@@ -12,11 +12,14 @@ Classes
     :nosignatures:
 
     Actor
+    BeamNester
     BuildingPlan
     BuildingPlanParser
     Instruction
     LinearDimension
     Model3d
+    NestingResult
     SimpleSequenceGenerator
     Step
+    Stock
     Text3d

@@ -7,6 +7,9 @@ from .sequencer import Model3d
 from .sequencer import Text3d
 from .sequencer import LinearDimension
 from .sequencer import BuildingPlanParser
+from .nesting import BeamNester
+from .nesting import NestingResult
+from .nesting import Stock
 
 __all__ = [
     "Actor",
@@ -18,4 +21,7 @@ __all__ = [
     "Step",
     "SimpleSequenceGenerator",
     "Text3d",
+    "BeamNester",
+    "Stock",
+    "NestingResult",
 ]

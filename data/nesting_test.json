@@ -1,0 +1,862 @@
+{
+    "data": {
+        "stocks": [
+            {
+                "beam_data": {
+                    "7ac9e7c4-3d81-4401-b400-fd9f82e92f88": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "869c671c-1963-4866-9f75-a0778e065855"
+                        },
+                        "length": 3120.0200000000004
+                    },
+                    "e0a77882-aee8-483b-86ce-6c111319ab5b": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3123.0200000000004,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "a6c0e66d-c4ba-433b-8cdb-2ca35c1a5a9e"
+                        },
+                        "length": 2120.0200000000004
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "3f569dfe-3232-49fc-aabb-ca6658e964b9": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3123.0200000000004,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "14945b1e-706e-41d1-a41e-6ba777d70a96"
+                        },
+                        "length": 2120.0200000000004
+                    },
+                    "9392aa08-2a0e-4e5e-9b91-a63ed1a2c863": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "a90a3ce7-b728-4938-9828-5e9e076da1c1"
+                        },
+                        "length": 3120.0200000000004
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "710d1274-889b-402a-9fe4-697c98486536": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3063.0200000000004,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "3012e219-de09-45d8-8f26-2c3e27abc368"
+                        },
+                        "length": 2060.0200000000004
+                    },
+                    "d8b62f6c-4c1f-4910-a1c4-0a8f5a1eb010": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "5a086c11-ebe7-4437-ad01-4f649a1b71a2"
+                        },
+                        "length": 3060.0200000000004
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "2bea96eb-e08a-4e9a-bf33-68b3053066a8": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3003.0200000000004,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "053fd60b-ac9c-46e6-bc1d-d5728f2a6805"
+                        },
+                        "length": 2000.02
+                    },
+                    "5faad399-a5f0-4b1c-9b5e-b81bd64416d0": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "13be0e63-88de-45c9-9602-6bc00dcdf2ae"
+                        },
+                        "length": 3000.0200000000004
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "4f01bc3f-b12c-4719-b3c9-a65458fd5615": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    1563.02,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "3cc832af-1c30-4adf-93a4-e101348c412c"
+                        },
+                        "length": 1560.02
+                    },
+                    "e58998e7-5cc8-4814-855a-c05b41370e09": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "dcf77cc5-1870-4e5b-9097-848d12c30742"
+                        },
+                        "length": 1560.02
+                    },
+                    "ecb4eb84-2226-425f-991b-18320b1380c2": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3126.04,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "e2305def-8bb9-4a07-9436-1210f0efca59"
+                        },
+                        "length": 1507.1011889345573
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "77dca870-18ce-437b-aba4-c596564dfc6b": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    4516.141188934557,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "3e6f5c38-41fc-4d78-a89c-7e6edfac8834"
+                        },
+                        "length": 1414.233562373095
+                    },
+                    "bf0edcc1-30ba-47e2-8d47-d85c479dbfef": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3013.1211889345573,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "27e42302-3688-4d86-a740-3e9b9ac0530d"
+                        },
+                        "length": 1500.02
+                    },
+                    "bf9a5d05-5611-40d2-a77d-d6091ed9d083": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "b3c088c7-6c86-4065-a89f-3fb9ef690605"
+                        },
+                        "length": 1507.1011889345573
+                    },
+                    "d6fbeeab-0203-4db9-b6d1-31f7d1da3450": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    1510.1011889345573,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "fbdc7880-4392-4b62-92d2-0ac48caa8167"
+                        },
+                        "length": 1500.02
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "99bb7fae-1f28-42b5-94cc-4b1ecfade74d": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    0.0,
+                                    1.0,
+                                    0.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "1b9e3e5e-1113-4bea-b7ea-91601089ac73"
+                        },
+                        "length": 1414.233562373095
+                    }
+                },
+                "cross_section": [
+                    120,
+                    120
+                ],
+                "cutting_tolerance": 0.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "21385dd3-f00e-423d-bf12-80d7f20cbf0a": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    2273.9174434356496,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "b2eae419-7957-488e-9e5e-60ae51b29dad"
+                        },
+                        "length": 2060.0200000000004
+                    },
+                    "c19ca11e-1675-4f86-acdf-c5c6119958ce": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "a9bfdcc7-0dfc-4479-ad16-40ca1ccee78f"
+                        },
+                        "length": 2270.9174434356496
+                    },
+                    "cb4e89d6-9a86-441c-ac6d-dc9d735f9023": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    4336.9374434356505,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "4d57016c-4556-467e-a059-eb937ae6a067"
+                        },
+                        "length": 1560.02
+                    }
+                },
+                "cross_section": [
+                    120,
+                    60
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "3687cfa5-417a-4cf5-89f8-f6a07c74183d": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    4126.040000000001,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "da6f8969-61f8-4d52-b2bd-4073a8b03239"
+                        },
+                        "length": 1731.9473049064165
+                    },
+                    "44ec0e40-819d-4d2e-8f63-1bfc68383655": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "79067bd2-2801-4d01-95ac-50045f94d510"
+                        },
+                        "length": 2060.0200000000004
+                    },
+                    "5b69b306-a52d-430e-8976-db9574c0e636": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    2063.0200000000004,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "2ad6a777-a3c4-4034-9b05-ba31b5d325e2"
+                        },
+                        "length": 2060.0200000000004
+                    }
+                },
+                "cross_section": [
+                    120,
+                    60
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "0e5464af-f269-4110-9f6c-6add20d257a4": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    4509.0599999999995,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "4434ac03-3a16-48b1-bc29-ba3625b2dafa"
+                        },
+                        "length": 1403.2492008788292
+                    },
+                    "1d228c00-c6cf-44b8-b911-37c97043e3d4": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3006.04,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "4b4e5813-067d-4add-8e88-c2d4d55546f4"
+                        },
+                        "length": 1500.02
+                    },
+                    "7ad1a1da-8059-45bf-9eda-3847b64c847d": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "ee01abd1-ffe4-45c6-b3a9-e5d636fcd0aa"
+                        },
+                        "length": 1500.02
+                    },
+                    "9d179502-01a4-4147-8575-731a4c89a5f2": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    1503.02,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "32f606b3-fbe5-45fc-bc20-5a0fba5804aa"
+                        },
+                        "length": 1500.02
+                    }
+                },
+                "cross_section": [
+                    120,
+                    60
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            },
+            {
+                "beam_data": {
+                    "7f4faaaf-9993-443c-8c1d-3af07f2135da": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3569.06,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "e3c59ccc-ae07-49f7-89e6-dbdfe7bc4215"
+                        },
+                        "length": 400.44838687505876
+                    },
+                    "c327845b-2fc0-4b21-8e72-d5b616e20027": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    3972.508386875059,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "ca106658-9173-44ab-ac57-e9cd82836dd3"
+                        },
+                        "length": 400.44838687505853
+                    },
+                    "c84bb0c0-a630-4485-9e07-63523401a040": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    2566.04,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "89f6cc4b-d972-4dd4-bf3c-6a279c75b277"
+                        },
+                        "length": 1000.02
+                    },
+                    "cff46de5-1f62-4061-b84b-193d05a66292": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    1503.02,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "fe589d24-202b-4e9e-bc40-13041eb12fa5"
+                        },
+                        "length": 1060.0200000000002
+                    },
+                    "d1ee8f6c-961c-4b2d-88f6-be9392e48f19": {
+                        "frame": {
+                            "data": {
+                                "point": [
+                                    0.0,
+                                    60.0,
+                                    0.0
+                                ],
+                                "xaxis": [
+                                    1.0,
+                                    0.0,
+                                    0.0
+                                ],
+                                "yaxis": [
+                                    -0.0,
+                                    0.0,
+                                    1.0
+                                ]
+                            },
+                            "dtype": "compas.geometry/Frame",
+                            "guid": "c4ae09fb-b0c8-4581-9c07-78dd2a8ba3fb"
+                        },
+                        "length": 1500.02
+                    }
+                },
+                "cross_section": [
+                    120,
+                    60
+                ],
+                "cutting_tolerance": 3.0,
+                "length": 6000
+            }
+        ]
+    },
+    "dtype": "compas_timber.planning/NestingResult",
+    "guid": "419a5124-6258-4ba2-9fa4-ed2d56221255"
+}
