@@ -574,19 +574,6 @@ def move_polyline_segment_to_plane(polyline, segment_index, plane):
             polyline[0] = end_pt
 
 
-def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to the intersection with a plane."""
-    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
-    if start_pt:
-        polyline[segment_index] = start_pt
-        if segment_index == 0:
-            polyline[-1] = start_pt
-    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
-    if end_pt:
-        polyline[segment_index + 1] = end_pt
-        if segment_index + 1 == len(polyline.lines):
-            polyline[0] = end_pt
-
 
 __all__ = [
     "intersection_line_line_param",
@@ -602,7 +589,6 @@ __all__ = [
     "get_segment_overlap",
     "split_beam_at_lengths",
     "intersection_line_beams",
-    "move_polyline_segment_to_plane",
     "distance_segment_segment_points",
     "move_polyline_segment_to_plane",
 ]

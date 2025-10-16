@@ -67,7 +67,6 @@ class PlateGeometry(object):
     def __init__(self, local_outline_a, local_outline_b, openings=None):
         self._original_outlines = (local_outline_a, local_outline_b)
         self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
-        self._edge_frames = {}
 
         self._planes = None
         self.openings = openings or []
@@ -182,33 +181,11 @@ class PlateGeometry(object):
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
-    @property
-    def local_edge_planes(self):
-        """Frames representing the edge planes of the plate in local coordinates.
-
-        Returns
-        -------
-        list[:class:`~compas.geometry.Frame`]
-            A list of frames representing the edge planes of the plate in local coordinates.
-        """
-        return [ep.transformed(self.transformation.inverse()) for ep in self.edge_planes]
-
-    @property
-    def local_edge_planes(self):
-        """Frames representing the edge planes of the plate in local coordinates.
-
-        Returns
-        -------
-        list[:class:`~compas.geometry.Frame`]
-            A list of frames representing the edge planes of the plate in local coordinates.
-        """
-        return [ep.transformed(self.transformation.inverse()) for ep in self.edge_planes]
-
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
-        self._edge_frames = {}
+        self._extension_planes = {}
 
 
     # ==========================================================================
