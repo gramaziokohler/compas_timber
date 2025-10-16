@@ -4,6 +4,7 @@ from operator import mul
 from compas.geometry import Frame
 from compas.geometry import Vector
 from compas.geometry import Line
+from compas.geometry import Vector
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element

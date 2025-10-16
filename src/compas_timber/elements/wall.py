@@ -79,10 +79,10 @@ class Wall(Slab):
         data["attributes"] = self.attributes
         return data
 
-    def __init__(self, frame, length, width, thickness, outline_a=None, outline_b=None, openings=None, name=None, **kwargs):
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
         print("args", frame, length, width, thickness)
-        super(Wall, self).__init__(frame, length, width, thickness, outline_a, outline_b, openings, **kwargs)
-        self.outline = outline_a
+        super(Wall, self).__init__(frame, length, width, thickness, local_outline_a, local_outline_b, openings, **kwargs)
+        self.outline = self.outline_a.copy()  # make mutable copy
         self.attributes = {}
         self.attributes.update(kwargs)
         self.name = name or "Wall"
