@@ -44,7 +44,7 @@ class JointRuleFromList(Grasshopper.Kernel.GH_ScriptInstance):
                 if val is not None:
                     kwargs[self.arg_names[i]] = val
 
-            return DirectRule(self.joint_type, elements, **kwargs)
+            return DirectRule(self.joint_type, [e for e in elements], **kwargs)
 
     @property
     def arg_start_index(self):
