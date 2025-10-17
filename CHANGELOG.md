@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added new `compas_timber.planning.Stock` class for representing raw material stock pieces with beam assignment tracking and waste calculation.
+* Added new `compas_timber.planning.Stock` base class for representing raw material stock pieces with polymorphic element handling.
+* Added new `compas_timber.planning.BeamStock` class for 1D beam stock pieces with length-based nesting and dimensional compatibility checking.
+* Added new `compas_timber.planning.PlateStock` class for 2D plate stock pieces with area-based nesting and dimensional compatibility checking.
 * Added new `compas_timber.planning.BeamNester` class for automated beam nesting with first-fit and best-fit decreasing algorithms.
-* Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties.
+* Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties and enhanced dimensional reporting.
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 
