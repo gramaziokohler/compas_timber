@@ -13,11 +13,12 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import BTLxWriter
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamNester
-from compas_timber.planning import Stock
+from compas_timber.planning import BeamStock
 
 HERE = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(HERE), "..", "data")
 LINES = os.path.join(HERE, "stand.json")
+BLADE_THICKNESS = 3.2
 
 TOL.absolute = 1e-3
 
@@ -40,8 +41,8 @@ def create_stand_model():
     model = TimberModel()
 
     # Add beams to model
-    CROSS_SQUARE = (120, 120)
-    CROSS_TALL = (120, 60)
+    CROSS_SQUARE = (100, 100)
+    CROSS_TALL = (100, 60)
     NORMAL_VERTICALS = Vector(0, 1, 0)
 
     # Create the beams with the right cross section depending on their category
@@ -67,7 +68,7 @@ def create_stand_model():
         if candidate.topology == JointTopology.TOPO_L:
             LButtJoint.create(model, beam_a, beam_b)
         elif candidate.topology == JointTopology.TOPO_T:
-            TButtJoint.create(model, beam_a, beam_b)
+            TButtJoint.create(model, beam_a, beam_b, mill_depth=5.0)
 
     model.process_joinery()
     return model
@@ -75,8 +76,8 @@ def create_stand_model():
 
 def generate_nesting(model):
     """Generate nesting for the given timber model."""
-    stock_catalog = [Stock(6000, (120, 120)), Stock(6000, (120, 60))]
-    nester = BeamNester(model, stock_catalog, spacing=3.0)
+    stock_catalog = [BeamStock(5000, (100, 100)), BeamStock(5000, (100, 60))]
+    nester = BeamNester(model, stock_catalog, spacing=BLADE_THICKNESS)
     return nester.nest(fast=False)
 
 
