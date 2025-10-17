@@ -17,7 +17,7 @@ from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
 from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
-from compas_timber.planning import Stock
+from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
 
 
@@ -250,9 +250,9 @@ def test_btlx_with_nesting_result_creates_rawparts(namespaces):
     model.add_element(beam2)
 
     # Create stock and assign beams
-    stock = Stock(length=2000, cross_section=(100, 100))
-    stock.add_beam(beam1)
-    stock.add_beam(beam2)
+    stock = BeamStock(length=2000, cross_section=(100, 100))
+    stock.add_element(beam1)
+    stock.add_element(beam2)
 
     # Create nesting result
     nesting_result = NestingResult([stock])
@@ -289,8 +289,8 @@ def test_btlx_rawpart_contains_correct_part_references(namespaces):
     model.add_element(beam)
 
     # Create stock and assign beam
-    stock = Stock(length=1000, cross_section=(80, 120))
-    stock.add_beam(beam)
+    stock = BeamStock(length=1000, cross_section=(80, 120))
+    stock.add_element(beam)
 
     # Create nesting result
     nesting_result = NestingResult([stock])
@@ -335,7 +335,7 @@ def test_btlx_generic_part_inheritance():
     """Test that BTLxPart and BTLxRawpart both inherit from BTLxGenericPart."""
     # Create a beam and stock for testing
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
-    stock = Stock(length=2000, cross_section=(100, 100))
+    stock = BeamStock(length=2000, cross_section=(100, 100))
 
     # Create instances of both subclasses
     btlx_part = BTLxPart(beam, order_num=1)
@@ -370,7 +370,7 @@ def test_btlx_part_unique_functionalities():
 
 def test_btlx_rawpart_unique_functionalities():
     """Test BTLxRawpart unique functionalities for raw material parts."""
-    stock = Stock(length=2000, cross_section=(100, 100))
+    stock = BeamStock(length=2000, cross_section=(100, 100))
     btlx_rawpart = BTLxRawpart(stock, order_number=2)
 
     # Test stock reference
