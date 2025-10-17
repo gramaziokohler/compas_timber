@@ -13,12 +13,14 @@ Classes
 
     Actor
     BeamNester
+    BeamStock
     BuildingPlan
     BuildingPlanParser
     Instruction
     LinearDimension
     Model3d
     NestingResult
+    PlateStock
     SimpleSequenceGenerator
     Step
     Stock
