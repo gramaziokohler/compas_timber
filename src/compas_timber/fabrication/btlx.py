@@ -223,10 +223,8 @@ class BTLxWriter(object):
         raw_part_element.extend([raw_part.et_transformations, raw_part.et_grain_direction, raw_part.et_reference_side])
 
         # Add part references if any beams are assigned to this stock
-        if stock.beam_data:
-            for beam_guid, beam_info in stock.beam_data.items():
-                # Get the pre-computed frame from the beam data
-                position_frame = beam_info["frame"]
+        if stock.element_data:
+            for beam_guid, position_frame in stock.element_data.items():
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
