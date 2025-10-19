@@ -19,10 +19,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+### Removed
+
+
+## [1.0.1] 2025-10-16
+
+### Added
+* Added `TimberElement.add_feature` to override the `Element` method.
+* Added new GH helper `get_createable_joints` to get all createable Joint classes.
+
+### Changed
+
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
 * Changed `BTLxPart` transformation GUID to use the `TimberElement`'s GUID instead of generating a random UUID in `compas_timber.fabrication.BTLxPart`.
 * Updated the `write()` and `model_to_xml()` methods of the `BTLxWriter` class to optionally accept a `NestingResult` object, enabling inclusion of beam nesting information in the BTLx output.
+* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
+* Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
+* Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
+* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
 
 ### Removed
 
