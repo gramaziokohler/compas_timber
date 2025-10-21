@@ -30,6 +30,7 @@ from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
+from .simple_scarf import SimpleScarf
 
 __all__ = [
     "BTLxWriter",
@@ -64,4 +65,5 @@ __all__ = [
     "Contour",
     "DualContour",
     "LongitudinalCut",
+    "SimpleScarf",
 ]
