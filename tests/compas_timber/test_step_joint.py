@@ -2,14 +2,18 @@ import pytest
 
 from collections import OrderedDict
 
+from compas.geometry import Frame
+from compas.geometry import Vector
 from compas.geometry import Point
 from compas.geometry import Line
 
+from compas_timber.connections import TStepJoint
 from compas_timber.elements import Beam
 from compas_timber.fabrication import StepJointNotch
 from compas_timber.fabrication import StepJoint
 from compas_timber.fabrication import StepShapeType
 from compas_timber.fabrication import OrientationType
+from compas_timber.model import TimberModel
 
 
 @pytest.fixture
@@ -281,3 +285,67 @@ def test_stepjoint_scaled():
     assert scaled.tenon_width == step_joint.tenon_width * 2.0
     assert scaled.tenon_height == step_joint.tenon_height * 2.0
     assert scaled.ref_side_index == step_joint.ref_side_index
+
+
+def test_tstepjoint_creates_expected_processings():
+    """Test that TStepJoint correctly calculates dimensions for different reference side orientations."""
+    expected_notch_params = {
+        "Orientation": "end",
+        "StartX": "1085.678",
+        "StartY": "0.000",
+        "StrutInclination": "109.993",
+        "NotchLimited": "no",
+        "NotchWidth": "80.000",
+        "StepDepth": "30.000",
+        "HeelDepth": "0.000",
+        "StrutHeight": "120.000",
+        "StepShape": "step",
+        "Mortise": "no",
+        "MortiseWidth": "40.000",
+        "MortiseHeight": "40.000",
+    }
+    expected_step_params = {
+        "Orientation": "start",
+        "StartX": "171.355",
+        "StrutInclination": "109.993",
+        "StepDepth": "30.000",
+        "HeelDepth": "0.000",
+        "StepShape": "step",
+        "Tenon": "no",
+        "TenonWidth": "40.000",
+        "TenonHeight": "40.000",
+    }
+
+    # Create beams with specific frames as provided
+    beam_width = 80
+    beam_height = 120
+
+    # Cross beam (first beam)
+    cross_frame = Frame(point=Point(x=-3000.000, y=7000.000, z=0.000), xaxis=Vector(x=0.000, y=-1.000, z=0.000), yaxis=Vector(x=1.000, y=0.000, z=-0.000))
+    cross_beam = Beam(frame=cross_frame, width=beam_width, height=beam_height, length=2000.000)
+    cross_beam.attributes["name"] = "cross_beam"
+
+    # Main beam (second beam)
+    main_frame = Frame(point=Point(x=-3000.000, y=6000.000, z=0.000), xaxis=Vector(x=0.000, y=-0.342, z=0.940), yaxis=Vector(x=1.000, y=0.000, z=-0.000))
+    main_beam = Beam(frame=main_frame, width=beam_width, height=beam_height, length=1000.000)
+    main_beam.attributes["name"] = "main_beam"
+
+    # Create TStepJoint
+    model = TimberModel()
+    model.add_elements([cross_beam, main_beam])
+    _ = TStepJoint.create(model, main_beam, cross_beam)
+
+    model.process_joinery()
+
+    # Validate generated parameters with expeccted processing parameters
+    for beam in model.beams:
+        if isinstance(beam.features[0], StepJointNotch):
+            notch = beam.features[0]
+            generated_notch_params = notch.params.as_dict()
+            for key, value in expected_notch_params.items():
+                assert generated_notch_params[key] == value
+        if isinstance(beam.features[0], StepJoint):
+            step = beam.features[0]
+            generated_step_params = step.params.as_dict()
+            for key, value in expected_step_params.items():
+                assert generated_step_params[key] == value
