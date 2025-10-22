@@ -563,7 +563,6 @@ class BeamNester(object):
             best_waste = float("inf")
 
             for stock_piece in stocks:
-                stock_piece.spacing = spacing  # Set spacing tolerance
                 if stock_piece.can_fit_element(beam) and stock_piece._remaining_length < best_waste:
                     best_waste = stock_piece._remaining_length
                     best_stock = stock_piece
