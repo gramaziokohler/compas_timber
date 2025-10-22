@@ -9,9 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added `PlateJointCandidate` to `generic_joint.py`.
-* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
-* Added `PlateJoint.from_generic_joint` as override.
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
