@@ -484,8 +484,8 @@ class BTLxRawpart(BTLxGenericPart):
         super(BTLxRawpart, self).__init__(
             order_number,
             stock.length,
-            stock.cross_section[0],
-            stock.cross_section[1],
+            stock.width,
+            stock.height,
             scale_factor,
         )
         self.stock = stock
