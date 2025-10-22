@@ -25,24 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-### Removed
-
-
-## [1.0.1] 2025-10-16
-
-### Added
-* Added `TimberElement.add_feature` to override the `Element` method.
-* Added new GH helper `get_createable_joints` to get all createable Joint classes.
-
-### Changed
-
-* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
-* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
-* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
-* Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
-* Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
-* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
-
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.0` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
@@ -68,6 +50,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not needed anymore.
+
+
+## [1.0.1] 2025-10-16
+
+### Added
+* Added `TimberElement.add_feature` to override the `Element` method.
+* Added new GH helper `get_createable_joints` to get all createable Joint classes.
+
+### Changed
+
+* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
+* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
+* Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
+* Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
+* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
+
+### Removed
 
 ## [1.0.0] 2025-09-01
 
