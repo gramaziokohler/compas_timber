@@ -1,13 +1,9 @@
-from functools import reduce
-from operator import mul
-
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-from compas_model.modifiers import Modifier
 
 
 class TimberElement(Element):
@@ -15,8 +11,17 @@ class TimberElement(Element):
 
     This is an abstract class and should not be instantiated directly.
 
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`, optional
+        The frame representing the beam's local coordinate system in its hierarchical context.
+        Defaults to ``None``, in which case the world coordinate system is used.
+
     Attributes
     ----------
+    frame : :class:`compas.geometry.Frame`
+        The coordinate system of this element in model space.
+        This property may be different from the constructor parameter if the element belongs to a model hierarchy.
     is_beam : bool
         True if the element is a beam.
     is_plate : bool
@@ -31,16 +36,20 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
-        data["frame"] = self.frame
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame=None, features=None, **kwargs):
-        super(TimberElement, self).__init__(**kwargs)
-        self._features = features or []
-        self._frame = frame or Frame.worldXY()
-        self._geometry = None
+    def __init__(self, frame=None, **kwargs):
+        frame = frame or Frame.worldXY()  # TODO: This is temporary. Once all subclasses are described the same way, the constructor should be updated.
+        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.debug_info = []
+
+    @classmethod
+    def __from_data__(cls, data):
+        transformation = data.pop("transformation", None)
+        if transformation:
+            data["frame"] = Frame.from_transformation(transformation)
+        return cls(**data)
 
     @reset_computed
     def _reset_computed_dummy(self):
@@ -72,32 +81,6 @@ class TimberElement(Element):
         return False
 
     @property
-    def frame(self):
-        # type: () -> Frame | None
-        """The local frame of the element defining its position and orientation in space."""
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        # type: (Frame) -> None
-        self._frame = frame
-
-    @property
-    def transformation(self):
-        # type: () -> Transformation
-        """The local transformation of the element defining its position and orientation in space.
-        This property returns the transformation computed from the frame when used as a getter,
-        and updates the frame by converting the transformation back to a frame when used as a setter.
-        """
-        return Transformation.from_frame(self.frame) if self.frame else Transformation()
-
-    @transformation.setter
-    @reset_computed
-    def transformation(self, transformation):
-        # type: (Transformation) -> None
-        self._frame = Frame.from_transformation(transformation)
-
-    @property
     def features(self):
         # type: () -> list[Feature]
         """A list of features applied to the element."""
@@ -120,60 +103,16 @@ class TimberElement(Element):
     # ========================================================================
 
     def compute_modeltransformation(self):
-        """Compute the transformation to model coordinates of this element
-        based on its position in the spatial hierarchy of the model.
-        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
-        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
-
-        Returns
-        -------
-        :class:`compas.geometry.Transformation`
-
-        """
-        # type: () -> Transformation
-        stack = []
-
-        if self.transformation:
-            stack.append(self.transformation)
-
-        if self.model:
-            parent = self.parent
-
-            while parent:
-                if parent.transformation:
-                    stack.append(parent.transformation)
-                parent = parent.parent
-
-            if self.model.transformation:
-                stack.append(self.model.transformation)
-
-        if stack:
-            return reduce(mul, stack[::-1])
-        return Transformation()
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
 
     def compute_modelgeometry(self):
-        """Compute the geometry of the element in model coordinates and taking into account the effect of interactions with connected elements.
-        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
-        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
-
-        Returns
-        -------
-        :class:`compas.geometry.Brep`
-
-        """
-        # type: () -> compas.geometry.Brep
-        xform = self.modeltransformation
-        modelgeometry = self.elementgeometry.transformed(xform)
-
-        if self.model:
-            for nbr in self.model.graph.neighbors_in(self.graphnode):
-                modifiers: list[Modifier] = self.model.graph.edge_attribute((nbr, self.graphnode), name="modifiers")  # type: ignore
-                if modifiers:
-                    source = self.model.graph.node_element(nbr)
-                    for modifier in modifiers:
-                        modelgeometry = modifier.apply(source, modelgeometry)
-
-        return modelgeometry
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()
 
     # ========================================================================
     # Feature management & Modification methods

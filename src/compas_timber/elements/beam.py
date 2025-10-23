@@ -27,7 +27,7 @@ class Beam(TimberElement):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`
-        A local coordinate system of the beam:
+        The frame representing the beam's local coordinate system in its hierarchical context:
         Origin is located at the starting point of the centerline.
         x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
@@ -41,8 +41,12 @@ class Beam(TimberElement):
 
     Attributes
     ----------
+    transformation : :class:`~compas.geometry.Transformation`
+        The transformation matrix representing the beam's local coordinate system in its hierarchical context.
+        This is the internal interface for the constructor `frame` parameter.
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this beam.
+        The coordinate system (frame) of this beam in model space.
+        This property may be different from the constructor parameter if the beam belongs to a model hierarchy.
     length : float
         Length of the beam.
     width : float
@@ -74,7 +78,6 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
@@ -82,8 +85,7 @@ class Beam(TimberElement):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(**kwargs)
-        self.frame = frame
+        super(Beam, self).__init__(frame, **kwargs)
         self.width = width
         self.height = height
         self.length = length
