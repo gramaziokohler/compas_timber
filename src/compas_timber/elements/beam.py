@@ -144,18 +144,6 @@ class Beam(TimberElement):
         line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
         return line.transformed(self.modeltransformation)
 
-    @property
-    def ref_frame(self):
-        # type: () -> Frame
-        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        """
-        Reference frame for machining processings according to BTLx standard.
-        The origin is at the bottom far corner of the element.
-        The ref_frame is always in model coordinates.
-        TODO: This should be upstreamed to TimberElement once all elements are described using a frame.
-        """
-        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
-
     # ==========================================================================
     # Implementations of abstract methods
     # ==========================================================================

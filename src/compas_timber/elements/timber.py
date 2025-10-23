@@ -2,6 +2,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -196,9 +197,12 @@ class TimberElement(Element):
     def ref_frame(self):
         # type: () -> Frame
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        """Reference frame for machining processings according to BTLx standard. The origin is at the bottom far corner of the element."""
-
-        raise NotImplementedError("This method should be implemented by subclasses.")
+        """
+        Reference frame for machining processings according to BTLx standard.
+        The origin is at the bottom far corner of the element.
+        The ref_frame is always in model coordinates.
+        """
+        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     @property
     def ref_sides(self):
