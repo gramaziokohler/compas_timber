@@ -10,19 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
-* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
-* Added `transformation` property to `TimberElement` that computes from `frame` and updates `frame` when set, enabling bidirectional frame-transformation synchronization.
-* Added `transformation` property to `Beam` with custom getter that accounts for blank extensions and setter that delegates to parent class for proper inheritance.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
 * Added `reset_computed_properties()` method to `TimberElement` to provide interface for invalidating `@reset_computed` decorated properties.
 * Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
+* Added `__from_data__` class method override in `TimberElement` to handle frame/transformation conversion during deserialization.
+* Added standalone element support through minimal overrides in `compute_modeltransformation()` and `compute_modelgeometry()` methods in `TimberElement`.
 
 ### Changed
 
-* Updated `compas_model` version pinning from `0.4.4` to `0.9.0` to align with the latest development.
+* Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
 * Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
@@ -30,13 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `joints` and `joint_candidates` properties in `TimberModel` to use direct edge-based lookup instead of interactions.
 * Updated default edge attributes in the model graph to include `joints` and `candidates`.
 * Updated `graph_node` property to `graphnode` following the changes in the parent `compas_model.elements.Element` class.
-* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
-* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
-* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
-* Changed the way the `blank` is computed using the `ref_frame` instead of the depricated `blank_frame` in `compas_timber.elements.Beam`.
+* Upstreamed `ref_frame` property from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`.
+* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`.
+* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Refactored `TimberElement.__init__()` to accept `frame` parameter and convert to `transformation` for parent `Element` class, bridging frame-based user interface with transformation-based inheritance.
+* Changed the way the `ref_frame` is computed from the `Blank`'s geometry in `TimberElement`.
+* Changed the way the `blank` is computed in `compas_timber.elements.Beam` applying the `modeltransformation` to a locally generated geometry.
 * Changed the `apply()` method in `DoubleCut`, `DovetailMortise`, `DovetailTenon`, `Drilling`, `FrenchRidgeLap`, `JackRafterCut`, `Lap`, `LongitudinalCut`, `Mortise`, `Pocket`, `StepJointNotch`, `StepJoint`, `Tenon` by transforming the computed feature geometry in the element's local space to allow the element geometry computation to happen in local coordinates.
 
 ### Removed
@@ -46,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
 * Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
-* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not needed anymore.
+* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
 
 
 ## [1.0.1] 2025-10-16
