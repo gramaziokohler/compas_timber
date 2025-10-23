@@ -15,6 +15,7 @@ from compas.geometry import close
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
+from compas_timber.model import TimberModel
 from compas_timber.fabrication import JackRafterCut
 
 
@@ -36,12 +37,31 @@ def test_beam_constructor():
 
     beam = Beam(frame=frame, length=1000.0, width=100.0, height=60.0)
 
-    assert beam.frame == frame
+    assert beam.frame == frame  # TODO: this is not necessarily true if beam is in a model with parent
     assert beam.length == length
     assert beam.width == width
     assert beam.height == height
     assert beam._blank_extensions == {}
     assert beam.transformation == Transformation.from_frame(frame)
+
+
+def test_beam_constructor_with_hierarchy():
+    parent_frame = Frame([100, 100, 100], [0, 1, 0], [1, 1, 1])
+    child_frame = Frame.worldXY()
+
+    parent_beam = Beam(frame=parent_frame, length=1000, width=100, height=100)
+    child_beam = Beam(frame=child_frame, length=1000, width=100, height=100)
+
+    model = TimberModel()
+    model.add_element(parent_beam)
+    model.add_element(child_beam, parent_beam)
+
+    assert parent_beam.transformation == Transformation.from_frame(parent_frame)
+    assert child_beam.transformation == Transformation.from_frame(child_frame)
+
+    assert parent_beam.frame == parent_frame
+    assert child_beam.frame != child_frame  # The frame of the child element is no longer the constructor frame but the frame in global space
+    assert child_beam.frame == parent_frame
 
 
 def test_create_from_endpoints():
@@ -50,6 +70,7 @@ def test_create_from_endpoints():
     B = Beam.from_endpoints(P1, P2, width=0.1, height=0.2)
     assert close(B.length, 1.0)  # the resulting beam length should be 1.0
     assert B.frame is not None
+    assert B.transformation is not None
 
 
 def test_create_from_centerline():
@@ -59,6 +80,7 @@ def test_create_from_centerline():
     B = Beam.from_centerline(line, width=0.1, height=0.2)
     assert close(B.length, 1.0)  # the resulting beam length should be 1.0
     assert B.frame is not None
+    assert B.transformation is not None
 
 
 def test__eq__():
