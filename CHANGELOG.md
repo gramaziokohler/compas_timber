@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
-* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
 * Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
 * Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
