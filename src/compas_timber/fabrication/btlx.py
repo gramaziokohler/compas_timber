@@ -238,7 +238,7 @@ class BTLxWriter(object):
 
         Parameters
         ----------
-        element : :class:`~compas_timber.elements.TimberElement` # TODO: not really
+        element : :class:`~compas_timber.elements.TimberElement`
             The element object.
         order_num : int
             The order number of the part.
@@ -549,7 +549,7 @@ class BTLxPart(BTLxGenericPart):
 
     Parameters
     ----------
-    element : :class:`~compas_model.elements.Element` # TODO: not really, make BTLx Element parent class
+    element : :class:`~compas_timber.elements.TimberElement`
         The element object.
     order_num : int
         The order number of the part.
