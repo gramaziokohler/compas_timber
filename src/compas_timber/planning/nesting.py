@@ -16,6 +16,10 @@ class Stock(Data):
         Width of the stock piece.
     height : float
         Height of the stock piece.
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.).
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
     Attributes
     ----------
@@ -31,41 +35,20 @@ class Stock(Data):
         Dictionary mapping element GUIDs to their assigned position frames.
     """
 
-    def __init__(self, length, width, height):
+    def __init__(self, length, width, height, spacing=0.0, element_data=None):
         super(Stock, self).__init__()
         self.length = length
         self.width = width
         self.height = height
-        self.element_data = {}  # {guid: Frame}
-
-        self._spacing = 0.0
+        self.spacing = spacing
+        self.element_data = element_data or {}  # {guid: Frame}
 
     @property
     def __data__(self):
         return {
-            "type": self.__class__.__name__,
-            "length": self.length,
-            "width": self.width,
-            "height": self.height,
             "spacing": self.spacing,
             "element_data": self.element_data,
         }
-
-    @classmethod
-    def __from_data__(cls, data):
-        stock = cls(length=data["length"], width=data["width"], height=data["height"])
-        stock.spacing = data.get("spacing", 0.0)
-        stock.element_data = data.get("element_data", {})
-        return stock
-
-    @property
-    def spacing(self):
-        """Get or set spacing tolerance for cutting operations."""
-        return self._spacing
-
-    @spacing.setter
-    def spacing(self, value):
-        self._spacing = value
 
     def add_element(self, element):
         """
@@ -115,10 +98,6 @@ class Stock(Data):
         """
         raise NotImplementedError("This method should be implemented in subclasses.")
 
-    def copy_empty(self):
-        """Create a copy of this stock with no elements assigned."""
-        raise NotImplementedError("This method should be implemented in subclasses.")
-
 
 class BeamStock(Stock):
     """
@@ -132,6 +111,10 @@ class BeamStock(Stock):
         Length of the stock piece.
     cross_section : tuple of float
         Cross-section dimensions (width, height).
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.).
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
 
     Attributes
@@ -142,26 +125,24 @@ class BeamStock(Stock):
         Cross-section dimensions sorted in ascending order for consistent comparison.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame]
+    element_data : dict[str, Frame], optional
         Dictionary mapping element GUIDs to their assigned position frames.
     """
 
-    def __init__(self, length, cross_section):
+    def __init__(self, length, cross_section, spacing=0.0, element_data=None):
         # Validate cross_section before passing to parent constructor
         if not isinstance(cross_section, (list, tuple)) or len(cross_section) != 2:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
-        super(BeamStock, self).__init__(length, cross_section[0], cross_section[1])
+        super(BeamStock, self).__init__(length=length, width=cross_section[0], height=cross_section[1], spacing=spacing, element_data=element_data)
         self.cross_section = tuple(cross_section)
         self._current_x_position = 0.0  # Track current position along length for placing beams
 
-    @classmethod
-    def __from_data__(cls, data):
-        # Convert width/height back to cross_section
-        cross_section = (data["width"], data["height"])
-        stock = cls(length=data["length"], cross_section=cross_section)
-        stock.spacing = data.get("spacing", 0.0)
-        stock.element_data = data.get("element_data", {})
-        return stock
+    @property
+    def __data__(self):
+        data = super(BeamStock, self).__data__
+        data["cross_section"] = self.cross_section
+        data["length"] = self.length
+        return data
 
     @property
     def _remaining_length(self):
@@ -253,10 +234,6 @@ class BeamStock(Stock):
         position_frame.point.x = self._current_x_position
         return position_frame
 
-    def copy_empty(self):
-        """Create a copy of this stock with no beams assigned."""
-        return BeamStock(self.length, self.cross_section)
-
 
 class PlateStock(Stock):
     """
@@ -270,6 +247,10 @@ class PlateStock(Stock):
         Dimensions of the stock piece (length, width).
     thickness : float
         Thickness of the stock piece.
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.).
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
     Attributes
     ----------
@@ -278,29 +259,25 @@ class PlateStock(Stock):
     thickness : float
         Thickness of the stock piece
     spacing : float, optional
-        Spacing tolerance for cutting operations (kerf width, etc.)
-    element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to element info containing "length" and "frame"
+        Spacing tolerance for cutting operations (kerf width, etc.).
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
     """
 
-    def __init__(self, dimensions, thickness):
+    def __init__(self, dimensions, thickness, spacing=0.0, element_data=None):
         # Validate dimensions before passing to parent constructor
         if not isinstance(dimensions, (list, tuple)) or len(dimensions) != 2:
             raise ValueError("dimensions must be a tuple or list of 2 dimensions")
-        super(PlateStock, self).__init__(dimensions[0], dimensions[1], thickness)
+        super(PlateStock, self).__init__(length=dimensions[0], width=dimensions[1], height=thickness, spacing=spacing, element_data=element_data)
         self.dimensions = tuple(dimensions)
+        self.thickness = thickness
 
-    @classmethod
-    def __from_data__(cls, data):
-        dimensions = (data["length"], data["width"])
-        stock = cls(dimensions=dimensions, thickness=data["height"])
-        stock.spacing = data.get("spacing", 0.0)
-        stock.element_data = data.get("element_data", {})
-        return stock
-
-    def copy_empty(self):
-        """Create a copy of this stock with no plates assigned."""
-        return PlateStock(self.dimensions, self.thickness)
+    @property
+    def __data__(self):
+        data = super(PlateStock, self).__data__
+        data["dimensions"] = self.dimensions
+        data["thickness"] = self.thickness
+        return data
 
 
 class NestingResult(Data):
@@ -328,19 +305,7 @@ class NestingResult(Data):
 
     @property
     def __data__(self):
-        return {"stocks": [stock.__data__ for stock in self.stocks]}
-
-    @classmethod
-    def __from_data__(cls, data):
-        stocks = []
-        for stock_data in data["stocks"]:
-            if stock_data["type"] == "BeamStock":
-                stocks.append(BeamStock.__from_data__(stock_data))
-            elif stock_data["type"] == "PlateStock":
-                stocks.append(PlateStock.__from_data__(stock_data))
-            else:
-                raise ValueError(f"Unknown stock type: {stock_data['type']}")
-        return cls(stocks)
+        return {"stocks": self.stocks}
 
     @property
     def total_material_volume(self):
@@ -506,6 +471,8 @@ class BeamNester(object):
             Beams to nest (will be sorted by blank length descending)
         stock : :class:`Stock`
             Stock type to use.
+        spacing : float, optional
+            Spacing tolerance for cutting operations (kerf width, etc.)
 
         Returns
         -------
@@ -526,8 +493,7 @@ class BeamNester(object):
                     break
             # If not fitted, create new stock
             if not fitted:
-                new_stock = stock.copy_empty()
-                new_stock.spacing = spacing  # Set spacing tolerance
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
@@ -547,6 +513,8 @@ class BeamNester(object):
             Beams to nest
         stock : :class:`Stock`
             Stock type to use
+        spacing : float, optional
+            Spacing tolerance for cutting operations (kerf width, etc.)
 
         Returns
         -------
@@ -571,8 +539,7 @@ class BeamNester(object):
                 best_stock.add_element(beam)
             else:
                 # Create new stock
-                new_stock = stock.copy_empty()
-                new_stock.spacing = spacing  # Set spacing tolerance
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
