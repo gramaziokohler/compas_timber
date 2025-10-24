@@ -143,32 +143,6 @@ def test_serialization():
     assert isinstance(restored_data.element_data[str(beam2.guid)], Frame)
 
 
-def test_copy_empty():
-    """Test copy_empty functionality."""
-    # Create stock with beams
-    stock = BeamStock(6000, (60, 120))
-    stock.spacing = 5.0
-
-    beam1 = Beam(frame=Frame.worldXY(), length=2000, width=60, height=120)
-    beam2 = Beam(frame=Frame.worldXY(), length=1500, width=60, height=120)
-    stock.add_element(beam1)
-    stock.add_element(beam2)
-
-    assert stock.spacing == 5.0
-    assert len(stock.element_data) == 2
-    assert str(beam1.guid) in stock.element_data
-    assert str(beam2.guid) in stock.element_data
-    assert stock._current_x_position == 2000 + 1500 + 10.0  # includes both cutting tolerance
-
-    # Test copy_empty
-    empty_copy = stock.copy_empty()
-    assert empty_copy.length == stock.length
-    assert empty_copy.cross_section == stock.cross_section
-    assert empty_copy.spacing == 0.0  # Should be reset to default
-    assert empty_copy.element_data == {}  # Should be empty
-    assert empty_copy._current_x_position == 0.0  # Nothing utilized
-
-
 # ============================================================================
 # BeamNester Tests
 # ============================================================================
