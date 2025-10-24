@@ -1,6 +1,8 @@
 import pytest
 import warnings
 
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 
 from compas_timber.elements import Beam
@@ -126,24 +128,19 @@ def test_serialization():
     stock.spacing = 5.0
 
     # Test serialization
-    data = stock.__data__
-    assert data["type"] == "BeamStock"
-    assert data["length"] == 6000
-    assert data["width"] == 60
-    assert data["height"] == 120
-    assert data["spacing"] == 5.0
-    assert len(data["element_data"]) == 2
-    assert str(beam1.guid) in data["element_data"]
-    assert str(beam2.guid) in data["element_data"]
-    assert isinstance(data["element_data"][str(beam1.guid)], Frame)
-    assert isinstance(data["element_data"][str(beam2.guid)], Frame)
+    restored_data = json_loads(json_dumps(stock))
+    assert isinstance(restored_data, BeamStock)
+    assert restored_data.length == stock.length
+    assert restored_data.width == stock.width
+    assert restored_data.height == stock.height
+    assert restored_data.cross_section == stock.cross_section
+    assert restored_data.spacing == stock.spacing
 
-    # Test deserialization
-    restored_stock = BeamStock.__from_data__(data)
-    assert restored_stock.length == stock.length
-    assert restored_stock.cross_section == stock.cross_section
-    assert restored_stock.spacing == stock.spacing
-    assert len(restored_stock.element_data) == len(stock.element_data)
+    assert len(restored_data.element_data) == len(stock.element_data)
+    assert str(beam1.guid) in restored_data.element_data
+    assert str(beam2.guid) in restored_data.element_data
+    assert isinstance(restored_data.element_data[str(beam1.guid)], Frame)
+    assert isinstance(restored_data.element_data[str(beam2.guid)], Frame)
 
 
 def test_copy_empty():
