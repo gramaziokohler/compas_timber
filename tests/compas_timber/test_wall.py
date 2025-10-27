@@ -8,7 +8,6 @@ from compas_timber.elements import Wall
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 from compas_timber.utils import classify_polyline_segments
-from compas_model.elements import Group
 
 
 @pytest.fixture

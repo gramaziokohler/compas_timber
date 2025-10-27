@@ -3,7 +3,6 @@ from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas.geometry import Vector
-
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -45,7 +44,7 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame, length, width, height, frame=None, **kwargs):
+    def __init__(self, frame, length, width, height, **kwargs):
         """Initialize a TimberElement.
 
         Parameters
@@ -65,7 +64,6 @@ class TimberElement(Element):
         """
         frame = frame or Frame.worldXY()  # TODO: This is temporary. Once all subclasses are described the same way, the constructor should be updated.
         super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
-        self.frame = frame
         self.length = length
         self.width = width
         self.height = height

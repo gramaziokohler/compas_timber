@@ -243,8 +243,7 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError(
-            "PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
+        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
