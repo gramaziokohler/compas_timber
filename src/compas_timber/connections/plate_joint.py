@@ -249,7 +249,10 @@ class PlateJoint(Joint):
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
+            print(self.plate_a.outline_a)
             self._adjust_plate_outlines()
+            print(self.plate_a.outline_a)
+
             self.plate_a.add_interface(self.interface_a)
             self.plate_b.add_interface(self.interface_b)
 

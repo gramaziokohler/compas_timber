@@ -86,6 +86,7 @@ class Plate(PlateGeometry, TimberElement):
         self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
+        self.interfaces = []
         self.debug_info = []
 
     def __repr__(self):
@@ -156,6 +157,9 @@ class Plate(PlateGeometry, TimberElement):
         # type: (list[FreeContour]) -> None
         """Sets the features of the plate."""
         self._features = features
+
+    def add_interface(self, interface):
+        self.interfaces.append(interface)
 
     @reset_computed
     def reset(self):

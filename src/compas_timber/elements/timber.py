@@ -120,9 +120,8 @@ class TimberElement(Element):
         bool
             False for the base TimberElement class.
         """
-        #NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
+        # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
-
 
     @property
     def features(self):

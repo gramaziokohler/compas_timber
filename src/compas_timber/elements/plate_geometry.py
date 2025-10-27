@@ -60,8 +60,8 @@ class PlateGeometry(object):
     @property
     def __data__(self):
         data = super(PlateGeometry, self).__data__
-        data["outline_a"] = self.outline_a
-        data["outline_b"] = self.outline_b
+        data["local_outline_a"] = self._original_outlines[0]
+        data["local_outline_b"] = self._original_outlines[1]
         data["openings"] = self.openings
         return data
 
@@ -171,18 +171,6 @@ class PlateGeometry(object):
             _edge_planes[i] = Plane.from_frame(frame)
         return _edge_planes
 
-    def set_extension_plane(self, edge_index, plane):
-        self._extension_planes[edge_index] = self.corrected_edge_plane(edge_index, plane)
-
-    def corrected_edge_plane(self, edge_index, plane):
-        if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
-            return Plane(plane.point, -plane.normal)
-        return plane
-
-    def apply_edge_extensions(self):
-        for edge_index, plane in self._extension_planes.items():
-            for polyline in self._mutable_outlines:
-                move_polyline_segment_to_plane(polyline, edge_index, plane)
 
     @property
     def local_edge_planes(self):
