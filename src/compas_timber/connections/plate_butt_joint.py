@@ -1,9 +1,8 @@
-from compas.geometry import Transformation
-
 from compas_timber.connections import InterfaceRole
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
+from .plate_joint import move_polyline_segment_to_plane
 
 
 class PlateButtJoint(PlateJoint):
@@ -82,6 +81,19 @@ class PlateButtJoint(PlateJoint):
     def __repr__(self):
         return "PlateButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
+    def _adjust_plate_outlines(self):
+        """Adjust the outlines of the plates to match the joint."""
+
+        assert self.main_plate
+        assert self.cross_plate
+
+        for polyline in self.main_outlines:
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
+
+        if self.topology == JointTopology.TOPO_EDGE_EDGE:
+            for polyline in self.cross_outlines:
+                move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
+
     @property
     def interface_main(self):
         return self.interface_a
@@ -111,9 +123,17 @@ class PlateLButtJoint(PlateButtJoint):
     def __repr__(self):
         return "PlateLButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
-    def set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self.cross_planes[0].transformed(Transformation.from_frame(self.plate_a.frame).inverse()))
-        self.cross_plate.set_extension_plane(self.cross_segment_index, self.main_planes[1].transformed(Transformation.from_frame(self.cross_plate.frame).inverse()))
+    def _adjust_plate_outlines(self):
+        """Adjust the outlines of the plates to match the joint."""
+
+        assert self.main_plate
+        assert self.cross_plate
+
+        for polyline in self.main_outlines:
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
+
+        for polyline in self.cross_outlines:
+            move_polyline_segment_to_plane(polyline, self.cross_segment_index, self.main_planes[1])
 
 
 class PlateTButtJoint(PlateButtJoint):
@@ -124,5 +144,11 @@ class PlateTButtJoint(PlateButtJoint):
     def __repr__(self):
         return "PlateTButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
-    def set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self.cross_planes[0].transformed(Transformation.from_frame(self.main_plate.frame).inverse()))
+    def _adjust_plate_outlines(self):
+        """Adjust the outlines of the plates to match the joint."""
+
+        assert self.main_plate
+        assert self.cross_plate
+
+        for polyline in self.main_outlines:
+            move_polyline_segment_to_plane(polyline, self.main_segment_index, self.cross_planes[0])
