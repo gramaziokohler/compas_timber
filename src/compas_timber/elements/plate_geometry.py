@@ -243,30 +243,8 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        """
-        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
-
-        Parameters
-        ----------
-        outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the plate geometry in parent space.
-        outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry in parent space.
-            This should have the same number of points as outline_a.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the plate geometry.
-        **kwargs : dict, optional
-            Additional keyword arguments to be passed to the constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate geometry with the given outlines.
-        """
-
-        args = cls.get_from_outlines_args(outline_a, outline_b, openings)
-        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
-        return cls(local_outline_a=args["local_outline_a"], local_outline_b=args["local_outline_b"], openings=args["openings"], **kwargs)
+        raise NotImplementedError(
+            "PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
