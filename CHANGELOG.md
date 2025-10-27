@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
+* Removed all Rhino7 components!
 
 
 ## [1.0.1] 2025-10-16
