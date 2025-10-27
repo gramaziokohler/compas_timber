@@ -193,3 +193,30 @@ class Slab(PlateGeometry, Element):
             Always True for slabs as they can contain other elements.
         """
         return True
+
+    @classmethod
+    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+        """
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry in parent space.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry in parent space.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outlines.
+        """
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
+        kwargs.update(args)
+        return cls(**kwargs)
