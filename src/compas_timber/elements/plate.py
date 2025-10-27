@@ -119,7 +119,7 @@ class Plate(PlateGeometry, TimberElement):
         :class:`~compas.geometry.Box`
             The blank box of the plate.
         """
-        box = Box(self.length, self.width, self.height, self.frame)
+        box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
         box.translate(self.frame.point - box.points[0])
         box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
         box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
@@ -195,3 +195,38 @@ class Plate(PlateGeometry, TimberElement):
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
         return plate_geo.transformed(Transformation.from_frame(self.frame))
+
+    @classmethod
+    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+        """
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry in parent space.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry in parent space.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outlines.
+        """
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
+        return cls(
+            args["frame"],
+            args["length"],
+            args["width"],
+            args["thickness"],
+            local_outline_a=args["local_outline_a"],
+            local_outline_b=args["local_outline_b"],
+            openings=args["openings"],
+            **kwargs,
+        )

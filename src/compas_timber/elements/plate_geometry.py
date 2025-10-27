@@ -3,6 +3,7 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
@@ -204,9 +205,46 @@ class PlateGeometry(object):
     # ==========================================================================
 
     @classmethod
+    def get_args_from_outlines(
+        cls,
+        outline_a,
+        outline_b,
+        openings=None,
+    ):
+        # get frame from outline_a
+        frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
+        # flip frame so that outline_b is in the +Z direction
+        if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
+            frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
+
+        # transform outlines to worldXY
+        transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+        rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
+        rebased_pline_b = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_b.points])
+        # get bounding box to define new frame
+        box = Box.from_points(rebased_pline_a.points + rebased_pline_b.points)
+        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
+        # transform frame back to global space
+        frame.transform(transform_to_world_xy.inverse())
+        # move outlines to +XY
+        vector_to_XY = Vector.from_start_end(box.points[0], Point(0, 0, 0))
+        local_outline_a = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_a.points])
+        local_outline_b = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_b.points])
+        openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
+        return {
+            "local_outline_a": local_outline_a,
+            "local_outline_b": local_outline_b,
+            "openings": openings,
+            "frame": frame,
+            "length": box.xsize,
+            "width": box.ysize,
+            "thickness": box.zsize,
+        }
+
+    @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a PlateGeometry from two polyline outlines.
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
 
         Parameters
         ----------
@@ -225,18 +263,10 @@ class PlateGeometry(object):
         :class:`~compas_timber.elements.PlateGeometry`
             A PlateGeometry object representing the plate geometry with the given outlines.
         """
-        (
-            frame,
-            length,
-            width,
-            thickness,
-        ) = PlateGeometry._get_frame_and_dims_from_outlines(outline_a, outline_b)
-        xform_to_local = Transformation.from_frame(frame).inverse()
-        local_outline_a = outline_a.transformed(xform_to_local)
-        local_outline_b = outline_b.transformed(xform_to_local)
-        PlateGeometry._check_outlines(local_outline_a, local_outline_b)
-        openings = [o.transformed(xform_to_local) for o in openings] if openings else None
-        return cls(frame, length, width, thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings, **kwargs)
+
+        args = cls.get_from_outlines_args(outline_a, outline_b, openings)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
+        return cls(local_outline_a=args["local_outline_a"], local_outline_b=args["local_outline_b"], openings=args["openings"], **kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
