@@ -111,29 +111,31 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         containers = [c for c in containers if c is not None]
 
-        for index, c_def in enumerate(containers):
+        for c_def in containers:
             slab = c_def.slab
-            model.add_group_element(slab, name=slab.name + str(index))
+            model.add_element(slab)
 
     def handle_populators(self, model, containers, max_distance):
         # Handle wall populators
         model.connect_adjacent_walls()
         config_sets = [c_def.config_set for c_def in containers]
         populators = []
+
+        # match populators to slabs
         if any(config_sets):
             populators = WallPopulator.from_model(model, config_sets)
 
         handled_pairs = []
         wall_joints = []
-        for populator, slab in zip(populators, list(model.slabs)):
+        for populator in populators:
             elements = populator.create_elements()
-            model.add_elements(elements, parent=slab.name)
+            model.add_elements(elements, parent=populator.slab)
             joint_definitions = populator.create_joints(elements, max_distance)
             wall_joints.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements
                 handled_pairs.append({element_a, element_b})
-
+                # TODO: make joints directly? Have ConnectionSolver not consider elements in slabs/groups.
         return handled_pairs, wall_joints
 
     def handle_features(self, features):

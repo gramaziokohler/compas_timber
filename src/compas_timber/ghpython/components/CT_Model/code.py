@@ -110,9 +110,9 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         containers = [c for c in containers if c is not None]
 
-        for index, c_def in enumerate(containers):
+        for c_def in containers:
             slab = c_def.slab
-            model.add_group_element(slab, name=slab.name + str(index))
+            model.add_element(slab)
 
     def handle_populators(self, model, containers, max_distance):
         # Handle wall populators
@@ -126,13 +126,13 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         wall_joint_definitions = []
         for populator, slab in zip(populators, list(model.slabs)):
             elements = populator.create_elements()
-            model.add_elements(elements, parent=slab.name)
+            model.add_elements(elements, parent=slab)
             joint_definitions = populator.create_joints(elements, max_distance)
             wall_joint_definitions.extend(joint_definitions)
             for j_def in joint_definitions:
                 element_a, element_b = j_def.elements
                 handled_pairs.append({element_a, element_b})
-
+                # TODO: maybe have ConnectionSolver not run on elements in a group/slab
         return handled_pairs, wall_joint_definitions
 
     def handle_features(self, features):
