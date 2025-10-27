@@ -3,6 +3,7 @@ from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import bounding_box
 from compas_model.elements import Element
@@ -57,13 +58,14 @@ class Slab(Element):
 
     def __init__(self, outline, thickness, openings=None, frame=None, name=None, **kwargs):
         # type: (compas.geometry.Polyline, float, list[compas.geometry.Polyline], Frame, dict) -> None
-        super(Slab, self).__init__(frame=frame or Frame.worldXY(), name=name)
+        super(Slab, self).__init__(name=name)
         self.outline = outline
         self.thickness = thickness
         self.openings = openings or []
         self.attributes = {}
         self.attributes.update(kwargs)
 
+        self._frame = frame
         self._faces = None
         self._corners = None
 
@@ -91,6 +93,19 @@ class Slab(Element):
     @property
     def is_group_element(self):
         return True
+
+    @property
+    def frame(self):
+        """The frame of the slab."""
+        if self._frame is None:
+            self._frame = Slab._frame_from_polyline(self.outline, self.normal)
+        return self._frame
+
+    @property
+    def normal(self):
+        """Return the normal vector of the slab, calculated from the outline's best-fit plane."""
+        plane = Plane.from_points(self.outline.points)
+        return plane.normal
 
     @property
     def origin(self):
@@ -160,8 +175,19 @@ class Slab(Element):
         return self.faces[:4]
 
     def compute_geometry(self, _=False):
-        assert self.frame
+        """Compute the geometry of the element in global coordinates.
 
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
+
+        """
+        assert self.frame
         extrusion_vector = self.frame.zaxis * self.thickness
         return Brep.from_extrusion(self.outline, extrusion_vector)
 

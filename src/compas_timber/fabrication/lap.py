@@ -400,7 +400,8 @@ class Lap(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            volume_frames = [face.frame_at(0,0) for face in volume.faces]
+            volume_surfaces = [face.nurbssurface for face in volume.faces]
+            volume_frames = [surface.frame_at(0, 0) for surface in volume_surfaces]
             planes = [Plane.from_frame(frame) for frame in volume_frames]
 
         else:
@@ -666,10 +667,11 @@ class Lap(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         lap_volume = self.volume_from_params_and_beam(beam)
+        lap_volume.transform(beam.transformation_to_local())
 
         # convert mesh to brep
         try:
-            lap_volume = Brep.from_mesh(lap_volume)
+            lap_volume = Brep.from_mesh(lap_volume.to_mesh())
         except Exception:
             raise FeatureApplicationError(
                 lap_volume,

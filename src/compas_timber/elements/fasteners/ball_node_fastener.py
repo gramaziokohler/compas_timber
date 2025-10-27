@@ -78,7 +78,7 @@ class BallNodeFastener(Fastener):
     @property
     def key(self):
         # type: () -> int | None
-        return self.graph_node
+        return self.graphnode
 
     def __str__(self):
         return "Ball Node Fastener"

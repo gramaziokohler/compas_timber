@@ -83,7 +83,7 @@ class Fastener(Element):
             The graph node key, or None if not set.
         """
         # type: () -> int | None
-        return self.graph_node
+        return self.graphnode
 
     @property
     def __data__(self):

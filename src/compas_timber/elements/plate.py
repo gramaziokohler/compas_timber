@@ -171,18 +171,22 @@ class Plate(PlateGeometry, TimberElement):
     # ==========================================================================
 
     def compute_geometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
-        """Compute the geometry of the element.
+        # type: (bool) -> compas.geometry.Brep
+        """Compute the geometry of the element in global coordinates.
 
         Parameters
         ----------
         include_features : bool, optional
-            If ``True``, include the features in the computed geometry.
-            If ``False``, return only the plate shape.
+            If True, the features should be included in the element geometry.
 
         Returns
         -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+        :class:`compas.geometry.Brep`
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If there is an error applying features to the element.
 
         """
 
