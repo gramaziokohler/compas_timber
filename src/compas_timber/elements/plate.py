@@ -220,13 +220,5 @@ class Plate(PlateGeometry, TimberElement):
         """
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
-        return cls(
-            args["frame"],
-            args["length"],
-            args["width"],
-            args["thickness"],
-            local_outline_a=args["local_outline_a"],
-            local_outline_b=args["local_outline_b"],
-            openings=args["openings"],
-            **kwargs,
-        )
+        kwargs.update(args)
+        return cls(**kwargs)
