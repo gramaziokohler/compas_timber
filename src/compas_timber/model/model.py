@@ -374,7 +374,7 @@ class TimberModel(Model):
         # Override the base method to also reset computed properties of elements
         super().transform(transformation)
         for element in self.elements():
-            element.reset_computed_properties()
+            element.reset_computed_properties()  # TODO: Find a better way to only update transformations of elements instead of resetting all computed properties.  # noqa: E501
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""

@@ -31,6 +31,10 @@ class TimberElement(Element):
         True if the element is a wall.
     is_group_element : bool
         True if the element can be used as container for other elements.
+    features : list[:class:`~compas_timber.parts.Feature`]
+        A list of features applied to the element.
+    geometry : :class:`compas.geometry.Geometry`
+        The geometry of the element in the model's global coordinates.
 
     """
 
@@ -250,6 +254,7 @@ class TimberElement(Element):
         The origin is at the bottom far corner of the element.
         The ref_frame is always in model coordinates.
         """
+        # TODO: cache this
         return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     @property

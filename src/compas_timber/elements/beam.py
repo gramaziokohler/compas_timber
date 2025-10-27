@@ -56,7 +56,8 @@ class Beam(TimberElement):
     shape : :class:`~compas.geometry.Box`
         A feature-less box representing the parametric geometry of this beam in global coordinates.
     blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this beam in local coordinates.
+        A feature-less box representing the material stock geometry to produce this beam in global coordinates.
+        Compared to `shape`, this box includes any extensions added to the beam.
     blank_length : float
         The length of the blank including any extensions added to the beam.
     centerline : :class:`~compas.geometry.Line`
@@ -122,7 +123,8 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in model space."""
+        """The blank of the beam in model space.
+        Compared to `shape`, this box includes any extensions added to the beam."""
         # type: () -> Box
         start, _ = self._resolve_blank_extensions()
         blank = Box(self.blank_length, self.width, self.height)
