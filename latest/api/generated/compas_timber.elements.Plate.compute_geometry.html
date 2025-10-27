@@ -603,19 +603,24 @@ document.write(`
 <h1>Plate.compute_geometry</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate.compute_geometry">
-<span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">compute_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/elements/plate.py#L370"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Compute the geometry of the element.</p>
+<span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">compute_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/elements/plate.py#L321"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Compute the geometry of the element in global coordinates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>include_features</strong><span class="classifier">bool, optional</span></dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, include the features in the computed geometry.
-If <code class="docutils literal notranslate"><span class="pre">False</span></code>, return only the plate shape.</p>
+<dt><strong>include_features</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the features should be included in the element geometry.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><a class="reference external" href="https://compas.dev/compas/latest/api/compas.datastructures.Mesh.html#compas.datastructures.Mesh" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.datastructures.Mesh</span></code></a> | <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code></a></dt><dd></dd>
+<dt><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code></a></dt><dd></dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><a class="reference internal" href="compas_timber.errors.FeatureApplicationError.html#compas_timber.errors.FeatureApplicationError" title="compas_timber.errors.FeatureApplicationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.errors.FeatureApplicationError</span></code></a></dt><dd><p>If there is an error applying features to the element.</p>
+</dd>
 </dl>
 </dd>
 </dl>

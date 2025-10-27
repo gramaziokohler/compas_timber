@@ -598,7 +598,7 @@ document.write(`
 <h1>BallNodeFastener</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.BallNodeFastener">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">BallNodeFastener</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/elements/fasteners/ball_node_fastener.py#L18"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">BallNodeFastener</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/elements/fasteners/ball_node_fastener.py#L18"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.Fastener.html#compas_timber.elements.Fastener" title="compas_timber.elements.fastener.Fastener"><code class="xref py py-class docutils literal notranslate"><span class="pre">Fastener</span></code></a></p>
 <p>A class to represent timber fasteners (screws, dowels, brackets).</p>
 <p>#TODO: finish this docstring</p>
@@ -644,14 +644,38 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.add_features.html#compas_timber.elements.BallNodeFastener.add_features" title="compas_timber.elements.BallNodeFastener.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds one or more features to the beam.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.apply_features.html#compas_timber.elements.BallNodeFastener.apply_features" title="compas_timber.elements.BallNodeFastener.apply_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_features</span></code></a></p></td>
+<td><p>Apply the features to the (base) geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.back_side.html#compas_timber.elements.BallNodeFastener.back_side" title="compas_timber.elements.BallNodeFastener.back_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">back_side</span></code></a></p></td>
+<td><p>Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_aabb.html#compas_timber.elements.BallNodeFastener.compute_aabb" title="compas_timber.elements.BallNodeFastener.compute_aabb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_aabb</span></code></a></p></td>
-<td><p>Computes the Axis Aligned Bounding Box (AABB) of the element.</p></td>
+<td><p>Computes the Axis Aligned Bounding Box (AABB) of the geometry of the element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_contacts.html#compas_timber.elements.BallNodeFastener.compute_contacts" title="compas_timber.elements.BallNodeFastener.compute_contacts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_contacts</span></code></a></p></td>
+<td><p>Compute the contacts between this element and another element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_elementgeometry.html#compas_timber.elements.BallNodeFastener.compute_elementgeometry" title="compas_timber.elements.BallNodeFastener.compute_elementgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_elementgeometry</span></code></a></p></td>
+<td><p>Compute the geometry of the element in local coordinates.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_modelgeometry.html#compas_timber.elements.BallNodeFastener.compute_modelgeometry" title="compas_timber.elements.BallNodeFastener.compute_modelgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modelgeometry</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_modeltransformation.html#compas_timber.elements.BallNodeFastener.compute_modeltransformation" title="compas_timber.elements.BallNodeFastener.compute_modeltransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modeltransformation</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_obb.html#compas_timber.elements.BallNodeFastener.compute_obb" title="compas_timber.elements.BallNodeFastener.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
-<td><p>Computes the Oriented Bounding Box (OBB) of the element.</p></td>
+<td><p>Computes the Oriented Bounding Box (OBB) of the geometry of the element.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_worldtransformation.html#compas_timber.elements.BallNodeFastener.compute_worldtransformation" title="compas_timber.elements.BallNodeFastener.compute_worldtransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_worldtransformation</span></code></a></p></td>
-<td><p>Compute the transformation to world coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_point.html#compas_timber.elements.BallNodeFastener.compute_point" title="compas_timber.elements.BallNodeFastener.compute_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_point</span></code></a></p></td>
+<td><p>Computes a reference point for the element geometry (e.g.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_surface_mesh.html#compas_timber.elements.BallNodeFastener.compute_surface_mesh" title="compas_timber.elements.BallNodeFastener.compute_surface_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_surface_mesh</span></code></a></p></td>
+<td><p>Computes the triangulated surface mesh of the element's model geometry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.compute_volumetric_mesh.html#compas_timber.elements.BallNodeFastener.compute_volumetric_mesh" title="compas_timber.elements.BallNodeFastener.compute_volumetric_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_volumetric_mesh</span></code></a></p></td>
+<td><p>Computes the tetrahedral volumetric mesh of the element's model geometry.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.copy.html#compas_timber.elements.BallNodeFastener.copy" title="compas_timber.elements.BallNodeFastener.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
@@ -662,26 +686,44 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.from_jsonstring.html#compas_timber.elements.BallNodeFastener.from_jsonstring" title="compas_timber.elements.BallNodeFastener.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.remove_blank_extension.html#compas_timber.elements.BallNodeFastener.remove_blank_extension" title="compas_timber.elements.BallNodeFastener.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.front_side.html#compas_timber.elements.BallNodeFastener.front_side" title="compas_timber.elements.BallNodeFastener.front_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">front_side</span></code></a></p></td>
+<td><p>Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.get_dimensions_relative_to_side.html#compas_timber.elements.BallNodeFastener.get_dimensions_relative_to_side" title="compas_timber.elements.BallNodeFastener.get_dimensions_relative_to_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dimensions_relative_to_side</span></code></a></p></td>
+<td><p>Returns the perpendicular and parallel dimensions of the beam to the given reference side.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.opp_side.html#compas_timber.elements.BallNodeFastener.opp_side" title="compas_timber.elements.BallNodeFastener.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
+<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.remove_blank_extension.html#compas_timber.elements.BallNodeFastener.remove_blank_extension" title="compas_timber.elements.BallNodeFastener.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.remove_features.html#compas_timber.elements.BallNodeFastener.remove_features" title="compas_timber.elements.BallNodeFastener.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.remove_features.html#compas_timber.elements.BallNodeFastener.remove_features" title="compas_timber.elements.BallNodeFastener.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
 <td><p>Removes a feature from the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.reset.html#compas_timber.elements.BallNodeFastener.reset" title="compas_timber.elements.BallNodeFastener.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.reset.html#compas_timber.elements.BallNodeFastener.reset" title="compas_timber.elements.BallNodeFastener.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
 <td><p>Resets the element to its initial state by removing all features, extensions, and debug_info.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.reset_computed_properties.html#compas_timber.elements.BallNodeFastener.reset_computed_properties" title="compas_timber.elements.BallNodeFastener.reset_computed_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_computed_properties</span></code></a></p></td>
+<td><p>Reset all computed/cached properties.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.sha256.html#compas_timber.elements.BallNodeFastener.sha256" title="compas_timber.elements.BallNodeFastener.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.to_json.html#compas_timber.elements.BallNodeFastener.to_json" title="compas_timber.elements.BallNodeFastener.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.side_as_surface.html#compas_timber.elements.BallNodeFastener.side_as_surface" title="compas_timber.elements.BallNodeFastener.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
+<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.to_json.html#compas_timber.elements.BallNodeFastener.to_json" title="compas_timber.elements.BallNodeFastener.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.to_jsonstring.html#compas_timber.elements.BallNodeFastener.to_jsonstring" title="compas_timber.elements.BallNodeFastener.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.to_jsonstring.html#compas_timber.elements.BallNodeFastener.to_jsonstring" title="compas_timber.elements.BallNodeFastener.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.transform.html#compas_timber.elements.BallNodeFastener.transform" title="compas_timber.elements.BallNodeFastener.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.transform.html#compas_timber.elements.BallNodeFastener.transform" title="compas_timber.elements.BallNodeFastener.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transforms the element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.transformation_to_local.html#compas_timber.elements.BallNodeFastener.transformation_to_local" title="compas_timber.elements.BallNodeFastener.transformation_to_local"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformation_to_local</span></code></a></p></td>
+<td><p>Compute the transformation to local coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.BallNodeFastener.transformed.html#compas_timber.elements.BallNodeFastener.transformed" title="compas_timber.elements.BallNodeFastener.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
 <td><p>Creates a transformed copy of the element.</p></td>

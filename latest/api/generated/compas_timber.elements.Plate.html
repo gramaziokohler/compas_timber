@@ -598,7 +598,7 @@ document.write(`
 <h1>Plate</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/elements/plate.py#L24"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/elements/plate.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.</p>
 <dl class="field-list">
@@ -628,7 +628,7 @@ document.write(`
 </dd>
 <dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>A feature-less box representing the material stock geometry to produce this plate.</p>
 </dd>
-<dt><strong>ref_frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_frame</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
 </dd>
 <dt><strong>ref_sides</strong><span class="classifier">tuple(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)</span></dt><dd><p>A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.</p>
 </dd>
@@ -655,7 +655,7 @@ document.write(`
 <td><p>Computes the collision geometry of the element.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_geometry.html#compas_timber.elements.Plate.compute_geometry" title="compas_timber.elements.Plate.compute_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_geometry</span></code></a></p></td>
-<td><p>Compute the geometry of the element.</p></td>
+<td><p>Compute the geometry of the element in global coordinates.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_obb.html#compas_timber.elements.Plate.compute_obb" title="compas_timber.elements.Plate.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
 <td><p>Computes the Oriented Bounding Box (OBB) of the element.</p></td>
@@ -666,14 +666,8 @@ document.write(`
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.from_outline_thickness.html#compas_timber.elements.Plate.from_outline_thickness" title="compas_timber.elements.Plate.from_outline_thickness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_outline_thickness</span></code></a></p></td>
 <td><p>Constructs a plate from a polyline outline and a thickness.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.opp_side.html#compas_timber.elements.Plate.opp_side" title="compas_timber.elements.Plate.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
-<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.reset.html#compas_timber.elements.Plate.reset" title="compas_timber.elements.Plate.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.reset.html#compas_timber.elements.Plate.reset" title="compas_timber.elements.Plate.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
 <td><p>Resets the element to its initial state by removing all features, extensions, and debug_info.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.side_as_surface.html#compas_timber.elements.Plate.side_as_surface" title="compas_timber.elements.Plate.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
-<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
 </tr>
 </tbody>
 </table>
@@ -689,8 +683,32 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.add_features.html#compas_timber.elements.Plate.add_features" title="compas_timber.elements.Plate.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds one or more features to the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_worldtransformation.html#compas_timber.elements.Plate.compute_worldtransformation" title="compas_timber.elements.Plate.compute_worldtransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_worldtransformation</span></code></a></p></td>
-<td><p>Compute the transformation to world coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.apply_features.html#compas_timber.elements.Plate.apply_features" title="compas_timber.elements.Plate.apply_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_features</span></code></a></p></td>
+<td><p>Apply the features to the (base) geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.back_side.html#compas_timber.elements.Plate.back_side" title="compas_timber.elements.Plate.back_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">back_side</span></code></a></p></td>
+<td><p>Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_contacts.html#compas_timber.elements.Plate.compute_contacts" title="compas_timber.elements.Plate.compute_contacts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_contacts</span></code></a></p></td>
+<td><p>Compute the contacts between this element and another element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_elementgeometry.html#compas_timber.elements.Plate.compute_elementgeometry" title="compas_timber.elements.Plate.compute_elementgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_elementgeometry</span></code></a></p></td>
+<td><p>Compute the geometry of the element in local coordinates.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_modelgeometry.html#compas_timber.elements.Plate.compute_modelgeometry" title="compas_timber.elements.Plate.compute_modelgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modelgeometry</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_modeltransformation.html#compas_timber.elements.Plate.compute_modeltransformation" title="compas_timber.elements.Plate.compute_modeltransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modeltransformation</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_point.html#compas_timber.elements.Plate.compute_point" title="compas_timber.elements.Plate.compute_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_point</span></code></a></p></td>
+<td><p>Computes a reference point for the element geometry (e.g.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_surface_mesh.html#compas_timber.elements.Plate.compute_surface_mesh" title="compas_timber.elements.Plate.compute_surface_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_surface_mesh</span></code></a></p></td>
+<td><p>Computes the triangulated surface mesh of the element's model geometry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.compute_volumetric_mesh.html#compas_timber.elements.Plate.compute_volumetric_mesh" title="compas_timber.elements.Plate.compute_volumetric_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_volumetric_mesh</span></code></a></p></td>
+<td><p>Computes the tetrahedral volumetric mesh of the element's model geometry.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.copy.html#compas_timber.elements.Plate.copy" title="compas_timber.elements.Plate.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
@@ -701,23 +719,41 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.from_jsonstring.html#compas_timber.elements.Plate.from_jsonstring" title="compas_timber.elements.Plate.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.remove_blank_extension.html#compas_timber.elements.Plate.remove_blank_extension" title="compas_timber.elements.Plate.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.front_side.html#compas_timber.elements.Plate.front_side" title="compas_timber.elements.Plate.front_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">front_side</span></code></a></p></td>
+<td><p>Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.get_dimensions_relative_to_side.html#compas_timber.elements.Plate.get_dimensions_relative_to_side" title="compas_timber.elements.Plate.get_dimensions_relative_to_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dimensions_relative_to_side</span></code></a></p></td>
+<td><p>Returns the perpendicular and parallel dimensions of the beam to the given reference side.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.opp_side.html#compas_timber.elements.Plate.opp_side" title="compas_timber.elements.Plate.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
+<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.remove_blank_extension.html#compas_timber.elements.Plate.remove_blank_extension" title="compas_timber.elements.Plate.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.remove_features.html#compas_timber.elements.Plate.remove_features" title="compas_timber.elements.Plate.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.remove_features.html#compas_timber.elements.Plate.remove_features" title="compas_timber.elements.Plate.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
 <td><p>Removes a feature from the beam.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.reset_computed_properties.html#compas_timber.elements.Plate.reset_computed_properties" title="compas_timber.elements.Plate.reset_computed_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_computed_properties</span></code></a></p></td>
+<td><p>Reset all computed/cached properties.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.sha256.html#compas_timber.elements.Plate.sha256" title="compas_timber.elements.Plate.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.to_json.html#compas_timber.elements.Plate.to_json" title="compas_timber.elements.Plate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.side_as_surface.html#compas_timber.elements.Plate.side_as_surface" title="compas_timber.elements.Plate.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
+<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.to_json.html#compas_timber.elements.Plate.to_json" title="compas_timber.elements.Plate.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.to_jsonstring.html#compas_timber.elements.Plate.to_jsonstring" title="compas_timber.elements.Plate.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.to_jsonstring.html#compas_timber.elements.Plate.to_jsonstring" title="compas_timber.elements.Plate.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.transform.html#compas_timber.elements.Plate.transform" title="compas_timber.elements.Plate.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.transform.html#compas_timber.elements.Plate.transform" title="compas_timber.elements.Plate.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transforms the element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Plate.transformation_to_local.html#compas_timber.elements.Plate.transformation_to_local" title="compas_timber.elements.Plate.transformation_to_local"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformation_to_local</span></code></a></p></td>
+<td><p>Compute the transformation to local coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Plate.transformed.html#compas_timber.elements.Plate.transformed" title="compas_timber.elements.Plate.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
 <td><p>Creates a transformed copy of the element.</p></td>

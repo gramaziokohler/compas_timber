@@ -603,19 +603,18 @@ document.write(`
 <h1>TimberModel.has_group</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel.has_group">
-<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">has_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/model/model.py#L243"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Check if a group with <cite>group_name</cite> exists in the model.</p>
-<p>TODO: upstream this to compas_model</p>
-<dl class="field-list simple">
+<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">has_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_element</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/model/model.py#L235"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Check if a group with <cite>group_element</cite> exists in the model.</p>
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>group_name</strong><span class="classifier">str</span></dt><dd><p>The name of the group to query.</p>
+<dd class="field-odd"><dl>
+<dt><strong>group_element</strong><span class="classifier">class:<cite>~compas_timber.elements.TimberElement</cite></span></dt><dd><p>The group element to check for existence.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>bool</dt><dd><p>True if the group exists in the model.</p>
+<dt>bool</dt><dd><p>True if the group element exists in the model.</p>
 </dd>
 </dl>
 </dd>

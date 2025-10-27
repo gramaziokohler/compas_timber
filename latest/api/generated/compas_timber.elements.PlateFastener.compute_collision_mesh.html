@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="PlateFastener.compute_obb" href="compas_timber.elements.PlateFastener.compute_obb.html" />
+    <link rel="next" title="PlateFastener.compute_contacts" href="compas_timber.elements.PlateFastener.compute_contacts.html" />
     <link rel="prev" title="PlateFastener.compute_aabb" href="compas_timber.elements.PlateFastener.compute_aabb.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -603,11 +603,17 @@ document.write(`
 <h1>PlateFastener.compute_collision_mesh</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.PlateFastener.compute_collision_mesh">
-<span class="sig-prename descclassname"><span class="pre">PlateFastener.</span></span><span class="sig-name descname"><span class="pre">compute_collision_mesh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/compas_model/elements/element.py#L299"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Computes the collision geometry of the element.</p>
+<span class="sig-prename descclassname"><span class="pre">PlateFastener.</span></span><span class="sig-name descname"><span class="pre">compute_collision_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inflate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/compas_model/elements/element.py#L406"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Computes the collision geometry of the geometry of the element.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
+<dt><strong>inflate</strong><span class="classifier">float, optional</span></dt><dd><p>Inflate the bounding box by this scaling factor.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt><a class="reference external" href="https://compas.dev/compas/latest/api/compas.datastructures.Mesh.html#compas.datastructures.Mesh" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.datastructures.Mesh</span></code></a></dt><dd><p>The collision geometry of the element.</p>
 </dd>
 </dl>

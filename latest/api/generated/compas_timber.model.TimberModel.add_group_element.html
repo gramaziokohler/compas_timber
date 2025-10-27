@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="TimberModel.add_joint" href="compas_timber.model.TimberModel.add_joint.html" />
-    <link rel="prev" title="TimberModel.add_element" href="compas_timber.model.TimberModel.add_element.html" />
+    <link rel="prev" title="TimberModel" href="compas_timber.model.TimberModel.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -603,10 +603,11 @@ document.write(`
 <h1>TimberModel.add_group_element</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel.add_group_element">
-<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">add_group_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/model/model.py#L188"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">add_group_element</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/model/model.py#L178"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Add an element which shall contain other elements.</p>
 <p>The container element is added to the group as well.</p>
-<p>TODO: upstream this to compas_model, maybe?</p>
+<p>TODO: upstream this to compas_model, maybe?
+TODO: should this allow for assigning it a parent in the future?</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -618,13 +619,14 @@ document.write(`
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupNode</span></code></dt><dd><p>The group node containing the element.</p>
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">Group</span></code></dt><dd><p>The group element that was created and to which the element was added.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt>ValueError</dt><dd><p>If the group name is not provided and the element has no name.
+<dt>ValueError</dt><dd><p>If the element is not a group element.
+If the group name is not provided and the element has no name.
 If a group with same name already exists in the model.</p>
 </dd>
 </dl>

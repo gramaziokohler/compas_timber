@@ -603,13 +603,13 @@ document.write(`
 <h1>TimberModel.get_elements_in_group</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel.get_elements_in_group">
-<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">get_elements_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/model/model.py#L261"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Get all elements in a group with <cite>group_name</cite>.</p>
+<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">get_elements_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/model/model.py#L251"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Get all elements in a group element.</p>
 <p>TODO: upstream this to compas_model</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>group_name</strong><span class="classifier">str</span></dt><dd><p>The name of the group to query.</p>
+<dd class="field-odd"><dl>
+<dt><strong>group_element</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>The group element to query.</p>
 </dd>
 <dt><strong>filter_</strong><span class="classifier">callable, optional</span></dt><dd><p>A filter function to apply to the elements.</p>
 </dd>
@@ -617,7 +617,7 @@ document.write(`
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Generator[<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>]</dt><dd><p>A generator of elements in the group.</p>
+<dt>Generator[<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>]</dt><dd><p>A generator of elements in the group.</p>
 </dd>
 </dl>
 </dd>

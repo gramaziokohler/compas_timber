@@ -598,13 +598,13 @@ document.write(`
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/elements/beam.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a></span></dt><dd><p>A local coordinate system of the beam:
+<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a></span></dt><dd><p>The frame representing the beam’s local coordinate system in its hierarchical context:
 Origin is located at the starting point of the centerline.
 x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
 y-axis corresponds to the width of the cross-section, usually the smaller dimension.
@@ -620,7 +620,11 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The coordinate system (frame) of this beam.</p>
+<dt><strong>transformation</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Transformation.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></dt><dd><p>The transformation matrix representing the beam’s local coordinate system in its hierarchical context.
+This is the internal interface for the constructor <cite>frame</cite> parameter.</p>
+</dd>
+<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The coordinate system (frame) of this beam in model space.
+This property may be different from the constructor parameter if the beam belongs to a model hierarchy.</p>
 </dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the beam.</p>
 </dd>
@@ -628,37 +632,23 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 </dd>
 <dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>Height of the cross-section</p>
 </dd>
-<dt><strong>shape</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>A feature-less box representing the parametric geometry of this beam.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The shape of the beam in model space.</p>
 </dd>
-<dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>A feature-less box representing the material stock geometry to produce this beam.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">blank</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The blank of the beam in model space.</p>
 </dd>
-<dt><strong>ref_frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
+<dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>The length of the blank including any extensions added to the beam.</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">centerline</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a></span></dt><dd><p>The centerline of the beam in model space.</p>
+</dd>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_frame</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
 </dd>
 <dt><strong>ref_sides</strong><span class="classifier">tuple(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)</span></dt><dd><p>A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.</p>
 </dd>
 <dt><strong>ref_edges</strong><span class="classifier">tuple(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)</span></dt><dd><p>A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.</p>
 </dd>
-<dt><strong>faces</strong><span class="classifier">list(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)</span></dt><dd><p>A list of frames representing the 6 faces of this beam.
-0: +y (side’s frame normal is equal to the beam’s Y positive direction)
-1: +z
-2: -y
-3: -z
-4: -x (side at the starting end)
-5: +x (side at the end of the beam)</p>
+<dt><strong>aabb</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>An axis aligned bounding box of this beam.</p>
 </dd>
-<dt><strong>centerline</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a></span></dt><dd><p>A line representing the centerline of this beam.</p>
-</dd>
-<dt><strong>centerline_start</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The point at the start of the centerline of this beam.</p>
-</dd>
-<dt><strong>centerline_end</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The point at the end of the centerline of this beam.</p>
-</dd>
-<dt><strong>aabb</strong><span class="classifier">tuple(float, float, float, float, float, float)</span></dt><dd><p>An axis-aligned bounding box of this beam as a 6 valued tuple of (xmin, ymin, zmin, xmax, ymax, zmax).</p>
-</dd>
-<dt><strong>long_edges</strong><span class="classifier">list(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)</span></dt><dd><p>A list containing the 4 lines along the long axis of this beam.</p>
-</dd>
-<dt><strong>midpoint</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The point at the middle of the centerline of this beam.</p>
-</dd>
-<dt><strong>key</strong><span class="classifier">int, optional</span></dt><dd><p>Once beam is added to a model, it will have this model-wide-unique integer key.</p>
+<dt><strong>obb</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>An oriented bounding box of this beam.</p>
 </dd>
 </dl>
 </dd>
@@ -669,47 +659,32 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.add_blank_extension.html#compas_timber.elements.Beam.add_blank_extension" title="compas_timber.elements.Beam.add_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_blank_extension</span></code></a></p></td>
 <td><p>Adds a blank extension to the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.back_side.html#compas_timber.elements.Beam.back_side" title="compas_timber.elements.Beam.back_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">back_side</span></code></a></p></td>
-<td><p>Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_aabb.html#compas_timber.elements.Beam.compute_aabb" title="compas_timber.elements.Beam.compute_aabb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_aabb</span></code></a></p></td>
+<td><p>Computes the Axis Aligned Bounding Box (AABB) of the element in global coordinates.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_aabb.html#compas_timber.elements.Beam.compute_aabb" title="compas_timber.elements.Beam.compute_aabb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_aabb</span></code></a></p></td>
-<td><p>Computes the Axis Aligned Bounding Box (AABB) of the element.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_collision_mesh.html#compas_timber.elements.Beam.compute_collision_mesh" title="compas_timber.elements.Beam.compute_collision_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_collision_mesh</span></code></a></p></td>
+<td><p>Computes the collision geometry of the element in global coordinates.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_collision_mesh.html#compas_timber.elements.Beam.compute_collision_mesh" title="compas_timber.elements.Beam.compute_collision_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_collision_mesh</span></code></a></p></td>
-<td><p>Computes the collision geometry of the element.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_elementgeometry.html#compas_timber.elements.Beam.compute_elementgeometry" title="compas_timber.elements.Beam.compute_elementgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_elementgeometry</span></code></a></p></td>
+<td><p>Compute the geometry of the element in local coordinates.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_geometry.html#compas_timber.elements.Beam.compute_geometry" title="compas_timber.elements.Beam.compute_geometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_geometry</span></code></a></p></td>
-<td><p>Compute the geometry of the element.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_obb.html#compas_timber.elements.Beam.compute_obb" title="compas_timber.elements.Beam.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
+<td><p>Computes the Oriented Bounding Box (OBB) of the element in global coordinates.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_obb.html#compas_timber.elements.Beam.compute_obb" title="compas_timber.elements.Beam.compute_obb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_obb</span></code></a></p></td>
-<td><p>Computes the Oriented Bounding Box (OBB) of the element.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.endpoint_closest_to_point.html#compas_timber.elements.Beam.endpoint_closest_to_point" title="compas_timber.elements.Beam.endpoint_closest_to_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endpoint_closest_to_point</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.endpoint_closest_to_point.html#compas_timber.elements.Beam.endpoint_closest_to_point" title="compas_timber.elements.Beam.endpoint_closest_to_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">endpoint_closest_to_point</span></code></a></p></td>
 <td><p>Returns which endpoint of the centerline of the beam is closer to the given point.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.extension_to_plane.html#compas_timber.elements.Beam.extension_to_plane" title="compas_timber.elements.Beam.extension_to_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extension_to_plane</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.extension_to_plane.html#compas_timber.elements.Beam.extension_to_plane" title="compas_timber.elements.Beam.extension_to_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extension_to_plane</span></code></a></p></td>
 <td><p>Returns the amount by which to extend the beam in each direction using metric units.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_centerline.html#compas_timber.elements.Beam.from_centerline" title="compas_timber.elements.Beam.from_centerline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_centerline</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_centerline.html#compas_timber.elements.Beam.from_centerline" title="compas_timber.elements.Beam.from_centerline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_centerline</span></code></a></p></td>
 <td><p>Define the beam from its centerline.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_endpoints.html#compas_timber.elements.Beam.from_endpoints" title="compas_timber.elements.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_endpoints.html#compas_timber.elements.Beam.from_endpoints" title="compas_timber.elements.Beam.from_endpoints"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_endpoints</span></code></a></p></td>
 <td><p>Creates a Beam from the given endpoints.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.front_side.html#compas_timber.elements.Beam.front_side" title="compas_timber.elements.Beam.front_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">front_side</span></code></a></p></td>
-<td><p>Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.get_dimensions_relative_to_side.html#compas_timber.elements.Beam.get_dimensions_relative_to_side" title="compas_timber.elements.Beam.get_dimensions_relative_to_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dimensions_relative_to_side</span></code></a></p></td>
-<td><p>Returns the perpendicular and parallel dimensions of the beam to the given reference side.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.opp_side.html#compas_timber.elements.Beam.opp_side" title="compas_timber.elements.Beam.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
-<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_blank_extension.html#compas_timber.elements.Beam.remove_blank_extension" title="compas_timber.elements.Beam.remove_blank_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_blank_extension</span></code></a></p></td>
 <td><p>Removes a blank extension from the beam.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.side_as_surface.html#compas_timber.elements.Beam.side_as_surface" title="compas_timber.elements.Beam.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
-<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
 </tr>
 </tbody>
 </table>
@@ -725,17 +700,47 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.add_features.html#compas_timber.elements.Beam.add_features" title="compas_timber.elements.Beam.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds one or more features to the beam.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_worldtransformation.html#compas_timber.elements.Beam.compute_worldtransformation" title="compas_timber.elements.Beam.compute_worldtransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_worldtransformation</span></code></a></p></td>
-<td><p>Compute the transformation to world coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.apply_features.html#compas_timber.elements.Beam.apply_features" title="compas_timber.elements.Beam.apply_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_features</span></code></a></p></td>
+<td><p>Apply the features to the (base) geometry.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.copy.html#compas_timber.elements.Beam.copy" title="compas_timber.elements.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.back_side.html#compas_timber.elements.Beam.back_side" title="compas_timber.elements.Beam.back_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">back_side</span></code></a></p></td>
+<td><p>Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_contacts.html#compas_timber.elements.Beam.compute_contacts" title="compas_timber.elements.Beam.compute_contacts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_contacts</span></code></a></p></td>
+<td><p>Compute the contacts between this element and another element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_modelgeometry.html#compas_timber.elements.Beam.compute_modelgeometry" title="compas_timber.elements.Beam.compute_modelgeometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modelgeometry</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_modeltransformation.html#compas_timber.elements.Beam.compute_modeltransformation" title="compas_timber.elements.Beam.compute_modeltransformation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_modeltransformation</span></code></a></p></td>
+<td><p>Same as parent but handles standalone elements.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_point.html#compas_timber.elements.Beam.compute_point" title="compas_timber.elements.Beam.compute_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_point</span></code></a></p></td>
+<td><p>Computes a reference point for the element geometry (e.g.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_surface_mesh.html#compas_timber.elements.Beam.compute_surface_mesh" title="compas_timber.elements.Beam.compute_surface_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_surface_mesh</span></code></a></p></td>
+<td><p>Computes the triangulated surface mesh of the element's model geometry.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.compute_volumetric_mesh.html#compas_timber.elements.Beam.compute_volumetric_mesh" title="compas_timber.elements.Beam.compute_volumetric_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_volumetric_mesh</span></code></a></p></td>
+<td><p>Computes the tetrahedral volumetric mesh of the element's model geometry.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.copy.html#compas_timber.elements.Beam.copy" title="compas_timber.elements.Beam.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_json.html#compas_timber.elements.Beam.from_json" title="compas_timber.elements.Beam.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_json.html#compas_timber.elements.Beam.from_json" title="compas_timber.elements.Beam.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_jsonstring.html#compas_timber.elements.Beam.from_jsonstring" title="compas_timber.elements.Beam.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.from_jsonstring.html#compas_timber.elements.Beam.from_jsonstring" title="compas_timber.elements.Beam.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.front_side.html#compas_timber.elements.Beam.front_side" title="compas_timber.elements.Beam.front_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">front_side</span></code></a></p></td>
+<td><p>Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.get_dimensions_relative_to_side.html#compas_timber.elements.Beam.get_dimensions_relative_to_side" title="compas_timber.elements.Beam.get_dimensions_relative_to_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dimensions_relative_to_side</span></code></a></p></td>
+<td><p>Returns the perpendicular and parallel dimensions of the beam to the given reference side.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.opp_side.html#compas_timber.elements.Beam.opp_side" title="compas_timber.elements.Beam.opp_side"><code class="xref py py-obj docutils literal notranslate"><span class="pre">opp_side</span></code></a></p></td>
+<td><p>Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.remove_features.html#compas_timber.elements.Beam.remove_features" title="compas_timber.elements.Beam.remove_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_features</span></code></a></p></td>
 <td><p>Removes a feature from the beam.</p></td>
@@ -743,8 +748,14 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.reset.html#compas_timber.elements.Beam.reset" title="compas_timber.elements.Beam.reset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset</span></code></a></p></td>
 <td><p>Resets the element to its initial state by removing all features, extensions, and debug_info.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.sha256.html#compas_timber.elements.Beam.sha256" title="compas_timber.elements.Beam.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.reset_computed_properties.html#compas_timber.elements.Beam.reset_computed_properties" title="compas_timber.elements.Beam.reset_computed_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_computed_properties</span></code></a></p></td>
+<td><p>Reset all computed/cached properties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.sha256.html#compas_timber.elements.Beam.sha256" title="compas_timber.elements.Beam.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.side_as_surface.html#compas_timber.elements.Beam.side_as_surface" title="compas_timber.elements.Beam.side_as_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">side_as_surface</span></code></a></p></td>
+<td><p>Returns the requested side of the beam as a parametric planar surface.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.to_json.html#compas_timber.elements.Beam.to_json" title="compas_timber.elements.Beam.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
@@ -755,10 +766,13 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.transform.html#compas_timber.elements.Beam.transform" title="compas_timber.elements.Beam.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transforms the element.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.transformed.html#compas_timber.elements.Beam.transformed" title="compas_timber.elements.Beam.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.transformation_to_local.html#compas_timber.elements.Beam.transformation_to_local" title="compas_timber.elements.Beam.transformation_to_local"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformation_to_local</span></code></a></p></td>
+<td><p>Compute the transformation to local coordinates of this element based on its position in the spatial hierarchy of the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.transformed.html#compas_timber.elements.Beam.transformed" title="compas_timber.elements.Beam.transformed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transformed</span></code></a></p></td>
 <td><p>Creates a transformed copy of the element.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.elements.Beam.validate_data.html#compas_timber.elements.Beam.validate_data" title="compas_timber.elements.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.elements.Beam.validate_data.html#compas_timber.elements.Beam.validate_data" title="compas_timber.elements.Beam.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>

@@ -60,7 +60,7 @@
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
     <link rel="next" title="TimberModel.add_group" href="compas_timber.model.TimberModel.add_group.html" />
-    <link rel="prev" title="TimberModel.ToString" href="compas_timber.model.TimberModel.ToString.html" />
+    <link rel="prev" title="TimberModel.add_element" href="compas_timber.model.TimberModel.add_element.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -603,21 +603,33 @@ document.write(`
 <h1>TimberModel.add_elements</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel.add_elements">
-<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">add_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/de8c7d5/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/compas_model/models/model.py#L322"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Add multiple elements to the model.</p>
+<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">add_elements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">elements</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">material</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/compas_model/models/model.py#L259"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Add a list of elements to the model.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>elements</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>]</span></dt><dd><p>The model elements.</p>
+<dt><strong>elements</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>]</span></dt><dd><p>The elements to add.</p>
 </dd>
-<dt><strong>parent</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">GroupNode</span></code>, optional</span></dt><dd><p>The parent group node of the elements.
-If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the elements will be added directly under the root node.</p>
+<dt><strong>parent</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>, optional</span></dt><dd><p>The parent element of the elements.
+If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the elements will be added directly under the root element.</p>
+</dd>
+<dt><strong>material</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Material</span></code>, optional</span></dt><dd><p>A material to assign to the elements.
+Note that the material should have already been added to the model before it can be assigned.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>list[<code class="xref py py-class docutils literal notranslate"><span class="pre">ElementNode</span></code>]</dt><dd></dd>
+<dt>list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>]</dt><dd><p>The list of elements added to the model.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the parent node is not a GroupNode.</p>
+</dd>
+<dt>ValueError</dt><dd><p>If a material is provided that is not part of the model.</p>
+</dd>
 </dl>
 </dd>
 </dl>
