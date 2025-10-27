@@ -11,13 +11,17 @@ from compas.tolerance import TOL
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
-from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
+from compas_timber.elements import Beam
+from compas_timber.elements import Fastener
+from compas_timber.elements import Plate
+from compas_timber.elements import Slab
+from compas_timber.elements import Wall
 from compas_timber.errors import BeamJoiningError
 
 
@@ -50,30 +54,28 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = ["interactions", "candidate"]
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None}
 
     @classmethod
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
-
-        # TODO: this is a workaround to ensure that the graph nodes are not lost during deserialization
-        # TODO: this was fixed in later compas_model release, remove after migrating
-        for graphnode in model._graph.nodes():
-            element = model._graph.node_element(graphnode)  # type: ignore
-            element.graph_node = graphnode  # type: ignore
-
-        for interaction in model.interactions():
-            interaction.restore_beams_from_keys(model)  # type: ignore
+        for joint in model.joints:  # TODO: allow for modifiers as well once they are implemented in compas_timber
+            joint.restore_beams_from_keys(model)  # type: ignore
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
+        self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
 
     def __str__(self):
         # type: () -> str
         return "TimberModel ({}) with {} elements(s) and {} joint(s).".format(str(self.guid), len(list(self.elements())), len(list(self.joints)))
+
+    # =============================================================================
+    # Attributes
+    # =============================================================================
 
     @property
     def tolerance(self):
@@ -82,27 +84,37 @@ class TimberModel(Model):
 
     @property
     def beams(self):
-        # type: () -> Generator[Beam, None, None]
-        # TODO: think about using `filter` instead of all these
-        # TODO: add `is_beam`, `is_plate` etc. to avoid using `isinstance`
-        for element in self.elements():
-            if getattr(element, "is_beam", False):
-                yield element
+        # type: () -> List[Beam]
+        return self.find_all_elements_of_type(Beam)
 
     @property
     def plates(self):
-        # type: () -> Generator[Plate, None, None]
-        for element in self.elements():
-            if getattr(element, "is_plate", False):
-                yield element
+        # type: () -> List[Plate]
+        return self.find_all_elements_of_type(Plate)
+
+    @property
+    def walls(self):
+        # type: () -> List[Wall]
+        return self.find_all_elements_of_type(Wall)
+
+    @property
+    def slabs(self):
+        # type: () -> List[Slab]
+        return self.find_all_elements_of_type(Slab)
+
+    @property
+    def fasteners(self):
+        # type: () -> List[Fastener]
+        return self.find_all_elements_of_type(Fastener)
 
     @property
     def joints(self):
         # type: () -> set[Joint]
         joints = set()  # some joints might apear on more than one interaction
-        for interaction in self.interactions():
-            if isinstance(interaction, Joint):
-                joints.add(interaction)
+        for edge in self._graph.edges():
+            edge_joints = self._graph.edge_attribute(edge, "joints") or []
+            for joint in edge_joints:
+                joints.add(joint)
         return joints
 
     @property
@@ -110,31 +122,10 @@ class TimberModel(Model):
         # type: () -> set[JointCandidate]
         candidates = set()
         for edge in self._graph.edges():
-            candidate = self._graph.edge_attribute(edge, "candidate")
-            if candidate is not None:
-                candidates.add(candidate)
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            if edge_candidate is not None:
+                candidates.add(edge_candidate)
         return candidates
-
-    @property
-    def fasteners(self):
-        # type: () -> Generator[Fastener, None, None]
-        for element in self.elements():
-            if getattr(element, "is_fastener", False):
-                yield element
-
-    @property
-    def walls(self):
-        # type: () -> Generator[Wall, None, None]
-        for element in self.elements():
-            if getattr(element, "is_wall", False):
-                yield element
-
-    @property
-    def slabs(self):
-        # type: () -> Generator[Slab, None, None]
-        for element in self.elements():
-            if getattr(element, "is_slab", False):
-                yield element
 
     @property
     def topologies(self):
@@ -159,6 +150,10 @@ class TimberModel(Model):
         # type: () -> float
         return sum([element.obb.volume for element in self.elements()])
 
+    # =============================================================================
+    # Elements
+    # =============================================================================
+
     def element_by_guid(self, guid):
         # type: (str) -> Beam
         """Get a beam by its unique identifier.
@@ -174,16 +169,11 @@ class TimberModel(Model):
             The element with the specified GUID.
 
         """
-        return self._guid_element[guid]
+        return self._elements[guid]
 
-    def add_element(self, element, parent=None, **kwargs):
-        # resolve parent name to GroupNode object
-        # TODO: upstream this to compas_model
-        if parent and isinstance(parent, str):
-            if not self.has_group(parent):
-                raise ValueError("Group {} not found in model.".format(parent))
-            parent = next((group for group in self._tree.groups if group.name == parent))
-        return super(TimberModel, self).add_element(element, parent, **kwargs)
+    # =============================================================================
+    # Groups
+    # =============================================================================
 
     def add_group_element(self, element, name=None):
         """Add an element which shall contain other elements.
@@ -191,6 +181,7 @@ class TimberModel(Model):
         The container element is added to the group as well.
 
         TODO: upstream this to compas_model, maybe?
+        TODO: should this allow for assigning it a parent in the future?
 
         Parameters
         ----------
@@ -201,12 +192,13 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_model.models.GroupNode`
-            The group node containing the element.
+        :class:`~compas_model.elements.Group`
+            The group element that was created and to which the element was added.
 
         Raises
         ------
         ValueError
+            If the element is not a group element.
             If the group name is not provided and the element has no name.
             If a group with same name already exists in the model.
 
@@ -222,7 +214,7 @@ class TimberModel(Model):
         True
 
         """
-        # type: (TimberElement, str) -> GroupNode
+        # type: (TimberElement, str) -> Group
         group_name = name or element.name
 
         if not element.is_group_element:
@@ -231,65 +223,66 @@ class TimberModel(Model):
         if not group_name:
             raise ValueError("Group name must be provided or group element must have a name.")
 
-        if self.has_group(group_name):
+        if self.has_group(element):
             raise ValueError("Group {} already exists in model.".format(group_name))
 
-        group_node = self.add_group(group_name)
-        self.add_element(element, parent=group_node)
+        group = self.add_group(group_name)
+        self.add_element(element, parent=group)
 
         element.name = group_name
-        return group_node
+        return group
 
-    def has_group(self, group_name):
-        # type: (str) -> bool
-        """Check if a group with `group_name` exists in the model.
-
-        TODO: upstream this to compas_model
+    def has_group(self, group_element):
+        # type: (TimberElement) -> bool
+        """Check if a group with `group_element` exists in the model.
 
         Parameters
         ----------
-        group_name : str
-            The name of the group to query.
+        group_element : class:`~compas_timber.elements.TimberElement`
+            The group element to check for existence.
 
         Returns
         -------
         bool
-            True if the group exists in the model.
+            True if the group element exists in the model.
         """
-        return group_name in (group.name for group in self._tree.groups)
+        return self.has_element(group_element)
 
-    def get_elements_in_group(self, group_name, filter_=None):
-        """Get all elements in a group with `group_name`.
+    def get_elements_in_group(self, group_element, filter_=None):
+        """Get all elements in a group element.
 
         TODO: upstream this to compas_model
 
         Parameters
         ----------
-        group_name : str
-            The name of the group to query.
+        group_element : :class:`~compas_timber.elements.TimberElement`
+            The group element to query.
         filter_ : callable, optional
             A filter function to apply to the elements.
 
         Returns
         -------
-        Generator[:class:`~compas_model.elements.Element`]
+        Generator[:class:`~compas_timber.elements.TimberElement`]
             A generator of elements in the group.
 
         """
-        # type: (str, Optional[callable]) -> Generator[Element, None, None]
-        if not self.has_group(group_name):
-            raise ValueError("Group {} not found in model.".format(group_name))
+        # type: (TimberElement, callable | None) -> Generator[TimberElement, None, None]
+        if not self.has_group(group_element):
+            raise ValueError("Group {} not found in model.".format(group_element.name))
 
         filter_ = filter_ or (lambda _: True)
-
-        group = next((group for group in self._tree.groups if group.name == group_name))
-        elements = (node.element for node in group.children)
+        group = self._elements[str(group_element.guid)]
+        elements = group.children
         return filter(filter_, elements)
+
+    # =============================================================================
+    # Interactions
+    # =============================================================================
 
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
-            return self._graph.edge_interactions(node_pair)
+            return self._graph.edge_attribute(node_pair, "joints")
         except KeyError:
             return []
 
@@ -308,11 +301,11 @@ class TimberModel(Model):
             A list of interactions for the given element.
         """
 
-        negihbors = self._graph.neighbors(element.graph_node)
+        neighbors = self._graph.neighbors(element.graphnode)
         result = []
-        for nbr in negihbors:
-            result.extend(self._safely_get_interactions((element.graph_node, nbr)))
-            result.extend(self._safely_get_interactions((nbr, element.graph_node)))
+        for nbr in neighbors:
+            result.extend(self._safely_get_interactions((element.graphnode, nbr)))
+            result.extend(self._safely_get_interactions((nbr, element.graphnode)))
         return result
 
     def add_joint(self, joint):
@@ -324,10 +317,14 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        # TODO: should we be removing the joint candidate(s) edge attributes when adding an actual joint?
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
-            _ = self.add_interaction(element_a, element_b, joint)
+            edge = self.add_interaction(element_a, element_b)
+            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
+            joints.append(joint)
+            self._graph.edge_attribute(edge, "joints", value=joints)  # SET
             # TODO: should we create a bidirectional interaction here?
 
     def add_joint_candidate(self, candidate):
@@ -344,17 +341,16 @@ class TimberModel(Model):
         """
         for interaction in candidate.interactions:
             element_a, element_b = interaction
-            edge = (element_a.graph_node, element_b.graph_node)
+            edge = (element_a.graphnode, element_b.graphnode)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
 
-                # HACK: calls to `model.joints` expect there to be a "interactions" on any edges
-                self._graph.edge_attribute(edge, "interactions", [])
+                # HACK: calls to `model.joints` expect there to be a "joints" on any edges
+                self._graph.edge_attribute(edge, "joints", [])
 
             # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
-            # (``interactions`` vs. ``candidate``)
-            # TODO: ``interactions`` is a list, should ``candidate`` be a list as well? don't see a reason rn.
-            self._graph.edge_attribute(edge, "candidate", candidate)
+            # (``joints`` vs. ``candidates``)
+            self._graph.edge_attribute(edge, "candidates", candidate)
 
     def remove_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
@@ -367,12 +363,12 @@ class TimberModel(Model):
         """
         for interaction in candidate.interactions:
             element_a, element_b = interaction
-            edge = (element_a.graph_node, element_b.graph_node)
+            edge = (element_a.graphnode, element_b.graphnode)
 
             if edge in self._graph.edges():
-                stored_candidate = self._graph.edge_attribute(edge, "candidate")
+                stored_candidate = self._graph.edge_attribute(edge, "candidates")
                 if stored_candidate is candidate:
-                    self._graph.unset_edge_attribute(edge, "candidate")
+                    self._graph.unset_edge_attribute(edge, "candidates")
 
             if not self._is_remaining_attrs_on_edge(edge):
                 # if there's no other timber related attributes on that edge, then remove the edge as well
@@ -409,11 +405,11 @@ class TimberModel(Model):
         None
 
         """
-        edge = (a.graph_node, b.graph_node)
+        edge = (a.graphnode, b.graphnode)
         if edge not in self._graph.edges():
             return
 
-        edge_interactions = self._graph.edge_attribute(edge, "interactions")
+        edge_interactions = self._graph.edge_attribute(edge, "joints")
         edge_interactions.clear()  # type: ignore
 
         if not self._is_remaining_attrs_on_edge(edge):
@@ -426,6 +422,17 @@ class TimberModel(Model):
             if self._graph.edge_attribute(edge, attr):
                 return True
         return False
+
+    # =============================================================================
+    # Other Methods
+    # =============================================================================
+
+    def transform(self, transformation):
+        """Transform the model and reset all computed properties of all elements."""
+        # Override the base method to also reset computed properties of elements
+        super().transform(transformation)
+        for element in self.elements():
+            element.reset_computed_properties()  # TODO: Find a better way to only update transformations of elements instead of resetting all computed properties.  # noqa: E501
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -488,7 +495,7 @@ class TimberModel(Model):
                 self.remove_joint(joint)
 
         max_distance = max_distance or TOL.relative
-        beams = list(self.beams)
+        beams = self.beams
         solver = ConnectionSolver()
         pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
         for pair in pairs:
@@ -517,7 +524,7 @@ class TimberModel(Model):
                 self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
-        plates = list(self.plates)
+        plates = self.plates
         solver = PlateConnectionSolver()
         pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
         for pair in pairs:
@@ -545,7 +552,7 @@ class TimberModel(Model):
         """
         self._clear_wall_joints()
 
-        walls = list(self.walls)
+        walls = self.walls
 
         if not walls:
             return
