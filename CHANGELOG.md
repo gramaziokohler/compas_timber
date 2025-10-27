@@ -11,15 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateGeometry` class.
 
 ### Changed
-
-* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
-* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Changed `Slab` to inherit from `PlateGeometry`
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
+
+### Removed
+
+
+## [1.0.1] 2025-10-16
+
+### Added
+* Added `TimberElement.add_feature` to override the `Element` method.
+* Added new GH helper `get_createable_joints` to get all createable Joint classes.
+
+### Changed
+
+* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
+* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
+* Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
+* Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
+* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
 
 ### Removed
 

@@ -3,11 +3,10 @@ import inspect
 from ghpythonlib.componentbase import executingcomponent as component
 from Grasshopper.Kernel.GH_RuntimeMessageLevel import Warning
 
-from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.design import TopologyRule
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.ghpython.ghcomponent_helpers import get_createable_joints
 from compas_timber.ghpython.ghcomponent_helpers import manage_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_gh_output
 
@@ -16,7 +15,7 @@ class L_TopologyJointRule(component):
     def __init__(self):
         super(L_TopologyJointRule, self).__init__()
         self.classes = {}
-        for cls in get_leaf_subclasses(Joint):
+        for cls in get_createable_joints():
             supported_topo = cls.SUPPORTED_TOPOLOGY
             if not isinstance(supported_topo, list):
                 supported_topo = [supported_topo]

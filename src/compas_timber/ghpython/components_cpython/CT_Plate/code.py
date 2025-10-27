@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.0
+# r: compas_timber>=1.0.1
 """Creates a Beam from a LineCurve."""
 
 # flake8: noqa
@@ -25,16 +25,14 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
         guid, geometry = self._get_guid_and_geometry(outline)
         rhino_polyline = rs.coercecurve(geometry)
         line = polyline_to_compas(rhino_polyline.ToPolyline())
-        v = vector_to_compas(vector)
+        v = vector_to_compas(vector) if vector else None
         o = []
         if openings:
             for o_outline in openings:
                 o_guid, o_geometry = self._get_guid_and_geometry(o_outline)
                 o_rhino_polyline = rs.coercecurve(o_geometry)
                 o.append(polyline_to_compas(o_rhino_polyline.ToPolyline()))
-        v = vector_to_compas(vector)
         plate = CTPlate.from_outline_thickness(line, thickness, vector=v, openings=o)
-        print(plate.geometry)
         plate.attributes["rhino_guid"] = str(guid) if guid else None
         plate.attributes["category"] = category
 

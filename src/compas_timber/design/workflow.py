@@ -127,7 +127,6 @@ class JointRuleSolver(object):
                     promoted = True
                     break
                 if error:
-                    print("Error: {}".format(error))
                     self.joining_errors.append(error)  # should only happen with direct rules
                     break
             if not promoted:
@@ -414,6 +413,25 @@ class CategoryRule(JointRule):
         """
         return set([e.attributes.get("category", None) for e in cluster.elements]) == {self.category_a, self.category_b}
 
+    def _get_ordered_elements(self, cluster):
+        """Returns the elements in the order of the rule's categories.
+        This assumes self._comply_categories and self._comply_category_order have been checked and passed.
+
+        Parameters
+        ----------
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster of elements to order.
+
+        Returns
+        -------
+        list(:class:`~compas_timber.elements.TimberElement`)
+            The ordered list of elements.
+        """
+        elements = list(cluster.joints[0].elements)
+        if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
+            elements.reverse()
+        return elements
+
     def try_create_joint(self, model, cluster, max_distance=None):
         """Returns a Joint if the given cluster's elements comply with this CategoryRule.
 
@@ -449,10 +467,11 @@ class CategoryRule(JointRule):
             return None, None
         if not self._comply_distance(cluster, max_distance=max_distance):
             return None, None
-        if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
+        elements = self._get_ordered_elements(cluster)
+        if not self.joint_type.check_elements_compatibility(elements):
             return None, None
         try:
-            joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
+            joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=elements, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
