@@ -13,7 +13,7 @@ from compas_timber.fabrication import Text
 from .utilities import beam_ref_side_incidence_with_vector
 
 
-class TOliGinaJoint(TenonMortiseJoint):
+class OliGinaJoint(TenonMortiseJoint):
     SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]
     TEXT_HEIGHT_FACTOR = 0.4
 
@@ -24,10 +24,10 @@ class TOliGinaJoint(TenonMortiseJoint):
         cross_beam,
         **kwargs
     ):
-        super(TOliGinaJoint, self).__init__(main_beam, cross_beam, **kwargs)
+        super(OliGinaJoint, self).__init__(main_beam, cross_beam, **kwargs)
 
     def add_features(self):
-        super(TOliGinaJoint, self).add_features()
+        super(OliGinaJoint, self).add_features()
         self.cross_beam.add_feature(self._make_oli_text())
         self.cross_beam.add_feature(self._make_date_text())
         self.main_beam.add_feature(self._make_gina_text())

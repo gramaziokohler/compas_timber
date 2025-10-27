@@ -122,6 +122,20 @@ class TimberElement(Element):
         self.debug_info = []
 
     @reset_computed
+    def add_feature(self, feature):
+        # type: (BTLxProcessing) -> None
+        """Adds one or more features to the beam.
+
+        Parameters
+        ----------
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature to be added.
+
+        """
+
+        self._features.append(feature)  # type: ignore
+
+    @reset_computed
     def add_features(self, features):
         # type: (Feature | list[Feature]) -> None
         """Adds one or more features to the element.

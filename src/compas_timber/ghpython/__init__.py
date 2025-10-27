@@ -4,6 +4,7 @@ from .ghcomponent_helpers import manage_dynamic_params
 from .ghcomponent_helpers import list_input_valid
 from .ghcomponent_helpers import item_input_valid
 from .ghcomponent_helpers import get_leaf_subclasses
+from .ghcomponent_helpers import get_createable_joints
 from .ghcomponent_helpers import rename_gh_input
 from .ghcomponent_helpers import rename_gh_output
 from .ghcomponent_helpers import item_input_valid_cpython
@@ -25,6 +26,7 @@ __all__ = [
     "list_input_valid",
     "item_input_valid",
     "get_leaf_subclasses",
+    "get_createable_joints",
     "rename_gh_input",
     "rename_gh_output",
     "item_input_valid_cpython",
