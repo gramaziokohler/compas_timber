@@ -1,5 +1,4 @@
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
@@ -129,7 +128,6 @@ class PlateJoint(Joint):
             for plate in self.plates:
                 plate.apply_edge_extensions()
 
-
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
         pass
@@ -160,5 +158,3 @@ class PlateJoint(Joint):
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
-
-

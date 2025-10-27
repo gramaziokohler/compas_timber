@@ -201,7 +201,6 @@ class PlateGeometry(object):
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
         self._edge_frames = {}
 
-
     # ==========================================================================
     # Alternate constructors
     # ==========================================================================
