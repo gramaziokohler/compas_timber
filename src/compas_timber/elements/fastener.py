@@ -65,7 +65,7 @@ class Fastener(TimberElement):
     @property
     def key(self):
         # type: () -> int | None
-        return self.graph_node
+        return self.graphnode
 
     @property
     def __data__(self):

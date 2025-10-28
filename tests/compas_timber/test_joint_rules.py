@@ -197,8 +197,12 @@ def test_joint_type_check_elements_compatibility(beams):
 
 
 def test_joint_type_check_elements_compatibility_bad_normal(beams):
+    new_frame = Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 1, 1))
+    new_beam = Beam(frame=new_frame, length=beams[1].length, width=beams[1].width, height=beams[1].height)
+    beams[1] = new_beam  # replace beam 1 with a beam with a different frame
+
     rules = [DirectRule(LFrenchRidgeLapJoint, [beams[0], beams[1]])]
-    beams[1].frame = Frame(beams[1].frame.point, beams[1].frame.xaxis, Vector(1, 1, 1))
+
     model = TimberModel()
     model.add_elements(beams)
     solver = JointRuleSolver(rules)
@@ -218,20 +222,24 @@ def test_joint_type_check_elements_compatibility_bad_dims(beams):
     assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
 
 
-def test_direct_rule_try_get_joint_max_distance(separated_beams):
+def test_direct_rule_try_get_joint_max_distance_failed(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.05)
     model = TimberModel()
     model.add_elements(separated_beams)
     solver = JointRuleSolver([rule], max_distance=0.15)
     errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 1
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 0
+    assert len(list(model.joints)) == 0
 
+
+def test_direct_rule_try_get_joint_max_distance_success(separated_beams):
     rule = DirectRule(LMiterJoint, [separated_beams[0], separated_beams[1]], max_distance=0.15)
+    model = TimberModel()
+    model.add_elements(separated_beams)
     solver = JointRuleSolver([rule])
     errors, unjoined_clusters = solver.apply_rules_to_model(model)
     assert len(errors) == 0
-    assert len([j for j in model.joints if not isinstance(j, JointCandidate)]) == 1
+    assert len(list(model.joints)) == 1
 
 
 def test_category_rule_try_get_joint(beams):

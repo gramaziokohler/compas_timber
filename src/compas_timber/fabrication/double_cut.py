@@ -331,13 +331,15 @@ class DoubleCut(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         # get cutting planes from params and beam
-
         try:
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
+        # convert to the local coordinates of the beam
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
+
         if self.is_concave:
             trim_volume = geometry.copy()
             for cutting_plane in cutting_planes:

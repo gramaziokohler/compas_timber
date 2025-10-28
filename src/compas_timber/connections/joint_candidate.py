@@ -41,8 +41,8 @@ class JointCandidate(Joint):
     @classmethod
     def __from_data__(cls, value):
         instance = cls(**value)
-        instance.element_a_guid = value["main_beam_key"]
-        instance.element_b_guid = value["cross_beam_key"]
+        instance.element_a_guid = value["element_a_guid"]
+        instance.element_b_guid = value["element_b_guid"]
         return instance
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
