@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.1
+# r: compas_timber>=1.0.2
 # flake8: noqa
 import math
 import random

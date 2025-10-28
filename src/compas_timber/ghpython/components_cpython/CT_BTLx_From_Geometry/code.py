@@ -1,6 +1,6 @@
+# r: compas_timber>=1.0.2
 """Generates a feature from BTLx type and input geometry."""
 
-# r: compas_timber>=1.0.1
 # flake8: noqa
 import inspect
 

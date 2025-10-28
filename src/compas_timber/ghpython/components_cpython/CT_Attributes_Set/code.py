@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.1
+# r: compas_timber>=1.0.2
 """Set attributes to the referenced object by encoding them in the objects's name."""
 
 # flake8: noqa
