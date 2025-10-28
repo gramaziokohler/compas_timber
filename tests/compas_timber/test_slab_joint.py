@@ -19,6 +19,8 @@ def test_simple_joint_and_reset():
     joint = SlabMiterJoint(slab_a, slab_b, **kwargs)
     joint.add_extensions()
     joint.add_features()
+    for s in [slab_a, slab_b]:
+        s.apply_edge_extensions()
     assert isinstance(joint, SlabMiterJoint), "Expected joint to be a SlabMiterJoint"
     assert any([slab_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to change outline_a"
     assert len(joint.interfaces) == 2, "Expected two interfaces to be created"
@@ -39,7 +41,12 @@ def test_simple_joint_and_reset_no_kwargs():
     joint = SlabMiterJoint(slab_a, slab_b)
     joint.add_extensions()
     joint.add_features()
+    for s in [slab_a, slab_b]:
+        s.apply_edge_extensions()
     assert isinstance(joint, SlabMiterJoint), "Expected joint to be a SlabMiterJoint"
+    assert len(joint.interfaces) == 2, "Expected two interfaces to be created"
+    assert len(slab_a.interfaces) == 1, "Expected slab_a to have the first interface"
+    assert len(slab_b.interfaces) == 1, "Expected slab_b to have the second interface"`
     assert any([slab_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to change outline_a"
     slab_a.reset()
     assert all([slab_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(slab_a.outline_a.points))]), "Expected joint to reset outline_a"
