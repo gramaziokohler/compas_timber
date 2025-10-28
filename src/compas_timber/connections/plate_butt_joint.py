@@ -1,7 +1,5 @@
 from compas.geometry import Transformation
 
-from compas_timber.connections import InterfaceRole
-
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 
@@ -81,26 +79,6 @@ class PlateButtJoint(PlateJoint):
 
     def __repr__(self):
         return "PlateButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
-
-    @property
-    def interface_main(self):
-        return self.interface_a
-
-    @property
-    def interface_cross(self):
-        return self.interface_a
-
-    @property
-    def interface_a(self):
-        self._plate_a_interface = super(PlateButtJoint, self).interface_a
-        self._plate_a_interface.interface_role = InterfaceRole.MAIN
-        return self._plate_a_interface
-
-    @property
-    def interface_b(self):
-        self._plate_b_interface = super(PlateButtJoint, self).interface_b
-        self._plate_b_interface.interface_role = InterfaceRole.CROSS
-        return self._plate_b_interface
 
 
 class PlateLButtJoint(PlateButtJoint):

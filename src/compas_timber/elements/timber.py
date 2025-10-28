@@ -1,5 +1,7 @@
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import PlanarSurface
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
@@ -10,8 +12,27 @@ class TimberElement(Element):
 
     This is an abstract class and should not be instantiated directly.
 
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`, optional
+        The frame representing the beam's local coordinate system in its hierarchical context.
+        Defaults to ``None``, in which case the world coordinate system is used.
+    length : float
+        Length of the timber element.
+    width : float
+        Width of the timber element.
+    height : float
+        Height of the timber element.
+    features : list[:class:`~compas_timber.fabrication.Feature`], optional
+        List of features to apply to this element.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
     Attributes
     ----------
+    frame : :class:`compas.geometry.Frame`
+        The coordinate system of this element in model space.
+        This property may be different from the constructor parameter if the element belongs to a model hierarchy.
     is_beam : bool
         True if the element is a beam.
     is_plate : bool
@@ -20,6 +41,10 @@ class TimberElement(Element):
         True if the element is a wall.
     is_group_element : bool
         True if the element can be used as container for other elements.
+    features : list[:class:`~compas_timber.parts.Feature`]
+        A list of features applied to the element.
+    geometry : :class:`compas.geometry.Geometry`
+        The geometry of the element in the model's global coordinates.
 
     """
 
@@ -33,31 +58,29 @@ class TimberElement(Element):
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame, length, width, height, features=None, **kwargs):
-        """Initialize a TimberElement.
-
-        Parameters
-        ----------
-        frame : :class:`~compas.geometry.Frame`
-            The coordinate system (frame) of this timber element.
-        length : float
-            Length of the timber element.
-        width : float
-            Width of the timber element.
-        height : float
-            Height of the timber element.
-        features : list[:class:`~compas_timber.fabrication.Feature`], optional
-            List of features to apply to this element.
-        **kwargs : dict, optional
-            Additional keyword arguments.
-        """
-        super(TimberElement, self).__init__(**kwargs)
-        self.frame = frame
+    def __init__(self, frame, length, width, height, **kwargs):
+        transformation = Transformation.from_frame(frame) if frame else Transformation()
+        super(TimberElement, self).__init__(transformation=transformation, **kwargs)
         self.length = length
         self.width = width
         self.height = height
-        self._features = features or []
         self.debug_info = []
+
+    @classmethod
+    def __from_data__(cls, data):
+        transformation = data.pop("transformation", None)
+        if transformation:
+            data["frame"] = Frame.from_transformation(transformation)
+        return cls(**data)
+
+    @reset_computed
+    def _reset_computed_dummy(self):
+        """Dummy method to trigger reset_computed decorator."""
+        pass
+
+    def reset_computed_properties(self):
+        """Reset all computed/cached properties."""
+        self._reset_computed_dummy()
 
     @property
     def is_beam(self):
@@ -90,6 +113,7 @@ class TimberElement(Element):
         bool
             False for the base TimberElement class.
         """
+        # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
 
     @property
@@ -102,11 +126,40 @@ class TimberElement(Element):
             The features applied to this element.
         """
         # type: () -> list[Feature]
+        """A list of features applied to the element."""
         return self._features
 
     @features.setter
+    @reset_computed
     def features(self, features):
         self._features = features
+
+    @property
+    def geometry(self):
+        """The geometry of the element in the model's global coordinates."""
+        if self._geometry is None:
+            self._geometry = self.compute_modelgeometry()
+        return self._geometry
+
+    # ========================================================================
+    # Geometry computation methods
+    # ========================================================================
+
+    def compute_modeltransformation(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
+
+    def compute_modelgeometry(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()
+
+    # ========================================================================
+    # Feature management & Modification methods
+    # ========================================================================
 
     def remove_blank_extension(self):
         """Remove blank extension from the element.
@@ -149,6 +202,7 @@ class TimberElement(Element):
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
+        self._geometry = None  # reset geometry cache
 
     @reset_computed
     def remove_features(self, features=None):
@@ -167,29 +221,38 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
+        self._geometry = None  # reset geometry cache
 
-    @property
-    def ref_frame(self):
-        """Reference frame for machining processing according to BTLx standard.
+    def transformation_to_local(self):
+        """Compute the transformation to local coordinates of this element
+        based on its position in the spatial hierarchy of the model.
 
         Returns
         -------
-        :class:`~compas.geometry.Frame`
-            The reference frame of the element.
+        :class:`compas.geometry.Transformation`
+
         """
+        # type: () -> Transformation
+        return self.modeltransformation.inverted()
+
+    ########################################################################
+    # BTLx properties
+    ########################################################################
+
+    @property
+    def ref_frame(self):
         # type: () -> Frame
-        # NOTE: changed to be generated from blank to ensure compatibility with Plate.blank including release 2.0/after updating to compas_model
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        """
+        Reference frame for machining processings according to BTLx standard.
+        The origin is at the bottom far corner of the element.
+        The ref_frame is always in model coordinates.
+        """
+        # TODO: cache this
         return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
 
     @property
     def ref_sides(self):
-        """The 6 frames representing the sides of the element according to BTLx standard.
-
-        Returns
-        -------
-        tuple[:class:`~compas.geometry.Frame`, ...]
-            A tuple containing the 6 frames representing the sides of the element.
-        """
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
         # TODO: cache these
@@ -210,13 +273,6 @@ class TimberElement(Element):
 
     @property
     def ref_edges(self):
-        """The 4 lines representing the long edges of the element according to BTLx standard.
-
-        Returns
-        -------
-        tuple[:class:`~compas.geometry.Line`, ...]
-            A tuple containing the 4 lines representing the long edges of the element.
-        """
         # type: () -> tuple[Line, Line, Line, Line]
         # so tuple is not created every time
         ref_sides = self.ref_sides
@@ -226,3 +282,97 @@ class TimberElement(Element):
             Line(ref_sides[2].point, ref_sides[2].point + ref_sides[2].xaxis * self.blank_length, name="RE_3"),
             Line(ref_sides[3].point, ref_sides[3].point + ref_sides[3].xaxis * self.blank_length, name="RE_4"),
         )
+
+    def side_as_surface(self, side_index):
+        # type: (int) -> compas.geometry.PlanarSurface
+        """Returns the requested side of the beam as a parametric planar surface.
+
+        Parameters
+        ----------
+        side_index : int
+            The index of the reference side to be returned. 0 to 5.
+
+        """
+        # TODO: maybe this should be the default representation of the ref sides?
+        ref_side = self.ref_sides[side_index]
+        if side_index in (0, 2):  # top + bottom
+            xsize = self.blank_length
+            ysize = self.width
+        elif side_index in (1, 3):  # sides
+            xsize = self.blank_length
+            ysize = self.height
+        elif side_index in (4, 5):  # ends
+            xsize = self.width
+            ysize = self.height
+        return PlanarSurface(xsize, ysize, frame=ref_side, name=ref_side.name)
+
+    def front_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the next side after the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the front side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the front side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 1) % 4]
+
+    def back_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the previous side before the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the back side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the back side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index - 1) % 4]
+
+    def opp_side(self, ref_side_index):
+        # type: (int) -> Frame
+        """Returns the the side that is directly across from the reference side, following the right-hand rule with the thumb along the beam's frame x-axis.
+        This method does not consider the start and end sides of the beam (RS5 & RS6).
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the opposite side should be calculated.
+
+        Returns
+        -------
+        frame : :class:`~compas.geometry.Frame`
+            The frame of the opposite side of the beam relative to the reference side.
+        """
+        return self.ref_sides[(ref_side_index + 2) % 4]
+
+    def get_dimensions_relative_to_side(self, ref_side_index):
+        # type: (int) -> tuple[float, float]
+        """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
+
+        Parameters
+        ----------
+        ref_side_index : int
+            The index of the reference side to which the dimensions should be calculated.
+
+        Returns
+        -------
+        tuple(float, float)
+            The perpendicular and parallel dimensions of the beam to the reference side.
+                - Perpendicular dimension: The measurement normal to the reference side.
+                - Parallel dimension: The measurement along y-axis of reference side.
+        """
+        if ref_side_index in [1, 3]:
+            return self.height, self.width
+        return self.width, self.height
