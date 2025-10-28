@@ -1,4 +1,3 @@
-from xml.sax.handler import property_dom_node
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -148,7 +147,7 @@ class PlateGeometry(object):
     @property
     def normal(self):
         """Normal vector of the plate."""
-        return Vector(0,0,1).transformed(self.modeltransformation)
+        return Vector(0, 0, 1).transformed(self.modeltransformation)
 
     @property
     def local_outlines(self):
