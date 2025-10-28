@@ -1,6 +1,7 @@
 from .btlx import BTLxWriter
 from .btlx import BTLxProcessing
 from .btlx import BTLxPart
+from .btlx import BTLxRawpart
 from .btlx import OrientationType
 from .jack_cut import JackRafterCut
 from .jack_cut import JackRafterCutProxy
@@ -64,4 +65,5 @@ __all__ = [
     "Contour",
     "DualContour",
     "LongitudinalCut",
+    "BTLxRawpart",
 ]
