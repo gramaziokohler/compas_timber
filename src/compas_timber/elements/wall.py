@@ -148,7 +148,7 @@ class Wall(Slab):
             raise ValueError("Wall outline must have 4 segments.")
 
     def __repr__(self):
-        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
+        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline, self.thickness)
 
     @property
     def is_wall(self):

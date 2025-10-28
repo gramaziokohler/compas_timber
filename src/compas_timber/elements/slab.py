@@ -111,10 +111,10 @@ class Slab(PlateGeometry, Element):
         self.attributes.update(kwargs)
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     @property
     def is_slab(self):
@@ -170,6 +170,17 @@ class Slab(PlateGeometry, Element):
             Always True for slabs as they can contain other elements.
         """
         return True
+
+    @property
+    def modeltransformation(self):
+        """The transformation from local to parent space.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Transformation`
+            The transformation from local to parent space.
+        """
+        return Element(self).modeltransformation if self.model else self.transformation
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
