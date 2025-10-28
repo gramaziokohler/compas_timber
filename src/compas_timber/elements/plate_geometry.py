@@ -1,3 +1,4 @@
+from xml.sax.handler import property_dom_node
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -106,7 +107,7 @@ class PlateGeometry(object):
         :class:`~compas.geometry.Polyline`
             The principal outline of the plate.
         """
-        return self._mutable_outlines[0].transformed(Transformation.from_frame(self.frame))
+        return self._mutable_outlines[0].transformed(self.modeltransformation)
 
     @property
     def outline_b(self):
@@ -117,7 +118,7 @@ class PlateGeometry(object):
         :class:`~compas.geometry.Polyline`
             The associated outline of the plate.
         """
-        return self._mutable_outlines[1].transformed(Transformation.from_frame(self.frame))
+        return self._mutable_outlines[1].transformed(self.modeltransformation)
 
     @property
     def thickness(self):
@@ -140,13 +141,14 @@ class PlateGeometry(object):
             The top and bottom planes of the plate.
         """
         if not self._planes:
-            self._planes = (Plane.from_frame(self.frame), Plane.from_frame(self.frame.translated(self.thickness * self.frame.normal)))
+            planes = (Plane.worldXY(), Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)))
+            self._planes = (planes[0].transformed(self.modeltransformation), planes[1].transformed(self.modeltransformation))
         return self._planes
 
     @property
     def normal(self):
         """Normal vector of the plate."""
-        return self.frame.normal
+        return Vector(0,0,1).transformed(self.modeltransformation)
 
     @property
     def local_outlines(self):
@@ -155,7 +157,7 @@ class PlateGeometry(object):
 
     @property
     def edge_planes(self):
-        """Frames representing the edge planes of the plate.
+        """Frames representing the edge planes of the plate in local space.
 
         Returns
         -------
@@ -183,17 +185,6 @@ class PlateGeometry(object):
         for edge_index, plane in self._extension_planes.items():
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
-
-    @property
-    def local_edge_planes(self):
-        """Frames representing the edge planes of the plate in local coordinates.
-
-        Returns
-        -------
-        list[:class:`~compas.geometry.Frame`]
-            A list of frames representing the edge planes of the plate in local coordinates.
-        """
-        return [ep.transformed(self.transformation.inverse()) for ep in self.edge_planes]
 
     @reset_computed
     def reset(self):
@@ -305,14 +296,14 @@ class PlateGeometry(object):
 
         """
         self.apply_edge_extensions()
-        outline_a = correct_polyline_direction(self._mutable_outlines[0], self.frame.normal, clockwise=True)
-        outline_b = correct_polyline_direction(self._mutable_outlines[1], self.frame.normal, clockwise=True)
+        outline_a = correct_polyline_direction(self._mutable_outlines[0], Vector(0, 0, 1), clockwise=True)
+        outline_b = correct_polyline_direction(self._mutable_outlines[1], Vector(0, 0, 1), clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
         for opening in self.openings:
             if not TOL.is_allclose(opening[0], opening[-1]):
                 raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            polyline_a = correct_polyline_direction(opening, self.frame.normal, clockwise=True)
+            polyline_a = correct_polyline_direction(opening, Vector(0, 0, 1), clockwise=True)
             polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
             brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
             brep.cap_planar_holes()
@@ -359,7 +350,7 @@ class PlateGeometry(object):
         obb.xsize += inflate
         obb.ysize += inflate
         obb.zsize += inflate
-        obb.transform(Transformation.from_frame(self.frame))
+        obb.transform(self.modeltransformation)
         return obb
 
     def compute_collision_mesh(self):
