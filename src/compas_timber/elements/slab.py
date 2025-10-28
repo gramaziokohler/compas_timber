@@ -90,9 +90,10 @@ class Slab(PlateGeometry, Element):
     def __data__(self):
         data = Element.__data__(self)
         data.update(PlateGeometry.__data__(self))
+        data["length"] = self.length
+        data["width"] = self.width
+        data["height"] = self.height
         data["name"] = self.name
-        data["interfaces"] = self.interfaces
-        data["attributes"] = self.attributes
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
