@@ -60,8 +60,8 @@ class PlateGeometry(object):
     @property
     def __data__(self):
         data = super(PlateGeometry, self).__data__
-        data["local_outline_a"] = self._original_outlines[0]
-        data["local_outline_b"] = self._original_outlines[1]
+        data["outline_a"] = self.outline_a
+        data["outline_b"] = self.outline_b
         data["openings"] = self.openings
         return data
 
@@ -171,6 +171,18 @@ class PlateGeometry(object):
             _edge_planes[i] = Plane.from_frame(frame)
         return _edge_planes
 
+    def set_extension_plane(self, edge_index, plane):
+        self._extension_planes[edge_index] = self.corrected_edge_plane(edge_index, plane)
+
+    def corrected_edge_plane(self, edge_index, plane):
+        if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
+            return Plane(plane.point, -plane.normal)
+        return plane
+
+    def apply_edge_extensions(self):
+        for edge_index, plane in self._extension_planes.items():
+            for polyline in self._mutable_outlines:
+                move_polyline_segment_to_plane(polyline, edge_index, plane)
 
     @property
     def local_edge_planes(self):
@@ -187,6 +199,7 @@ class PlateGeometry(object):
     def reset(self):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
+        self._edge_frames = {}
 
     # ==========================================================================
     # Alternate constructors
@@ -231,7 +244,30 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
+        """
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry in parent space.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry in parent space.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outlines.
+        """
+
+        args = cls.get_from_outlines_args(outline_a, outline_b, openings)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
+        return cls(local_outline_a=args["local_outline_a"], local_outline_b=args["local_outline_b"], openings=args["openings"], **kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):

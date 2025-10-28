@@ -86,7 +86,6 @@ class Plate(PlateGeometry, TimberElement):
         self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
-        self.interfaces = []
         self.debug_info = []
 
     def __repr__(self):
@@ -158,9 +157,6 @@ class Plate(PlateGeometry, TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
-    def add_interface(self, interface):
-        self.interfaces.append(interface)
-
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
@@ -175,22 +171,18 @@ class Plate(PlateGeometry, TimberElement):
     # ==========================================================================
 
     def compute_geometry(self, include_features=True):
-        # type: (bool) -> compas.geometry.Brep
-        """Compute the geometry of the element in global coordinates.
+        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+        """Compute the geometry of the element.
 
         Parameters
         ----------
         include_features : bool, optional
-            If True, the features should be included in the element geometry.
+            If ``True``, include the features in the computed geometry.
+            If ``False``, return only the plate shape.
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
-
-        Raises
-        ------
-        :class:`compas_timber.errors.FeatureApplicationError`
-            If there is an error applying features to the element.
+        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
 
         """
 
