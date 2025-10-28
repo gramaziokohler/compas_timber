@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
 * Added `__from_data__` class method override in `TimberElement` to handle frame/transformation conversion during deserialization.
 * Added standalone element support through minimal overrides in `compute_modeltransformation()` and `compute_modelgeometry()` methods in `TimberElement`.
+
+* Added new `compas_timber.planning.Stock` base class for representing raw material stock pieces with polymorphic element handling.
+* Added new `compas_timber.planning.BeamStock` class for 1D beam stock pieces with length-based nesting and dimensional compatibility checking.
+* Added new `compas_timber.planning.PlateStock` class for 2D plate stock pieces with area-based nesting and dimensional compatibility checking.
+* Added new `compas_timber.planning.BeamNester` class for automated beam nesting with first-fit and best-fit decreasing algorithms.
+* Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties and enhanced dimensional reporting.
+* Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
+* Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
 
@@ -54,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
+* Removed all Rhino7 components!
 * Removed method `add_group_element` from `TimberModel`.
 
 ## [1.0.1] 2025-10-16
@@ -66,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
 * Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Changed `BTLxPart` transformation GUID to use the `TimberElement`'s GUID instead of generating a random UUID in `compas_timber.fabrication.BTLxPart`.
+* Updated the `write()` and `model_to_xml()` methods of the `BTLxWriter` class to optionally accept a `NestingResult` object, enabling inclusion of beam nesting information in the BTLx output.
 * Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
 * Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
 * Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.

@@ -16,11 +16,6 @@ User
     mamba create -n <myenvname> compas_timber -c conda-forge --yes
     mamba activate <myenvname>
 
-Install to Rhino 7.0
-
-.. code-block:: bash
-
-    python -m compas_rhino.install -v7.0
 
 Developer
 =========
@@ -44,12 +39,6 @@ Install the package in editable mode with its development dependencies
 .. code-block:: bash
 
     pip install -e .[dev]
-
-To compile the Rhino7 Grasshopper components
-
-.. code-block:: bash
-
-    invoke build-ghuser-components
 
 To compile the Rhino8 Grasshopper components
 

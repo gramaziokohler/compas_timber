@@ -195,8 +195,8 @@ class TimberElement(Element):
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`]
-            The features to be added.
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature or features to be added described as a BTLxProcessing or a list of BTLxProcessings.
 
         """
         if not isinstance(features, list):
@@ -211,8 +211,9 @@ class TimberElement(Element):
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`], optional
-            The features to be removed. If None, all features will be removed.
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
+            The feature or features to be removed described as a BTLxProcessing or a list of BTLxProcessings.
+            If None, all features will be removed.
 
         """
         if features is None:
