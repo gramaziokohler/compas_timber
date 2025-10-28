@@ -35,7 +35,8 @@ def test_simple_joint_and_reset_no_kwargs():
 
     joint = PlateMiterJoint(plate_a, plate_b)
     joint.add_extensions()
-    assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected outline_a to be unchanged before apply_edge_extensions"
+    msg = "Expected outline_a to be unchanged before apply_edge_extensions"
+    assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), msg
     for plate in joint.elements:
         plate.apply_edge_extensions()
     assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"

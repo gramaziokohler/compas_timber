@@ -17,6 +17,16 @@ class TimberElement(Element):
     frame : :class:`compas.geometry.Frame`, optional
         The frame representing the beam's local coordinate system in its hierarchical context.
         Defaults to ``None``, in which case the world coordinate system is used.
+    length : float
+        Length of the timber element.
+    width : float
+        Width of the timber element.
+    height : float
+        Height of the timber element.
+    features : list[:class:`~compas_timber.fabrication.Feature`], optional
+        List of features to apply to this element.
+    **kwargs : dict, optional
+        Additional keyword arguments.
 
     Attributes
     ----------
@@ -49,25 +59,8 @@ class TimberElement(Element):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        """Initialize a TimberElement.
-
-        Parameters
-        ----------
-        frame : :class:`~compas.geometry.Frame`
-            The coordinate system (frame) of this timber element.
-        length : float
-            Length of the timber element.
-        width : float
-            Width of the timber element.
-        height : float
-            Height of the timber element.
-        features : list[:class:`~compas_timber.fabrication.Feature`], optional
-            List of features to apply to this element.
-        **kwargs : dict, optional
-            Additional keyword arguments.
-        """
-        frame = frame or Frame.worldXY()  # TODO: This is temporary. Once all subclasses are described the same way, the constructor should be updated.
-        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
+        transformation = Transformation.from_frame(frame) if frame else Transformation()
+        super(TimberElement, self).__init__(transformation=transformation, **kwargs)
         self.length = length
         self.width = width
         self.height = height

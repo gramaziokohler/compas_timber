@@ -17,13 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
 * Added `__from_data__` class method override in `TimberElement` to handle frame/transformation conversion during deserialization.
 * Added standalone element support through minimal overrides in `compute_modeltransformation()` and `compute_modelgeometry()` methods in `TimberElement`.
+* Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 
 ### Changed
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
-
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
 * Removed method `add_group_element` from `TimberModel`.
+* Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
 
 ## [1.0.1] 2025-10-16
 

@@ -127,6 +127,8 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
 
         handled_pairs = []
         wall_joints = []
+
+        # config set and slab have already been matched in WallPopulator.from_model, no zip required
         for populator in populators:
             elements = populator.create_elements()
             model.add_elements(elements, parent=populator.slab)

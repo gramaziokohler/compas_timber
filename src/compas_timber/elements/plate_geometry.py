@@ -56,6 +56,7 @@ class PlateGeometry(object):
         A list of Opening objects representing openings in this plate.
 
     """
+
     @property
     def __data__(self):
         data = super(PlateGeometry, self).__data__
@@ -204,12 +205,9 @@ class PlateGeometry(object):
     # Alternate constructors
     # ==========================================================================
 
-
-
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
-
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
@@ -382,6 +380,31 @@ class PlateGeometry(object):
 
     @staticmethod
     def get_args_from_outlines(outline_a, outline_b, openings=None):
+        """
+        Get constructor arguments for the PlateGeometry and subclasses from outlines.
+        Outlines and openings are transformed to the local frame of the plate.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            Principal outline of the plate.
+        outline_b : :class:`~compas.geometry.Polyline`
+            Associated outline of the plate.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            List of opening polylines.
+
+        Returns
+        -------
+        dict
+            Dictionary of constructor arguments containing:
+            - local_outline_a (:class:`~compas.geometry.Polyline`)
+            - local_outline_b (:class:`~compas.geometry.Polyline`)
+            - openings (list[:class:`~compas.geometry.Polyline`]|None)
+            - frame (:class:`~compas.geometry.Frame`)
+            - length (float)
+            - width (float)
+            - thickness (float)
+        """
         # get frame from outline_a
         frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
         # flip frame so that outline_b is in the +Z direction
