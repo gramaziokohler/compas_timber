@@ -208,6 +208,17 @@ class Slab(PlateGeometry, Element):
         """
         return Element(self).modeltransformation if self.model else self.transformation
 
+    @property
+    def modelgeometry(self):
+        """The transformation from local to parent space.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Transformation`
+            The transformation from local to parent space.
+        """
+        return Element(self).modelgeometry if self.model else self.shape.transformed(self.transformation)
+
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
