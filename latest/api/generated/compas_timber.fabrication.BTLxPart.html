@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="BTLxPart.et_point_vals" href="compas_timber.fabrication.BTLxPart.et_point_vals.html" />
+    <link rel="next" title="BTLxPart.ref_side_from_face" href="compas_timber.fabrication.BTLxPart.ref_side_from_face.html" />
     <link rel="prev" title="BTLxWriter.write" href="compas_timber.fabrication.BTLxWriter.write.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -598,13 +598,13 @@ document.write(`
 <h1>BTLxPart</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxPart">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/fabrication/btlx.py#L299"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">BTLxPart</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ca05394/src/compas_timber/fabrication/btlx.py#L547"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxGenericPart</span></code></p>
 <p>Class representing a BTLx part. This acts as a wrapper for an Element object.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code>  # TODO: not really, make BTLx Element parent class</span></dt><dd><p>The element object.</p>
+<dt><strong>element</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>The element object.</p>
 </dd>
 <dt><strong>order_num</strong><span class="classifier">int</span></dt><dd><p>The order number of the part.</p>
 </dd>
@@ -614,7 +614,7 @@ document.write(`
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>attr</strong><span class="classifier">dict</span></dt><dd><p>The attributes of the BTLx part.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">attr</span></code><span class="classifier">dict</span></dt><dd><p>Return the attributes dictionary for the part XML element.</p>
 </dd>
 <dt><strong>element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Element</span></code></span></dt><dd><p>The element object.</p>
 </dd>
@@ -634,11 +634,16 @@ document.write(`
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLxPart.ref_side_from_face.html#compas_timber.fabrication.BTLxPart.ref_side_from_face" title="compas_timber.fabrication.BTLxPart.ref_side_from_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_side_from_face</span></code></a></p></td>
+<td><p>Finds the one-based index of the reference side with normal that matches the normal of the given element face.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Inherited Methods</p>
+<table class="autosummary longtable table autosummary">
+<tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLxPart.et_point_vals.html#compas_timber.fabrication.BTLxPart.et_point_vals" title="compas_timber.fabrication.BTLxPart.et_point_vals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">et_point_vals</span></code></a></p></td>
 <td><p>Returns the ET point values for a given point.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.BTLxPart.ref_side_from_face.html#compas_timber.fabrication.BTLxPart.ref_side_from_face" title="compas_timber.fabrication.BTLxPart.ref_side_from_face"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_side_from_face</span></code></a></p></td>
-<td><p>Finds the one-based index of the reference side with normal that matches the normal of the given element face.</p></td>
 </tr>
 </tbody>
 </table>

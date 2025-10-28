@@ -603,7 +603,7 @@ document.write(`
 <h1>BTLxWriter.write</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.fabrication.BTLxWriter.write">
-<span class="sig-prename descclassname"><span class="pre">BTLxWriter.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/80a1a26/src/compas_timber/fabrication/btlx.py#L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">BTLxWriter.</span></span><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nesting_result</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ca05394/src/compas_timber/fabrication/btlx.py#L72"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Writes the BTLx file to the given file path.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -611,6 +611,8 @@ document.write(`
 <dt><strong>model</strong><span class="classifier"><a class="reference internal" href="compas_timber.model.TimberModel.html#compas_timber.model.TimberModel" title="compas_timber.model.TimberModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberModel</span></code></a></span></dt><dd><p>The model object.</p>
 </dd>
 <dt><strong>file_path</strong><span class="classifier">str</span></dt><dd><p>The file path to write the BTLx file to.</p>
+</dd>
+<dt><strong>nesting_result</strong><span class="classifier"><a class="reference internal" href="compas_timber.planning.NestingResult.html#compas_timber.planning.NestingResult" title="compas_timber.planning.NestingResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestingResult</span></code></a>, optional</span></dt><dd><p>The nesting result object. If provided, raw parts will be created for each stock in the nesting result.</p>
 </dd>
 </dl>
 </dd>
