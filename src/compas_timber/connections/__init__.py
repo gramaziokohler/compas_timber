@@ -88,7 +88,6 @@ __all__ = [
     "SlabLButtJoint",
     "SlabTButtJoint",
     "SlabMiterJoint",
-    "PlateToPlateInterface",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",

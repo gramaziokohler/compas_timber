@@ -18,7 +18,8 @@ def test_simple_joint_and_reset():
     kwargs = {"topology": JointTopology.TOPO_EDGE_EDGE, "a_segment_index": 1, "b_segment_index": 0}
     joint = PlateMiterJoint(plate_a, plate_b, **kwargs)
     joint.add_extensions()
-    joint.add_features()
+    for plate in [plate_a, plate_b]:
+        plate.apply_edge_extensions()
     assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
     assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
     plate_a.reset()
@@ -34,7 +35,10 @@ def test_simple_joint_and_reset_no_kwargs():
 
     joint = PlateMiterJoint(plate_a, plate_b)
     joint.add_extensions()
-    joint.add_features()
+    msg = "Expected outline_a to be unchanged before apply_edge_extensions"
+    assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), msg
+    for plate in [plate_a, plate_b]:
+        plate.apply_edge_extensions()
     assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
     assert any([plate_a.outline_a.points[i] != polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to change outline_a"
     plate_a.reset()

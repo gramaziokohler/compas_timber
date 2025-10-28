@@ -40,66 +40,60 @@ def beam_list():
 
 
 def test_wall_groups(model, wall1, nameless_wall):
-    model.add_group_element(wall1)
-    model.add_group_element(nameless_wall, name="wall2")
+    model.add_element(wall1)
+    model.add_element(nameless_wall)
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
+    assert model.has_group(wall1)
+    assert model.has_group(nameless_wall)
 
 
 def test_add_elements_to_group(model, beam_list, wall1, wall2):
     beam_a, beam_b, beam_c, beam_d = beam_list
 
-    wall1_group = model.add_group_element(wall1)
-    wall2_group = model.add_group_element(wall2)
+    wall1_group = model.add_element(wall1)
+    wall2_group = model.add_element(wall2)
 
     model.add_element(beam_a, parent=wall1_group)
     model.add_element(beam_b, parent=wall1_group)
     model.add_element(beam_c, parent=wall2_group)
     model.add_element(beam_d, parent=wall2_group)
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1")) == [wall1, beam_a, beam_b]
-    assert list(model.get_elements_in_group("wall2")) == [wall2, beam_c, beam_d]
+    assert model.has_group(wall1)
+    assert model.has_group(wall2)
+    assert list(model.get_elements_in_group(wall1)) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group(wall2)) == [beam_c, beam_d]
 
 
 def test_get_elements_in_group_filter(model, beam_list, wall1, wall2):
     beam_a, beam_b, beam_c, beam_d = beam_list
 
-    wall1_group = model.add_group_element(wall1)
-    wall2_group = model.add_group_element(wall2)
+    model.add_element(wall1)
+    model.add_element(wall2)
 
-    model.add_element(beam_a, parent=wall1_group)
-    model.add_element(beam_b, parent=wall1_group)
-    model.add_element(beam_c, parent=wall2_group)
-    model.add_element(beam_d, parent=wall2_group)
+    model.add_element(beam_a, parent=wall1)
+    model.add_element(beam_b, parent=wall1)
+    model.add_element(beam_c, parent=wall2)
+    model.add_element(beam_d, parent=wall2)
 
-    assert model.has_group("wall1")
-    assert model.has_group("wall2")
-    assert list(model.get_elements_in_group("wall1", filter_=lambda b: isinstance(b, Beam))) == [beam_a, beam_b]
-    assert list(model.get_elements_in_group("wall2", filter_=lambda b: isinstance(b, Beam))) == [beam_c, beam_d]
+    assert model.has_group(wall1)
+    assert model.has_group(wall2)
+    assert list(model.get_elements_in_group(wall1, filter_=lambda b: isinstance(b, Beam))) == [beam_a, beam_b]
+    assert list(model.get_elements_in_group(wall2, filter_=lambda b: isinstance(b, Beam))) == [beam_c, beam_d]
+    # NOTE: due to the new Tree structure, I got rid of some of the explicit Group functionality.
+    # Instead I add wall as normal element and used the parent argument when adding children to the wall.
     # NOTE: changed to isinstance because is_beam, is_plate, are TimberElement properties
     # NOTE: I am presuming we want to include various element types in groups, not just TimberElements and don't want to have to add is_* properties to all elements
 
 
-def test_group_does_not_exist(model):
+def test_group_does_not_exist(model, wall1):
     with pytest.raises(ValueError):
-        list(model.get_elements_in_group("non_existent_group"))
+        list(model.get_elements_in_group(wall1))
 
 
 def test_group_already_exists(model, wall1):
-    model.add_group_element(wall1)
-
-    with pytest.raises(ValueError):
-        model.add_group_element(wall1)
-
-
-def test_not_group_element(model):
-    beam = Beam(Frame.worldXY(), 100, 200, 300)
-
-    with pytest.raises(ValueError):
-        model.add_group_element(beam)
+    model.add_element(wall1)
+    with pytest.raises(Exception):
+        model.add_element(wall1)
 
 
 def test_wall_with_door_openings():

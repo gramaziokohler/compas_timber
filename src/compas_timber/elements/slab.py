@@ -1,5 +1,6 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -90,13 +91,15 @@ class Slab(PlateGeometry, Element):
     def __data__(self):
         data = Element.__data__(self)
         data.update(PlateGeometry.__data__(self))
+        data["length"] = self.length
+        data["width"] = self.width
+        data["height"] = self.height
         data["name"] = self.name
-        data["interfaces"] = self.interfaces
-        data["attributes"] = self.attributes
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
-        Element.__init__(self, frame=frame, **kwargs)
+        transformation = Transformation.from_frame(frame) if frame else Transformation()
+        Element.__init__(self, transformation=transformation, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
         PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
@@ -109,10 +112,10 @@ class Slab(PlateGeometry, Element):
         self.attributes.update(kwargs)
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline_a, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     @reset_computed
     def reset(self):
@@ -193,6 +196,17 @@ class Slab(PlateGeometry, Element):
             Always True for slabs as they can contain other elements.
         """
         return True
+
+    @property
+    def modeltransformation(self):
+        """The transformation from local to parent space.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Transformation`
+            The transformation from local to parent space.
+        """
+        return Element(self).modeltransformation if self.model else self.transformation
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):

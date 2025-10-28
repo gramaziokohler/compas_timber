@@ -595,7 +595,7 @@ def guess_joint_topology_2beams(beamA, beamB, tol=1e-6, max_distance=1e-6):
 
 
 def set_default_joints(model, x_default="x-lap", t_default="t-butt", l_default="l-miter"):
-    beams = list(model.beams)
+    beams = model.beams
     n = len(beams)
 
     connectivity = {"L": [], "T": [], "X": []}

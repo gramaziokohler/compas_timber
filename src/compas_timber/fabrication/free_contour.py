@@ -235,6 +235,7 @@ class FreeContour(BTLxProcessing):
         """
         # TODO: this doesn't work anymore with the new definition of FreeContour, needs fixing but currently not sure how to do it.
         # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
+        # TODO: should have a look at this also in regards to the global to local transformation of the features
         ref_side = element.ref_sides[self.ref_side_index]
         xform = Transformation.from_frame_to_frame(Frame.worldXY(), ref_side)
         pts = [pt.transformed(xform) for pt in self.contour_param_object.polyline]

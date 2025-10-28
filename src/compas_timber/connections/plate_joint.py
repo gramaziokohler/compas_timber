@@ -125,8 +125,6 @@ class PlateJoint(Joint):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
             self.set_edge_planes()
-            for plate in self.plates:
-                plate.apply_edge_extensions()
 
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""

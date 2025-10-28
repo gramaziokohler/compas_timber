@@ -132,14 +132,10 @@ class Wall(Slab):
     @property
     def __data__(self):
         data = super(Wall, self).__data__
-        data["outline"] = self.outline
-        data["openings"] = self.openings
-        data["thickness"] = self.thickness
         data["attributes"] = self.attributes
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
-        print("args", frame, length, width, thickness)
         super(Wall, self).__init__(frame, length, width, thickness, local_outline_a, local_outline_b, openings, **kwargs)
         self.outline = self.outline_a.copy()  # make mutable copy
         self.attributes = {}
@@ -152,7 +148,7 @@ class Wall(Slab):
             raise ValueError("Wall outline must have 4 segments.")
 
     def __repr__(self):
-        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.frame, self.outline, self.thickness)
+        return "Wall(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline, self.thickness)
 
     @property
     def is_wall(self):

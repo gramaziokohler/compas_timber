@@ -199,7 +199,7 @@ class Plate(PlateGeometry, TimberElement):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Slabs.
 
         Parameters
         ----------
@@ -215,8 +215,8 @@ class Plate(PlateGeometry, TimberElement):
 
         Returns
         -------
-        :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate geometry with the given outlines.
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate geometry with the given outlines.
         """
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
