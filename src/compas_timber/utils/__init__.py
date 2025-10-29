@@ -512,6 +512,67 @@ def move_polyline_segment_to_plane(polyline, segment_index, plane):
             polyline[0] = end_pt
 
 
+def intersection_line_beams(line, beams, max_distance=None):
+    """Find intersections between a line and a list of beams.
+    Parameters
+    ----------
+    line : :class:`compas.geometry.Line`
+        The line to check for intersections.
+    beams : list of :class:`compas_timber.elements.Beam`
+        The beams to check for intersections.
+    max_distance : float, optional
+        The maximum distance from the line to consider an intersection valid.
+        Defaults to 0.0, meaning no distance check.
+    Returns
+    -------
+    list of dict
+        A list of dictionaries containing the intersection points, dot products, and the corresponding beams.
+    Each dictionary has the keys "point", "dot", and "beam".
+    """
+    intersections = []
+    max_distance = max_distance or TOL.relative
+    for beam in beams:
+        line_pt, beam_pt = intersection_line_segment(line, beam.centerline)
+        if line_pt:
+            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
+                continue
+            intersection = {}
+            intersection["point"] = Point(*line_pt)
+            intersection["dot"] = dot_vectors(Vector.from_start_end(line.start, Point(*line_pt)), line.direction)
+            intersection["beam"] = beam
+            intersections.append(intersection)
+    return intersections
+
+def split_beam_at_lengths(beam, lengths):
+    """Splits a beam at given lengths.
+
+    Parameters
+    ----------
+    beam : :class:`compas_timber.elements.Beam`
+        The beam to split.
+    length : float
+        The length at which to split the beam.
+
+    Returns
+    -------
+    :class:`compas_timber.elements.Beam` or None
+        The new beam that is created by the split, or None if the length is outside the beam's length.
+
+    """
+    lengths.sort(reverse=True)
+    for length in lengths:
+        if length <= 0.0 or length >= beam.length:
+            lengths.remove(length)  # remove lengths that are outside the beam's length
+    beams = [beam]
+    for length in lengths:
+        new_beam = beam.copy()
+        new_beam.attributes.update(beam.attributes)
+        new_beam.length = beam.length - length
+        beam.length = length
+        new_beam.frame.translate(beam.frame.xaxis * length)
+        beams.insert(1, new_beam)
+    return beams
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -525,4 +586,6 @@ __all__ = [
     "do_segments_overlap",
     "get_segment_overlap",
     "move_polyline_segment_to_plane",
+    "intersection_line_beams",
+    "split_beam_at_lengths",
 ]
