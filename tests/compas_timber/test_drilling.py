@@ -4,8 +4,20 @@ from collections import OrderedDict
 
 from compas.geometry import Point
 from compas.geometry import Line
+from compas.geometry import Frame
+from compas.geometry import Vector
+from compas.geometry import Transformation
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Drilling
+
+from compas_timber.fabrication.drilling import DrillingProxy
+
+from compas.tolerance import Tolerance
+
+
+@pytest.fixture
+def tol():
+    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
 @pytest.fixture
@@ -251,3 +263,89 @@ def test_drilling_scaled():
     assert scaled.angle == drilling.angle
     assert scaled.inclination == drilling.inclination
     assert scaled.diameter == drilling.diameter * 2.0
+
+
+def test_drilling_transforms_with_beam(tol):
+    centerline = Line(Point(x=17.2361412989, y=36.4787607210, z=0.0), Point(x=1484.82372687, y=473.845866212, z=224.447551130))
+    width = 60
+    height = 120
+    beam_a = Beam.from_centerline(centerline, width, height)
+    beam_b = Beam.from_centerline(centerline, width, height)
+
+    drill_line = Line(
+        Point(x=769.9252869559241, y=183.9103745653814, z=182.91342125683593),
+        Point(x=-29.735867847271493, y=99.36335854655916, z=-74.9835882181502),
+    )
+    diameter = 10.0
+
+    # Create drilling instances
+    instance_a = Drilling.from_line_and_element(drill_line, beam_a, diameter)
+    instance_b = Drilling.from_line_and_element(drill_line, beam_b, diameter)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # properties should be the same after transformation
+    assert tol.is_close(instance_a.start_x, instance_b.start_x)
+    assert tol.is_close(instance_a.start_y, instance_b.start_y)
+    assert tol.is_close(instance_a.angle, instance_b.angle)
+    assert tol.is_close(instance_a.inclination, instance_b.inclination)
+    assert instance_a.depth_limited == instance_b.depth_limited
+    assert tol.is_close(instance_a.depth, instance_b.depth)
+    assert tol.is_close(instance_a.diameter, instance_b.diameter)
+    assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
+
+    # cylinders should transform correctly
+    cylinder_a = instance_a.cylinder_from_params_and_element(beam_a)
+    cylinder_b = instance_b.cylinder_from_params_and_element(beam_b)
+
+    cylinder_a.transform(transformation)
+
+    assert tol.is_close(cylinder_a.radius, cylinder_b.radius)
+    assert tol.is_allclose(cylinder_a.circle.plane.point, cylinder_b.circle.plane.point)
+    assert tol.is_allclose(cylinder_a.circle.plane.normal, cylinder_b.circle.plane.normal)
+
+
+def test_drilling_proxy_transforms_with_beam(tol):
+    centerline = Line(Point(x=17.2361412989, y=36.4787607210, z=0.0), Point(x=1484.82372687, y=473.845866212, z=224.447551130))
+    width = 60
+    height = 120
+    beam_a = Beam.from_centerline(centerline, width, height)
+    beam_b = Beam.from_centerline(centerline, width, height)
+
+    drill_line = Line(
+        Point(x=769.9252869559241, y=183.9103745653814, z=182.91342125683593),
+        Point(x=-29.735867847271493, y=99.36335854655916, z=-74.9835882181502),
+    )
+    diameter = 10.0
+
+    # Create DrillingProxy instances
+    instance_a = DrillingProxy.from_line_and_element(drill_line, beam_a, diameter)
+    instance_b = DrillingProxy.from_line_and_element(drill_line, beam_b, diameter)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # unproxify to get the actual Drilling instances
+    drilling_a = instance_a.unproxified()
+    drilling_b = instance_b.unproxified()
+
+    # properties should be the same after transformation
+    assert tol.is_close(drilling_a.start_x, drilling_b.start_x)
+    assert tol.is_close(drilling_a.start_y, drilling_b.start_y)
+    assert tol.is_close(drilling_a.angle, drilling_b.angle)
+    assert tol.is_close(drilling_a.inclination, drilling_b.inclination)
+    assert drilling_a.depth_limited == drilling_b.depth_limited
+    assert tol.is_close(drilling_a.depth, drilling_b.depth)
+    assert tol.is_close(drilling_a.diameter, drilling_b.diameter)
+    assert tol.is_close(drilling_a.ref_side_index, drilling_b.ref_side_index)
+
+    # cylinders should transform correctly
+    cylinder_a = drilling_a.cylinder_from_params_and_element(beam_a)
+    cylinder_b = drilling_b.cylinder_from_params_and_element(beam_b)
+
+    cylinder_a.transform(transformation)
+
+    assert tol.is_close(cylinder_a.radius, cylinder_b.radius)
+    assert tol.is_allclose(cylinder_a.circle.plane.point, cylinder_b.circle.plane.point)
+    assert tol.is_allclose(cylinder_a.circle.plane.normal, cylinder_b.circle.plane.normal)

@@ -8,6 +8,8 @@ from compas.datastructures import Mesh
 from compas.geometry import Polyhedron
 from compas.geometry import Line
 from compas.geometry import Vector
+from compas.geometry import Frame
+from compas.geometry import Transformation
 
 from compas.tolerance import Tolerance
 
@@ -15,6 +17,8 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import Pocket
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.connections import LapJoint
+
+from compas_timber.fabrication.pocket import PocketProxy
 
 
 @pytest.fixture
@@ -307,3 +311,97 @@ def test_pocket_scaled():
     assert scaled_instance.tilt_end_side == instance.tilt_end_side
     assert scaled_instance.tilt_opp_side == instance.tilt_opp_side
     assert scaled_instance.tilt_start_side == instance.tilt_start_side
+
+
+def test_pocket_from_polyhedron_transforms_with_beam(tol, neg_vol):
+    centerline = Line(Point(x=982.9951560400838, y=-479.2205162374722, z=-67.36803489442559), Point(x=492.1609174771529, y=376.21927273785184, z=97.87275211713762))
+    cross_section = [60, 60]
+    z_vector = Vector(x=0.400, y=0.165, z=-0.855)
+
+    beam_a = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector=z_vector)
+    beam_b = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector=z_vector)
+
+    # Pocket instances
+    instance_a = Pocket.from_volume_and_element(neg_vol, beam_a, ref_side_index=2)
+    instance_b = Pocket.from_volume_and_element(neg_vol, beam_b, ref_side_index=2)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # properties should be the same after transformation
+    assert tol.is_close(instance_a.start_x, instance_b.start_x)
+    assert tol.is_close(instance_a.start_y, instance_b.start_y)
+    assert tol.is_close(instance_a.start_depth, instance_b.start_depth)
+    assert tol.is_close(instance_a.angle, instance_b.angle)
+    assert tol.is_close(instance_a.inclination, instance_b.inclination)
+    assert tol.is_close(instance_a.slope, instance_b.slope)
+    assert tol.is_close(instance_a.length, instance_b.length)
+    assert tol.is_close(instance_a.width, instance_b.width)
+    assert tol.is_close(instance_a.internal_angle, instance_b.internal_angle)
+    assert tol.is_close(instance_a.tilt_ref_side, instance_b.tilt_ref_side)
+    assert tol.is_close(instance_a.tilt_end_side, instance_b.tilt_end_side)
+    assert tol.is_close(instance_a.tilt_opp_side, instance_b.tilt_opp_side)
+    assert tol.is_close(instance_a.tilt_start_side, instance_b.tilt_start_side)
+    assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
+
+    # volumes should transform correctly
+    volume_a = instance_a.volume_from_params_and_element(beam_a)
+    volume_b = instance_b.volume_from_params_and_element(beam_b)
+
+    volume_a.transform(transformation)
+
+    vertices_a, faces_a = volume_a.to_vertices_and_faces()
+    vertices_b, faces_b = volume_b.to_vertices_and_faces()
+
+    assert len(vertices_a) == len(vertices_b)
+    for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        assert tol.is_allclose(vertex_a, vertex_b)
+
+
+def test_pocket_proxy_transforms_with_beam(tol, neg_vol):
+    centerline = Line(Point(x=982.9951560400838, y=-479.2205162374722, z=-67.36803489442559), Point(x=492.1609174771529, y=376.21927273785184, z=97.87275211713762))
+    cross_section = [60, 60]
+    z_vector = Vector(x=0.400, y=0.165, z=-0.855)
+
+    beam_a = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector=z_vector)
+    beam_b = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector=z_vector)
+
+    # PocketProxy instances
+    instance_a = PocketProxy(neg_vol, beam_a, ref_side_index=2)
+    instance_b = PocketProxy(neg_vol, beam_b, ref_side_index=2)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # unproxify to get the actual Pocket instances
+    pocket_a = instance_a.unproxified()
+    pocket_b = instance_b.unproxified()
+
+    # properties should be the same after transformation
+    assert tol.is_close(pocket_a.start_x, pocket_b.start_x)
+    assert tol.is_close(pocket_a.start_y, pocket_b.start_y)
+    assert tol.is_close(pocket_a.start_depth, pocket_b.start_depth)
+    assert tol.is_close(pocket_a.angle, pocket_b.angle)
+    assert tol.is_close(pocket_a.inclination, pocket_b.inclination)
+    assert tol.is_close(pocket_a.slope, pocket_b.slope)
+    assert tol.is_close(pocket_a.length, pocket_b.length)
+    assert tol.is_close(pocket_a.width, pocket_b.width)
+    assert tol.is_close(pocket_a.internal_angle, pocket_b.internal_angle)
+    assert tol.is_close(pocket_a.tilt_ref_side, pocket_b.tilt_ref_side)
+    assert tol.is_close(pocket_a.tilt_end_side, pocket_b.tilt_end_side)
+    assert tol.is_close(pocket_a.tilt_opp_side, pocket_b.tilt_opp_side)
+    assert tol.is_close(pocket_a.tilt_start_side, pocket_b.tilt_start_side)
+    assert tol.is_close(pocket_a.ref_side_index, pocket_b.ref_side_index)
+
+    # volumes should transform correctly
+    volume_a = pocket_a.volume_from_params_and_element(beam_a)
+    volume_b = pocket_b.volume_from_params_and_element(beam_b)
+
+    volume_a.transform(transformation)
+
+    vertices_a, faces_a = volume_a.to_vertices_and_faces()
+    vertices_b, faces_b = volume_b.to_vertices_and_faces()
+
+    assert len(vertices_a) == len(vertices_b)
+    for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        assert tol.is_allclose(vertex_a, vertex_b)
