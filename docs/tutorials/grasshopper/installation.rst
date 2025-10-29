@@ -29,14 +29,6 @@ After a successful installation, you should see the COMPAS Timber section in the
     .. image:: /_images/gh_installation_toolbar.JPG
         :width: 100%
 
-Rhino 7 Installation
---------------------
-
-1. **Open Rhino 7.**
-2. Follow the same steps used for Rhino8.
-3. To complete the installation, please install the library to Rhino7 by following the :ref:`User Installation Instructions<lib_installation>`.
-4. Retart Rhino 7.
-
 Troubleshooting
 ---------------
 

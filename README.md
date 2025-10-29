@@ -21,12 +21,6 @@
 pip install compas_timber
 ```
 
-To install `compas_timber` to Rhino run
-
-```bash
-python -m compas_rhino.install
-```
-
 ## First Steps
 
 * [Documentation](https://gramaziokohler.github.io/compas_timber/)
