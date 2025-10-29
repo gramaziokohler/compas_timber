@@ -790,7 +790,7 @@ class PocketProxy(object):
         return self.unproxified()
 
     def __init__(self, volume, element, machining_limits=None, ref_side_index=None):
-        self.volume = volume
+        self.volume = volume.transformed(element.transformation_to_local())
         self.element = element
         self.machining_limits = machining_limits
         self.ref_side_index = ref_side_index
@@ -805,7 +805,8 @@ class PocketProxy(object):
 
         """
         if not self._processing:
-            self._processing = Pocket.from_volume_and_element(self.volume, self.element, self.machining_limits, self.ref_side_index)
+            volume = self.volume.transformed(self.element.modeltransformation)
+            self._processing = Pocket.from_volume_and_element(volume, self.element, self.machining_limits, self.ref_side_index)
         return self._processing
 
     @classmethod

@@ -582,7 +582,7 @@ class LongitudinalCutProxy(object):
         return self.unproxified()
 
     def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None):
-        self.plane = plane
+        self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.start_x = start_x
         self.length = length
@@ -603,8 +603,9 @@ class LongitudinalCutProxy(object):
 
         """
         if not self._processing:
+            plane = self.plane.transformed(self.beam.modeltransformation)
             self._processing = LongitudinalCut.from_plane_and_beam(
-                self.plane,
+                plane,
                 self.beam,
                 self.start_x,
                 self.length,

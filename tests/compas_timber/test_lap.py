@@ -8,12 +8,15 @@ from compas.geometry import Polyhedron
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Vector
+from compas.geometry import Transformation
 
 from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import OrientationType
+
+from compas_timber.fabrication.lap import LapProxy
 
 
 @pytest.fixture
@@ -320,3 +323,118 @@ def test_lap_scaled():
     assert scaled_instance.lead_inclination == instance.lead_inclination
     assert scaled_instance.machining_limits == instance.machining_limits
     assert scaled_instance.ref_side_index == instance.ref_side_index
+
+
+
+def test_lap_from_polyhedron_transforms_with_beam(tol):
+    centerline = Line(Point(x=598.9718391480744, y=442.07491356492113, z=-43.147538325873505), Point(x=439.346903483214, y=-335.92694125538884, z=69.2873648757245))
+    cross_section = [60, 60]
+    z_vector = Vector(x=-0.379, y=0.208, z=0.902)
+    beam_a = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector)
+    beam_b = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector)
+
+    polyhedron = Polyhedron(
+        vertices=(
+            Point(x=538.7940634854756, y=-30.0, z=17.375355587655925),
+            Point(x=560.2327136921036, y=-30.0, z=-30.0),
+            Point(x=545.7550689114237, y=30.0, z=20.525401820812363),
+            Point(x=568.6192015970676, y=30.0, z=-30.0),
+            Point(x=490.65016682732494, y=30.0, z=-4.4110805717187915),
+            Point(x=502.22985601347585, y=30.0, z=-30.0),
+            Point(x=483.6891614013768, y=-30.0, z=-7.561126804875222),
+            Point(x=493.8433681085121, y=-30.0, z=-30.0),
+        ),
+        faces=[[1, 7, 5, 3], [0, 2, 4, 6], [1, 3, 2, 0], [3, 5, 4, 2], [5, 7, 6, 4], [7, 1, 0, 6]],
+    )
+
+    # Lap instances
+    instance_a = Lap.from_volume_and_beam(polyhedron, beam_a, ref_side_index=0)
+    instance_b = Lap.from_volume_and_beam(polyhedron, beam_b, ref_side_index=0)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # properties should be the same after transformation
+    assert tol.is_close(instance_a.start_x, instance_b.start_x)
+    assert tol.is_close(instance_a.start_y, instance_b.start_y)
+    assert tol.is_close(instance_a.angle, instance_b.angle)
+    assert tol.is_close(instance_a.inclination, instance_b.inclination)
+    assert tol.is_close(instance_a.slope, instance_b.slope)
+    assert tol.is_close(instance_a.length, instance_b.length)
+    assert tol.is_close(instance_a.width, instance_b.width)
+    assert tol.is_close(instance_a.depth, instance_b.depth)
+    assert tol.is_close(instance_a.lead_angle, instance_b.lead_angle)
+    assert tol.is_close(instance_a.lead_inclination, instance_b.lead_inclination)
+    assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
+
+    # volumes should transform correctly
+    volume_a = instance_a.volume_from_params_and_beam(beam_a)
+    volume_b = instance_b.volume_from_params_and_beam(beam_b)
+
+    volume_a.transform(transformation)
+
+    vertices_a, faces_a = volume_a.to_vertices_and_faces()
+    vertices_b, faces_b = volume_b.to_vertices_and_faces()
+
+    assert len(vertices_a) == len(vertices_b)
+    for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        assert tol.is_allclose(vertex_a, vertex_b)
+
+
+def test_lap_proxy_transforms_with_beam(tol):
+    centerline = Line(Point(x=598.9718391480744, y=442.07491356492113, z=-43.147538325873505), Point(x=439.346903483214, y=-335.92694125538884, z=69.2873648757245))
+    cross_section = [60, 60]
+    z_vector = Vector(x=-0.379, y=0.208, z=0.902)
+    beam_a = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector)
+    beam_b = Beam.from_centerline(centerline, cross_section[0], cross_section[1], z_vector)
+
+    polyhedron = Polyhedron(
+        vertices=(
+            Point(x=538.7940634854756, y=-30.0, z=17.375355587655925),
+            Point(x=560.2327136921036, y=-30.0, z=-30.0),
+            Point(x=545.7550689114237, y=30.0, z=20.525401820812363),
+            Point(x=568.6192015970676, y=30.0, z=-30.0),
+            Point(x=490.65016682732494, y=30.0, z=-4.4110805717187915),
+            Point(x=502.22985601347585, y=30.0, z=-30.0),
+            Point(x=483.6891614013768, y=-30.0, z=-7.561126804875222),
+            Point(x=493.8433681085121, y=-30.0, z=-30.0),
+        ),
+        faces=[[1, 7, 5, 3], [0, 2, 4, 6], [1, 3, 2, 0], [3, 5, 4, 2], [5, 7, 6, 4], [7, 1, 0, 6]],
+    )
+
+    # LapProxy instances
+    instance_a = LapProxy(polyhedron, beam_a, ref_side_index=0)
+    instance_b = LapProxy(polyhedron, beam_b, ref_side_index=0)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    # unproxify to get the actual Lap instances
+    lap_a = instance_a.unproxified()
+    lap_b = instance_b.unproxified()
+
+    # properties should be the same after transformation
+    assert tol.is_close(lap_a.start_x, lap_b.start_x)
+    assert tol.is_close(lap_a.start_y, lap_b.start_y)
+    assert tol.is_close(lap_a.angle, lap_b.angle)
+    assert tol.is_close(lap_a.inclination, lap_b.inclination)
+    assert tol.is_close(lap_a.slope, lap_b.slope)
+    assert tol.is_close(lap_a.length, lap_b.length)
+    assert tol.is_close(lap_a.width, lap_b.width)
+    assert tol.is_close(lap_a.depth, lap_b.depth)
+    assert tol.is_close(lap_a.lead_angle, lap_b.lead_angle)
+    assert tol.is_close(lap_a.lead_inclination, lap_b.lead_inclination)
+    assert tol.is_close(lap_a.ref_side_index, lap_b.ref_side_index)
+
+    # volumes should transform correctly
+    volume_a = lap_a.volume_from_params_and_beam(beam_a)
+    volume_b = lap_b.volume_from_params_and_beam(beam_b)
+
+    volume_a.transform(transformation)
+
+    vertices_a, faces_a = volume_a.to_vertices_and_faces()
+    vertices_b, faces_b = volume_b.to_vertices_and_faces()
+
+    assert len(vertices_a) == len(vertices_b)
+    for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        assert tol.is_allclose(vertex_a, vertex_b)
