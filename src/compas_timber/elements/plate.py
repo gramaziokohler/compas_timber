@@ -120,10 +120,9 @@ class Plate(PlateGeometry, TimberElement):
             The blank box of the plate.
         """
         box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
-        box.translate(self.frame.point - box.points[0])
         box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
         box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
-        return box
+        return box.transformed(self.modeltransformation)
 
     @property
     def blank_length(self):
