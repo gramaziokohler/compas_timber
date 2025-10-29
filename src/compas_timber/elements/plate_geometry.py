@@ -362,9 +362,9 @@ class PlateGeometry(object):
         # transform frame back to global space
         frame.transform(transform_to_world_xy.inverse())
         # move outlines to +XY
-        vector_to_XY = Vector.from_start_end(box.points[0], Point(0, 0, 0))
-        local_outline_a = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_a.points])
-        local_outline_b = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_b.points])
+        vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
+        local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
+        local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
         openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,
