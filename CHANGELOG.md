@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `PlateGeometry` class.
-
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
@@ -20,8 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 
 ### Changed
-* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
-* Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
+* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.

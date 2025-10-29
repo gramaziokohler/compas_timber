@@ -84,49 +84,19 @@ class TimberElement(Element):
 
     @property
     def is_beam(self):
-        """Check if this element is a beam.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_plate(self):
-        """Check if this element is a plate.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_group_element(self):
-        """Check if this element can be used as a container for other elements.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
 
     @property
     def features(self):
-        """List of features applied to this element.
-
-        Returns
-        -------
-        list[:class:`~compas_timber.fabrication.Feature`]
-            The features applied to this element.
-        """
-        # type: () -> list[Feature]
-        """A list of features applied to the element."""
         return self._features
 
     @features.setter

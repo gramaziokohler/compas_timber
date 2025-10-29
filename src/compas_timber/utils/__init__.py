@@ -499,7 +499,16 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
 
 
 def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to the intersection with a plane."""
+    """Move a segment of a polyline to lay on a given plane. this is accomplished by extending the adjacent segments to intersect with the plane.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    plane : :class:`~compas.geometry.Plane`
+        The plane to intersect with.
+    """
     start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
     if start_pt:
         polyline[segment_index] = start_pt

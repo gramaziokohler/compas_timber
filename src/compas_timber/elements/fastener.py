@@ -63,24 +63,10 @@ class Fastener(Element):
 
     @property
     def is_fastener(self):
-        """Check if this element is a fastener.
-
-        Returns
-        -------
-        bool
-            Always True for fasteners.
-        """
         return True
 
     @property
     def key(self):
-        """The graph node key of this fastener.
-
-        Returns
-        -------
-        int or None
-            The graph node key, or None if not set.
-        """
         # type: () -> int | None
         return self.graphnode
 
@@ -92,7 +78,7 @@ class Fastener(Element):
             "interfaces": self.interfaces,
         }
 
-    def compute_geometry(self):
+    def compute_elementgeometry(self):
         """Returns the geometry of the fastener in the model.
 
         Returns
