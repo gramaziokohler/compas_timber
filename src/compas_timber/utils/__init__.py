@@ -20,6 +20,8 @@ from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
+from compas.geometry import intersection_line_segment
+from compas.geometry import intersection_line_line
 
 from compas.tolerance import TOL
 
@@ -378,8 +380,8 @@ def correct_polyline_direction(polyline, normal_vector, clockwise=False):
 
 
 def get_polyline_segment_perpendicular_vector(polyline, segment_index):
-    """Get the vector perpendicular to a polyline segment. This vector points outside of the polyline.
-    The polyline must be closed.
+    """Get the unitized vector perpendicular to a polyline segment. This vector points outside of the polyline.
+    The polyline must be closed and planar.
 
     Parameters
     ----------
@@ -399,8 +401,8 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
     perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
     point = pt + (perp_vector * 0.1)
     if is_point_in_polyline(point, polyline):
-        return Vector.from_start_end(point, pt)
-    return Vector.from_start_end(pt, point)
+        return Vector.from_start_end(point, pt).unitized()
+    return Vector.from_start_end(pt, point).unitized()
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
@@ -572,6 +574,17 @@ def split_beam_at_lengths(beam, lengths):
         new_beam.frame.translate(beam.frame.xaxis * length)
         beams.insert(1, new_beam)
     return beams
+
+def extend_lines_pairwise(segs):
+    for i in range(len(segs)):
+        seg_a = segs[i-1]
+        seg_b = segs[i]
+        intersection = intersection_line_line(seg_a, seg_b)
+        if intersection:
+            pt = intersection[0]
+            seg_a.end = pt
+            seg_b.start = pt
+
 
 __all__ = [
     "intersection_line_line_param",
