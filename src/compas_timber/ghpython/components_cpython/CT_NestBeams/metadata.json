@@ -38,6 +38,10 @@
             {
                 "name": "NestingResult",
                 "description": "NestingResult object containing details of the nesting operation."
+            },
+            {
+                "name": "Summary",
+                "description": "A human-readable summary of the nesting result."
             }
         ]
     }

@@ -20,17 +20,11 @@
                 "description": "List of values representing the cross-section dimensions of the beam stock.",
                 "typeHintID": "float",
                 "scriptParamAccess": 2
-            },
-            {
-                "name": "spacing",
-                "description": "Spacing between beams in the stock accounting for cutting operations.",
-                "typeHintID": "float",
-                "scriptParamAccess": 1
             }
         ],
         "outputParameters": [
             {
-                "name": "Stock",
+                "name": "BeamStock",
                 "description": "Stock object representing the beam stock."
             }
         ]
