@@ -18,8 +18,12 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping element GUIDs to a dict with:
+            'frame': assigned position frame (Frame)
+            'length': element length (float)
+            'key': graphnode key
+
 
     Attributes
     ----------
@@ -31,8 +35,11 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame]
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping element GUIDs to a dict with:
+            'frame': assigned position frame (Frame)
+            'length': element length (float)
+            'key': graphnode key
     """
 
     def __init__(self, length, width, height, spacing=0.0, element_data=None):
@@ -41,7 +48,7 @@ class Stock(Data):
         self.width = width
         self.height = height
         self.spacing = spacing
-        self.element_data = element_data or {}  # {guid: Frame}
+        self.element_data = element_data or {}  # {guid: {"frame": Frame, "key": graphnode_key, "cut_position": float}}
 
     @property
     def __data__(self):
@@ -113,8 +120,11 @@ class BeamStock(Stock):
         Cross-section dimensions (width, height).
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping element GUIDs to a dict with:
+            'frame': assigned position frame (Frame)
+            'length': element length (float)
+            'key': graphnode key
 
 
     Attributes
@@ -125,8 +135,11 @@ class BeamStock(Stock):
         Cross-section dimensions sorted in ascending order for consistent comparison.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping element GUIDs to a dict with:
+            'frame': assigned position frame (Frame)
+            'length': element length (float)
+            'key': graphnode key
     """
 
     def __init__(self, length, cross_section, spacing=0.0, element_data=None):
@@ -203,9 +216,9 @@ class BeamStock(Stock):
             raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
-        # Store element data
-        self.element_data[str(beam.guid)] = position_frame
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
+        # Store element data with frame, blank length and graphnode key
+        self.element_data[str(beam.guid)] = {"frame": position_frame, "length": beam.blank_length, "key": beam.graphnode}
 
     def _get_position_frame(self, beam):
         """
@@ -297,6 +310,8 @@ class NestingResult(Data):
         Total material volume across all stocks in cubic millimeters
     total_stock_pieces : dict
         Detailed report of stock pieces needed with their dimensions
+    summary : str
+        Human-readable summary of the nesting result
     """
 
     def __init__(self, stocks):
@@ -341,6 +356,32 @@ class NestingResult(Data):
             stock_report[stock_type][dimensions_key] += 1
 
         return stock_report
+
+    @property
+    def summary(self):
+        """Return a human-readable summary of the nesting result."""
+        lines = []
+        for i, stock in enumerate(self.stocks, 1):
+            lines.append(f"{stock.__class__.__name__} {i}:")
+            if isinstance(stock, BeamStock):
+                lines.append(f"Dimensions: {int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}mm")
+                beam_keys = []
+                lengths = []
+                for data in stock.element_data.values():
+                    key = data.get("key", None)
+                    length = data.get("length", None)
+                    beam_keys.append(key)
+                    lengths.append(int(length))
+                waste = stock.length - sum(lengths) if lengths else stock.length
+                # Formatted output
+                lines.append(f"BeamKeys {beam_keys}")
+                lines.append(f"BeamLengths: {lengths}")
+                lines.append(f"Waste(mm): {int(waste)}")
+                lines.append(f"Spacing(mm): {stock.spacing}")
+                lines.append("--------")
+            else:
+                raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
+        return "\n".join(lines)
 
 
 class BeamNester(object):
