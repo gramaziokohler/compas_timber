@@ -1,6 +1,9 @@
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Frame
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
@@ -55,3 +58,26 @@ def test_plate_blank():
     assert blank.ysize == 21, "Expected blank ysize to be 21"
     assert blank.zsize == 1, "Expected blank zsize to be 1"
     assert blank.frame.point == Point(5.5, 10.5, 0.5), "Expected blank center to match plate center"
+
+
+def test_plate_serialization():
+    plate = Plate(Frame.worldXY(), 10, 20, 1)
+    plate = json_loads(json_dumps(plate))
+    assert plate.frame == Frame.worldXY()
+    assert plate.length == 10
+    assert plate.width == 20
+    assert plate.thickness == 1
+
+
+def test_sloped_plate_serialization():
+    polyline_a = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate = Plate.from_outline_thickness(polyline_a, 1)
+
+    plate_copy = json_loads(json_dumps(plate))
+
+    assert plate.frame.point == plate_copy.frame.point, "Expected plate frame to match input polyline"
+    assert all([TOL.is_allclose(plate.outline_a.points[i], polyline_a.points[i]) for i in range(len(plate.outline_a.points))]), "Expected plate to match input polyline"
+    assert all([TOL.is_allclose(plate_copy.outline_a.points[i], polyline_a.points[i]) for i in range(len(plate.outline_a.points))]), "Expected plate to match input polyline"
+    assert TOL.is_close(plate.thickness, plate_copy.thickness), "Expected plate thickness to match input thickness"
+    assert TOL.is_close(plate.length, plate_copy.length), "Expected plate length to be 10*sqrt(2)"
+    assert TOL.is_close(plate.width, plate_copy.width), "Expected plate width to be 20"

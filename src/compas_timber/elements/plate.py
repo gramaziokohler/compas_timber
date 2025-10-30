@@ -38,10 +38,6 @@ class Plate(PlateGeometry, TimberElement):
     ----------
     frame : :class:`~compas.geometry.Frame`
         The coordinate system (frame) of this plate.
-    outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate.
     length : float
         Length of the plate.
     width : float
@@ -50,20 +46,18 @@ class Plate(PlateGeometry, TimberElement):
         Height of the plate (same as thickness).
     thickness : float
         Thickness of the plate.
+    outline_a : :class:`~compas.geometry.Polyline`
+        A line representing the principal outline of this plate.
+    outline_b : :class:`~compas.geometry.Polyline`
+        A line representing the associated outline of this plate.
     is_plate : bool
         Always True for plates.
     blank : :class:`~compas.geometry.Box`
         A feature-less box representing the material stock geometry to produce this plate.
     blank_length : float
         Length of the plate blank.
-    features : list[:class:`~compas_timber.fabrication.Feature`]
+    features : list[:class:`~compas_timber.fabrication.BTLxProcessing`]
         List of features applied to this plate.
-    shape : :class:`~compas.geometry.Brep`
-        The geometry of the Plate before other machining features are applied.
-    ref_frame : :class:`~compas.geometry.Frame`
-        Reference frame for machining processings according to BTLx standard.
-    ref_sides : tuple[:class:`~compas.geometry.Frame`, ...]
-        A tuple containing the 6 frames representing the sides of the plate according to BTLx standard.
     key : int, optional
         Once plate is added to a model, it will have this model-wide-unique integer key.
 
@@ -71,10 +65,9 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def __data__(self):
-        data = TimberElement.__data__(self)
-        data["outline_a"] = self.outline_a
-        data["outline_b"] = self.outline_b
-        data["openings"] = [o.__data__ for o in self.openings]
+        data = TimberElement.__data__.fget(self)
+        data["thickness"] = data.pop("height")
+        data.update(PlateGeometry.__data__.fget(self))
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, **kwargs):
@@ -87,6 +80,7 @@ class Plate(PlateGeometry, TimberElement):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self._blank = None  # TODO: remove after #586 merged
 
     def __repr__(self):
         # type: () -> str
@@ -101,49 +95,23 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def is_plate(self):
-        """Check if this element is a plate.
-
-        Returns
-        -------
-        bool
-            Always True for plates.
-        """
         return True
 
     @property
     def blank(self):
-        """A feature-less box representing the material stock geometry to produce this plate.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Box`
-            The blank box of the plate.
-        """
-        box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
-        box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
-        box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
-        return box.transformed(self.modeltransformation)
+        if not self._blank:
+            box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
+            box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
+            box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
+            self._blank = box.transformed(self.modeltransformation)
+        return self._blank
 
     @property
     def blank_length(self):
-        """Length of the plate blank.
-
-        Returns
-        -------
-        float
-            The length of the blank.
-        """
         return self.blank.xsize
 
     @property
     def features(self):
-        """All features of the plate including outline, openings, and user-defined features.
-
-        Returns
-        -------
-        list[:class:`~compas_timber.fabrication.Feature`]
-            A list of all features applied to this plate.
-        """
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
@@ -169,7 +137,7 @@ class Plate(PlateGeometry, TimberElement):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    def compute_geometry(self, include_features=True):
+    def compute_elementgeometry(self, include_features=True):
         # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
         """Compute the geometry of the element.
 
@@ -186,7 +154,7 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.shape
+        plate_geo = self.calculate_shape()
         if include_features:
             for feature in self._features:
                 try:
