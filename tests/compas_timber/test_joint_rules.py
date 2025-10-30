@@ -570,3 +570,21 @@ def test_joints_created_with_y_topo_cluster(K_beams):
     assert len(model.joints) == 3
     assert any([isinstance(j, LButtJoint) for j in model.joints])
     assert any([isinstance(j, TButtJoint) for j in model.joints])
+
+def test_joints_created_with_y_topo_cluster_l_fails(K_beams):
+    rules = [
+        TopologyRule(JointTopology.TOPO_T, TButtJoint),
+    ]
+    model = TimberModel()
+    model.add_elements(K_beams)
+
+    clusters = get_clusters_from_model(model)
+    assert len(clusters) == 1
+    assert clusters[0].topology == JointTopology.TOPO_K
+    assert len(clusters[0].joints) == 3
+
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(unjoined_clusters) == 1
+    assert len(model.joints) == 2
+    assert all([isinstance(j, TButtJoint) for j in model.joints])
