@@ -399,8 +399,8 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
     perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
     point = pt + (perp_vector * 0.1)
     if is_point_in_polyline(point, polyline):
-        return Vector.from_start_end(point, pt)
-    return Vector.from_start_end(pt, point)
+        return Vector.from_start_end(point, pt).unitized()
+    return Vector.from_start_end(pt, point).unitized()
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):

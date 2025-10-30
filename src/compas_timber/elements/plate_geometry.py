@@ -117,11 +117,11 @@ class PlateGeometry(object):
     def edge_planes(self):
         _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
-            frame = self._extension_planes.get(i, None)
-            if not frame:
-                frame = Frame.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
-                frame = self.corrected_edge_plane(i, frame)
-            _edge_planes[i] = Plane.from_frame(frame)
+            plane = self._extension_planes.get(i, None)
+            if not plane:
+                plane = Plane.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
+                plane = self.corrected_edge_plane(i, plane)
+            _edge_planes[i] = plane
         return _edge_planes
 
     def set_extension_plane(self, edge_index, plane):
