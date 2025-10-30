@@ -244,7 +244,6 @@ class PlateGeometry(object):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    @property
     def calculate_shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.

@@ -154,7 +154,7 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.calculate_shape
+        plate_geo = self.calculate_shape()
         if include_features:
             for feature in self._features:
                 try:

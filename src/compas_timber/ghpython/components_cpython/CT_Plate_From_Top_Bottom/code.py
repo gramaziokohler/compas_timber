@@ -49,9 +49,7 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
             update_rhobj_attributes_name(t_guid, "category", category)
 
         scene.add(plate.calculate_shape())
-
         geo = scene.draw()
-
         return plate, geo
 
     def _get_guid_and_geometry(self, line):  # TODO: move to ghpython_helpers
