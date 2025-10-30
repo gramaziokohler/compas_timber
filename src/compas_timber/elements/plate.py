@@ -80,7 +80,7 @@ class Plate(PlateGeometry, TimberElement):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self._blank = None #TODO: remove after #586 merged
+        self._blank = None  # TODO: remove after #586 merged
 
     def __repr__(self):
         # type: () -> str

@@ -144,7 +144,7 @@ class PlateGeometry(object):
         if edge_index is None:
             self._extension_planes = {}
         elif edge_index in self._extension_planes:
-                del self._extension_planes[edge_index]
+            del self._extension_planes[edge_index]
 
     @reset_computed
     def reset(self):
