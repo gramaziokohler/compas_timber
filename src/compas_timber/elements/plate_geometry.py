@@ -59,10 +59,7 @@ class PlateGeometry(object):
 
     @property
     def __data__(self):
-        data = super(PlateGeometry, self).__data__
-        data["local_outline_a"] = self._original_outlines[0]
-        data["local_outline_b"] = self._original_outlines[1]
-        data["openings"] = self.openings
+        data = {"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1], "openings": self.openings}
         return data
 
     def __init__(self, local_outline_a, local_outline_b, openings=None):
@@ -73,7 +70,6 @@ class PlateGeometry(object):
         self._planes = None
         self.openings = openings or []
         self._extension_planes = {}
-        self.test = []
 
     def __repr__(self):
         # type: () -> str
@@ -88,57 +84,22 @@ class PlateGeometry(object):
 
     @property
     def outlines(self):
-        """The outlines of the plate.
-
-        Returns
-        -------
-        tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
-            A tuple containing outline_a and outline_b.
-        """
         return (self.outline_a, self.outline_b)
 
     @property
     def outline_a(self):
-        """The principal outline of the plate.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Polyline`
-            The principal outline of the plate.
-        """
         return self._mutable_outlines[0].transformed(self.modeltransformation)
 
     @property
     def outline_b(self):
-        """The associated outline of the plate.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Polyline`
-            The associated outline of the plate.
-        """
         return self._mutable_outlines[1].transformed(self.modeltransformation)
 
     @property
     def thickness(self):
-        """The thickness of the plate.
-
-        Returns
-        -------
-        float
-            The thickness of the plate (same as height).
-        """
         return self.height
 
     @property
     def planes(self):
-        """The top and bottom planes of the plate.
-
-        Returns
-        -------
-        tuple[:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`]
-            The top and bottom planes of the plate.
-        """
         if not self._planes:
             planes = (Plane.worldXY(), Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)))
             self._planes = (planes[0].transformed(self.modeltransformation), planes[1].transformed(self.modeltransformation))
@@ -146,41 +107,34 @@ class PlateGeometry(object):
 
     @property
     def normal(self):
-        """Normal vector of the plate."""
         return Vector(0, 0, 1).transformed(self.modeltransformation)
 
     @property
     def local_outlines(self):
-        """Returns the local outlines of the plate."""
         return self._mutable_outlines
 
     @property
     def edge_planes(self):
-        """Frames representing the edge planes of the plate in local space.
-
-        Returns
-        -------
-        dict:
-            A dict of frames representing the edge planes of the plate.
-        """
         _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
-            frame = self._extension_planes.get(i, None)
-            if not frame:
-                frame = Frame.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
-                frame = self.corrected_edge_plane(i, frame)
-            _edge_planes[i] = Plane.from_frame(frame)
+            plane = self._extension_planes.get(i, None)
+            if not plane:
+                plane = Plane.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
+                plane = self.corrected_edge_plane(i, plane)
+            _edge_planes[i] = plane
         return _edge_planes
 
     def set_extension_plane(self, edge_index, plane):
-        self._extension_planes[edge_index] = self.corrected_edge_plane(edge_index, plane)
+        """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
+        self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
-    def corrected_edge_plane(self, edge_index, plane):
+    def _corrected_edge_plane(self, edge_index, plane):
         if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
             return Plane(plane.point, -plane.normal)
         return plane
 
     def apply_edge_extensions(self):
+        """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
         for edge_index, plane in self._extension_planes.items():
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
@@ -309,9 +263,6 @@ class PlateGeometry(object):
             plate_geo -= brep
         return plate_geo
 
-    def compute_elementgeometry(self):
-        return self.shape
-
     def compute_aabb(self, inflate=0.0):
         # type: (float) -> compas.geometry.Box
         """Computes the Axis Aligned Bounding Box (AABB) of the element.
@@ -411,9 +362,9 @@ class PlateGeometry(object):
         # transform frame back to global space
         frame.transform(transform_to_world_xy.inverse())
         # move outlines to +XY
-        vector_to_XY = Vector.from_start_end(box.points[0], Point(0, 0, 0))
-        local_outline_a = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_a.points])
-        local_outline_b = Polyline([pt.translated(vector_to_XY) for pt in rebased_pline_b.points])
+        vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
+        local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
+        local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
         openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,

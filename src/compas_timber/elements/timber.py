@@ -84,49 +84,20 @@ class TimberElement(Element):
 
     @property
     def is_beam(self):
-        """Check if this element is a beam.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_plate(self):
-        """Check if this element is a plate.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_group_element(self):
-        """Check if this element can be used as a container for other elements.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
 
     @property
     def features(self):
-        """List of features applied to this element.
-
-        Returns
-        -------
-        list[:class:`~compas_timber.fabrication.Feature`]
-            The features applied to this element.
-        """
-        # type: () -> list[Feature]
-        """A list of features applied to the element."""
+        # type: () -> list[BTLxProcessing]
         return self._features
 
     @features.setter
@@ -190,13 +161,13 @@ class TimberElement(Element):
 
     @reset_computed
     def add_features(self, features):
-        # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the element.
+        # type: (BTLxProcessing | list[BTLxProcessing]) -> None
+        """Adds one or more features to the beam.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`]
-            The features to be added.
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature or features to be added described as a BTLxProcessing or a list of BTLxProcessings.
 
         """
         if not isinstance(features, list):
@@ -206,13 +177,14 @@ class TimberElement(Element):
 
     @reset_computed
     def remove_features(self, features=None):
-        # type: (None | Feature | list[Feature]) -> None
-        """Removes features from the element.
+        # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
+        """Removes a feature from the beam.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`], optional
-            The features to be removed. If None, all features will be removed.
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
+            The feature or features to be removed described as a BTLxProcessing or a list of BTLxProcessings.
+            If None, all features will be removed.
 
         """
         if features is None:
