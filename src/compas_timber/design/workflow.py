@@ -7,6 +7,7 @@ from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
+from compas_timber.connections import Cluster
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
 
@@ -130,7 +131,12 @@ class JointRuleSolver(object):
                     self.joining_errors.append(error)  # should only happen with direct rules
                     break
             if not promoted:
-                remaining_clusters.append(cluster)
+                if len(cluster.joints) > 1:
+                    sub_clusters = [Cluster([j]) for j in cluster.joints]
+                    sub_remaining_clusters = self._joints_from_rules_and_clusters(model, rules, sub_clusters, max_distance=max_distance)
+                    remaining_clusters.extend(sub_remaining_clusters)
+                else:
+                    remaining_clusters.append(cluster)
         return remaining_clusters
 
 
