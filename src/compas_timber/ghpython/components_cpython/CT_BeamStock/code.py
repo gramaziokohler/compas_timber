@@ -19,6 +19,10 @@ class BeamStock(Grasshopper.Kernel.GH_ScriptInstance):
         length = list(length)
         cross_section = tree_to_list(cross_section)
 
+        # If user passes a flat list, nest it
+        if all(isinstance(x, float) for x in cross_section):
+            cross_section = [cross_section]
+
         for cs in cross_section:
             if len(cs) != 2:
                 ghenv.Component.AddRuntimeMessage(
