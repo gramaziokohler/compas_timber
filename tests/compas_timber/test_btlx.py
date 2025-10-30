@@ -1,5 +1,6 @@
 import os
 import pytest
+from unittest.mock import patch
 
 from compas.data import json_load
 from compas.tolerance import Tolerance
@@ -21,23 +22,23 @@ from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
 
 
-@pytest.fixture
-def test_model(mocker):
-    mocker.patch("compas_timber.connections.Joint.add_features")
+@pytest.fixture(scope="module")
+def test_model():
     model_path = os.path.join(compas_timber.DATA, "model_test.json")
     model = json_load(model_path)
-    model.process_joinery()
+    with patch("compas_timber.connections.Joint.add_features"):
+        model.process_joinery()
     return model
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def expected_btlx():
     btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
     with open(btlx_path, "r", encoding="utf-8") as btlx:
         return ET.fromstring(btlx.read())
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def resulting_btlx(test_model):
     writer = BTLxWriter()
     resulting_btlx_str = writer.model_to_xml(test_model)
