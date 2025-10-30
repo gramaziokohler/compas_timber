@@ -1,9 +1,9 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Frame
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-
 from .plate_geometry import PlateGeometry
 
 
@@ -89,8 +89,9 @@ class Slab(PlateGeometry, Element):
 
     @property
     def __data__(self):
-        data = Element.__data__(self)
-        data.update(PlateGeometry.__data__(self))
+        data = Element.__data__.fget(self)
+        data.update(PlateGeometry.__data__.fget(self))
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
