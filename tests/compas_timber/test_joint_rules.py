@@ -122,9 +122,9 @@ def Y_beams():
         Line(Point(0, 0, 0), Point(1, 0, 0)),
         Line(Point(0, 0, 0), Point(0, 1, 0)),
         Line(Point(0, 0, 0), Point(-1, -1, 0)),
-
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
+
 
 @pytest.fixture
 def K_beams():
@@ -140,10 +140,8 @@ def K_beams():
         Line(Point(0, 0, 0), Point(1, 0, 0)),
         Line(Point(0, -1, 0), Point(0, 1, 0)),
         Line(Point(0, 0, 0), Point(-1, -1, 0)),
-
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
-
 
 
 def test_joints_from_beams_and_rules_with_no_max_distance(separated_beams):
@@ -533,6 +531,7 @@ def test_plate_rules_priority():
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
     )
 
+
 def test_joints_created_with_y_topo_cluster(Y_beams):
     rules = [
         TopologyRule(JointTopology.TOPO_L, LButtJoint),
@@ -551,7 +550,8 @@ def test_joints_created_with_y_topo_cluster(Y_beams):
     assert len(model.joints) == 3
     assert all([isinstance(j, LButtJoint) for j in model.joints])
 
-def test_joints_created_with_y_topo_cluster(K_beams):
+
+def test_joints_created_with_k_topo_cluster(K_beams):
     rules = [
         TopologyRule(JointTopology.TOPO_L, LButtJoint),
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
@@ -571,7 +571,8 @@ def test_joints_created_with_y_topo_cluster(K_beams):
     assert any([isinstance(j, LButtJoint) for j in model.joints])
     assert any([isinstance(j, TButtJoint) for j in model.joints])
 
-def test_joints_created_with_y_topo_cluster_l_fails(K_beams):
+
+def test_joints_created_with_k_topo_cluster_l_fails(K_beams):
     rules = [
         TopologyRule(JointTopology.TOPO_T, TButtJoint),
     ]

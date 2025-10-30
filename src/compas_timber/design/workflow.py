@@ -1,5 +1,6 @@
 from compas.tolerance import TOL
 
+from compas_timber.connections import Cluster
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import MaxNCompositeAnalyzer
@@ -7,7 +8,6 @@ from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import PlateTButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import XLapJoint
-from compas_timber.connections import Cluster
 from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import intersection_line_line_param
 
