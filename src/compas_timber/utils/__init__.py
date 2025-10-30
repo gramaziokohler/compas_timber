@@ -399,8 +399,8 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
     perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
     point = pt + (perp_vector * 0.1)
     if is_point_in_polyline(point, polyline):
-        return Vector.from_start_end(point, pt)
-    return Vector.from_start_end(pt, point)
+        return Vector.from_start_end(point, pt).unitized()
+    return Vector.from_start_end(pt, point).unitized()
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
@@ -499,7 +499,16 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
 
 
 def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to the intersection with a plane."""
+    """Move a segment of a polyline to lay on a given plane. this is accomplished by extending the adjacent segments to intersect with the plane.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    plane : :class:`~compas.geometry.Plane`
+        The plane to intersect with.
+    """
     start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
     if start_pt:
         polyline[segment_index] = start_pt
