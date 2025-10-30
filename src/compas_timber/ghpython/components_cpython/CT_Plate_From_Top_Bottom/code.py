@@ -48,7 +48,7 @@ class PlateFromTopBottom(Grasshopper.Kernel.GH_ScriptInstance):
             update_rhobj_attributes_name(b_guid, "outline_b", str(bottom_line))
             update_rhobj_attributes_name(t_guid, "category", category)
 
-        scene.add(plate.calculate_shape())
+        scene.add(plate.compute_shape())
         geo = scene.draw()
         return plate, geo
 
