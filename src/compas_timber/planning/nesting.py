@@ -2,6 +2,7 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
+from compas.tolerance import TOL
 
 
 class Stock(Data):
@@ -213,7 +214,7 @@ class BeamStock(Stock):
             If beam doesn't fit in remaining space
         """
         if not self.can_fit_element(beam):
-            warn(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
+            warn(f"Beam with length {round(beam.blank_length, 1)} doesn't fit in remaining space {self._remaining_length}")
             return
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
@@ -302,11 +303,14 @@ class NestingResult(Data):
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
-
+    tolerance : :class:`~compas.tolerance.Tolerance`, optional
+        The tolerance configuration used for this model. TOL if none provided.
     Attributes
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
+    tolerance : :class:`~compas.tolerance.Tolerance`
+        The tolerance configuration used for this model. TOL if none provided.
     total_material_volume : float
         Total material volume across all stocks in cubic millimeters
     total_stock_pieces : dict
@@ -315,13 +319,16 @@ class NestingResult(Data):
         Human-readable summary of the nesting result
     """
 
-    def __init__(self, stocks):
+    def __init__(self, stocks, tolerance=None):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
+        self.tolerance = tolerance or TOL
+        if self.tolerance.unit == "MM":
+            self.tolerance.precision = 1
 
     @property
     def __data__(self):
-        return {"stocks": self.stocks}
+        return {"stocks": self.stocks, "tolerance": self.tolerance}
 
     @property
     def total_material_volume(self):
@@ -336,15 +343,21 @@ class NestingResult(Data):
         for stock in self.stocks:
             if isinstance(stock, BeamStock):
                 # Format: "60x120x2000mm" (width x height x length)
-                dimensions_key = f"{int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
+                )
                 stock_type = "BeamStock"
             elif isinstance(stock, PlateStock):
                 # Format: "1200x2400x18mm" (length x width x thickness)
-                dimensions_key = f"{int(stock.dimensions[0])}x{int(stock.dimensions[1])}x{int(stock.height)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.dimensions[0]), float(stock.dimensions[1]), float(stock.thickness), prec=self.tolerance.precision
+                )
                 stock_type = "PlateStock"
             else:
                 # Fallback for other stock types
-                dimensions_key = f"{int(stock.length)}x{int(stock.width)}x{int(stock.height)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.length), float(stock.width), float(stock.height), prec=self.tolerance.precision
+                )
                 stock_type = type(stock).__name__
 
             # Create nested structure: {stock_type: {dimensions: count}}
@@ -365,20 +378,24 @@ class NestingResult(Data):
         for i, stock in enumerate(self.stocks):
             lines.append(f"{stock.__class__.__name__} {i}:")
             if isinstance(stock, BeamStock):
-                lines.append(f"Dimensions: {int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}mm")
+                lines.append(
+                    "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                        self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
+                    )
+                )
                 beam_keys = []
                 lengths = []
                 for data in stock.element_data.values():
                     key = data.get("key", None)
                     length = data.get("length", None)
                     beam_keys.append(key)
-                    lengths.append(int(length))
+                    lengths.append(round(length, self.tolerance.precision))
                 waste = stock.length - sum(lengths) if lengths else stock.length
                 # Formatted output
                 lines.append(f"BeamKeys {beam_keys}")
-                lines.append(f"BeamLengths: {lengths}")
-                lines.append(f"Waste(mm): {int(waste)}")
-                lines.append(f"Spacing(mm): {stock.spacing}")
+                lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
+                lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
+                lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
                 lines.append("--------")
             else:
                 raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
@@ -460,7 +477,7 @@ class BeamNester(object):
             # Collect unique cross-sections from unnested beams
             beam_details = set((beam.width, beam.height) for beam in unnested_beams)
             # Format each cross-section as a string
-            formatted_sections = ["{}x{}mm".format(int(width), int(height)) for width, height in beam_details]
+            formatted_sections = ["{}x{}{}".format(round(width, 1), round(height, 1), self.model.tolerance.unit) for width, height in beam_details]
 
             warn(
                 "Found {} beam(s) incompatible with available stock catalog. Beams with the following cross-sections will be skipped during nesting: {}".format(  # noqa: E501
@@ -497,7 +514,7 @@ class BeamNester(object):
             # Add to overall result
             nesting_stocks.extend(stocks)
 
-        return NestingResult(nesting_stocks)
+        return NestingResult(nesting_stocks, tolerance=self.model.tolerance)
 
     @staticmethod
     def _first_fit_decreasing(beams, stock, spacing=0.0):
