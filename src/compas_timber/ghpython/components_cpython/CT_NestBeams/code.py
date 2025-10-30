@@ -37,6 +37,9 @@ class BeamNester(Grasshopper.Kernel.GH_ScriptInstance):
             if w:
                 for warning in w:
                     ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, str(warning.message))
-                    nesting_summary += "\n\nWarnings:\n--------\n" + str(warning.message)
+                # Add warnings section to summary
+                nesting_summary += "\n\nWARNINGS:\n~~~~~~"
+                for i, warning in enumerate(w, 1):
+                    nesting_summary += f"\nWarning {i}:\n{str(warning.message)}\n--------"
 
         return nesting_result, nesting_summary
