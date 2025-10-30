@@ -213,7 +213,8 @@ class BeamStock(Stock):
             If beam doesn't fit in remaining space
         """
         if not self.can_fit_element(beam):
-            raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
+            warn(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
+            return
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
@@ -361,7 +362,7 @@ class NestingResult(Data):
     def summary(self):
         """Return a human-readable summary of the nesting result."""
         lines = []
-        for i, stock in enumerate(self.stocks, 1):
+        for i, stock in enumerate(self.stocks):
             lines.append(f"{stock.__class__.__name__} {i}:")
             if isinstance(stock, BeamStock):
                 lines.append(f"Dimensions: {int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}mm")
