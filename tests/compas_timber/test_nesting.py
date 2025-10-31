@@ -72,10 +72,14 @@ def test_beam_addition_and_capacity_tracking():
 
     expected_x_position1 = beam1.blank_length + stock.spacing
     expected_frame1 = Frame.worldXY()
+    element_info = stock.element_data[str(beam1.guid)]
 
     assert len(stock.element_data) == 1
     assert str(beam1.guid) in stock.element_data
-    assert stock.element_data[str(beam1.guid)] == expected_frame1
+    assert isinstance(element_info, dict)
+    assert element_info["frame"] == expected_frame1
+    assert element_info["key"] == beam1.graphnode
+    assert element_info["length"] == beam1.blank_length
     assert stock._current_x_position == expected_x_position1
 
     # Add second beam
@@ -85,10 +89,14 @@ def test_beam_addition_and_capacity_tracking():
     expected_frame2 = Frame.worldXY()
     expected_frame2.point.x = expected_x_position1
     expected_x_position2 = expected_x_position1 + beam2.blank_length + stock.spacing
+    element_info = stock.element_data[str(beam2.guid)]
 
     assert len(stock.element_data) == 2
     assert str(beam2.guid) in stock.element_data
-    assert stock.element_data[str(beam2.guid)] == expected_frame2
+    assert isinstance(element_info, dict)
+    assert element_info["frame"] == expected_frame2
+    assert element_info["key"] == beam2.graphnode
+    assert element_info["length"] == beam2.blank_length
     assert stock._current_x_position == expected_x_position2
 
 
@@ -139,8 +147,14 @@ def test_serialization():
     assert len(restored_data.element_data) == len(stock.element_data)
     assert str(beam1.guid) in restored_data.element_data
     assert str(beam2.guid) in restored_data.element_data
-    assert isinstance(restored_data.element_data[str(beam1.guid)], Frame)
-    assert isinstance(restored_data.element_data[str(beam2.guid)], Frame)
+    element_data1 = restored_data.element_data[str(beam1.guid)]
+    element_data2 = restored_data.element_data[str(beam2.guid)]
+    assert isinstance(element_data1["frame"], Frame)
+    assert element_data1["key"] == beam1.graphnode
+    assert element_data1["length"] == beam1.blank_length
+    assert isinstance(element_data2["frame"], Frame)
+    assert element_data2["key"] == beam2.graphnode
+    assert element_data2["length"] == beam2.blank_length
 
 
 # ============================================================================
@@ -192,7 +206,7 @@ def test_sort_beams_by_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Test sorting with warning capture
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
         stock_beam_map = nester._sort_beams_by_stock()
 
     # Check that compatible beams were sorted correctly
@@ -270,7 +284,7 @@ def test_nest_beams_no_compatible_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Should warn about incompatible beam cross-section
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
         nesting_result = nester.nest()
 
     # Should return empty list since no compatible stock
@@ -307,8 +321,8 @@ def test_nest_beams_multiple_incompatible_cross_sections():
         warning_message = str(w[0].message)
         assert "Found 3 beam(s) incompatible with available stock catalog" in warning_message
         # Should contain both unique cross-sections
-        assert "200x100mm" in warning_message
-        assert "150x80mm" in warning_message
+        assert "200x100M" in warning_message
+        assert "150x80M" in warning_message
 
 
 def test_nest_beams_empty_model():
@@ -404,7 +418,7 @@ def test_nest_method_with_incompatible_beams():
     nester = BeamNester(model, stock_catalog)
 
     # Should warn about incompatible beam
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
         nesting_result = nester.nest()
 
     # Should have one stock with only the compatible beam
@@ -446,8 +460,8 @@ def test_nesting_result_basic_properties():
     stock_pieces = result.total_stock_pieces
     assert isinstance(stock_pieces, dict)
     assert "BeamStock" in stock_pieces
-    assert "120x60x6000mm" in stock_pieces["BeamStock"]
-    assert stock_pieces["BeamStock"]["120x60x6000mm"] == 2  # 2 pieces of this dimension
+    assert "Dimensions(MM): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
 
 
 def test_nesting_result_serialization():
