@@ -97,8 +97,7 @@ class Slab(PlateGeometry, Element):
         data["name"] = self.name
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
-        transformation = Transformation.from_frame(frame) if frame else Transformation()
+    def __init__(self, transformation, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
         Element.__init__(self, transformation=transformation, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
@@ -197,6 +196,22 @@ class Slab(PlateGeometry, Element):
         """
         return True
 
+    def compute_modeltransformation(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
+
+    def compute_modelgeometry(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()
+
+    def compute_elementgeometry(self, include_features = False):
+        """Compute the geometry of the element at local coordinates."""
+        return self.compute_shape()
+
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
@@ -222,4 +237,5 @@ class Slab(PlateGeometry, Element):
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
+        kwargs["transformation"] = Transformation.from_frame(args["frame"])
         return cls(**kwargs)
