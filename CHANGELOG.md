@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
+* Fixed the `ShowTopologyTypes` GH Component.
 
 
 ### Removed
