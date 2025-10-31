@@ -15,6 +15,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
+from compas_timber.connections import SlabJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import WallJoint
 from compas_timber.elements import Beam
@@ -175,63 +176,6 @@ class TimberModel(Model):
     # Groups
     # =============================================================================
 
-    def add_group_element(self, element, name=None):
-        """Add an element which shall contain other elements.
-
-        The container element is added to the group as well.
-
-        TODO: upstream this to compas_model, maybe?
-        TODO: should this allow for assigning it a parent in the future?
-
-        Parameters
-        ----------
-        element : :class:`~compas_timber.elements.TimberElement`
-            The element to add to the group.
-        name : str, optional
-            The name of the group to add the element to. If not provided, the element's name is used.
-
-        Returns
-        -------
-        :class:`~compas_model.elements.Group`
-            The group element that was created and to which the element was added.
-
-        Raises
-        ------
-        ValueError
-            If the element is not a group element.
-            If the group name is not provided and the element has no name.
-            If a group with same name already exists in the model.
-
-        Examples
-        --------
-        >>> from compas_timber.elements import Beam, Wall
-        >>> from compas_timber.model import TimberModel
-        >>> model = TimberModel()
-        >>> wall1_group = model.add_group_element(Wall(5000, 200, 3000, name="wall1"))
-        >>> beam_a = Beam(Frame.worldXY(), 100, 200, 300)
-        >>> model.add_element(beam_a, parent=wall1_group)
-        >>> model.has_group("wall1")
-        True
-
-        """
-        # type: (TimberElement, str) -> Group
-        group_name = name or element.name
-
-        if not element.is_group_element:
-            raise ValueError("Element {} is not a group element.".format(element))
-
-        if not group_name:
-            raise ValueError("Group name must be provided or group element must have a name.")
-
-        if self.has_group(element):
-            raise ValueError("Group {} already exists in model.".format(group_name))
-
-        group = self.add_group(group_name)
-        self.add_element(element, parent=group)
-
-        element.name = group_name
-        return group
-
     def has_group(self, group_element):
         # type: (TimberElement) -> bool
         """Check if a group with `group_element` exists in the model.
@@ -271,8 +215,7 @@ class TimberModel(Model):
             raise ValueError("Group {} not found in model.".format(group_element.name))
 
         filter_ = filter_ or (lambda _: True)
-        group = self._elements[str(group_element.guid)]
-        elements = group.children
+        elements = group_element.children
         return filter(filter_, elements)
 
     # =============================================================================
@@ -530,6 +473,36 @@ class TimberModel(Model):
         for pair in pairs:
             plate_a, plate_b = pair
             result = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
+
+            if result.topology is JointTopology.TOPO_UNKNOWN:
+                continue
+            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
+
+            if result.topology == JointTopology.TOPO_EDGE_EDGE:
+                kwargs["b_segment_index"] = result.b_segment_index
+
+            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
+            self.add_joint_candidate(candidate)
+
+    def connect_adjacent_slabs(self, max_distance=None):
+        """Connects adjacent plates in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
+        """
+        for joint in self.joints:
+            if isinstance(joint, SlabJoint):
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+
+        max_distance = max_distance or TOL.absolute
+        slabs = self.slabs
+        solver = PlateConnectionSolver()
+        pairs = solver.find_intersecting_pairs(slabs, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            slab_a, slab_b = pair
+            result = solver.find_topology(slab_a, slab_b, tol=TOL.relative, max_distance=max_distance)
 
             if result.topology is JointTopology.TOPO_UNKNOWN:
                 continue
