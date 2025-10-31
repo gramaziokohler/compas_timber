@@ -51,7 +51,7 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
-        data["frame"] = self.frame
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
@@ -59,8 +59,7 @@ class TimberElement(Element):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        transformation = Transformation.from_frame(frame) if frame else Transformation()
-        super(TimberElement, self).__init__(transformation=transformation, **kwargs)
+        super(TimberElement, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.length = length
         self.width = width
         self.height = height
