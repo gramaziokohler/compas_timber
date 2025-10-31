@@ -152,7 +152,7 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
-    assert beam_b.transformation == transformation*beam_a.transformation
+    assert beam_b.transformation == transformation * beam_a.transformation
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)
@@ -181,7 +181,7 @@ def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
-    assert beam_b.transformation == transformation*beam_a.transformation
+    assert beam_b.transformation == transformation * beam_a.transformation
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)
