@@ -21,7 +21,6 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
-from networkx import volume
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -824,7 +823,7 @@ class Lap(BTLxProcessing):
         # ensure proper vertex order based on orientation
         if self.orientation == OrientationType.END:
             faces = [face[::-1] for face in faces]
-        return Polyhedron(vertices, faces)
+        return Polyhedron(vertices, faces).transformed(beam.transformation_to_local())
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

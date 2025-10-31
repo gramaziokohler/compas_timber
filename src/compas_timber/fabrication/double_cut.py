@@ -399,7 +399,7 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        return [Plane.from_frame(cutting_frame).transformed(beam.transformation_to_local()) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.
@@ -569,10 +569,7 @@ class DoubleCutProxy(object):
         # determine if concave or convex based on the stored planes
         # get the intersection line of cutting planes
         if not intersection_plane_plane(self.planes[0], self.planes[1]):
-            raise FeatureApplicationError(
-                None, geometry, "The two cutting planes are parallel."
-            )
-
+            raise FeatureApplicationError(None, geometry, "The two cutting planes are parallel.")
 
         # check angle between planes to determine concavity
         angle_between = angle_vectors(self.planes[0].normal, self.planes[1].normal, deg=True)

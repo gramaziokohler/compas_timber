@@ -16,7 +16,7 @@ from compas_timber.fabrication import OrientationType
 
 from compas.tolerance import Tolerance
 
-from compas_timber.fabrication.jack_cut import JackRafterCutProxy
+from compas_timber.fabrication import JackRafterCutProxy
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_jack_rafter_cut_from_plane_start(tol):
     assert tol.is_close(instance.inclination, 95.000)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params_and_beam(beam)
+    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -62,7 +62,7 @@ def test_jack_rafter_cut_from_plane_end(tol):
     assert tol.is_close(instance.angle, 66.656)
     assert tol.is_close(instance.inclination, 85.000)
     assert tol.is_close(instance.ref_side_index, 0)
-    cut_plane = instance.plane_from_params_and_beam(beam)
+    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -85,7 +85,7 @@ def test_jack_rafter_cut_from_frame(tol):
     assert tol.is_close(instance.inclination, 95.000)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params_and_beam(beam)
+    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -149,10 +149,10 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     instance_a = JackRafterCut.from_plane_and_beam(plane, beam_a)
     instance_b = JackRafterCut.from_plane_and_beam(plane, beam_b)
 
-
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
+    assert beam_b.transformation == transformation * beam_a.transformation
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)
@@ -163,12 +163,8 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     cut_plane_a = instance_a.plane_from_params_and_beam(beam_a)
     cut_plane_b = instance_b.plane_from_params_and_beam(beam_b)
 
-    cut_plane_a.transform(transformation)
-
-    assert tol.is_allclose(cut_plane_a.normal, plane.normal.transformed(transformation))
     assert tol.is_allclose(cut_plane_a.normal, cut_plane_b.normal)
     assert tol.is_allclose(cut_plane_a.point, cut_plane_b.point)
-
 
 
 def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
@@ -182,10 +178,10 @@ def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
     instance_a = JackRafterCutProxy.from_plane_and_beam(plane, beam_a)
     instance_b = JackRafterCutProxy.from_plane_and_beam(plane, beam_b)
 
-
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
+    assert beam_b.transformation == transformation * beam_a.transformation
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)
@@ -195,9 +191,6 @@ def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
 
     cut_plane_a = instance_a.plane_from_params_and_beam(beam_a)
     cut_plane_b = instance_b.plane_from_params_and_beam(beam_b)
-
-    cut_plane_a.transform(transformation)
-
-    assert tol.is_allclose(cut_plane_a.normal, plane.normal.transformed(transformation))
+    # planes are produced in element space, should be the same after transformation
     assert tol.is_allclose(cut_plane_a.normal, cut_plane_b.normal)
     assert tol.is_allclose(cut_plane_a.point, cut_plane_b.point)

@@ -14,7 +14,7 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import LongitudinalCut
 from compas_timber.fabrication import AlignmentType
 
-from compas_timber.fabrication.longitudinal_cut import LongitudinalCutProxy
+from compas_timber.fabrication import LongitudinalCutProxy
 
 from compas.tolerance import Tolerance
 

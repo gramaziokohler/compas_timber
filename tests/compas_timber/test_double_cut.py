@@ -15,7 +15,7 @@ from compas.tolerance import Tolerance
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DoubleCut
 
-from compas_timber.fabrication.double_cut import DoubleCutProxy
+from compas_timber.fabrication import DoubleCutProxy
 
 
 @pytest.fixture
@@ -234,6 +234,7 @@ def test_double_cut_planes_from_params(
     generated_planes = double_cut.planes_from_params_and_beam(main_beams[test_index])
     # compare generated planes to expected planes using `approx`
     for generated, expected in zip(generated_planes, expected_cutting_planes):
+        expected = expected.transformed(main_beams[test_index].transformation_to_local())
         assert generated.point.x == pytest.approx(expected.point.x, abs=TOL.approximation)
         assert generated.point.y == pytest.approx(expected.point.y, abs=TOL.approximation)
         assert generated.point.z == pytest.approx(expected.point.z, abs=TOL.approximation)
@@ -285,6 +286,8 @@ def test_double_cut_transforms_with_beam(tol, cross_beam):
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
+    assert beam_b.transformation == transformation * beam_a.transformation
+
     # properties should be the same after transformation
     assert instance_a.orientation == instance_b.orientation
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
@@ -300,7 +303,6 @@ def test_double_cut_transforms_with_beam(tol, cross_beam):
     planes_b = instance_b.planes_from_params_and_beam(beam_b)
 
     for plane_a, plane_b in zip(planes_a, planes_b):
-        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)
 
@@ -324,6 +326,8 @@ def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
+    assert beam_b.transformation == transformation * beam_a.transformation
+
     # unproxify to get the actual DoubleCut instances
     double_cut_a = instance_a.unproxified()
     double_cut_b = instance_b.unproxified()
@@ -338,11 +342,9 @@ def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
     assert tol.is_close(double_cut_a.inclination_2, double_cut_b.inclination_2)
     assert tol.is_close(double_cut_a.ref_side_index, double_cut_b.ref_side_index)
 
-    # planes should transform correctly
+    # planes are produced in element space, should be the same after transformation
     planes_a = double_cut_a.planes_from_params_and_beam(beam_a)
     planes_b = double_cut_b.planes_from_params_and_beam(beam_b)
-
     for plane_a, plane_b in zip(planes_a, planes_b):
-        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)

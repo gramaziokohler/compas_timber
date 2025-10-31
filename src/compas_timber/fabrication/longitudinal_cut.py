@@ -678,6 +678,7 @@ class LongitudinalCutProxy(object):
 
         """
         try:
+            # TODO: add geometry implementation for cuts that don't go full length of beam
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(self.plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")

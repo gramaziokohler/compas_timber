@@ -16,7 +16,7 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import OrientationType
 
-from compas_timber.fabrication.lap import LapProxy
+from compas_timber.fabrication import LapProxy
 
 
 @pytest.fixture
@@ -72,7 +72,7 @@ def test_lap_for_pocket_from_frame(tol):
     assert instance.ref_side_index == ref_side_index
 
     # volume from Lap instance
-    mesh_volume = instance.volume_from_params_and_beam(beam)
+    mesh_volume = instance.volume_from_params_and_beam(beam).transformed(beam.transformation)
     mesh_vertices, mesh_faces = mesh_volume.to_vertices_and_faces()
 
     # expected vertices and faces
@@ -148,7 +148,7 @@ def test_lap_from_polyhedron(tol):
     assert instance.ref_side_index == 0
 
     # volume from Lap instance
-    polyhedron_volume = instance.volume_from_params_and_beam(beam)
+    polyhedron_volume = instance.volume_from_params_and_beam(beam).transformed(beam.transformation)
     polyhedron_vertices, polyhedron_faces = polyhedron_volume.to_vertices_and_faces()
 
     # expected vertices and faces
@@ -325,7 +325,6 @@ def test_lap_scaled():
     assert scaled_instance.ref_side_index == instance.ref_side_index
 
 
-
 def test_lap_from_polyhedron_transforms_with_beam(tol):
     centerline = Line(Point(x=598.9718391480744, y=442.07491356492113, z=-43.147538325873505), Point(x=439.346903483214, y=-335.92694125538884, z=69.2873648757245))
     cross_section = [60, 60]
@@ -370,8 +369,6 @@ def test_lap_from_polyhedron_transforms_with_beam(tol):
     # volumes should transform correctly
     volume_a = instance_a.volume_from_params_and_beam(beam_a)
     volume_b = instance_b.volume_from_params_and_beam(beam_b)
-
-    volume_a.transform(transformation)
 
     vertices_a, faces_a = volume_a.to_vertices_and_faces()
     vertices_b, faces_b = volume_b.to_vertices_and_faces()
@@ -429,8 +426,6 @@ def test_lap_proxy_transforms_with_beam(tol):
     # volumes should transform correctly
     volume_a = lap_a.volume_from_params_and_beam(beam_a)
     volume_b = lap_b.volume_from_params_and_beam(beam_b)
-
-    volume_a.transform(transformation)
 
     vertices_a, faces_a = volume_a.to_vertices_and_faces()
     vertices_b, faces_b = volume_b.to_vertices_and_faces()

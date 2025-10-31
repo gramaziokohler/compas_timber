@@ -247,7 +247,6 @@ class JackRafterCut(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         cutting_plane = self.plane_from_params_and_beam(beam)
-        cutting_plane.transform(beam.transformation_to_local())
         try:
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
@@ -298,7 +297,7 @@ class JackRafterCut(BTLxProcessing):
             plane_normal = cutting_plane.xaxis
         else:
             plane_normal = -cutting_plane.xaxis
-        return Plane(cutting_plane.point, plane_normal)
+        return Plane(cutting_plane.point, plane_normal).transformed(beam.transformation_to_local())
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
