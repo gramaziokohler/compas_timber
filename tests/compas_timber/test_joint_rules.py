@@ -5,7 +5,8 @@ from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import Frame
 
-from compas_timber.design.workflow import JointRuleSolver
+from compas_timber.design import JointRuleSolver
+from compas_timber.design import get_clusters_from_model
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -107,18 +108,40 @@ def L_beams_separated():
     return [Beam.from_centerline(line, w, h) for line in lines]
 
 
-def test_joints_from_beams_and_topo_rules(beams):
-    rules = [
-        TopologyRule(JointTopology.TOPO_L, LMiterJoint),
-        TopologyRule(JointTopology.TOPO_T, TButtJoint),
-        TopologyRule(JointTopology.TOPO_X, XLapJoint),
+@pytest.fixture
+def Y_beams():
+    """
+    0 <=> 1:L
+    1 <=> 2:L
+    2 <=> 3:L
+
+    """
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(0, 0, 0), Point(1, 0, 0)),
+        Line(Point(0, 0, 0), Point(0, 1, 0)),
+        Line(Point(0, 0, 0), Point(-1, -1, 0)),
     ]
-    model = TimberModel()
-    model.add_elements(beams)
-    solver = JointRuleSolver(rules)
-    errors, unjoined_clusters = solver.apply_rules_to_model(model)
-    assert len(model.joints) == 4
-    assert set([joint.__class__.__name__ for joint in model.joints]) == set(["LMiterJoint", "TButtJoint", "XLapJoint"])
+    return [Beam.from_centerline(line, w, h) for line in lines]
+
+
+@pytest.fixture
+def K_beams():
+    """
+    0 <=> 1:Y
+    1 <=> 2:Y
+    2 <=> 3:Y
+
+    """
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(0, 0, 0), Point(1, 0, 0)),
+        Line(Point(0, -1, 0), Point(0, 1, 0)),
+        Line(Point(0, 0, 0), Point(-1, -1, 0)),
+    ]
+    return [Beam.from_centerline(line, w, h) for line in lines]
 
 
 def test_joints_from_beams_and_rules_with_no_max_distance(separated_beams):
@@ -507,3 +530,62 @@ def test_plate_rules_priority():
     assert set([j.__class__.__name__ for j in model.joints]) == set(["PlateLButtJoint", "PlateTButtJoint", "PlateMiterJoint"]), (
         "Expected PlateLButtJoint, PlateTButtJoint, and PlateMiterJoint"
     )
+
+
+def test_joints_created_with_y_topo_cluster(Y_beams):
+    rules = [
+        TopologyRule(JointTopology.TOPO_L, LButtJoint),
+    ]
+    model = TimberModel()
+    model.add_elements(Y_beams)
+
+    clusters = get_clusters_from_model(model)
+    assert len(clusters) == 1
+    assert clusters[0].topology == JointTopology.TOPO_Y
+    assert len(clusters[0].joints) == 3
+
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(unjoined_clusters) == 0
+    assert len(model.joints) == 3
+    assert all([isinstance(j, LButtJoint) for j in model.joints])
+
+
+def test_joints_created_with_k_topo_cluster(K_beams):
+    rules = [
+        TopologyRule(JointTopology.TOPO_L, LButtJoint),
+        TopologyRule(JointTopology.TOPO_T, TButtJoint),
+    ]
+    model = TimberModel()
+    model.add_elements(K_beams)
+
+    clusters = get_clusters_from_model(model)
+    assert len(clusters) == 1
+    assert clusters[0].topology == JointTopology.TOPO_K
+    assert len(clusters[0].joints) == 3
+
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(unjoined_clusters) == 0
+    assert len(model.joints) == 3
+    assert any([isinstance(j, LButtJoint) for j in model.joints])
+    assert any([isinstance(j, TButtJoint) for j in model.joints])
+
+
+def test_joints_created_with_k_topo_cluster_l_fails(K_beams):
+    rules = [
+        TopologyRule(JointTopology.TOPO_T, TButtJoint),
+    ]
+    model = TimberModel()
+    model.add_elements(K_beams)
+
+    clusters = get_clusters_from_model(model)
+    assert len(clusters) == 1
+    assert clusters[0].topology == JointTopology.TOPO_K
+    assert len(clusters[0].joints) == 3
+
+    solver = JointRuleSolver(rules)
+    errors, unjoined_clusters = solver.apply_rules_to_model(model)
+    assert len(unjoined_clusters) == 1
+    assert len(model.joints) == 2
+    assert all([isinstance(j, TButtJoint) for j in model.joints])
