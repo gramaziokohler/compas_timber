@@ -6,7 +6,9 @@ from .btlx import OrientationType
 from .jack_cut import JackRafterCut
 from .jack_cut import JackRafterCutProxy
 from .double_cut import DoubleCut
+from .double_cut import DoubleCutProxy
 from .drilling import Drilling
+from .drilling import DrillingProxy
 from .step_joint_notch import StepJointNotch
 from .step_joint import StepJoint
 from .dovetail_tenon import DovetailTenon
@@ -31,6 +33,7 @@ from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
+from .longitudinal_cut import LongitudinalCutProxy
 
 __all__ = [
     "BTLxWriter",
@@ -40,7 +43,9 @@ __all__ = [
     "JackRafterCutProxy",
     "OrientationType",
     "DoubleCut",
+    "DoubleCutProxy",
     "Drilling",
+    "DrillingProxy",
     "StepJointNotch",
     "StepJoint",
     "DovetailTenon",
@@ -65,5 +70,6 @@ __all__ = [
     "Contour",
     "DualContour",
     "LongitudinalCut",
+    "LongitudinalCutProxy",
     "BTLxRawpart",
 ]

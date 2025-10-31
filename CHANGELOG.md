@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
+* Added new `DrillingProxy` and `DoubleCutProxy` classes.
 
 ### Changed
 
@@ -50,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
 
+* Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
 
 ### Removed
 
