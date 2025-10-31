@@ -2,7 +2,7 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
-from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 
 class Stock(Data):
@@ -322,9 +322,17 @@ class NestingResult(Data):
     def __init__(self, stocks, tolerance=None):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
-        self.tolerance = tolerance or TOL
-        if self.tolerance.unit == "MM":
-            self.tolerance.precision = 1  # Set precision to 1 decimal for mm units
+        self._tolerance = tolerance or Tolerance(unit="MM")
+
+    @property
+    def tolerance(self):
+        return self._tolerance
+
+    @tolerance.setter
+    def tolerance(self, tolerance):
+        if tolerance.unit == "MM":
+            tolerance = Tolerance(unit="MM", precision=1)  # Ensure MM has at least 1 decimal place
+        self._tolerance = tolerance
 
     @property
     def __data__(self):
