@@ -33,7 +33,6 @@ from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-from .plate_joint import PlateToPlateInterface
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
@@ -79,7 +78,6 @@ __all__ = [
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
-    "PlateToPlateInterface",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",

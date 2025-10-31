@@ -60,7 +60,7 @@ def test_plate_contour():
     plate = Plate.from_outline_thickness(pline, thickness)
 
     expected = {
-        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "right", "ReferencePlaneID": "2", "CounterSink": "no", "Process": "yes"},
+        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "right", "ReferencePlaneID": "1", "CounterSink": "no", "Process": "yes"},
         "contour_attributes": {"Inclination": "0", "DepthBounded": "no", "Depth": "10.0"},
         "contour_points": [
             {"StartPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}},
@@ -129,7 +129,7 @@ def test_plate_aperture_BTLx():
 def test_double_contour_plate():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     pline_b = Polyline([Point(-10, -10, 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10, 10), Point(-10, -10, 10)])
-    plate = Plate(pline_a, pline_b)
+    plate = Plate.from_outlines(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
@@ -141,7 +141,7 @@ def test_double_contour_plate():
 def test_contour_plate_blank():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     pline_b = Polyline([Point(-10, -10, 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10, 10), Point(-10, -10, 10)])
-    plate = Plate(pline_a, pline_b)
+    plate = Plate.from_outlines(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
@@ -153,7 +153,7 @@ def test_contour_plate_blank():
 def test_contour_plate_simple_inclination():
     pline_a = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(100, 200, 0), Point(100, 0, 0), Point(0, 0, 0)])
     pline_b = Polyline([Point(-10, -10, 10), Point(-10, 210, 10), Point(110, 210, 10), Point(110, -10, 10), Point(-10, -10, 10)])
-    plate = Plate(pline_a, pline_b)
+    plate = Plate.from_outlines(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
@@ -174,7 +174,7 @@ def test_contour_plate_multiple_inclination():
             Point(-10, -10 * math.tan(math.pi / 6), 10),
         ]
     )
-    plate = Plate(pline_a, pline_b)
+    plate = Plate.from_outlines(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
@@ -193,7 +193,7 @@ def test_dual_contour_plate():
             Point(10, 10 * math.tan(math.pi / 6), 10),
         ]
     )
-    plate = Plate(pline_a, pline_b)
+    plate = Plate.from_outlines(pline_a, pline_b)
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
