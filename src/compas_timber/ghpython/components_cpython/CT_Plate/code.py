@@ -41,7 +41,7 @@ class Plate(Grasshopper.Kernel.GH_ScriptInstance):
             update_rhobj_attributes_name(guid, "thickness", str(thickness))
             update_rhobj_attributes_name(guid, "category", category)
 
-        scene.add(plate.calculate_shape())
+        scene.add(plate.compute_shape())
         geo = scene.draw()
         return plate, geo
 

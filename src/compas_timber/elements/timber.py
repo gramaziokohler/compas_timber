@@ -1,3 +1,6 @@
+import abc
+from functools import wraps
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -7,7 +10,21 @@ from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 
-class TimberElement(Element):
+def reset_timber_attrs(f):
+    """Decorator to reset cached timber-specific attributes."""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        self: TimberElement = args[0]
+        self._blank = None
+        self._ref_frame = None
+        self._geometry = None  # from Element
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+class TimberElement(Element, abc.ABC):
     """Base class for all timber elements.
 
     This is an abstract class and should not be instantiated directly.
@@ -51,7 +68,7 @@ class TimberElement(Element):
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
-        data["frame"] = self.frame
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
@@ -59,11 +76,12 @@ class TimberElement(Element):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        transformation = Transformation.from_frame(frame) if frame else Transformation()
-        super(TimberElement, self).__init__(transformation=transformation, **kwargs)
+        super().__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.length = length
         self.width = width
         self.height = height
+        self._blank = None
+        self._ref_frame = None
         self.debug_info = []
 
     @classmethod
@@ -74,6 +92,7 @@ class TimberElement(Element):
         return cls(**data)
 
     @reset_computed
+    @reset_timber_attrs
     def _reset_computed_dummy(self):
         """Dummy method to trigger reset_computed decorator."""
         pass
@@ -146,6 +165,7 @@ class TimberElement(Element):
         self.debug_info = []
 
     @reset_computed
+    @reset_timber_attrs
     def add_feature(self, feature):
         # type: (BTLxProcessing) -> None
         """Adds one or more features to the beam.
@@ -156,10 +176,10 @@ class TimberElement(Element):
             The feature to be added.
 
         """
-
         self._features.append(feature)  # type: ignore
 
     @reset_computed
+    @reset_timber_attrs
     def add_features(self, features):
         # type: (BTLxProcessing | list[BTLxProcessing]) -> None
         """Adds one or more features to the beam.
@@ -173,9 +193,9 @@ class TimberElement(Element):
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
-        self._geometry = None  # reset geometry cache
 
     @reset_computed
+    @reset_timber_attrs
     def remove_features(self, features=None):
         # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
         """Removes a feature from the beam.
@@ -193,7 +213,6 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
-        self._geometry = None  # reset geometry cache
 
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
@@ -220,14 +239,16 @@ class TimberElement(Element):
         The origin is at the bottom far corner of the element.
         The ref_frame is always in model coordinates.
         """
-        # TODO: cache this
-        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
+        if not self._ref_frame:
+            self._ref_frame = Frame(
+                self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7])
+            )
+        return self._ref_frame
 
     @property
     def ref_sides(self):
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        # TODO: cache these
         rs1_point = self.ref_frame.point
         rs2_point = rs1_point + self.ref_frame.yaxis * self.height
         rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width

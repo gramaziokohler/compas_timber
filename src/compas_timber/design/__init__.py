@@ -6,6 +6,7 @@ from .workflow import DebugInfomation
 from .workflow import ContainerDefinition
 from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
+from .workflow import get_clusters_from_model
 from .workflow import JointRuleSolver
 
 from .wall_from_surface import SurfaceModel
@@ -35,4 +36,5 @@ __all__ = [
     "guess_joint_topology_2beams",
     "set_default_joints",
     "ContainerDefinition",
+    "get_clusters_from_model",
 ]
