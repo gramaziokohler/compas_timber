@@ -16,7 +16,7 @@ from compas_timber.fabrication import OrientationType
 
 from compas.tolerance import Tolerance
 
-from compas_timber.fabrication.jack_cut import JackRafterCutProxy
+from compas_timber.fabrication import JackRafterCutProxy
 
 
 @pytest.fixture
@@ -149,10 +149,8 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     instance_a = JackRafterCut.from_plane_and_beam(plane, beam_a)
     instance_b = JackRafterCut.from_plane_and_beam(plane, beam_b)
 
-
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
-
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)
@@ -170,7 +168,6 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     assert tol.is_allclose(cut_plane_a.point, cut_plane_b.point)
 
 
-
 def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
     centerline = Line(Point(x=270.0, y=270.0, z=590.0), Point(x=1220.0, y=680.0, z=590.0))
     cross_section = (60, 120)
@@ -182,10 +179,8 @@ def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
     instance_a = JackRafterCutProxy.from_plane_and_beam(plane, beam_a)
     instance_b = JackRafterCutProxy.from_plane_and_beam(plane, beam_b)
 
-
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
-
 
     assert tol.is_close(instance_a.start_x, instance_b.start_x)
     assert tol.is_close(instance_a.start_y, instance_b.start_y)

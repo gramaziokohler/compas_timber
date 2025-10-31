@@ -18,7 +18,7 @@ from compas_timber.fabrication import Pocket
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.connections import LapJoint
 
-from compas_timber.fabrication.pocket import PocketProxy
+from compas_timber.fabrication import PocketProxy
 
 
 @pytest.fixture

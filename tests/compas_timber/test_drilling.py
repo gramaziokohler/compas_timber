@@ -10,7 +10,7 @@ from compas.geometry import Transformation
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Drilling
 
-from compas_timber.fabrication.drilling import DrillingProxy
+from compas_timber.fabrication import DrillingProxy
 
 from compas.tolerance import Tolerance
 

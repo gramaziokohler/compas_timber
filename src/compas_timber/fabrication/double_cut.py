@@ -569,10 +569,7 @@ class DoubleCutProxy(object):
         # determine if concave or convex based on the stored planes
         # get the intersection line of cutting planes
         if not intersection_plane_plane(self.planes[0], self.planes[1]):
-            raise FeatureApplicationError(
-                None, geometry, "The two cutting planes are parallel."
-            )
-
+            raise FeatureApplicationError(None, geometry, "The two cutting planes are parallel.")
 
         # check angle between planes to determine concavity
         angle_between = angle_vectors(self.planes[0].normal, self.planes[1].normal, deg=True)

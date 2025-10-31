@@ -16,7 +16,7 @@ from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import OrientationType
 
-from compas_timber.fabrication.lap import LapProxy
+from compas_timber.fabrication import LapProxy
 
 
 @pytest.fixture
@@ -323,7 +323,6 @@ def test_lap_scaled():
     assert scaled_instance.lead_inclination == instance.lead_inclination
     assert scaled_instance.machining_limits == instance.machining_limits
     assert scaled_instance.ref_side_index == instance.ref_side_index
-
 
 
 def test_lap_from_polyhedron_transforms_with_beam(tol):

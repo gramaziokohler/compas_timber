@@ -15,7 +15,7 @@ from compas.tolerance import Tolerance
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DoubleCut
 
-from compas_timber.fabrication.double_cut import DoubleCutProxy
+from compas_timber.fabrication import DoubleCutProxy
 
 
 @pytest.fixture
