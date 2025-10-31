@@ -91,10 +91,9 @@ class Slab(PlateGeometry, Element):
     def __data__(self):
         data = Element.__data__.fget(self)
         data.update(PlateGeometry.__data__.fget(self))
-        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
-        data["height"] = self.height
+        data["thickness"] = self.height
         data["name"] = self.name
         return data
 

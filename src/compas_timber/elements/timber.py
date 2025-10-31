@@ -226,6 +226,20 @@ class TimberElement(Element, abc.ABC):
         # type: () -> Transformation
         return self.modeltransformation.inverted()
 
+    @reset_computed
+    @reset_timber_attrs
+    def transform(self, transformation):
+        """Applies a transformation to the element.
+
+        Parameters
+        ----------
+        transformation : :class:`compas.geometry.Transformation`
+            The transformation to apply.
+
+        """
+        super().transform(transformation)
+
+
     ########################################################################
     # BTLx properties
     ########################################################################
