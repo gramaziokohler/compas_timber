@@ -221,23 +221,6 @@ class TimberElement(Element, abc.ABC):
         else:
             self.transformation = transformation
 
-    def transformed(self, transformation: Transformation) -> "Element":
-        """Creates a transformed copy of the element.
-
-        Parameters
-        ----------
-        transformation : :class:`compas.geometry.Transformation`:
-            The transformation to be applied to the copy of the element.
-
-        Returns
-        -------
-        :class:`compas_model.elements.Element`
-
-        """
-        element: Element = self.copy()
-        element.transform(transformation)
-        return element
-
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
         based on its position in the spatial hierarchy of the model.
