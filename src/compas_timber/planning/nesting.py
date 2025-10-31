@@ -20,10 +20,9 @@ class Stock(Data):
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
     element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to a dict with:
+        Dictionary mapping each element GUID to a dict containing at least:
             'frame': assigned position frame (Frame)
-            'length': element length (float)
-            'key': graphnode key
+            'key': graphnode key (int)
 
 
     Attributes
@@ -37,10 +36,9 @@ class Stock(Data):
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
     element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to a dict with:
+        Dictionary mapping each element GUID to a dict containing at least:
             'frame': assigned position frame (Frame)
-            'length': element length (float)
-            'key': graphnode key
+            'key': graphnode key (int)
     """
 
     def __init__(self, length, width, height, spacing=0.0, element_data=None):
@@ -49,7 +47,7 @@ class Stock(Data):
         self.width = width
         self.height = height
         self.spacing = spacing
-        self.element_data = element_data or {}  # {guid: {"frame": Frame, "key": graphnode_key, "cut_position": float}}
+        self.element_data = element_data or {}  # {guid: {"frame": Frame, "key": int}}
 
     @property
     def __data__(self):
@@ -139,8 +137,8 @@ class BeamStock(Stock):
     element_data : dict[str, dict]
         Dictionary mapping element GUIDs to a dict with:
             'frame': assigned position frame (Frame)
+            'key': graphnode key (int)
             'length': element length (float)
-            'key': graphnode key
     """
 
     def __init__(self, length, cross_section, spacing=0.0, element_data=None):
@@ -220,7 +218,11 @@ class BeamStock(Stock):
         position_frame = self._get_position_frame(beam)
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
         # Store element data with frame, blank length and graphnode key
-        self.element_data[str(beam.guid)] = {"frame": position_frame, "length": beam.blank_length, "key": beam.graphnode}
+        self.element_data[str(beam.guid)] = {
+            "frame": position_frame,
+            "key": beam.graphnode,
+            "length": beam.blank_length,
+        }
 
     def _get_position_frame(self, beam):
         """
@@ -264,8 +266,11 @@ class PlateStock(Stock):
         Thickness of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping each element GUID to a dict containing at least:
+            'frame': assigned position frame (Frame)
+            'key': graphnode key (int)
+
 
     Attributes
     ----------
@@ -275,8 +280,11 @@ class PlateStock(Stock):
         Thickness of the stock piece
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, dict]
+        Dictionary mapping each element GUID to a dict containing at least:
+            'frame': assigned position frame (Frame)
+            'key': graphnode key (int)
+
     """
 
     def __init__(self, dimensions, thickness, spacing=0.0, element_data=None):
