@@ -139,6 +139,13 @@ class PlateGeometry(object):
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
+    def remove_blank_extension(self, edge_index=None):
+        """Removes any extension plane for the given edge index."""
+        if edge_index is None:
+            self._extension_planes = {}
+        elif edge_index in self._extension_planes:
+            del self._extension_planes[edge_index]
+
     @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
@@ -237,8 +244,7 @@ class PlateGeometry(object):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    @property
-    def shape(self):
+    def compute_shape(self):
         # type: () -> compas.geometry.Brep
         """The shape of the plate before other features area applied.
 

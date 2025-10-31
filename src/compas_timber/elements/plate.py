@@ -80,6 +80,7 @@ class Plate(PlateGeometry, TimberElement):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self._blank = None  # TODO: remove after #586 merged
 
     def __repr__(self):
         # type: () -> str
@@ -98,10 +99,12 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def blank(self):
-        box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
-        box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
-        box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
-        return box.transformed(self.modeltransformation)
+        if not self._blank:
+            box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
+            box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
+            box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
+            self._blank = box.transformed(self.modeltransformation)
+        return self._blank
 
     @property
     def blank_length(self):
@@ -151,7 +154,7 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.shape
+        plate_geo = self.compute_shape()
         if include_features:
             for feature in self._features:
                 try:
