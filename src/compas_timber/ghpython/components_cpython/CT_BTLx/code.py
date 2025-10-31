@@ -8,7 +8,7 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class WriteBTLx(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, model, nesting_result, write: bool):
+    def RunScript(self, model, nesting_result, path, write: bool):
         if not item_input_valid_cpython(ghenv, model, "Model"):
             return
 
