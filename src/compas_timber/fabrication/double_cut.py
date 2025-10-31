@@ -373,7 +373,7 @@ class DoubleCut(BTLxProcessing):
         assert self.inclination_2 is not None
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
-        ref_side = beam.side_as_surface(self.ref_side_index).transformed(beam.transformation_to_local())
+        ref_side = beam.side_as_surface(self.ref_side_index)
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
@@ -399,7 +399,7 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        return [Plane.from_frame(cutting_frame).transformed(beam.transformation_to_local()) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.
