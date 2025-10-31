@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
+* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operaion.
 
 ### Changed
 
@@ -49,7 +50,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
-
+* Refactor `BTLxWriter` to use `graphnode` as part identifier in `BTLxpart` creation instead of the enumeration index, for consistent part referencing.
+* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a dictionary containing its frame, a human-readable key, and length, instead of just the frame. 
+* Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 
 ### Removed
 
