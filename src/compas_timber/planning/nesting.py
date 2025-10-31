@@ -214,7 +214,7 @@ class BeamStock(Stock):
             If beam doesn't fit in remaining space
         """
         if not self.can_fit_element(beam):
-            warn(f"Beam with length {round(beam.blank_length, 1)} doesn't fit in remaining space {self._remaining_length}")
+            warn(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
             return
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
@@ -324,7 +324,7 @@ class NestingResult(Data):
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
         self.tolerance = tolerance or TOL
         if self.tolerance.unit == "MM":
-            self.tolerance.precision = 1
+            self.tolerance.precision = 1  # Set precision to 1 decimal for mm units
 
     @property
     def __data__(self):
@@ -376,7 +376,7 @@ class NestingResult(Data):
         """Return a human-readable summary of the nesting result."""
         lines = []
         for i, stock in enumerate(self.stocks):
-            lines.append(f"{stock.__class__.__name__} {i}:")
+            lines.append(f"{stock.__class__.__name__}_{i}:")
             if isinstance(stock, BeamStock):
                 lines.append(
                     "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
@@ -392,7 +392,7 @@ class NestingResult(Data):
                     lengths.append(round(length, self.tolerance.precision))
                 waste = stock.length - sum(lengths) if lengths else stock.length
                 # Formatted output
-                lines.append(f"BeamKeys {beam_keys}")
+                lines.append(f"BeamKeys: {beam_keys}")
                 lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
                 lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
                 lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
@@ -477,7 +477,7 @@ class BeamNester(object):
             # Collect unique cross-sections from unnested beams
             beam_details = set((beam.width, beam.height) for beam in unnested_beams)
             # Format each cross-section as a string
-            formatted_sections = ["{}x{}{}".format(round(width, 1), round(height, 1), self.model.tolerance.unit) for width, height in beam_details]
+            formatted_sections = ["{}x{}{}".format(width, height, self.model.tolerance.unit) for width, height in beam_details]
 
             warn(
                 "Found {} beam(s) incompatible with available stock catalog. Beams with the following cross-sections will be skipped during nesting: {}".format(  # noqa: E501
