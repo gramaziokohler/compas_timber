@@ -276,7 +276,7 @@ class JackRafterCut(BTLxProcessing):
         assert self.inclination is not None
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
-        ref_side = beam.side_as_surface(self.ref_side_index)
+        ref_side = beam.side_as_surface(self.ref_side_index).transformed(beam.transformation_to_local())
         p_origin = ref_side.point_at(self.start_x, 0.0)
         cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 

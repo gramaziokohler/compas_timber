@@ -373,7 +373,7 @@ class DoubleCut(BTLxProcessing):
         assert self.inclination_2 is not None
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
-        ref_side = beam.side_as_surface(self.ref_side_index)
+        ref_side = beam.side_as_surface(self.ref_side_index).transformed(beam.transformation_to_local())
         p_origin = ref_side.point_at(self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 

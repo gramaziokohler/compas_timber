@@ -300,7 +300,6 @@ def test_double_cut_transforms_with_beam(tol, cross_beam):
     planes_b = instance_b.planes_from_params_and_beam(beam_b)
 
     for plane_a, plane_b in zip(planes_a, planes_b):
-        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)
 
@@ -324,6 +323,8 @@ def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
     transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
     beam_b.transform(transformation)
 
+    assert beam_b.transformation == transformation*beam_a.transformation
+
     # unproxify to get the actual DoubleCut instances
     double_cut_a = instance_a.unproxified()
     double_cut_b = instance_b.unproxified()
@@ -338,11 +339,9 @@ def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
     assert tol.is_close(double_cut_a.inclination_2, double_cut_b.inclination_2)
     assert tol.is_close(double_cut_a.ref_side_index, double_cut_b.ref_side_index)
 
-    # planes should transform correctly
+    # planes are produced in element space, should be the same after transformation
     planes_a = double_cut_a.planes_from_params_and_beam(beam_a)
     planes_b = double_cut_b.planes_from_params_and_beam(beam_b)
-
     for plane_a, plane_b in zip(planes_a, planes_b):
-        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)
