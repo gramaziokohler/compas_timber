@@ -50,6 +50,7 @@ class Slab(Element):
     @property
     def __data__(self):
         data = super(Slab, self).__data__
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["outline"] = self.outline
         data["openings"] = self.openings
         data["thickness"] = self.thickness
