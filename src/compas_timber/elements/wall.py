@@ -6,6 +6,8 @@ from compas.geometry import Line
 from compas.geometry import Polyline
 from compas.geometry import bounding_box
 
+from compas_timber.elements.plate_geometry import PlateGeometry
+
 from .slab import Slab
 
 
@@ -137,7 +139,7 @@ class Wall(Slab):
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
         super(Wall, self).__init__(frame, length, width, thickness, local_outline_a, local_outline_b, openings, **kwargs)
-        self.outline = self.outline_a.copy()  # make mutable copy
+        self.outline = local_outline_a.copy()  # make mutable copy
         self.attributes = {}
         self.attributes.update(kwargs)
         self.name = name or "Wall"
@@ -355,6 +357,33 @@ class Wall(Slab):
         yaxis = normal.cross(xaxis)
         return Frame(points[0], xaxis, yaxis)
 
+
+    @classmethod
+    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+        """
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry in parent space.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry in parent space.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.PlateGeometry`
+            A PlateGeometry object representing the plate geometry with the given outlines.
+        """
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
+        kwargs.update(args)
+        return cls(**kwargs)
 
 def _oriented_polyline(polyline, normal):
     """Return a polyline that is oriented consistently counterclockwise around the normal.

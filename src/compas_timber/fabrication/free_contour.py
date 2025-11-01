@@ -9,6 +9,7 @@ except ImportError:
     pass
 
 import math
+from turtle import distance
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -203,10 +204,11 @@ class FreeContour(BTLxProcessing):
         # type: (Polyline, Plate) -> int
         curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
         for i, ref_side in enumerate(element.ref_sides):
-            if TOL.is_zero(distance_point_plane(contour_points[0], Plane.from_frame(ref_side)), tol=1e-6) and TOL.is_zero(
-                angle_vectors(ref_side.normal, curve_frame.zaxis, deg=True) % 180.0, 1e-6
-            ):
-                return i
+            distance = distance_point_plane(contour_points[0], Plane.from_frame(ref_side))
+            if TOL.is_zero(distance, tol=1e-6):
+                angle = angle_vectors(ref_side.normal, curve_frame.zaxis, deg=True)
+                if TOL.is_zero(angle, 1e-3) or TOL.is_zero(angle - 180.0, 1e-3):
+                    return i
         raise ValueError("The contour does not lay on one of the reference sides of the element.")
 
     @staticmethod

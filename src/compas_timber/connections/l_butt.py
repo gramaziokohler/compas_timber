@@ -46,7 +46,7 @@ class LButtJoint(ButtJoint):
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
     back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.
+        The plane used to cut the cross beam. If not provided, the back side of the main beam will be used. Should be defined in the main_beam frame.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
 

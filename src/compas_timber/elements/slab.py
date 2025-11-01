@@ -212,6 +212,18 @@ class Slab(PlateGeometry, Element):
         """Compute the geometry of the element at local coordinates."""
         return self.compute_shape()
 
+    @reset_computed
+    def transform(self, transformation):
+        """Applies a transformation to the element.
+
+        Parameters
+        ----------
+        transformation : :class:`compas.geometry.Transformation`
+            The transformation to apply.
+
+        """
+        super().transform(transformation)
+
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
@@ -237,5 +249,5 @@ class Slab(PlateGeometry, Element):
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
-        kwargs["transformation"] = Transformation.from_frame(args["frame"])
+        kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
         return cls(**kwargs)

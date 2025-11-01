@@ -5,6 +5,8 @@ from compas.geometry import Vector
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
 
+from compas.data import Data
+
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 
@@ -28,7 +30,7 @@ class InterfaceRole(object):
     NONE = "NONE"
 
 
-class SlabConnectionInterface(object):
+class SlabConnectionInterface(Data):
     """
     polyline : :class:`compas.geometry.Polyline`
         The outline of the interface area.
@@ -45,7 +47,18 @@ class SlabConnectionInterface(object):
 
     """
 
+    @property
+    def __data__(self):
+        return {
+            "polyline": self.polyline,
+            "frame": self.frame,
+            "edge_index": self.edge_index,
+            "topology": self.topology,
+            "interface_role": self.interface_role,
+        }
+
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
+        super(SlabConnectionInterface, self).__init__()
         self.polyline = polyline
         self.frame = frame
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
@@ -110,7 +123,7 @@ class SlabJoint(PlateJoint):
     @property
     def __data__(self):
         data = super(SlabJoint, self).__data__
-        data["interfaces"] = self.interfaces
+        # data["interfaces"] = self.interfaces
         return data
 
     def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):

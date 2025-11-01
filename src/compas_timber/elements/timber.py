@@ -226,6 +226,20 @@ class TimberElement(Element, abc.ABC):
         # type: () -> Transformation
         return self.modeltransformation.inverted()
 
+    @reset_computed
+    @reset_timber_attrs
+    def transform(self, transformation):
+        # type: (BTLxProcessing | list[BTLxProcessing]) -> None
+        """Adds one or more features to the beam.
+
+        Parameters
+        ----------
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature or features to be added described as a BTLxProcessing or a list of BTLxProcessings.
+
+        """
+        super().transform(transformation)
+
     ########################################################################
     # BTLx properties
     ########################################################################

@@ -32,7 +32,7 @@ class ButtJoint(Joint):
     main_beam : :class:`~compas_timber.parts.Beam`
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.parts.Beam`
-        The cross beam to be joined.
+        The cross beam to be joined. should be defined in the main_beam frame.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
     modify_cross : bool, default False
@@ -100,7 +100,7 @@ class ButtJoint(Joint):
         # extend the main beam
         try:
             if self.butt_plane:
-                cutting_plane_main = self.butt_plane
+                cutting_plane_main = self.butt_plane.transformed(self.main_beam.modeltransformation)
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
                 extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
                 self.main_beam.add_blank_extension(
@@ -129,7 +129,7 @@ class ButtJoint(Joint):
         if self.modify_cross:
             try:
                 if self.back_plane:
-                    cutting_plane_cross = self.back_plane
+                    cutting_plane_cross = self.back_plane.transformed(self.main_beam.modeltransformation)
                 else:
                     cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
                 start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
@@ -156,7 +156,7 @@ class ButtJoint(Joint):
 
         # get the cutting plane for the main beam
         if self.butt_plane:
-            cutting_plane = self.butt_plane
+            cutting_plane = self.butt_plane.transformed(self.main_beam.modeltransformation)
         else:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
             cutting_plane.xaxis = -cutting_plane.xaxis
@@ -186,7 +186,7 @@ class ButtJoint(Joint):
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             if self.back_plane:
-                modification_plane = self.back_plane
+                modification_plane = self.back_plane.transformed(self.main_beam.modeltransformation)
             else:
                 modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
