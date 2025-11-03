@@ -13,6 +13,7 @@ from .features import MillVolume
 from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
 from .timber import TimberElement
+from .plate_geometry import PlateGeometry
 
 __all__ = [
     "Beam",
@@ -30,4 +31,5 @@ __all__ = [
     "OpeningType",
     "Slab",
     "Wall",
+    "PlateGeometry",
 ]

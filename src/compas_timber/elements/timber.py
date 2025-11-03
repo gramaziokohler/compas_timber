@@ -34,6 +34,16 @@ class TimberElement(Element, abc.ABC):
     frame : :class:`compas.geometry.Frame`, optional
         The frame representing the beam's local coordinate system in its hierarchical context.
         Defaults to ``None``, in which case the world coordinate system is used.
+    length : float
+        Length of the timber element.
+    width : float
+        Width of the timber element.
+    height : float
+        Height of the timber element.
+    features : list[:class:`~compas_timber.fabrication.Feature`], optional
+        List of features to apply to this element.
+    **kwargs : dict, optional
+        Additional keyword arguments.
 
     Attributes
     ----------
@@ -57,13 +67,19 @@ class TimberElement(Element, abc.ABC):
 
     @property
     def __data__(self):
-        data = super().__data__
+        data = super(TimberElement, self).__data__
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
+        data["length"] = self.length
+        data["width"] = self.width
+        data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame=None, **kwargs):
-        frame = frame or Frame.worldXY()  # TODO: This is temporary. Once all subclasses are described the same way, the constructor should be updated.
+    def __init__(self, frame, length, width, height, **kwargs):
         super().__init__(transformation=Transformation.from_frame(frame), **kwargs)
+        self.length = length
+        self.width = width
+        self.height = height
         self._blank = None
         self._ref_frame = None
         self.debug_info = []
@@ -94,15 +110,8 @@ class TimberElement(Element, abc.ABC):
         return False
 
     @property
-    def is_wall(self):
-        return False
-
-    @property
     def is_group_element(self):
-        return False
-
-    @property
-    def is_fastener(self):
+        # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
 
     @property
@@ -143,6 +152,10 @@ class TimberElement(Element, abc.ABC):
     # ========================================================================
 
     def remove_blank_extension(self):
+        """Remove blank extension from the element.
+
+        This method is intended to be overridden by subclasses.
+        """
         pass
 
     def reset(self):
