@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Fastener.compute_modelgeometry" href="compas_timber.elements.Fastener.compute_modelgeometry.html" />
-    <link rel="prev" title="Fastener.compute_contacts" href="compas_timber.elements.Fastener.compute_contacts.html" />
+    <link rel="next" title="Fastener.ToString" href="compas_timber.elements.Fastener.ToString.html" />
+    <link rel="prev" title="Fastener" href="compas_timber.elements.Fastener.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -603,20 +603,13 @@ document.write(`
 <h1>Fastener.compute_elementgeometry</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Fastener.compute_elementgeometry">
-<span class="sig-prename descclassname"><span class="pre">Fastener.</span></span><span class="sig-name descname"><span class="pre">compute_elementgeometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d83fc96/src/compas_timber/../../../../../../../opt/hostedtoolcache/Python/3.10.18/x64/lib/python3.10/site-packages/compas_model/elements/element.py#L306"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Compute the geometry of the element in local coordinates.</p>
-<p>This is the parametric representation of the element,
-without considering its location in the model or its interaction(s) with connected elements.</p>
+<span class="sig-prename descclassname"><span class="pre">Fastener.</span></span><span class="sig-name descname"><span class="pre">compute_elementgeometry</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b4a5ef2/src/compas_timber/elements/fastener.py#L81"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Returns the geometry of the fastener in the model.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>include_features</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the features should be included in the element geometry.</p>
+<dt><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Geometry.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a></dt><dd><p>The transformed geometry of the fastener.</p>
 </dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><a class="reference external" href="https://compas.dev/compas/latest/api/compas.datastructures.Mesh.html#compas.datastructures.Mesh" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.datastructures.Mesh</span></code></a> | <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Brep</span></code></a></dt><dd></dd>
 </dl>
 </dd>
 </dl>

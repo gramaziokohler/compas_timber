@@ -598,7 +598,7 @@ document.write(`
 <h1>PlateButtJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.PlateButtJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">PlateButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d83fc96/src/compas_timber/connections/plate_butt_joint.py#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">PlateButtJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b4a5ef2/src/compas_timber/connections/plate_butt_joint.py#L7"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.PlateJoint.html#compas_timber.connections.PlateJoint" title="compas_timber.connections.plate_joint.PlateJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">PlateJoint</span></code></a></p>
 <p>Creates a plate-to-plate butt-joint connection.</p>
 <p class="rubric">Inherited Methods</p>
@@ -608,10 +608,10 @@ document.write(`
 <td><p>Converts the instance to a string.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.add_extensions.html#compas_timber.connections.PlateButtJoint.add_extensions" title="compas_timber.connections.PlateButtJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
-<td><p>Adds the extensions defined by this joint to affected beam(s).</p></td>
+<td><p>Adjusts plate outlines to outer shape required for the joint.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.add_features.html#compas_timber.connections.PlateButtJoint.add_features" title="compas_timber.connections.PlateButtJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
-<td><p>Add features to the plates based on the joint.</p></td>
+<td><p>Adds features to the plates based on the joint.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.calculate_topology.html#compas_timber.connections.PlateButtJoint.calculate_topology" title="compas_timber.connections.PlateButtJoint.calculate_topology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calculate_topology</span></code></a></p></td>
 <td><p>Calculate the topology of the joint based on the plates.</p></td>
@@ -637,34 +637,31 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.from_jsonstring.html#compas_timber.connections.PlateButtJoint.from_jsonstring" title="compas_timber.connections.PlateButtJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.get_interface_for_plate.html#compas_timber.connections.PlateButtJoint.get_interface_for_plate" title="compas_timber.connections.PlateButtJoint.get_interface_for_plate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_interface_for_plate</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.promote_cluster.html#compas_timber.connections.PlateButtJoint.promote_cluster" title="compas_timber.connections.PlateButtJoint.promote_cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_cluster</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.promote_cluster.html#compas_timber.connections.PlateButtJoint.promote_cluster" title="compas_timber.connections.PlateButtJoint.promote_cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_cluster</span></code></a></p></td>
 <td><p>Creates an instance of this joint from a cluster of elements.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.promote_joint_candidate.html#compas_timber.connections.PlateButtJoint.promote_joint_candidate" title="compas_timber.connections.PlateButtJoint.promote_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_joint_candidate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.promote_joint_candidate.html#compas_timber.connections.PlateButtJoint.promote_joint_candidate" title="compas_timber.connections.PlateButtJoint.promote_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_joint_candidate</span></code></a></p></td>
 <td><p>Creates an instance of this joint from a generic joint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines.html#compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines" title="compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder_planes_and_outlines</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines.html#compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines" title="compas_timber.connections.PlateButtJoint.reorder_planes_and_outlines"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorder_planes_and_outlines</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.restore_beams_from_keys.html#compas_timber.connections.PlateButtJoint.restore_beams_from_keys" title="compas_timber.connections.PlateButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.restore_beams_from_keys.html#compas_timber.connections.PlateButtJoint.restore_beams_from_keys" title="compas_timber.connections.PlateButtJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>Restores the reference to the elements associated with this joint.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.restore_plates_from_keys.html#compas_timber.connections.PlateButtJoint.restore_plates_from_keys" title="compas_timber.connections.PlateButtJoint.restore_plates_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_plates_from_keys</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.restore_plates_from_keys.html#compas_timber.connections.PlateButtJoint.restore_plates_from_keys" title="compas_timber.connections.PlateButtJoint.restore_plates_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_plates_from_keys</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.sha256.html#compas_timber.connections.PlateButtJoint.sha256" title="compas_timber.connections.PlateButtJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.sha256.html#compas_timber.connections.PlateButtJoint.sha256" title="compas_timber.connections.PlateButtJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.to_json.html#compas_timber.connections.PlateButtJoint.to_json" title="compas_timber.connections.PlateButtJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.to_json.html#compas_timber.connections.PlateButtJoint.to_json" title="compas_timber.connections.PlateButtJoint.to_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_json</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.to_jsonstring.html#compas_timber.connections.PlateButtJoint.to_jsonstring" title="compas_timber.connections.PlateButtJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.to_jsonstring.html#compas_timber.connections.PlateButtJoint.to_jsonstring" title="compas_timber.connections.PlateButtJoint.to_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_jsonstring</span></code></a></p></td>
 <td><p>Convert an object to its native data representation and save it to a JSON string.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.validate_data.html#compas_timber.connections.PlateButtJoint.validate_data" title="compas_timber.connections.PlateButtJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.PlateButtJoint.validate_data.html#compas_timber.connections.PlateButtJoint.validate_data" title="compas_timber.connections.PlateButtJoint.validate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_data</span></code></a></p></td>
 <td><p>Validate the data against the object's data schema.</p></td>
 </tr>
 </tbody>
