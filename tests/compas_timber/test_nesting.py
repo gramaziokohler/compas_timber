@@ -4,7 +4,7 @@ import warnings
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
-from compas.geometry import Transformation
+from compas.geometry import Polyline
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Slab
@@ -419,9 +419,9 @@ def test_nest_method_with_incompatible_beams():
 def test_nest_per_group_basic():
     """Test per_group nesting keeps beams from the same group together on separate stocks."""
     model = TimberModel()
-
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with 2 beams
-    group_a = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    group_a = Slab(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_a)
@@ -429,7 +429,7 @@ def test_nest_per_group_basic():
     model.add_element(beam_a2, parent=group_a)
 
     # Create Group B with 2 beams
-    group_b = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    group_b = Slab(outline=polyline, thickness=0)
     beam_b1 = Beam(frame=Frame.worldXY(), length=800, width=120, height=60)
     beam_b2 = Beam(frame=Frame.worldXY(), length=1200, width=120, height=60)
     model.add_element(group_b)
@@ -472,9 +472,10 @@ def test_nest_per_group_basic():
 def test_nest_per_group_with_standalone_beams():
     """Test per_group nesting handles both grouped and standalone beams correctly."""
     model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create a group with 2 beams
-    group = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    group = Slab(outline=polyline, thickness=0)
     beam_g1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_g2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group)
@@ -509,13 +510,14 @@ def test_nest_per_group_with_standalone_beams():
 def test_nest_per_group_empty_groups():
     """Test per_group nesting handles empty groups without beams."""
     model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create an empty group
-    empty_group = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    empty_group = Slab(outline=polyline, thickness=0)
     model.add_element(empty_group)
 
     # Add a group with beams
-    group_with_beams = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    group_with_beams = Slab(outline=polyline, thickness=0)
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_with_beams)
@@ -539,9 +541,9 @@ def test_nest_per_group_empty_groups():
 def test_nest_per_group_multiple_sections():
     """Test per_group nesting with groups having beams of different cross-sections."""
     model = TimberModel()
-
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with beams of multiple cross-sections
-    group_a = Slab(transformation=Transformation(), length=0, width=0, thickness=0)
+    group_a = Slab(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
     model.add_element(group_a)
