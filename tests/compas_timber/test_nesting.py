@@ -447,8 +447,8 @@ def test_nest_per_group_basic():
     result_grouped = nester_grouped.nest()
 
     # Global optimization: all 4 beams optimized together
-    # Sorted descending: 2200, 2000, 800, 1500
-    # Stock 1: 2200 + 800 = 3000, Stock 2: 1200 + 1500 = 2700
+    # Sorted descending: 2000, 1500, 1200, 800
+    # Stock 1: 2000 + 800 = 2800, Stock 2: 1500 + 1200 = 2700
     assert len(result_global.stocks) == 2
 
     # Per-group: each group nested separately
