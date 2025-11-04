@@ -8,6 +8,7 @@ import Grasshopper
 import Rhino.Geometry as rg
 import System
 from compas.geometry import Line
+from compas_rhino.conversions import brep_to_compas
 from compas_rhino.conversions import plane_to_compas
 from compas_rhino.conversions import polyline_to_compas
 
@@ -61,6 +62,8 @@ class BTLxFromGeometry(Grasshopper.Kernel.GH_ScriptInstance):
                     geometries.append(plane_to_compas(geo))
                 elif isinstance(geo, rg.PolylineCurve):
                     geometries.append(polyline_to_compas(geo.ToPolyline()))
+                elif isinstance(geo, rg.Brep):
+                    geometries.append(brep_to_compas(geo))
                 else:
                     error(self.component, f"Input parameter {arg_name} collect unusable data")
 
