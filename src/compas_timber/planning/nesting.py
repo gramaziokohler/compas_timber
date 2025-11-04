@@ -415,7 +415,7 @@ class BeamNester(object):
             standalone_beams = []
             for element in self.model.elements():
                 if element.is_group_element:
-                    group_children = self.model.get_elements_in_group(element, filter_=lambda e: e.is_beam)
+                    group_children = list(self.model.get_elements_in_group(element, filter_=lambda e: e.is_beam))
                     if group_children:
                         beam_groups.append(group_children)
 
