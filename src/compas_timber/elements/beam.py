@@ -18,6 +18,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
 
 from .timber import TimberElement
+from .timber import reset_timber_attrs
 
 
 class Beam(TimberElement):
@@ -86,14 +87,13 @@ class Beam(TimberElement):
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
-        super(Beam, self).__init__(frame, **kwargs)
-        self.width = width
-        self.height = height
-        self.length = length
+        super(Beam, self).__init__(frame=frame, length=length, width=width, height=height, **kwargs)
+
         self.attributes = {}
         self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
+        self._blank = None
 
     def __repr__(self):
         # type: () -> str
@@ -128,10 +128,12 @@ class Beam(TimberElement):
         """The blank of the beam in model space.
         Compared to `shape`, this box includes any extensions added to the beam."""
         # type: () -> Box
-        start, _ = self._resolve_blank_extensions()
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
-        return blank.transformed(self.modeltransformation)
+        if not self._blank:
+            start, _ = self._resolve_blank_extensions()
+            blank = Box(self.blank_length, self.width, self.height)
+            blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
+            self._blank = blank.transformed(self.modeltransformation)
+        return self._blank
 
     @property
     def blank_length(self):
@@ -303,6 +305,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @reset_computed
+    @reset_timber_attrs
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         """Adds a blank extension to the beam.
@@ -323,6 +326,7 @@ class Beam(TimberElement):
         self._blank_extensions[joint_key] = (start, end)
 
     @reset_computed
+    @reset_timber_attrs
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
         """Removes a blank extension from the beam.

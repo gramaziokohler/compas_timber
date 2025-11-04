@@ -377,3 +377,41 @@ def test_geometry_with_features(beam, mocker):
 
     # Check that apply was called for this feature
     mock_feature.apply.assert_called()
+
+
+def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
+    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+    # Force computation of cached attributes by accessing them
+    _ = beam.blank
+    _ = beam.ref_frame
+
+    # Verify the attributes are cached (not None)
+    assert beam._blank is not None
+    assert beam._ref_frame is not None
+
+    # Call a method decorated with @reset_timber_attrs
+    beam.add_feature(JackRafterCut(is_joinery=False))
+
+    # Verify the cached attributes have been reset to None
+    assert beam._blank is None
+    assert beam._ref_frame is None
+    assert beam._geometry is None
+
+
+def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
+    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+    # Force computation of cached attributes by accessing them
+    _ = beam.blank
+    _ = beam.ref_frame
+
+    # Verify the attributes are cached (not None)
+    assert beam._blank is not None
+    assert beam._ref_frame is not None
+
+    # Call a method decorated with @reset_timber_attrs
+    beam.add_blank_extension(10.0, 20.0)
+
+    # Verify the cached attributes have been reset to None
+    assert beam._blank is None
+    assert beam._ref_frame is None
+    assert beam._geometry is None
