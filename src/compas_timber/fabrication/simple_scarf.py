@@ -1,30 +1,19 @@
 import math
 from collections import OrderedDict
 
-from compas.datastructures import Mesh
 from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
-from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import Polyhedron
-from compas.geometry import angle_vectors_signed
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
-from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements.beam import Beam
 from compas_timber.errors import FeatureApplicationError
-from tests.compas_timber.test_lap_joint import beam_a, beam_b
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import EdgePositionType
 from .btlx import OrientationType
 
 
@@ -170,8 +159,18 @@ class SimpleScarf(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_beams(cls, beam, other_beam, length=200.0, depth_ref_side=20.0, depth_opp_side=20.0, num_drill_hole=0, drill_hole_diam_1=20.0, drill_hole_diam_2=20.0, ref_side_index=0):
-
+    def from_beams(
+        cls,
+        beam,
+        other_beam,
+        length=200.0,
+        depth_ref_side=20.0,
+        depth_opp_side=20.0,
+        num_drill_hole=0,
+        drill_hole_diam_1=20.0,
+        drill_hole_diam_2=20.0,
+        ref_side_index=0,
+    ):
         # type: (Beam, Beam, float, float, float, int, float, float, int) -> SimpleScarf
         if num_drill_hole not in [0, 1, 2]:
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
