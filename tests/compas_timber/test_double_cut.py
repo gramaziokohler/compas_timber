@@ -234,7 +234,6 @@ def test_double_cut_planes_from_params(
     generated_planes = double_cut.planes_from_params_and_beam(main_beams[test_index])
     # compare generated planes to expected planes using `approx`
     for generated, expected in zip(generated_planes, expected_cutting_planes):
-        expected = expected.transformed(main_beams[test_index].transformation_to_local())
         assert generated.point.x == pytest.approx(expected.point.x, abs=TOL.approximation)
         assert generated.point.y == pytest.approx(expected.point.y, abs=TOL.approximation)
         assert generated.point.z == pytest.approx(expected.point.z, abs=TOL.approximation)
@@ -303,6 +302,7 @@ def test_double_cut_transforms_with_beam(tol, cross_beam):
     planes_b = instance_b.planes_from_params_and_beam(beam_b)
 
     for plane_a, plane_b in zip(planes_a, planes_b):
+        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)
 
@@ -346,5 +346,6 @@ def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
     planes_a = double_cut_a.planes_from_params_and_beam(beam_a)
     planes_b = double_cut_b.planes_from_params_and_beam(beam_b)
     for plane_a, plane_b in zip(planes_a, planes_b):
+        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)

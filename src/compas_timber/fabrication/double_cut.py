@@ -332,7 +332,7 @@ class DoubleCut(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         # get cutting planes from params and beam
         try:
-            cutting_planes = self.planes_from_params_and_beam(beam)
+            cutting_planes = [cp.transformed(beam.transformation_to_local()) for cp in self.planes_from_params_and_beam(beam)]
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
@@ -399,7 +399,7 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-        return [Plane.from_frame(cutting_frame).transformed(beam.transformation_to_local()) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.

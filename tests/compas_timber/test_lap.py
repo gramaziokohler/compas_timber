@@ -72,7 +72,7 @@ def test_lap_for_pocket_from_frame(tol):
     assert instance.ref_side_index == ref_side_index
 
     # volume from Lap instance
-    mesh_volume = instance.volume_from_params_and_beam(beam).transformed(beam.transformation)
+    mesh_volume = instance.volume_from_params_and_beam(beam)
     mesh_vertices, mesh_faces = mesh_volume.to_vertices_and_faces()
 
     # expected vertices and faces
@@ -148,7 +148,7 @@ def test_lap_from_polyhedron(tol):
     assert instance.ref_side_index == 0
 
     # volume from Lap instance
-    polyhedron_volume = instance.volume_from_params_and_beam(beam).transformed(beam.transformation)
+    polyhedron_volume = instance.volume_from_params_and_beam(beam)
     polyhedron_vertices, polyhedron_faces = polyhedron_volume.to_vertices_and_faces()
 
     # expected vertices and faces
@@ -375,6 +375,7 @@ def test_lap_from_polyhedron_transforms_with_beam(tol):
 
     assert len(vertices_a) == len(vertices_b)
     for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        vertex_a.transform(transformation)
         assert tol.is_allclose(vertex_a, vertex_b)
 
 
@@ -432,4 +433,5 @@ def test_lap_proxy_transforms_with_beam(tol):
 
     assert len(vertices_a) == len(vertices_b)
     for vertex_a, vertex_b in zip(vertices_a, vertices_b):
+        vertex_a.transform(transformation)
         assert tol.is_allclose(vertex_a, vertex_b)
