@@ -415,3 +415,34 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
     assert beam._blank is None
     assert beam._ref_frame is None
     assert beam._geometry is None
+
+
+def test_transform_invalidates_cached_timber_attributes(beam):
+    """Test that calling transform() correctly invalidates cached timber-specific attributes."""
+    # Force computation of cached timber attributes by accessing them
+    original_blank = beam.blank
+    original_ref_frame = beam.ref_frame
+    _ = beam.geometry  # Force computation but we don't need to keep reference
+
+    # Verify attributes are cached (not None)
+    assert beam._blank is not None
+    assert beam._ref_frame is not None
+    assert beam._geometry is not None
+
+    # Apply a transformation
+    translation = Translation.from_vector(Vector(100, 200, 300))
+    beam.transform(translation)
+
+    # Verify cached attributes have been reset to None
+    assert beam._blank is None
+    assert beam._ref_frame is None
+    assert beam._geometry is None
+
+    # Verify that accessing the properties after transformation returns new values
+    new_blank = beam.blank
+    new_ref_frame = beam.ref_frame
+
+    # The geometries should be different (transformed)
+    assert new_blank.frame != original_blank.frame
+    assert new_ref_frame.point != original_ref_frame.point
+    assert not TOL.is_close(new_blank.frame.point.distance_to_point(original_blank.frame.point), 0.0)
