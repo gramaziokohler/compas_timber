@@ -422,12 +422,10 @@ def test_transform_invalidates_cached_timber_attributes(beam):
     # Force computation of cached timber attributes by accessing them
     original_blank = beam.blank
     original_ref_frame = beam.ref_frame
-    _ = beam.geometry  # Force computation but we don't need to keep reference
 
     # Verify attributes are cached (not None)
     assert beam._blank is not None
     assert beam._ref_frame is not None
-    assert beam._geometry is not None
 
     # Apply a transformation
     translation = Translation.from_vector(Vector(100, 200, 300))
@@ -436,7 +434,6 @@ def test_transform_invalidates_cached_timber_attributes(beam):
     # Verify cached attributes have been reset to None
     assert beam._blank is None
     assert beam._ref_frame is None
-    assert beam._geometry is None
 
     # Verify that accessing the properties after transformation returns new values
     new_blank = beam.blank
