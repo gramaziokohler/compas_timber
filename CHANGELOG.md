@@ -8,59 +8,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-* Added `PlateGeometry` class.
-* Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
-
-* Added `PlateJointCandidate` to `generic_joint.py`.
-* Added `Joint.from_cluster` and `Joint.from_generic_joint` constructors to `Joint`.
-* Added `PlateJoint.from_generic_joint` as override.
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
-* Added `frame` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added `frame` property in serialized output in `compas_timber.elements.TimberElement` following its removal from the base `Element`.
-* Added explicit `frame` property setter to `TimberElement` that automatically updates the `transformation` when frame is set.
-* Added `transformation` property to `TimberElement` that computes from `frame` and updates `frame` when set, enabling bidirectional frame-transformation synchronization.
-* Added `transformation` property to `Beam` with custom getter that accounts for blank extensions and setter that delegates to parent class for proper inheritance.
+* Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
 * Added `reset_computed_properties()` method to `TimberElement` to provide interface for invalidating `@reset_computed` decorated properties.
 * Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
+* Added `__from_data__` class method override in `TimberElement` to handle frame/transformation conversion during deserialization.
+* Added standalone element support through minimal overrides in `compute_modeltransformation()` and `compute_modelgeometry()` methods in `TimberElement`.
+
+* Added new `compas_timber.planning.Stock` base class for representing raw material stock pieces with polymorphic element handling.
+* Added new `compas_timber.planning.BeamStock` class for 1D beam stock pieces with length-based nesting and dimensional compatibility checking.
+* Added new `compas_timber.planning.PlateStock` class for 2D plate stock pieces with area-based nesting and dimensional compatibility checking.
+* Added new `compas_timber.planning.BeamNester` class for automated beam nesting with first-fit and best-fit decreasing algorithms.
+* Added new `compas_timber.planning.NestingResult` class as a serializable wrapper for nesting results with analysis properties and enhanced dimensional reporting.
+* Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
+* Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
+* Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
+* Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
+* Added `PlateGeometry` class.
 
 ### Changed
-
-* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
-* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
-* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_timber.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
-* Moved BTLx-specific properties and methods `ref_frame`, `ref_sides`, `ref_edges` to `TimberElement`.
-* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
-* Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
-* Changed `Slab` to inherit from `PlateGeometry`
-* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
-
-* Updated `compas_model` version pinning from `0.4.4` to `0.9.0` to align with the latest development.
-* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the depricated `Interaction`.
+* Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
+* Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
 * Changed `TimberModel.element_by_guid()` to use `self._elements[guid]` instead of `self._guid_element[guid]` for element lookup.
 * Replaced all `GroupNode` references with the new `Group` element class from `compas_model`.
 * Changed `joints` and `joint_candidates` properties in `TimberModel` to use direct edge-based lookup instead of interactions.
 * Updated default edge attributes in the model graph to include `joints` and `candidates`.
 * Updated `graph_node` property to `graphnode` following the changes in the parent `compas_model.elements.Element` class.
-* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
-* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`
-* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`
-* Modified `TimberElement.__init__()` to remove automatic frame and transformation initialization from constructor.
-* Changed the way the `blank` is computed using the `ref_frame` instead of the depricated `blank_frame` in `compas_timber.elements.Beam`.
+* Upstreamed `ref_frame` property from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `ref_sides` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`.
+* Upstreamed `ref_edges` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` to `compas_timber.elements.TimberElement`.
+* Upstreamed `front_side`, `back_side`, `opp_side` methods from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `side_as_surface` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Upstreamed `get_dimensions_relative_to_side` method from `compas_timber.elements.Beam` to `compas_timber.elements.TimberElement`.
+* Refactored `TimberElement.__init__()` to accept `frame` parameter and convert to `transformation` for parent `Element` class, bridging frame-based user interface with transformation-based inheritance.
+* Changed the way the `ref_frame` is computed from the `Blank`'s geometry in `TimberElement`.
+* Changed the way the `blank` is computed in `compas_timber.elements.Beam` applying the `modeltransformation` to a locally generated geometry.
 * Changed the `apply()` method in `DoubleCut`, `DovetailMortise`, `DovetailTenon`, `Drilling`, `FrenchRidgeLap`, `JackRafterCut`, `Lap`, `LongitudinalCut`, `Mortise`, `Pocket`, `StepJointNotch`, `StepJoint`, `Tenon` by transforming the computed feature geometry in the element's local space to allow the element geometry computation to happen in local coordinates.
+* Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
+* Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
+* Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
+* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
+* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
+* Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
+* Fixed the `ShowTopologyTypes` GH Component.
 
 ### Removed
-* Removed `PlateToPlateInterface`, as plates will take `BTLxProcessing` features.
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.
 * Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
 * Removed `faces` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
-* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not needed anymore.
+* Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
+* Removed all Rhino7 components!
+* Removed method `add_group_element` from `TimberModel`.
+* Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
+
+## [1.0.1] 2025-10-16
+
+### Added
+* Added `TimberElement.add_feature` to override the `Element` method.
+* Added new GH helper `get_createable_joints` to get all createable Joint classes.
+
+### Changed
+
+* Fixed a bug in `TLapJoint` and `XLapJoint` where the `cut_plane_bias` parameter was not passed to the `_create_negative_volumes()` method after its signature was changed.
+* Replaced `JackRafterCut` and `Lap` with their Proxy counterparts in `LLapJoint` and `TLapJoint`.
+* Changed `BTLxPart` transformation GUID to use the `TimberElement`'s GUID instead of generating a random UUID in `compas_timber.fabrication.BTLxPart`.
+* Updated the `write()` and `model_to_xml()` methods of the `BTLxWriter` class to optionally accept a `NestingResult` object, enabling inclusion of beam nesting information in the BTLx output.
+* Fixed a bug in `TStepJoint` where beam dimensions were calculated incorrectly for certain reference side orientations. 
+* Renamed `TOliGinaJoint` to `OliginaJoint` for consistency wrt to the supported topology.
+* Replaced `get_leaf_subclasses(Joint)` with `get_createable_joints()` in the relevant GH components.
+* Added inflation of the negative volume in `LapProxy` to fix boolean difference artifact.
+
+### Removed
 
 ## [1.0.0] 2025-09-01
 

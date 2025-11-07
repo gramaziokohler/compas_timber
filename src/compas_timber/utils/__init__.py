@@ -18,7 +18,6 @@ from compas.geometry import subtract_vectors
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
-from compas.geometry import intersection_line_segment
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
@@ -395,11 +394,13 @@ def get_polyline_segment_perpendicular_vector(polyline, segment_index):
         The vector perpendicular to the segment, pointing outside of the polyline.
 
     """
-    normal = Plane.from_points(polyline.points[:3]).normal
-    if is_polyline_clockwise(polyline, normal):
-        return Vector(*cross_vectors(normal, polyline.lines[segment_index].direction))
-    else:
-        return Vector(*cross_vectors(polyline.lines[segment_index].direction, normal))
+    plane = Plane.from_points(polyline.points)
+    pt = polyline.lines[segment_index].point_at(0.5)
+    perp_vector = Vector(*cross_vectors(polyline.lines[segment_index].direction, plane.normal))
+    point = pt + (perp_vector * 0.1)
+    if is_point_in_polyline(point, polyline):
+        return Vector.from_start_end(point, pt).unitized()
+    return Vector.from_start_end(pt, point).unitized()
 
 
 def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
@@ -497,71 +498,17 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     return (dots[0], dots[1])
 
 
-def intersection_line_beams(line, beams, max_distance=None):
-    """Find intersections between a line and a list of beams.
-    Parameters
-    ----------
-    line : :class:`compas.geometry.Line`
-        The line to check for intersections.
-    beams : list of :class:`compas_timber.elements.Beam`
-        The beams to check for intersections.
-    max_distance : float, optional
-        The maximum distance from the line to consider an intersection valid.
-        Defaults to 0.0, meaning no distance check.
-    Returns
-    -------
-    list of dict
-        A list of dictionaries containing the intersection points, dot products, and the corresponding beams.
-    Each dictionary has the keys "point", "dot", and "beam".
-    """
-    intersections = []
-    max_distance = max_distance or TOL.relative
-    for beam in beams:
-        line_pt, beam_pt = intersection_line_segment(line, beam.centerline)
-        if line_pt:
-            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
-                continue
-            intersection = {}
-            intersection["point"] = Point(*line_pt)
-            intersection["dot"] = dot_vectors(Vector.from_start_end(line.start, Point(*line_pt)), line.direction)
-            intersection["beam"] = beam
-            intersections.append(intersection)
-    return intersections
-
-
-def split_beam_at_lengths(beam, lengths):
-    """Splits a beam at given lengths.
-
-    Parameters
-    ----------
-    beam : :class:`compas_timber.elements.Beam`
-        The beam to split.
-    length : float
-        The length at which to split the beam.
-
-    Returns
-    -------
-    :class:`compas_timber.elements.Beam` or None
-        The new beam that is created by the split, or None if the length is outside the beam's length.
-
-    """
-    lengths.sort(reverse=True)
-    for length in lengths:
-        if length <= 0.0 or length >= beam.length:
-            lengths.remove(length)  # remove lengths that are outside the beam's length
-    beams = [beam]
-    for length in lengths:
-        new_beam = beam.copy()
-        new_beam.attributes.update(beam.attributes)
-        new_beam.length = beam.length - length
-        beam.length = length
-        new_beam.frame.translate(beam.frame.xaxis * length)
-        beams.insert(1, new_beam)
-    return beams
-
-
 def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to the intersection with a plane."""
+    """Move a segment of a polyline to lay on a given plane. this is accomplished by extending the adjacent segments to intersect with the plane.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    plane : :class:`~compas.geometry.Plane`
+        The plane to intersect with.
+    """
     start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
     if start_pt:
         polyline[segment_index] = start_pt
@@ -572,7 +519,6 @@ def move_polyline_segment_to_plane(polyline, segment_index, plane):
         polyline[segment_index + 1] = end_pt
         if segment_index + 1 == len(polyline.lines):
             polyline[0] = end_pt
-
 
 
 __all__ = [
@@ -587,8 +533,5 @@ __all__ = [
     "is_point_in_polyline",
     "do_segments_overlap",
     "get_segment_overlap",
-    "split_beam_at_lengths",
-    "intersection_line_beams",
-    "distance_segment_segment_points",
     "move_polyline_segment_to_plane",
 ]

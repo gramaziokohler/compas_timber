@@ -12,8 +12,10 @@ from compas.geometry import Transformation
 from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import close
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
+from compas_timber.model import TimberModel
 from compas_timber.fabrication import JackRafterCut
 
 
@@ -35,12 +37,31 @@ def test_beam_constructor():
 
     beam = Beam(frame=frame, length=1000.0, width=100.0, height=60.0)
 
-    assert beam.frame == frame
+    assert beam.frame == frame  # TODO: this is not necessarily true if beam is in a model with parent
     assert beam.length == length
     assert beam.width == width
     assert beam.height == height
     assert beam._blank_extensions == {}
     assert beam.transformation == Transformation.from_frame(frame)
+
+
+def test_beam_constructor_with_hierarchy():
+    parent_frame = Frame([100, 100, 100], [0, 1, 0], [1, 1, 1])
+    child_frame = Frame.worldXY()
+
+    parent_beam = Beam(frame=parent_frame, length=1000, width=100, height=100)
+    child_beam = Beam(frame=child_frame, length=1000, width=100, height=100)
+
+    model = TimberModel()
+    model.add_element(parent_beam)
+    model.add_element(child_beam, parent_beam)
+
+    assert parent_beam.transformation == Transformation.from_frame(parent_frame)
+    assert child_beam.transformation == Transformation.from_frame(child_frame)
+
+    assert parent_beam.frame == parent_frame
+    assert child_beam.frame != child_frame  # The frame of the child element is no longer the constructor frame but the frame in global space
+    assert child_beam.frame == parent_frame
 
 
 def test_create_from_endpoints():
@@ -49,6 +70,7 @@ def test_create_from_endpoints():
     B = Beam.from_endpoints(P1, P2, width=0.1, height=0.2)
     assert close(B.length, 1.0)  # the resulting beam length should be 1.0
     assert B.frame is not None
+    assert B.transformation is not None
 
 
 def test_create_from_centerline():
@@ -58,6 +80,7 @@ def test_create_from_centerline():
     B = Beam.from_centerline(line, width=0.1, height=0.2)
     assert close(B.length, 1.0)  # the resulting beam length should be 1.0
     assert B.frame is not None
+    assert B.transformation is not None
 
 
 def test__eq__():
@@ -184,48 +207,32 @@ def test_resolve_blank_extensions_no_extensions(beam):
     assert end == 0.0
 
 
-def test_transformation_with_start_extension(beam):
-    """Test beam transformation includes negative translation along x-axis for start extension."""
-    # Get transformation before extension
-    transformation_before = beam.transformation
+def test_start_blank_extension_updates_blank(beam):
+    """Test that adding start extension properly updates the blank geometry."""
+    blank_before = beam.blank.copy()
+    extension_amount = 50.0
 
-    # Add start extension
-    beam.add_blank_extension(0.1, 0.0, joint_key=1)
+    beam.add_blank_extension(extension_amount, 0.0, joint_key=1)
+    blank_after = beam.blank.copy()
 
-    # Get transformation after extension
-    transformation_after = beam.transformation
+    # The blank length should increase by the extension amount
+    expected_new_length = beam.length + extension_amount
+    assert TOL.is_close(blank_after.xsize, expected_new_length)
 
-    assert transformation_before == transformation_after
+    # Width and height should remain unchanged
+    assert TOL.is_close(blank_after.ysize, blank_before.ysize)
+    assert TOL.is_close(blank_after.zsize, blank_before.zsize)
 
+    # The blank should shift to accommodate the start extension
+    # Start extension moves the blank backward along the beam's x-axis
+    expected_shift = extension_amount * 0.5  # Half the extension since blank is centered
+    shift_vector = beam.frame.xaxis * expected_shift
+    expected_center = blank_before.frame.point - shift_vector
 
-def test_transformation_with_end_extension_only(beam):
-    """Test beam transformation doesn't change for end extension only."""
-    # Get transformation before extension
-    transformation_before = beam.transformation
+    assert TOL.is_zero(blank_after.frame.point.distance_to_point(expected_center))
 
-    # Add end extension only
-    beam.add_blank_extension(0.0, 0.2, joint_key=1)
-
-    # Get transformation after extension
-    transformation_after = beam.transformation
-
-    # Should be the same (no start extension)
-    assert transformation_before == transformation_after
-
-
-def test_transformation_with_multiple_extensions(beam):
-    """Test beam transformation uses max start value from multiple extensions."""
-    # Get transformation before extensions
-    transformation_before = beam.transformation
-
-    # Add multiple extensions with different start values
-    beam.add_blank_extension(0.1, 0.0, joint_key=1)
-    beam.add_blank_extension(0.15, 0.0, joint_key=2)  # This has the max start
-    beam.add_blank_extension(0.0, 5.0, joint_key=3)
-
-    transformation_after = beam.transformation
-
-    assert transformation_after == transformation_before
+    # Verify blank_length property is updated correctly
+    assert TOL.is_close(beam.blank_length, expected_new_length)
 
 
 def test_transformation_when_removing_extensions(beam):
@@ -370,3 +377,41 @@ def test_geometry_with_features(beam, mocker):
 
     # Check that apply was called for this feature
     mock_feature.apply.assert_called()
+
+
+def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
+    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+    # Force computation of cached attributes by accessing them
+    _ = beam.blank
+    _ = beam.ref_frame
+
+    # Verify the attributes are cached (not None)
+    assert beam._blank is not None
+    assert beam._ref_frame is not None
+
+    # Call a method decorated with @reset_timber_attrs
+    beam.add_feature(JackRafterCut(is_joinery=False))
+
+    # Verify the cached attributes have been reset to None
+    assert beam._blank is None
+    assert beam._ref_frame is None
+    assert beam._geometry is None
+
+
+def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
+    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+    # Force computation of cached attributes by accessing them
+    _ = beam.blank
+    _ = beam.ref_frame
+
+    # Verify the attributes are cached (not None)
+    assert beam._blank is not None
+    assert beam._ref_frame is not None
+
+    # Call a method decorated with @reset_timber_attrs
+    beam.add_blank_extension(10.0, 20.0)
+
+    # Verify the cached attributes have been reset to None
+    assert beam._blank is None
+    assert beam._ref_frame is None
+    assert beam._geometry is None

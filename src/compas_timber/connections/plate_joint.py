@@ -57,39 +57,15 @@ class PlateJoint(Joint):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
-
-        self._reverse_a = False
-        self._reverse_b = False
-
+        self.a_outlines = None
+        self.b_outlines = None
+        self.a_planes = None
+        self.b_planes = None
         self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
         self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
-
-    @property
-    def a_outlines(self):
-        if self._reverse_a:
-            return self.plate_a.outlines[::-1]
-        return self.plate_a.outlines
-
-    @property
-    def b_outlines(self):
-        if self._reverse_b:
-            return self.plate_b.outlines[::-1]
-        return self.plate_b.outlines
-
-    @property
-    def a_planes(self):
-        if self._reverse_a:
-            return self.plate_a.planes[::-1]
-        return self.plate_a.planes
-
-    @property
-    def b_planes(self):
-        if self._reverse_b:
-            return self.plate_b.planes[::-1]
-        return self.plate_b.planes
 
     @property
     def plates(self):
@@ -136,7 +112,10 @@ class PlateJoint(Joint):
             The instance of the created joint.
 
         """
-        kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        if reordered_elements and candidate.elements[0] != reordered_elements[0]:  # plates are in different order, reverse segment indices
+            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
+        else:
+            kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
         return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_extensions(self):
@@ -146,9 +125,6 @@ class PlateJoint(Joint):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
             self.set_edge_planes()
-            for plate in self.plates:
-                plate.apply_edge_extensions()
-
 
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
@@ -156,14 +132,18 @@ class PlateJoint(Joint):
 
     def reorder_planes_and_outlines(self):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
-            self._reverse_b = True
+            self.b_planes = self.plate_b.planes[::-1]
+            self.b_outlines = self.plate_b.outlines[::-1]
         else:
-            self._reverse_b = False
+            self.b_planes = self.plate_b.planes
+            self.b_outlines = self.plate_b.outlines
+
+        self.a_planes = self.plate_a.planes
+        self.a_outlines = self.plate_a.outlines
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self._reverse_a = True
-            else:
-                self._reverse_a = False
+                self.a_planes = self.plate_a.planes[::-1]
+                self.a_outlines = self.plate_a.outlines[::-1]
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
@@ -176,5 +156,3 @@ class PlateJoint(Joint):
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
         self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid
-
-

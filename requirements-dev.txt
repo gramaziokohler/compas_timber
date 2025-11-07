@@ -7,7 +7,6 @@ ruff
 sphinx_compas2_theme
 sphinxcontrib-mermaid
 twine
-build
 wheel
 pytest-mock
 build
@@ -15,3 +14,4 @@ pythonnet
 tomlkit
 compas_viewer
 pytest-cov
+pre-commit
