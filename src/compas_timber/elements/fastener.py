@@ -21,8 +21,8 @@ class Fastener(Element):
     ----------
     shape : :class:`~compas.geometry.Geometry`, optional
         The geometry of the fastener.
-    frame : :class:`~compas.geometry.Frame`, optional
-        The frame of the fastener.
+    transformation : :class:`~compas.geometry.Transformation`, optional
+        The transformation of the fastener.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -30,8 +30,8 @@ class Fastener(Element):
     ----------
     shape : :class:`~compas.geometry.Geometry`
         The geometry of the fastener.
-    frame : :class:`~compas.geometry.Frame`
-        The frame of the fastener.
+    transformation : :class:`~compas.geometry.Transformation`
+        The transformation of the fastener.
     interfaces : list
         A list of interfaces associated with this fastener.
     attributes : dict
@@ -45,25 +45,17 @@ class Fastener(Element):
 
     """
 
-    def __init__(self, shape=None, frame=None, **kwargs):
-        super(Fastener, self).__init__(**kwargs)
-        self._frame = frame
-        self.transformation = Transformation.from_frame(frame) if frame else Transformation()
+    def __init__(self, shape=None, transformation=None, **kwargs):
+        super(Fastener, self).__init__(transformation=transformation, **kwargs)
         self._shape = shape
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
 
-    def frame(self):
-        if self.model:
-            return Frame.from_transformation(self.transformation)
-        else:
-            return self._frame
-
     def __repr__(self):
         # type: () -> str
-        return "Fastener(frame={!r}, name={})".format(self._frame, self.name)
+        return "Fastener(transformation={!r}, name={})".format(self.transformation, self.name)
 
     def __str__(self):
         # type: () -> str
@@ -71,24 +63,10 @@ class Fastener(Element):
 
     @property
     def is_fastener(self):
-        """Check if this element is a fastener.
-
-        Returns
-        -------
-        bool
-            Always True for fasteners.
-        """
         return True
 
     @property
     def key(self):
-        """The graph node key of this fastener.
-
-        Returns
-        -------
-        int or None
-            The graph node key, or None if not set.
-        """
         # type: () -> int | None
         return self.graphnode
 
@@ -96,11 +74,11 @@ class Fastener(Element):
     def __data__(self):
         return {
             "shape": self._shape,
-            "frame": self.frame,
+            "transformation": self.transformation,
             "interfaces": self.interfaces,
         }
 
-    def compute_geometry(self):
+    def compute_elementgeometry(self):
         """Returns the geometry of the fastener in the model.
 
         Returns
@@ -108,7 +86,7 @@ class Fastener(Element):
         :class:`~compas.geometry.Geometry`
             The transformed geometry of the fastener.
         """
-        return self.shape.transformed(Transformation.from_frame(self.frame))
+        return self.shape.transformed(self.transformation)
 
 
 class FastenerTimberInterface(Data):

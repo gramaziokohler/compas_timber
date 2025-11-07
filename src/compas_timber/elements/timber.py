@@ -1,24 +1,55 @@
-from functools import reduce
-from operator import mul
+import abc
+from functools import wraps
 
 from compas.geometry import Frame
-from compas.geometry import Vector
 from compas.geometry import Line
-from compas.geometry import Vector
 from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-from compas_model.modifiers import Modifier
 
 
-class TimberElement(Element):
+def reset_timber_attrs(f):
+    """Decorator to reset cached timber-specific attributes."""
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        self: TimberElement = args[0]
+        self._blank = None
+        self._ref_frame = None
+        self._geometry = None  # from Element
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+class TimberElement(Element, abc.ABC):
     """Base class for all timber elements.
 
     This is an abstract class and should not be instantiated directly.
 
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`, optional
+        The frame representing the beam's local coordinate system in its hierarchical context.
+        Defaults to ``None``, in which case the world coordinate system is used.
+    length : float
+        Length of the timber element.
+    width : float
+        Width of the timber element.
+    height : float
+        Height of the timber element.
+    features : list[:class:`~compas_timber.fabrication.Feature`], optional
+        List of features to apply to this element.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
     Attributes
     ----------
+    frame : :class:`compas.geometry.Frame`
+        The coordinate system of this element in model space.
+        This property may be different from the constructor parameter if the element belongs to a model hierarchy.
     is_beam : bool
         True if the element is a beam.
     is_plate : bool
@@ -27,48 +58,41 @@ class TimberElement(Element):
         True if the element is a wall.
     is_group_element : bool
         True if the element can be used as container for other elements.
+    features : list[:class:`~compas_timber.parts.Feature`]
+        A list of features applied to the element.
+    geometry : :class:`compas.geometry.Geometry`
+        The geometry of the element in the model's global coordinates.
 
     """
 
     @property
     def __data__(self):
         data = super(TimberElement, self).__data__
-        data["frame"] = self.frame
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         return data
 
-    def __init__(self, frame, length, width, height, features=None, **kwargs):
-        """Initialize a TimberElement.
-
-        Parameters
-        ----------
-        frame : :class:`~compas.geometry.Frame`
-            The coordinate system (frame) of this timber element.
-        length : float
-            Length of the timber element.
-        width : float
-            Width of the timber element.
-        height : float
-            Height of the timber element.
-        features : list[:class:`~compas_timber.fabrication.Feature`], optional
-            List of features to apply to this element.
-        **kwargs : dict, optional
-            Additional keyword arguments.
-        """
-        super(TimberElement, self).__init__(**kwargs)
-        self.frame = frame
+    def __init__(self, frame, length, width, height, **kwargs):
+        super().__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.length = length
         self.width = width
         self.height = height
-        self._features = features or []
-        self._frame = frame or Frame.worldXY()
-        self._geometry = None
+        self._blank = None
+        self._ref_frame = None
         self.debug_info = []
 
+    @classmethod
+    def __from_data__(cls, data):
+        transformation = data.pop("transformation", None)
+        if transformation:
+            data["frame"] = Frame.from_transformation(transformation)
+        return cls(**data)
+
     @reset_computed
+    @reset_timber_attrs
     def _reset_computed_dummy(self):
         """Dummy method to trigger reset_computed decorator."""
         pass
@@ -79,71 +103,20 @@ class TimberElement(Element):
 
     @property
     def is_beam(self):
-        """Check if this element is a beam.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_plate(self):
-        """Check if this element is a plate.
-
-        Returns
-        -------
-        bool
-            False for the base TimberElement class.
-        """
         return False
 
     @property
     def is_group_element(self):
+        # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
         return False
-
-    @property
-    def is_fastener(self):
-        return False
-
-    @property
-    def frame(self):
-        # type: () -> Frame | None
-        """The local frame of the element defining its position and orientation in space."""
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame):
-        # type: (Frame) -> None
-        self._frame = frame
-
-    @property
-    def transformation(self):
-        # type: () -> Transformation
-        """The local transformation of the element defining its position and orientation in space.
-        This property returns the transformation computed from the frame when used as a getter,
-        and updates the frame by converting the transformation back to a frame when used as a setter.
-        """
-        return Transformation.from_frame(self.frame) if self.frame else Transformation()
-
-    @transformation.setter
-    @reset_computed
-    def transformation(self, transformation):
-        # type: (Transformation) -> None
-        self._frame = Frame.from_transformation(transformation)
 
     @property
     def features(self):
-        """List of features applied to this element.
-
-        Returns
-        -------
-        list[:class:`~compas_timber.fabrication.Feature`]
-            The features applied to this element.
-        """
-        # type: () -> list[Feature]
-        """A list of features applied to the element."""
+        # type: () -> list[BTLxProcessing]
         return self._features
 
     @features.setter
@@ -163,60 +136,16 @@ class TimberElement(Element):
     # ========================================================================
 
     def compute_modeltransformation(self):
-        """Compute the transformation to model coordinates of this element
-        based on its position in the spatial hierarchy of the model.
-        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
-        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
-
-        Returns
-        -------
-        :class:`compas.geometry.Transformation`
-
-        """
-        # type: () -> Transformation
-        stack = []
-
-        if self.transformation:
-            stack.append(self.transformation)
-
-        if self.model:
-            parent = self.parent
-
-            while parent:
-                if parent.transformation:
-                    stack.append(parent.transformation)
-                parent = parent.parent
-
-            if self.model.transformation:
-                stack.append(self.model.transformation)
-
-        if stack:
-            return reduce(mul, stack[::-1])
-        return Transformation()
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
 
     def compute_modelgeometry(self):
-        """Compute the geometry of the element in model coordinates and taking into account the effect of interactions with connected elements.
-        # TODO: this is an override of the base class method. The difference is that it checks for self.model.
-        # TODO: this is done in order to allow for an element to be handled without a model. Check if this is necessary.
-
-        Returns
-        -------
-        :class:`compas.geometry.Brep`
-
-        """
-        # type: () -> compas.geometry.Brep
-        xform = self.modeltransformation
-        modelgeometry = self.elementgeometry.transformed(xform)
-
-        if self.model:
-            for nbr in self.model.graph.neighbors_in(self.graphnode):
-                modifiers: list[Modifier] = self.model.graph.edge_attribute((nbr, self.graphnode), name="modifiers")  # type: ignore
-                if modifiers:
-                    source = self.model.graph.node_element(nbr)
-                    for modifier in modifiers:
-                        modelgeometry = modifier.apply(source, modelgeometry)
-
-        return modelgeometry
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()
 
     # ========================================================================
     # Feature management & Modification methods
@@ -236,30 +165,46 @@ class TimberElement(Element):
         self.debug_info = []
 
     @reset_computed
-    def add_features(self, features):
-        # type: (Feature | list[Feature]) -> None
-        """Adds one or more features to the element.
+    @reset_timber_attrs
+    def add_feature(self, feature):
+        # type: (BTLxProcessing) -> None
+        """Adds one or more features to the beam.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`]
-            The features to be added.
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature to be added.
+
+        """
+        self._features.append(feature)  # type: ignore
+
+    @reset_computed
+    @reset_timber_attrs
+    def add_features(self, features):
+        # type: (BTLxProcessing | list[BTLxProcessing]) -> None
+        """Adds one or more features to the beam.
+
+        Parameters
+        ----------
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`)
+            The feature or features to be added described as a BTLxProcessing or a list of BTLxProcessings.
 
         """
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
-        self._geometry = None  # reset geometry cache
 
     @reset_computed
+    @reset_timber_attrs
     def remove_features(self, features=None):
-        # type: (None | Feature | list[Feature]) -> None
-        """Removes features from the element.
+        # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
+        """Removes a feature from the beam.
 
         Parameters
         ----------
-        features : :class:`~compas_timber.parts.Feature` | list[:class:`~compas_timber.parts.Feature`], optional
-            The features to be removed. If None, all features will be removed.
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
+            The feature or features to be removed described as a BTLxProcessing or a list of BTLxProcessings.
+            If None, all features will be removed.
 
         """
         if features is None:
@@ -268,7 +213,6 @@ class TimberElement(Element):
             if not isinstance(features, list):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
-
 
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
@@ -280,54 +224,31 @@ class TimberElement(Element):
 
         """
         # type: () -> Transformation
-        return self.modeltransformation.inverse()
-
-    def transform(self, transformation):
-        """Apply a transformation to the element's frame. IMPORTANT: This transformation occurs in the parent's local coordinate system.
-
-        Parameters
-        ----------
-        transformation : :class:`~compas.geometry.Transformation`
-            The transformation to apply.
-
-        """
-        # type: (Transformation) -> None
-        self.frame.transform(transformation)
-        self.transformation = Transformation.from_frame(self.frame)
-
-    def translate(self, vector):
-        """Apply a translation to the element's frame. IMPORTANT: This translation occurs in the parent's local coordinate system.
-
-        Parameters
-        ----------
-        transformation : :class:`~compas.geometry.Transformation`
-            The transformation to apply.
-
-        """
-        # type: (Transformation) -> None
-        self.frame.translate(vector)
-        self.transformation = Transformation.from_frame(self.frame)
+        return self.modeltransformation.inverted()
 
     ########################################################################
     # BTLx properties
     ########################################################################
+
     @property
     def ref_frame(self):
-        """Reference frame for machining processing according to BTLx standard.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The reference frame of the element.
-        """
         # type: () -> Frame
-        return Frame(self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7]))
+        # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
+        """
+        Reference frame for machining processings according to BTLx standard.
+        The origin is at the bottom far corner of the element.
+        The ref_frame is always in model coordinates.
+        """
+        if not self._ref_frame:
+            self._ref_frame = Frame(
+                self.blank.points[1], Vector.from_start_end(self.blank.points[1], self.blank.points[2]), Vector.from_start_end(self.blank.points[1], self.blank.points[7])
+            )
+        return self._ref_frame
 
     @property
     def ref_sides(self):
         # type: () -> tuple[Frame, Frame, Frame, Frame, Frame, Frame]
         # See: https://design2machine.com/btlx/BTLx_2_2_0.pdf
-        # TODO: cache these
         rs1_point = self.ref_frame.point
         rs2_point = rs1_point + self.ref_frame.yaxis * self.height
         rs3_point = rs1_point + self.ref_frame.yaxis * self.height + self.ref_frame.zaxis * self.width

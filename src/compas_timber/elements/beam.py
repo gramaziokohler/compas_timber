@@ -18,6 +18,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
 
 from .timber import TimberElement
+from .timber import reset_timber_attrs
 
 
 class Beam(TimberElement):
@@ -27,7 +28,7 @@ class Beam(TimberElement):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`
-        A local coordinate system of the beam:
+        The frame representing the beam's local coordinate system in its hierarchical context:
         Origin is located at the starting point of the centerline.
         x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
         y-axis corresponds to the width of the cross-section, usually the smaller dimension.
@@ -41,8 +42,12 @@ class Beam(TimberElement):
 
     Attributes
     ----------
+    transformation : :class:`~compas.geometry.Transformation`
+        The transformation matrix representing the beam's local coordinate system in its hierarchical context.
+        This is the internal interface for the constructor `frame` parameter.
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this beam.
+        The coordinate system (frame) of this beam in model space.
+        This property may be different from the constructor parameter if the beam belongs to a model hierarchy.
     length : float
         Length of the beam.
     width : float
@@ -52,7 +57,8 @@ class Beam(TimberElement):
     shape : :class:`~compas.geometry.Box`
         A feature-less box representing the parametric geometry of this beam in global coordinates.
     blank : :class:`~compas.geometry.Box`
-        A feature-less box representing the material stock geometry to produce this beam in local coordinates.
+        A feature-less box representing the material stock geometry to produce this beam in global coordinates.
+        Compared to `shape`, this box includes any extensions added to the beam.
     blank_length : float
         The length of the blank including any extensions added to the beam.
     centerline : :class:`~compas.geometry.Line`
@@ -74,7 +80,6 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["frame"] = self.frame
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
@@ -88,6 +93,7 @@ class Beam(TimberElement):
         self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
+        self._blank = None
 
     def __repr__(self):
         # type: () -> str
@@ -111,7 +117,7 @@ class Beam(TimberElement):
 
     @property
     def shape(self):
-        """The shape of the beam in global coordinates."""
+        """The shape of the beam in model space."""
         # type: () -> Box
         shape = Box(self.length, self.width, self.height)
         shape.translate(Vector.Xaxis() * self.length * 0.5)
@@ -119,12 +125,15 @@ class Beam(TimberElement):
 
     @property
     def blank(self):
-        """The blank of the beam in local coordinates."""
+        """The blank of the beam in model space.
+        Compared to `shape`, this box includes any extensions added to the beam."""
         # type: () -> Box
-        start, _ = self._resolve_blank_extensions()
-        blank = Box(self.blank_length, self.width, self.height)
-        blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
-        return blank.transformed(self.modeltransformation)
+        if not self._blank:
+            start, _ = self._resolve_blank_extensions()
+            blank = Box(self.blank_length, self.width, self.height)
+            blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
+            self._blank = blank.transformed(self.modeltransformation)
+        return self._blank
 
     @property
     def blank_length(self):
@@ -134,7 +143,7 @@ class Beam(TimberElement):
 
     @property
     def centerline(self):
-        """The centerline of the beam in global coordinates."""
+        """The centerline of the beam in model space."""
         # type: () -> Line
         line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
         return line.transformed(self.modeltransformation)
@@ -296,6 +305,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @reset_computed
+    @reset_timber_attrs
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         """Adds a blank extension to the beam.
@@ -316,6 +326,7 @@ class Beam(TimberElement):
         self._blank_extensions[joint_key] = (start, end)
 
     @reset_computed
+    @reset_timber_attrs
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
         """Removes a blank extension from the beam.

@@ -40,30 +40,6 @@ jobs:
       run: |
         invoke build-cpython-ghuser-components
 
-    - name: Create IronPython Grasshopper user objects
-      run: |
-        choco install ironpython --version=2.7.8.1
-        invoke clean
-        invoke build-ghuser-components
-
-    - name: Create Rhino7 Yak package
-      shell: pwsh
-      run: |
-        invoke yakerize -m $Env:YAK_TEMPLATE\manifest.yml -l $Env:YAK_TEMPLATE\icon.png -g $Env:USER_OBJECTS -t rh7
-      env:
-        USER_OBJECTS: src\compas_timber\ghpython\components\ghuser
-        YAK_TEMPLATE: src\compas_timber\ghpython\yak_template
-
-    - name: Publish to Yak server (Rhino 7)
-      shell: pwsh
-      run: |
-        $test_flag = if ($Env:TEST_FLAG) { $Env:TEST_FLAG } else { "" }
-        $file = Get-ChildItem -Path dist\yak_package\*rh7*.yak -File | Select-Object -ExpandProperty Name
-        $command = "invoke publish-yak -y dist\yak_package\$file $test_flag".Trim()
-        Invoke-Expression $command
-      env:
-        YAK_TOKEN: ${{ secrets.YAK_DF_TOKEN }}
-
     - name: Create Rhino8 Yak package
       shell: pwsh
       run: |
