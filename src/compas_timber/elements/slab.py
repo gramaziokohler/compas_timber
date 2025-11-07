@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 from .plate_geometry import PlateGeometry
+from .slab_feature import SlabOpening
 
 
 class SlabType(object):
@@ -250,4 +251,9 @@ class Slab(PlateGeometry, Element):
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
-        return cls(**kwargs)
+        openings = args.pop("openings", None)
+        slab = cls(**kwargs)
+        if openings:
+            for opening in openings:
+                slab.features.append(SlabOpening.from_polyline_slab(opening, slab))
+        return slab
