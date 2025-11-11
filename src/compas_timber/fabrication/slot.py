@@ -1,13 +1,19 @@
+import math
 from collections import OrderedDict
+
+
 
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Frame
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_plane
+
 from compas.tolerance import TOL
+
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -19,7 +25,7 @@ class Slot(BTLxProcessing):
 
     @property
     def __data__(self):
-        data = super(Slot, self).__data__
+        data = super().__data__
         data["orientation"] = self.orientation
         data["start_x"] = self.start_x
         data["start_y"] = self.start_y
@@ -347,8 +353,61 @@ class Slot(BTLxProcessing):
             The resulting geometry after processing
 
         """
-        # type: (Brep, Beam) -> Brep
+
+        print("Hello! I'm the problme it is me!")
+
+        
+
+    
+
+        # get the reference side of the beam    
+        ref_side = beam.side_as_surface(self.ref_side_index)
+
+        # get the origin point and the origin frameof the reference side
+        origin_point = ref_side.point_at(0, 0)
+        origin_frame = ref_side.frame_at(0, 0)
+
+        # calculate P1 in local coordinates of the ref side
+        p1 = (origin_point
+            + origin_frame.xaxis * self.start_x
+            + origin_frame.yaxis * self.start_y
+            + origin_frame.zaxis * -self.start_depth)
+
+        # create and adjust the frame in P1
+        # the polyline will be created on this frame        
+        p1_frame = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.yaxis)
+
+        angle_radians = math.radians(self.angle)
+        p1_frame.rotate(angle_radians, axis=p1_frame.zaxis, point=p1_frame.point)
+
+        inclination_radians = math.radians(self.inclination)
+        p1_frame.rotate(inclination_radians, axis=p1_frame.xaxis, point=p1_frame.point)
+
+
+        # find P2
+
+        print(self.angle_ref_point)
+
+        angle_ref_point_radians = math.radians(self.angle_ref_point)
+
+        distance_to_p2 = self.length / math.sin(angle_ref_point_radians)
+        print ("distance to p2: {}".format(distance_to_p2))
+        print("length: ", self.length)
+
+
+        return p1_frame, [p1]
+
+        # find P3
+
+
+        # find P4
+
+
         return geometry.copy()
+
+
+
+
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
