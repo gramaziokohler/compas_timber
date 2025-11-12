@@ -4,9 +4,12 @@ from collections import OrderedDict
 
 
 from compas.geometry import Line
+from compas.geometry import Polyline
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Frame
+from compas.geometry import Vector
+from compas.geometry import Brep
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
@@ -408,18 +411,35 @@ class Slot(BTLxProcessing):
 
 
         # find P3
-        angle_opp_point_radians = math.radians(self.angle_opp_point + self.add_angle_opp_point)
+        angle_opp_point_radians = math.radians(self.angle_opp_point)
         distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
 
-        vector_to_p4 = p4 - p1
-        vector_to_p4.rotate(math.pi - angle_opp_point_radians, axis = p1_frame.zaxis, point=p4)
-        vector_to_p4.unitize()
-        p3 = (p4 + vector_to_p4 * distancee_to_p3_from_p4)
+        vector_to_p3 = Vector.from_start_end(p4, p1)
+        angle_of_rotation = math.pi - angle_opp_point_radians
+        print("rotation angle", math.degrees(angle_of_rotation))
+        vector_to_p3.rotate(-angle_of_rotation, axis = p1_frame.zaxis, point=p4)
+        vector_to_p3.unitize()
+        p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
+
+
+
+        
+        slot_polyline = Polyline([p1, p2, p3, p4, p1])
+        brep = Brep.from_extrusion(slot_polyline, p1_frame.zaxis * self.thickness)
+        brep.translate(p1_frame.zaxis * - (self.thickness / 2))
+        
+
+        
+        
+        new_geometry = Brep.from_boolean_difference(geometry, brep)
 
 
 
 
-        return p1_frame, [p1, p2, p3, p4]
+        return p1_frame, [p1, p4, p3, p2], new_geometry
+
+
+
         return geometry.copy()
 
 
