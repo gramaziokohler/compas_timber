@@ -14,6 +14,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_plane
+from compas.geometry import intersection_line_line
 
 from compas.tolerance import TOL
 
@@ -357,12 +358,6 @@ class Slot(BTLxProcessing):
 
         """
 
-        print("Hello! I'm the problme it is me!")
-
-        
-
-    
-
         # get the reference side of the beam    
         ref_side = beam.side_as_surface(self.ref_side_index)
 
@@ -370,77 +365,92 @@ class Slot(BTLxProcessing):
         origin_point = ref_side.point_at(0, 0)
         origin_frame = ref_side.frame_at(0, 0)
 
+        # P1 and its frame
         # calculate P1 in local coordinates of the ref side
         p1 = (origin_point
             + origin_frame.xaxis * self.start_x
             + origin_frame.yaxis * self.start_y
             + origin_frame.zaxis * -self.start_depth)
 
-        # create and adjust the frame in P1
+        # create and adjust the frame in P1 with
         # the polyline will be created on this frame        
-        p1_frame_original = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
+        if self.start_depth == 0:
+            p1_frame_original = Frame(p1, xaxis=-origin_frame.zaxis, yaxis=origin_frame.xaxis)
+        else:
+            if self.orientation == OrientationType.START:
+                p1_frame_original = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
+            elif self.orientation == OrientationType.END:
+                p1_frame_original = Frame(p1, xaxis=-origin_frame.xaxis, yaxis=origin_frame.zaxis)
         
+        # adjust angle and inclination
         angle_radians = math.radians(self.angle)
-        p1_frame = p1_frame_original.rotated(angle_radians, axis=p1_frame_original.xaxis, point=p1_frame_original.point)
+        inclination_radians = math.radians(self.inclination - 90) # adjusting for this reference frame
 
-        inclination_radians = math.radians(self.inclination - 90)
+        if self.orientation == OrientationType.END:
+            angle_radians *= -1
+            inclination_radians *= -1   
+        # set the angle parameter
+        p1_frame = p1_frame_original.rotated(-angle_radians, axis=p1_frame_original.xaxis, point=p1_frame_original.point)
+        # set the inclination parameter
         p1_frame = p1_frame.rotated(inclination_radians, axis=p1_frame_original.yaxis, point=p1_frame.point)
     
 
-
-        # find P2
-
-        print(self.angle_ref_point)
-
+        # transform in radians the angles
         angle_ref_point_radians = math.radians(self.angle_ref_point)
-
-        distance_to_p2 = self.length / math.sin(angle_ref_point_radians)
-
-        # FIXME: the one element perfectly connected to the lenght is P3, P2 and P4 are function of the angles.
-        p2 = (p1 + p1_frame.yaxis * distance_to_p2)
-        print ("distance to p2: {}".format(distance_to_p2))
-        print("length: ", self.length)
+        angle_opp_point_radians = math.radians(self.angle_opp_point)
+        add_angle_opp_point_radians = math.radians(self.add_angle_opp_point)
 
 
-        # find P4
-        # I can find P4 by the intersection of the angle in P1 and self.depth
+        # FIND P4 
+        # find P4 by the angle_ref_point in P1 and detph
         distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
         vector_to_p4 = p1_frame.yaxis.rotated(-angle_ref_point_radians, axis=p1_frame.zaxis, point=p1_frame.point).unitized()
         p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
 
 
-
-        # find P3
-        angle_opp_point_radians = math.radians(self.angle_opp_point)
+        # FIND P3 
+        # calculate the lineare distan between P4 and P3, can be found with the length value
         distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
-
+        # find the angle in P3 anf build the vector
         vector_to_p3 = Vector.from_start_end(p4, p1)
         angle_of_rotation = math.pi - angle_opp_point_radians
-        print("rotation angle", math.degrees(angle_of_rotation))
         vector_to_p3.rotate(-angle_of_rotation, axis = p1_frame.zaxis, point=p4)
         vector_to_p3.unitize()
+        # create P3
         p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
 
 
+        # FIND P2
+        # find the direction to P2 from P3 with the angle_opp_point and add_angle_opp_point
+        vector_to_p2 = Vector.from_start_end(p3, p4)
+        angle_of_rotation_to_p2 = angle_opp_point_radians + add_angle_opp_point_radians
+        vector_to_p2.rotate(-angle_of_rotation_to_p2, axis = p1_frame.zaxis, point=p3)
+        vector_to_p2.unitize()
+        # find P2 by projecting P3 to the y axis oxis of the P1 frame with the direction to P2
+        p3_p2_line = Line.from_point_and_vector(p3, vector_to_p2)
+        yaxis_line = Line.from_point_and_vector(p1, p1_frame.yaxis)
+        intersection_point, _ = intersection_line_line(p3_p2_line, yaxis_line)
+        p2 = Point(*intersection_point)
 
-        
+
+        # adjust p1 for a full brep cut (when angles are not perpendiculare it does not fully cut)
+        adj_direction_1 = Vector.from_start_end(p4, p1).unitized()
+        p1 += adj_direction_1 * (self.start_x + 20)
+        adj_direction_2 = Vector.from_start_end(p3, p2).unitized()
+        p2 += adj_direction_2 * (self.start_x + 20)
+
+
+        # build the BREP of the slot
         slot_polyline = Polyline([p1, p2, p3, p4, p1])
         brep = Brep.from_extrusion(slot_polyline, p1_frame.zaxis * self.thickness)
         brep.translate(p1_frame.zaxis * - (self.thickness / 2))
         
+        # cut the geometry with the slot brep
+        cutted_geometry = geometry - brep
 
-        
-        
-        new_geometry = Brep.from_boolean_difference(geometry, brep)
-
-
+        return cutted_geometry
 
 
-        return p1_frame, [p1, p4, p3, p2], new_geometry
-
-
-
-        return geometry.copy()
 
 
 
