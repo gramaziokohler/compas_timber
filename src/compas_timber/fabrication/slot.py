@@ -393,19 +393,24 @@ class Slot(BTLxProcessing):
 
         distance_to_p2 = self.length / math.sin(angle_ref_point_radians)
 
+        # FIXME: the one element perfectly connected to the lenght is P3, P2 and P4 are function of the angles.
         p2 = (p1 + p1_frame.yaxis * distance_to_p2)
         print ("distance to p2: {}".format(distance_to_p2))
         print("length: ", self.length)
 
 
-        return p1_frame, [p1, p2]
 
         # find P3
 
 
         # find P4
+        # I can find P4 by the intersection of the angle in P1 and self.depth
 
+        distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
+        vector_to_p4 = p1_frame.yaxis.rotated(-angle_ref_point_radians, axis=p1_frame.zaxis, point=p1_frame.point).unitized()
+        p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
 
+        return p1_frame, [p1, p2, p4]
         return geometry.copy()
 
 
