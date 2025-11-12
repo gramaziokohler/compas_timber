@@ -375,13 +375,14 @@ class Slot(BTLxProcessing):
 
         # create and adjust the frame in P1
         # the polyline will be created on this frame        
-        p1_frame = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.yaxis)
-
+        p1_frame_original = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
+        
         angle_radians = math.radians(self.angle)
-        p1_frame.rotate(angle_radians, axis=p1_frame.zaxis, point=p1_frame.point)
+        p1_frame = p1_frame_original.rotated(angle_radians, axis=p1_frame_original.xaxis, point=p1_frame_original.point)
 
-        inclination_radians = math.radians(self.inclination)
-        p1_frame.rotate(inclination_radians, axis=p1_frame.xaxis, point=p1_frame.point)
+        inclination_radians = math.radians(self.inclination - 90)
+        p1_frame = p1_frame.rotated(inclination_radians, axis=p1_frame_original.yaxis, point=p1_frame.point)
+    
 
 
         # find P2
@@ -391,11 +392,13 @@ class Slot(BTLxProcessing):
         angle_ref_point_radians = math.radians(self.angle_ref_point)
 
         distance_to_p2 = self.length / math.sin(angle_ref_point_radians)
+
+        p2 = (p1 + p1_frame.yaxis * distance_to_p2)
         print ("distance to p2: {}".format(distance_to_p2))
         print("length: ", self.length)
 
 
-        return p1_frame, [p1]
+        return p1_frame, [p1, p2]
 
         # find P3
 
