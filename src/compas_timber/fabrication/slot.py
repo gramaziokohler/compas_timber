@@ -399,18 +399,27 @@ class Slot(BTLxProcessing):
         print("length: ", self.length)
 
 
-
-        # find P3
-
-
         # find P4
         # I can find P4 by the intersection of the angle in P1 and self.depth
-
         distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
         vector_to_p4 = p1_frame.yaxis.rotated(-angle_ref_point_radians, axis=p1_frame.zaxis, point=p1_frame.point).unitized()
         p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
 
-        return p1_frame, [p1, p2, p4]
+
+
+        # find P3
+        angle_opp_point_radians = math.radians(self.angle_opp_point + self.add_angle_opp_point)
+        distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
+
+        vector_to_p4 = p4 - p1
+        vector_to_p4.rotate(math.pi - angle_opp_point_radians, axis = p1_frame.zaxis, point=p4)
+        vector_to_p4.unitize()
+        p3 = (p4 + vector_to_p4 * distancee_to_p3_from_p4)
+
+
+
+
+        return p1_frame, [p1, p2, p3, p4]
         return geometry.copy()
 
 
