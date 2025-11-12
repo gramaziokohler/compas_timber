@@ -9,7 +9,6 @@ except ImportError:
     pass
 
 import math
-from turtle import distance
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -136,12 +135,12 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(top_polyline, element)
 
         ref_side = element.ref_sides[ref_side_index]
-        xform_to_part_coords = Transformation.from_frame_to_frame(ref_side, Frame.worldXY())
         tool_position = cls.parse_tool_position(top_polyline, ref_side, interior, tool_position)
-
         if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
-            points_principal = [pt.transformed(xform_to_part_coords) for pt in top_polyline]
-            points_associated = [pt.transformed(xform_to_part_coords) for pt in bottom_polyline]
+            points_principal = [pt.transformed(element.transformation_to_local()) for pt in top_polyline]
+            points_associated = [pt.transformed(element.transformation_to_local()) for pt in bottom_polyline]
+            print(Polyline(points_principal))
+            print(Polyline(points_associated))
             contour = DualContour(points_principal, points_associated)
         else:  # use Contour with inclination
             inclinations = []
@@ -151,7 +150,8 @@ class FreeContour(BTLxProcessing):
             if len(set(inclinations)) == 1:
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
             depth = distance_point_plane(bottom_polyline[0], Plane.from_frame(ref_side))
-            polyline = top_polyline.transformed(xform_to_part_coords)
+            polyline = top_polyline.transformed(element.transformation_to_local())
+            print(polyline)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
 
         return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index, **kwargs)  # type: ignore
@@ -238,16 +238,17 @@ class FreeContour(BTLxProcessing):
         # TODO: this doesn't work anymore with the new definition of FreeContour, needs fixing but currently not sure how to do it.
         # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
         # TODO: should have a look at this also in regards to the global to local transformation of the features
-        ref_side = element.ref_sides[self.ref_side_index]
-        xform = Transformation.from_frame_to_frame(Frame.worldXY(), ref_side)
-        pts = [pt.transformed(xform) for pt in self.contour_param_object.polyline]
-        pts = correct_polyline_direction(pts, -ref_side.normal, clockwise=True)
-        pln = Polyline(offset_polyline(Polyline(pts), 0.001, normal=-ref_side.normal))  # This is the only way I could get the boolean difference to work
-        pt = intersection_line_line(pln.lines[0], pln.lines[-1])
-        pln[0] = pt[0]
-        pln[-1] = pt[0]
-        vol = Brep.from_extrusion(NurbsCurve.from_points(pln, degree=1), -ref_side.normal * self.contour_param_object.depth)
 
+        if isinstance(self.contour_param_object, Contour):
+            pline_a = self.contour_param_object.polyline
+            pline_b = pline_a.translated([0, 0, self.contour_param_object.depth])
+        else:
+            pline_a = self.contour_param_object.principal_polyline
+            pline_b = self.contour_param_object.associated_polyline
+        pline_a = Polyline(correct_polyline_direction(pline_a, Vector(0,0,1), clockwise=True))
+        pline_b = Polyline(correct_polyline_direction(pline_b, Vector(0,0,1), clockwise=True))
+        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
+        vol.cap_planar_holes()
         if self.counter_sink:  # contour should remove material inside of the contour
             return geometry - vol
         else:

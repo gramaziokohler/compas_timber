@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 from .plate_geometry import PlateGeometry
+from .slab_features import Opening
 
 
 class SlabType(object):
@@ -49,8 +50,6 @@ class Slab(PlateGeometry, Element):
         A polyline representing the principal outline of this slab.
     outline_b : :class:`~compas.geometry.Polyline`, optional
         A polyline representing the associated outline of this slab.
-    openings : list[:class:`~compas_timber.elements.Opening`], optional
-        A list of Opening objects representing openings in this slab.
     name : str, optional
         Name of the slab. Defaults to "Slab".
     **kwargs : dict, optional
@@ -97,11 +96,11 @@ class Slab(PlateGeometry, Element):
         data["name"] = self.name
         return data
 
-    def __init__(self, transformation, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
+    def __init__(self, transformation, length, width, thickness, local_outline_a=None, local_outline_b=None, name=None, **kwargs):
         Element.__init__(self, transformation=transformation, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
+        PlateGeometry.__init__(self, local_outline_a, local_outline_b)
         self.length = length
         self.width = width
         self.height = thickness
@@ -208,9 +207,14 @@ class Slab(PlateGeometry, Element):
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 
-    def compute_elementgeometry(self, include_features = False):
+    def compute_elementgeometry(self, include_features = True):
         """Compute the geometry of the element at local coordinates."""
-        return self.compute_shape()
+        geometry = self.compute_shape()
+        if include_features:
+            for feature in self.features:
+                shape = feature.apply(geometry, self)
+                geometry -= shape
+        return geometry
 
     @reset_computed
     def transform(self, transformation):
@@ -246,8 +250,13 @@ class Slab(PlateGeometry, Element):
         :class:`~compas_timber.elements.PlateGeometry`
             A PlateGeometry object representing the plate geometry with the given outlines.
         """
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
-        return cls(**kwargs)
+        slab = cls(**kwargs)
+        if openings:
+            for polyline in openings:
+                opening = Opening.from_outline_slab(polyline, slab)
+                slab.add_feature(opening)
+        return slab

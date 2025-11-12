@@ -585,15 +585,26 @@ def split_beam_at_lengths(beam, lengths):
     return beams
 
 def extend_lines_pairwise(segs):
-    for i in range(len(segs)):
-        seg_a = segs[i-1]
-        seg_b = segs[i]
-        intersection = intersection_line_line(seg_a, seg_b)
+    for i in range(-2, len(segs)-1):
+        intersection = intersection_line_line(segs[i], segs[i+1])
         if intersection:
             pt = intersection[0]
-            seg_a.end = pt
-            seg_b.start = pt
+            segs[i][1] = pt
+            segs[i+1][0] = pt
 
+def polyline_from_brep_loop(loop):
+    polyline_points = [loop.edges[0].start_vertex.point, loop.edges[0].end_vertex.point]
+
+    if not any([pt == polyline_points[1] for pt in [loop.edges[1].start_vertex.point, loop.edges[1].end_vertex.point]]):
+        polyline_points.reverse()
+    for edge in loop.edges[1:]:
+        if edge.start_vertex.point == polyline_points[-1]:
+            polyline_points.append(edge.end_vertex.point)
+        else:
+            polyline_points.append(edge.start_vertex.point)
+    if polyline_points[0] != polyline_points[-1]:
+        polyline_points.append(polyline_points[0])
+    return Polyline(polyline_points)
 
 __all__ = [
     "intersection_line_line_param",

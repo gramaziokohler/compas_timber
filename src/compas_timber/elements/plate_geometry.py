@@ -9,6 +9,7 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
+from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
@@ -16,7 +17,7 @@ from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
-
+from compas_timber.utils import polyline_from_brep_loop
 
 class PlateGeometry(object):
     """
@@ -29,8 +30,6 @@ class PlateGeometry(object):
     local_outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should be declared in the local frame of the plate and have the same number of points as outline_a.
         Must be parallel to outline_a. Must be in the +Z direction of the frame.
-    openings : list[:class:`~compas_timber.elements.Opening`], optional
-        A list of Opening objects representing openings in this plate.
 
     Attributes
     ----------
@@ -52,23 +51,20 @@ class PlateGeometry(object):
         The geometry of the Plate before other machining features are applied.
     interfaces : list
         List of interfaces associated with this plate.
-    openings : list[:class:`~compas_timber.elements.Opening`]
-        A list of Opening objects representing openings in this plate.
 
     """
 
     @property
     def __data__(self):
-        data = {"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1], "openings": self.openings}
+        data = {"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1]}
         return data
 
-    def __init__(self, local_outline_a, local_outline_b, openings=None):
+    def __init__(self, local_outline_a, local_outline_b):
         self._original_outlines = (local_outline_a, local_outline_b)
         self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
         self._edge_frames = {}
 
         self._planes = None
-        self.openings = openings or []
         self._extension_planes = {}
 
     def __repr__(self):
@@ -174,8 +170,8 @@ class PlateGeometry(object):
             The thickness of the plate geometry.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        openings : list[:class:`~compas_timber.elements.Opening`], optional
-            A list of openings to be added to the plate geometry.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of polyline openings to be added to the plate geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -185,13 +181,14 @@ class PlateGeometry(object):
             A PlateGeometry object representing the plate geometry with the given outline and thickness.
         """
         # this ensure the plate geometry can always be computed
-        if TOL.is_zero(thickness):
-            thickness = TOL.absolute
         # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        offset_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal  # gets frame perpendicular to outline
+        print("in from_outline_thickness:")
+        for pt in outline.points:
+            print(pt)
+        offset_vector = Vector(*cross_vectors(outline[1]-outline[0], outline[-2]-outline[0]))  # gets frame perpendicular to outline
         if vector:
             if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
                 offset_vector = -offset_vector
@@ -230,14 +227,10 @@ class PlateGeometry(object):
         outer_polyline = None
         inner_polylines = []
         for loop in face.loops:
-            polyline_points = []
-            for edge in loop.edges:
-                polyline_points.append(edge.start_vertex.point)
-            polyline_points.append(polyline_points[0])
             if loop.is_outer:
-                outer_polyline = Polyline(polyline_points)
+                outer_polyline = polyline_from_brep_loop(loop)
             else:
-                inner_polylines.append(Polyline(polyline_points))
+                inner_polylines.append(polyline_from_brep_loop(loop))
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     # ==========================================================================
@@ -259,14 +252,6 @@ class PlateGeometry(object):
         outline_b = correct_polyline_direction(self._mutable_outlines[1], Vector(0, 0, 1), clockwise=True)
         plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
         plate_geo.cap_planar_holes()
-        for opening in self.openings:
-            if not TOL.is_allclose(opening[0], opening[-1]):
-                raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            polyline_a = correct_polyline_direction(opening, Vector(0, 0, 1), clockwise=True)
-            polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
-            brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
-            brep.cap_planar_holes()
-            plate_geo -= brep
         return plate_geo
 
     def compute_aabb(self, inflate=0.0):
@@ -326,7 +311,7 @@ class PlateGeometry(object):
     # ==========================================================================
 
     @staticmethod
-    def get_args_from_outlines(outline_a, outline_b, openings=None):
+    def get_args_from_outlines(outline_a, outline_b):
         """
         Get constructor arguments for the PlateGeometry and subclasses from outlines.
         Outlines and openings are transformed to the local frame of the plate.
@@ -371,11 +356,9 @@ class PlateGeometry(object):
         vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
-        openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,
             "local_outline_b": local_outline_b,
-            "openings": openings,
             "frame": frame,
             "length": box.xsize,
             "width": box.ysize,

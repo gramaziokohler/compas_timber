@@ -12,9 +12,11 @@ from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 
 from compas.data import Data
+from shapely import intersection
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.fabrication import FreeContour
 
 class SlabFeature(Data):
     #TODO: should this inherit from Element?
@@ -45,6 +47,7 @@ class Opening(SlabFeature):
         super(Opening, self).__init__(frame=frame, name=name)
         self._outline_a = outline_a
         self._outline_b = outline_b
+        self._shape = None
 
     @property
     def outline_a(self):
@@ -67,12 +70,42 @@ class Opening(SlabFeature):
 
     @property
     def shape(self):
-        positive_vector = Vector.from_start_end(self.outline_a[0], self.outline_b[0])
-        outline_a = correct_polyline_direction(self.outline_a, positive_vector, clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, positive_vector, clockwise=True)
-        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
-        plate_geo.cap_planar_holes()
-        return plate_geo
+        if not self._shape:
+            positive_vector = Vector.from_start_end(self._outline_a[0], self._outline_b[0])
+            outline_a = correct_polyline_direction(self._outline_a, positive_vector, clockwise=True)
+            outline_b = correct_polyline_direction(self._outline_b, positive_vector, clockwise=True)
+            self._shape = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
+            self._shape.cap_planar_holes()
+        return self._shape
+
+    def apply(self, slab_geometry, slab):
+        """Applies the opening to the given slab geometry.
+
+        Parameters
+        ----------
+        slab_geometry : :class:`compas.geometry.Brep`
+            The geometry of the slab to which the opening will be applied.
+        slab : :class:`compas_timber.elements.Slab`
+            The slab element.
+
+        Returns
+        -------
+        :class:`compas.geometry.Brep`
+            The modified slab geometry with the opening applied.
+
+        Raises
+        ------
+        :class:`compas_timber.errors.FeatureApplicationError`
+            If the opening cannot be applied to the slab geometry.
+
+        """
+        try:
+            slab_geometry -= self.shape.transformed(self.transformation)
+            return slab_geometry
+        except Exception as e:
+            raise FeatureApplicationError(slab_geometry, self.shape, f"Failed to apply opening to slab geometry: {e}")
+
+
 
     @classmethod
     def from_outline_slab(cls, outline, slab, horizontal_sill=False, name=None):
@@ -96,6 +129,7 @@ class Opening(SlabFeature):
             The created opening.
         """
         # project outline onto top and bottom faces of slab
+        outline.transform(slab.modeltransformation.inverse())
         pts_a = []
         for pt in outline.points:
             pts_a.append(Point(pt[0], pt[1], 0))  # project to slab.planes[0]/slab.outline_a
@@ -103,7 +137,7 @@ class Opening(SlabFeature):
         frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
         pts_b = []
         if horizontal_sill:
-            vector = Vector(slab.frame.normal[0], slab.frame.normal[1], 0).transformed(slab.transformation_to_local())
+            vector = Vector(slab.frame.normal[0], slab.frame.normal[1], 0).transformed(slab.modeltransformation.inverse())
             for pt in pts_a:
                 line = Line.from_point_and_vector(pt, vector)
                 intersection = intersection_line_plane(line, Plane(Point(0, 0, slab.thickness), Vector(0, 0, 1)))
