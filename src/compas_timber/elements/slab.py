@@ -30,7 +30,7 @@ class SlabType(object):
 class Slab(PlateGeometry, Element):
     """Represents a timber slab element (wall, floor, roof, etc.).
 
-    Serves as container for beams, joints and other related elements and groups them together to form a slab.
+    Serves as container for beams, plates, and other related elements and groups them together to form a slab.
     A slab is often a single unit of prefabricated timber element.
     It is often referred to as an enveloping body.
 
@@ -96,15 +96,14 @@ class Slab(PlateGeometry, Element):
         data["name"] = self.name
         return data
 
-    def __init__(self, transformation, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
-        Element.__init__(self, transformation=transformation, **kwargs)
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
+        Element.__init__(self, frame=Transformation.from_frame(frame) or Transformation(), name=name, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
         PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
         self.length = length
         self.width = width
         self.height = thickness
-        self.name = name or "Slab"
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -117,57 +116,22 @@ class Slab(PlateGeometry, Element):
 
     @property
     def is_slab(self):
-        """Check if this element is a slab.
-
-        Returns
-        -------
-        bool
-            Always True for slabs.
-        """
         return True
 
     @property
     def is_wall(self):
-        """Check if this element is a wall.
-
-        Returns
-        -------
-        bool
-            False for the base Slab class.
-        """
         return False
 
     @property
     def is_floor(self):
-        """Check if this element is a floor.
-
-        Returns
-        -------
-        bool
-            False for the base Slab class.
-        """
         return False
 
     @property
     def is_roof(self):
-        """Check if this element is a roof.
-
-        Returns
-        -------
-        bool
-            False for the base Slab class.
-        """
         return False
 
     @property
     def is_group_element(self):
-        """Check if this element can be used as a container for other elements.
-
-        Returns
-        -------
-        bool
-            Always True for slabs as they can contain other elements.
-        """
         return True
 
     def compute_modeltransformation(self):
@@ -211,5 +175,4 @@ class Slab(PlateGeometry, Element):
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
-        kwargs["transformation"] = Transformation.from_frame(args["frame"])
         return cls(**kwargs)

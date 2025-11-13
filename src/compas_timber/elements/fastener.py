@@ -30,8 +30,8 @@ class Fastener(Element):
     ----------
     shape : :class:`~compas.geometry.Geometry`
         The geometry of the fastener.
-    transformation : :class:`~compas.geometry.Transformation`
-        The transformation of the fastener.
+    frame : :class:`~compas.geometry.Frame`
+        The frame of the fastener in parent space.
     interfaces : list
         A list of interfaces associated with this fastener.
     attributes : dict
@@ -45,8 +45,8 @@ class Fastener(Element):
 
     """
 
-    def __init__(self, shape=None, transformation=None, **kwargs):
-        super(Fastener, self).__init__(transformation=transformation, **kwargs)
+    def __init__(self, shape=None, frame=None, **kwargs):
+        super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
         self._shape = shape
         self.interfaces = []
         self.attributes = {}
