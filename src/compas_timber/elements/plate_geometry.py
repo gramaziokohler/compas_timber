@@ -357,7 +357,6 @@ class PlateGeometry(object):
         # flip frame so that outline_b is in the +Z direction
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-
         # transform outlines to worldXY
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])

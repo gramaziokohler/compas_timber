@@ -9,14 +9,6 @@ from .workflow import set_default_joints
 from .workflow import get_clusters_from_model
 from .workflow import JointRuleSolver
 
-from .wall_from_surface import SurfaceModel
-from .wall_populator import WallPopulator
-from .wall_populator import WallPopulatorConfigurationSet
-from .wall_populator import WallSelector
-from .wall_populator import AnyWallSelector
-from .wall_details import LConnectionDetailA
-from .wall_details import LConnectionDetailB
-from .wall_details import TConnectionDetailA
 
 __all__ = [
     "JointRuleSolver",
@@ -25,14 +17,6 @@ __all__ = [
     "JointRule",
     "TopologyRule",
     "DebugInfomation",
-    "SurfaceModel",
-    "WallPopulator",
-    "WallPopulatorConfigurationSet",
-    "WallSelector",
-    "AnyWallSelector",
-    "LConnectionDetailA",
-    "LConnectionDetailB",
-    "TConnectionDetailA",
     "guess_joint_topology_2beams",
     "set_default_joints",
     "ContainerDefinition",

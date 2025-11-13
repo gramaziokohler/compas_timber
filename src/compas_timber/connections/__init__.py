@@ -25,14 +25,16 @@ from .oligina import OliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
-from .wall_joint import WallJoint
-from .wall_joint import InterfaceLocation
-from .wall_joint import InterfaceRole
 from .plate_joint import PlateJoint
+from .slab_joint import SlabJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
+from .slab_butt_joint import SlabButtJoint
+from .slab_butt_joint import SlabLButtJoint
+from .slab_butt_joint import SlabTButtJoint
+from .slab_miter_joint import SlabMiterJoint
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
@@ -70,14 +72,16 @@ __all__ = [
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
-    "WallJoint",
-    "InterfaceLocation",
-    "InterfaceRole",
     "PlateJoint",
+    "SlabJoint",
     "PlateButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
+    "SlabButtJoint",
+    "SlabLButtJoint",
+    "SlabTButtJoint",
+    "SlabMiterJoint",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",

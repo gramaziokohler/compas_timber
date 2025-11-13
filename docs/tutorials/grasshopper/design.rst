@@ -2,7 +2,7 @@
 Design
 ******
 
-Design Components help to generate standard Wall structures from Surfaces, using different Options.
+Design Components help to generate standard Slab structures from Surfaces, using different Options.
 
 .. image:: ../images/gh_design_workflow.png
     :width: 80%
