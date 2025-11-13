@@ -1,6 +1,6 @@
 import math
-from collections import OrderedDict
 
+from collections import OrderedDict
 
 
 from compas.geometry import Line
@@ -24,12 +24,19 @@ from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
+
+from typing import TYPE_CHECKING
+from compas_timber.elements.beam import Beam
+
+
+
+
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
 
     @property
     def __data__(self):
-        data = super().__data__
+        data = super(Slot, self).__data__
         data["orientation"] = self.orientation
         data["start_x"] = self.start_x
         data["start_y"] = self.start_y
@@ -336,7 +343,7 @@ class Slot(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, beam):
+    def apply(self, geometry: Brep, beam: Beam) -> Brep:
         """Apply the feature to the beam geometry.
 
         Parameters
@@ -357,7 +364,34 @@ class Slot(BTLxProcessing):
             The resulting geometry after processing
 
         """
+        # get the volume to be removed
+        subtraction_volume = self.volume_from_params_and_beam(beam)
+        subtraction_volume.transform(beam.transformation_to_local())
 
+        # perform the boolean operation
+        cutted_geometry = geometry - subtraction_volume
+
+        return cutted_geometry
+
+
+
+    def volume_from_params_and_beam(self, beam: "Beam") -> Brep:
+        """
+        Calculate the volume of the slot to be removed from the beam based on the slot parameters and the beam geometry.
+        
+        Parameters
+        ----------
+
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The volume of the slot to be removed from the beam.
+            
+        """
         # get the reference side of the beam    
         ref_side = beam.side_as_surface(self.ref_side_index)
 
@@ -365,73 +399,12 @@ class Slot(BTLxProcessing):
         origin_point = ref_side.point_at(0, 0)
         origin_frame = ref_side.frame_at(0, 0)
 
-        # P1 and its frame
-        # calculate P1 in local coordinates of the ref side
-        p1 = (origin_point
-            + origin_frame.xaxis * self.start_x
-            + origin_frame.yaxis * self.start_y
-            + origin_frame.zaxis * -self.start_depth)
-
-        # create and adjust the frame in P1 with
-        # the polyline will be created on this frame        
-        if self.start_depth == 0:
-            p1_frame_original = Frame(p1, xaxis=-origin_frame.zaxis, yaxis=origin_frame.xaxis)
-        else:
-            if self.orientation == OrientationType.START:
-                p1_frame_original = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
-            elif self.orientation == OrientationType.END:
-                p1_frame_original = Frame(p1, xaxis=-origin_frame.xaxis, yaxis=origin_frame.zaxis)
-        
-        # adjust angle and inclination
-        angle_radians = math.radians(self.angle)
-        inclination_radians = math.radians(self.inclination - 90) # adjusting for this reference frame
-
-        if self.orientation == OrientationType.END:
-            angle_radians *= -1
-            inclination_radians *= -1   
-        # set the angle parameter
-        p1_frame = p1_frame_original.rotated(-angle_radians, axis=p1_frame_original.xaxis, point=p1_frame_original.point)
-        # set the inclination parameter
-        p1_frame = p1_frame.rotated(inclination_radians, axis=p1_frame_original.yaxis, point=p1_frame.point)
-    
-
-        # transform in radians the angles
-        angle_ref_point_radians = math.radians(self.angle_ref_point)
-        angle_opp_point_radians = math.radians(self.angle_opp_point)
-        add_angle_opp_point_radians = math.radians(self.add_angle_opp_point)
-
-
-        # FIND P4 
-        # find P4 by the angle_ref_point in P1 and detph
-        distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
-        vector_to_p4 = p1_frame.yaxis.rotated(-angle_ref_point_radians, axis=p1_frame.zaxis, point=p1_frame.point).unitized()
-        p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
-
-
-        # FIND P3 
-        # calculate the lineare distan between P4 and P3, can be found with the length value
-        distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
-        # find the angle in P3 anf build the vector
-        vector_to_p3 = Vector.from_start_end(p4, p1)
-        angle_of_rotation = math.pi - angle_opp_point_radians
-        vector_to_p3.rotate(-angle_of_rotation, axis = p1_frame.zaxis, point=p4)
-        vector_to_p3.unitize()
-        # create P3
-        p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
-
-
-        # FIND P2
-        # find the direction to P2 from P3 with the angle_opp_point and add_angle_opp_point
-        vector_to_p2 = Vector.from_start_end(p3, p4)
-        angle_of_rotation_to_p2 = angle_opp_point_radians + add_angle_opp_point_radians
-        vector_to_p2.rotate(-angle_of_rotation_to_p2, axis = p1_frame.zaxis, point=p3)
-        vector_to_p2.unitize()
-        # find P2 by projecting P3 to the y axis oxis of the P1 frame with the direction to P2
-        p3_p2_line = Line.from_point_and_vector(p3, vector_to_p2)
-        yaxis_line = Line.from_point_and_vector(p1, p1_frame.yaxis)
-        intersection_point, _ = intersection_line_line(p3_p2_line, yaxis_line)
-        p2 = Point(*intersection_point)
-
+        # calculates the points of the slot polyline
+        p1 = self._find_p1(origin_point, origin_frame)
+        slot_frame = self._compute_slot_frame(p1, origin_frame)
+        p4 = self._find_p4(p1, slot_frame)
+        p3 = self._find_p3(p1, p4, slot_frame)
+        p2 = self._find_p2(p1, p3, p4, slot_frame)
 
         # adjust p1 for a full brep cut (when angles are not perpendiculare it does not fully cut)
         adj_direction_1 = Vector.from_start_end(p4, p1).unitized()
@@ -439,16 +412,184 @@ class Slot(BTLxProcessing):
         adj_direction_2 = Vector.from_start_end(p3, p2).unitized()
         p2 += adj_direction_2 * (self.start_x + 20)
 
-
-        # build the BREP of the slot
+        # build the subtracting volume of the slot
         slot_polyline = Polyline([p1, p2, p3, p4, p1])
-        brep = Brep.from_extrusion(slot_polyline, p1_frame.zaxis * self.thickness)
-        brep.translate(p1_frame.zaxis * - (self.thickness / 2))
-        
-        # cut the geometry with the slot brep
-        cutted_geometry = geometry - brep
+        subtracting_volume = Brep.from_extrusion(slot_polyline, slot_frame.zaxis * self.thickness)
+        subtracting_volume.translate(slot_frame.zaxis * - (self.thickness / 2))
 
-        return cutted_geometry
+        return subtracting_volume
+
+
+
+    def _find_p1(self, origin_point: Point, origin_frame: Frame) -> Point:
+        """
+        Computes the position of the point P1 of ths slot (see design2machine pdf for reference).
+
+        Parameters
+        ----------
+        origin_point : :class:`~compas.geometry.Point`
+            The origin point of the reference side of the beam.
+        origin_frame : :class:`~compas.geometry.Frame`
+            The origin frame of the reference side of the beam.
+        
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The computed point P1 of the slot.
+
+        """
+        p1 = (origin_point
+            + origin_frame.xaxis * self.start_x
+            + origin_frame.yaxis * self.start_y
+            + origin_frame.zaxis * -self.start_depth)
+        return p1
+
+
+
+    def _find_p2(self, p1: Point, p3: Point, p4: Point, slot_frame: Frame) -> Point:
+        """
+        Compute the position of the point P2 of ths slot (see design2machine pdf for reference).
+        Parameters
+        ----------
+        p1 : :class:`~compas.geometry.Point`
+            The point P1 of the slot.
+        p3 : :class:`~compas.geometry.Point`
+            The point P3 of the slot.
+        p4 : :class:`~compas.geometry.Point`
+            The point P4 of the slot.
+        slot_frame : :class:`~compas.geometry.Frame`
+            The frame aligned with the slot at point p1.
+            
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The computed point P2 of the slot.
+
+        """
+
+        angle_opp_point_radians = math.radians(self.angle_opp_point)
+        add_angle_opp_point_radians = math.radians(self.add_angle_opp_point)
+
+        # find the direction to P2 from P3 with the angle_opp_point and add_angle_opp_point
+        vector_to_p2 = Vector.from_start_end(p3, p4)
+        angle_of_rotation_to_p2 = angle_opp_point_radians + add_angle_opp_point_radians
+        vector_to_p2.rotate(-angle_of_rotation_to_p2, axis = slot_frame.zaxis, point=p3)
+        vector_to_p2.unitize()
+        # find P2 by projecting P3 to the y axis oxis of the P1 frame with the direction to P2
+        p3_p2_line = Line.from_point_and_vector(p3, vector_to_p2)
+        yaxis_line = Line.from_point_and_vector(p1, slot_frame.yaxis)
+        intersection_point, _ = intersection_line_line(p3_p2_line, yaxis_line)
+        p2 = Point(*intersection_point)
+        return p2
+
+
+
+    def _find_p3(self, p1: Point, p4: Point, slot_frame: Frame) -> Point:
+        """
+        Compute the position of the point P3 of ths slot (see design2machine pdf for reference).
+        
+        Parameters
+        ----------
+        p1 : :class:`~compas.geometry.Point`
+            The point P1 of the slot.
+        p4 : :class:`~compas.geometry.Point`
+            The point P4 of the slot. 
+        slot_frame : :class:`~compas.geometry.Frame`
+            The frame aligned with the slot at point p1.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The computed point P3 of the slot.
+
+        """
+        angle_opp_point_radians = math.radians(self.angle_opp_point)
+
+        # calculate the lineare distan between P4 and P3, can be found with the length value
+        distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
+        # find the angle in P3 anf build the vector
+        vector_to_p3 = Vector.from_start_end(p4, p1)
+        angle_of_rotation = math.pi - angle_opp_point_radians
+        vector_to_p3.rotate(-angle_of_rotation, axis = slot_frame.zaxis, point=p4)
+        vector_to_p3.unitize()
+        # create P3
+        p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
+
+        return p3
+    
+
+
+    def _find_p4(self, p1: Point, slot_frame: Frame) -> Point:
+        """
+        Compute the position of the point P4 of ths slot (see design2machine pdf for reference).
+        
+        Parameters
+        ----------
+        p1 : :class:`~compas.geometry.Point`
+            The point P1 of the slot.
+        slot_frame : :class:`~compas.geometry.Frame`
+            The frame aligned with the slot at point p1.  
+
+        
+        Returns:
+        -------
+        :class:`~compas.geometry.Point`
+            The computed point P4 of the slot.
+        """
+        angle_ref_point_radians = math.radians(self.angle_ref_point)
+        # find P4 by the angle_ref_point in P1 and depth
+        distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
+        vector_to_p4 = slot_frame.yaxis.rotated(-angle_ref_point_radians, axis=slot_frame.zaxis, point=slot_frame.point).unitized()
+        p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
+        return p4    
+
+
+
+    def _compute_slot_frame(self, p1: Point, origin_frame: Frame) -> Frame:
+        """ 
+        Compute the frame aligned with the slot at point p1.
+        This method appy the angle and inclnation paramaters to the frame.
+
+        Parameters
+        ----------
+        p1 : :class:`~compas.geometry.Point`
+            The point where the slot starts, origin of the frame. 
+        origin_frame : :class:`~compas.geometry.Frame`
+            The reference frame from which the slot frame is derived. Frame base on the reference side of the beam. 
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The computed slot frame at point p1.
+
+
+        """
+        # create and adjust the frame in P1 with
+        # the polyline will be created on this frame        
+        if self.start_depth == 0:
+            slot_frame_untrasformed = Frame(p1, xaxis=-origin_frame.zaxis, yaxis=origin_frame.xaxis)
+        else:
+            if self.orientation == OrientationType.START:
+                slot_frame_untrasformed = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
+            elif self.orientation == OrientationType.END:
+                slot_frame_untrasformed = Frame(p1, xaxis=-origin_frame.xaxis, yaxis=origin_frame.zaxis)
+        
+       
+        # angle and inclination to radians
+        angle_radians = math.radians(self.angle)
+        inclination_radians = math.radians(self.inclination - 90) # adjusting for this reference frame
+
+        if self.orientation == OrientationType.END:
+            angle_radians *= -1
+            inclination_radians *= -1   
+       
+        # set the angle parameter
+        slot_frame = slot_frame_untrasformed.rotated(-angle_radians, axis=slot_frame_untrasformed.xaxis, point=p1)
+       
+        # set the inclination parameter
+        slot_frame = slot_frame.rotated(inclination_radians, axis=slot_frame_untrasformed.yaxis, point=p1)
+    
+        return slot_frame
 
 
 
