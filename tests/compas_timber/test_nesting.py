@@ -4,8 +4,10 @@ import warnings
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
+from compas.geometry import Polyline
 
 from compas_timber.elements import Beam
+from compas_timber.elements import Slab
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import BeamNester
@@ -193,7 +195,7 @@ def test_sort_beams_by_stock():
 
     # Test sorting with warning capture
     with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
-        stock_beam_map = nester._sort_beams_by_stock()
+        stock_beam_map = nester._sort_beams_by_stock(model.beams)
 
     # Check that compatible beams were sorted correctly
     compatible_beams = stock_beam_map[stock_catalog[0]]
@@ -412,6 +414,160 @@ def test_nest_method_with_incompatible_beams():
     assert len(nesting_result.stocks) == 1
     assert str(beam1.guid) in nesting_result.stocks[0].element_data
     assert str(beam2.guid) not in nesting_result.stocks[0].element_data
+
+
+def test_nest_per_group_basic():
+    """Test per_group nesting keeps beams from the same group together on separate stocks."""
+    model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
+    # Create Group A with 2 beams
+    group_a = Slab(outline=polyline, thickness=0)
+    beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
+    model.add_element(group_a)
+    model.add_element(beam_a1, parent=group_a)
+    model.add_element(beam_a2, parent=group_a)
+
+    # Create Group B with 2 beams
+    group_b = Slab(outline=polyline, thickness=0)
+    beam_b1 = Beam(frame=Frame.worldXY(), length=800, width=120, height=60)
+    beam_b2 = Beam(frame=Frame.worldXY(), length=1200, width=120, height=60)
+    model.add_element(group_b)
+    model.add_element(beam_b1, parent=group_b)
+    model.add_element(beam_b2, parent=group_b)
+
+    stock_catalog = [BeamStock(3000, (120, 60))]
+
+    # Test without per_group (all beams optimized together)
+    nester_global = BeamNester(model, stock_catalog, per_group=False)
+    result_global = nester_global.nest()
+
+    # Test with per_group (each group nested separately)
+    nester_grouped = BeamNester(model, stock_catalog, per_group=True)
+    result_grouped = nester_grouped.nest()
+
+    # Global optimization: all 4 beams optimized together
+    # Sorted descending: 2000, 1500, 1200, 800
+    # Stock 1: 2000 + 800 = 2800, Stock 2: 1500 + 1200 = 2700
+    assert len(result_global.stocks) == 2
+
+    # Per-group: each group nested separately
+    # Group A (3500 total) fits in 2 stocks, Group B (2000 total) fits in 1 stocks
+    assert len(result_grouped.stocks) == 3
+
+    # Verify all beams are nested in both cases
+    all_beams = {str(beam_a1.guid), str(beam_a2.guid), str(beam_b1.guid), str(beam_b2.guid)}
+
+    global_guids = set()
+    for stock in result_global.stocks:
+        global_guids.update(stock.element_data.keys())
+    assert global_guids == all_beams
+
+    grouped_guids = set()
+    for stock in result_grouped.stocks:
+        grouped_guids.update(stock.element_data.keys())
+    assert grouped_guids == all_beams
+
+
+def test_nest_per_group_with_standalone_beams():
+    """Test per_group nesting handles both grouped and standalone beams correctly."""
+    model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
+
+    # Create a group with 2 beams
+    group = Slab(outline=polyline, thickness=0)
+    beam_g1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam_g2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
+    model.add_element(group)
+    model.add_element(beam_g1, parent=group)
+    model.add_element(beam_g2, parent=group)
+
+    # Add standalone beams (not in a group)
+    beam_s1 = Beam(frame=Frame.worldXY(), length=1000, width=120, height=60)
+    beam_s2 = Beam(frame=Frame.worldXY(), length=800, width=120, height=60)
+    model.add_element(beam_s1)
+    model.add_element(beam_s2)
+
+    stock_catalog = [BeamStock(6000, (120, 60))]
+    nester = BeamNester(model, stock_catalog, per_group=True)
+    result = nester.nest()
+
+    # Per-group should create 2 stocks:
+    # Stock 1: grouped beams (2000 + 1500 = 3500)
+    # Stock 2: standalone beams (1000 + 800 = 1800)
+    assert len(result.stocks) == 2
+
+    # All beams should be nested
+    all_beams = {str(beam_g1.guid), str(beam_g2.guid), str(beam_s1.guid), str(beam_s2.guid)}
+
+    nested_guids = set()
+    for stock in result.stocks:
+        nested_guids.update(stock.element_data.keys())
+
+    assert nested_guids == all_beams
+
+
+def test_nest_per_group_empty_groups():
+    """Test per_group nesting handles empty groups without beams."""
+    model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
+
+    # Create an empty group
+    empty_group = Slab(outline=polyline, thickness=0)
+    model.add_element(empty_group)
+
+    # Add a group with beams
+    group_with_beams = Slab(outline=polyline, thickness=0)
+    beam1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
+    model.add_element(group_with_beams)
+    model.add_element(beam1, parent=group_with_beams)
+    model.add_element(beam2, parent=group_with_beams)
+
+    stock_catalog = [BeamStock(6000, (120, 60))]
+    nester = BeamNester(model, stock_catalog, per_group=True)
+    result = nester.nest()
+
+    # Should only create stocks for the group with beams
+    assert len(result.stocks) == 1
+    # All beams should be nested
+    all_beams = {str(beam1.guid), str(beam2.guid)}
+    nested_guids = set()
+    for stock in result.stocks:
+        nested_guids.update(stock.element_data.keys())
+    assert nested_guids == all_beams
+
+
+def test_nest_per_group_multiple_sections():
+    """Test per_group nesting with groups having beams of different cross-sections."""
+    model = TimberModel()
+    polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
+    # Create Group A with beams of multiple cross-sections
+    group_a = Slab(outline=polyline, thickness=0)
+    beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
+    model.add_element(group_a)
+    model.add_element(beam_a1, parent=group_a)
+    model.add_element(beam_a2, parent=group_a)
+
+    # Add standalone beams with same cross-sections
+    beam_s1 = Beam(frame=Frame.worldXY(), length=1000, width=120, height=60)
+    beam_s2 = Beam(frame=Frame.worldXY(), length=800, width=80, height=40)
+    model.add_element(beam_s1)
+    model.add_element(beam_s2)
+
+    stock_catalog = [BeamStock(6000, (120, 60)), BeamStock(6000, (80, 40))]
+    nester = BeamNester(model, stock_catalog, per_group=True)
+    result = nester.nest()
+
+    # Should create 2 stocks for Group A (one per cross-section) and 2 for standalone beams
+    assert len(result.stocks) == 4
+    # All beams should be nested
+    all_beams = {str(beam_a1.guid), str(beam_a2.guid), str(beam_s1.guid), str(beam_s2.guid)}
+    nested_guids = set()
+    for stock in result.stocks:
+        nested_guids.update(stock.element_data.keys())
+    assert nested_guids == all_beams
 
 
 # ============================================================================
