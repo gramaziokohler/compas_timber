@@ -47,12 +47,14 @@ def test_sloped_slab_creation():
     assert TOL.is_close(slab_a.length, 14.1421356237), "Expected slab length to be 10*sqrt(2)"
     assert TOL.is_close(slab_a.width, 20), "Expected slab width to be 20"
 
+
 def test_slab_addition_to_model(model):
     slabs = model.slabs
     assert slabs[0].modeltransformation == slabs[0].transformation, "Expected slab model transformation to match slab transformation"
     assert slabs[1].modeltransformation == slabs[1].transformation, "Expected slab model transformation to match slab transformation"
     assert len(list(model.elements())) == 2, "Expected model to contain two slabs"
     assert all(isinstance(element, Slab) for element in model.elements()), "Expected all elements in the model to be slabs"
+
 
 def test_add_beam_to_slab(model):
     beam = Beam(Frame.worldXY(), length=5, width=0.3, height=0.5, name="Beam 1")

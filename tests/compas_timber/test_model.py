@@ -171,8 +171,6 @@ def test_generator_properties():
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
     model.add_element(beam)
 
-
-
     assert len(model.plates) == 1
     assert len(model.beams) == 1
 

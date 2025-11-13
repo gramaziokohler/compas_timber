@@ -1,7 +1,7 @@
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import Frame
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
@@ -90,7 +90,7 @@ class Slab(PlateGeometry, Element):
         data["name"] = self.name
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None,name=None, **kwargs):
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, name=None, **kwargs):
         Element.__init__(self, transformation=Transformation.from_frame(frame) if frame else Transformation(), name=name, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
@@ -150,7 +150,7 @@ class Slab(PlateGeometry, Element):
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 
-    def compute_elementgeometry(self, include_features = False):
+    def compute_elementgeometry(self, include_features=False):
         """Compute the geometry of the element at local coordinates."""
         return self.compute_shape()
 
