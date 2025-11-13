@@ -16,17 +16,15 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
-from compas_timber.connections import WallJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Plate
 from compas_timber.elements import Slab
-from compas_timber.elements import Wall
 from compas_timber.errors import BeamJoiningError
 
 
 class TimberModel(Model):
-    """Represents a timber model containing different elements such as walls, beams and joints.
+    """Represents a timber model containing different elements such as slabs, beams and joints.
 
     The timber model allows expressing the hierarchy and interactions between the different elements it contains.
 
@@ -40,8 +38,8 @@ class TimberModel(Model):
         A set of all actual joints assigned to this model.
     joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model.
-    walls : Generator[:class:`~compas_timber.elements.Wall`]
-        A Generator object of all walls assigned to this model.
+    slabs : Generator[:class:`~compas_timber.elements.Slab`]
+        A Generator object of all slabs assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -91,11 +89,6 @@ class TimberModel(Model):
     def plates(self):
         # type: () -> List[Plate]
         return self.find_all_elements_of_type(Plate)
-
-    @property
-    def walls(self):
-        # type: () -> List[Wall]
-        return self.find_all_elements_of_type(Wall)
 
     @property
     def slabs(self):
@@ -431,11 +424,6 @@ class TimberModel(Model):
         for candidate in list(self.joint_candidates):
             self.remove_joint_candidate(candidate)
 
-        # Clear existing joints (except WallJoints)
-        for joint in list(self.joints):
-            if not isinstance(joint, WallJoint):
-                self.remove_joint(joint)
-
         max_distance = max_distance or TOL.relative
         beams = self.beams
         solver = ConnectionSolver()
@@ -482,50 +470,3 @@ class TimberModel(Model):
 
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
-
-    def connect_adjacent_walls(self, max_distance=None):
-        """Connects adjacent walls in the model.
-
-        Parameters
-        ----------
-        max_distance : float, optional
-            The maximum distance between walls to consider them adjacent. Default is 0.0.
-
-        """
-        self._clear_wall_joints()
-
-        walls = self.walls
-
-        if not walls:
-            return
-
-        if max_distance is None:
-            max_distance = max(wall.thickness for wall in walls)
-
-        solver = ConnectionSolver()
-        pairs = solver.find_intersecting_pairs(walls, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            wall_a, wall_b = pair
-            result = solver.find_wall_wall_topology(wall_a, wall_b, tol=self._tolerance.absolute, max_distance=max_distance)
-
-            topology = result[0]
-
-            unsupported_topos = (JointTopology.TOPO_UNKNOWN, JointTopology.TOPO_I, JointTopology.TOPO_X)
-            if topology in unsupported_topos:
-                continue
-
-            wall_a, wall_b = result[1], result[2]
-
-            assert wall_a and wall_b
-
-            # assume wall_a is the main, unless wall_b is explicitly marked as main
-            # TODO: use the Rule system? this isn't good enough, a wall can totally be main and cross at the same time (in two different interactions)
-            if wall_b.attributes.get("role", "cross") == "main":
-                WallJoint.create(self, wall_b, wall_a, topology=topology)
-            else:
-                WallJoint.create(self, wall_a, wall_b, topology=topology)
-
-    def _clear_wall_joints(self):
-        for joint in self.joints:
-            if isinstance(joint, WallJoint):
-                self.remove_joint(joint)

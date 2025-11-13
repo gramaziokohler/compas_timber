@@ -200,70 +200,6 @@ def _split_into_consecutive_sequences(source, wrap_on):
     return sequences
 
 
-def classify_polyline_segments(polyline, normal, direction="cw"):
-    """Classify polyline segments as external or part of a cutout based on turning angles.
-
-    Parameters
-    ----------
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline to classify.
-    normal : :class:`compas.geometry.Vector`
-        The normal vector of the wall. Used as reference palne for turning angles calculation.
-    direction : str, optional
-        The winding direction of the outline around the given normal vector. One of: ("cw", "ccw"). Default is "cw".
-
-    Returns
-    -------
-    tuple(list[int], list[list[int]])
-        A tuple containing two lists:
-        - the first list contains the indices of outline vertices
-        - the second list contains the indices of internal vertices grouped in sequences
-    """
-    if direction not in ("cw", "ccw"):
-        raise ValueError("Direction must be either 'cw' or 'ccw'.")
-
-    # iterate on polyline without p[0] == p[-1]
-    if polyline[0] == polyline[-1]:
-        polyline = polyline[:-1]
-
-    outline_vertices = []
-    internal_vertices = []
-
-    num_points = len(polyline)
-
-    for i in range(num_points):
-        p_prev = polyline[i]
-        p_curr = polyline[(i + 1) % num_points]
-        p_next = polyline[(i + 2) % num_points]
-
-        v1 = Vector.from_start_end(p_prev, p_curr)
-        v2 = Vector.from_start_end(p_curr, p_next)
-
-        angle = angle_vectors_signed(v1, v2, normal, deg=True)
-
-        if direction == "ccw":
-            angle = -angle
-
-        if angle < 0:
-            outline_vertices.append((i + 1) % num_points)
-        else:
-            internal_vertices.append((i + 1) % num_points)
-
-    # vertices that lie on the outline but are at openings count as internal
-    # they are removed from the outline list and added to the internal list
-    internal_groups = _split_into_consecutive_sequences(internal_vertices, wrap_on=num_points)
-    polyline_indices = list(range(num_points))
-    for group in internal_groups:
-        prev_value = polyline_indices[group[0] - 1]
-        next_value = polyline_indices[(group[1] + 1) % num_points]
-        group.insert(0, prev_value)
-        group.append(next_value)
-        outline_vertices.remove(prev_value)
-        outline_vertices.remove(next_value)
-
-    return outline_vertices, internal_groups
-
-
 def distance_segment_segment(segment_a, segment_b):
     """Computes the distance between two segments.
 
@@ -525,7 +461,6 @@ __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
     "intersection_line_beam_param",
-    "classify_polyline_segments",
     "distance_segment_segment",
     "is_polyline_clockwise",
     "correct_polyline_direction",

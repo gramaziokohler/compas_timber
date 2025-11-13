@@ -39,7 +39,6 @@ Joints
     TenonMortiseJoint
     YButtJoint
     TOliGinaJoint
-    WallJoint
     PlateJoint
     PlateButtJoint
     PlateLButtJoint

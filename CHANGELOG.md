@@ -54,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Fixed the `ShowTopologyTypes` GH Component.
+* Changed `Slab` to inherit from `PlateGeometry`
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -65,6 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed all Rhino7 components!
 * Removed method `add_group_element` from `TimberModel`.
 * Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
+* Removed `Wall`, `WallJoint`, `WallToWallInterface`, `InterfaceRole`, `InterfaceLocation`, `Opening`, `OpeningType`,
+  `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
+  GH components and component functionality.
 
 ## [1.0.1] 2025-10-16
 

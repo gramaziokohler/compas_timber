@@ -30,14 +30,14 @@ storey = ifc_model.building_storeys[0]
 #         Name=element.name,
 #     )
 
-for wall in model.walls:
+for slab in model.slabs:
     ifc_wall = ifc_model.create(
         "IfcWall",
         parent=storey,
-        geometry=wall.geometry,
-        Name=wall.name,
+        geometry=slab.geometry,
+        Name=slab.name,
     )
-    for beam in model.get_elements_in_group(wall.name):
+    for beam in slab.name.children:
         ifc_model.create(
             "IfcBeam",
             parent=ifc_wall,
