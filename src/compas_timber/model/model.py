@@ -470,5 +470,3 @@ class TimberModel(Model):
 
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
-
-   
