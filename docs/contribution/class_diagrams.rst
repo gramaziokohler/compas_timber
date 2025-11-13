@@ -20,9 +20,10 @@ This section provides visual representations of the class hierarchies and relati
          +height : float
          +features : list[Feature]
          +debug_info : list
-         +is_beam() : bool
-         +is_plate() : bool
-         +is_group_element() : bool
+         +is_beam : bool
+         +is_plate : bool
+         +is_group_element : bool
+         +is_fastener : bool
          +reset()
          +add_features(features)
          +remove_features(features)
@@ -101,12 +102,15 @@ This section provides visual representations of the class hierarchies and relati
          +faces : tuple[Frame]
          +end_faces : tuple[Frame, Frame]
          +envelope_faces : tuple[Frame]
-         +is_wall : bool = True
+         +is_group_element : bool = True
+         +from_boundary()
+         +from_brep()
          +compute_geometry()
          +compute_aabb()
          +compute_obb()
          +rotate()
       }
+
 
       class Fastener {
          +shape : Geometry
@@ -116,11 +120,6 @@ This section provides visual representations of the class hierarchies and relati
          +compute_geometry()
       }
 
-      class Opening {
-         +polyline : Polyline
-         +opening_type : str
-         +orient_polyline(normal)
-      }
 
       class FastenerTimberInterface {
          +outline_points : list[Point]
@@ -134,13 +133,11 @@ This section provides visual representations of the class hierarchies and relati
 
       %% Inheritance relationships
       Element <|-- TimberElement
-      Element <|-- Fastener
       PlateGeometry <|-- Plate
       TimberElement <|-- Plate
-      TimberElement <|-- Beam
       PlateGeometry <|-- Slab
       Element <|-- Slab
-      Slab <|-- Wall
+      Element <|-- Fastener
 
          %% Composition relationships
       Slab ..> Opening : contains
@@ -264,11 +261,6 @@ The connections subsystem defines joints and their relationships. All joints inh
          +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
       }
 
-      class WallJoint {
-         +wall_a : Wall
-         +wall_b : Wall
-         +interface : WallToWallInterface
-      }
 
       %% Inheritance relationships
       Interaction <|-- Joint
@@ -280,7 +272,6 @@ The connections subsystem defines joints and their relationships. All joints inh
       Joint <|-- BallNodeJoint
       Joint <|-- TenonMortiseJoint
       Joint <|-- PlateJoint
-      Joint <|-- WallJoint
 
       ButtJoint <|-- LButtJoint
       ButtJoint <|-- TButtJoint

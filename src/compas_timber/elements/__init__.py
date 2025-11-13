@@ -1,9 +1,6 @@
 from .beam import Beam
 from .plate import Plate
-from .wall import Opening
-from .wall import OpeningType
 from .slab import Slab
-from .wall import Wall
 from .fastener import Fastener
 from .fastener import FastenerTimberInterface
 from .features import BrepSubtraction
@@ -27,9 +24,6 @@ __all__ = [
     "BallNodeFastener",
     "PlateFastener",
     "TimberElement",
-    "Opening",
-    "OpeningType",
     "Slab",
-    "Wall",
     "PlateGeometry",
 ]
