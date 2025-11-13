@@ -185,9 +185,6 @@ class PlateGeometry(object):
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        print("in from_outline_thickness:")
-        for pt in outline.points:
-            print(pt)
         offset_vector = Vector(*cross_vectors(outline[1]-outline[0], outline[-2]-outline[0]))  # gets frame perpendicular to outline
         if vector:
             if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
