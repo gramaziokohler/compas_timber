@@ -124,6 +124,11 @@ class TimberElement(Element, abc.ABC):
     def features(self, features):
         self._features = features
 
+    @reset_timber_attrs
+    def transform(self, transformation):
+        # override to reset timber-specific cached attributes
+        super().transform(transformation)
+
     @property
     def geometry(self):
         """The geometry of the element in the model's global coordinates."""
