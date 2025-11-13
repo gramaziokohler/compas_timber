@@ -44,7 +44,7 @@ class Slab(PlateGeometry, Element):
         Width of the slab.
     thickness : float
         Thickness of the slab.
-    outline_a : :class:`~compas.geometry.Polyline`, optional
+    local_outline_a: :class:`~compas.geometry.Polyline`, optional
         A polyline representing the principal outline of this slab.
     outline_b : :class:`~compas.geometry.Polyline`, optional
         A polyline representing the associated outline of this slab.
