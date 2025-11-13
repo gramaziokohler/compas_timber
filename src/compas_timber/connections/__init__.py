@@ -18,7 +18,8 @@ from .t_lap import TLapJoint
 from .x_lap import XLapJoint
 from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
-from .t_tenon_mortise import TenonMortiseJoint
+from .t_tenon_mortise import TTenonMortiseJoint
+from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import OliGinaJoint
@@ -64,7 +65,8 @@ __all__ = [
     "find_neighboring_elements",
     "TDovetailJoint",
     "BallNodeJoint",
-    "TenonMortiseJoint",
+    "TTenonMortiseJoint",
+    "LTenonMortiseJoint",
     "YButtJoint",
     "OliGinaJoint",
     "beam_ref_side_incidence",
