@@ -15,7 +15,6 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas.geometry import Line
 from compas_timber.elements import Beam
-from compas_timber.elements import Wall
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -172,12 +171,10 @@ def test_generator_properties():
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
     model.add_element(beam)
 
-    wall = Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
-    model.add_element(wall)
+
 
     assert len(model.plates) == 1
     assert len(model.beams) == 1
-    assert len(model.walls) == 1
 
 
 def test_type_properties():
@@ -193,16 +190,12 @@ def test_type_properties():
 
     plate = Plate.from_outline_thickness(polyline, 10.0, Vector(1, 0, 0))
     beam = Beam(Frame.worldXY(), 10.0, 10.0, 10.0)
-    wall = Wall.from_outline_thickness(Polyline([[100, 0, 0], [100, 100, 0], [200, 100, 0], [200, 0, 0], [100, 0, 0]]), thickness=10, vector=Vector.Zaxis())
 
     assert plate.is_plate
     assert beam.is_beam
-    assert wall.is_wall
 
     assert not plate.is_beam
     assert not beam.is_plate
-
-    assert wall.is_slab
 
 
 def test_model_tolerance_default():

@@ -1,6 +1,7 @@
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Frame
 from compas_model.elements import Element
 
 from .plate_geometry import PlateGeometry
@@ -73,14 +74,6 @@ class Slab(PlateGeometry, Element):
         List of interfaces associated with this slab.
     attributes : dict
         Dictionary of additional attributes.
-    is_slab : bool
-        Always True for slabs.
-    is_wall : bool
-        False for base Slab class.
-    is_floor : bool
-        False for base Slab class.
-    is_roof : bool
-        False for base Slab class.
     is_group_element : bool
         Always True for slabs as they can contain other elements.
 
@@ -96,8 +89,8 @@ class Slab(PlateGeometry, Element):
         data["name"] = self.name
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, name=None, **kwargs):
-        Element.__init__(self, frame=Transformation.from_frame(frame) or Transformation(), name=name, **kwargs)
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None,name=None, **kwargs):
+        Element.__init__(self, transformation=Transformation.from_frame(frame) if frame else Transformation(), name=name, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
         PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
@@ -105,30 +98,15 @@ class Slab(PlateGeometry, Element):
         self.width = width
         self.height = thickness
         self.interfaces = []
+        self.type = type or SlabType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
-
-    @property
-    def is_slab(self):
-        return True
-
-    @property
-    def is_wall(self):
-        return False
-
-    @property
-    def is_floor(self):
-        return False
-
-    @property
-    def is_roof(self):
-        return False
+        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     @property
     def is_group_element(self):

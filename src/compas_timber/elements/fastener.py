@@ -21,8 +21,8 @@ class Fastener(Element):
     ----------
     shape : :class:`~compas.geometry.Geometry`, optional
         The geometry of the fastener.
-    transformation : :class:`~compas.geometry.Transformation`, optional
-        The transformation of the fastener.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The frame of the fastener in parent space.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -55,7 +55,7 @@ class Fastener(Element):
 
     def __repr__(self):
         # type: () -> str
-        return "Fastener(transformation={!r}, name={})".format(self.transformation, self.name)
+        return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)
 
     def __str__(self):
         # type: () -> str

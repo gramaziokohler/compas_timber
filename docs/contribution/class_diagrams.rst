@@ -23,7 +23,6 @@ The elements subsystem contains all the core timber elements that can be modeled
          +debug_info : list
          +is_beam : bool
          +is_plate : bool
-         +is_wall : bool
          +is_group_element : bool
          +is_fastener : bool
          +reset()
@@ -92,7 +91,6 @@ The elements subsystem contains all the core timber elements that can be modeled
          +faces : tuple[Frame]
          +end_faces : tuple[Frame]
          +envelope_faces : tuple[Frame]
-         +is_slab : bool = True
          +is_group_element : bool = True
          +from_boundary()
          +from_brep()
@@ -102,12 +100,6 @@ The elements subsystem contains all the core timber elements that can be modeled
          +rotate()
       }
 
-      class Wall {
-         +outline : Polyline
-         +thickness : float
-         +openings : list[Polyline]
-         +is_wall : bool = True
-      }
 
       class Fastener {
          +shape : Geometry
@@ -117,11 +109,6 @@ The elements subsystem contains all the core timber elements that can be modeled
          +compute_geometry()
       }
 
-      class Opening {
-         +polyline : Polyline
-         +opening_type : str
-         +orient_polyline(normal)
-      }
 
       class FastenerTimberInterface {
          +outline_points : list[Point]
@@ -139,7 +126,6 @@ The elements subsystem contains all the core timber elements that can be modeled
       TimberElement <|-- Plate
       TimberElement <|-- Slab
       TimberElement <|-- Fastener
-      Slab <|-- Wall
 
       %% Composition relationships
       Slab ..> Opening : contains
@@ -264,11 +250,6 @@ The connections subsystem defines joints and their relationships. All joints inh
          +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
       }
 
-      class WallJoint {
-         +wall_a : Wall
-         +wall_b : Wall
-         +interface : WallToWallInterface
-      }
 
       %% Inheritance relationships
       Interaction <|-- Joint
@@ -280,7 +261,6 @@ The connections subsystem defines joints and their relationships. All joints inh
       Joint <|-- BallNodeJoint
       Joint <|-- TenonMortiseJoint
       Joint <|-- PlateJoint
-      Joint <|-- WallJoint
 
       ButtJoint <|-- LButtJoint
       ButtJoint <|-- TButtJoint
