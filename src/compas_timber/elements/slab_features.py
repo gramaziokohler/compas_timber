@@ -21,13 +21,13 @@ from compas_timber.fabrication import FreeContour
 class SlabFeature(Data):
     #TODO: should this inherit from Element?
     def __init__(self, frame, name=None):
+        super(SlabFeature, self).__init__()
         self.transformation=Transformation.from_frame(frame)
         self.name=name
 
     @property
     def __data__(self):
         data = {"frame": self.frame}
-        data["name"] = self.name
         return data
 
     @property

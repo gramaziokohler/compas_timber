@@ -4,6 +4,8 @@ from compas.geometry import Transformation
 from compas.geometry import Frame
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+
+from compas_timber.errors import FeatureApplicationError
 from .plate_geometry import PlateGeometry
 from .slab_features import Opening
 
@@ -212,8 +214,10 @@ class Slab(PlateGeometry, Element):
         geometry = self.compute_shape()
         if include_features:
             for feature in self.features:
-                shape = feature.apply(geometry, self)
-                geometry -= shape
+                try:
+                    geometry = feature.apply(geometry, self)
+                except FeatureApplicationError as error:
+                    self.debug_info.append(error)
         return geometry
 
     @reset_computed

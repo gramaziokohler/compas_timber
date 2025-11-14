@@ -110,8 +110,8 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def features(self):
-        if not self._opening_features:
-            self._opening_features = [FreeContour.from_polyline_and_element(o.transformed(Transformation.from_frame(self.frame)), self, interior=True) for o in self.openings]
+        if not self._outline_feature:
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         return [self._outline_feature] + self._features
 
     @features.setter

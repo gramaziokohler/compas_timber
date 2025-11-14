@@ -139,8 +139,6 @@ class FreeContour(BTLxProcessing):
         if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
             points_principal = [pt.transformed(element.transformation_to_local()) for pt in top_polyline]
             points_associated = [pt.transformed(element.transformation_to_local()) for pt in bottom_polyline]
-            print(Polyline(points_principal))
-            print(Polyline(points_associated))
             contour = DualContour(points_principal, points_associated)
         else:  # use Contour with inclination
             inclinations = []
@@ -151,7 +149,6 @@ class FreeContour(BTLxProcessing):
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
             depth = distance_point_plane(bottom_polyline[0], Plane.from_frame(ref_side))
             polyline = top_polyline.transformed(element.transformation_to_local())
-            print(polyline)
             contour = Contour(polyline, depth=depth, inclination=inclinations)
 
         return cls(contour, counter_sink=interior, tool_position=tool_position, ref_side_index=ref_side_index, **kwargs)  # type: ignore
