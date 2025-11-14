@@ -332,7 +332,7 @@ class DoubleCut(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         # get cutting planes from params and beam
         try:
-            cutting_planes = [cp.transformed(beam.transformation_to_local()) for cp in self.planes_from_params_and_beam(beam)]
+            cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
@@ -465,8 +465,8 @@ class DoubleCutProxy(object):
     ----------
     planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
         The two cutting planes that define the double cut.
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam that is cut by this instance.
+    element : :class:`~compas_timber.elements.TimberElement`
+        The element that is cut by this instance.
     ref_side_index : int, optional
         The reference side index of the beam to be cut. Default is None.
 
@@ -478,9 +478,9 @@ class DoubleCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, planes, beam, ref_side_index=None):
-        self.planes = [plane.transformed(beam.transformation_to_local()) for plane in planes]
-        self.beam = beam
+    def __init__(self, planes, element, ref_side_index=None):
+        self.planes = [plane.transformed(element.transformation_to_local()) for plane in planes]
+        self.element = element
         self.ref_side_index = ref_side_index
         self._processing = None
 

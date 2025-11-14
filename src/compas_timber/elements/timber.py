@@ -201,26 +201,6 @@ class TimberElement(Element, abc.ABC):
                 features = [features]
             self._features = [f for f in self._features if f not in features]
 
-    @reset_computed
-    @reset_timber_attrs
-    def transform(self, transformation: Transformation) -> None:
-        """Transforms the element.
-
-        Parameters
-        ----------
-        transformation : :class:`compas.geometry.Transformation`
-            The transformation to be applied.
-
-        Returns
-        -------
-        None
-
-        """
-        if self.transformation:
-            self.transformation = transformation * self.transformation
-        else:
-            self.transformation = transformation
-
     def transformation_to_local(self):
         """Compute the transformation to local coordinates of this element
         based on its position in the spatial hierarchy of the model.

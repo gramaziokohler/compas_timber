@@ -367,7 +367,7 @@ class Drilling(BTLxProcessing):
         # scale both ends so is protrudes nicely from the surface
         # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
         drill_line = self._scaled_line_by_factor(drill_line, 1.2)
-        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5).transformed(element.transformation_to_local())
+        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
 
     def _scaled_line_by_factor(self, line, factor):
         direction = line.vector.unitized()
