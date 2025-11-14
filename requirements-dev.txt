@@ -7,7 +7,6 @@ ruff
 sphinx_compas2_theme
 sphinxcontrib-mermaid
 twine
-build
 wheel
 pytest-mock
 build
