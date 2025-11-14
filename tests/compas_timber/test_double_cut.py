@@ -6,11 +6,21 @@ from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Line
 from compas.geometry import Vector
+from compas.geometry import Frame
+from compas.geometry import Transformation
 
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DoubleCut
+
+from compas_timber.fabrication import DoubleCutProxy
+
+
+@pytest.fixture
+def tol():
+    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
 @pytest.fixture
@@ -254,3 +264,88 @@ def test_doublecut_scaled():
     assert scaled.angle_2 == doublecut.angle_2
     assert scaled.inclination_2 == doublecut.inclination_2
     assert scaled.ref_side_index == doublecut.ref_side_index
+
+
+def test_double_cut_transforms_with_beam(tol, cross_beam):
+    width = 80
+    height = 100
+    normal = Vector(1, 1.5, 0)
+    centerline = Line(Point(x=30499.6181909, y=-4472.85889623, z=-1495.56306376), Point(x=31205.1038160, y=-3257.66821289, z=0.0))
+
+    beam_a = Beam.from_centerline(centerline, width, height, normal)
+    beam_b = Beam.from_centerline(centerline, width, height, normal)
+
+    # Create cutting planes from the cross beam
+    cutting_planes = [cross_beam.ref_sides[0], cross_beam.ref_sides[1]]
+
+    # Create DoubleCut instances
+    instance_a = DoubleCut.from_planes_and_beam(cutting_planes, beam_a, ref_side_index=1)
+    instance_b = DoubleCut.from_planes_and_beam(cutting_planes, beam_b, ref_side_index=1)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    assert beam_b.transformation == transformation * beam_a.transformation
+
+    # properties should be the same after transformation
+    assert instance_a.orientation == instance_b.orientation
+    assert tol.is_close(instance_a.start_x, instance_b.start_x)
+    assert tol.is_close(instance_a.start_y, instance_b.start_y)
+    assert tol.is_close(instance_a.angle_1, instance_b.angle_1)
+    assert tol.is_close(instance_a.inclination_1, instance_b.inclination_1)
+    assert tol.is_close(instance_a.angle_2, instance_b.angle_2)
+    assert tol.is_close(instance_a.inclination_2, instance_b.inclination_2)
+    assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
+
+    # planes should transform correctly
+    planes_a = instance_a.planes_from_params_and_beam(beam_a)
+    planes_b = instance_b.planes_from_params_and_beam(beam_b)
+
+    for plane_a, plane_b in zip(planes_a, planes_b):
+        plane_a.transform(transformation)
+        assert tol.is_allclose(plane_a.point, plane_b.point)
+        assert tol.is_allclose(plane_a.normal, plane_b.normal)
+
+
+def test_double_cut_proxy_transforms_with_beam(tol, cross_beam):
+    width = 80
+    height = 100
+    normal = Vector(1, 1.5, 0)
+    centerline = Line(Point(x=30499.6181909, y=-4472.85889623, z=-1495.56306376), Point(x=31205.1038160, y=-3257.66821289, z=0.0))
+
+    beam_a = Beam.from_centerline(centerline, width, height, normal)
+    beam_b = Beam.from_centerline(centerline, width, height, normal)
+
+    # Create cutting planes from the cross beam
+    cutting_planes = [cross_beam.ref_sides[0], cross_beam.ref_sides[1]]
+
+    # Create DoubleCutProxy instances
+    instance_a = DoubleCutProxy.from_planes_and_beam(cutting_planes, beam_a, ref_side_index=1)
+    instance_b = DoubleCutProxy.from_planes_and_beam(cutting_planes, beam_b, ref_side_index=1)
+
+    transformation = Transformation.from_frame(Frame(Point(1000, 555, -69), Vector(1, 4, 5), Vector(6, 1, -3)))
+    beam_b.transform(transformation)
+
+    assert beam_b.transformation == transformation * beam_a.transformation
+
+    # unproxify to get the actual DoubleCut instances
+    double_cut_a = instance_a.unproxified()
+    double_cut_b = instance_b.unproxified()
+
+    # properties should be the same after transformation
+    assert double_cut_a.orientation == double_cut_b.orientation
+    assert tol.is_close(double_cut_a.start_x, double_cut_b.start_x)
+    assert tol.is_close(double_cut_a.start_y, double_cut_b.start_y)
+    assert tol.is_close(double_cut_a.angle_1, double_cut_b.angle_1)
+    assert tol.is_close(double_cut_a.inclination_1, double_cut_b.inclination_1)
+    assert tol.is_close(double_cut_a.angle_2, double_cut_b.angle_2)
+    assert tol.is_close(double_cut_a.inclination_2, double_cut_b.inclination_2)
+    assert tol.is_close(double_cut_a.ref_side_index, double_cut_b.ref_side_index)
+
+    # planes are produced in element space, should be the same after transformation
+    planes_a = double_cut_a.planes_from_params_and_beam(beam_a)
+    planes_b = double_cut_b.planes_from_params_and_beam(beam_b)
+    for plane_a, plane_b in zip(planes_a, planes_b):
+        plane_a.transform(transformation)
+        assert tol.is_allclose(plane_a.point, plane_b.point)
+        assert tol.is_allclose(plane_a.normal, plane_b.normal)
