@@ -302,7 +302,7 @@ def test_double_cut_transforms_with_beam(tol, cross_beam):
     planes_b = instance_b.planes_from_params_and_beam(beam_b)
 
     for plane_a, plane_b in zip(planes_a, planes_b):
-        # plane_a.transform(transformation)
+        plane_a.transform(transformation)
         assert tol.is_allclose(plane_a.point, plane_b.point)
         assert tol.is_allclose(plane_a.normal, plane_b.normal)
 

@@ -300,6 +300,7 @@ def test_drilling_transforms_with_beam(tol):
     cylinder_b = instance_b.cylinder_from_params_and_element(beam_b)
 
     assert tol.is_close(cylinder_a.radius, cylinder_b.radius)
+    cylinder_a.transform(transformation)
     assert tol.is_allclose(cylinder_a.circle.plane.point, cylinder_b.circle.plane.point)
     assert tol.is_allclose(cylinder_a.circle.plane.normal, cylinder_b.circle.plane.normal)
 

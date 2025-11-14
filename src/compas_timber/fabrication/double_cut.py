@@ -493,8 +493,8 @@ class DoubleCutProxy(object):
 
         """
         if not self._processing:
-            planes = [plane.transformed(self.beam.modeltransformation) for plane in self.planes]
-            self._processing = DoubleCut.from_planes_and_beam(planes, self.beam, self.ref_side_index)
+            planes = [plane.transformed(self.element.modeltransformation) for plane in self.planes]
+            self._processing = DoubleCut.from_planes_and_beam(planes, self.element, self.ref_side_index)
         return self._processing
 
     @classmethod
