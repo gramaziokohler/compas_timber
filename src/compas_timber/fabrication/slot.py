@@ -16,6 +16,7 @@ from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
 from compas_timber.elements.beam import Beam
+from compas_timber.errors import FeatureApplicationError
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -359,10 +360,18 @@ class Slot(BTLxProcessing):
         subtraction_volume = self.volume_from_params_and_beam(beam)
         subtraction_volume.transform(beam.transformation_to_local())
 
-        # perform the boolean operation
-        cutted_geometry = geometry - subtraction_volume
+        # perform the boolean operation, subtract the volume of the slot from the beam geometry
+        try:
+            cutted_geometry = geometry - subtraction_volume
+            return cutted_geometry
+        
+        except Exception:
+            raise FeatureApplicationError(
+                subtraction_volume,
+                geometry,
+                "The slot subtracting volumen does not intersect with the beam geometry."
+                )
 
-        return cutted_geometry
 
 
 
