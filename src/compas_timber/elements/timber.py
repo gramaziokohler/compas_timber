@@ -150,7 +150,7 @@ class TimberElement(Element, abc.ABC):
         """Same as parent but handles standalone elements."""
         if not self.model:
             return self.elementgeometry.transformed(self.transformation)
-        return super().compute_modelgeometry()
+        return super().compute_modgielgeometry()
 
     # ========================================================================
     # Feature management & Modification methods
