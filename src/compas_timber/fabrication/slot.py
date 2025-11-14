@@ -396,8 +396,8 @@ class Slot(BTLxProcessing):
         ref_side = beam.side_as_surface(self.ref_side_index)
 
         # get the origin point and the origin frameof the reference side
-        origin_point = ref_side.point_at(0, 0)
-        origin_frame = ref_side.frame_at(0, 0)
+        origin_point = self._origin_point(beam)
+        origin_frame = self._origin_frame(beam)
 
         # calculates the points of the slot polyline
         p1 = self._find_p1(origin_point, origin_frame)
@@ -407,18 +407,60 @@ class Slot(BTLxProcessing):
         p2 = self._find_p2(p1, p3, p4, slot_frame)
 
         # adjust p1 for a full brep cut (when angles are not perpendiculare it does not fully cut)
-        adj_direction_1 = Vector.from_start_end(p4, p1).unitized()
-        p1 += adj_direction_1 * (self.start_x + 20)
-        adj_direction_2 = Vector.from_start_end(p3, p2).unitized()
-        p2 += adj_direction_2 * (self.start_x + 20)
+        p1, p2 = self._adjust_p1_p2(p1, p2, p3, p4, slot_frame, beam)
 
         # build the subtracting volume of the slot
-        slot_polyline = Polyline([p1, p2, p3, p4, p1])
+        slot_polyline = self._slot_polyline(p1, p2, p3, p4)
+
         subtracting_volume = Brep.from_extrusion(slot_polyline, slot_frame.zaxis * self.thickness)
         subtracting_volume.translate(slot_frame.zaxis * - (self.thickness / 2))
 
         return subtracting_volume
 
+
+    def _origin_point(self, beam: "Beam") -> Point:
+        """
+        Computes the origin point of the reference side of the beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The origin point of the reference side of the beam.
+
+        """
+        ref_side = beam.side_as_surface(self.ref_side_index)
+        origin_point = ref_side.point_at(0, 0)
+        return origin_point
+    
+    
+    def _origin_frame(self, beam: "Beam") -> Frame:
+        """
+        Computes the origin frame of the reference side of the beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The origin frame of the reference side of the beam.
+
+        """
+        ref_side = beam.side_as_surface(self.ref_side_index)
+        origin_frame = ref_side.frame_at(0, 0)
+        return origin_frame
+    
+
+    def _slot_polyline(self, p1: Point, p2: Point, p3: Point, p4: Point) -> Polyline:
+        slot_polyline = Polyline([p1, p2, p3, p4, p1]) 
+        return slot_polyline
 
 
     def _find_p1(self, origin_point: Point, origin_frame: Frame) -> Point:
@@ -591,6 +633,26 @@ class Slot(BTLxProcessing):
     
         return slot_frame
 
+
+    def _adjust_p1_p2(self, p1, p2, p3, p4, slot_frame, beam):
+        """
+        Adjust the points P1 and P2 to ensure the slot fully cuts through the beam.
+        """
+
+        if self.orientation == OrientationType.START:
+            adj_distance = self.start_x + 20
+        elif self.orientation == OrientationType.END:
+            adj_distance = beam.length - self.start_x + 20
+
+        adj_direction_1 = Vector.from_start_end(p4, p1).unitized()
+        angle_1 = abs(adj_direction_1.angle(slot_frame.xaxis))
+        p1_adj = p1 + adj_direction_1 * -(adj_distance/math.cos(angle_1))
+
+        adj_direction_2 = Vector.from_start_end(p3, p2).unitized()  
+        angle_2 = abs(adj_direction_2.angle(slot_frame.xaxis))
+        p2_adj = p2 + adj_direction_2 * -(adj_distance/math.cos(angle_2))
+        return p1_adj, p2_adj
+    
 
 
 
