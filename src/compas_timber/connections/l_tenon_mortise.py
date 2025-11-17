@@ -12,7 +12,7 @@ class LTenonMortiseJoint(TTenonMortiseJoint):
     Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.
     A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam's tenon.
 
-    This joint type is compatible with beams in T and L topology.
+    This joint type is compatible with beams in L topology.
 
     Please use `LTenonMortiseJoint.create()` to properly create an instance of this class and associate it with a model.
 

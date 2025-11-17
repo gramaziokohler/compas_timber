@@ -22,7 +22,7 @@ from .t_tenon_mortise import TTenonMortiseJoint
 from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
-from .oligina import OliGinaJoint
+from .oligina import TOliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
@@ -68,7 +68,7 @@ __all__ = [
     "TTenonMortiseJoint",
     "LTenonMortiseJoint",
     "YButtJoint",
-    "OliGinaJoint",
+    "TOliGinaJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
