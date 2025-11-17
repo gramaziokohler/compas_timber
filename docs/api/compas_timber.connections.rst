@@ -36,7 +36,8 @@ Joints
     PlateConnectionSolver
     TDovetailJoint
     BallNodeJoint
-    TenonMortiseJoint
+    LTenonMortiseJoint
+    TTenonMortiseJoint
     YButtJoint
     TOliGinaJoint
     WallJoint

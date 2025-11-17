@@ -10,9 +10,10 @@ from compas_timber.connections import LLapJoint
 from compas_timber.connections import LFrenchRidgeLapJoint
 from compas_timber.connections import TDovetailJoint
 from compas_timber.connections import BallNodeJoint
-from compas_timber.connections import TenonMortiseJoint
+from compas_timber.connections import LTenonMortiseJoint
+from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.connections import YButtJoint
-from compas_timber.connections import OliGinaJoint
+from compas_timber.connections import TOliGinaJoint
 
 
 def test_get_createable_joints():
@@ -34,9 +35,10 @@ def test_get_createable_joints():
         LFrenchRidgeLapJoint,
         TDovetailJoint,
         BallNodeJoint,
-        TenonMortiseJoint,
+        LTenonMortiseJoint,
+        TTenonMortiseJoint,
         YButtJoint,
-        OliGinaJoint,
+        TOliGinaJoint,
     ]
 
     for joint in createable_joints:
