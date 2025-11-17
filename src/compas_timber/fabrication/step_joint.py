@@ -511,7 +511,7 @@ class StepJoint(BTLxProcessing):
 
         # Get the points at the start of the step, at the end and at the heel
         p_ref = ref_side.point_at(self.start_x / ref_side.xsize, 0)
-        p_opp = opp_side.point_at((self.start_x + x_displacement_end) / opp_side.xsize, beam.width / beam_width)
+        p_opp = opp_side.point_at((self.start_x + x_displacement_end) / opp_side.xsize, 1.0)
         p_heel = ref_side.point_at((self.start_x + x_displacement_heel) / ref_side.xsize, 0)
         # Create cutting planes at the start of the step, at the end and at the heel
         cutting_plane_ref = Frame(p_ref, ref_side.frame.xaxis, ref_side.frame.yaxis)
