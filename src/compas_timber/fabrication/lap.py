@@ -517,7 +517,7 @@ class Lap(BTLxProcessing):
             The Lap feature.
 
         """
-        return cls.from_volume_and_element(volume, element, **kwargs)
+        return cls.from_volume_and_beam(volume, element, **kwargs)
 
     @staticmethod
     def _calculate_orientation(ref_side, plane):
