@@ -16,6 +16,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -701,7 +702,7 @@ class DovetailTenon(BTLxProcessing):
         angle_radians = math.radians(self.angle + 90)
 
         # calculate the point of origin based on orientation
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         if self.orientation == OrientationType.END:
             yaxis = ref_side.frame.yaxis
         else:
@@ -751,10 +752,10 @@ class DovetailTenon(BTLxProcessing):
         dy = -self.length
 
         bottom_dovetail_points = [
-            cutting_surface.point_at(self.start_y - dx_top, 0),
-            cutting_surface.point_at(self.start_y + dx_top, 0),
-            cutting_surface.point_at(self.start_y + dx_bottom, dy),
-            cutting_surface.point_at(self.start_y - dx_bottom, dy),
+            planar_surface_point_at(cutting_surface, self.start_y - dx_top, 0),
+            planar_surface_point_at(cutting_surface, self.start_y + dx_top, 0),
+            planar_surface_point_at(cutting_surface, self.start_y + dx_bottom, dy),
+            planar_surface_point_at(cutting_surface, self.start_y - dx_bottom, dy),
         ]
 
         dovetail_edges = [
