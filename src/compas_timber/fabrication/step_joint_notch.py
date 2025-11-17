@@ -613,8 +613,8 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_heel_planes(self, ref_side):
         """Calculate cutting planes for a heel notch."""
         # Move the frames to the start and end of the notch to create the cuts
-        p_origin = ref_side.point_at(self.start_x / beam.blank_length, self.start_y / ref_side.ysize)
-        p_heel = ref_side.point_at((self.start_x + self.displacement_heel) / beam.blank_length, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_heel = ref_side.point_at((self.start_x + self.displacement_heel) / ref_side.xsize, self.start_y / ref_side.ysize)
         cutting_plane_end = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_heel = Frame(p_heel, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         # Calculate heel cutting planes angles
@@ -629,8 +629,8 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_tapered_heel_planes(self, ref_side):
         """Calculate cutting planes for a tapered heel notch."""
         # Move the frames to the start and end of the notch to create the cuts
-        p_origin = ref_side.point_at(self.start_x / beam.blank_length, self.start_y / ref_side.ysize)
-        p_end = ref_side.point_at((self.start_x + self.displacement_end) / beam.blank_length, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_end = ref_side.point_at((self.start_x + self.displacement_end) / ref_side.xsize, self.start_y / ref_side.ysize)
         cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, ref_side.frame.yaxis)
         # Calculate heel cutting planes angles
@@ -650,7 +650,7 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_double_planes(self, ref_side):
         """Calculate cutting planes for a double notch."""
         # Move the frames to the start and end of the notch to create the cutsy
-        p_heel = ref_side.point_at((self.start_x + self.displacement_heel) / beam.blank_length, self.start_y / ref_side.ysize)
+        p_heel = ref_side.point_at((self.start_x + self.displacement_heel) / ref_side.xsize, self.start_y / ref_side.ysize)
         cutting_plane_heel_step = Frame(p_heel, ref_side.frame.xaxis, ref_side.frame.yaxis)
         # Calculate step cutting planes angles
         dx = self.step_depth / math.tan(math.radians(180 - self.strut_inclination / 2))
