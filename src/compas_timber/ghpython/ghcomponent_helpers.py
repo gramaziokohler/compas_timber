@@ -99,14 +99,14 @@ def get_createable_joints():
     from compas_timber.connections import LFrenchRidgeLapJoint
     from compas_timber.connections import LLapJoint
     from compas_timber.connections import LMiterJoint
-    from compas_timber.connections import TOliGinaJoint
+    from compas_timber.connections import LTenonMortiseJoint
     from compas_timber.connections import TBirdsmouthJoint
     from compas_timber.connections import TButtJoint
     from compas_timber.connections import TDovetailJoint
-    from compas_timber.connections import LTenonMortiseJoint
-    from compas_timber.connections import TTenonMortiseJoint
     from compas_timber.connections import TLapJoint
+    from compas_timber.connections import TOliGinaJoint
     from compas_timber.connections import TStepJoint
+    from compas_timber.connections import TTenonMortiseJoint
     from compas_timber.connections import XLapJoint
     from compas_timber.connections import XNotchJoint
     from compas_timber.connections import YButtJoint
