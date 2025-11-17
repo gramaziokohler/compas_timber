@@ -573,7 +573,7 @@ class DovetailMortise(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
         cutting_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         # rotate the cutting frame based on the angle
@@ -622,10 +622,10 @@ class DovetailMortise(BTLxProcessing):
         dy = self.length
 
         dovetail_profile_points = [
-            cutting_surface.point_at(-dx_top / cutting_surface.xsize, 0),
-            cutting_surface.point_at(dx_top / cutting_surface.xsize, 0),
-            cutting_surface.point_at(dx_bottom / cutting_surface.xsize, -dy / cutting_surface.ysize),
-            cutting_surface.point_at(-dx_bottom / cutting_surface.xsize, -dy / cutting_surface.ysize),
+            cutting_surface.point_at(-dx_top, 0),
+            cutting_surface.point_at(dx_top, 0),
+            cutting_surface.point_at(dx_bottom, -dy),
+            cutting_surface.point_at(-dx_bottom, -dy),
         ]
 
         dovetail_edges = [

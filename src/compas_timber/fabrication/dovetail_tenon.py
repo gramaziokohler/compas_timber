@@ -701,7 +701,7 @@ class DovetailTenon(BTLxProcessing):
         angle_radians = math.radians(self.angle + 90)
 
         # calculate the point of origin based on orientation
-        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
         if self.orientation == OrientationType.END:
             yaxis = ref_side.frame.yaxis
         else:
@@ -751,10 +751,10 @@ class DovetailTenon(BTLxProcessing):
         dy = -self.length
 
         bottom_dovetail_points = [
-            cutting_surface.point_at((self.start_y - dx_top) / cutting_surface.xsize, 0),
-            cutting_surface.point_at((self.start_y + dx_top) / cutting_surface.xsize, 0),
-            cutting_surface.point_at((self.start_y + dx_bottom) / cutting_surface.xsize, dy / cutting_surface.ysize),
-            cutting_surface.point_at((self.start_y - dx_bottom) / cutting_surface.xsize, dy / cutting_surface.ysize),
+            cutting_surface.point_at(self.start_y - dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_top, 0),
+            cutting_surface.point_at(self.start_y + dx_bottom, dy),
+            cutting_surface.point_at(self.start_y - dx_bottom, dy),
         ]
 
         dovetail_edges = [

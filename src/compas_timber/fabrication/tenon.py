@@ -609,7 +609,7 @@ class Tenon(BTLxProcessing):
         angle_radians = math.radians(self.angle + 90)
 
         # calculate the point of origin based on orientation
-        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
         if self.orientation == OrientationType.END:
             yaxis = ref_side.frame.yaxis
         else:

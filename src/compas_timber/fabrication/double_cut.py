@@ -374,7 +374,7 @@ class DoubleCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, self.start_y / ref_side.ysize)
+        p_origin = ref_side.point_at(self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         if self.orientation == OrientationType.END:

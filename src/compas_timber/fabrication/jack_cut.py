@@ -277,7 +277,7 @@ class JackRafterCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x / ref_side.xsize, 0.0)
+        p_origin = ref_side.point_at(self.start_x, 0.0)
         cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         # normal pointing towards xaxis so just need the delta

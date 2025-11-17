@@ -510,9 +510,9 @@ class StepJoint(BTLxProcessing):
         )
 
         # Get the points at the start of the step, at the end and at the heel
-        p_ref = ref_side.point_at(self.start_x / ref_side.xsize, 0)
-        p_opp = opp_side.point_at((self.start_x + x_displacement_end) / opp_side.xsize, 1.0)
-        p_heel = ref_side.point_at((self.start_x + x_displacement_heel) / ref_side.xsize, 0)
+        p_ref = ref_side.point_at(self.start_x, 0)
+        p_opp = opp_side.point_at(self.start_x + x_displacement_end, beam.width)
+        p_heel = ref_side.point_at(self.start_x + x_displacement_heel, 0)
         # Create cutting planes at the start of the step, at the end and at the heel
         cutting_plane_ref = Frame(p_ref, ref_side.frame.xaxis, ref_side.frame.yaxis)
         cutting_plane_opp = Frame(p_opp, ref_side.frame.xaxis, ref_side.frame.yaxis)
@@ -650,7 +650,7 @@ class StepJoint(BTLxProcessing):
         start_y = ref_surface.ysize/2
 
         # create a box volume for the tenon
-        box_origin = ref_surface.point_at(start_x / ref_surface.xsize, start_y / ref_surface.ysize)
+        box_origin = ref_surface.point_at(start_x, start_y)
         box_frame = Frame(box_origin, ref_side.xaxis, ref_side.yaxis)
         tenon_box = Box(dx, dy, self.tenon_height, box_frame)
 
