@@ -335,7 +335,7 @@ class FrenchRidgeLap(BTLxProcessing):
         # get the origin of the cutting frame
         start_x = self.start_x
         start_y = ref_surface.ysize if self.ref_position == EdgePositionType.OPPEDGE else 0
-        origin = ref_surface.point_at(start_x, start_y)
+        origin = ref_surface.point_at(start_x / ref_surface.xsize, start_y / ref_surface.ysize)
 
         # flip the rot_axis if the orientation is END
         rot_axis = -ref_surface.frame.normal

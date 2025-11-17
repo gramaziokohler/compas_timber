@@ -355,7 +355,7 @@ class Drilling(BTLxProcessing):
         assert self.depth is not None
 
         ref_surface = element.side_as_surface(self.ref_side_index)
-        xy_world = ref_surface.point_at(self.start_x, self.start_y)
+        xy_world = ref_surface.point_at(self.start_x / ref_surface.xsize, self.start_y / ref_surface.ysize)
 
         # x and y flipped because we want z pointting down into the element, that'll be the cylinder long direction
         cylinder_frame = Frame(xy_world, ref_surface.zaxis, -ref_surface.yaxis)

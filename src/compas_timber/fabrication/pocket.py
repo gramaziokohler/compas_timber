@@ -568,7 +568,7 @@ class Pocket(BTLxProcessing):
         ref_side = element.ref_sides[self.ref_side_index]
         ref_surface = element.side_as_surface(self.ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
 
-        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        p_origin = ref_surface.point_at(self.start_x / ref_surface.xsize, self.start_y / ref_surface.ysize)
         p_origin.translate(-ref_side.normal * self.start_depth)
         bottom_frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
 
