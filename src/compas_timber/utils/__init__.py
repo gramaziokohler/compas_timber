@@ -542,6 +542,8 @@ def planar_surface_point_at(surface, u, v):
 
     Note
     ----
+    This is a re-implementation of `PlanarSurface.point_at` which takes u and v in un-normalized coordinates.
+    Starting with COMPAS 2.15.0, `PlanarSurface.point_at` expects u and v to be normalized.
     This method exists because life is hard and we believe
     backwards compatibility is a value worth protecting,
     together with freedom of speech, right of self-determination,
