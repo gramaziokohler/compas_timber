@@ -15,6 +15,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -588,11 +589,11 @@ class StepJointNotch(BTLxProcessing):
         """Calculate cutting planes for a step notch."""
         # Move the frames to the start and end of the notch to create the cuts
         if self.strut_inclination > 90:
-            p_origin = ref_side.point_at(self.start_x, self.start_y)
-            p_end = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
+            p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
+            p_end = planar_surface_point_at(ref_side, self.start_x + self.displacement_end, self.start_y)
         else:
-            p_origin = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
-            p_end = ref_side.point_at(self.start_x, self.start_y)
+            p_origin = planar_surface_point_at(ref_side, self.start_x + self.displacement_end, self.start_y)
+            p_end = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
         cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, ref_side.frame.yaxis)
         # Calculate step cutting planes angles
@@ -613,8 +614,8 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_heel_planes(self, ref_side):
         """Calculate cutting planes for a heel notch."""
         # Move the frames to the start and end of the notch to create the cuts
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
-        p_heel = ref_side.point_at(self.start_x + self.displacement_heel, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
+        p_heel = planar_surface_point_at(ref_side, self.start_x + self.displacement_heel, self.start_y)
         cutting_plane_end = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_heel = Frame(p_heel, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         # Calculate heel cutting planes angles
@@ -629,8 +630,8 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_tapered_heel_planes(self, ref_side):
         """Calculate cutting planes for a tapered heel notch."""
         # Move the frames to the start and end of the notch to create the cuts
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
-        p_end = ref_side.point_at(self.start_x + self.displacement_end, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
+        p_end = planar_surface_point_at(ref_side, self.start_x + self.displacement_end, self.start_y)
         cutting_plane_origin = Frame(p_origin, ref_side.frame.xaxis, -ref_side.frame.yaxis)
         cutting_plane_end = Frame(p_end, ref_side.frame.xaxis, ref_side.frame.yaxis)
         # Calculate heel cutting planes angles
@@ -650,7 +651,7 @@ class StepJointNotch(BTLxProcessing):
     def _calculate_double_planes(self, ref_side):
         """Calculate cutting planes for a double notch."""
         # Move the frames to the start and end of the notch to create the cutsy
-        p_heel = ref_side.point_at(self.start_x + self.displacement_heel, self.start_y)
+        p_heel = planar_surface_point_at(ref_side, self.start_x + self.displacement_heel, self.start_y)
         cutting_plane_heel_step = Frame(p_heel, ref_side.frame.xaxis, ref_side.frame.yaxis)
         # Calculate step cutting planes angles
         dx = self.step_depth / math.tan(math.radians(180 - self.strut_inclination / 2))
@@ -698,7 +699,7 @@ class StepJointNotch(BTLxProcessing):
         start_x = self.start_x + dx/2 if self.orientation == OrientationType.START else self.start_x - dx/2
         start_y = ref_side.ysize / 2
 
-        box_origin = ref_side.point_at(start_x, start_y)
+        box_origin = planar_surface_point_at(ref_side, start_x, start_y)
         box_frame =  Frame(box_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
         if self.orientation == OrientationType.END:
             box_frame.xaxis = -box_frame.xaxis

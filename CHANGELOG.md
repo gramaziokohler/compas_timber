@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
@@ -26,9 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
 * Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operaion.
+* Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
+* Added `PlateGeometry` class.
+* Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
+* Added `planar_surface_point_at` to `compas_timber.utils`.
 
 ### Changed
-
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
@@ -53,9 +55,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Refactor `BTLxWriter` to use `graphnode` as part identifier in `BTLxpart` creation instead of the enumeration index, for consistent part referencing.
 * Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a dictionary containing its frame, a human-readable key, and length, instead of just the frame. 
 * Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
+* Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
+* Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
+* Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
+* Fixed the `ShowTopologyTypes` GH Component.
+* Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 
 ### Removed
-
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.
 * Removed `blank_frame` property from `compas_timber.elements.Beam` since the ref_frame could serve it's purpose.
@@ -63,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `has_features` property from `compas_timber.elements.Beam` since it wasn't used anywhere.
 * Removed `key` property from `compas_timber.elements.Beam` and `compas_timber.elements.Plate` since it is not used anymore.
 * Removed all Rhino7 components!
-
+* Removed method `add_group_element` from `TimberModel`.
+* Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
 
 ## [1.0.1] 2025-10-16
 

@@ -20,6 +20,7 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -568,7 +569,7 @@ class Pocket(BTLxProcessing):
         ref_side = element.ref_sides[self.ref_side_index]
         ref_surface = element.side_as_surface(self.ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
 
-        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_surface, self.start_x, self.start_y)
         p_origin.translate(-ref_side.normal * self.start_depth)
         bottom_frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
 
