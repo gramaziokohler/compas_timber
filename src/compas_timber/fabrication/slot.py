@@ -404,7 +404,7 @@ class Slot(BTLxProcessing):
         p3 = self._find_p3(p1, p4, slot_frame)
         p2 = self._find_p2(p1, p3, p4, slot_frame)
 
-        # adjust p1 for a full brep cut (when angles are not perpendiculare it does not fully cut)
+        # adjust p1 for a full brep cut (when angles are not perpendicular it does not fully cut)
         p1, p2 = self._adjust_p1_p2(p1, p2, p3, p4, slot_frame, beam)
 
         # build the subtracting volume of the slot
