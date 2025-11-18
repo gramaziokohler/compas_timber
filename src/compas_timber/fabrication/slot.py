@@ -393,7 +393,7 @@ class Slot(BTLxProcessing):
             
         """
 
-        # get the origin point and the origin frameof the reference side
+        # get the origin point and the origin frame of the reference side
         origin_point = self._origin_point(beam)
         origin_frame = self._origin_frame(beam)
 
