@@ -603,12 +603,12 @@ document.write(`
 <h1>Beam.from_centerline</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Beam.from_centerline">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">from_centerline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centerline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1ba59fb/src/compas_timber/elements/beam.py#L242"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Beam.</span></span><span class="sig-name descname"><span class="pre">from_centerline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">centerline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z_vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0362196/src/compas_timber/elements/beam.py#L242"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Define the beam from its centerline.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>centerline</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a></span></dt><dd><p>The centerline of the beam to be created.</p>
+<dt><strong>centerline</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></span></dt><dd><p>The centerline of the beam to be created.</p>
 </dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the beam.</p>
 </dd>
@@ -616,7 +616,7 @@ document.write(`
 </dd>
 <dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>Height of the cross-section.</p>
 </dd>
-<dt><strong>z_vector</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vector</span></code></a></span></dt><dd><p>A vector indicating the height direction (z-axis) of the cross-section.
+<dt><strong>z_vector</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vector</span></code></span></dt><dd><p>A vector indicating the height direction (z-axis) of the cross-section.
 Defaults to WorldZ or WorldX depending on the centerline’s orientation.</p>
 </dd>
 </dl>

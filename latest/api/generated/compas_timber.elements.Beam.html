@@ -598,13 +598,13 @@ document.write(`
 <h1>Beam</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Beam">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1ba59fb/src/compas_timber/elements/beam.py#L24"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Beam</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0362196/src/compas_timber/elements/beam.py#L24"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber beams (studs, slats, etc.) with rectangular cross-sections.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a></span></dt><dd><p>The frame representing the beam’s local coordinate system in its hierarchical context:
+<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></span></dt><dd><p>The frame representing the beam’s local coordinate system in its hierarchical context:
 Origin is located at the starting point of the centerline.
 x-axis corresponds to the centerline (major axis), usually also the fibre direction in solid wood beams.
 y-axis corresponds to the width of the cross-section, usually the smaller dimension.
@@ -620,10 +620,10 @@ z-axis corresponds to the height of the cross-section, usually the larger dimens
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>transformation</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Transformation.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></a></span></dt><dd><p>The transformation matrix representing the beam’s local coordinate system in its hierarchical context.
+<dt><strong>transformation</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transformation</span></code></span></dt><dd><p>The transformation matrix representing the beam’s local coordinate system in its hierarchical context.
 This is the internal interface for the constructor <cite>frame</cite> parameter.</p>
 </dd>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The coordinate system (frame) of this beam in model space.
+<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></span></dt><dd><p>The coordinate system (frame) of this beam in model space.
 This property may be different from the constructor parameter if the beam belongs to a model hierarchy.</p>
 </dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the beam.</p>
@@ -632,23 +632,23 @@ This property may be different from the constructor parameter if the beam belong
 </dd>
 <dt><strong>height</strong><span class="classifier">float</span></dt><dd><p>Height of the cross-section</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The shape of the beam in model space.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">shape</span></code><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></span></dt><dd><p>The shape of the beam in model space.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">blank</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>The blank of the beam in model space.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">blank</span></code><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></span></dt><dd><p>The blank of the beam in model space.</p>
 </dd>
 <dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>The length of the blank including any extensions added to the beam.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">centerline</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a></span></dt><dd><p>The centerline of the beam in model space.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">centerline</span></code><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></span></dt><dd><p>The centerline of the beam in model space.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_frame</span></code><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">ref_frame</span></code><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></span></dt><dd><p>Reference frame for machining processings according to BTLx standard.</p>
 </dd>
-<dt><strong>ref_sides</strong><span class="classifier">tuple(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)</span></dt><dd><p>A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.</p>
+<dt><strong>ref_sides</strong><span class="classifier">tuple(<code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code>)</span></dt><dd><p>A tuple containing the 6 frames representing the sides of the beam according to BTLx standard.</p>
 </dd>
-<dt><strong>ref_edges</strong><span class="classifier">tuple(<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code></a>)</span></dt><dd><p>A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.</p>
+<dt><strong>ref_edges</strong><span class="classifier">tuple(<code class="xref py py-class docutils literal notranslate"><span class="pre">Line</span></code>)</span></dt><dd><p>A tuple containing the 4 lines representing the long edges of the beam according to BTLx standard.</p>
 </dd>
-<dt><strong>aabb</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>An axis aligned bounding box of this beam.</p>
+<dt><strong>aabb</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></span></dt><dd><p>An axis aligned bounding box of this beam.</p>
 </dd>
-<dt><strong>obb</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>An oriented bounding box of this beam.</p>
+<dt><strong>obb</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></span></dt><dd><p>An oriented bounding box of this beam.</p>
 </dd>
 </dl>
 </dd>

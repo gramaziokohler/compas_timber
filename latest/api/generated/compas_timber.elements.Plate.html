@@ -598,13 +598,13 @@ document.write(`
 <h1>Plate</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/1ba59fb/src/compas_timber/elements/plate.py#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">Plate</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/0362196/src/compas_timber/elements/plate.py#L14"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">PlateGeometry</span></code>, <a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.timber.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></p>
 <p>A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The coordinate system (frame) of this plate.</p>
+<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></span></dt><dd><p>The coordinate system (frame) of this plate.</p>
 </dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the plate.</p>
 </dd>
@@ -612,11 +612,11 @@ document.write(`
 </dd>
 <dt><strong>thickness</strong><span class="classifier">float</span></dt><dd><p>Thickness of the plate.</p>
 </dd>
-<dt><strong>outline_a</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>, optional</span></dt><dd><p>A line representing the principal outline of this plate.</p>
+<dt><strong>outline_a</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>, optional</span></dt><dd><p>A line representing the principal outline of this plate.</p>
 </dd>
-<dt><strong>outline_b</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>, optional</span></dt><dd><p>A line representing the associated outline of this plate. This should have the same number of points as outline_a.</p>
+<dt><strong>outline_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>, optional</span></dt><dd><p>A line representing the associated outline of this plate. This should have the same number of points as outline_a.</p>
 </dd>
-<dt><strong>openings</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>], optional</span></dt><dd><p>A list of Polyline objects representing openings in this plate.</p>
+<dt><strong>openings</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>], optional</span></dt><dd><p>A list of Polyline objects representing openings in this plate.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Additional keyword arguments.</p>
 </dd>
@@ -624,7 +624,7 @@ document.write(`
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The coordinate system (frame) of this plate.</p>
+<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></span></dt><dd><p>The coordinate system (frame) of this plate.</p>
 </dd>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the plate.</p>
 </dd>
@@ -634,13 +634,13 @@ document.write(`
 </dd>
 <dt><strong>thickness</strong><span class="classifier">float</span></dt><dd><p>Thickness of the plate.</p>
 </dd>
-<dt><strong>outline_a</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a></span></dt><dd><p>A line representing the principal outline of this plate.</p>
+<dt><strong>outline_a</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></span></dt><dd><p>A line representing the principal outline of this plate.</p>
 </dd>
-<dt><strong>outline_b</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a></span></dt><dd><p>A line representing the associated outline of this plate.</p>
+<dt><strong>outline_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></span></dt><dd><p>A line representing the associated outline of this plate.</p>
 </dd>
 <dt><strong>is_plate</strong><span class="classifier">bool</span></dt><dd><p>Always True for plates.</p>
 </dd>
-<dt><strong>blank</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Box.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></a></span></dt><dd><p>A feature-less box representing the material stock geometry to produce this plate.</p>
+<dt><strong>blank</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Box</span></code></span></dt><dd><p>A feature-less box representing the material stock geometry to produce this plate.</p>
 </dd>
 <dt><strong>blank_length</strong><span class="classifier">float</span></dt><dd><p>Length of the plate blank.</p>
 </dd>
