@@ -146,7 +146,7 @@ class BeamStock(Stock):
 
     @property
     def _remaining_length(self):
-        """Get remaining unused length of the stock piece."""
+        # Get remaining unused length of the stock piece.
         return self.length - self._current_x_position
 
     def can_fit_element(self, beam):
@@ -208,21 +208,8 @@ class BeamStock(Stock):
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
 
     def _get_position_frame(self, beam):
-        """
-        Get the position frame for a beam that is being added to this stock.
-        The frame is oriented based on the beam's cross-section relative to the stock's.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam to get the position frame for.
-        x_position : float
-            The position along the stock length where the beam should be placed.
-        Returns
-        -------
-        :class:`Frame`
-            The position frame for the beam.
-        """
+        # Get the position frame for a beam that is being added to this stock.
+        # Orientation is based on the beam's cross-section relative to the stock's.
         beam_cross_section = tuple([beam.width, beam.height])
         # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
         if beam_cross_section == self.cross_section:
@@ -437,21 +424,7 @@ class BeamNester(object):
         return NestingResult(nesting_stocks)
 
     def _nest_beam_collection(self, beams, fast=True):
-        """
-        Nest a collection of beams into stock pieces.
-
-        Parameters
-        ----------
-        beams : list[:class:`~compas_timber.elements.Beam`]
-            Collection of beams to nest together
-        fast : bool, optional
-            Whether to use fast (FFD) or best-fit (BFD) algorithm
-
-        Returns
-        -------
-        list[:class:`Stock`]
-            List of stock pieces with assigned beams
-        """
+        # Nest a collection of beams into stock pieces.
         stocks = []
         stock_beam_map = self._sort_beams_by_stock(beams)
 
@@ -468,23 +441,7 @@ class BeamNester(object):
         return stocks
 
     def _sort_beams_by_stock(self, beams):
-        """
-        Sort beams into compatible stock types based on their dimensions.
-
-        Parameters
-        ----------
-        beams : list[:class:`~compas_timber.elements.Beam`]
-            Collection of beams to sort by stock compatibility
-
-        Returns
-        -------
-        dict[:class:`Stock`, list[:class:`~compas_timber.elements.Beam`]]
-            A mapping of stock types to lists of compatible beams.
-
-        Warns
-        ------
-            If any beam does not match any stock type.
-        """
+        # Sort beams into compatible stock types based on their dimensions.
         unnested_beams = []
         stock_beam_map = {stock: [] for stock in self.stock_catalog}
         for beam in beams:
@@ -513,27 +470,8 @@ class BeamNester(object):
 
     @staticmethod
     def _first_fit_decreasing(beams, stock, spacing=0.0):
-        """
-        Apply First Fit Decreasing algorithm for a single stock type.
-
-        Fast but more wasteful packing - places each beam in the first stock
-        that has enough space, without optimizing for minimal waste.
-
-        Parameters
-        ----------
-        beams : list[:class:`~compas_timber.elements.Beam`]
-            Beams to nest (will be sorted by blank length descending)
-        stock : :class:`Stock`
-            Stock type to use.
-        spacing : float, optional
-            Spacing tolerance for cutting operations (kerf width, etc.)
-
-        Returns
-        -------
-        list[:class:`Stock`]
-            List of stock pieces with assigned beams
-        """
-        # Sort beams by blank length in descending order
+        # Fast but more wasteful packing
+        # Places each beam in the first stock that has enough space, without optimizing for minimal waste.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
         stocks = []
@@ -555,27 +493,8 @@ class BeamNester(object):
 
     @staticmethod
     def _best_fit_decreasing(beams, stock, spacing=0.0):
-        """
-        Apply Best Fit Decreasing algorithm for a single stock type.
-
-        Slower but more efficient packing - minimizes waste by selecting the stock piece
-        with the smallest remaining space that can still fit the beam.
-
-        Parameters
-        ----------
-        beams : list[:class:`~compas_timber.elements.Beam`]
-            Beams to nest
-        stock : :class:`Stock`
-            Stock type to use
-        spacing : float, optional
-            Spacing tolerance for cutting operations (kerf width, etc.)
-
-        Returns
-        -------
-        list[:class:`Stock`]
-            List of stock pieces with assigned beams
-        """
-        # Sort beams by blank length in descending order
+        # Slower but more efficient packing
+        # Minimizes waste by selecting the stock piece with the smallest remaining space that can still fit the beam.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
         stocks = []
