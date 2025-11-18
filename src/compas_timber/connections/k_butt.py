@@ -5,6 +5,7 @@ from compas.geometry import Plane
 from compas.geometry import Vector
 
 from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 
@@ -148,8 +149,8 @@ class KButtJoint(Joint):
 
 
     def add_features(self):
-        self._cut_beam_a()
         self._cut_beam_b()
+        self._cut_beam_a()
         self._cut_cross_beam()
 
 
@@ -170,17 +171,31 @@ class KButtJoint(Joint):
 
 
     def _cut_beam_b(self):
+        cutting_frame = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
         cutting_plane_cross_beam = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)])
         if self.mill_depth:
             cutting_plane_cross_beam.translate(-cutting_plane_cross_beam.normal * self.mill_depth)
 
-        cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[self.main_beam_ref_side_index(self.main_beam_a)])
+        print(cutting_frame.normal == cutting_plane_cross_beam.normal)
 
-        cutting_plane_cross_beam.normal *= -1  # invert normal to point towards the main beam
+
+        ref_side_dict = beam_ref_side_incidence(self.main_beam_b, self.main_beam_a, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cutting_frame_A = self.main_beam_a.ref_sides[ref_side_index]
+        cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[ref_side_index])
+
         # cutting_plane_main_beam_A.normal *= -1  # invert normal to point towards the main beam
+        # cutting_plane_cross_beam.normal *= -1  # invert normal to point towards the main beam
 
+        # TODO: find the logic to apply this:
+        if None:
+            cutting_plane_cross_beam.point += cutting_frame.xaxis * self.cross_beam.length
 
-        cutting_planes = [cutting_plane_cross_beam, cutting_plane_main_beam_A]
+        cutting_planes = [cutting_plane_main_beam_A, cutting_plane_cross_beam]
+
+        intersection = intersection_plane_plane(cutting_plane_cross_beam, cutting_plane_main_beam_A)
+        print(intersection)
+
         double_cut = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam_b)
         self.main_beam_b.add_feature(double_cut)
         self.features.append(double_cut)
@@ -196,16 +211,17 @@ class KButtJoint(Joint):
         Pa, _ = intersection_line_line(self.main_beam_a.centerline, self.cross_beam.centerline)
         Pb, _ = intersection_line_line(self.main_beam_b.centerline, self.cross_beam.centerline)
 
+        print(math.degrees(angle_b))
         
         if dot_a > dot_b:
             tilt_start_side = angle_b
-            tilt_end_side = angle_a
+            tilt_end_side = math.pi - angle_a
             start_x = self._find_start_x(Pb, angle_b, self.main_beam_b)
             length = self._find_length(Pa, start_x, angle_a, self.main_beam_a)
 
         elif dot_a < dot_b:
             tilt_start_side = angle_a
-            tilt_end_side = angle_b
+            tilt_end_side = math.pi - angle_b
             start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
             length = self._find_length(Pb, start_x, angle_b, self.main_beam_b)
         
@@ -286,8 +302,10 @@ class KButtJoint(Joint):
         end_x = math.sqrt( air_distance**2 - (beam_width/2)**2 ) 
         x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)
         x2 = (beam_height/2) / math.sin(math.pi - angle)
-        end_x += x1
+        end_x += abs(x1)
         end_x += x2
+
+        print("xs", x1, x2)
 
         length = end_x - start_x
         return length
@@ -321,12 +339,12 @@ class KButtJoint(Joint):
         
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)    
-        if dot > 0:
-            angle = math.pi - angle
-        elif dot == 0:
-            angle = math.pi / 2
-        elif dot < 0:
-            angle = angle
+        # if dot > 0:
+        #     angle = math.pi - angle
+        # elif dot == 0:
+        #     angle = math.pi / 2
+        # elif dot < 0:
+        #     angle = angle
 
         return angle, dot
          
