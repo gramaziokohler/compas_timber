@@ -375,7 +375,7 @@ class Slot(BTLxProcessing):
 
 
 
-    def volume_from_params_and_beam(self, beam: "Beam") -> Brep:
+    def volume_from_params_and_beam(self, beam: Beam) -> Brep:
         """
         Calculate the volume of the slot to be removed from the beam based on the slot parameters and the beam geometry.
         
@@ -392,8 +392,6 @@ class Slot(BTLxProcessing):
             The volume of the slot to be removed from the beam.
             
         """
-        # get the reference side of the beam    
-        ref_side = beam.side_as_surface(self.ref_side_index)
 
         # get the origin point and the origin frameof the reference side
         origin_point = self._origin_point(beam)
@@ -418,45 +416,23 @@ class Slot(BTLxProcessing):
         return subtracting_volume
 
 
-    def _origin_point(self, beam: "Beam") -> Point:
+    def _origin_point(self, beam: Beam) -> Point:
         """
         Computes the origin point of the reference side of the beam.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Point`
-            The origin point of the reference side of the beam.
-
         """
         ref_side = beam.side_as_surface(self.ref_side_index)
         origin_point = ref_side.point_at(0, 0)
         return origin_point
-    
-    
-    def _origin_frame(self, beam: "Beam") -> Frame:
+
+
+    def _origin_frame(self, beam: Beam) -> Frame:
         """
         Computes the origin frame of the reference side of the beam.
-
-        Parameters
-        ----------
-        beam : :class:`~compas_timber.elements.Beam`
-            The beam that is cut by this instance.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The origin frame of the reference side of the beam.
-
         """
         ref_side = beam.side_as_surface(self.ref_side_index)
         origin_frame = ref_side.frame_at(0, 0)
         return origin_frame
-    
+
 
     def _slot_polyline(self, p1: Point, p2: Point, p3: Point, p4: Point) -> Polyline:
         slot_polyline = Polyline([p1, p2, p3, p4, p1]) 
@@ -466,19 +442,6 @@ class Slot(BTLxProcessing):
     def _find_p1(self, origin_point: Point, origin_frame: Frame) -> Point:
         """
         Computes the position of the point P1 of ths slot (see design2machine pdf for reference).
-
-        Parameters
-        ----------
-        origin_point : :class:`~compas.geometry.Point`
-            The origin point of the reference side of the beam.
-        origin_frame : :class:`~compas.geometry.Frame`
-            The origin frame of the reference side of the beam.
-        
-        Returns
-        -------
-        :class:`~compas.geometry.Point`
-            The computed point P1 of the slot.
-
         """
         p1 = (origin_point
             + origin_frame.xaxis * self.start_x
@@ -491,22 +454,6 @@ class Slot(BTLxProcessing):
     def _find_p2(self, p1: Point, p3: Point, p4: Point, slot_frame: Frame) -> Point:
         """
         Compute the position of the point P2 of ths slot (see design2machine pdf for reference).
-        Parameters
-        ----------
-        p1 : :class:`~compas.geometry.Point`
-            The point P1 of the slot.
-        p3 : :class:`~compas.geometry.Point`
-            The point P3 of the slot.
-        p4 : :class:`~compas.geometry.Point`
-            The point P4 of the slot.
-        slot_frame : :class:`~compas.geometry.Frame`
-            The frame aligned with the slot at point p1.
-            
-        Returns
-        -------
-        :class:`~compas.geometry.Point`
-            The computed point P2 of the slot.
-
         """
 
         angle_opp_point_radians = math.radians(self.angle_opp_point)
@@ -529,21 +476,6 @@ class Slot(BTLxProcessing):
     def _find_p3(self, p1: Point, p4: Point, slot_frame: Frame) -> Point:
         """
         Compute the position of the point P3 of ths slot (see design2machine pdf for reference).
-        
-        Parameters
-        ----------
-        p1 : :class:`~compas.geometry.Point`
-            The point P1 of the slot.
-        p4 : :class:`~compas.geometry.Point`
-            The point P4 of the slot. 
-        slot_frame : :class:`~compas.geometry.Frame`
-            The frame aligned with the slot at point p1.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Point`
-            The computed point P3 of the slot.
-
         """
         angle_opp_point_radians = math.radians(self.angle_opp_point)
 
@@ -558,25 +490,12 @@ class Slot(BTLxProcessing):
         p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
 
         return p3
-    
+
 
 
     def _find_p4(self, p1: Point, slot_frame: Frame) -> Point:
         """
         Compute the position of the point P4 of ths slot (see design2machine pdf for reference).
-        
-        Parameters
-        ----------
-        p1 : :class:`~compas.geometry.Point`
-            The point P1 of the slot.
-        slot_frame : :class:`~compas.geometry.Frame`
-            The frame aligned with the slot at point p1.  
-
-        
-        Returns:
-        -------
-        :class:`~compas.geometry.Point`
-            The computed point P4 of the slot.
         """
         angle_ref_point_radians = math.radians(self.angle_ref_point)
         # find P4 by the angle_ref_point in P1 and depth
@@ -591,20 +510,6 @@ class Slot(BTLxProcessing):
         """ 
         Compute the frame aligned with the slot at point p1.
         This method appy the angle and inclnation paramaters to the frame.
-
-        Parameters
-        ----------
-        p1 : :class:`~compas.geometry.Point`
-            The point where the slot starts, origin of the frame. 
-        origin_frame : :class:`~compas.geometry.Frame`
-            The reference frame from which the slot frame is derived. Frame base on the reference side of the beam. 
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The computed slot frame at point p1.
-
-
         """
         # create and adjust the frame in P1 with
         # the polyline will be created on this frame        
@@ -630,7 +535,7 @@ class Slot(BTLxProcessing):
        
         # set the inclination parameter
         slot_frame = slot_frame.rotated(inclination_radians, axis=slot_frame_untrasformed.yaxis, point=p1)
-    
+
         return slot_frame
 
 
@@ -652,7 +557,7 @@ class Slot(BTLxProcessing):
         angle_2 = abs(adj_direction_2.angle(slot_frame.xaxis))
         p2_adj = p2 + adj_direction_2 * -(adj_distance/math.cos(angle_2))
         return p1_adj, p2_adj
-    
+
 
 
 

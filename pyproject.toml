@@ -16,7 +16,8 @@ authors = [
     { name = "Anastasiia Stryzhevska", email = "astryzhevska@arch.ethz.ch" },
     { name = "Jelle Feringa", email = "jelleferinga@gmail.com" },
     { name = "Joseph Kenny", email = "jk6372@princeton.edu" },
-    { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" }
+    { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" },
+    {name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch}
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
