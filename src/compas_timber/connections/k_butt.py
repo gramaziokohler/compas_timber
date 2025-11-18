@@ -200,18 +200,21 @@ class KButtJoint(Joint):
         if dot_a > dot_b:
             tilt_start_side = angle_b
             tilt_end_side = angle_a
-
             start_x = self._find_start_x(Pb, angle_b, self.main_beam_b)
+            length = self._find_length(Pa, start_x, angle_a, self.main_beam_a)
 
         elif dot_a < dot_b:
             tilt_start_side = angle_a
             tilt_end_side = angle_b
-
             start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
+            length = self._find_length(Pb, start_x, angle_b, self.main_beam_b)
         
         else:
             raise ValueError("The two main beams cannot be parallel to each other")
 
+
+        width = self._find_width()
+        start_y = self._find_start_y(width)
      
         print("Start X", start_x)
         print("Mill_depth", self.mill_depth)
@@ -220,13 +223,13 @@ class KButtJoint(Joint):
         machining_limits = MachiningLimits()
         pocket = Pocket(
             start_x=start_x,
-            start_y=0.0,
+            start_y=start_y,
             start_depth=self.mill_depth,
             angle=0,
             inclination=0,
             slope=0.0,
-            length=20,
-            width=20,
+            length=length,
+            width=width,
             internal_angle=90.0,
             tilt_ref_side=90.0,
             tilt_end_side=math.degrees(tilt_end_side),
@@ -267,9 +270,41 @@ class KButtJoint(Joint):
         return start_x
     
 
-    def _find_lenght(self, start_x):
-        pass
+
+
+    def _find_length(self, intersection_point, start_x, angle, beam):
+        beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
+        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
+
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+        ref_side_plane = Plane.from_frame(ref_side) 
+        intersection_point_projected = ref_side_plane.projected_point(intersection_point)
+
+        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
+
+         # calculate end_x
+        end_x = math.sqrt( air_distance**2 - (beam_width/2)**2 ) 
+        x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)
+        x2 = (beam_height/2) / math.sin(math.pi - angle)
+        end_x += x1
+        end_x += x2
+
+        length = end_x - start_x
+        return length
+
     
+
+    def _find_width(self):
+        beam_a_width, _ = self.main_beam_a.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_a))
+        beam_b_width, _ = self.main_beam_b.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_b))
+        width = max(beam_a_width, beam_b_width)
+        return width
+
+
+    def _find_start_y(self, width):
+        cross_beam_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_a))
+        start_y = (cross_beam_width - width) / 2
+        return start_y
 
 
 
