@@ -1,20 +1,23 @@
 
+import math
+from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
 
+from compas.geometry import intersection_line_line
+from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
+
 
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import DoubleCut
-from compas_timber.fabrication import PocketProxy
 from compas_timber.fabrication import Pocket
-from compas_timber.fabrication import LapProxy
-from compas_timber.fabrication import Lap
+from compas_timber.fabrication import MachiningLimits
 from compas_timber.errors import BeamJoiningError  
 
 
@@ -182,18 +185,94 @@ class KButtJoint(Joint):
 
 
     def _cut_cross_beam(self):
-        cutting_plane = self.main_beam_a.ref_sides[self.main_beam_ref_side_index(self.main_beam_a)]
-        lap_width = self.main_beam_a.get_dimensions_relative_to_side(self.main_beam_ref_side_index(self.main_beam_a))[1]
-        lap = Lap.from_plane_and_beam(
-            cutting_plane, 
-            self.cross_beam,
-            lap_width,
-            self.mill_depth,
-            ref_side_index=self.cross_beam_ref_side_index(self.main_beam_a)
-        )
-        self.cross_beam.add_feature(lap)    
-        self.features.append(lap)
 
+
+
+        angle_a, dot_a = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_a)
+        angle_b, dot_b = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_b)
+
+        Pa, _ = intersection_line_line(self.main_beam_a.centerline, self.cross_beam.centerline)
+        Pb, _ = intersection_line_line(self.main_beam_b.centerline, self.cross_beam.centerline)
+
+        
+        
+
+        if dot_a > dot_b:
+            tilt_start_side = angle_b
+            tilt_end_side = angle_a
+
+            start_x = self._find_start_x(Pb, angle_b, self.main_beam_b)
+
+        elif dot_a < dot_b:
+            tilt_start_side = angle_a
+            tilt_end_side = angle_b
+
+            start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
+        
+        else:
+            raise ValueError("The two main beams cannot be parallel to each other")
+
+
+
+        machining_limits = MachiningLimits()
+        pocket = Pocket(
+            start_x=start_x,
+            start_y=0.0,
+            start_depth=self.mill_depth,
+            angle=0,
+            inclination=0,
+            slope=0.0,
+            length=50,
+            width=50.0,
+            internal_angle=90.0,
+            tilt_ref_side=90.0,
+            tilt_end_side=math.degrees(tilt_end_side),
+            tilt_opp_side=90.0,
+            tilt_start_side=math.degrees(tilt_start_side),
+            machining_limits=machining_limits.limits,
+            ref_side_index = self.cross_beam_ref_side_index(self.main_beam_a)
+        )
+
+        self.cross_beam.add_feature(pocket)
+        self.features.append(pocket)
+
+
+    def _find_start_x(self, intersection_point, angle, beam):
+        beam_height = beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index(beam))[1]
+        alpha = math.pi / 2 if angle > math.pi else angle
+        adj_distance = (beam_height/2) / math.sin(alpha) 
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+        ref_side_plane = Plane.from_frame(ref_side)
+        intersection_point_projected = ref_side_plane.projected_point(intersection_point)
+
+        start_x = ref_side.point.distance_to_point(intersection_point_projected) - adj_distance
+        return start_x
+    
+
+
+
+    def _compute_angle_and_dot_between_cross_and_main(self, main_beam):
+        p1x, _ = intersection_line_line(main_beam.centerline, self.cross_beam.centerline)
+        if p1x is None:
+            raise ValueError("The two beams do not intersect with each other")  
+        end, _ = main_beam.endpoint_closest_to_point(Point(*p1x))
+
+        if end == "start":
+            main_beam_direction = main_beam.centerline.vector
+        else:
+            main_beam_direction = main_beam.centerline.vector * -1
+        
+        angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
+        dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)    
+        if dot > 0:
+            angle = math.pi - angle
+        elif dot == 0:
+            angle = math.pi / 2
+        elif dot < 0:
+            angle = angle
+
+        return angle, dot
+         
 
 
 
