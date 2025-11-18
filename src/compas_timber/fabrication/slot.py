@@ -495,7 +495,7 @@ class Slot(BTLxProcessing):
 
     def _find_p4(self, p1: Point, slot_frame: Frame) -> Point:
         """
-        Compute the position of the point P4 of ths slot (see design2machine pdf for reference).
+        Compute the position of the point P4 of the slot (see design2machine pdf for reference).
         """
         angle_ref_point_radians = math.radians(self.angle_ref_point)
         # find P4 by the angle_ref_point in P1 and depth
