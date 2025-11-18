@@ -131,6 +131,7 @@ class KButtJoint(Joint):
 
 
     def _extend_main_beam_a(self):
+
         cutting_plane_A = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_a)]
         if self.mill_depth:
             cutting_plane_A.translate(-cutting_plane_A.normal * self.mill_depth)
@@ -150,6 +151,13 @@ class KButtJoint(Joint):
 
 
     def add_features(self):
+        """"
+        Adds the require extensionand trimming features to the three beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+        """
+        assert self.main_beam_a and self.main_beam_b and self.cross_beam
+
         self._cut_beam_b()
         self._cut_beam_a()
         self._cut_cross_beam()
@@ -158,6 +166,9 @@ class KButtJoint(Joint):
 
 
     def _cut_beam_a(self):
+        """
+        Adds the cutting features to the first main beam.
+        """
         # jack rafter cut with 
         cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_a)])
         if self.mill_depth:
@@ -172,6 +183,9 @@ class KButtJoint(Joint):
 
 
     def _cut_beam_b(self):
+        """
+        Adds the cutting features to the second main beam.
+        """
         cutting_frame = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
         cutting_plane_cross_beam = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)])
         if self.mill_depth:
@@ -179,12 +193,10 @@ class KButtJoint(Joint):
 
         print(cutting_frame.normal == cutting_plane_cross_beam.normal)
 
-
         ref_side_dict = beam_ref_side_incidence(self.main_beam_b, self.main_beam_a, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         cutting_frame_A = self.main_beam_a.ref_sides[ref_side_index]
         cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[ref_side_index])
-
 
 
         # TODO: find the logic to apply this:
@@ -197,14 +209,14 @@ class KButtJoint(Joint):
         print(intersection)
 
         try:
+            # the double cut feature is successfull only if the main beam B intersects both cross beam and main beam A
             double_cut = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam_b)
             self.main_beam_b.add_feature(double_cut)
             self.features.append(double_cut)
 
-        except Exception as e:
-
+        except:
+            # if doble cut fails, add a simple JackRafterCut to the main beam B
             intersection = Brep.from_boolean_intersection(self.main_beam_a.geometry, self.main_beam_b.geometry)
-            print("intersection", intersection)
 
             if not intersection:
                 cutting_plane_cross_beam.normal *= -1  # invert normal to point towards the main beam
@@ -223,22 +235,30 @@ class KButtJoint(Joint):
 
 
     def _cut_cross_beam(self):
+        """
+        Adds the pocket features to the cross beam.
+        """
 
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_a)
         angle_b, dot_b = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_b)
 
+        # Find intersection points between cross beams and main beams
         Pa, _ = intersection_line_line(self.main_beam_a.centerline, self.cross_beam.centerline)
         Pb, _ = intersection_line_line(self.main_beam_b.centerline, self.cross_beam.centerline)
 
-        print(math.degrees(angle_b))
         
+        # Dot product use to determine the orderr of the two main beams according to the direction
+        # of the cross beam.
+        # Finds the BTLx pockets parameters accordingly
         if dot_a > dot_b:
+            # beam B first
             tilt_start_side = angle_b
             tilt_end_side = math.pi - angle_a
             start_x = self._find_start_x(Pb, angle_b, self.main_beam_b)
             length = self._find_length(Pa, start_x, angle_a, self.main_beam_a)
 
         elif dot_a < dot_b:
+            # beam A first
             tilt_start_side = angle_a
             tilt_end_side = math.pi - angle_b
             start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
@@ -247,14 +267,12 @@ class KButtJoint(Joint):
         else:
             raise ValueError("The two main beams cannot be parallel to each other")
 
-
+        # independent BTLx parameters
         width = self._find_width()
         start_y = self._find_start_y(width)
      
-        print("Start X", start_x)
-        print("Mill_depth", self.mill_depth)
 
-
+        # Create pocket feature
         machining_limits = MachiningLimits()
         pocket = Pocket(
             start_x=start_x,
@@ -274,7 +292,6 @@ class KButtJoint(Joint):
             ref_side_index = self.cross_beam_ref_side_index(self.main_beam_a)
         )
 
-
         self.cross_beam.add_feature(pocket)
         self.features.append(pocket)
 
@@ -282,12 +299,13 @@ class KButtJoint(Joint):
 
 
     def _find_start_x(self, intersection_point, angle, beam):
+        """
+        Computes the start_x BTLx parameter for the pocket in the cross beam.
+        """
 
         beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
         cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
 
-        print(beam_width, beam_height)
-        print(cross_width, cross_height)
 
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
         ref_side_plane = Plane.from_frame(ref_side)
@@ -308,6 +326,9 @@ class KButtJoint(Joint):
 
 
     def _find_length(self, intersection_point, start_x, angle, beam):
+        """
+        Computes the length BTLx parameter for the pocket in the cross beam.
+        """
         beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
         cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
 
@@ -332,6 +353,9 @@ class KButtJoint(Joint):
     
 
     def _find_width(self):
+        """
+        Computes the width BTLx parameter for the pocket in the cross beam.
+        """
         beam_a_width, _ = self.main_beam_a.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_a))
         beam_b_width, _ = self.main_beam_b.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_b))
         width = max(beam_a_width, beam_b_width)
@@ -339,13 +363,21 @@ class KButtJoint(Joint):
 
 
     def _find_start_y(self, width):
+        """
+        Computes the start_y BTLx parameter for the pocket in the cross beam.
+        """
         cross_beam_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_a))
         start_y = (cross_beam_width - width) / 2
         return start_y
 
 
 
+
     def _compute_angle_and_dot_between_cross_and_main(self, main_beam):
+        """
+        Computes the angle and the dot product between the cross beam and a main beam.
+        """
+
         p1x, _ = intersection_line_line(main_beam.centerline, self.cross_beam.centerline)
         if p1x is None:
             raise ValueError("The two beams do not intersect with each other")  
@@ -358,12 +390,6 @@ class KButtJoint(Joint):
         
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)    
-        # if dot > 0:
-        #     angle = math.pi - angle
-        # elif dot == 0:
-        #     angle = math.pi / 2
-        # elif dot < 0:
-        #     angle = angle
 
         return angle, dot
          
