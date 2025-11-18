@@ -598,7 +598,7 @@ document.write(`
 <h1>BeamNester</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.planning.BeamNester">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">BeamNester</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d5cadbb/src/compas_timber/planning/nesting.py#L346"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">BeamNester</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/852b51d/src/compas_timber/planning/nesting.py#L333"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A class for optimizing 1D nesting of beams into stock pieces.</p>
 <p>This class implements algorithms to efficiently nest beams from a TimberModel
@@ -612,6 +612,8 @@ into available stock pieces, minimizing waste and cost.</p>
 </dd>
 <dt><strong>spacing</strong><span class="classifier">float, optional</span></dt><dd><p>Spacing tolerance for cutting operations (kerf width, etc.)</p>
 </dd>
+<dt><strong>per_group</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to nest beams per group or all together. Default is False (all together).</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
@@ -621,6 +623,8 @@ into available stock pieces, minimizing waste and cost.</p>
 <dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">stock_catalog</span></code><span class="classifier">list[<a class="reference internal" href="compas_timber.planning.BeamStock.html#compas_timber.planning.BeamStock" title="compas_timber.planning.BeamStock"><code class="xref py py-class docutils literal notranslate"><span class="pre">BeamStock</span></code></a>]</span></dt><dd><p>Get the stock catalog.</p>
 </dd>
 <dt><strong>spacing</strong><span class="classifier">float</span></dt><dd><p>Spacing tolerance for cutting operations (kerf width, etc.)</p>
+</dd>
+<dt><strong>per_group</strong><span class="classifier">bool</span></dt><dd><p>Whether to nest beams per group or all together. Default is False (all together).</p>
 </dd>
 </dl>
 </dd>
