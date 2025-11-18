@@ -509,7 +509,7 @@ class Slot(BTLxProcessing):
     def _compute_slot_frame(self, p1: Point, origin_frame: Frame) -> Frame:
         """ 
         Compute the frame aligned with the slot at point p1.
-        This method appy the angle and inclnation paramaters to the frame.
+        This method applies the angle and inclination parameters to the frame.
         """
         # create and adjust the frame in P1 with
         # the polyline will be created on this frame        
