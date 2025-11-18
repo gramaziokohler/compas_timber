@@ -521,6 +521,40 @@ def move_polyline_segment_to_plane(polyline, segment_index, plane):
             polyline[0] = end_pt
 
 
+def planar_surface_point_at(surface, u, v):
+    """
+    Returns the point at parameters u, v on a planar surface transformed using the surface's transformation.
+    The domain of u and v is assumed to be [0.0 => surface.xsize] and [0.0 => surface.ysize] respectively.
+
+    Parameters
+    ----------
+    surface : :class:`~compas.geometry.PlanarSurface`
+        The planar surface.
+    u : float
+        The first parameter.
+    v : float
+        The second parameter.
+
+    Returns
+    -------
+    :class:`compas.geometry.Point`
+        A point on the planar surface.
+
+    Note
+    ----
+    This is a re-implementation of `PlanarSurface.point_at` which takes u and v in un-normalized coordinates.
+    Starting with COMPAS 2.15.0, `PlanarSurface.point_at` expects u and v to be normalized.
+    This method exists because life is hard and we believe
+    backwards compatibility is a value worth protecting,
+    together with freedom of speech, right of self-determination,
+    democracy, and bodily autonomy.
+
+    """
+    point = Point(u, v, 0)
+    point.transform(surface.transformation)
+    return point
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -534,4 +568,5 @@ __all__ = [
     "do_segments_overlap",
     "get_segment_overlap",
     "move_polyline_segment_to_plane",
+    "planar_surface_point_at",
 ]
