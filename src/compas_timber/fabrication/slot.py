@@ -479,15 +479,15 @@ class Slot(BTLxProcessing):
         """
         angle_opp_point_radians = math.radians(self.angle_opp_point)
 
-        # calculate the lineare distan between P4 and P3, can be found with the length value
-        distancee_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
-        # find the angle in P3 anf build the vector
+        # calculate the linear distance between P4 and P3, can be found with the length value
+        distance_to_p3_from_p4 = self.length / math.sin(angle_opp_point_radians)
+        # find the angle in P3 and build the vector
         vector_to_p3 = Vector.from_start_end(p4, p1)
         angle_of_rotation = math.pi - angle_opp_point_radians
         vector_to_p3.rotate(-angle_of_rotation, axis = slot_frame.zaxis, point=p4)
         vector_to_p3.unitize()
         # create P3
-        p3 = (p4 + vector_to_p3 * distancee_to_p3_from_p4)
+        p3 = (p4 + vector_to_p3 * distance_to_p3_from_p4)
 
         return p3
 
