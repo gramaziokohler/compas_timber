@@ -66,7 +66,7 @@ commit = true
 tag = true
 
 [[tool.bumpversion.files]]
-filename = "src/compas_timber/__version__.py"
+filename = "src/compas_timber/__init__.py"
 search = "{current_version}"
 replace = "{new_version}"
 
