@@ -3,6 +3,7 @@ import math
 from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import Brep
 
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
@@ -184,8 +185,7 @@ class KButtJoint(Joint):
         cutting_frame_A = self.main_beam_a.ref_sides[ref_side_index]
         cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[ref_side_index])
 
-        # cutting_plane_main_beam_A.normal *= -1  # invert normal to point towards the main beam
-        # cutting_plane_cross_beam.normal *= -1  # invert normal to point towards the main beam
+
 
         # TODO: find the logic to apply this:
         if None:
@@ -196,10 +196,29 @@ class KButtJoint(Joint):
         intersection = intersection_plane_plane(cutting_plane_cross_beam, cutting_plane_main_beam_A)
         print(intersection)
 
-        double_cut = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam_b)
-        self.main_beam_b.add_feature(double_cut)
-        self.features.append(double_cut)
+        try:
+            double_cut = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam_b)
+            self.main_beam_b.add_feature(double_cut)
+            self.features.append(double_cut)
 
+        except Exception as e:
+
+            intersection = Brep.from_boolean_intersection(self.main_beam_a.geometry, self.main_beam_b.geometry)
+            print("intersection", intersection)
+
+            if not intersection:
+                cutting_plane_cross_beam.normal *= -1  # invert normal to point towards the main beam
+                jack_rafter_cut = JackRafterCutProxy.from_plane_and_beam(cutting_plane_cross_beam, self.main_beam_b)
+                self.main_beam_b.add_feature(jack_rafter_cut)
+                self.features.append(jack_rafter_cut)
+
+            else:
+                cutting_plane_main_beam_A.normal *= -1  # invert normal to point towards the main beam
+                jack_rafter_cut = JackRafterCutProxy.from_plane_and_beam(cutting_plane_main_beam_A, self.main_beam_b)
+                self.main_beam_b.add_feature(jack_rafter_cut)
+                self.features.append(jack_rafter_cut)
+
+            
 
 
 
