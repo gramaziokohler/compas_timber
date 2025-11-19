@@ -135,7 +135,7 @@ class Lap(BTLxProcessing):
         self.lead_angle = lead_angle
         self.lead_inclination_parallel = lead_inclination_parallel
         self.lead_inclination = lead_inclination
-        self.machining_limits = machining_limits
+        self.machining_limits = machining_limits or MachiningLimits().limits
 
     ########################################################################
     # Properties

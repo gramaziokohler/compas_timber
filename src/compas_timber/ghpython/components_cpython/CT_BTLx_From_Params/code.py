@@ -1,5 +1,8 @@
-# r: compas_timber>=1.0.2
+# r: compas_timber>=1.0.3
 # flake8: noqa
+
+"""Generates a feature from BTLx parameters."""
+
 import inspect
 
 import Grasshopper
@@ -7,6 +10,7 @@ import System
 from compas.scene import Scene
 
 from compas_timber.fabrication import BTLxProcessing
+from compas_timber.fabrication import MachiningLimits
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
@@ -30,13 +34,7 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
             return None
         else:
             if not ref_side:
-                ref_side = [0 for _ in range(len(element))]
-            elif len(ref_side) == 1:
-                ref_side = [ref_side[0] for _ in range(len(element))]
-            else:
-                if len(ref_side) != len(element):
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Ref side should be empty,a single index, or the same length as elements")
-                    return
+                ref_side = 0
             ghenv.Component.Message = self.processing_type.__name__
             kwargs = {}
             kwargs["ref_side_index"] = ref_side
@@ -44,16 +42,20 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
                 if val is not None:
                     kwargs[arg] = val
 
+            if "machining_limits" in self.arg_names() and kwargs.get("machining_limits") is not None:
+                kwargs["machining_limits"] = kwargs["machining_limits"].limits
             processing = self.processing_type(**kwargs)
 
             scene = Scene()
+            deferred_processings = []
             if processing and element:
                 for e in element:
                     e_copy = e.copy()
                     e_copy.add_features(processing)
                     scene.add(e_copy.geometry)
+                    deferred_processings.append(DeferredBTLxProcessing(processing, e))
 
-            return DeferredBTLxProcessing(processing, element), scene.draw()
+            return deferred_processings, scene.draw()
 
     def arg_names(self):
         return inspect.getargspec(self.processing_type.__init__)[0][1:]
