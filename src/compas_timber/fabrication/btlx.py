@@ -194,8 +194,8 @@ class BTLxWriter(object):
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
-        for i, element in enumerate(elements):
-            part_element = self._create_part(element, i)
+        for element in elements:
+            part_element = self._create_part(element, element.graphnode)
             parts_element.append(part_element)
         return project_element
 
@@ -224,7 +224,8 @@ class BTLxWriter(object):
 
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
-            for beam_guid, position_frame in stock.element_data.items():
+            for beam_guid, data in stock.element_data.items():
+                position_frame = data.get("frame", None)
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
