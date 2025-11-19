@@ -42,7 +42,7 @@ def test_create_k_butt(beam_a, beam_b, cross_beam):
     assert isinstance(joint, KButtJoint)
 
 
-def test_model_porcess_joinery(beam_a, beam_b, cross_beam):
+def test_model_process_joinery(beam_a, beam_b, cross_beam):
     model = TimberModel()
     model.add_element(beam_a)
     model.add_element(beam_b)
