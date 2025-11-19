@@ -11,8 +11,8 @@ from compas.tolerance import TOL
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import OrientationType
 from .btlx import MachiningLimits
+from .btlx import OrientationType
 
 
 class Slot(BTLxProcessing):
