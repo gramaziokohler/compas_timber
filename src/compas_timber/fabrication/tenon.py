@@ -544,10 +544,14 @@ class Tenon(BTLxProcessing):
                 None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
         # fillet the edges of the volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
+        if self.shape != TenonShapeType.SQUARE:
             try:
                 edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
+                if self.shape == TenonShapeType.ROUND:
+                    shape_radius = self.width / 2
+                else:
+                    shape_radius = self.shape_radius
+                tenon_volume.fillet(shape_radius, edges)
             except Exception as e:
                 raise FeatureApplicationError(
                     tenon_volume,
