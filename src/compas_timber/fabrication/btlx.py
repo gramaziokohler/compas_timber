@@ -705,8 +705,15 @@ class BTLxPart(BTLxGenericPart):
 
                 if len(pts) > 2:
                     for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
+                        # Find if this point already exists within tolerance
+                        existing_index = None
+                        for i, existing_pt in enumerate(brep_vertex_points):
+                            if TOL.is_allclose(pt, existing_pt):
+                                existing_index = i
+                                break
+
+                        if existing_index is not None:
+                            brep_indices.append(existing_index)
                         else:
                             brep_indices.append(len(brep_vertex_points))
                             brep_vertex_points.append(pt)
