@@ -131,7 +131,7 @@ class Pocket(BTLxProcessing):
         self.tilt_end_side = tilt_end_side
         self.tilt_opp_side = tilt_opp_side
         self.tilt_start_side = tilt_start_side
-        self.machining_limits = machining_limits
+        self.machining_limits = machining_limits or MachiningLimits().limits
 
     ########################################################################
     # Properties

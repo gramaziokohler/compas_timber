@@ -18,10 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+Added BTLx Machining Limits component
+
 ### Changed
 
 Changed 'BTLxFromGeometry' to allow Brep as input.
 Fixed Shape options for Mortise and Tenon input.
+Fixed BTLx from Parameters component. 
 
 ### Removed
 

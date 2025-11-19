@@ -12,6 +12,7 @@ from compas.tolerance import TOL
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
+from .btlx import MachiningLimits
 
 
 class Slot(BTLxProcessing):
@@ -80,7 +81,7 @@ class Slot(BTLxProcessing):
         self.angle_ref_point = angle_ref_point
         self.angle_opp_point = angle_opp_point
         self.add_angle_opp_point = add_angle_opp_point
-        self.machining_limits = machining_limits
+        self.machining_limits = machining_limits or MachiningLimits().limits
 
     ########################################################################
     # Properties

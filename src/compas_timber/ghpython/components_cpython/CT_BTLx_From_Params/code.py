@@ -1,5 +1,8 @@
 # r: compas_timber>=1.0.2
 # flake8: noqa
+
+"""Generates a feature from BTLx parameters."""
+
 import inspect
 
 import Grasshopper
@@ -7,6 +10,7 @@ import System
 from compas.scene import Scene
 
 from compas_timber.fabrication import BTLxProcessing
+from compas_timber.fabrication import MachiningLimits
 from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
 from compas_timber.ghpython.ghcomponent_helpers import manage_cpython_dynamic_params
 from compas_timber.ghpython.ghcomponent_helpers import rename_cpython_gh_output
@@ -38,6 +42,8 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
                 if val is not None:
                     kwargs[arg] = val
 
+            if "machining_limits" in self.arg_names() and kwargs.get("machining_limits") is not None:
+                kwargs["machining_limits"] = kwargs["machining_limits"].limits
             processing = self.processing_type(**kwargs)
 
             scene = Scene()
