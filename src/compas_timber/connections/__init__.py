@@ -43,8 +43,6 @@ from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
 
 
-
-
 __all__ = [
     "Joint",
     "LapJoint",

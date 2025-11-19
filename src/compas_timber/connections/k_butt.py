@@ -1,62 +1,55 @@
-
 import math
-from compas.geometry import Point
-from compas.geometry import Plane
-from compas.geometry import Vector
-from compas.geometry import Brep
 
-from compas.geometry import intersection_line_line
-from compas.geometry import intersection_plane_plane
+from compas.geometry import Brep
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Line
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane
 
-
-from compas_timber.elements import Beam
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.elements import Beam
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DoubleCut
-from compas_timber.fabrication import Pocket
+from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import MachiningLimits
-from compas_timber.errors import BeamJoiningError  
-
-
-
-
-
+from compas_timber.fabrication import Pocket
 
 
 class KButtJoint(Joint):
     """
-    Represets a K-Butt type joint which joins the ends of two beams along the length of a another beam, trimming the two main beams. 
+    Represents a K-Butt type joint which joins the ends of two beams along the length of another beam, trimming the two main beams. A `Pocket` feature is applied to the cross beam. 
 
     This joint type is compatible with beams in K topology.
 
-    Parameters 
+    The three beams must be coplanar and the two main beams must be on the same side of the cross beam. 
+    A double cut is applied at `main_beam_b`; if it fails to intersect both other beams, a JackRafterCut is applied instead.
+
+    Parameters
     ----------
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined. The beam connected along its length.
-    main_beam_1 : :class:`~compas_timber.parts.Beam`
-        The first main beam to be joined. Worked with a JackRafterCut
-    main_beam_2 : :class:`~compas_timber.parts.Beam`
-        The second main beam to be joined. Workd with a DoubleCut
+    main_beam_a : :class:`~compas_timber.parts.Beam`
+        The first main beam to be joined. Worked with a JackRafterCut.
+    main_beam_b : :class:`~compas_timber.parts.Beam`
+        The second main beam to be joined. Worked with a DoubleCut.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beams. If not provided, the closest side of the cross beam will be used.
-    fastener : :class:`~compas_timber.parts.Fastener`, optional
-        The fastener to be used in the joint.
 
-    
+
+
     Attributes
     ----------
     cross_beam : :class:`~compas_timber.parts.Beam`
         The cross beam to be joined.
-    main_beam_1 : :class:`~compas_timber.parts.Beam`
+    main_beam_a : :class:`~compas_timber.parts.Beam`
         The first main beam to be joined.
-    main_beam_2 : :class:`~compas_timber.parts.Beam`
+    main_beam_b : :class:`~compas_timber.parts.Beam`
         The second main beam to be joined.
 
     """
@@ -64,7 +57,6 @@ class KButtJoint(Joint):
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = 3
-
 
     @property
     def __data__(self):
@@ -75,138 +67,114 @@ class KButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-
-    def __init__(self, cross_beam: Beam = None, main_beam_a: Beam = None, main_beam_b: Beam = None, mill_depth: float = None, **kwargs):
-        
+    def __init__(self, cross_beam: Beam = None, main_beam_a: Beam = None, main_beam_b: Beam = None, mill_depth: float = 0, **kwargs):
         super().__init__(**kwargs)
 
         self.cross_beam = cross_beam
         self.main_beam_a = main_beam_a
         self.main_beam_b = main_beam_b
-        self.cross_beam_guid = kwargs.get('cross_beam_guid', None) or str(cross_beam.guid)
-        self.main_beam_a_guid = kwargs.get('main_beam_a_guid', None) or str(main_beam_a.guid)
-        self.main_beam_b_guid = kwargs.get('main_beam_b_guid', None) or str(main_beam_b.guid)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(main_beam_a.guid)
+        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(main_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
 
-
     @property
     def beams(self):
-        return [self.cross_beam, self.main_beam_a, self.main_beam_b]    
-    
+        return [self.cross_beam, self.main_beam_a, self.main_beam_b]
+
     @property
     def elements(self):
         return self.beams
-    
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
-
     def main_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
-
     def add_extensions(self):
         """
-        Calculates and adds the necessary extensions to the main beams. 
+        Calculates and adds the necessary extensions to the main beams.
         It accounts for the mill depth in the cross beam.
 
-        This method is automatically called when joint is creat by the call to `Joint.create()`. 
+        This method is automatically called when joint is creat by the call to `Joint.create()`.
 
         Raises
         ------
         BeamJoingingError
-            If the extension could not be calculated. 
+            If the extension could not be calculated.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
 
         self._extend_main_beam_a()
         self._extend_main_beam_b()
 
-
-
     def _extend_main_beam_a(self):
-
         cutting_plane_A = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_a)]
         if self.mill_depth:
             cutting_plane_A.translate(-cutting_plane_A.normal * self.mill_depth)
         start_main, end_main = self.main_beam_a.extension_to_plane(cutting_plane_A)
-        self.main_beam_a.add_blank_extension( start_main + 0.01, end_main + 0.01, self.guid) 
-        
-
+        self.main_beam_a.add_blank_extension(start_main + 0.01, end_main + 0.01, self.guid)
 
     def _extend_main_beam_b(self):
         cutting_plane_B = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
         if self.mill_depth:
             cutting_plane_B.translate(-cutting_plane_B.normal * self.mill_depth)
         start_main, end_main = self.main_beam_b.extension_to_plane(cutting_plane_B)
-        self.main_beam_b.add_blank_extension( start_main + 0.01, end_main + 0.01, self.guid)
-
-
-
+        self.main_beam_b.add_blank_extension(start_main + 0.01, end_main + 0.01, self.guid)
 
     def add_features(self):
-        """"
+        """ "
         Adds the require extensionand trimming features to the three beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
-
         self._cut_beam_b()
         self._cut_beam_a()
         self._cut_cross_beam()
-
-
-
 
     def _cut_beam_a(self):
         """
         Adds the cutting features to the first main beam.
         """
-        # jack rafter cut with 
+        # jack rafter cut with
         cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_a)])
         if self.mill_depth:
             cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
-        
+
         cutting_plane.normal *= -1  # invert normal to point towards the main beam
         jack_rafter_cut = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam_a)
         self.main_beam_a.add_feature(jack_rafter_cut)
         self.features.append(jack_rafter_cut)
 
-
-
-
     def _cut_beam_b(self):
         """
         Adds the cutting features to the second main beam.
         """
-        cutting_frame = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
-        cutting_plane_cross_beam = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)])
+        cutting_frame_cross_beam = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
+        cutting_plane_cross_beam = Plane.from_frame(cutting_frame_cross_beam)
         if self.mill_depth:
             cutting_plane_cross_beam.translate(-cutting_plane_cross_beam.normal * self.mill_depth)
 
-        print(cutting_frame.normal == cutting_plane_cross_beam.normal)
-
         ref_side_dict = beam_ref_side_incidence(self.main_beam_b, self.main_beam_a, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cutting_frame_A = self.main_beam_a.ref_sides[ref_side_index]
         cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[ref_side_index])
 
-
-        # TODO: find the logic to apply this:
-        if None:
-            cutting_plane_cross_beam.point += cutting_frame.xaxis * self.cross_beam.length
-
-        cutting_planes = [cutting_plane_main_beam_A, cutting_plane_cross_beam]
-
+        # adjusts the cutting planes position to ensure correct orientation of the double cut
         intersection = intersection_plane_plane(cutting_plane_cross_beam, cutting_plane_main_beam_A)
-        print(intersection)
+        intersection_line = Line(intersection[0], intersection[1])
+        if  intersection_line.direction.dot(cutting_frame_cross_beam.yaxis) > 0:
+            cutting_plane_cross_beam.point += cutting_frame_cross_beam.xaxis * self.cross_beam.length
+
+
+        # creating the double cut, if it fails a JackRafterCut is added instead
+        cutting_planes = [cutting_plane_main_beam_A, cutting_plane_cross_beam]
 
         try:
             # the double cut feature is successfull only if the main beam B intersects both cross beam and main beam A
@@ -214,7 +182,7 @@ class KButtJoint(Joint):
             self.main_beam_b.add_feature(double_cut)
             self.features.append(double_cut)
 
-        except:
+        except Exception:
             # if doble cut fails, add a simple JackRafterCut to the main beam B
             intersection = Brep.from_boolean_intersection(self.main_beam_a.geometry, self.main_beam_b.geometry)
 
@@ -225,14 +193,11 @@ class KButtJoint(Joint):
                 self.features.append(jack_rafter_cut)
 
             else:
-                cutting_plane_main_beam_A.normal *= -1  # invert normal to point towards the main beam
-                jack_rafter_cut = JackRafterCutProxy.from_plane_and_beam(cutting_plane_main_beam_A, self.main_beam_b)
-                self.main_beam_b.add_feature(jack_rafter_cut)
-                self.features.append(jack_rafter_cut)
-
-            
-
-
+                raise BeamJoiningError(
+                    beams=[self.main_beam_b],
+                    joint=self.__class__,
+                    debug_info="Could not create DoubleCut or JackRafterCut for main beam B in KButtJoint. Main beam B intersects only main beam A",
+                )
 
     def _cut_cross_beam(self):
         """
@@ -246,7 +211,6 @@ class KButtJoint(Joint):
         Pa, _ = intersection_line_line(self.main_beam_a.centerline, self.cross_beam.centerline)
         Pb, _ = intersection_line_line(self.main_beam_b.centerline, self.cross_beam.centerline)
 
-        
         # Dot product use to determine the orderr of the two main beams according to the direction
         # of the cross beam.
         # Finds the BTLx pockets parameters accordingly
@@ -263,14 +227,14 @@ class KButtJoint(Joint):
             tilt_end_side = math.pi - angle_b
             start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
             length = self._find_length(Pb, start_x, angle_b, self.main_beam_b)
-        
+
         else:
             raise ValueError("The two main beams cannot be parallel to each other")
 
         # independent BTLx parameters
         width = self._find_width()
         start_y = self._find_start_y(width)
-     
+
 
         # Create pocket feature
         machining_limits = MachiningLimits()
@@ -289,14 +253,11 @@ class KButtJoint(Joint):
             tilt_opp_side=90.0,
             tilt_start_side=math.degrees(tilt_start_side),
             machining_limits=machining_limits.limits,
-            ref_side_index = self.cross_beam_ref_side_index(self.main_beam_a)
+            ref_side_index=self.cross_beam_ref_side_index(self.main_beam_a),
         )
 
         self.cross_beam.add_feature(pocket)
         self.features.append(pocket)
-
-
-
 
     def _find_start_x(self, intersection_point, angle, beam):
         """
@@ -306,7 +267,6 @@ class KButtJoint(Joint):
         beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
         cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
 
-
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
         ref_side_plane = Plane.from_frame(ref_side)
         intersection_point_projected = ref_side_plane.projected_point(intersection_point)
@@ -314,16 +274,13 @@ class KButtJoint(Joint):
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
         # calculate start_x
-        start_x = math.sqrt( air_distance**2 - (beam_width/2)**2 ) 
-        x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)
-        x2 = (beam_height/2) / math.sin(math.pi - angle)
+        start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
+        x2 = (beam_height / 2) / math.sin(math.pi - angle)
         start_x -= x1
         start_x -= x2
-        
+
         return start_x
-    
-
-
 
     def _find_length(self, intersection_point, start_x, angle, beam):
         """
@@ -333,24 +290,20 @@ class KButtJoint(Joint):
         cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
 
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
-        ref_side_plane = Plane.from_frame(ref_side) 
+        ref_side_plane = Plane.from_frame(ref_side)
         intersection_point_projected = ref_side_plane.projected_point(intersection_point)
 
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
-         # calculate end_x
-        end_x = math.sqrt( air_distance**2 - (beam_width/2)**2 ) 
-        x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)
-        x2 = (beam_height/2) / math.sin(math.pi - angle)
+        # calculate end_x
+        end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
+        x2 = (beam_height / 2) / math.sin(math.pi - angle)
         end_x += abs(x1)
         end_x += x2
 
-        print("xs", x1, x2)
-
         length = end_x - start_x
         return length
-
-    
 
     def _find_width(self):
         """
@@ -361,7 +314,6 @@ class KButtJoint(Joint):
         width = max(beam_a_width, beam_b_width)
         return width
 
-
     def _find_start_y(self, width):
         """
         Computes the start_y BTLx parameter for the pocket in the cross beam.
@@ -370,9 +322,6 @@ class KButtJoint(Joint):
         start_y = (cross_beam_width - width) / 2
         return start_y
 
-
-
-
     def _compute_angle_and_dot_between_cross_and_main(self, main_beam):
         """
         Computes the angle and the dot product between the cross beam and a main beam.
@@ -380,22 +329,18 @@ class KButtJoint(Joint):
 
         p1x, _ = intersection_line_line(main_beam.centerline, self.cross_beam.centerline)
         if p1x is None:
-            raise ValueError("The two beams do not intersect with each other")  
+            raise ValueError("The two beams do not intersect with each other")
         end, _ = main_beam.endpoint_closest_to_point(Point(*p1x))
 
         if end == "start":
             main_beam_direction = main_beam.centerline.vector
         else:
             main_beam_direction = main_beam.centerline.vector * -1
-        
+
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-        dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)    
+        dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
 
         return angle, dot
-         
-
-
-
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
@@ -415,18 +360,16 @@ class KButtJoint(Joint):
             True if the requirements are met, False otherwise.
         """
 
-        # the 2 main beams have to be complanar between temselves
-        if not are_beams_aligned_with_cross_vector(*elements[1:3]):
-
+        # for this joints the beams have to be coplanar
+        if not(
+            are_beams_aligned_with_cross_vector(elements[0], elements[1])
+            and are_beams_aligned_with_cross_vector(elements[1], elements[2])
+            and are_beams_aligned_with_cross_vector(elements[0], elements[2])
+        ):
             if not raise_error:
                 return False
-            
+
             if raise_error:
-                raise BeamJoiningError(
-                    beams = elements[1:3], 
-                    joint = cls, 
-                    debug_info="The two main beams are not coplanar."
-                )
-        
+                raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
+
         return True
-        
