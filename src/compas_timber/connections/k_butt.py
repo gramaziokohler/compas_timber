@@ -52,6 +52,8 @@ class KButtJoint(Joint):
         The first main beam to be joined.
     main_beam_b : :class:`~compas_timber.parts.Beam`
         The second main beam to be joined.
+    mill_depth : float
+        The depth of the pocket to be milled in the cross beam.
 
     """
 
