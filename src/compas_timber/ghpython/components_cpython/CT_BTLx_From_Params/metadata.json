@@ -19,7 +19,7 @@
                 "name": "ref_side",
                 "description": "integer 0-5 corresponding to BTLx reference side 1-6.",
                 "typeHintID": "int",
-                "scriptParamAccess": 1
+                "scriptParamAccess": 0
             }
         ],
         "outputParameters": [

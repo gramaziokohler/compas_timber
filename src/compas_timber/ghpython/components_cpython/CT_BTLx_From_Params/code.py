@@ -30,13 +30,7 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
             return None
         else:
             if not ref_side:
-                ref_side = [0 for _ in range(len(element))]
-            elif len(ref_side) == 1:
-                ref_side = [ref_side[0] for _ in range(len(element))]
-            else:
-                if len(ref_side) != len(element):
-                    ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Ref side should be empty,a single index, or the same length as elements")
-                    return
+                ref_side = 0
             ghenv.Component.Message = self.processing_type.__name__
             kwargs = {}
             kwargs["ref_side_index"] = ref_side
@@ -47,13 +41,15 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
             processing = self.processing_type(**kwargs)
 
             scene = Scene()
+            deferred_processings = []
             if processing and element:
                 for e in element:
                     e_copy = e.copy()
                     e_copy.add_features(processing)
                     scene.add(e_copy.geometry)
+                    deferred_processings.append(DeferredBTLxProcessing(processing, e))
 
-            return DeferredBTLxProcessing(processing, element), scene.draw()
+            return deferred_processings, scene.draw()
 
     def arg_names(self):
         return inspect.getargspec(self.processing_type.__init__)[0][1:]
