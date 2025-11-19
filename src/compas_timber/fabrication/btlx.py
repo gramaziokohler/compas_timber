@@ -637,26 +637,71 @@ class BTLxPart(BTLxGenericPart):
         if not self._shape_strings:
             brep_vertex_points = []
             brep_indices = []
+            # Use actual geometry to show features, or blank geometry for stock representation
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
-            for face in scaled_geometry.faces:
-                pts = []
-                frame = face.surface.frame_at(0.5, 0.5)
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
-                overflow = len(edges)
-                while edges and overflow > 0:
-                    for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
-                            edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
-                    overflow -= 1
-                pts = correct_polyline_direction(pts, frame.normal)
 
-                if len(pts) != len(face.edges):
-                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
+            for face in scaled_geometry.faces:
+                # Use a more robust method to extract face vertices
+                # Iterate through all edges in the face boundary to build ordered vertex list
+                boundary = face.boundary
+
+                # Get all vertices from the outer loop in order
+                pts = []
+                visited_edges = set()
+
+                # Start with first edge
+                if boundary.edges:
+                    first_edge = boundary.edges[0]
+                    current_point = first_edge.start_vertex.point
+                    pts.append(current_point)
+
+                    # Find chain of connected edges
+                    for _ in range(len(boundary.edges)):
+                        # Find next edge that starts where we are
+                        next_edge = None
+                        for edge in boundary.edges:
+                            if id(edge) in visited_edges:
+                                continue
+                            if TOL.is_allclose(edge.start_vertex.point, current_point):
+                                next_edge = edge
+                                break
+                            elif TOL.is_allclose(edge.end_vertex.point, current_point):
+                                # Edge is reversed
+                                next_edge = edge
+                                current_point = edge.start_vertex.point
+                                pts.append(current_point)
+                                visited_edges.add(id(edge))
+                                break
+
+                        if next_edge and id(next_edge) not in visited_edges:
+                            visited_edges.add(id(next_edge))
+                            current_point = next_edge.end_vertex.point
+                            # Don't add last point if it closes the loop
+                            if not TOL.is_allclose(current_point, pts[0]):
+                                pts.append(current_point)
+                        else:
+                            break
+
+                # Fallback to original method if new method fails
+                if len(pts) < 3:
+                    pts = []
+                    frame = face.surface.frame_at(0.5, 0.5)
+                    edges = face.boundary.edges[1:]
+                    pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
+                    overflow = len(edges)
+                    while edges and overflow > 0:
+                        for i, edge in enumerate(edges):
+                            if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):
+                                edges.pop(i)
+                            elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):
+                                pts.append(edges.pop(i).end_vertex.point)
+                            elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):
+                                pts.append(edges.pop(i).start_vertex.point)
+                        overflow -= 1
+                else:
+                    # Correct direction for successful extraction
+                    frame = face.surface.frame_at(0.5, 0.5)
+                    pts = correct_polyline_direction(pts, frame.normal)
 
                 if len(pts) > 2:
                     for pt in pts:
