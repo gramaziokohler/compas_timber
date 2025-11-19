@@ -29,7 +29,7 @@ class KButtJoint(Joint):
     This joint type is compatible with beams in K topology.
 
     The three beams must be coplanar and the two main beams must be on the same side of the cross beam.
-    A double cut is applied at `main_beam_b`; if it fails to intersect both other beams, a JackRafterCut is applied instead.
+    A double cut is applied to `main_beam_b`; if it fails to intersect both other beams, a JackRafterCut is applied instead.
 
     Parameters
     ----------
@@ -103,11 +103,11 @@ class KButtJoint(Joint):
         Calculates and adds the necessary extensions to the main beams.
         It accounts for the mill depth in the cross beam.
 
-        This method is automatically called when joint is creat by the call to `Joint.create()`.
+        This method is automatically called when the joint is created by the call to `Joint.create()`.
 
         Raises
         ------
-        BeamJoingingError
+        BeamJoiningError
             If the extension could not be calculated.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
@@ -130,10 +130,10 @@ class KButtJoint(Joint):
         self.main_beam_b.add_blank_extension(start_main + 0.01, end_main + 0.01, self.guid)
 
     def add_features(self):
-        """ "
-        Adds the require extensionand trimming features to the three beams.
+        """
+        Adds the required extension and trimming features to the three beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is automatically called when the joint is created by the call to `Joint.create()`.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
         self._cut_beam_b()
@@ -167,23 +167,23 @@ class KButtJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         cutting_plane_main_beam_A = Plane.from_frame(self.main_beam_a.ref_sides[ref_side_index])
 
-        # adjusts the cutting planes position to ensure correct orientation of the double cut
+        # Adjust the cutting plane's position to ensure correct orientation of the double cut
         intersection = intersection_plane_plane(cutting_plane_cross_beam, cutting_plane_main_beam_A)
         intersection_line = Line(intersection[0], intersection[1])
         if intersection_line.direction.dot(cutting_frame_cross_beam.yaxis) > 0:
             cutting_plane_cross_beam.point += cutting_frame_cross_beam.xaxis * self.cross_beam.length
 
-        # creating the double cut, if it fails a JackRafterCut is added instead
+        # Create the double cut; if it fails, a JackRafterCut is added instead
         cutting_planes = [cutting_plane_main_beam_A, cutting_plane_cross_beam]
 
         try:
-            # the double cut feature is successfull only if the main beam B intersects both cross beam and main beam A
+            # The double cut feature is successful only if main beam B intersects both the cross beam and main beam A
             double_cut = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam_b)
             self.main_beam_b.add_feature(double_cut)
             self.features.append(double_cut)
 
         except Exception:
-            # if doble cut fails, add a simple JackRafterCut to the main beam B
+            # If double cut fails, add a simple JackRafterCut to main beam B
             intersection = Brep.from_boolean_intersection(self.main_beam_a.geometry, self.main_beam_b.geometry)
 
             if not intersection:
@@ -196,7 +196,7 @@ class KButtJoint(Joint):
                 raise BeamJoiningError(
                     beams=[self.main_beam_b],
                     joint=self.__class__,
-                    debug_info="Could not create DoubleCut or JackRafterCut for main beam B in KButtJoint. Main beam B intersects only main beam A",
+                    debug_info="Could not create DoubleCut or JackRafterCut for main beam B in KButtJoint. Main beam B intersects only main beam A.",
                 )
 
     def _cut_cross_beam(self):
@@ -207,31 +207,31 @@ class KButtJoint(Joint):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_a)
         angle_b, dot_b = self._compute_angle_and_dot_between_cross_and_main(self.main_beam_b)
 
-        # Find intersection points between cross beams and main beams
+        # Find intersection points between cross beam and main beams
         Pa, _ = intersection_line_line(self.main_beam_a.centerline, self.cross_beam.centerline)
         Pb, _ = intersection_line_line(self.main_beam_b.centerline, self.cross_beam.centerline)
 
-        # Dot product use to determine the orderr of the two main beams according to the direction
+        # Dot product used to determine the order of the two main beams according to the direction
         # of the cross beam.
-        # Finds the BTLx pockets parameters accordingly
+        # Find the BTLx pocket parameters accordingly
         if dot_a > dot_b:
-            # beam B first
+            # Beam B first
             tilt_start_side = angle_b
             tilt_end_side = math.pi - angle_a
             start_x = self._find_start_x(Pb, angle_b, self.main_beam_b)
             length = self._find_length(Pa, start_x, angle_a, self.main_beam_a)
 
         elif dot_a < dot_b:
-            # beam A first
+            # Beam A first
             tilt_start_side = angle_a
             tilt_end_side = math.pi - angle_b
             start_x = self._find_start_x(Pa, angle_a, self.main_beam_a)
             length = self._find_length(Pb, start_x, angle_b, self.main_beam_b)
 
         else:
-            raise ValueError("The two main beams cannot be parallel to each other")
+            raise ValueError("The two main beams cannot be parallel to each other.")
 
-        # independent BTLx parameters
+        # Independent BTLx parameters
         width = self._find_width()
         start_y = self._find_start_y(width)
 
@@ -272,7 +272,7 @@ class KButtJoint(Joint):
 
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
-        # calculate start_x
+        # Calculate start_x
         start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
         x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
         x2 = (beam_height / 2) / math.sin(math.pi - angle)
@@ -294,7 +294,7 @@ class KButtJoint(Joint):
 
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
-        # calculate end_x
+        # Calculate end_x
         end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
         x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle) if self.mill_depth < cross_height / 2 else 0
         x2 = (beam_height / 2) / math.sin(math.pi - angle)
@@ -354,7 +354,7 @@ class KButtJoint(Joint):
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         """
-        Checks if the cluster fo  beams complies with the requirements for the YButtJoint.
+        Checks if the cluster of beams complies with the requirements for the KButtJoint.
 
         Parameters
         ----------
@@ -369,7 +369,7 @@ class KButtJoint(Joint):
             True if the requirements are met, False otherwise.
         """
 
-        # for this joints the beams have to be coplanar
+        # For this joint, the beams have to be coplanar
         if not (
             are_beams_aligned_with_cross_vector(elements[0], elements[1])
             and are_beams_aligned_with_cross_vector(elements[1], elements[2])
