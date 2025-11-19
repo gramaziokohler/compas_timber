@@ -18,6 +18,7 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
 from compas_timber.utils import polyline_from_brep_loop
+from compas_timber.utils import combine_parallel_segments
 
 class PlateGeometry(object):
     """
@@ -228,7 +229,7 @@ class PlateGeometry(object):
                 outer_polyline = polyline_from_brep_loop(loop)
             else:
                 inner_polylines.append(polyline_from_brep_loop(loop))
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, recognize_doors=True, **kwargs)
 
     # ==========================================================================
     #  Implementation of abstract methods
@@ -353,6 +354,10 @@ class PlateGeometry(object):
         vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
+
+        for polyline in (local_outline_a, local_outline_b):
+            combine_parallel_segments(polyline)
+
         return {
             "local_outline_a": local_outline_a,
             "local_outline_b": local_outline_b,
@@ -390,3 +395,4 @@ class PlateGeometry(object):
             raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
         if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
+

@@ -43,10 +43,11 @@ class SlabFeature(Data):
         return new
 
 class Opening(SlabFeature):
-    def __init__(self, frame, outline_a, outline_b, name="Opening"):
+    def __init__(self, frame, outline_a, outline_b, opening_type=None, name="Opening"):
         super(Opening, self).__init__(frame=frame, name=name)
         self._outline_a = outline_a
         self._outline_b = outline_b
+        self.opening_type = opening_type or OpeningType.WINDOW
         self._shape = None
 
     @property
@@ -108,7 +109,7 @@ class Opening(SlabFeature):
 
 
     @classmethod
-    def from_outline_slab(cls, outline, slab, horizontal_sill=False, name=None):
+    def from_outline_slab(cls, outline, slab, opening_type=None, horizontal_sill=False, name=None):
         """Creates an opening from a single outline and a slab.
 
         The outline defined locally relative to the slab frame. The outline is projected
@@ -152,7 +153,7 @@ class Opening(SlabFeature):
                 pts_b.append(Point(pt[0], pt[1], slab.thickness))
         pl_a = Polyline(pts_a).transformed(Transformation.from_frame(frame).inverse())
         pl_b = Polyline(pts_b).transformed(Transformation.from_frame(frame).inverse())
-        return cls(frame, pl_a, pl_b, name=name)
+        return cls(frame, pl_a, pl_b, opening_type=opening_type, name=name)
 
 class OpeningType(object):
     """Constants for different types of openings in walls.

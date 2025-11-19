@@ -4,9 +4,11 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Line
 from compas.geometry import Polygon
 from compas.geometry import is_point_in_polygon_xy
 from compas.geometry import angle_vectors_signed
+from compas.geometry import angle_vectors
 from compas.geometry import add_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_point
@@ -522,6 +524,27 @@ def move_polyline_segment_to_plane(polyline, segment_index, plane):
         if segment_index + 1 == len(polyline.lines):
             polyline[0] = end_pt
 
+def move_polyline_segment_to_line(polyline, segment_index, line):
+    """Move a segment of a polyline to lay colinear to the projection of a line on that polyline. this is accomplished by extending the adjacent segments to intersect with the line.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    line : :class:`~compas.geometry.Line`
+        The line to intersect with.
+    """
+    start_pt = intersection_line_line(polyline.lines[segment_index - 1], line)[0]
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_line(polyline.lines[(segment_index + 1) % len(polyline.lines)], line)[0]
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt
 
 def intersection_line_beams(line, beams, max_distance=None):
     """Find intersections between a line and a list of beams.
@@ -584,27 +607,57 @@ def split_beam_at_lengths(beam, lengths):
         beams.insert(1, new_beam)
     return beams
 
-def extend_lines_pairwise(segs):
-    for i in range(-2, len(segs)-1):
-        intersection = intersection_line_line(segs[i], segs[i+1])
-        if intersection:
-            pt = intersection[0]
-            segs[i][1] = pt
-            segs[i+1][0] = pt
+def extend_line_segments(segments, close_loop=False):
+    """Extend segments to their intersections."""
+    start = 0 if close_loop else 1
+    for i in range(start, len(segments)):
+        if TOL.is_allclose(segments[i - 1].end, segments[i].start): #points are already coincident
+            continue
+        ints = intersection_line_line(segments[i - 1], segments[i])
+        if not ints[0]:
+            continue
+        segments[i - 1]=Line(segments[i - 1].start, ints[0])
+        segments[i]=Line(ints[0], segments[i].end)
+
+def join_polyline_segments(segments, close_loop=False):
+    """Join segments into a polyline."""
+    points = [segments[0].start, segments[0].end]
+    remaining_segments = segments[1:]
+    while remaining_segments:
+        for seg in remaining_segments:
+            if seg.start == points[-1]:
+                points.append(seg.end)
+                remaining_segments.remove(seg)
+                break
+            elif seg.end == points[-1]:
+                points.append(seg.start)
+                remaining_segments.remove(seg)
+                break
+            elif seg.end == points[0]:
+                points.insert(0, seg.start)
+                remaining_segments.remove(seg)
+                break
+            elif seg.start == points[0]:
+                points.insert(0, seg.end)
+                remaining_segments.remove(seg)
+                break
+        else:
+            break
+    if close_loop and points[0] != points[-1]:
+        points.append(points[0])
+    return Polyline(points)
 
 def polyline_from_brep_loop(loop):
     polyline_points = [loop.edges[0].start_vertex.point, loop.edges[0].end_vertex.point]
+    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
+    return join_polyline_segments(segments, close_loop=True)
 
-    if not any([pt == polyline_points[1] for pt in [loop.edges[1].start_vertex.point, loop.edges[1].end_vertex.point]]):
-        polyline_points.reverse()
-    for edge in loop.edges[1:]:
-        if edge.start_vertex.point == polyline_points[-1]:
-            polyline_points.append(edge.end_vertex.point)
-        else:
-            polyline_points.append(edge.start_vertex.point)
-    if polyline_points[0] != polyline_points[-1]:
-        polyline_points.append(polyline_points[0])
-    return Polyline(polyline_points)
+def combine_parallel_segments(polyline, tol = TOL):
+    for i in range(len(polyline) - 2, 0, -1):
+        v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
+        if tol.is_zero(angle_vectors(v1, v2)):
+            polyline.points.pop(i)
 
 __all__ = [
     "intersection_line_line_param",
@@ -621,4 +674,8 @@ __all__ = [
     "move_polyline_segment_to_plane",
     "intersection_line_beams",
     "split_beam_at_lengths",
+    "extend_line_segments",
+    "join_polyline_segments",
+    "polyline_from_brep_loop",
+    "combine_parallel_segments",
 ]

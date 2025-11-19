@@ -23,6 +23,7 @@ from compas.geometry import distance_point_plane
 from compas.geometry import intersection_line_line
 from compas.geometry import offset_polyline
 from compas.tolerance import TOL
+from shapely import Point
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
@@ -244,6 +245,9 @@ class FreeContour(BTLxProcessing):
             pline_b = self.contour_param_object.associated_polyline
         pline_a = Polyline(correct_polyline_direction(pline_a, Vector(0,0,1), clockwise=True))
         pline_b = Polyline(correct_polyline_direction(pline_b, Vector(0,0,1), clockwise=True))
+        pline_a.translate([0, 0, -0.001])
+        pline_b.translate([0, 0, 0.001])
+
         vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
         vol.cap_planar_holes()
         if self.counter_sink:  # contour should remove material inside of the contour
