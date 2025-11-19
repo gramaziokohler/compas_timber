@@ -295,15 +295,31 @@ class KButtJoint(Joint):
 
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
+        x1_depth = (cross_height/2 - self.mill_depth) if self.mill_depth < cross_height/2 else cross_height/2
+
+
         # calculate end_x
         end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
-        x2 = (beam_height / 2) / math.sin(math.pi - angle)
+        x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)  if self.mill_depth < cross_height/2 else 0
+        x2 = (beam_height / 2) / math.sin(math.pi - angle) 
+
         end_x += abs(x1)
-        end_x += x2
+        end_x += abs(x2)
 
         length = end_x - start_x
+
+        if self.mill_depth >= cross_height / 2:
+            x3 = (self.mill_depth - cross_height / 2) / math.tan(math.pi - angle)
+
+            if angle < math.pi / 2:
+                length -= abs(x3)
+            else:
+                length += abs(x3)
+
         return length
+    
+
+
 
     def _find_width(self):
         """
