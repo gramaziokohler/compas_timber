@@ -1,9 +1,9 @@
 import math
 
 from compas.geometry import Brep
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Line
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
@@ -23,11 +23,12 @@ from compas_timber.fabrication import Pocket
 
 class KButtJoint(Joint):
     """
-    Represents a K-Butt type joint which joins the ends of two beams along the length of another beam, trimming the two main beams. A `Pocket` feature is applied to the cross beam. 
+    Represents a K-Butt type joint which joins the ends of two beams along the length of another beam, trimming the two main beams.
+    A `Pocket` feature is applied to the cross beam.
 
     This joint type is compatible with beams in K topology.
 
-    The three beams must be coplanar and the two main beams must be on the same side of the cross beam. 
+    The three beams must be coplanar and the two main beams must be on the same side of the cross beam.
     A double cut is applied at `main_beam_b`; if it fails to intersect both other beams, a JackRafterCut is applied instead.
 
     Parameters
@@ -169,9 +170,8 @@ class KButtJoint(Joint):
         # adjusts the cutting planes position to ensure correct orientation of the double cut
         intersection = intersection_plane_plane(cutting_plane_cross_beam, cutting_plane_main_beam_A)
         intersection_line = Line(intersection[0], intersection[1])
-        if  intersection_line.direction.dot(cutting_frame_cross_beam.yaxis) > 0:
+        if intersection_line.direction.dot(cutting_frame_cross_beam.yaxis) > 0:
             cutting_plane_cross_beam.point += cutting_frame_cross_beam.xaxis * self.cross_beam.length
-
 
         # creating the double cut, if it fails a JackRafterCut is added instead
         cutting_planes = [cutting_plane_main_beam_A, cutting_plane_cross_beam]
@@ -235,7 +235,6 @@ class KButtJoint(Joint):
         width = self._find_width()
         start_y = self._find_start_y(width)
 
-
         # Create pocket feature
         machining_limits = MachiningLimits()
         pocket = Pocket(
@@ -295,13 +294,10 @@ class KButtJoint(Joint):
 
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
 
-        x1_depth = (cross_height/2 - self.mill_depth) if self.mill_depth < cross_height/2 else cross_height/2
-
-
         # calculate end_x
         end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-        x1 = (cross_height/2 - self.mill_depth) / math.tan(math.pi - angle)  if self.mill_depth < cross_height/2 else 0
-        x2 = (beam_height / 2) / math.sin(math.pi - angle) 
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle) if self.mill_depth < cross_height / 2 else 0
+        x2 = (beam_height / 2) / math.sin(math.pi - angle)
 
         end_x += abs(x1)
         end_x += abs(x2)
@@ -317,9 +313,6 @@ class KButtJoint(Joint):
                 length += abs(x3)
 
         return length
-    
-
-
 
     def _find_width(self):
         """
@@ -377,7 +370,7 @@ class KButtJoint(Joint):
         """
 
         # for this joints the beams have to be coplanar
-        if not(
+        if not (
             are_beams_aligned_with_cross_vector(elements[0], elements[1])
             and are_beams_aligned_with_cross_vector(elements[1], elements[2])
             and are_beams_aligned_with_cross_vector(elements[0], elements[2])
