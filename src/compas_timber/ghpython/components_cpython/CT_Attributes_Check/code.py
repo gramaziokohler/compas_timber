@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.2
+# r: compas_timber>=1.0.3
 # flake8: noqa
 import math
 

@@ -7,33 +7,34 @@ import Grasshopper
 import Rhino
 
 from compas_timber.fabrication import MachiningLimits
-from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 class BTLxMachiningLimits(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, face_limited_start: bool, face_limited_end: bool, face_limited_front: bool, face_limited_back: bool, face_limited_top: bool, face_limited_bottom: bool):
-        if not all(
-            item_input_valid_cpython(ghenv, inp, name)
-            for inp, name in zip(
-                [
-                    face_limited_start,
-                    face_limited_end,
-                    face_limited_front,
-                    face_limited_back,
-                    face_limited_top,
-                    face_limited_bottom,
-                ],
-                [
-                    "face_limited_start",
-                    "face_limited_end",
-                    "face_limited_front",
-                    "face_limited_back",
-                    "face_limited_top",
-                    "face_limited_bottom",
-                ],
-            )
-        ):
-            return
         
+        # provide default value
+        inputs = [
+            face_limited_start,
+            face_limited_end,
+            face_limited_front,
+            face_limited_back,
+            face_limited_top,
+            face_limited_bottom,
+        ]
+
+        for i in range(len(inputs)):
+            if inputs[i] is None:
+                inputs[i] = True
+
+        (
+            face_limited_start,
+            face_limited_end,
+            face_limited_front,
+            face_limited_back,
+            face_limited_top,
+            face_limited_bottom,
+        ) = inputs
+        
+        # get MachiningLimits object
         machining_limits = MachiningLimits()
         machining_limits.face_limited_start = face_limited_start
         machining_limits.face_limited_end = face_limited_end
