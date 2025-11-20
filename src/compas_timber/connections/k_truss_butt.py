@@ -5,7 +5,9 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Plane
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 
@@ -124,11 +126,22 @@ class KTrussButtJoint(Joint):
 
     def _cut_main_beam(self, beam: Beam, mid_cutting_plane: Plane, second_beam: bool):
         
-        cross_cutting_frame = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+        cross_cutting_frame = self.cross_beam.ref_sides[self.main_beam_ref_side_index(beam)]
         cross_cutting_plane = Plane.from_frame(cross_cutting_frame)
 
-        if second_beam:
+
+
+        # adjust cutting plane position to ensure correct orientation of the double cut
+        intersection = intersection_plane_plane(mid_cutting_plane, cross_cutting_plane)
+        intersection_line = Line(intersection[0], intersection[1])
+        if intersection_line.direction.dot(cross_cutting_frame.yaxis) > 0:
             cross_cutting_plane.point += cross_cutting_frame.xaxis * self.cross_beam.length
+        else:
+            mid_cutting_plane.normal *= -1
+
+        if second_beam:
+            mid_cutting_plane.normal *= -1 
+
 
         double_cut = DoubleCut.from_planes_and_beam([cross_cutting_plane, mid_cutting_plane], beam)
         
@@ -145,12 +158,12 @@ class KTrussButtJoint(Joint):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
         angle_b, dot_b = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[1])
 
-        if dot_a > dot_b:
+        if dot_a < dot_b:
             # Beam B first
-            return self.main_beams[1], self.main_beams[0]
-        elif dot_a < dot_b:
-            # Beam A first
             return self.main_beams[0], self.main_beams[1]
+        elif dot_a > dot_b:
+            # Beam A first
+            return self.main_beams[1], self.main_beams[0]
         else:
             raise ValueError("The two main beams cannot be parallel to each other.")
 
@@ -198,6 +211,7 @@ class KTrussButtJoint(Joint):
 
         # Create plane perpendicular to the bisector at the intersection point
         mid_cutting_plane = Plane(intersection_point, cutting_plane_normal)
+        mid_cutting_plane.point += bisector_direction * max(self.cross_beam.height, self.cross_beam.width)
 
         return mid_cutting_plane
 
