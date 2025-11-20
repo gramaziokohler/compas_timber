@@ -16,6 +16,8 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements.beam import Beam
 from compas_timber.fabrication import DoubleCut
+from compas_timber.fabrication import Pocket
+from compas_timber.fabrication import MachiningLimits
 
 
 
@@ -117,6 +119,9 @@ class KTrussButtJoint(Joint):
         self._cut_main_beam(beam_1, mid_cutting_plane, second_beam = False)
        
         self._cut_main_beam(beam_2, mid_cutting_plane, second_beam = True)
+
+
+        self._cut_cross_beam(beam_1, beam_2)
     
 
 
@@ -129,6 +134,9 @@ class KTrussButtJoint(Joint):
         cross_cutting_frame = self.cross_beam.ref_sides[self.main_beam_ref_side_index(beam)]
         cross_cutting_plane = Plane.from_frame(cross_cutting_frame)
 
+
+        if self.mill_depth:
+            cross_cutting_plane.point -= cross_cutting_plane.normal * self.mill_depth
 
 
         # adjust cutting plane position to ensure correct orientation of the double cut
@@ -218,6 +226,157 @@ class KTrussButtJoint(Joint):
 
 
 
+    def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
+        # find intersection points between cross beame and main beams
+        P1, _ = intersection_line_line(self.cross_beam.centerline, beam_1.centerline)
+        P2, _ = intersection_line_line(self.cross_beam.centerline, beam_2.centerline)   
+
+        angle_1, _ = self._compute_angle_and_dot_between_cross_beam_and_main_beam(beam_1)
+        angle_2, _ = self._compute_angle_and_dot_between_cross_beam_and_main_beam(beam_2)
+
+        tilt_start_side =  angle_1
+        tilt_end_side = math.pi - angle_2
+        start_x = self._find_start_x(P1, angle_1, beam_1)
+        length = self._find_length(P2, start_x, angle_2, beam_2)
+        width = self._find_width(beam_1, beam_2)
+        start_y = self._find_start_y(width, beam_1)
+
+
+        # Create pocket feature
+        machining_limits = MachiningLimits()
+        pocket = Pocket(
+            start_x=start_x,
+            start_y=start_y,
+            start_depth=self.mill_depth,
+            angle=0,
+            inclination=0,
+            slope=0.0,
+            length=length,
+            width=width,
+            internal_angle=90.0,
+            tilt_ref_side=90.0,
+            tilt_end_side=math.degrees(tilt_end_side),
+            tilt_opp_side=90.0,
+            tilt_start_side=math.degrees(tilt_start_side),
+            machining_limits=machining_limits.limits,
+            ref_side_index=self.main_beam_ref_side_index(beam_1),
+        )
+
+        self.cross_beam.add_feature(pocket)
+        self.features.append(pocket)
+
+
+
+
+    def _find_start_x(self, P: Point, angle: float, main_beam: Beam) -> float:
+        """
+        Computes the start_x BTLx parameter for the pocket in the cross beam.
+        """
+
+        beam_width, beam_height = main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(main_beam))
+        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(main_beam))
+
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(main_beam)]
+        ref_side_plane = Plane.from_frame(ref_side)
+        intersection_point_projected = ref_side_plane.projected_point(P)
+
+        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
+
+        # Calculate start_x
+        start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
+        x2 = (beam_height / 2) / math.sin(math.pi - angle)
+        start_x -= x1
+        start_x -= x2
+
+        return start_x  
+    
+
+
+    def _find_length(self, intersection_point, start_x, angle, beam):
+        """
+        Computes the length BTLx parameter for the pocket in the cross beam.
+        """
+        beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
+        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
+
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+        ref_side_plane = Plane.from_frame(ref_side)
+        intersection_point_projected = ref_side_plane.projected_point(intersection_point)
+
+        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
+
+        # Calculate end_x
+        end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(angle) if self.mill_depth < cross_height / 2 else 0
+        x2 = (beam_height / 2) / math.sin(angle)
+
+
+
+        end_x += x1
+        end_x += abs(x2)
+
+        length = end_x - start_x
+
+        if self.mill_depth >= cross_height / 2:
+            x3 = (self.mill_depth - cross_height / 2) / math.tan(math.pi - angle)
+
+            if angle < math.pi / 2:
+                length -= abs(x3)
+            else:
+                length += abs(x3)
+
+        return length
+    
+
+
+
+    def _find_start_y(self, width, beam_1: Beam) -> float:
+        """
+        Computes the start_y BTLx parameter for the pocket in the cross beam.
+        """
+        cross_beam_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_1))
+        start_y = (cross_beam_width - width) / 2
+        return start_y
+
+
+
+
+    def _find_width(self, beam_1: Beam, beam_2: Beam) -> float:
+        """
+        Computes the width BTLx parameter for the pocket in the cross beam.
+        """
+        beam_1_width, _ = beam_1.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_1))
+        beam_2_width, _ = beam_2.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_2))
+        width = max(beam_1_width, beam_2_width)
+        return width
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         pass
+        
