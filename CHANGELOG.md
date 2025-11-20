@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
-* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operaion.
+* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operation.
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `PlateGeometry` class.
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
