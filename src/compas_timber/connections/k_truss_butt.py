@@ -51,9 +51,6 @@ class KTrussButtJoint(Joint):
     features : list of :class:`~compas_timber.fabrication.Feature`
         The features added to the beams by the joint.
 
-
-
-
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
