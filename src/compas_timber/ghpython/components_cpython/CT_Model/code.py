@@ -55,7 +55,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
-        self.add_elements_to_model(Model, Elements, Containers)
+        self.add_elements_to_model(Model, Elements)
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
