@@ -16,6 +16,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -374,7 +375,7 @@ class DoubleCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         if self.orientation == OrientationType.END:

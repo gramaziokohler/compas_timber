@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateGeometry` class.
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
+* Added `planar_surface_point_at` to `compas_timber.utils`.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -56,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Fixed the `ShowTopologyTypes` GH Component.
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
+* Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
