@@ -1,4 +1,6 @@
 
+import math
+
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Plane
@@ -118,6 +120,8 @@ class KTrussButtJoint(Joint):
 
 
 
+
+
     def _cut_main_beam(self, beam: Beam, mid_cutting_plane: Plane, second_beam: bool):
         
         cross_cutting_frame = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
@@ -179,7 +183,21 @@ class KTrussButtJoint(Joint):
         if intersection_point is None:
             raise ValueError("Main beams do not intersect.")
 
-        mid_cutting_plane = Plane(intersection_point, self.cross_beam.centerline.direction)
+        # Get normalized direction vectors
+        dir1 = Vector(*beam_1.centerline.direction).unitized()
+        dir2 = Vector(*beam_2.centerline.direction).unitized()
+        
+        # The bisector direction is the normalized sum of both directions
+        bisector_direction = (dir1 + dir2).unitized()
+
+        # Create rotation plane of the bisector
+        roatation_plane = Plane.from_point_and_two_vectors(intersection_point, dir1, dir2)
+
+        # Compute normal of the cutting plane
+        cutting_plane_normal = bisector_direction.rotated(math.pi/2, roatation_plane.normal, intersection_point)
+
+        # Create plane perpendicular to the bisector at the intersection point
+        mid_cutting_plane = Plane(intersection_point, cutting_plane_normal)
 
         return mid_cutting_plane
 
