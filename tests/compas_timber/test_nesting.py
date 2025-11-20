@@ -11,6 +11,7 @@ from compas_timber.elements import Slab
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import BeamNester
+from compas_timber.planning import NestedElementData
 from compas_timber.planning import NestingResult
 
 # ============================================================================
@@ -78,10 +79,10 @@ def test_beam_addition_and_capacity_tracking():
 
     assert len(stock.element_data) == 1
     assert str(beam1.guid) in stock.element_data
-    assert isinstance(element_info, dict)
-    assert element_info["frame"] == expected_frame1
-    assert element_info["key"] == beam1.graphnode
-    assert element_info["length"] == beam1.blank_length
+    assert isinstance(element_info, NestedElementData)
+    assert element_info.frame == expected_frame1
+    assert element_info.key == beam1.graphnode
+    assert element_info.length == beam1.blank_length
     assert stock._current_x_position == expected_x_position1
 
     # Add second beam
@@ -95,10 +96,10 @@ def test_beam_addition_and_capacity_tracking():
 
     assert len(stock.element_data) == 2
     assert str(beam2.guid) in stock.element_data
-    assert isinstance(element_info, dict)
-    assert element_info["frame"] == expected_frame2
-    assert element_info["key"] == beam2.graphnode
-    assert element_info["length"] == beam2.blank_length
+    assert isinstance(element_info, NestedElementData)
+    assert element_info.frame == expected_frame2
+    assert element_info.key == beam2.graphnode
+    assert element_info.length == beam2.blank_length
     assert stock._current_x_position == expected_x_position2
 
 
@@ -151,12 +152,12 @@ def test_serialization():
     assert str(beam2.guid) in restored_data.element_data
     element_data1 = restored_data.element_data[str(beam1.guid)]
     element_data2 = restored_data.element_data[str(beam2.guid)]
-    assert isinstance(element_data1["frame"], Frame)
-    assert element_data1["key"] == beam1.graphnode
-    assert element_data1["length"] == beam1.blank_length
-    assert isinstance(element_data2["frame"], Frame)
-    assert element_data2["key"] == beam2.graphnode
-    assert element_data2["length"] == beam2.blank_length
+    assert isinstance(element_data1.frame, Frame)
+    assert element_data1.key == beam1.graphnode
+    assert element_data1.length == beam1.blank_length
+    assert isinstance(element_data2.frame, Frame)
+    assert element_data2.key == beam2.graphnode
+    assert element_data2.length == beam2.blank_length
 
 
 # ============================================================================

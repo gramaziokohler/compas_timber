@@ -5,6 +5,44 @@ from compas.geometry import Frame
 from compas.tolerance import Tolerance
 
 
+class NestedElementData(Data):
+    """
+    Data container for elements nested within stock pieces.
+
+    Parameters
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The position frame of the element within the stock.
+    key : int, optional
+        A human-readable identifier/index for the element.
+    length : float, optional
+        The length of the element (for beams).
+
+    Attributes
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The position frame of the element within the stock.
+    key : int or None
+        A human-readable identifier/index for the element.
+    length : float or None
+        The length of the element (for beams), None if not applicable.
+    """
+
+    def __init__(self, frame, key=None, length=None):
+        super(NestedElementData, self).__init__()
+        self.frame = frame
+        self.key = key
+        self.length = length
+
+    @property
+    def __data__(self):
+        return {
+            "frame": self.frame,
+            "key": self.key,
+            "length": self.length,
+        }
+
+
 class Stock(Data):
     """
     A base class to represent a stock piece for nesting.
@@ -19,10 +57,8 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
 
 
     Attributes
@@ -35,10 +71,8 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
     """
 
     def __init__(self, length, width, height, spacing=0.0, element_data=None):
@@ -47,7 +81,7 @@ class Stock(Data):
         self.width = width
         self.height = height
         self.spacing = spacing
-        self.element_data = element_data or {}  # {guid: {"frame": Frame, "key": int}}
+        self.element_data = element_data or {}
 
     @property
     def __data__(self):
@@ -119,11 +153,8 @@ class BeamStock(Stock):
         Cross-section dimensions (width, height).
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to a dict with:
-            'frame': assigned position frame (Frame)
-            'length': element length (float)
-            'key': graphnode key
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
 
 
     Attributes
@@ -134,11 +165,8 @@ class BeamStock(Stock):
         Cross-section dimensions sorted in ascending order for consistent comparison.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to a dict with:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
-            'length': element length (float)
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
     """
 
     def __init__(self, length, cross_section, spacing=0.0, element_data=None):
@@ -217,12 +245,12 @@ class BeamStock(Stock):
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
-        # Store element data with frame, blank length and graphnode key
-        self.element_data[str(beam.guid)] = {
-            "frame": position_frame,
-            "key": beam.graphnode,
-            "length": beam.blank_length,
-        }
+        # Store element data using NestedElementData type
+        self.element_data[str(beam.guid)] = NestedElementData(
+            frame=position_frame,
+            key=beam.graphnode,
+            length=beam.blank_length,
+        )
 
     def _get_position_frame(self, beam):
         # Get the position frame for a beam that is being added to this stock.
@@ -253,10 +281,8 @@ class PlateStock(Stock):
         Thickness of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
 
 
     Attributes
@@ -267,10 +293,8 @@ class PlateStock(Stock):
         Thickness of the stock piece
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
 
     """
 
@@ -389,10 +413,8 @@ class NestingResult(Data):
                 beam_keys = []
                 lengths = []
                 for data in stock.element_data.values():
-                    key = data.get("key", None)
-                    length = data.get("length", None)
-                    beam_keys.append(key)
-                    lengths.append(round(length, self.tolerance.precision))
+                    beam_keys.append(data.key)
+                    lengths.append(round(data.length, self.tolerance.precision))
                 waste = stock.length - sum(lengths) if lengths else stock.length
                 # Formatted output
                 lines.append(f"BeamKeys: {beam_keys}")
