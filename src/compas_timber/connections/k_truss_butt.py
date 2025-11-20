@@ -18,6 +18,7 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
+from compas_timber.fabrication import OrientationType
 
 
 class KTrussButtJoint(Joint):
@@ -136,6 +137,13 @@ class KTrussButtJoint(Joint):
 
         self._cut_cross_beam(beam_1, beam_2)
 
+
+
+
+
+
+
+
     def _cut_main_beam(self, beam: Beam, mid_cutting_plane: Plane, second_beam: bool):
         cross_cutting_frame = self.cross_beam.ref_sides[self.main_beam_ref_side_index(beam)]
         cross_cutting_plane = Plane.from_frame(cross_cutting_frame)
@@ -151,13 +159,22 @@ class KTrussButtJoint(Joint):
         else:
             mid_cutting_plane.normal *= -1
 
+
         if second_beam:
             mid_cutting_plane.normal *= -1
 
         double_cut = DoubleCut.from_planes_and_beam([cross_cutting_plane, mid_cutting_plane], beam)
 
+
         beam.add_feature(double_cut)
         self.features.append(double_cut)
+
+
+
+
+
+
+
 
     def _sort_main_beams(self):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
@@ -194,8 +211,21 @@ class KTrussButtJoint(Joint):
             raise ValueError("Main beams do not intersect.")
 
         # Get normalized direction vectors
-        dir1 = Vector(*beam_1.centerline.direction).unitized()
-        dir2 = Vector(*beam_2.centerline.direction).unitized()
+        p1, _ = intersection_line_line(beam_1.centerline, self.cross_beam.centerline)
+        end, _ = beam_1.endpoint_closest_to_point(Point(*p1))
+        if end == "start":
+            dir1 = beam_1.centerline.vector
+        else:
+            dir1 = beam_1.centerline.vector * -1
+
+        p2, _ = intersection_line_line(beam_2.centerline, self.cross_beam.centerline)
+        end, _ = beam_2.endpoint_closest_to_point(Point(*p2))
+        if end == "start":
+            dir2 = beam_2.centerline.vector
+        else:
+            dir2 = beam_2.centerline.vector * -1
+
+    
 
         # The bisector direction is the normalized sum of both directions
         bisector_direction = (dir1 + dir2).unitized()
