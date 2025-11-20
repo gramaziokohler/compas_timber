@@ -8,7 +8,6 @@ from compas_timber.elements import Beam
 from compas_timber.connections import KTrussButtJoint
 from compas_timber.fabrication import Pocket
 from compas_timber.fabrication import DoubleCut
-from compas_timber.fabrication.jack_cut import JackRafterCutProxy
 from compas_timber.model import TimberModel
 
 
