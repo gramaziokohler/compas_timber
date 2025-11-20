@@ -598,13 +598,13 @@ document.write(`
 <h1>SurfaceModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.design.SurfaceModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">SurfaceModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/852b51d/src/compas_timber/design/wall_from_surface.py#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.design.</span></span><span class="sig-name descname"><span class="pre">SurfaceModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d6f890f/src/compas_timber/design/wall_from_surface.py#L35"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Create a timber assembly from a surface.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>surface</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Surface</span></code></span></dt><dd><p>The surface to create the assembly from. must be planar.</p>
+<dt><strong>surface</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Surface.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Surface</span></code></a></span></dt><dd><p>The surface to create the assembly from. must be planar.</p>
 </dd>
 <dt><strong>beam_width</strong><span class="classifier">float</span></dt><dd><p>The height of the beams aka thickness of wall cavity normal to the surface.</p>
 </dd>
@@ -612,7 +612,7 @@ document.write(`
 </dd>
 <dt><strong>stud_spacing</strong><span class="classifier">float</span></dt><dd><p>The spacing between the studs.</p>
 </dd>
-<dt><strong>z_axis</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code>, optional</span></dt><dd><p>Determines the orientation of the posts inside the frame.
+<dt><strong>z_axis</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code></a>, optional</span></dt><dd><p>Determines the orientation of the posts inside the frame.
 Default is <code class="docutils literal notranslate"><span class="pre">Vector.Zaxis</span></code>.</p>
 </dd>
 </dl>
@@ -623,15 +623,15 @@ Default is <code class="docutils literal notranslate"><span class="pre">Vector.Z
 </dd>
 <dt><strong>rules</strong><span class="classifier">list of <a class="reference internal" href="compas_timber.design.CategoryRule.html#compas_timber.design.CategoryRule" title="compas_timber.design.CategoryRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.design.CategoryRule</span></code></a></span></dt><dd><p>The rules for the assembly.</p>
 </dd>
-<dt><strong>centerlines</strong><span class="classifier">list of <code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Line</span></code></span></dt><dd><p>The centerlines of the beams.</p>
+<dt><strong>centerlines</strong><span class="classifier">list of <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Line.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Line</span></code></a></span></dt><dd><p>The centerlines of the beams.</p>
 </dd>
-<dt><strong>normal</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code></span></dt><dd><p>The normal of the surface.</p>
+<dt><strong>normal</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Vector</span></code></a></span></dt><dd><p>The normal of the surface.</p>
 </dd>
 <dt><strong>panel_length</strong><span class="classifier">float</span></dt><dd><p>The length of the panel.</p>
 </dd>
 <dt><strong>panel_height</strong><span class="classifier">float</span></dt><dd><p>The height of the panel.</p>
 </dd>
-<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></span></dt><dd><p>The frame of the assembly.</p>
+<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Frame</span></code></a></span></dt><dd><p>The frame of the assembly.</p>
 </dd>
 <dt><strong>jack_studs</strong><span class="classifier">list of <code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.model.SurfaceAssembly.BeamDefinition</span></code></span></dt><dd><p>The jack studs of the assembly.</p>
 </dd>

@@ -603,27 +603,27 @@ document.write(`
 <h1>Plate.get_args_from_outlines</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate.get_args_from_outlines">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">get_args_from_outlines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outline_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outline_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/852b51d/src/compas_timber/elements/plate_geometry.py#L328"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">get_args_from_outlines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outline_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outline_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d6f890f/src/compas_timber/elements/plate_geometry.py#L328"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Get constructor arguments for the PlateGeometry and subclasses from outlines.
 Outlines and openings are transformed to the local frame of the plate.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>outline_a</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></span></dt><dd><p>Principal outline of the plate.</p>
+<dt><strong>outline_a</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a></span></dt><dd><p>Principal outline of the plate.</p>
 </dd>
-<dt><strong>outline_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></span></dt><dd><p>Associated outline of the plate.</p>
+<dt><strong>outline_b</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a></span></dt><dd><p>Associated outline of the plate.</p>
 </dd>
-<dt><strong>openings</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>], optional</span></dt><dd><p>List of opening polylines.</p>
+<dt><strong>openings</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>], optional</span></dt><dd><p>List of opening polylines.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>dict</dt><dd><p>Dictionary of constructor arguments containing:
-- local_outline_a (<code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>)
-- local_outline_b (<code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>)
-- openings (list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code>]|None)
-- frame (<code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code>)
+- local_outline_a (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>)
+- local_outline_b (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>)
+- openings (list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Polyline</span></code></a>]|None)
+- frame (<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>)
 - length (float)
 - width (float)
 - thickness (float)</p>

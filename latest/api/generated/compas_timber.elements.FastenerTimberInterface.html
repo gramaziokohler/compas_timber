@@ -598,8 +598,8 @@ document.write(`
 <h1>FastenerTimberInterface</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.elements.FastenerTimberInterface">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">FastenerTimberInterface</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/852b51d/src/compas_timber/elements/fastener.py#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Data</span></code></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.elements.</span></span><span class="sig-name descname"><span class="pre">FastenerTimberInterface</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d6f890f/src/compas_timber/elements/fastener.py#L92"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.data.Data.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Data</span></code></a></p>
 <p>A class to represent the interface between a fastener and a timber element.</p>
 <p># TODO: we need to put some thought as to what’s the minimal representation of an interface.
 # TODO: the responsibilities of the Fastener-based-joint vs. Fastener vs. FastenerTimberInterface should be perhaps more clearly defined
@@ -609,7 +609,7 @@ document.write(`
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>outline_points</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code>], optional</span></dt><dd><p>The points of the polyline outline of the fastener geometry.</p>
+<dt><strong>outline_points</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>], optional</span></dt><dd><p>The points of the polyline outline of the fastener geometry.</p>
 </dd>
 <dt><strong>thickness</strong><span class="classifier">float, optional</span></dt><dd><p>The thickness of the fastener plate.</p>
 </dd>
@@ -621,9 +621,9 @@ document.write(`
 “through”: bool, optional, if True, the hole goes through the timber element
 }</p>
 </dd>
-<dt><strong>shapes</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code>], optional</span></dt><dd><p>Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.</p>
+<dt><strong>shapes</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Geometry.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a>], optional</span></dt><dd><p>Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.</p>
 </dd>
-<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code>, optional</span></dt><dd><p>The frame of the instance of the fastener that is applied to the model.</p>
+<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a>, optional</span></dt><dd><p>The frame of the instance of the fastener that is applied to the model.</p>
 </dd>
 <dt><strong>element</strong><span class="classifier">object, optional</span></dt><dd><p>The timber element this interface is associated with.</p>
 </dd>
@@ -633,7 +633,7 @@ document.write(`
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>outline_points</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code>]</span></dt><dd><p>The points of the polyline outline of the fastener geometry.</p>
+<dt><strong>outline_points</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a>]</span></dt><dd><p>The points of the polyline outline of the fastener geometry.</p>
 </dd>
 <dt><strong>thickness</strong><span class="classifier">float</span></dt><dd><p>The thickness of the fastener plate.</p>
 </dd>
@@ -645,11 +645,11 @@ document.write(`
 “through”: bool, optional, if True, the hole goes through the timber element
 }</p>
 </dd>
-<dt><strong>frame</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></span></dt><dd><p>The frame of the instance of the fastener that is applied to the model.</p>
+<dt><strong>frame</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Frame.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Frame</span></code></a></span></dt><dd><p>The frame of the instance of the fastener that is applied to the model.</p>
 </dd>
 <dt><strong>element</strong><span class="classifier">object</span></dt><dd><p>The timber element this interface is associated with.</p>
 </dd>
-<dt><strong>shapes</strong><span class="classifier">list[<code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code>]</span></dt><dd><p>Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.</p>
+<dt><strong>shapes</strong><span class="classifier">list[<a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Geometry.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Geometry</span></code></a>]</span></dt><dd><p>Input for extra geometric elements. These should be solids that can be booleaned with the fastener geometry.</p>
 </dd>
 <dt><strong>features</strong><span class="classifier">list[<a class="reference internal" href="compas_timber.fabrication.BTLxFromGeometryDefinition.html#compas_timber.fabrication.BTLxFromGeometryDefinition" title="compas_timber.fabrication.BTLxFromGeometryDefinition"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxFromGeometryDefinition</span></code></a>]</span></dt><dd><p>The features that are applied by this interface to the timber element. This returns the features in world coordinates.</p>
 </dd>
