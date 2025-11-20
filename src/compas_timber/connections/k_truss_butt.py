@@ -14,10 +14,12 @@ from compas.geometry import dot_vectors
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology   
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.elements.beam import Beam
 from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import Pocket
 from compas_timber.fabrication import MachiningLimits
+from compas_timber.errors import BeamJoiningError
 
 
 
@@ -25,6 +27,40 @@ from compas_timber.fabrication import MachiningLimits
 
 
 class KTrussButtJoint(Joint):
+    """
+    Represents a K-Butt type joint which joins the ends of two beams (`main_beams`),  along the length of another beam (`cross_beam`), trimming the two mian beams. 
+    A `Pocket` feature is created in the `cross_beam` and `DoubleCut` features are created in each of the `main_beams`.
+
+    This joint type is compatible with beams in K topology. 
+
+    The three beams must be coplanar and the two main beams must be ont eh same side of the cross beam. 
+
+    
+    Parameters
+    ----------
+    cross_beam : :class:`~compas_timber.elements.Beam`
+         The cross beam to be joined. The beam connected along its lenght. 
+    main_beams : list of :class:`~compas_timber.elements.Beam`
+         The two main beams to be joined. The beams connected at their ends.
+    mill_depth : float, optional
+            The depth of material to be milled from the cross beam at the cutting planes. Default is 0.
+
+
+    Attributes
+    ----------
+    cross_beam : :class:`~compas_timber.elements.Beam`
+         The cross beam to be joined. The beam connected along its lenght.
+    main_beams : list of :class:`~compas_timber.elements.Beam`
+        The two main beams to be joined. The beams connected at their ends.
+    mill_depth : float
+            The depth of material to be milled from the cross beam at the cutting planes.
+    features : list of :class:`~compas_timber.fabrication.Feature`
+        The features added to the beams by the joint.
+
+
+    
+    
+    """
 
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
@@ -111,7 +147,12 @@ class KTrussButtJoint(Joint):
 
 
     def add_features(self):
+        """
+        Adds the required extension and trimming featrues to the three beams.
         
+        This method is automaically called whe the joint is creaed by the call to `Joint.create()`.
+        """
+
         beam_1, beam_2 = self._sort_main_beams()
 
         mid_cutting_plane = self._compute_middle_cutting_plane(beam_1, beam_2)
@@ -159,8 +200,6 @@ class KTrussButtJoint(Joint):
         
         
         
-
-
 
     def _sort_main_beams(self):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
@@ -367,16 +406,39 @@ class KTrussButtJoint(Joint):
 
 
 
-
-
-
-
-
-
-
-
-
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
-        pass
+        """ 
+        Checks if the cluster og beams complies  with the requirements for the KTrussButtJoint.
+
+        Parameters
+        ----------
+        elements : list of :class:`~compas_timber.parts.Beam`
+            The beams to be checked.
+        raise_error : bool, optional
+            If True, raises `BeamJoiningError` if the requirements are not met. Default is False.
+
+
+        Returns
+        -------
+        bool
+            True if the requirements are met, False otherwise.
+
+
+        """ 
         
+        # For this joint, the beams have to be coplanar
+        if not (
+            are_beams_aligned_with_cross_vector(elements[0], elements[1])
+            and are_beams_aligned_with_cross_vector(elements[1], elements[2])
+            and are_beams_aligned_with_cross_vector(elements[0], elements[2])
+        ):
+            if not raise_error:
+                return False
+
+            if raise_error:
+                raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
+
+
+
+        return True
