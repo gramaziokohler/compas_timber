@@ -322,6 +322,10 @@ class PlateStock(Stock):
         bool
             True if plate could fit somewhere in remaining space, False otherwise
         """
+        # TODO: Signature mismatch with abstract Stock.can_fit_element(element)
+        # TODO: Should accept plate object + transformation instead of pre-transformed polygon
+        # TODO: This prevents proper validation before algorithms find positions
+
         # Step 1: Quick area rejection
         if plate_outline.area > self._remaining_area:
             return False
@@ -346,15 +350,18 @@ class PlateStock(Stock):
         ValueError
             If plate doesn't fit in remaining space
         """
-        # Offset polygon by spacing to account for cutting tolerance
-        plate_outline = offset_polygon(plate_outline, self.spacing)
-
         # Get frame from transformation
         position_frame = Frame.from_transformation(transformation)
 
         # Transform plate polygon outline to placement position
         plate_outline = plate.local_outline_a.transformed(transformation)  # TODO: check which one of the two to use
 
+        # TODO: Offset timing issue - spacing should be applied during fit check, not just here
+        # TODO: This means can_fit_element needs access to spacing and transformation
+        # Offset polygon by spacing to account for cutting tolerance
+        plate_outline = offset_polygon(plate_outline, self.spacing)
+
+        # TODO: This validation happens AFTER offset, but algorithm needs to know BEFORE finding position
         if not self.can_fit_element(plate_outline):
             raise ValueError("Plate doesn't fit in remaining space")
 
@@ -761,10 +768,13 @@ class PlateNester(object):
     def _fast_skyline_nest(plates, stock, spacing=0.0):
         # Fast algorithm using bounding boxes and skyline approach.
         # TODO: Implement skyline algorithm for 2D plate
+        # TODO: Algorithm needs to find valid Transformation (position + rotation)
+        # TODO: Then call stock.add_element(plate, transformation)
         # Placeholder implementation
         stocks = []
         for plate in plates:
             new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+            # TODO: Missing transformation parameter - should pass Transformation()
             new_stock.add_element(plate)
             stocks.append(new_stock)
         return stocks
@@ -773,10 +783,12 @@ class PlateNester(object):
     def _optimized_bottomleft_nest(plates, stock, spacing=0.0):
         # Optimized algorithm using actual polygon geometry.
         # TODO: Implement bottom-left algorithm for 2D plate nesting.
+        # TODO: Algorithm needs to find valid Transformation (position + rotation)
+        # TODO: Then call stock.add_element(plate, transformation)
         # Placeholder implementation
         stocks = []
         for plate in plates:
             new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+            # TODO: Missing transformation parameter - should pass Transformation()
             new_stock.add_element(plate)
             stocks.append(new_stock)
-        return stocks
