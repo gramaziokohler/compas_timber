@@ -149,6 +149,7 @@ class BeamStock(Stock):
         super(BeamStock, self).__init__(length=length, width=cross_section[0], height=cross_section[1], spacing=spacing, element_data=element_data)
         self.cross_section = tuple(cross_section)
         self._current_x_position = 0.0  # Track current position along length for placing beams
+        self._blank_extension_transformation = None
 
     @property
     def __data__(self):
@@ -566,6 +567,7 @@ class BeamNester(object):
             if not fitted:
                 new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
                 new_stock.add_element(beam)
+                new_stock._blank_extension_transformation = beam._blank_extension_transformation
                 stocks.append(new_stock)
 
         return stocks
@@ -592,6 +594,7 @@ class BeamNester(object):
             else:
                 # Create new stock
                 new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
+                new_stock._blank_extension_transformation = beam._blank_extension_transformation
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
