@@ -1,10 +1,18 @@
+from abc import ABC
+from abc import abstractmethod
 from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Polygon
+from compas.geometry import Transformation
+from compas.geometry import is_polygon_in_polygon_xy
+from compas.geometry import offset_polygon
+from compas.tolerance import TOL
 
 
-class Stock(Data):
+class Stock(Data, ABC):
     """
     A base class to represent a stock piece for nesting.
 
@@ -50,6 +58,7 @@ class Stock(Data):
             "element_data": self.element_data,
         }
 
+    @abstractmethod
     def add_element(self, element):
         """
         Add an element to this stock assignment.
@@ -64,8 +73,9 @@ class Stock(Data):
         ValueError
             If element doesn't fit in remaining space.
         """
-        raise NotImplementedError("This method should be implemented in subclasses.")
+        pass
 
+    @abstractmethod
     def can_fit_element(self, element):
         """
         Check if an element can fit in the remaining space.
@@ -80,8 +90,9 @@ class Stock(Data):
         bool
             True if element fits in remaining space, False otherwise
         """
-        raise NotImplementedError("This method should be implemented in subclasses.")
+        pass
 
+    @abstractmethod
     def is_compatible_with(self, element):
         """
         Check if this stock can accommodate the element type and dimensions.
@@ -96,7 +107,7 @@ class Stock(Data):
         bool
             True if element is compatible with this stock, False otherwise
         """
-        raise NotImplementedError("This method should be implemented in subclasses.")
+        pass
 
 
 class BeamStock(Stock):
@@ -259,12 +270,101 @@ class PlateStock(Stock):
         self.dimensions = tuple(dimensions)
         self.thickness = thickness
 
+        # Initialize remaining boundary as full stock rectangle
+        self._remaining_boundary = Polygon([Point(0, 0, 0), Point(dimensions[0], 0, 0), Point(dimensions[0], dimensions[1], 0), Point(0, dimensions[1], 0)])
+
     @property
     def __data__(self):
         data = super(PlateStock, self).__data__
         data["dimensions"] = self.dimensions
         data["thickness"] = self.thickness
         return data
+
+    @property
+    def _remaining_area(self):
+        # Get remaining available area in the stock.
+        return self._remaining_boundary.area
+
+    def is_compatible_with(self, plate):
+        """
+        Check if this stock can accommodate the plate type and dimensions.
+
+        For 2D nesting, plates must have matching thickness.
+        The plate's 2D outline must fit within the stock dimensions.
+
+        Parameters
+        ----------
+        plate : :class:`~compas_timber.elements.Plate`
+            The plate to check
+
+        Returns
+        -------
+        bool
+            True if plate is compatible with this stock, False otherwise
+        """
+        return TOL.is_close(plate.thickness, self.thickness)
+
+    def can_fit_element(self, plate_outline):
+        """
+        Check if a plate can fit in the remaining space.
+
+        Two-step optimization check:
+        1. Area check - fast rejection based on area comparison
+        2. Shape check - validate if plate's polygon can fit within remaining boundary
+
+        Parameters
+        ----------
+        plate_outline : :class:`compas.geometry.Polygon`
+            The polygon to check
+
+        Returns
+        -------
+        bool
+            True if plate could fit somewhere in remaining space, False otherwise
+        """
+        # Step 1: Quick area rejection
+        if plate_outline.area > self._remaining_area:
+            return False
+        # Step 2: Shape check
+        return is_polygon_in_polygon_xy(plate_outline, self._remaining_boundary)
+
+    def add_element(self, plate, transformation=Transformation()):
+        """
+        Add a plate to this stock assignment at a specific position and rotation.
+
+        This updates the remaining boundary by subtracting the placed plate polygon.
+
+        Parameters
+        ----------
+        plate : :class:`~compas_timber.elements.Plate`
+            The plate to add
+        transformation : :class:`compas.geometry.Transformation`, optional
+            Transformation defining position and rotation of the plate within the stock.
+
+        Raises
+        ------
+        ValueError
+            If plate doesn't fit in remaining space
+        """
+        # Offset polygon by spacing to account for cutting tolerance
+        plate_outline = offset_polygon(plate_outline, self.spacing)
+
+        # Get frame from transformation
+        position_frame = Frame.from_transformation(transformation)
+
+        # Transform plate polygon outline to placement position
+        plate_outline = plate.local_outline_a.transformed(transformation)  # TODO: check which one of the two to use
+
+        if not self.can_fit_element(plate_outline):
+            raise ValueError("Plate doesn't fit in remaining space")
+
+        # Update remaining boundary using boolean difference
+        difference_result = self._remaining_boundary.boolean_difference(plate_outline)
+        if difference_result:
+            self._remaining_boundary = difference_result[0]
+
+        # Store element data
+        self.element_data[str(plate.guid)] = position_frame
 
 
 class NestingResult(Data):
@@ -516,4 +616,167 @@ class BeamNester(object):
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
+        return stocks
+
+
+class PlateNester(object):
+    """
+    A class for optimizing 2D nesting of plates into stock pieces.
+
+    This class implements algorithms to efficiently nest plates from a TimberModel
+    into available stock pieces, minimizing waste and cost.
+
+    Parameters
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The timber model containing plates to nest
+    stock_catalog : list[:class:`PlateStock`]
+        Available PlateStock pieces for nesting.
+    spacing : float, optional
+        Spacing tolerance for cutting operations (kerf width, etc.)
+    per_group : bool, optional
+        Whether to nest plates per group or all together. Default is False (all together).
+
+    Attributes
+    ----------
+    model : :class:`~compas_timber.model.TimberModel`
+        The timber model
+    stock_catalog : list[:class:`PlateStock`]
+        Available PlateStock pieces for nesting
+    spacing : float
+        Spacing tolerance for cutting operations (kerf width, etc.)
+    per_group : bool
+        Whether to nest plates per group or all together. Default is False (all together).
+    """
+
+    def __init__(self, model, stock_catalog, spacing=0.0, per_group=False):
+        self.model = model
+        self.spacing = spacing
+        self.per_group = per_group
+        self.stock_catalog = stock_catalog if isinstance(stock_catalog, list) else [stock_catalog]
+
+    @property
+    def stock_catalog(self):
+        """Get the stock catalog."""
+        return self._stock_catalog
+
+    @stock_catalog.setter
+    def stock_catalog(self, value):
+        """Set the stock catalog with validation."""
+        # Validate that all items are PlateStock instances
+        for i, stock in enumerate(value):
+            if not isinstance(stock, PlateStock):
+                raise TypeError(f"All items in stock_catalog must be PlateStock instances. Item at index {i} is {type(stock).__name__}")
+        self._stock_catalog = value
+
+    def nest(self, fast=True):
+        """
+        Perform 2D nesting of all plates in the model.
+
+        Parameters
+        ----------
+        fast : bool, optional
+            Whether to use a fast nesting algorithm (Skyline with bounding boxes) or a more
+            accurate one (Bottom-Left with polygon geometry). Default is True (fast).
+
+        Returns
+        -------
+        :class:`NestingResult`
+            Nesting result containing stocks with assigned plates and metadata
+        """
+        nesting_stocks = []
+        if self.per_group:
+            # Collect plate groups
+            plate_groups = []  # list of lists of plates per group
+            standalone_plates = []
+            for element in self.model.elements():
+                if element.is_group_element:
+                    group_children = list(self.model.get_elements_in_group(element, filter_=lambda e: e.is_plate))
+                    if group_children:
+                        plate_groups.append(group_children)
+
+                elif element.is_plate and element.parent is None:
+                    # Handle standalone plates not in a group
+                    standalone_plates.append(element)
+            if standalone_plates:
+                plate_groups.append(standalone_plates)
+
+            # Nest each group separately
+            for plates in plate_groups:
+                stocks = self._nest_plate_collection(plates, fast)
+                nesting_stocks.extend(stocks)
+        else:
+            # Nest ALL plates together
+            stocks = self._nest_plate_collection(self.model.plates, fast)
+            nesting_stocks.extend(stocks)
+
+        return NestingResult(nesting_stocks)
+
+    def _nest_plate_collection(self, plates, fast=True):
+        # Nest a collection of plates into stock pieces.
+        stocks = []
+        stock_plate_map = self._sort_plates_by_stock(plates)
+
+        for stock_type, compatible_plates in stock_plate_map.items():
+            if not compatible_plates:
+                continue
+            # Apply selected algorithm
+            if fast:
+                result_stocks = self._fast_skyline_nest(compatible_plates, stock_type, self.spacing)
+            else:
+                result_stocks = self._optimized_bottomleft_nest(compatible_plates, stock_type, self.spacing)
+
+            stocks.extend(result_stocks)
+        return stocks
+
+    def _sort_plates_by_stock(self, plates):
+        # Sort plates into compatible stock types based on their dimensions.
+        unnested_plates = []
+        stock_plate_map = {stock: [] for stock in self.stock_catalog}
+        for plate in plates:
+            plate_matched = False
+            for stock in self.stock_catalog:
+                if stock.is_compatible_with(plate):
+                    stock_plate_map[stock].append(plate)
+                    plate_matched = True
+                    break  # Assign plate to first compatible stock type
+
+            if not plate_matched:
+                unnested_plates.append(plate)
+
+        if unnested_plates:
+            # Collect unique thicknesses from unnested plates
+            plate_details = set(plate.thickness for plate in unnested_plates)
+            # Format each thickness as a string
+            formatted_thicknesses = ["{}mm".format(int(thickness)) for thickness in plate_details]
+
+            warn(
+                "Found {} plate(s) incompatible with available stock catalog. Plates with the following thicknesses will be skipped during nesting: {}".format(
+                    len(unnested_plates), ", ".join(formatted_thicknesses)
+                )
+            )
+        return stock_plate_map
+
+    @staticmethod
+    def _fast_skyline_nest(plates, stock, spacing=0.0):
+        # Fast algorithm using bounding boxes and skyline approach.
+        # TODO: Implement skyline algorithm for 2D plate
+        # Placeholder implementation
+        stocks = []
+        for plate in plates:
+            new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+            new_stock.add_element(plate)
+            stocks.append(new_stock)
+        return stocks
+
+    @staticmethod
+    def _optimized_bottomleft_nest(plates, stock, spacing=0.0):
+        # Optimized algorithm using actual polygon geometry.
+        # TODO: Implement bottom-left algorithm for 2D plate nesting.
+        # Placeholder implementation
+        stocks = []
+        for plate in plates:
+            new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+            new_stock.add_element(plate)
+            stocks.append(new_stock)
         return stocks
