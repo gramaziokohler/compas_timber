@@ -409,7 +409,7 @@ class Slot(BTLxProcessing):
         p1, p2 = self._adjust_p1_p2(p1, p2, p3, p4, slot_frame, beam)
 
         # build the subtracting volume of the slot
-        slot_polyline = self._slot_polyline(p1, p2, p3, p4)
+        slot_polyline = Polyline([p1, p2, p3, p4, p1])
 
         subtracting_volume = Brep.from_extrusion(slot_polyline, slot_frame.zaxis * self.thickness)
         subtracting_volume.translate(slot_frame.zaxis * - (self.thickness / 2))
@@ -421,6 +421,8 @@ class Slot(BTLxProcessing):
         """
         Computes the origin point of the reference side of the beam.
         """
+        assert self.ref_side_index in [0, 1, 2, 3, 4, 5]
+
         ref_side = beam.side_as_surface(self.ref_side_index)
         origin_point = ref_side.point_at(0, 0)
         return origin_point
@@ -430,20 +432,22 @@ class Slot(BTLxProcessing):
         """
         Computes the origin frame of the reference side of the beam.
         """
+        assert self.ref_side_index in [0, 1, 2, 3, 4, 5]
+
         ref_side = beam.side_as_surface(self.ref_side_index)
         origin_frame = ref_side.frame_at(0, 0)
         return origin_frame
 
-
-    def _slot_polyline(self, p1: Point, p2: Point, p3: Point, p4: Point) -> Polyline:
-        slot_polyline = Polyline([p1, p2, p3, p4, p1]) 
-        return slot_polyline
 
 
     def _find_p1(self, origin_point: Point, origin_frame: Frame) -> Point:
         """
         Computes the position of the point P1 of ths slot (see design2machine pdf for reference).
         """
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.start_depth is not None
+
         p1 = (origin_point
             + origin_frame.xaxis * self.start_x
             + origin_frame.yaxis * self.start_y
@@ -456,6 +460,8 @@ class Slot(BTLxProcessing):
         """
         Compute the position of the point P2 of ths slot (see design2machine pdf for reference).
         """
+        assert self.angle_opp_point is not None
+        assert self.add_angle_opp_point is not None
 
         angle_opp_point_radians = math.radians(self.angle_opp_point)
         add_angle_opp_point_radians = math.radians(self.add_angle_opp_point)
@@ -478,6 +484,8 @@ class Slot(BTLxProcessing):
         """
         Compute the position of the point P3 of ths slot (see design2machine pdf for reference).
         """
+        assert self.length >= 0
+
         angle_opp_point_radians = math.radians(self.angle_opp_point)
 
         # calculate the linear distance between P4 and P3, can be found with the length value
@@ -498,6 +506,10 @@ class Slot(BTLxProcessing):
         """
         Compute the position of the point P4 of the slot (see design2machine pdf for reference).
         """
+        assert self.angle_ref_point is not None
+        assert self.depth >= 0
+
+
         angle_ref_point_radians = math.radians(self.angle_ref_point)
         # find P4 by the angle_ref_point in P1 and depth
         distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
@@ -512,6 +524,9 @@ class Slot(BTLxProcessing):
         Compute the frame aligned with the slot at point p1.
         This method applies the angle and inclination parameters to the frame.
         """
+        assert self.orientation in [OrientationType.START, OrientationType.END]
+        assert self.start_depth >= 0
+
         # create and adjust the frame in P1 with
         # the polyline will be created on this frame        
         if self.start_depth == 0:
@@ -544,6 +559,8 @@ class Slot(BTLxProcessing):
         """
         Adjust the points P1 and P2 to ensure the slot fully cuts through the beam.
         """
+        assert self.orientation in [OrientationType.START, OrientationType.END]
+        assert self.start_x is not None
 
         if self.orientation == OrientationType.START:
             adj_distance = self.start_x + 20
