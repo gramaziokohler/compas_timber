@@ -47,6 +47,7 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "ISimpleScarf",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",

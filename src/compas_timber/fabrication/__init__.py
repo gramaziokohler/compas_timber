@@ -72,4 +72,6 @@ __all__ = [
     "DualContour",
     "LongitudinalCut",
     "BTLxRawpart",
+    "SimpleScarf",
+    "LongitudinalCutProxy",
 ]
