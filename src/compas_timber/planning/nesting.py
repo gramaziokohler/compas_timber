@@ -120,11 +120,13 @@ class BeamStock(Stock):
         Cross-section dimensions (width, height).
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
+    element_data : dict[str, dict], optional
         Dictionary mapping element GUIDs to a dict with:
             'frame': assigned position frame (Frame)
             'length': element length (float)
             'key': graphnode key
+    blank_extension_transformation : :class:`~compas.geometry.Transformation`, optional
+        Transformation to apply for blank extension positioning.
 
 
     Attributes
@@ -140,21 +142,25 @@ class BeamStock(Stock):
             'frame': assigned position frame (Frame)
             'key': graphnode key (int)
             'length': element length (float)
+    blank_extension_transformation : :class:`~compas.geometry.Transformation` or None
+        Transformation to apply for blank extension positioning.
     """
 
-    def __init__(self, length, cross_section, spacing=0.0, element_data=None):
+    def __init__(self, length, cross_section, spacing=0.0, element_data=None, blank_extension_transformation=None):
         # Validate cross_section before passing to parent constructor
         if not isinstance(cross_section, (list, tuple)) or len(cross_section) != 2:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
         super(BeamStock, self).__init__(length=length, width=cross_section[0], height=cross_section[1], spacing=spacing, element_data=element_data)
         self.cross_section = tuple(cross_section)
         self._current_x_position = 0.0  # Track current position along length for placing beams
+        self.blank_extension_transformation = blank_extension_transformation
 
     @property
     def __data__(self):
         data = super(BeamStock, self).__data__
         data["cross_section"] = self.cross_section
         data["length"] = self.length
+        data["blank_extension_transformation"] = self.blank_extension_transformation
         return data
 
     @property
@@ -564,7 +570,7 @@ class BeamNester(object):
                     break
             # If not fitted, create new stock
             if not fitted:
-                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing, blank_extension_transformation=beam.attributes["blank_extension_transformation"])
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
@@ -591,7 +597,7 @@ class BeamNester(object):
                 best_stock.add_element(beam)
             else:
                 # Create new stock
-                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing, blank_extension_transformation=beam.attributes["blank_extension_transformation"])
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
