@@ -6,12 +6,13 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Polyline
+from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
@@ -358,8 +359,13 @@ class Slot(BTLxProcessing):
 
         """
         # get the volume to be removed
+
+
         subtraction_volume = self.volume_from_params_and_beam(beam)
         subtraction_volume.transform(beam.transformation_to_local())
+        subtraction_volume = Brep.from_mesh(subtraction_volume.to_mesh())
+        if self.orientation == OrientationType.END:
+            subtraction_volume.flip()
 
         # perform the boolean operation, subtract the volume of the slot from the beam geometry
         try:
@@ -376,45 +382,230 @@ class Slot(BTLxProcessing):
 
 
 
-    def volume_from_params_and_beam(self, beam: Beam) -> Brep:
+
+    def volume_from_params_and_beam(self, beam: Beam) -> Polyhedron:
+
         """
-        Calculate the volume of the slot to be removed from the beam based on the slot parameters and the beam geometry.
-        
+        Computes the cutting volume of the slot based on the machining limits and parameters.
+
         Parameters
         ----------
-
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
 
-        
         Returns
         -------
-        :class:`~compas.geometry.Brep`
-            The volume of the slot to be removed from the beam.
-            
+        :class:`~compas.geometry.Polyhedron`
+            The cutting volume of the slot.
         """
 
-        # get the origin point and the origin frame of the reference side
+        
         origin_point = self._origin_point(beam)
         origin_frame = self._origin_frame(beam)
-
-        # calculates the points of the slot polyline
         p1 = self._find_p1(origin_point, origin_frame)
         slot_frame = self._compute_slot_frame(p1, origin_frame)
         p4 = self._find_p4(p1, slot_frame)
         p3 = self._find_p3(p1, p4, slot_frame)
-        p2 = self._find_p2(p1, p3, p4, slot_frame)
 
-        # adjust p1 for a full brep cut (when angles are not perpendicular it does not fully cut)
-        p1, p2 = self._adjust_p1_p2(p1, p2, p3, p4, slot_frame, beam)
 
-        # build the subtracting volume of the slot
-        slot_polyline = Polyline([p1, p2, p3, p4, p1])
+        start_frame = self._start_frame(beam, slot_frame, p3)
+        end_frame = self._end_frame(beam, slot_frame, p3)
+        top_frame = self._top_frame(beam, slot_frame, p3)
+        bottom_frame = self._bottom_frame(beam, slot_frame, p3)
+        front_frame = self._front_frame(beam, slot_frame)
+        back_frame = self._back_frame(beam, slot_frame)
 
-        subtracting_volume = Brep.from_extrusion(slot_polyline, slot_frame.zaxis * self.thickness)
-        subtracting_volume.translate(slot_frame.zaxis * - (self.thickness / 2))
+        start_plane = Plane.from_frame(start_frame)
+        end_plane = Plane.from_frame(end_frame)
+        top_plane = Plane.from_frame(top_frame)
+        bottom_plane = Plane.from_frame(bottom_frame)
+        front_plane = Plane.from_frame(front_frame)
+        back_plane = Plane.from_frame(back_frame)
 
-        return subtracting_volume
+        vertices = [
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, front_plane)), # v0
+            Point(*intersection_plane_plane_plane(bottom_plane, end_plane, front_plane)),  # v1
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, front_plane)),    # v2
+            Point(*intersection_plane_plane_plane(top_plane, start_plane, front_plane)),   # v3
+            Point(*intersection_plane_plane_plane(start_plane, bottom_plane, back_plane)), # v4
+            Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),  # v5
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),    # v6  
+            Point(*intersection_plane_plane_plane(top_plane, start_plane, back_plane)),   # v7
+        ]
+
+        faces = [
+            [0, 1, 2, 3],  # front face
+            [4, 7, 6, 5],  # back face
+            [0, 4, 5, 1],  # bottom face
+            [3, 2, 6, 7],  # top face
+            [1, 5, 6, 2],  # right face
+            [0, 3, 7, 4],  # left face
+        ]
+
+        return Polyhedron(vertices, faces)
+
+
+
+
+
+
+    def _top_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
+
+        if self.machining_limits["FaceLimitedTop"]:
+
+            if self.start_depth == 0:
+                # top_frame = slot_frame.copy()
+                # top_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                # top_frame.flip()
+                top_frame = beam.ref_sides[self.ref_side_index]
+                
+            else:
+                top_frame = slot_frame.copy()
+                top_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                top_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+                top_frame.translate(top_frame.zaxis * -(self.length))
+                top_frame.rotate(-math.radians(self.add_angle_opp_point), axis=slot_frame.zaxis, point=p3)
+                top_frame.flip()
+        else:
+            top_frame = beam.ref_sides[4]
+        
+          
+        return top_frame
+
+
+
+
+
+
+    def _bottom_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
+        
+        if self.machining_limits["FaceLimitedBottom"]:
+            if self.start_depth == 0:
+                bottom_frame = slot_frame.copy()
+                bottom_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+                bottom_frame.point = p3
+                bottom_frame.rotate(math.radians(self.angle_opp_point), axis=slot_frame.zaxis, point=p3)
+            else:
+                bottom_frame = slot_frame.copy()
+                bottom_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+            
+        else:
+            bottom_frame = beam.opp_side(self.ref_side_index)
+
+        return bottom_frame
+
+
+
+
+
+
+
+
+
+    def _start_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame :    
+        if self.machining_limits["FaceLimitedStart"]:
+            
+            if self.start_depth == 0:
+                start_frame = slot_frame.copy()
+                start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                start_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+            else:
+                # start_frame = slot_frame.copy()
+                # start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                # start_frame.flip()
+                if self.orientation == OrientationType.START:
+                    start_frame = beam.ref_sides[4]
+                    start_frame.point = beam.centerline.start
+
+                else:
+                    start_frame = slot_frame.copy()
+                    start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                    start_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+                    start_frame.point = p3
+                    start_frame.rotate(math.radians(self.angle_opp_point), axis=slot_frame.zaxis, point=p3)
+        else:
+            start_frame = beam.ref_sides[4]
+            start_frame.point = beam.centerline.start
+
+        return start_frame  
+
+
+
+
+
+
+
+            
+    def _end_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:  
+        
+        if self.machining_limits["FaceLimitedEnd"]:
+
+            if self.start_depth == 0:
+                end_frame = slot_frame.copy()
+                end_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                end_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+                end_frame.translate(end_frame.zaxis * -(self.length))
+                end_frame.rotate(-math.radians(self.add_angle_opp_point), axis=slot_frame.zaxis, point=p3)
+                end_frame.flip()
+
+            else:
+                if self.orientation == OrientationType.START:
+                    end_frame = slot_frame.copy()
+                    end_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
+                    end_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
+                    end_frame.point = p3
+                    end_frame.rotate(math.radians(self.angle_opp_point), axis=slot_frame.zaxis, point=p3)
+                else:
+                    end_frame = beam.ref_sides[5]
+                    end_frame.point = beam.centerline.end
+
+        else: 
+            end_frame = beam.ref_sides[5]
+
+        return end_frame
+
+
+
+
+
+
+    def _front_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
+        if self.machining_limits["FaceLimitedFront"]:
+
+            if self.start_depth == 0:
+                front_frame = slot_frame.copy()
+                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
+            
+            else:
+                front_frame = slot_frame.copy()
+                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
+        else:
+            front_frame = beam.front_side(self.ref_side_index)
+
+        return front_frame
+
+
+
+    def _back_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
+        if self.machining_limits["FaceLimitedBack"]:
+
+            if self.start_depth == 0:
+                back_frame = slot_frame.copy()
+                back_frame.translate(slot_frame.zaxis * -(self.thickness / 2))
+                back_frame.flip()
+            else:
+                back_frame = slot_frame.copy()
+                back_frame.translate(slot_frame.zaxis * -(self.thickness / 2))
+                back_frame.flip()
+        else:
+            back_frame = beam.back_side(self.ref_side_index)
+
+        return back_frame
+
+
+
 
 
     def _origin_point(self, beam: Beam) -> Point:
@@ -554,27 +745,6 @@ class Slot(BTLxProcessing):
 
         return slot_frame
 
-
-    def _adjust_p1_p2(self, p1, p2, p3, p4, slot_frame, beam):
-        """
-        Adjust the points P1 and P2 to ensure the slot fully cuts through the beam.
-        """
-        assert self.orientation in [OrientationType.START, OrientationType.END]
-        assert self.start_x is not None
-
-        if self.orientation == OrientationType.START:
-            adj_distance = self.start_x + 20
-        elif self.orientation == OrientationType.END:
-            adj_distance = beam.length - self.start_x + 20
-
-        adj_direction_1 = Vector.from_start_end(p4, p1).unitized()
-        angle_1 = abs(adj_direction_1.angle(slot_frame.xaxis))
-        p1_adj = p1 + adj_direction_1 * -(adj_distance/math.cos(angle_1))
-
-        adj_direction_2 = Vector.from_start_end(p3, p2).unitized()  
-        angle_2 = abs(adj_direction_2.angle(slot_frame.xaxis))
-        p2_adj = p2 + adj_direction_2 * -(adj_distance/math.cos(angle_2))
-        return p1_adj, p2_adj
 
 
 
