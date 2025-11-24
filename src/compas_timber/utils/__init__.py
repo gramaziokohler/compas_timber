@@ -643,7 +643,8 @@ def join_polyline_segments(segments, close_loop=False):
                 break
         else:
             break
-    if close_loop and points[0] != points[-1]:
+    if close_loop and not TOL.is_allclose(points[0], points[-1]):
+        print("closing loop")
         points.append(points[0])
     return Polyline(points)
 

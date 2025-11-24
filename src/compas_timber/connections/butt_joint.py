@@ -98,6 +98,7 @@ class ButtJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
         # extend the main beam
+        cutting_plane_main = None
         try:
             if self.butt_plane:
                 cutting_plane_main = self.butt_plane.transformed(self.main_beam.modeltransformation)
