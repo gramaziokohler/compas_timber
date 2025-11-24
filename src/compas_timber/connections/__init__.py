@@ -3,6 +3,7 @@ from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
+from .l_miter import MiterType
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -56,6 +57,7 @@ __all__ = [
     "TStepJoint",
     "TBirdsmouthJoint",
     "LMiterJoint",
+    "MiterType",
     "XLapJoint",
     "XNotchJoint",
     "TLapJoint",

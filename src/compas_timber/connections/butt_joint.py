@@ -130,7 +130,7 @@ class ButtJoint(Joint):
         if self.modify_cross:
             try:
                 if self.back_plane:
-                    cutting_plane_cross = self.back_plane.transformed(self.main_beam.modeltransformation)
+                    cutting_plane_cross = self.back_plane.transformed(self.cross_beam.modeltransformation)
                 else:
                     cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
                 start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
@@ -187,7 +187,7 @@ class ButtJoint(Joint):
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             if self.back_plane:
-                modification_plane = self.back_plane.transformed(self.main_beam.modeltransformation)
+                modification_plane = self.back_plane.transformed(self.cross_beam.modeltransformation)
             else:
                 modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
