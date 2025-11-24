@@ -24,6 +24,7 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -712,7 +713,7 @@ class Lap(BTLxProcessing):
         assert self.slope is not None
 
         ref_surface = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_surface, self.start_x, self.start_y)
         start_frame = Frame(p_origin, -ref_surface.frame.yaxis, ref_surface.frame.xaxis)
 
         # define angle rotation matrix
@@ -825,7 +826,7 @@ class Lap(BTLxProcessing):
         # ensure proper vertex order based on orientation
         if self.orientation == OrientationType.END:
             faces = [face[::-1] for face in faces]
-        return Polyhedron(vertices, faces).transformed(beam.transformation_to_local())
+        return Polyhedron(vertices, faces)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

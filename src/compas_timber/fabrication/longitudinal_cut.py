@@ -16,6 +16,7 @@ from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -437,7 +438,7 @@ class LongitudinalCut(BTLxProcessing):
         assert self.inclination is not None
 
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
 
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
         frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)

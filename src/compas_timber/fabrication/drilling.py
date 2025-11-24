@@ -19,6 +19,7 @@ from compas.geometry import project_point_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -355,7 +356,7 @@ class Drilling(BTLxProcessing):
         assert self.depth is not None
 
         ref_surface = element.side_as_surface(self.ref_side_index)
-        xy_world = ref_surface.point_at(self.start_x, self.start_y)
+        xy_world = planar_surface_point_at(ref_surface, self.start_x, self.start_y)
 
         # x and y flipped because we want z pointting down into the element, that'll be the cylinder long direction
         cylinder_frame = Frame(xy_world, ref_surface.zaxis, -ref_surface.yaxis)
@@ -367,7 +368,7 @@ class Drilling(BTLxProcessing):
         # scale both ends so is protrudes nicely from the surface
         # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
         drill_line = self._scaled_line_by_factor(drill_line, 1.2)
-        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5).transformed(element.transformation_to_local())
+        return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
 
     def _scaled_line_by_factor(self, line, factor):
         direction = line.vector.unitized()
