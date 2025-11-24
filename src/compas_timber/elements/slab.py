@@ -10,6 +10,7 @@ from compas.geometry import is_colinear_line_line
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 from compas.tolerance import TOL
+from numpy import flip
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import is_polyline_clockwise
@@ -243,7 +244,7 @@ class Slab(PlateGeometry, Element):
         super().transform(transformation)
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, **kwargs):
+    def from_outlines(cls, outline_a, outline_b, openings=None, design_surface_outside=False, recognize_doors=False, **kwargs):
         """
         Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
 
@@ -264,6 +265,8 @@ class Slab(PlateGeometry, Element):
         :class:`~compas_timber.elements.PlateGeometry`
             A PlateGeometry object representing the plate geometry with the given outlines.
         """
+        if design_surface_outside:
+            outline_a, outline_b = outline_b, outline_a
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
             if door_openings:
@@ -271,15 +274,17 @@ class Slab(PlateGeometry, Element):
                     openings = door_openings
                 else:
                     openings = [(o, "window") for o in openings]
-                    openings.extend([(o, "door") for o in door_openings])        
-        
+                    openings.extend([(o, "door") for o in door_openings])
+
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
         slab = cls(**kwargs)
         if openings:
+            print(openings)
             for polyline, opening_type in openings:
+                print("from_outlines opening_type", opening_type)
                 opening = Opening.from_outline_slab(polyline, slab, opening_type=opening_type)
                 slab.add_feature(opening)
         return slab
@@ -332,7 +337,7 @@ def extract_door_openings(outline_a, outline_b):
                 continue
             if not is_colinear_line_line(door_segments[0], door_segments[4], tol=TOL.RELATIVE):
                 continue
-            
+
             segs_a = []
             segs_b = []
             for i in range(len(slab_segments_a)):

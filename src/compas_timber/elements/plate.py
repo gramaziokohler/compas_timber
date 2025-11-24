@@ -126,7 +126,6 @@ class Plate(PlateGeometry, TimberElement):
         PlateGeometry.reset(self)  # reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
-        self._opening_features = None
         self.debug_info = []
 
     # ==========================================================================
