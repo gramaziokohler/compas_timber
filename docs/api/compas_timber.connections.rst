@@ -38,23 +38,13 @@ Joints
     BallNodeJoint
     TenonMortiseJoint
     YButtJoint
-    TOliGinaJoint
+    OliGinaJoint
     PlateJoint
     PlateButtJoint
     PlateLButtJoint
     PlateTButtJoint
     PlateMiterJoint
 
-Joint Interfaces
-=================
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    InterfaceLocation
-    InterfaceRole
-    PlateToPlateInterface
 
 Solvers
 =======
