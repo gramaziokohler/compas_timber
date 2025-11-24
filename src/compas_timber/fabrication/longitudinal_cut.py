@@ -16,6 +16,7 @@ from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -437,7 +438,7 @@ class LongitudinalCut(BTLxProcessing):
         assert self.inclination is not None
 
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
 
         frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
         frame.rotate(math.radians(self.inclination), ref_side.xaxis, p_origin)
@@ -584,7 +585,7 @@ class LongitudinalCutProxy(object):
         return self.unproxified()
 
     def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None):
-        self.plane = plane
+        self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.start_x = start_x
         self.length = length
@@ -605,8 +606,9 @@ class LongitudinalCutProxy(object):
 
         """
         if not self._processing:
+            plane = self.plane.transformed(self.beam.modeltransformation)
             self._processing = LongitudinalCut.from_plane_and_beam(
-                self.plane,
+                plane,
                 self.beam,
                 self.start_x,
                 self.length,
@@ -677,6 +679,7 @@ class LongitudinalCutProxy(object):
 
         """
         try:
+            # TODO: add geometry implementation for cuts that don't go full length of beam
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(self.plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")
