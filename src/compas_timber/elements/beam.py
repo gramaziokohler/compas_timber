@@ -94,7 +94,7 @@ class Beam(TimberElement):
         self._blank_extensions = {}
         self.debug_info = []
         self._blank = None
-        self._blank_extension_transformation = None
+        self.attributes["blank_extension_transformation"] = None
 
     def __repr__(self):
         # type: () -> str
@@ -394,7 +394,7 @@ class Beam(TimberElement):
         for s, e in self._blank_extensions.values():
             start = max(start, s)
             end = max(end, e)
-        self._blank_extension_transformation = Translation.from_vector(Vector.Xaxis() * start)
+        self.attributes["blank_extension_transformation"] = Translation.from_vector(Vector.Xaxis() * start)
         return start, end
 
     # ==========================================================================
