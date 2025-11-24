@@ -379,10 +379,6 @@ class Slot(BTLxProcessing):
                 "The slot subtracting volume does not intersect with the beam geometry."
                 )
 
-
-
-
-
     def volume_from_params_and_beam(self, beam: Beam) -> Polyhedron:
 
         """
@@ -467,14 +463,9 @@ class Slot(BTLxProcessing):
                 top_frame.rotate(-math.radians(self.add_angle_opp_point), axis=slot_frame.zaxis, point=p3)
                 top_frame.flip()
         else:
-            top_frame = beam.ref_sides[4]
-        
+            top_frame = beam.ref_sides[self.ref_side_index]
           
         return top_frame
-
-
-
-
 
 
     def _bottom_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
@@ -497,13 +488,6 @@ class Slot(BTLxProcessing):
         return bottom_frame
 
 
-
-
-
-
-
-
-
     def _start_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame :    
         if self.machining_limits["FaceLimitedStart"]:
             
@@ -512,9 +496,7 @@ class Slot(BTLxProcessing):
                 start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
                 start_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
             else:
-                # start_frame = slot_frame.copy()
-                # start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
-                # start_frame.flip()
+
                 if self.orientation == OrientationType.START:
                     start_frame = beam.ref_sides[4]
                     start_frame.point = beam.centerline.start
@@ -532,12 +514,6 @@ class Slot(BTLxProcessing):
         return start_frame  
 
 
-
-
-
-
-
-            
     def _end_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:  
         
         if self.machining_limits["FaceLimitedEnd"]:
@@ -567,10 +543,6 @@ class Slot(BTLxProcessing):
         return end_frame
 
 
-
-
-
-
     def _front_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
         if self.machining_limits["FaceLimitedFront"]:
 
@@ -585,7 +557,6 @@ class Slot(BTLxProcessing):
             front_frame = beam.front_side(self.ref_side_index)
 
         return front_frame
-
 
 
     def _back_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
@@ -603,9 +574,6 @@ class Slot(BTLxProcessing):
             back_frame = beam.back_side(self.ref_side_index)
 
         return back_frame
-
-
-
 
 
     def _origin_point(self, beam: Beam) -> Point:
