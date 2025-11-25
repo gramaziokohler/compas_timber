@@ -6,6 +6,7 @@ from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polygon
+from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import is_polygon_in_polygon_xy
 from compas.geometry import offset_polygon
@@ -272,6 +273,7 @@ class PlateStock(Stock):
 
         # Initialize remaining boundary as full stock rectangle
         self._remaining_boundary = Polygon([Point(0, 0, 0), Point(dimensions[0], 0, 0), Point(dimensions[0], dimensions[1], 0), Point(0, dimensions[1], 0)])
+        self._skyline = Polyline([[0, 0, 0], [self.dimensions[0], 0, 0]])  # setup skyline for nesting algorithms
 
     @property
     def __data__(self):
@@ -767,17 +769,184 @@ class PlateNester(object):
     @staticmethod
     def _fast_skyline_nest(plates, stock, spacing=0.0):
         # Fast algorithm using bounding boxes and skyline approach.
-        # TODO: Implement skyline algorithm for 2D plate
-        # TODO: Algorithm needs to find valid Transformation (position + rotation)
-        # TODO: Then call stock.add_element(plate, transformation)
-        # Placeholder implementation
+        # Uses plate blank rectangles (xsize, ysize) for efficient packing.
+        # Maintains a skyline profile to track the top edge of placed plates.
+
+        # Sort plates by area (largest first) for better packing
+        sorted_plates = sorted(plates, key=lambda p: p.blank.xsize * p.blank.ysize, reverse=True)
+
         stocks = []
-        for plate in plates:
-            new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
-            # TODO: Missing transformation parameter - should pass Transformation()
-            new_stock.add_element(plate)
-            stocks.append(new_stock)
+        for plate in sorted_plates:
+            # Get plate blank dimensions
+            plate_width = plate.blank.xsize
+            plate_height = plate.blank.ysize
+
+            placed = False
+            best_stock = None
+            best_position = None
+            best_waste = float("inf")
+
+            # Try to fit in existing stocks
+            for stock_piece in stocks:
+                # Try to find position using skyline
+                position, waste = PlateNester._find_skyline_position(stock_piece, plate_width, plate_height, spacing)
+
+                if position is not None and waste < best_waste:
+                    best_stock = stock_piece
+                    best_position = position
+                    best_waste = waste
+
+            # Place plate in best stock found
+            if best_stock is not None:
+                # Create transformation from position
+                transformation = Transformation.from_frame(Frame(best_position, [1, 0, 0], [0, 1, 0]))
+                best_stock.add_element(plate, transformation)
+
+                # Update skyline for this stock
+                PlateNester._update_skyline(best_stock, best_position, plate_width, plate_height)
+                placed = True
+
+            # Create new stock if not placed
+            if not placed:
+                new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+
+                # Place at origin
+                frame = Frame(Point(0, 0, 0), [1, 0, 0], [0, 1, 0])
+                new_stock.add_element(plate, frame)
+
+                # Update skyline
+                PlateNester._update_skyline(new_stock, Point(0, 0, 0), plate_width, plate_height)
+                stocks.append(new_stock)
+
         return stocks
+
+    @staticmethod
+    def _find_skyline_position(stock, plate_width, plate_height, spacing):
+        # Find the best position on the skyline for a plate.
+        # Returns (position, waste) or (None, inf) if no valid position found.
+
+        best_position = None
+        best_waste = float("inf")
+
+        # Try each skyline segment
+        for line in stock._skyline.lines:
+            x = line.start.x
+            y = line.start.y
+
+            # Check if plate fits at this position
+            if x + plate_width + spacing > stock.dimensions[0]:
+                continue  # Doesn't fit horizontally
+            if y + plate_height + spacing > stock.dimensions[1]:
+                continue  # Doesn't fit vertically
+
+            # Calculate waste (height difference to next skyline segment)
+            waste = PlateNester._calculate_skyline_waste(stock._skyline, x, plate_width, y)
+
+            # Create test position
+            test_position = Point(x, y, 0)
+
+            # Create test rectangle polygon for validation
+            test_rect = Polygon([Point(x, y, 0), Point(x + plate_width, y, 0), Point(x + plate_width, y + plate_height, 0), Point(x, y + plate_height, 0)])
+
+            # Check if this rectangle fits in remaining boundary
+            if is_polygon_in_polygon_xy(test_rect, stock._remaining_boundary):
+                if waste < best_waste:
+                    best_position = test_position
+                    best_waste = waste
+
+        return best_position, best_waste
+
+    @staticmethod
+    def _calculate_skyline_waste(skyline, x, width, base_y):
+        # Calculate the wasted vertical space when placing a plate.
+        # This is the sum of height differences in the covered skyline region.
+
+        waste = 0
+        covered_width = 0
+
+        for line in skyline.lines:
+            segment_x = line.start.x
+            segment_y = line.start.y
+            segment_width = line.length
+
+            # Check if this segment is in the covered region
+            if segment_x >= x + width:
+                break  # Past the covered region
+
+            if segment_x + segment_width <= x:
+                continue  # Before the covered region
+
+            # This segment overlaps with the placement region
+            overlap_start = max(segment_x, x)
+            overlap_end = min(segment_x + segment_width, x + width)
+            overlap_width = overlap_end - overlap_start
+
+            # Add height difference as waste
+            height_diff = abs(segment_y - base_y)
+            waste += height_diff * overlap_width
+            covered_width += overlap_width
+
+        return waste
+
+    @staticmethod
+    def _update_skyline(stock, position, plate_width, plate_height):
+        # Update the skyline profile after placing a plate.
+        x = position.x
+        new_y = position.y + plate_height
+
+        # Build new skyline points
+        new_points = []
+
+        for line in stock._skyline.lines:
+            segment_x = line.start.x
+            segment_y = line.start.y
+            segment_width = line.length
+            segment_end_x = segment_x + segment_width
+
+            # Segment is completely before the plate
+            if segment_end_x <= x:
+                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
+                    new_points.append([segment_x, segment_y, 0])
+                new_points.append([segment_end_x, segment_y, 0])
+                continue
+
+            # Segment is completely after the plate
+            if segment_x >= x + plate_width:
+                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
+                    new_points.append([segment_x, segment_y, 0])
+                new_points.append([segment_end_x, segment_y, 0])
+                continue
+
+            # Segment overlaps with the plate - split it
+            # Left part (before plate)
+            if segment_x < x:
+                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
+                    new_points.append([segment_x, segment_y, 0])
+                new_points.append([x, segment_y, 0])
+
+            # Middle part (covered by plate)
+            if not new_points or new_points[-1][1] != new_y or new_points[-1][0] != x:
+                # Add vertical step if needed
+                if new_points and new_points[-1][0] == x and new_points[-1][1] != new_y:
+                    new_points.append([x, new_y, 0])
+                elif not new_points or new_points[-1][0] != x:
+                    new_points.append([x, new_y, 0])
+            new_points.append([x + plate_width, new_y, 0])
+
+            # Right part (after plate)
+            if segment_end_x > x + plate_width:
+                # Add vertical step down if needed
+                if segment_y != new_y:
+                    new_points.append([x + plate_width, segment_y, 0])
+                new_points.append([segment_end_x, segment_y, 0])
+
+        # Remove duplicate consecutive points
+        cleaned_points = []
+        for pt in new_points:
+            if not cleaned_points or cleaned_points[-1] != pt:
+                cleaned_points.append(pt)
+
+        stock._skyline = Polyline(cleaned_points)
 
     @staticmethod
     def _optimized_bottomleft_nest(plates, stock, spacing=0.0):
