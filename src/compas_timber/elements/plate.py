@@ -1,3 +1,4 @@
+import re
 from compas.geometry import Box
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -111,7 +112,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False, ref_side_index=0)
         return [self._outline_feature] + self._features
 
     @features.setter

@@ -160,9 +160,16 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     assert tol.is_close(instance_a.inclination, instance_b.inclination)
     assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
 
-    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a).transformed(transformation)
+    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a)
+    assert is_point_on_plane(cut_plane_a.point, plane, tol=tol.absolute)
+    assert plane.normal == cut_plane_a.normal
+
+    plane.transform(transformation)
+    cut_plane_a.transform(transformation)
     cut_plane_b = instance_b.plane_from_params_and_beam(beam_b)
 
+    assert tol.is_allclose(plane.normal, cut_plane_b.normal)
+    assert is_point_on_plane(plane.point, cut_plane_b, tol=tol.absolute)
     assert tol.is_allclose(cut_plane_a.normal, cut_plane_b.normal)
     assert tol.is_allclose(cut_plane_a.point, cut_plane_b.point)
 

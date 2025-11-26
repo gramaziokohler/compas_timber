@@ -375,6 +375,10 @@ class JackRafterCutProxy(object):
         return self.unproxified()
 
     def __init__(self, plane, beam, ref_side_index=0):
+        print("initializing JackRafterCutProxy")
+        print("with plane:", plane)
+        print("beam frame:", beam.frame)
+
         self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.ref_side_index = ref_side_index
@@ -389,6 +393,10 @@ class JackRafterCutProxy(object):
 
         """
         if not self._processing:
+            print("unproxifying JackRafterCutProxy")
+            print("plane=", self.plane)
+            print("beam frame:", self.beam.frame)
+
             plane = self.plane.transformed(self.beam.modeltransformation)
             self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index)
         return self._processing
@@ -435,7 +443,9 @@ class JackRafterCutProxy(object):
 
         """
         # type: (Brep, Beam) -> Brep
-
+        print("applying JackRafterCutProxy")
+        print("plane=", self.plane)
+        print("beam frame:", self.beam.frame)
         try:
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
