@@ -168,6 +168,11 @@ class BeamStock(Stock):
         # Get remaining unused length of the stock piece.
         return self.length - self._current_x_position
 
+    @property
+    def consoles_positions(self):
+        """Get positions of consoles in the stock based on assigned beams."""
+        return self._consoles_positions
+
     def can_fit_element(self, beam):
         """
         Check if a beam can fit in the remaining space.
@@ -248,6 +253,50 @@ class BeamStock(Stock):
         position_frame.point.x = self._current_x_position
         return position_frame
 
+    def set_consoles_positions(self, model, threshold: float = 100.0, step: float = 5.0):
+            """Compute and store console positions per assigned beam."""
+
+            from optimalpositioner import consoles_positions as _cp
+
+            count = len(self.element_data) if isinstance(self.element_data, dict) else 0
+            mapping = {}
+            for guid, data in (self.element_data or {}).items():
+                key = data.get("key")
+                beam_obj = None
+                for b in model.beams or []:
+                    if getattr(b, 'graphnode', None) == key or getattr(b, 'key', None) == key:
+                        beam_obj = b
+                        break
+                if beam_obj is None:
+                    continue
+                positions = _cp(beam_obj, threshold=threshold, step=step, beams_on_stock=count)
+                mapping[guid] = positions
+
+            self._consoles_positions = mapping
+
+            for guid, positions in mapping.items():
+                key = str(guid)
+                ed = self.element_data.get(key) or self.element_data.get(guid)
+                if ed is None:
+                    self.element_data[key] = {"console_positions": positions}
+                    continue
+                if isinstance(ed, dict):
+                    new_ed = {}
+                    inserted = False
+                    for k, v in ed.items():
+                        if k == 'console_positions':
+                            continue
+                        new_ed[k] = v
+                        if k == 'length':
+                            new_ed['console_positions'] = positions
+                            inserted = True
+                    if not inserted:
+                        new_ed['console_positions'] = positions
+                    self.element_data[key] = new_ed
+                else:
+                    self.element_data[key] = {"console_positions": positions}
+
+            return mapping
 
 class PlateStock(Stock):
     """
@@ -398,17 +447,22 @@ class NestingResult(Data):
                 )
                 beam_keys = []
                 lengths = []
+                consoles_positions = []
                 for data in stock.element_data.values():
                     key = data.get("key", None)
                     length = data.get("length", None)
                     beam_keys.append(key)
                     lengths.append(round(length, self.tolerance.precision))
+                    consoles_positions.append(data.get("console_positions", None))
                 waste = stock.length - sum(lengths) if lengths else stock.length
+                valid_console_positions = [cp for cp in consoles_positions if cp is not None]
                 # Formatted output
                 lines.append(f"BeamKeys: {beam_keys}")
                 lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
                 lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
                 lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
+                if valid_console_positions:
+                    lines.append(f"ConsolePositions({self.tolerance.unit}): {valid_console_positions}")
                 lines.append("--------")
             else:
                 raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
@@ -465,7 +519,7 @@ class BeamNester(object):
                 raise TypeError(f"All items in stock_catalog must be BeamStock instances. Item at index {i} is {type(stock).__name__}")
         self._stock_catalog = value
 
-    def nest(self, fast=True):
+    def nest(self, fast=True, consoles=False):
         """
         Perform 1D nesting of all beams in the model.
 
@@ -474,7 +528,8 @@ class BeamNester(object):
         fast : bool, optional
             Whether to use a fast nesting algorithm (First Fit Decreasing) or a more
             accurate one (Best Fit Decreasing). Default is True (fast).
-
+        consoles : bool, optional
+            Whether to consider console positions in the nesting process. Default is False.
         Returns
         -------
         :class:`NestingResult`
@@ -505,6 +560,11 @@ class BeamNester(object):
             # Nest ALL beams together
             stocks = self._nest_beam_collection(self.model.beams, fast)
             nesting_stocks.extend(stocks)
+
+        # Populate consoles positions on each stock now that assignments are done
+        for stock in nesting_stocks:
+            if consoles:
+                stock.set_consoles_positions(self.model)
 
         return NestingResult(nesting_stocks)
 
