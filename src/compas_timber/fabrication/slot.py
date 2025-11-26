@@ -358,16 +358,12 @@ class Slot(BTLxProcessing):
             The resulting geometry after processing
 
         """
-        # get the volume to be removed
-
-
         subtraction_volume = self.volume_from_params_and_beam(beam)
         subtraction_volume.transform(beam.transformation_to_local())
         subtraction_volume = Brep.from_mesh(subtraction_volume.to_mesh())
         if self.orientation == OrientationType.END:
             subtraction_volume.flip()
 
-        # perform the boolean operation, subtract the volume of the slot from the beam geometry
         try:
             cutted_geometry = geometry - subtraction_volume
             return cutted_geometry
@@ -380,7 +376,6 @@ class Slot(BTLxProcessing):
                 )
 
     def volume_from_params_and_beam(self, beam: Beam) -> Polyhedron:
-
         """
         Computes the cutting volume of the slot based on the machining limits and parameters.
 
@@ -393,16 +388,13 @@ class Slot(BTLxProcessing):
         -------
         :class:`~compas.geometry.Polyhedron`
             The cutting volume of the slot.
-        """
-
-        
+        """        
         origin_point = self._origin_point(beam)
         origin_frame = self._origin_frame(beam)
         p1 = self._find_p1(origin_point, origin_frame)
         slot_frame = self._compute_slot_frame(p1, origin_frame)
         p4 = self._find_p4(p1, slot_frame)
         p3 = self._find_p3(p1, p4, slot_frame)
-
 
         start_frame = self._start_frame(beam, slot_frame, p3)
         end_frame = self._end_frame(beam, slot_frame, p3)
@@ -428,7 +420,6 @@ class Slot(BTLxProcessing):
             Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),    # v6  
             Point(*intersection_plane_plane_plane(top_plane, start_plane, back_plane)),   # v7
         ]
-
         faces = [
             [0, 1, 2, 3],  # front face
             [4, 7, 6, 5],  # back face
@@ -437,24 +428,13 @@ class Slot(BTLxProcessing):
             [1, 5, 6, 2],  # right face
             [0, 3, 7, 4],  # left face
         ]
-
         return Polyhedron(vertices, faces)
-
-
-
-
-
 
     def _top_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
 
         if self.machining_limits["FaceLimitedTop"]:
-
             if self.start_depth == 0:
-                # top_frame = slot_frame.copy()
-                # top_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
-                # top_frame.flip()
                 top_frame = beam.ref_sides[self.ref_side_index]
-                
             else:
                 top_frame = slot_frame.copy()
                 top_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
@@ -464,9 +444,7 @@ class Slot(BTLxProcessing):
                 top_frame.flip()
         else:
             top_frame = beam.ref_sides[self.ref_side_index]
-          
         return top_frame
-
 
     def _bottom_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
         
@@ -480,13 +458,10 @@ class Slot(BTLxProcessing):
             else:
                 bottom_frame = slot_frame.copy()
                 bottom_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
-                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
-            
+                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)   
         else:
             bottom_frame = beam.opp_side(self.ref_side_index)
-
         return bottom_frame
-
 
     def _start_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame :    
         if self.machining_limits["FaceLimitedStart"]:
@@ -500,7 +475,6 @@ class Slot(BTLxProcessing):
                 if self.orientation == OrientationType.START:
                     start_frame = beam.ref_sides[4]
                     start_frame.point = beam.centerline.start
-
                 else:
                     start_frame = slot_frame.copy()
                     start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
@@ -510,9 +484,7 @@ class Slot(BTLxProcessing):
         else:
             start_frame = beam.ref_sides[4]
             start_frame.point = beam.centerline.start
-
         return start_frame  
-
 
     def _end_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:  
         
@@ -525,7 +497,6 @@ class Slot(BTLxProcessing):
                 end_frame.translate(end_frame.zaxis * -(self.length))
                 end_frame.rotate(-math.radians(self.add_angle_opp_point), axis=slot_frame.zaxis, point=p3)
                 end_frame.flip()
-
             else:
                 if self.orientation == OrientationType.START:
                     end_frame = slot_frame.copy()
@@ -536,28 +507,21 @@ class Slot(BTLxProcessing):
                 else:
                     end_frame = beam.ref_sides[5]
                     end_frame.point = beam.centerline.end
-
         else: 
             end_frame = beam.ref_sides[5]
-
         return end_frame
-
 
     def _front_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
         if self.machining_limits["FaceLimitedFront"]:
-
             if self.start_depth == 0:
                 front_frame = slot_frame.copy()
-                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
-            
+                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))      
             else:
                 front_frame = slot_frame.copy()
                 front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
         else:
             front_frame = beam.front_side(self.ref_side_index)
-
         return front_frame
-
 
     def _back_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
         if self.machining_limits["FaceLimitedBack"]:
@@ -575,7 +539,6 @@ class Slot(BTLxProcessing):
 
         return back_frame
 
-
     def _origin_point(self, beam: Beam) -> Point:
         """
         Computes the origin point of the reference side of the beam.
@@ -586,7 +549,6 @@ class Slot(BTLxProcessing):
         origin_point = ref_side.point_at(0, 0)
         return origin_point
 
-
     def _origin_frame(self, beam: Beam) -> Frame:
         """
         Computes the origin frame of the reference side of the beam.
@@ -596,8 +558,6 @@ class Slot(BTLxProcessing):
         ref_side = beam.side_as_surface(self.ref_side_index)
         origin_frame = ref_side.frame_at(0, 0)
         return origin_frame
-
-
 
     def _find_p1(self, origin_point: Point, origin_frame: Frame) -> Point:
         """
@@ -612,8 +572,6 @@ class Slot(BTLxProcessing):
             + origin_frame.yaxis * self.start_y
             + origin_frame.zaxis * -self.start_depth)
         return p1
-
-
 
     def _find_p2(self, p1: Point, p3: Point, p4: Point, slot_frame: Frame) -> Point:
         """
@@ -637,8 +595,6 @@ class Slot(BTLxProcessing):
         p2 = Point(*intersection_point)
         return p2
 
-
-
     def _find_p3(self, p1: Point, p4: Point, slot_frame: Frame) -> Point:
         """
         Compute the position of the point P3 of ths slot (see design2machine pdf for reference).
@@ -656,10 +612,7 @@ class Slot(BTLxProcessing):
         vector_to_p3.unitize()
         # create P3
         p3 = (p4 + vector_to_p3 * distance_to_p3_from_p4)
-
         return p3
-
-
 
     def _find_p4(self, p1: Point, slot_frame: Frame) -> Point:
         """
@@ -668,15 +621,12 @@ class Slot(BTLxProcessing):
         assert self.angle_ref_point is not None
         assert self.depth >= 0
 
-
         angle_ref_point_radians = math.radians(self.angle_ref_point)
         # find P4 by the angle_ref_point in P1 and depth
         distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
         vector_to_p4 = slot_frame.yaxis.rotated(-angle_ref_point_radians, axis=slot_frame.zaxis, point=slot_frame.point).unitized()
         p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
         return p4    
-
-
 
     def _compute_slot_frame(self, p1: Point, origin_frame: Frame) -> Frame:
         """ 
@@ -695,8 +645,6 @@ class Slot(BTLxProcessing):
                 slot_frame_untrasformed = Frame(p1, xaxis=origin_frame.xaxis, yaxis=origin_frame.zaxis)
             elif self.orientation == OrientationType.END:
                 slot_frame_untrasformed = Frame(p1, xaxis=-origin_frame.xaxis, yaxis=origin_frame.zaxis)
-        
-       
         # angle and inclination to radians
         angle_radians = math.radians(self.angle)
         inclination_radians = math.radians(self.inclination - 90) # adjusting for this reference frame
@@ -704,16 +652,12 @@ class Slot(BTLxProcessing):
         if self.orientation == OrientationType.END:
             angle_radians *= -1
             inclination_radians *= -1   
-       
         # set the angle parameter
-        slot_frame = slot_frame_untrasformed.rotated(-angle_radians, axis=slot_frame_untrasformed.xaxis, point=p1)
-       
+        slot_frame = slot_frame_untrasformed.rotated(-angle_radians, axis=slot_frame_untrasformed.xaxis, point=p1)       
         # set the inclination parameter
         slot_frame = slot_frame.rotated(inclination_radians, axis=slot_frame_untrasformed.yaxis, point=p1)
 
         return slot_frame
-
-
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
