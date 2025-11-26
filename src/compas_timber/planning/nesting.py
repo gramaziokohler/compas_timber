@@ -237,14 +237,14 @@ class BeamStock(Stock):
     def _get_position_frame(self, beam):
         # Get the position frame for a beam that is being added to this stock.
         # Orientation is based on the beam's cross-section relative to the stock's.
-        beam_cross_section = tuple([beam.width, beam.height])
-        # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
-        if TOL.is_close(self.width, beam.width) and TOL.is_close(self.height, beam.height):
-            position_frame = Frame.worldXY()
-        # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
-        else:
-            position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
-            position_frame.point.y = self.height  # offset in Y by stock height
+        # beam_cross_section = tuple([beam.width, beam.height])
+        # # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
+        # if TOL.is_close(self.width, beam.width) and TOL.is_close(self.height, beam.height):
+        position_frame = Frame.worldXY()
+        # # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
+        # else:
+        #     position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
+        #     position_frame.point.y = self.height  # offset in Y by stock height
         position_frame.point.x = self._current_x_position
         return position_frame
 
