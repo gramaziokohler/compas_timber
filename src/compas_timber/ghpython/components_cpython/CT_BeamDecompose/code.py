@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.2
+# r: compas_timber>=1.0.3
 """Extracts main geometric characteristics of a Beam."""
 
 # flake8: noqa

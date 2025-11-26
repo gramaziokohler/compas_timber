@@ -1,0 +1,57 @@
+{
+    "name": "BTLxMachiningLimits",
+    "nickname": "BTLxMachiningLimits",
+    "category": "COMPAS Timber",
+    "subcategory": "06 Features",
+    "description": "Machining limits dictinary for BTLx from Parameters",
+    "exposure": 4,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "face_limited_start",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "face_limited_end",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "face_limited_front",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "face_limited_back",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "face_limited_top",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            },
+            {
+                "name": "face_limited_bottom",
+                "description": "MachiningLimit value",
+                "typeHintID": "bool",
+                "scriptParamAccess": 0
+            }
+
+        ],
+        "outputParameters": [
+            {
+                "name": "machining_limits",
+                "description": "MachiningLimits object"
+            }
+        ]
+    }
+}
