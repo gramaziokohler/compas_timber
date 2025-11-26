@@ -5,10 +5,12 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Line
 from compas.geometry import Vector
+from compas.geometry import Polyhedron
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Slot
 from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import MachiningLimits
 
 
 @pytest.fixture
@@ -189,3 +191,168 @@ def test_slot_scaled():
     assert scaled_slot.depth == slot.depth * 2.0
     assert scaled_slot.thickness == slot.thickness * 2.0
     assert scaled_slot.ref_side_index == slot.ref_side_index
+
+
+def test_slot_apply_points():
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
+    ml = MachiningLimits()
+    slot = slot = Slot(
+        orientation=OrientationType.START,
+        start_x=10,
+        start_y=12,
+        start_depth=40,
+        angle=25.0,
+        inclination=80.0,
+        length=10,
+        depth=23,
+        thickness=5,
+        angle_ref_point=110.0,
+        angle_opp_point=65.0,
+        add_angle_opp_point=10.0,
+        machining_limits=ml.limits,
+        ref_side_index=2,
+    )
+
+    origin_point = slot._origin_point(beam)
+    origin_frame = slot._origin_frame(beam)
+    p1 = slot._find_p1(origin_point, origin_frame)
+    slot_frame = slot._compute_slot_frame(p1, origin_frame)
+    p4 = slot._find_p4(p1, slot_frame)
+    p3 = slot._find_p3(p1, p4, slot_frame)
+    p2 = slot._find_p2(p1, p3, p4, slot_frame)
+
+    assert origin_point == Point(x=0.000, y=-15.000, z=25.000)
+    assert origin_frame == Frame(point=Point(x=0.000, y=-15.000, z=25.000), xaxis=Vector(x=1.000, y=0.000, z=0.000), yaxis=Vector(x=0.000, y=1.000, z=-0.000))
+    assert slot_frame == Frame(point=Point(x=10.000, y=-3.000, z=-15.000), xaxis=Vector(x=0.985, y=-0.174, z=0.000), yaxis=Vector(x=0.073, y=0.416, z=0.906))
+    assert p1 == Point(x=10.000, y=-3.000, z=-15.000)
+    assert p2 == Point(x=11.263, y=4.165, z=0.601)
+    assert p3 == Point(x=40.292, y=-8.586, z=-15.516)
+    assert p4 == Point(x=32.036, y=-10.478, z=-22.587)
+
+
+def test_slot_apply_frames():
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
+    ml = MachiningLimits()
+    slot = slot = Slot(
+        orientation=OrientationType.START,
+        start_x=10,
+        start_y=12,
+        start_depth=40,
+        angle=25.0,
+        inclination=80.0,
+        length=10,
+        depth=23,
+        thickness=5,
+        angle_ref_point=110.0,
+        angle_opp_point=65.0,
+        add_angle_opp_point=10.0,
+        machining_limits=ml.limits,
+        ref_side_index=2,
+    )
+
+    origin_point = slot._origin_point(beam)
+    origin_frame = slot._origin_frame(beam)
+    p1 = slot._find_p1(origin_point, origin_frame)
+    slot_frame = slot._compute_slot_frame(p1, origin_frame)
+    p4 = slot._find_p4(p1, slot_frame)
+    p3 = slot._find_p3(p1, p4, slot_frame)
+    top_frame = slot._top_frame(beam, slot_frame, p3)
+    bottom_frame = slot._bottom_frame(beam, slot_frame, p3)
+    start_frame = slot._start_frame(beam, slot_frame, p3)
+    end_frame = slot._end_frame(beam, slot_frame, p3)
+    front_frame = slot._front_frame(beam, slot_frame)
+    back_frame = slot._back_frame(beam, slot_frame)
+
+    assert top_frame == Frame(point=Point(x=16.510, y=1.860, z=-2.311), xaxis=Vector(x=0.157, y=0.893, z=-0.423), yaxis=Vector(x=-0.816, y=0.358, z=0.453))
+    assert bottom_frame == Frame(point=Point(x=10.000, y=-3.000, z=-15.000), xaxis=Vector(x=0.157, y=0.893, z=-0.423), yaxis=Vector(x=0.900, y=-0.306, z=-0.310))
+    assert start_frame == Frame(point=Point(x=0.000, y=0.000, z=0.000), xaxis=Vector(x=0.000, y=-1.000, z=0.000), yaxis=Vector(x=0.000, y=0.000, z=1.000))
+    assert end_frame == Frame(point=Point(x=40.292, y=-8.586, z=-15.516), xaxis=Vector(x=0.157, y=0.893, z=-0.423), yaxis=Vector(x=0.748, y=0.172, z=0.641))
+    assert front_frame == Frame(point=Point(x=9.607, y=-5.231, z=-13.943), xaxis=Vector(x=0.985, y=-0.174, z=0.000), yaxis=Vector(x=0.073, y=0.416, z=0.906))
+    assert back_frame == Frame(point=Point(x=10.393, y=-0.769, z=-16.057), xaxis=Vector(x=0.985, y=-0.174, z=0.000), yaxis=Vector(x=-0.073, y=-0.416, z=-0.906))
+
+    # with start_depth == 0
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
+    ml = MachiningLimits()
+    slot = slot = Slot(
+        orientation=OrientationType.START,
+        start_x=10,
+        start_y=12,
+        start_depth=0,
+        angle=25.0,
+        inclination=80.0,
+        length=10,
+        depth=23,
+        thickness=5,
+        angle_ref_point=110.0,
+        angle_opp_point=65.0,
+        add_angle_opp_point=10.0,
+        machining_limits=ml.limits,
+        ref_side_index=2,
+    )
+
+    origin_point = slot._origin_point(beam)
+    origin_frame = slot._origin_frame(beam)
+    p1 = slot._find_p1(origin_point, origin_frame)
+    slot_frame = slot._compute_slot_frame(p1, origin_frame)
+    p4 = slot._find_p4(p1, slot_frame)
+    p3 = slot._find_p3(p1, p4, slot_frame)
+    top_frame = slot._top_frame(beam, slot_frame, p3)
+    bottom_frame = slot._bottom_frame(beam, slot_frame, p3)
+    start_frame = slot._start_frame(beam, slot_frame, p3)
+    end_frame = slot._end_frame(beam, slot_frame, p3)
+    front_frame = slot._front_frame(beam, slot_frame)
+    back_frame = slot._back_frame(beam, slot_frame)
+
+    assert top_frame == Frame(point=Point(x=0.000, y=-15.000, z=25.000), xaxis=Vector(x=1.000, y=0.000, z=0.000), yaxis=Vector(x=0.000, y=1.000, z=-0.000))
+    assert bottom_frame == Frame(point=Point(x=9.484, y=-8.586, z=-5.292), xaxis=Vector(x=-0.423, y=0.893, z=-0.157), yaxis=Vector(x=0.641, y=0.172, z=-0.748))
+    assert start_frame == Frame(point=Point(x=10.000, y=-3.000, z=25.000), xaxis=Vector(x=-0.423, y=0.893, z=-0.157), yaxis=Vector(x=-0.310, y=-0.306, z=-0.900))
+    assert end_frame == Frame(point=Point(x=22.689, y=1.860, z=18.490), xaxis=Vector(x=-0.423, y=0.893, z=-0.157), yaxis=Vector(x=0.453, y=0.358, z=0.816))
+    assert front_frame == Frame(point=Point(x=11.057, y=-5.231, z=25.393), xaxis=Vector(x=0.000, y=-0.174, z=-0.985), yaxis=Vector(x=0.906, y=0.416, z=-0.073))
+    assert back_frame == Frame(point=Point(x=8.943, y=-0.769, z=24.607), xaxis=Vector(x=0.000, y=-0.174, z=-0.985), yaxis=Vector(x=-0.906, y=-0.416, z=0.073))
+
+
+
+
+
+
+
+def test_slot_volume_subtracting_polyhedron(beam):
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
+    ml = MachiningLimits()
+    slot = slot = Slot(
+        orientation=OrientationType.START,
+        start_x=10,
+        start_y=12,
+        start_depth=40,
+        angle=25.0,
+        inclination=80.0,
+        length=10,
+        depth=23,
+        thickness=5,
+        angle_ref_point=110.0,
+        angle_opp_point=65.0,
+        add_angle_opp_point=10.0,
+        machining_limits=ml.limits,
+        ref_side_index=2,
+    )
+
+    polyhedron = slot.volume_from_params_and_beam(beam)
+    comparing_polyhdron = Polyhedron(
+        vertices=[
+            ["0.000", "-1.971", "-10.636"],
+            ["31.643", "-12.709", "-21.530"],
+            ["39.899", "-10.817", "-14.459"],
+            ["0.000", "6.708", "7.693"],
+            ["0.000", "2.758", "-12.478"],
+            ["32.430", "-8.247", "-23.644"],
+            ["40.686", "-6.354", "-16.572"],
+            ["0.000", "11.516", "6.017"],
+        ],
+        faces=[[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [3, 2, 6, 7], [1, 5, 6, 2], [0, 3, 7, 4]],
+    )
+
+    vertices_points = [Point(*vertex) for vertex in polyhedron.vertices]
+    comparing_vertices_points = [Point(*vertex) for vertex in comparing_polyhdron.vertices]
+
+    assert polyhedron.faces == comparing_polyhdron.faces
+    assert vertices_points == comparing_vertices_points

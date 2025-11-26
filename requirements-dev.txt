@@ -9,6 +9,7 @@ sphinxcontrib-mermaid
 twine
 wheel
 pytest-mock
+pytest>=8.0
 build
 pythonnet
 tomlkit
