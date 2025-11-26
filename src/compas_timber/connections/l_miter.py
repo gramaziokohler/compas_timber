@@ -108,7 +108,6 @@ class LMiterJoint(Joint):
 
 
         if miter_plane:
-            print("miter_plane", miter_plane)
             miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
         if trim_plane_a:
             trim_plane_a = trim_plane_a.transformed(beam_a.modeltransformation.inverse())
