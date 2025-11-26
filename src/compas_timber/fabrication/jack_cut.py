@@ -8,7 +8,7 @@ from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -173,7 +173,7 @@ class JackRafterCut(BTLxProcessing):
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
 
-        start_x = distance_point_point(ref_edge.point, point_start_x)
+        start_x = dot_vectors(Vector.from_start_end(ref_edge.point, point_start_x), ref_side.xaxis)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
