@@ -232,6 +232,18 @@ class Slab(PlateGeometry, Element):
         return geometry
 
     @reset_computed
+    def reset_computed_properties(self):
+        """Applies a transformation to the element.
+
+        Parameters
+        ----------
+        transformation : :class:`compas.geometry.Transformation`
+            The transformation to apply.
+
+        """
+        pass
+
+    @reset_computed
     def transform(self, transformation):
         """Applies a transformation to the element.
 
@@ -282,9 +294,7 @@ class Slab(PlateGeometry, Element):
         kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
         slab = cls(**kwargs)
         if openings:
-            print(openings)
             for polyline, opening_type in openings:
-                print("from_outlines opening_type", opening_type)
                 opening = Opening.from_outline_slab(polyline, slab, opening_type=opening_type)
                 slab.add_feature(opening)
         return slab

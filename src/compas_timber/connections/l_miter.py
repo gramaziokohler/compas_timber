@@ -62,10 +62,14 @@ class LMiterJoint(Joint):
         data["beam_a_guid"] = self.beam_a_guid
         data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
+        data["miter_type"] = self.miter_type
         data["miter_plane"] = self.miter_plane
+        data["clean"] = self.clean
+        data["trim_plane_a"] = self.trim_plane_a
+        data["trim_plane_b"] = self.trim_plane_b
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, trim_plane_a=None, trim_plane_b=None, **kwargs):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -74,14 +78,19 @@ class LMiterJoint(Joint):
         self.miter_plane = miter_plane
         self.miter_type = miter_type
         self.cutoff = cutoff
+        self.clean = clean
+        self.trim_plane_a = trim_plane_a
+        self.trim_plane_b = trim_plane_b
         self.features = []
+
+
 
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
 
 
-    def create(model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, **kwargs):
+    def create(model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, trim_plane_a=None, trim_plane_b=None, **kwargs):
         """Creates an L-Butt joint and associates it with the provided model.
 
         Parameters
@@ -97,10 +106,16 @@ class LMiterJoint(Joint):
         small_beam_butts : bool, default False
             If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed."""
 
-        if miter_plane:
-            miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
 
-        joint = LMiterJoint(beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, **kwargs)
+        if miter_plane:
+            print("miter_plane", miter_plane)
+            miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
+        if trim_plane_a:
+            trim_plane_a = trim_plane_a.transformed(beam_a.modeltransformation.inverse())
+        if trim_plane_b:
+            trim_plane_b = trim_plane_b.transformed(beam_b.modeltransformation.inverse())
+
+        joint = LMiterJoint(beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, trim_plane_a=trim_plane_a, trim_plane_b=trim_plane_b, **kwargs)
         model.add_joint(joint)
         return joint
 
@@ -110,7 +125,6 @@ class LMiterJoint(Joint):
         pln_a = miter_plane
         pln_b = Plane(miter_plane.point, -miter_plane.normal)
         if dot_vectors(Vector.from_start_end(miter_plane.point, self.beam_a.centerline.midpoint), miter_plane.normal) > 0:
-            print("Swapping planes")
             pln_a , pln_b = pln_b, pln_a
         return Frame.from_plane(pln_a), Frame.from_plane(pln_b)
 
@@ -133,7 +147,6 @@ class LMiterJoint(Joint):
     def get_cutting_planes(self):
         assert self.beam_a and self.beam_b
         if self.miter_plane:
-            print("Using provided miter plane")
             return self._get_cut_planes_from_miter_plane(self.miter_plane.transformed(self.beam_a.modeltransformation))
         elif self.miter_type == MiterType.REF_SURFACES:
             miter_plane = self._get_cut_planes_from_ref_sides()
@@ -244,6 +257,33 @@ class LMiterJoint(Joint):
                 cutoff = JackRafterCutProxy.from_plane_and_beam(cutoff_plane, beam)
                 beam.add_features(cutoff)
                 self.features.append(cutoff)
+
+        if self.trim_plane_a:
+            plane_a = self.trim_plane_a.transformed(self.beam_a.modeltransformation)
+            trim_cut_a = JackRafterCutProxy.from_plane_and_beam(plane_a, self.beam_a)
+            self.beam_a.add_features(trim_cut_a)
+            self.features.append(trim_cut_a)
+
+        if self.trim_plane_b:
+            plane_b = self.trim_plane_b.transformed(self.beam_b.modeltransformation)
+            trim_cut_b = JackRafterCutProxy.from_plane_and_beam(plane_b, self.beam_b)
+            self.beam_b.add_features(trim_cut_b)
+            self.features.append(trim_cut_b)
+
+        if self.clean:
+            ref_side_a = beam_ref_side_incidence(self.beam_a, self.beam_b)
+            back_a = Plane.from_frame(self.beam_a.ref_sides[max(ref_side_a, key=ref_side_a.get)])
+            ref_side_b = beam_ref_side_incidence(self.beam_b, self.beam_a)
+            back_b = Plane.from_frame(self.beam_b.ref_sides[max(ref_side_b, key=ref_side_b.get)])
+
+            clean_cut_a = JackRafterCutProxy.from_plane_and_beam(back_b, self.beam_a)
+            clean_cut_b = JackRafterCutProxy.from_plane_and_beam(back_a, self.beam_b)
+
+
+            self.beam_a.add_features(clean_cut_a)
+            self.beam_b.add_features(clean_cut_b)
+            self.features.append(clean_cut_a)
+            self.features.append(clean_cut_b)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

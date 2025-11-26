@@ -49,7 +49,6 @@ class Opening(SlabFeature):
         self._outline_b = outline_b
         self.opening_type = opening_type or OpeningType.WINDOW
         self._shape = None
-        print("opening init", self.opening_type)
 
     @property
     def outline_a(self):
@@ -130,7 +129,6 @@ class Opening(SlabFeature):
         :class:`Opening`
             The created opening.
         """
-        print("from_outline_slab", opening_type)
         # project outline onto top and bottom faces of slab
         outline.transform(slab.modeltransformation.inverse())
         pts_a = []
