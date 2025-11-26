@@ -237,7 +237,7 @@ class BeamStock(Stock):
     def _get_position_frame(self, beam):
         # Get the position frame for a beam that is being added to this stock.
         # Orientation is based on the beam's cross-section relative to the stock's.
-
+        beam_cross_section = tuple([beam.width, beam.height])
         # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
         if TOL.is_close(self.width, beam.width) and TOL.is_close(self.height, beam.height):
             position_frame = Frame.worldXY()
@@ -544,7 +544,7 @@ class BeamNester(object):
             # Collect unique cross-sections from unnested beams
             beam_details = set((beam.width, beam.height) for beam in unnested_beams)
             # Format each cross-section as a string
-            formatted_sections = ["{}x{}{}".format(width, height, self.model.tolerance.unit) for width, height in beam_details]
+            formatted_sections = ["{}x{}mm".format(int(width), int(height)) for width, height in beam_details]
 
             warn(
                 "Found {} beam(s) incompatible with available stock catalog. Beams with the following cross-sections will be skipped during nesting: {}".format(  # noqa: E501

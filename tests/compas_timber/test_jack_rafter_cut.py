@@ -40,7 +40,7 @@ def test_jack_rafter_cut_from_plane_start(tol):
     assert tol.is_close(instance.inclination, 95.000)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
+    cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -62,7 +62,7 @@ def test_jack_rafter_cut_from_plane_end(tol):
     assert tol.is_close(instance.angle, 66.656)
     assert tol.is_close(instance.inclination, 85.000)
     assert tol.is_close(instance.ref_side_index, 0)
-    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
+    cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -85,7 +85,7 @@ def test_jack_rafter_cut_from_frame(tol):
     assert tol.is_close(instance.inclination, 95.000)
     assert tol.is_close(instance.ref_side_index, 0)
 
-    cut_plane = instance.plane_from_params_and_beam(beam).transformed(beam.transformation)
+    cut_plane = instance.plane_from_params_and_beam(beam)
 
     # should be the same plane, but point might be different
     assert cut_plane.is_parallel(plane, tol=tol.absolute)
@@ -160,7 +160,7 @@ def test_jack_rafter_cut_transforms_with_beam(tol):
     assert tol.is_close(instance_a.inclination, instance_b.inclination)
     assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
 
-    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a)
+    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a).transformed(transformation)
     cut_plane_b = instance_b.plane_from_params_and_beam(beam_b)
 
     assert tol.is_allclose(cut_plane_a.normal, cut_plane_b.normal)
@@ -189,8 +189,8 @@ def test_jack_rafter_cut_proxy_transforms_with_beam(tol):
     assert tol.is_close(instance_a.inclination, instance_b.inclination)
     assert tol.is_close(instance_a.ref_side_index, instance_b.ref_side_index)
 
-    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a)
+    cut_plane_a = instance_a.plane_from_params_and_beam(beam_a).transformed(transformation)
     cut_plane_b = instance_b.plane_from_params_and_beam(beam_b)
-    # planes are produced in element space, should be the same after transformation
+
     assert tol.is_allclose(cut_plane_a.normal, cut_plane_b.normal)
     assert tol.is_allclose(cut_plane_a.point, cut_plane_b.point)

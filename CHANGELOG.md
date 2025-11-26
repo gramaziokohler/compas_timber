@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `PlateGeometry` class.
+* Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
+* Added new `DrillingProxy` and `DoubleCutProxy` classes.
+* Added `planar_surface_point_at` to `compas_timber.utils`.
 * Added `SlabJoint`, `SlabMiterJoint`, `SlabButtJoint`, `SlabLButtJoint`, `SlabTButtJoint`.
 
 ### Changed
@@ -50,11 +53,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Slab` to inherit from `PlateGeometry`
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
+* Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
+* Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
+* Fixed the `ShowTopologyTypes` GH Component.
 
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
+* Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 
 ### Removed
 * Removed `PlateToPlateInterface`, as plates will take `BTLxProcessing` features.

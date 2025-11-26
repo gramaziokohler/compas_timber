@@ -16,6 +16,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -374,7 +375,7 @@ class DoubleCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         if self.orientation == OrientationType.END:
@@ -399,7 +400,7 @@ class DoubleCut(BTLxProcessing):
             ref_frame.xaxis, math.radians(inclination_2), point=p_origin
         )
         cutting_frame_2.transform(rot_2_horiz * rot_2_vert)
-        return [Plane.from_frame(cutting_frame).transformed(beam.transformation_to_local()) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
+        return [Plane.from_frame(cutting_frame) for cutting_frame in [cutting_frame_1, cutting_frame_2]]
 
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.
@@ -465,8 +466,8 @@ class DoubleCutProxy(object):
     ----------
     planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
         The two cutting planes that define the double cut.
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam that is cut by this instance.
+    element : :class:`~compas_timber.elements.TimberElement`
+        The element that is cut by this instance.
     ref_side_index : int, optional
         The reference side index of the beam to be cut. Default is None.
 
@@ -478,9 +479,9 @@ class DoubleCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, planes, beam, ref_side_index=None):
-        self.planes = [plane.transformed(beam.transformation_to_local()) for plane in planes]
-        self.beam = beam
+    def __init__(self, planes, element, ref_side_index=None):
+        self.planes = [plane.transformed(element.transformation_to_local()) for plane in planes]
+        self.element = element
         self.ref_side_index = ref_side_index
         self._processing = None
 
@@ -493,8 +494,8 @@ class DoubleCutProxy(object):
 
         """
         if not self._processing:
-            planes = [plane.transformed(self.beam.modeltransformation) for plane in self.planes]
-            self._processing = DoubleCut.from_planes_and_beam(planes, self.beam, self.ref_side_index)
+            planes = [plane.transformed(self.element.modeltransformation) for plane in self.planes]
+            self._processing = DoubleCut.from_planes_and_beam(planes, self.element, self.ref_side_index)
         return self._processing
 
     @classmethod
