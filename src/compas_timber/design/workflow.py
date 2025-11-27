@@ -514,6 +514,22 @@ class TopologyRule(JointRule):
             self.joint_type,
         )
 
+    def _get_reordered_elements(self, cluster):
+        """ 
+        Returns the reordered elements based on the cluster topology. This is needed for K-joints where the cross beam needs to be first.
+        """
+        if cluster.topology == JointTopology.TOPO_K:
+            for joint in cluster.joints:
+                if joint.topology == JointTopology.TOPO_L:
+                    main_beams = [e for e in joint.elements]
+            for element in cluster.elements:
+                if element not in main_beams:
+                    cross_beam = element
+
+            reordered_elements = [cross_beam] + main_beams
+            return reordered_elements
+        return None
+
     def try_create_joint(self, model, cluster, max_distance=None):
         """Returns a Joint if the given cluster's elements comply with this TopologyRule.
         It checks:
@@ -550,7 +566,8 @@ class TopologyRule(JointRule):
         if not self.joint_type.check_elements_compatibility(list(cluster.elements)):
             return None, None
         try:
-            joint = self.joint_type.promote_cluster(model, cluster, **self.kwargs)
+            reordered_elements = self._get_reordered_elements(cluster)
+            joint = self.joint_type.promote_cluster(model, cluster, reordered_elements=reordered_elements, **self.kwargs)
         except BeamJoiningError as bje:
             error = bje
         return joint, error
