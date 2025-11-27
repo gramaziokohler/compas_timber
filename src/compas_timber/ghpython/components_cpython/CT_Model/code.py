@@ -10,7 +10,6 @@ from compas.tolerance import Tolerance
 
 from compas_timber.design import DebugInfomation
 from compas_timber.design import JointRuleSolver
-from compas_timber.design import WallPopulator
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.errors import FeatureApplicationError
@@ -56,10 +55,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         debug_info = DebugInfomation()
 
         ##### Adding elements #####
-        self.add_elements_to_model(Model, Elements, Containers)
-
-        ##### Wall populating #####
-        handled_pairs, wall_joints = self.handle_populators(Model, Containers, MaxDistance)
+        self.add_elements_to_model(Model, Elements)
 
         ##### Handle joinery #####
         # checks elements compatibility and generates Joints
@@ -114,31 +110,6 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         for c_def in containers:
             slab = c_def.slab
             model.add_element(slab)
-
-    def handle_populators(self, model, containers, max_distance):
-        # Handle wall populators
-        model.connect_adjacent_walls()
-        config_sets = [c_def.config_set for c_def in containers]
-        populators = []
-
-        # match populators to slabs
-        if any(config_sets):
-            populators = WallPopulator.from_model(model, config_sets)
-
-        handled_pairs = []
-        wall_joints = []
-
-        # config set and slab have already been matched in WallPopulator.from_model, no zip required
-        for populator in populators:
-            elements = populator.create_elements()
-            model.add_elements(elements, parent=populator.slab)
-            joint_definitions = populator.create_joints(elements, max_distance)
-            wall_joints.extend(joint_definitions)
-            for j_def in joint_definitions:
-                element_a, element_b = j_def.elements
-                handled_pairs.append({element_a, element_b})
-                # TODO: make joints directly? Have ConnectionSolver not consider elements in slabs/groups.
-        return handled_pairs, wall_joints
 
     def handle_features(self, features):
         feature_errors = []

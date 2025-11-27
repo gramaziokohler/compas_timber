@@ -15,7 +15,6 @@ Classes
     DebugInfomation
     DirectRule
     JointRule
-    SurfaceModel
     TopologyRule
 
 
