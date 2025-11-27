@@ -515,7 +515,7 @@ class TopologyRule(JointRule):
         )
 
     def _get_reordered_elements(self, cluster):
-        """ 
+        """
         Returns the reordered elements based on the cluster topology. This is needed for K-joints where the cross beam needs to be first.
         """
         if cluster.topology == JointTopology.TOPO_K:
