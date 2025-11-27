@@ -16,6 +16,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -374,7 +375,7 @@ class DoubleCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         if self.orientation == OrientationType.END:
@@ -452,3 +453,140 @@ class DoubleCutParams(BTLxProcessingParams):
         result["Angle2"] = "{:.{prec}f}".format(float(self._instance.angle_2), prec=TOL.precision)
         result["Inclination2"] = "{:.{prec}f}".format(float(self._instance.inclination_2), prec=TOL.precision)
         return result
+
+
+class DoubleCutProxy(object):
+    """This object behaves like a DoubleCut except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+        The two cutting planes that define the double cut.
+    element : :class:`~compas_timber.elements.TimberElement`
+        The element that is cut by this instance.
+    ref_side_index : int, optional
+        The reference side index of the beam to be cut. Default is None.
+
+    """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxy as it's more of a performance hack.
+        # plus it references a beam so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
+    def __init__(self, planes, element, ref_side_index=None):
+        self.planes = [plane.transformed(element.transformation_to_local()) for plane in planes]
+        self.element = element
+        self.ref_side_index = ref_side_index
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DoubleCut`
+
+        """
+        if not self._processing:
+            planes = [plane.transformed(self.element.modeltransformation) for plane in self.planes]
+            self._processing = DoubleCut.from_planes_and_beam(planes, self.element, self.ref_side_index)
+        return self._processing
+
+    @classmethod
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None):
+        """Create a DoubleCutProxy instance from two cutting planes and the beam they should cut.
+
+        Parameters
+        ----------
+        planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
+            The two cutting planes that define the double cut.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+        ref_side_index : int, optional
+            The reference side index of the beam to be cut. Default is None.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DoubleCutProxy`
+
+        """
+        if len(planes) != 2:
+            raise ValueError("Exactly two cutting planes are required to create a DoubleCutProxy instance.")
+        # convert all frames to planes
+        planes = [Plane.from_frame(plane) if isinstance(plane, Frame) else plane for plane in planes]
+        return cls(planes, beam, ref_side_index)
+
+    @classmethod
+    def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
+        """Construct a DoubleCutProxy from two planes and an element.
+
+        Parameters
+        ----------
+        plane_a : :class:`compas.geometry.Plane`
+            The first cutting plane.
+        plane_b : :class:`compas.geometry.Plane`
+            The second cutting plane.
+        element : :class:`compas_timber.elements.Element`
+            The element to be cut.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DoubleCutProxy`
+            The constructed double cut proxy.
+
+        """
+        return cls.from_planes_and_beam([plane_a, plane_b], element, **kwargs)
+
+    def apply(self, geometry, beam):
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be cut.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is cut by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting planes do not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        # type: (Brep, Beam) -> Brep
+        # transform planes to beam's local coordinate system
+
+        # determine if concave or convex based on the stored planes
+        # get the intersection line of cutting planes
+        if not intersection_plane_plane(self.planes[0], self.planes[1]):
+            raise FeatureApplicationError(None, geometry, "The two cutting planes are parallel.")
+
+        # check angle between planes to determine concavity
+        angle_between = angle_vectors(self.planes[0].normal, self.planes[1].normal, deg=True)
+        is_concave = angle_between < 90.0  # simplified concavity check
+
+        if is_concave:
+            trim_volume = geometry.copy()
+            for cutting_plane in self.planes:
+                trim_volume.trim(self.planes)
+            return geometry - trim_volume
+        else:
+            for cutting_plane in self.planes:
+                plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                geometry.trim(plane)
+            return geometry
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)

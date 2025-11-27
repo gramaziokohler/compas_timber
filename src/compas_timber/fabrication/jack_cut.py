@@ -14,6 +14,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -246,8 +247,7 @@ class JackRafterCut(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane_from_params_and_beam(beam)
-        cutting_plane.transform(beam.transformation_to_local())
+        cutting_plane = self.plane_from_params_and_beam(beam).transformed(beam.transformation_to_local())
         try:
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
@@ -277,7 +277,7 @@ class JackRafterCut(BTLxProcessing):
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_side.point_at(self.start_x, 0.0)
+        p_origin = planar_surface_point_at(ref_side, self.start_x, 0.0)
         cutting_plane = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
 
         # normal pointing towards xaxis so just need the delta
@@ -375,7 +375,7 @@ class JackRafterCutProxy(object):
         return self.unproxified()
 
     def __init__(self, plane, beam, ref_side_index=0):
-        self.plane = plane
+        self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.ref_side_index = ref_side_index
         self._processing = None
@@ -389,7 +389,8 @@ class JackRafterCutProxy(object):
 
         """
         if not self._processing:
-            self._processing = JackRafterCut.from_plane_and_beam(self.plane, self.beam, self.ref_side_index)
+            plane = self.plane.transformed(self.beam.modeltransformation)
+            self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index)
         return self._processing
 
     @classmethod
@@ -434,13 +435,12 @@ class JackRafterCutProxy(object):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane
-        cutting_plane = cutting_plane.transformed(beam.transformation_to_local())
+
         try:
-            return geometry.trimmed(cutting_plane)
+            return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                cutting_plane,
+                self.plane,
                 geometry,
                 "The cutting plane does not intersect with beam geometry.",
             )
