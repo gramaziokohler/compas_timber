@@ -504,6 +504,20 @@ class LongitudinalCut(BTLxProcessing):
             neg_vol.flip()
         return neg_vol
 
+    def scale(self, factor):
+        """Scale the machining parameters of the Longitudinal Cut feature.
+
+        Parameters
+        ----------
+        factor : float
+            The scale factor.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.length *= factor
+        self.depth *= factor
+
 
 class LongitudinalCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Longitudinal Cut feature.
