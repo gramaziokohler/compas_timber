@@ -203,10 +203,10 @@ class JackRafterCut(BTLxProcessing):
     def _calculate_orientation(beam, cutting_plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        int_point = Point(*intersection_line_plane(beam.centerline, cutting_plane))
-        if int_point is None:
-            raise ValueError("Plane does not intersect with beam.")
-        if int_point.distance_to_point(beam.centerline.start) > int_point.distance_to_point(beam.centerline.end):
+        dot = dot_vectors(beam.frame.xaxis, cutting_plane.normal)
+        if TOL.is_zero(dot):
+            raise ValueError("Plane is parallel to beam, no orientation could be identified.")
+        if dot > 0:
             return OrientationType.END
         else:
             return OrientationType.START
