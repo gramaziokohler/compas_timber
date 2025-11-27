@@ -49,8 +49,8 @@ class Slab(PlateGeometry, Element):
         A polyline representing the principal outline of this slab.
     local_outline_b: :class:`~compas.geometry.Polyline`, optional
         A polyline representing the associated outline of this slab.
-    openings : list[:class:`~compas_timber.elements.Opening`], optional
-        A list of Opening objects representing openings in this slab.
+    openings : list[:class:`~compas.geometry.Polyline`], optional
+        A list of Polyline objects representing openings in this slab.
     name : str, optional
         Name of the slab. Defaults to "Slab".
     **kwargs : dict, optional
@@ -131,24 +131,24 @@ class Slab(PlateGeometry, Element):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+        Constructs a Slab from two polyline outlines. to be implemented to instantialte Plates and Slabs.
 
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the plate geometry in parent space.
+            A polyline representing the principal outline of the slab geometry in parent space.
         outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry in parent space.
+            A polyline representing the associated outline of the slab geometry in parent space.
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the plate geometry.
+            A list of openings to be added to the slab geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
         Returns
         -------
-        :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate geometry with the given outlines.
+        :class:`~compas_timber.elements.Slab`
+            A Slab object representing the slab geometry with the given outlines.
         """
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
