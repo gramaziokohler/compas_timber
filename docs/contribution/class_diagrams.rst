@@ -79,7 +79,7 @@ The elements subsystem contains all the core timber elements that can be modeled
       class Slab {
          +outline : Polyline
          +thickness : float
-         +openings : list[Opening]
+         +openings : list[Polyline]
          +frame : Frame
          +origin : Point
          +baseline : Line
@@ -124,11 +124,10 @@ The elements subsystem contains all the core timber elements that can be modeled
       Element <|-- TimberElement
       TimberElement <|-- Beam
       TimberElement <|-- Plate
-      TimberElement <|-- Slab
+      Element <|-- Slab
       TimberElement <|-- Fastener
 
       %% Composition relationships
-      Slab ..> Opening : contains
       Fastener ..> FastenerTimberInterface : contains
 
 Connections Subsystem

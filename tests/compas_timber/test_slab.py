@@ -10,11 +10,11 @@ from compas_timber.model import TimberModel
 
 @pytest.fixture
 def model():
-    """Create a basic TimberModel with two plates."""
+    """Create a basic TimberModel with two slabs."""
 
     model = TimberModel()
 
-    # Create two plates
+    # Create two slabs
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
 

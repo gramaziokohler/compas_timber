@@ -19,4 +19,3 @@ Classes
     PlateFastener
     TimberElement
     Slab
-    
