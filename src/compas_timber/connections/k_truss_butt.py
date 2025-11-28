@@ -26,7 +26,7 @@ class KTrussButtJoint(Joint):
 
     This joint type is compatible with beams in K topology.
 
-    The three beams must be coplanar and the two main beams must be ont eh same side of the cross beam.
+    The three beams must be coplanar and the two main beams must be on the same side of the cross beam.
 
 
     Parameters
