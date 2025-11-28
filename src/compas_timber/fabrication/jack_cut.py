@@ -247,8 +247,7 @@ class JackRafterCut(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane_from_params_and_beam(beam)
-        cutting_plane.transform(beam.transformation_to_local())
+        cutting_plane = self.plane_from_params_and_beam(beam).transformed(beam.transformation_to_local())
         try:
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
@@ -376,7 +375,7 @@ class JackRafterCutProxy(object):
         return self.unproxified()
 
     def __init__(self, plane, beam, ref_side_index=0):
-        self.plane = plane
+        self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.ref_side_index = ref_side_index
         self._processing = None
@@ -390,7 +389,8 @@ class JackRafterCutProxy(object):
 
         """
         if not self._processing:
-            self._processing = JackRafterCut.from_plane_and_beam(self.plane, self.beam, self.ref_side_index)
+            plane = self.plane.transformed(self.beam.modeltransformation)
+            self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index)
         return self._processing
 
     @classmethod
@@ -435,13 +435,12 @@ class JackRafterCutProxy(object):
 
         """
         # type: (Brep, Beam) -> Brep
-        cutting_plane = self.plane
-        cutting_plane = cutting_plane.transformed(beam.transformation_to_local())
+
         try:
-            return geometry.trimmed(cutting_plane)
+            return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                cutting_plane,
+                self.plane,
                 geometry,
                 "The cutting plane does not intersect with beam geometry.",
             )

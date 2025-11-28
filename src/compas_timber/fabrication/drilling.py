@@ -424,3 +424,128 @@ class DrillingParams(BTLxProcessingParams):
         result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
         result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
         return result
+
+
+class DrillingProxy(object):
+    """This object behaves like a Drilling except it only calculates the machining parameters once unproxified.
+    Can also be used to defer the creation of the processing instance until it is actually needed.
+
+    Until then, it can be used to visualize the machining operation.
+    This slightly improves performance.
+
+    Parameters
+    ----------
+    line : :class:`~compas.geometry.Line`
+        The line on which the drilling is to be made.
+    element : :class:`~compas_timber.elements.Element`
+        The element to drill.
+    diameter : float
+        The diameter of the drilling.
+
+    """
+
+    def __deepcopy__(self, *args, **kwargs):
+        # not sure there's value in copying the proxy as it's more of a performance hack.
+        # plus it references an element so it would be a bit of a mess to copy it.
+        # for now just return the unproxified version
+        return self.unproxified()
+
+    def __init__(self, line, element, diameter):
+        self.line = line.transformed(element.transformation_to_local())
+        self.element = element
+        self.diameter = diameter
+        self._processing = None
+
+    def unproxified(self):
+        """Returns the unproxified processing instance.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Drilling`
+
+        """
+        if not self._processing:
+            line = self.line.transformed(self.element.modeltransformation)
+            self._processing = Drilling.from_line_and_element(line, self.element, self.diameter)
+        return self._processing
+
+    @classmethod
+    def from_line_and_element(cls, line, element, diameter):
+        """Construct a DrillingProxy from a line and diameter.
+
+        Parameters
+        ----------
+        line : :class:`~compas.geometry.Line`
+            The line on which the drilling is to be made.
+        element : :class:`~compas_timber.elements.Element`
+            The element to drill.
+        diameter : float
+            The diameter of the drilling.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DrillingProxy`
+            The constructed drilling proxy.
+
+        """
+        return cls(line, element, diameter)
+
+    @classmethod
+    def from_shapes_and_element(cls, line, element, diameter, **kwargs):
+        """Construct a DrillingProxy from a line, element and diameter.
+
+        Parameters
+        ----------
+        line : :class:`~compas.geometry.Line`
+            The line on which the drilling is to be made.
+        element : :class:`~compas_timber.elements.Element`
+            The element to drill.
+        diameter : float
+            The diameter of the drilling.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.DrillingProxy`
+            The constructed drilling proxy.
+
+        """
+        if isinstance(line, list):
+            line = line[0]
+        return cls.from_line_and_element(line, element, float(diameter), **kwargs)
+
+    def apply(self, geometry, element):
+        """Apply the feature to the element geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The element geometry to drill.
+        element : :class:`~compas_timber.elements.Element`
+            The element to drill.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the drill geometry does not intersect with element geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        # type: (Brep, Element) -> Brep
+        drill_geometry = Brep.from_cylinder(Cylinder.from_line_and_radius(self.line, self.diameter * 0.5))
+
+        try:
+            return geometry - drill_geometry
+        except IndexError:
+            raise FeatureApplicationError(
+                drill_geometry,
+                geometry,
+                "The drill geometry does not intersect with element geometry.",
+            )
+
+    def __getattr__(self, attr):
+        # any unknown calls are passed through to the processing instance
+        return getattr(self.unproxified(), attr)
