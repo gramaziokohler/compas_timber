@@ -120,9 +120,9 @@ class KTrussButtJoint(Joint):
 
     def add_features(self):
         """
-        Adds the required extension and trimming featrues to the three beams.
+        Adds the required extension and trimming features to the three beams.
 
-        This method is automaically called whe the joint is creaed by the call to `Joint.create()`.
+        This method is automatically called when the joint is created by the call to `Joint.create()`.
         """
 
         beam_1, beam_2 = self._sort_main_beams()
