@@ -7,7 +7,7 @@ from compas.tolerance import TOL
 
 from compas_timber.connections import beam_ref_side_incidence_with_vector
 from compas_timber.fabrication import Lap
-from compas_timber.fabrication import LongitudinalCut
+from compas_timber.fabrication import LongitudinalCutProxy
 from compas_timber.fabrication.btlx import MachiningLimits
 
 # Grippers Parameters
@@ -28,21 +28,32 @@ ADJUST_STEP = 5.0
 
 def set_gripper_positions(model):
     for beam in model.beams:
+        # determine gripper positions for each beam
+        gripper_positions = _get_gripper_positions(beam)
+        if not gripper_positions:
+            print((f"Could not determine valid gripper positions for beam of length {beam.blank_length} mm."))
+            gripper_positions = [beam.blank_length * 0.5]
+            beam.attributes["gripper_position"] = gripper_positions[0]
+        else:
+            if len(gripper_positions) == 2:
+                # the gripper positions should respect the desired separation
+                assert TOL.is_close(GRIPPER_SEPARATION, gripper_positions[1] - gripper_positions[0])
+                # store the central gripper position as beam attribute
+                beam.attributes["gripper_position"] = (sum(gripper_positions) + LAP_LENGTH) * 0.5
+            elif len(gripper_positions) == 1:
+                beam.attributes["gripper_position"] = gripper_positions[0] + (GRIPPER_SEPARATION + LAP_LENGTH) * 0.5
+            else:
+                raise ValueError("Unexpected number of gripper positions returned.")
+
+        # add gripper laps to the beams that have a longitudinal cut
         if beam.width >= LAP_WIDTH and beam.height >= LAP_WIDTH:
             for f in beam.features:
-                if isinstance(f, LongitudinalCut):
-                    long_plane = f.plane_from_params_and_beam(beam)
+                if isinstance(f, LongitudinalCutProxy):
+                    long_plane = f.plane.transformed(beam.modeltransformation)
                     ref_side_dict = beam_ref_side_incidence_with_vector(beam, long_plane.normal, ignore_ends=True)
                     ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
                     if ref_side_index not in [1, 3]:
                         raise ValueError("Cannot place gripper lap on beam with square cross-section and longitudinal cut not on side 1 or 3.")
-
-            gripper_positions = _get_gripper_positions(beam)
-            if not gripper_positions:
-                continue
-
-            assert TOL.is_close(GRIPPER_SEPARATION, gripper_positions[1] - gripper_positions[0]) if len(gripper_positions) == 2 else True
-            beam.attributes["gripper_position"] = gripper_positions[0]
 
             depth = LAP_DEPTH
             if TOL.is_close(beam.width, 280.0) or TOL.is_close(beam.height, 280.0):
@@ -75,6 +86,8 @@ def set_gripper_positions(model):
                 )
                 lap.name = "GripperLap"
                 beam.add_feature(lap)
+        else:
+            beam.attributes["gripper_position"] = beam.blank_length * 0.5
 
 
 def _domains_overlap(domain1, domain2, tolerance=0.1):
@@ -106,6 +119,8 @@ def _positions_are_valid(positions, usable_domain, lap_domains):
 
     # Check overlap with lap domains
     for gripper_domain in gripper_domains:
+        if not lap_domains:
+            return True
         for lap_domain in lap_domains:
             if _domains_overlap(gripper_domain, lap_domain):
                 return False
@@ -150,11 +165,11 @@ def _get_usable_domain(beam):
     regardless of orientation. The orientation affects the cutting direction,
     not the coordinate system.
     """
-    jack_cut_featurs = [f for f in beam.features if f.__class__.__name__ == "JackRafterCut"]
+    jack_cut_features = [f for f in beam.features if f.__class__.__name__ == "JackRafterCut"]
     start_bound = 0.0
     end_bound = beam.blank_length
 
-    for cut in jack_cut_featurs:
+    for cut in jack_cut_features:
         # start_x is absolute position from beam start for both orientations
         if cut.orientation == "start":
             # Cut at start - start_x is where the cut is located
@@ -246,8 +261,8 @@ def _get_gripper_positions(beam):
         if _positions_are_valid(new_positions, usable_domain, lap_domains):
             return tuple(float(round(g, 3)) for g in new_positions)
 
-    # No valid position found - return None to signal failure
-    return None
+    # No valid position found - return original positions
+    return tuple(float(round(g, 3)) for g in gripper_positions)
 
 
 def get_consoles_positions(
