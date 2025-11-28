@@ -147,7 +147,7 @@ class BeamStock(Stock):
         List of console positions per assigned beam.
     """
 
-    def __init__(self, length, cross_section, spacing=0.0, element_data=None, consoles_positions=None):
+    def __init__(self, length, cross_section, spacing=None, element_data=None, consoles_positions=None):
         # Validate cross_section before passing to parent constructor
         if not isinstance(cross_section, (list, tuple)) or len(cross_section) != 2:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
@@ -155,6 +155,7 @@ class BeamStock(Stock):
         self.cross_section = tuple(cross_section)
         self.consoles_positions = consoles_positions
         self._current_x_position = 0.0  # Track current position along length for placing beams
+        self._spacing = spacing if spacing is not None else 0.0
 
     @property
     def __data__(self):
@@ -229,7 +230,7 @@ class BeamStock(Stock):
             return
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
-        self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
+        self._current_x_position += beam.blank_length + self._spacing  # Update position for next beam
         # Store element data with frame, blank length and graphnode key
         self.element_data[str(beam.guid)] = {
             "frame": position_frame,
@@ -260,6 +261,7 @@ class BeamStock(Stock):
             beam = model.element_by_guid(str(guid))
             positions = get_consoles_positions(beam, threshold=threshold, step=step, beams_on_stock=count)
             stock_console_positions.extend(positions)
+        stock_console_positions.sort()
         self.consoles_positions = stock_console_positions
 
 
@@ -539,13 +541,14 @@ class BeamNester(object):
         stock_beam_map = self._sort_beams_by_stock(beams)
 
         for stock_type, compatible_beams in stock_beam_map.items():
+            spacing = self.spacing if stock_type.spacing is None else stock_type.spacing
             if not compatible_beams:
                 continue
             # Apply selected algorithm
             if fast:
-                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, self.spacing)
+                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, spacing)
             else:
-                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, self.spacing)
+                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, spacing)
 
             stocks.extend(result_stocks)
         return stocks
