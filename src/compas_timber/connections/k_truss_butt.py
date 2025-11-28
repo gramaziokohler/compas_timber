@@ -114,9 +114,9 @@ class KTrussButtJoint(Joint):
         cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
         if self.mill_depth:
             cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
-        start_extension, end_extesion = beam.extension_to_plane(cutting_plane)
+        start_extension, end_extension = beam.extension_to_plane(cutting_plane)
         extension_tolerance = 0.01
-        beam.add_blank_extension(start_extension + extension_tolerance, end_extesion + extension_tolerance)
+        beam.add_blank_extension(start_extension + extension_tolerance, end_extension + extension_tolerance)
 
     def add_features(self):
         """
