@@ -304,9 +304,15 @@ class LongitudinalCut(BTLxProcessing):
         else:
             max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
         depth = max_depth if depth is None else depth
-        depth_limited = depth < max_depth
+        depth_limited = depth <= max_depth
         if not depth_limited:
             depth = 0.0
+
+        # calculate tool_position
+        if TOL.is_negative(plane.normal.dot(ref_side.yaxis)):
+            tool_position = AlignmentType.RIGHT
+        else:
+            tool_position = AlignmentType.LEFT
 
         return cls(
             start_x,
@@ -319,7 +325,7 @@ class LongitudinalCut(BTLxProcessing):
             depth,
             angle_start,
             angle_end,
-            tool_position=tool_position,
+            tool_position,
             ref_side_index=ref_side_index,
             **kwargs,
         )
