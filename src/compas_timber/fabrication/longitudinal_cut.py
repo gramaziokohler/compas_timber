@@ -304,7 +304,7 @@ class LongitudinalCut(BTLxProcessing):
         else:
             max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
         depth = max_depth if depth is None else depth
-        depth_limited = depth <= max_depth
+        depth_limited = depth < max_depth
         if not depth_limited:
             depth = 0.0
 
