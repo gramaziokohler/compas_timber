@@ -229,7 +229,7 @@ class PlateGeometry(object):
                 outer_polyline = polyline_from_brep_loop(loop)
             else:
                 inner_polylines.append(polyline_from_brep_loop(loop))
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, recognize_doors=True, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     # ==========================================================================
     #  Implementation of abstract methods

@@ -347,7 +347,8 @@ def extract_door_openings(outline_a, outline_b):
                 continue
             if not is_colinear_line_line(door_segments[0], door_segments[4], tol=TOL.RELATIVE):
                 continue
-
+            vertical = door_segments[1].direction
+            vertical.unitize()
             segs_a = []
             segs_b = []
             for i in range(len(slab_segments_a)):
@@ -356,6 +357,8 @@ def extract_door_openings(outline_a, outline_b):
                 segs_a.append(slab_segments_a[i])
                 segs_b.append(slab_segments_b[i])
             opening = join_polyline_segments(door_segments[1:4])
+            opening[0] -= vertical*1.0
+            opening[3] -= vertical*1.0
             opening.append(opening.points[0])  # close loop
             openings.append(opening)
             outline_a= join_polyline_segments(segs_a, close_loop=True)
