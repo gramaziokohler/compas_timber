@@ -1,7 +1,13 @@
-from typing import Tuple, Optional
+from typing import Optional
+from typing import Tuple
+
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.tolerance import TOL
+
+from compas_timber.connections import beam_ref_side_incidence_with_vector
 from compas_timber.fabrication import Lap
+from compas_timber.fabrication import LongitudinalCut
 from compas_timber.fabrication.btlx import MachiningLimits
 
 # Grippers Parameters
@@ -11,23 +17,156 @@ MIN_MARGIN = 1.0
 
 # Laps Parameters
 LAP_LENGTH = 110.0
-LAP_DEPTH = 60.0
+LAP_DEPTH = 80.0
 LAP_WIDTH = 140.0
-REF_SIDE_INDEX = 3
+REF_SIDE_INDEX = 1
 
 # Consoles Parameters
-LAP_THRESHOLD = 100.0
+LAP_THRESHOLD = 10.0
 ADJUST_STEP = 5.0
 
 
-def gripper_positions(
-    beam: object,
-    sep: float = GRIPPER_SEPARATION,
-    threshold: float = LAP_THRESHOLD,
-    step: float = ADJUST_STEP,
-    middle: bool = False,
-    small_beam_threshold: float = SMALL_BEAM_THRESHOLD,
-) -> object:
+def set_gripper_positions(model):
+    for beam in model.beams:
+        if beam.width >= LAP_WIDTH and beam.height >= LAP_WIDTH:
+            for f in beam.features:
+                if isinstance(f, LongitudinalCut):
+                    long_plane = f.plane_from_params_and_beam(beam)
+                    ref_side_dict = beam_ref_side_incidence_with_vector(beam, long_plane.normal, ignore_ends=True)
+                    ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+                    if ref_side_index not in [1, 3]:
+                        raise ValueError("Cannot place gripper lap on beam with square cross-section and longitudinal cut not on side 1 or 3.")
+
+            gripper_positions = _get_gripper_positions(beam)
+            if not gripper_positions:
+                continue
+
+            assert TOL.is_close(GRIPPER_SEPARATION, gripper_positions[1] - gripper_positions[0]) if len(gripper_positions) == 2 else True
+            beam.attributes["gripper_position"] = gripper_positions[0]
+
+            depth = LAP_DEPTH
+            if TOL.is_close(beam.width, 280.0) or TOL.is_close(beam.height, 280.0):
+                depth += 140.0
+
+            if isinstance(gripper_positions, (list, tuple)):
+                for g in list(gripper_positions):
+                    lap = Lap(
+                        start_x=float(g),
+                        start_y=0.0,
+                        length=float(LAP_LENGTH),
+                        width=float(LAP_WIDTH),
+                        depth=depth,
+                        machining_limits=MachiningLimits().limits,
+                        ref_side_index=ref_side_index,
+                        is_joinery=False,
+                    )
+                    lap.name = "GripperLap"
+                    beam.add_feature(lap)
+            else:
+                lap = Lap(
+                    start_x=float(gripper_positions),
+                    start_y=0.0,
+                    length=float(LAP_LENGTH),
+                    width=float(LAP_WIDTH),
+                    depth=depth,
+                    machining_limits=MachiningLimits().limits,
+                    ref_side_index=ref_side_index,
+                    is_joinery=False,
+                )
+                lap.name = "GripperLap"
+                beam.add_feature(lap)
+
+
+def _domains_overlap(domain1, domain2, tolerance=0.1):
+    """
+    Check if two domains overlap at all.
+    Two intervals overlap if: start1 < end2 AND start2 < end1
+    Added small tolerance to handle floating point precision issues.
+    """
+    # Add small tolerance for floating point comparisons
+    return (domain1[0] - tolerance) < domain2[1] and (domain2[0] - tolerance) < domain1[1]
+
+
+def _positions_are_valid(positions, usable_domain, lap_domains):
+    """
+    Check if gripper positions are valid.
+
+    Each gripper position defines a domain [pos, pos + LAP_LENGTH].
+    Positions are valid if:
+    1. All gripper domains are within beam bounds
+    2. Gripper domains don't overlap with lap domains beyond max_overlap_ratio
+    """
+    # Create gripper domains
+    gripper_domains = [(pos, pos + LAP_LENGTH) for pos in positions]
+
+    # Check beam bounds
+    for domain in gripper_domains:
+        if domain[0] < usable_domain[0] or domain[1] > usable_domain[1]:
+            return False
+
+    # Check overlap with lap domains
+    for gripper_domain in gripper_domains:
+        for lap_domain in lap_domains:
+            if _domains_overlap(gripper_domain, lap_domain):
+                return False
+    return True
+
+
+def _get_lap_domains(beam):
+    """Get lap domains for all laps EXCEPT GripperLaps (to avoid checking against themselves).
+
+    Note: start_x is ALWAYS an absolute position from the start of the beam,
+    regardless of orientation. The orientation affects the cutting direction,
+    not the coordinate system.
+    """
+    lap_features = [f for f in beam.features if f.__class__.__name__ == "Lap"]
+    lap_domains = []
+    for lap in lap_features:
+        # start_x is absolute position from beam start for both orientations
+        if lap.orientation == "start":
+            # For START orientation, lap extends forward from start_x
+            lap_domain = (lap.start_x, lap.start_x + lap.length)
+            lap_domains.append(lap_domain)
+        elif lap.orientation == "end":
+            # For END orientation, lap extends backward from start_x
+            lap_domain = (lap.start_x - lap.length, lap.start_x)
+            lap_domains.append(lap_domain)
+    return lap_domains
+
+
+def _define_gripper_positions(usable_domain):
+    center = (usable_domain[0] + usable_domain[1]) * 0.5
+    if (usable_domain[1] - usable_domain[0]) <= GRIPPER_SEPARATION + 2 * LAP_LENGTH:
+        return [center]
+    else:
+        # start by trying to place the grippers at 1/4 and 3/4 of the beam
+        return [center - GRIPPER_SEPARATION / 2, center + GRIPPER_SEPARATION / 2]
+
+
+def _get_usable_domain(beam):
+    """Calculate usable domain considering JackRafterCuts.
+
+    Note: start_x is ALWAYS an absolute position from the start of the beam,
+    regardless of orientation. The orientation affects the cutting direction,
+    not the coordinate system.
+    """
+    jack_cut_featurs = [f for f in beam.features if f.__class__.__name__ == "JackRafterCut"]
+    start_bound = 0.0
+    end_bound = beam.blank_length
+
+    for cut in jack_cut_featurs:
+        # start_x is absolute position from beam start for both orientations
+        if cut.orientation == "start":
+            # Cut at start - start_x is where the cut is located
+            start_bound = max(start_bound, cut.start_x)
+        elif cut.orientation == "end":
+            # Cut at end - start_x is where the cut is located
+            end_bound = min(end_bound, cut.start_x)
+
+    return start_bound, end_bound
+
+
+def _get_gripper_positions(beam):
     """Return two gripper positions (g1, g2) along a beam of given length.
 
     Positions are center +/- sep/2 and are clamped to the interior of the
@@ -35,131 +174,83 @@ def gripper_positions(
     beam is shorter than the desired separation, the function falls back to
     25%/75% split of the beam.
     """
-    length = float(beam.blank_length)
+    usable_domain = _get_usable_domain(beam)
 
-    lap_starts = [f.start_x for f in beam.features if f.__class__.__name__ == 'Lap']
-    # If the beam is very short, prefer a single gripper located at 1/4
-    # from the best side (avoid placing it at the console which will be
-    # positioned at the beam midpoint). For backward compatibility we
-    # return a pair (g,g) unless `middle=True` is requested.
-    try:
-        if small_beam_threshold is not None and float(length) < float(small_beam_threshold):
+    # collect lap domains for the laps on the beam
+    lap_domains = _get_lap_domains(beam)
 
-            q1 = float(round(length * 0.25, 3))
-            q2 = float(round(length * 0.75, 3))
+    # define initial fripper positions according to usable length
+    gripper_positions = _define_gripper_positions(usable_domain)
 
-            # collect lap starts safely
-            try:
-                lap_list = [float(s) for s in (lap_starts or []) if s is not None]
-            except Exception:
-                lap_list = []
+    # check if there are any conflicts, otherwise we are done!
+    if _positions_are_valid(gripper_positions, usable_domain, lap_domains):
+        return tuple(float(round(g, 3)) for g in gripper_positions)
 
-            def safe_pos(x: float) -> bool:
-                if x < MIN_MARGIN or x > max(MIN_MARGIN, length - MIN_MARGIN):
-                    return False
-                for s in lap_list:
-                    if abs(x - s) < threshold:
-                        return False
-                return True
+    # CONFLICT RESOLUTION: Find the first overlap and calculate offsets to clear it
+    overlapping_gripper_idx = None
+    overlapping_domain_idx = None
 
-            cand = None
-            # prefer the candidate (q1 or q2) that is safe and farthest from laps
-            cands = []
-            for c in (q1, q2):
-                if safe_pos(c):
-                    mind = min([abs(c - s) for s in lap_list]) if lap_list else float('inf')
-                    cands.append((mind, c))
-            if cands:
-                # choose candidate with maximum min-distance to any lap
-                cand = max(cands, key=lambda x: x[0])[1]
-            else:
-                # none safe; fallback to nearest position to q1 that is safe by stepping
-                step_count = int(max(10, (length - 2 * MIN_MARGIN) / max(step, 1e-6)))
-                found = None
-                for i in range(step_count + 1):
-                    # try moving inward from q1 and q2 alternately
-                    for base in (q1, q2):
-                        for d in (i, -i):
-                            x = base + d * step
-                            if x < MIN_MARGIN or x > max(MIN_MARGIN, length - MIN_MARGIN):
-                                continue
-                            if safe_pos(x):
-                                found = x
-                                break
-                        if found is not None:
-                            break
-                    if found is not None:
-                        break
-                cand = found if found is not None else q1
-
-            g = float(round(cand if cand is not None else q1, 3))
-            if middle:
-                return g
-            # For small beams return a single primitive gripper value
-            # (consumers can treat it as a single gripper point).
-            return float(round(g, 3))
-    except Exception:
-        # fall through to normal behavior on error
-        pass
-    half = float(sep) / 2.0
-    center = float(length) / 2.0
-    g1 = center - half
-    g2 = center + half
-
-    minv, maxv = float(MIN_MARGIN), float(max(MIN_MARGIN, length - MIN_MARGIN))
-    if g1 < minv or g2 > maxv:
-        if length >= sep + 2.0:
-            g1 = max(minv, min(maxv, g1))
-            g2 = max(minv, min(maxv, g2))
-        else:
-            g1 = max(minv, min(maxv, length * 0.25))
-            g2 = max(minv, min(maxv, length * 0.75))
-
-    g1 = float(max(minv, min(maxv, g1)))
-    g2 = float(max(minv, min(maxv, g2)))
-
-    try:
-        lap_list = [float(s) for s in (lap_starts or []) if s is not None]
-    except Exception:
-        lap_list = []
-
-    def safe(a: float, b: float) -> bool:
-        return all(abs(s - a) >= threshold and abs(s - b) >= threshold for s in lap_list)
-
-    if lap_list and not safe(g1, g2):
-        orig_g1, orig_g2 = g1, g2
-        max_iter = int(max(10, (maxv - minv) / max(step, 1e-6) * 2))
-        for _ in range(max_iter):
-            if g2 + step > maxv:
+    for i, domain in enumerate(lap_domains):
+        for j, g_pos in enumerate(gripper_positions):
+            gripper_domain = (g_pos, g_pos + LAP_LENGTH)
+            if _domains_overlap(gripper_domain, domain):
+                overlapping_gripper_idx = j
+                overlapping_domain_idx = i
                 break
-            g1 += step
-            g2 += step
-            if safe(g1, g2):
-                g1 = float(max(minv, min(maxv, g1)))
-                g2 = float(max(minv, min(maxv, g2)))
-                if middle:
-                    return float(round((g1 + g2) / 2.0, 3))
-                return g1, g2
+        if overlapping_gripper_idx is not None:
+            break
 
-        g1, g2 = orig_g1, orig_g2
-        for _ in range(max_iter):
-            if g1 - step < minv:
-                break
-            g1 -= step
-            g2 -= step
-            if safe(g1, g2):
-                g1 = float(max(minv, min(maxv, g1)))
-                g2 = float(max(minv, min(maxv, g2)))
-                if middle:
-                    return float(round((g1 + g2) / 2.0, 3))
-                return g1, g2
+    # If no overlap found, return current positions
+    if overlapping_gripper_idx is None:
+        return tuple(float(round(g, 3)) for g in gripper_positions)
 
-    if middle:
-        return float(round((g1 + g2) / 2.0, 3))
-    return float(round(g1, 3)), float(round(g2, 3))
+    # Get the overlapping gripper's position and lap's domain
+    g_pos = gripper_positions[overlapping_gripper_idx]
+    lap_domain = lap_domains[overlapping_domain_idx]
+    gripper_domain = (g_pos, g_pos + LAP_LENGTH)
+
+    # Calculate how much to move to clear the lap domain (with threshold)
+    # To move backward (negative): need to move gripper END before lap START
+    distance_to_move_backward = gripper_domain[1] - lap_domain[0] + LAP_THRESHOLD
+    # To move forward (positive): need to move gripper START after lap END
+    distance_to_move_forward = lap_domain[1] - gripper_domain[0] + LAP_THRESHOLD
+
+    # Create offsets (negative for backward, positive for forward)
+    offsets = [-distance_to_move_backward, distance_to_move_forward]
+
+    # Prefer the shorter distance
+    if distance_to_move_backward > distance_to_move_forward:
+        offsets.reverse()
+
+    # Try both offsets (deterministic - one should work)
+    for offset in offsets:
+        new_positions = [gripper_positions[0] + offset]
+        if len(gripper_positions) > 1:
+            new_positions.append(gripper_positions[1] + offset)
+
+        if _positions_are_valid(new_positions, usable_domain, lap_domains):
+            return tuple(float(round(g, 3)) for g in new_positions)
+
+    # FALLBACK: Try incremental adjustments if both simple offsets failed
+    # (e.g., when moving in one direction hits another lap or boundary)
+    preferred_offset = offsets[0]
+    increment = ADJUST_STEP if preferred_offset > 0 else -ADJUST_STEP
+
+    max_attempts = 100
+    for attempt in range(max_attempts):
+        test_offset = preferred_offset + (increment * (attempt + 1))
+        new_positions = [gripper_positions[0] + test_offset]
+        if len(gripper_positions) > 1:
+            new_positions.append(gripper_positions[1] + test_offset)
+
+        if _positions_are_valid(new_positions, usable_domain, lap_domains):
+            return tuple(float(round(g, 3)) for g in new_positions)
+
+    # No valid position found - return None to signal failure
+    return None
 
 
-def consoles_positions(
+def get_consoles_positions(
     beam: object,
     g1: Optional[float] = None,
     g2: Optional[float] = None,
@@ -185,7 +276,7 @@ def consoles_positions(
     """
 
     length = float(beam.blank_length)
-    lap_starts = [f.start_x for f in beam.features if f.__class__.__name__ == 'Lap']
+    lap_starts = [f.start_x for f in beam.features if f.__class__.__name__ == "Lap"]
 
     # (short-beam single-console handling is applied after adjust_one is defined)
 
@@ -286,7 +377,9 @@ def consoles_positions(
 
     return tuple(adjusted)
 
+
 # LAPS
+
 
 def _make_world_frame(beam, gx: float):
     try:
@@ -341,15 +434,15 @@ def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
             # 'caterogy')
             attrs = {}
             try:
-                attrs = getattr(beam, 'attributes', {}) or {}
+                attrs = getattr(beam, "attributes", {}) or {}
             except Exception:
                 attrs = {}
             try:
-                cat = (attrs.get('category') or attrs.get('caterogy') or '')
+                cat = attrs.get("category") or attrs.get("caterogy") or ""
             except Exception:
-                cat = ''
+                cat = ""
             try:
-                if isinstance(cat, str) and cat.lower() in ('stud', 'studs', 'recess'):
+                if isinstance(cat, str) and cat.lower() in ("stud", "studs", "recess"):
                     continue
             except Exception:
                 pass
@@ -359,7 +452,7 @@ def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
                 continue
 
             # keep any existing longitudinal cuts if present (optional)
-            cuts = [f for f in beam.features or [] if f.__class__.__name__ == 'LongitudinalCut']
+            cuts = [f for f in beam.features or [] if f.__class__.__name__ == "LongitudinalCut"]
 
             # choose ref side (prefer data from a longitudinal cut if available)
             chosen_rs = None
@@ -368,8 +461,8 @@ def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
                 if cuts:
                     for c in cuts:
                         try:
-                            sx = float(getattr(c, 'start_x', getattr(c, 'data', {}).get('start_x', None)))
-                            clen = float(getattr(c, 'length', getattr(c, 'data', {}).get('length', None) or 0.0))
+                            sx = float(getattr(c, "start_x", getattr(c, "data", {}).get("start_x", None)))
+                            clen = float(getattr(c, "length", getattr(c, "data", {}).get("length", None) or 0.0))
                         except Exception:
                             sx = None
                             clen = None
@@ -379,7 +472,7 @@ def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
                     if chosen_cut is None:
                         chosen_cut = cuts[0]
                     try:
-                        chosen_rs = int(getattr(chosen_cut, 'ref_side_index', None) or getattr(chosen_cut, 'data', {}).get('ref_side_index', None))
+                        chosen_rs = int(getattr(chosen_cut, "ref_side_index", None) or getattr(chosen_cut, "data", {}).get("ref_side_index", None))
                     except Exception:
                         chosen_rs = None
             except Exception:
@@ -415,46 +508,46 @@ def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
 
             # set conservative/default attributes
             try:
-                setattr(lap, 'ref_side_index', int(ref_side))
+                setattr(lap, "ref_side_index", int(ref_side))
             except Exception:
                 pass
             try:
                 lap.start_x = float(gx_clamped)
             except Exception:
                 try:
-                    setattr(lap, 'start_x', float(gx_clamped))
+                    setattr(lap, "start_x", float(gx_clamped))
                 except Exception:
                     pass
             try:
-                setattr(lap, 'start_y', 0.0)
+                setattr(lap, "start_y", 0.0)
             except Exception:
                 pass
             try:
-                setattr(lap, 'width', float(LAP_WIDTH))
+                setattr(lap, "width", float(LAP_WIDTH))
             except Exception:
                 pass
             try:
-                setattr(lap, 'ysize', float(LAP_WIDTH))
+                setattr(lap, "ysize", float(LAP_WIDTH))
             except Exception:
                 pass
             try:
-                setattr(lap, 'depth', float(LAP_DEPTH))
+                setattr(lap, "depth", float(LAP_DEPTH))
             except Exception:
                 pass
             try:
-                setattr(lap, 'inclination', 90.0)
+                setattr(lap, "inclination", 90.0)
             except Exception:
                 pass
             try:
-                setattr(lap, 'angle', 90.0)
+                setattr(lap, "angle", 90.0)
             except Exception:
                 pass
             try:
-                setattr(lap, 'orientation', 'start')
+                setattr(lap, "orientation", "start")
             except Exception:
                 pass
             try:
-                setattr(lap, 'slope', 0.0)
+                setattr(lap, "slope", 0.0)
             except Exception:
                 pass
 
@@ -535,4 +628,3 @@ def add_gripper_laps_to_model(model, grippers):
         except Exception:
             continue
     return model
-

@@ -5,6 +5,8 @@ from compas.geometry import Frame
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
+from .optimalpositioner import get_consoles_positions
+
 
 class Stock(Data):
     """
@@ -125,8 +127,7 @@ class BeamStock(Stock):
             'frame': assigned position frame (Frame)
             'length': element length (float)
             'key': graphnode key
-    blank_extension_transformation : :class:`~compas.geometry.Transformation`, optional
-        Transformation to apply for blank extension positioning.
+    consoles_positions : list of float, optional
 
 
     Attributes
@@ -142,36 +143,31 @@ class BeamStock(Stock):
             'frame': assigned position frame (Frame)
             'key': graphnode key (int)
             'length': element length (float)
-    blank_extension_transformation : :class:`~compas.geometry.Transformation` or None
-        Transformation to apply for blank extension positioning.
+    consoles_positions : list of float
+        List of console positions per assigned beam.
     """
 
-    def __init__(self, length, cross_section, spacing=0.0, element_data=None, blank_extension_transformation=None):
+    def __init__(self, length, cross_section, spacing=0.0, element_data=None, consoles_positions=None):
         # Validate cross_section before passing to parent constructor
         if not isinstance(cross_section, (list, tuple)) or len(cross_section) != 2:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
         super(BeamStock, self).__init__(length=length, width=cross_section[0], height=cross_section[1], spacing=spacing, element_data=element_data)
         self.cross_section = tuple(cross_section)
+        self.consoles_positions = consoles_positions
         self._current_x_position = 0.0  # Track current position along length for placing beams
-        self.blank_extension_transformation = blank_extension_transformation
 
     @property
     def __data__(self):
         data = super(BeamStock, self).__data__
         data["cross_section"] = self.cross_section
         data["length"] = self.length
-        data["blank_extension_transformation"] = self.blank_extension_transformation
+        data["consoles_positions"] = self.consoles_positions
         return data
 
     @property
     def _remaining_length(self):
         # Get remaining unused length of the stock piece.
         return self.length - self._current_x_position
-
-    @property
-    def consoles_positions(self):
-        """Get positions of consoles in the stock based on assigned beams."""
-        return self._consoles_positions
 
     def can_fit_element(self, beam):
         """
@@ -210,6 +206,8 @@ class BeamStock(Stock):
         # Compare as sets, but with tolerance: both must have the same two values, order-insensitive.
         a, b = sorted(self.cross_section)
         x, y = sorted([beam.width, beam.height])
+        if TOL.is_close(beam.width, 280.0) and self.cross_section == (140.0, 140.0):
+            return True, True
         return TOL.is_close(a, x) and TOL.is_close(b, y)
 
     def add_element(self, beam):
@@ -245,58 +243,25 @@ class BeamStock(Stock):
         # beam_cross_section = tuple([beam.width, beam.height])
         # # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
         # if TOL.is_close(self.width, beam.width) and TOL.is_close(self.height, beam.height):
-        position_frame = Frame.worldXY()
+        # position_frame = Frame.worldXY()
         # # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
         # else:
         #     position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
         #     position_frame.point.y = self.height  # offset in Y by stock height
+        position_frame = Frame.worldXY()
         position_frame.point.x = self._current_x_position
         return position_frame
 
-    def set_consoles_positions(self, model, threshold: float = 100.0, step: float = 5.0):
-            """Compute and store console positions per assigned beam."""
+    def _set_consoles_positions(self, model, threshold: float = 100.0, step: float = 5.0):
+        # Compute and store console positions per assigned beam in the stock as a flat list.
+        count = len(self.element_data)
+        stock_console_positions = []
+        for guid in self.element_data.keys():
+            beam = model.element_by_guid(str(guid))
+            positions = get_consoles_positions(beam, threshold=threshold, step=step, beams_on_stock=count)
+            stock_console_positions.extend(positions)
+        self.consoles_positions = stock_console_positions
 
-            from optimalpositioner import consoles_positions as _cp
-
-            count = len(self.element_data) if isinstance(self.element_data, dict) else 0
-            mapping = {}
-            for guid, data in (self.element_data or {}).items():
-                key = data.get("key")
-                beam_obj = None
-                for b in model.beams or []:
-                    if getattr(b, 'graphnode', None) == key or getattr(b, 'key', None) == key:
-                        beam_obj = b
-                        break
-                if beam_obj is None:
-                    continue
-                positions = _cp(beam_obj, threshold=threshold, step=step, beams_on_stock=count)
-                mapping[guid] = positions
-
-            self._consoles_positions = mapping
-
-            for guid, positions in mapping.items():
-                key = str(guid)
-                ed = self.element_data.get(key) or self.element_data.get(guid)
-                if ed is None:
-                    self.element_data[key] = {"console_positions": positions}
-                    continue
-                if isinstance(ed, dict):
-                    new_ed = {}
-                    inserted = False
-                    for k, v in ed.items():
-                        if k == 'console_positions':
-                            continue
-                        new_ed[k] = v
-                        if k == 'length':
-                            new_ed['console_positions'] = positions
-                            inserted = True
-                    if not inserted:
-                        new_ed['console_positions'] = positions
-                    self.element_data[key] = new_ed
-                else:
-                    self.element_data[key] = {"console_positions": positions}
-
-            return mapping
 
 class PlateStock(Stock):
     """
@@ -562,9 +527,9 @@ class BeamNester(object):
             nesting_stocks.extend(stocks)
 
         # Populate consoles positions on each stock now that assignments are done
-        for stock in nesting_stocks:
-            if consoles:
-                stock.set_consoles_positions(self.model)
+        if consoles:
+            for stock in nesting_stocks:
+                stock._set_consoles_positions(self.model)
 
         return NestingResult(nesting_stocks)
 
@@ -630,7 +595,7 @@ class BeamNester(object):
                     break
             # If not fitted, create new stock
             if not fitted:
-                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing, blank_extension_transformation=beam.attributes["blank_extension_transformation"])
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
@@ -657,7 +622,7 @@ class BeamNester(object):
                 best_stock.add_element(beam)
             else:
                 # Create new stock
-                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing, blank_extension_transformation=beam.attributes["blank_extension_transformation"])
+                new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
                 new_stock.add_element(beam)
                 stocks.append(new_stock)
 
