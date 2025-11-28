@@ -220,7 +220,7 @@ class KTrussButtJoint(Joint):
         return mid_cutting_plane
 
     def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
-        # find intersection points between cross beame and main beams
+        # find intersection points between cross beam and main beams
         P1, _ = intersection_line_line(self.cross_beam.centerline, beam_1.centerline)
         P2, _ = intersection_line_line(self.cross_beam.centerline, beam_2.centerline)
 
