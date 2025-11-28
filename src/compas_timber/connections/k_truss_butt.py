@@ -208,10 +208,10 @@ class KTrussButtJoint(Joint):
         bisector_direction = (dir1 + dir2).unitized()
 
         # Create rotation plane of the bisector
-        roatation_plane = Plane.from_point_and_two_vectors(intersection_point, dir1, dir2)
+        rotation_plane = Plane.from_point_and_two_vectors(intersection_point, dir1, dir2)
 
         # Compute normal of the cutting plane
-        cutting_plane_normal = bisector_direction.rotated(math.pi / 2, roatation_plane.normal, intersection_point)
+        cutting_plane_normal = bisector_direction.rotated(math.pi / 2, rotation_plane.normal, intersection_point)
 
         # Create plane perpendicular to the bisector at the intersection point
         mid_cutting_plane = Plane(intersection_point, cutting_plane_normal)
