@@ -311,11 +311,6 @@ def test_slot_apply_frames():
     assert back_frame == Frame(point=Point(x=8.943, y=-0.769, z=24.607), xaxis=Vector(x=0.000, y=-0.174, z=-0.985), yaxis=Vector(x=-0.906, y=-0.416, z=0.073))
 
 
-
-
-
-
-
 def test_slot_volume_subtracting_polyhedron(beam):
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
     ml = MachiningLimits()

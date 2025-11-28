@@ -35,7 +35,7 @@ def test_create_k_butt(beam_a, beam_b, cross_beam):
     model.add_element(beam_b)
     model.add_element(cross_beam)
 
-    joint = KTrussButtJoint.create(model, cross_beam, [beam_a, beam_b], mill_depth=15.0)
+    joint = KTrussButtJoint.create(model, cross_beam, beam_a, beam_b, mill_depth=15.0)
 
     assert len(model.joints) == 1
     assert isinstance(joint, KTrussButtJoint)
@@ -47,7 +47,7 @@ def test_model_process_joinery(beam_a, beam_b, cross_beam):
     model.add_element(beam_b)
     model.add_element(cross_beam)
 
-    joint = KTrussButtJoint(cross_beam, [beam_a, beam_b], mill_depth=15.0)
+    joint = KTrussButtJoint(cross_beam, beam_a, beam_b, mill_depth=15.0)
     model.add_joint(joint)
 
     model.process_joinery()

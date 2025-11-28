@@ -65,11 +65,11 @@ class KTrussButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, cross_beam: Beam = None, main_beams: list[Beam] = None, mill_depth: float = 0, **kwargs):
-        super().__init__(main_beams=main_beams, cross_beam=cross_beam, **kwargs)
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
+        super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
         self.cross_beam = cross_beam
-        self.main_beams = main_beams
+        self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None)
         self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None)
