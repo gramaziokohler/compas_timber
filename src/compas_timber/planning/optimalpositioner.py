@@ -42,7 +42,7 @@ def set_gripper_positions(model):
                 continue
 
             assert TOL.is_close(GRIPPER_SEPARATION, gripper_positions[1] - gripper_positions[0]) if len(gripper_positions) == 2 else True
-            beam.attribuites["gripper_position"] = gripper_positions[0]
+            beam.attributes["gripper_position"] = gripper_positions[0]
 
             depth = LAP_DEPTH
             if TOL.is_close(beam.width, 280.0) or TOL.is_close(beam.height, 280.0):
