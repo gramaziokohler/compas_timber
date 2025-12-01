@@ -303,10 +303,10 @@ class LongitudinalCut(BTLxProcessing):
             max_depth = start_y * math.tan(math.radians(inclination))
         else:
             max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
-        depth = max_depth if depth is None else depth
-        depth_limited = depth < max_depth
-        if not depth_limited:
-            depth = 0.0
+
+
+        depth_limited = depth <= max_depth if depth is not None else False
+        depth = 0.0 if depth is None else depth
 
         # calculate tool_position
         if TOL.is_negative(plane.normal.dot(ref_side.yaxis)):
