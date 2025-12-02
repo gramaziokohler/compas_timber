@@ -21,32 +21,33 @@ from compas_timber.fabrication import Pocket
 
 class KMiterJoint(Joint):
     """
-    Represents a K-Butt type joint which joins the ends of two beams (`main_beams`),  along the length of another beam (`cross_beam`), trimming the two main beams.
-    A `Pocket` feature is created in the `cross_beam` and `DoubleCut` features are created in each of the `main_beams`.
+    Represents a K-Miter type joint which joins the ends of two beams (`main_beams`) along the length of another beam (`cross_beam`).
+
+    The main beams are joined with Miter joint where they meet, and each main beam is joined to the cross beam with a Butt joint.
+    If the beams are coplanar, a  :class:`~compas_timber.fabrication.Pocket` feature is created in the `cross_beam` otherwise
+    with a :class:`~compas_timber.fabrication.Lap` feature.
 
     This joint type is compatible with beams in K topology.
-
-    The three beams must be coplanar and the two main beams must be on the same side of the cross beam.
-
 
     Parameters
     ----------
     cross_beam : :class:`~compas_timber.elements.Beam`
-         The cross beam to be joined. The beam connected along its length.
-    main_beams : list of :class:`~compas_timber.elements.Beam`
-         The two main beams to be joined. The beams connected at their ends.
+        The cross beam to be joined. The beam connected along its length.
+    *main_beams : :class:`~compas_timber.elements.Beam`
+        The two main beams to be joined. The beams connected at their ends.
     mill_depth : float, optional
-            The depth of material to be milled from the cross beam at the cutting planes. Default is 0.
-
+        The depth of material to be milled from the cross beam at the cutting planes. Default is 0.
+    **kwargs : dict
+        Additional keyword arguments passed to the parent Joint class.
 
     Attributes
     ----------
     cross_beam : :class:`~compas_timber.elements.Beam`
-         The cross beam to be joined. The beam connected along its length.
+        The cross beam to be joined. The beam connected along its length.
     main_beams : list of :class:`~compas_timber.elements.Beam`
         The two main beams to be joined. The beams connected at their ends.
     mill_depth : float
-            The depth of material to be milled from the cross beam at the cutting planes.
+        The depth of material to be milled from the cross beam at the cutting planes.
     features : list of :class:`~compas_timber.fabrication.Feature`
         The features added to the beams by the joint.
 
@@ -135,7 +136,7 @@ class KMiterJoint(Joint):
         """
         Adds the required extension and trimming features to the three beams.
 
-        This method is called when the joint is created by the call by `model.process_joinery()`.
+        This method is called by `model.process_joinery()`..
         """
         assert self.main_beams and self.cross_beam
         beam_1, beam_2 = self._sort_main_beams()

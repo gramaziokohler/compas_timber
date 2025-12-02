@@ -24,21 +24,19 @@ class KButtJoint(Joint):
 
     This joint type is compatible with beams in K topology.
 
-    The three beams must be coplanar and the two main beams must be on the same side of the cross beam.
-    A double cut is applied to `main_beam_b`; if it fails to intersect both other beams, a JackRafterCut is applied instead.
+    If the three beams are coplanare, the cross beam is cut with a :class:`~compas_timber.fabrication.Pocket` feature
+    otherwise with a :class:`~compas_timber.fabrication.Lap` feature.
 
     Parameters
     ----------
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.parts.Beam`, optional
         The cross beam to be joined. The beam connected along its length.
-    main_beam_a : :class:`~compas_timber.parts.Beam`
-        The first main beam to be joined. Worked with a JackRafterCut.
-    main_beam_b : :class:`~compas_timber.parts.Beam`
-        The second main beam to be joined. Worked with a DoubleCut.
-    mill_depth : float
-        The depth of the pocket to be milled in the cross beam.
-
-
+    *main_beams : :class:`~compas_timber.parts.Beam`
+        The two main beams to be joined.
+    mill_depth : float, optional
+        The depth of the pocket to be milled in the cross beam. Default is 0.
+    **kwargs : dict
+        Additional keyword arguments passed to the parent Joint class.
 
     Attributes
     ----------
@@ -50,6 +48,12 @@ class KButtJoint(Joint):
         The second main beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
+    cross_beam_guid : str
+        The GUID of the cross beam.
+    main_beam_a_guid : str
+        The GUID of the first main beam.
+    main_beam_b_guid : str
+        The GUID of the second main beam.
 
     """
 
@@ -143,7 +147,7 @@ class KButtJoint(Joint):
         """
         Adds the required extension and trimming features to the three beams.
 
-        This method is automatically called when the joint is created by the call to `Joint.create()`.
+        This method is called by `model.process_joinery()`.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
 
