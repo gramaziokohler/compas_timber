@@ -10,6 +10,9 @@ from compas.geometry import intersection_plane_plane
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.butt_joint import ButtJoint
+from compas_timber.connections.t_butt import TButtJoint
+from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements.beam import Beam
@@ -19,7 +22,7 @@ from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
 
 
-class KTrussButtJoint(Joint):
+class KMiterJoint(Joint):
     """
     Represents a K-Butt type joint which joins the ends of two beams (`main_beams`),  along the length of another beam (`cross_beam`), trimming the two mian beams.
     A `Pocket` feature is created in the `cross_beam` and `DoubleCut` features are created in each of the `main_beams`.
@@ -124,14 +127,17 @@ class KTrussButtJoint(Joint):
 
         This method is automatically called when the joint is created by the call to `Joint.create()`.
         """
-
         beam_1, beam_2 = self._sort_main_beams()
 
-        mid_cutting_plane = self._compute_middle_cutting_plane(beam_1, beam_2)
+        L_joint = LMiterJoint(beam_1, beam_2)
+        L_joint.add_features()
 
-        self._cut_main_beam(beam_1, mid_cutting_plane)
+        dummy_cross = self.cross_beam.copy()
+        T_joint = TButtJoint(beam_1, dummy_cross, mill_depth=self.mill_depth)
+        T_joint.add_features()
 
-        self._cut_main_beam(beam_2, mid_cutting_plane)
+        T_joint = TButtJoint(beam_2, dummy_cross, mill_depth=self.mill_depth)
+        T_joint.add_features()
 
         self._cut_cross_beam(beam_1, beam_2)
 
@@ -158,7 +164,6 @@ class KTrussButtJoint(Joint):
     def _sort_main_beams(self):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
         angle_b, dot_b = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[1])
-
         if dot_a < dot_b:
             # Beam B first
             return self.main_beams[0], self.main_beams[1]
@@ -181,7 +186,6 @@ class KTrussButtJoint(Joint):
 
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-
         return angle, dot
 
     def _compute_middle_cutting_plane(self, beam_1, beam_2) -> Plane:
@@ -193,30 +197,24 @@ class KTrussButtJoint(Joint):
         p1, _ = intersection_line_line(beam_1.centerline, self.cross_beam.centerline)
         end, _ = beam_1.endpoint_closest_to_point(Point(*p1))
         if end == "start":
-            dir1 = beam_1.centerline.vector
+            dir1 = beam_1.frame.xaxis
         else:
-            dir1 = beam_1.centerline.vector * -1
+            dir1 = beam_1.frame.xaxis * -1
 
         p2, _ = intersection_line_line(beam_2.centerline, self.cross_beam.centerline)
         end, _ = beam_2.endpoint_closest_to_point(Point(*p2))
         if end == "start":
-            dir2 = beam_2.centerline.vector
+            dir2 = beam_2.frame.xaxis
         else:
-            dir2 = beam_2.centerline.vector * -1
+            dir2 = beam_2.frame.xaxis * -1
 
         # The bisector direction is the normalized sum of both directions
         bisector_direction = (dir1 + dir2).unitized()
-
-        # Create rotation plane of the bisector
-        rotation_plane = Plane.from_point_and_two_vectors(intersection_point, dir1, dir2)
-
-        # Compute normal of the cutting plane
-        cutting_plane_normal = bisector_direction.rotated(math.pi / 2, rotation_plane.normal, intersection_point)
-
+        # Compute the normal of the cutting plane that runs along the bisector
+        cutting_plane_normal = bisector_direction.cross(dir2.cross(dir1)).unitized()
         # Create plane perpendicular to the bisector at the intersection point
         mid_cutting_plane = Plane(intersection_point, cutting_plane_normal)
         mid_cutting_plane.point += bisector_direction * max(self.cross_beam.height, self.cross_beam.width)
-
         return mid_cutting_plane
 
     def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
@@ -253,7 +251,6 @@ class KTrussButtJoint(Joint):
             machining_limits=machining_limits.limits,
             ref_side_index=self.main_beam_ref_side_index(beam_1),
         )
-
         self.cross_beam.add_feature(pocket)
         self.features.append(pocket)
 
