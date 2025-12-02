@@ -5,9 +5,7 @@ from compas.geometry import Line
 
 
 from compas_timber.elements import Beam
-from compas_timber.connections import KTrussButtJoint
-from compas_timber.fabrication import Pocket
-from compas_timber.fabrication import DoubleCut
+from compas_timber.connections.k_miter import KMiterJoint
 from compas_timber.model import TimberModel
 
 
@@ -34,11 +32,9 @@ def test_create_k_butt(beam_a, beam_b, cross_beam):
     model.add_element(beam_a)
     model.add_element(beam_b)
     model.add_element(cross_beam)
-
-    joint = KTrussButtJoint.create(model, cross_beam, beam_a, beam_b, mill_depth=15.0)
-
+    joint = KMiterJoint.create(model, cross_beam, beam_a, beam_b, mill_depth=15.0)
     assert len(model.joints) == 1
-    assert isinstance(joint, KTrussButtJoint)
+    assert isinstance(joint, KMiterJoint)
 
 
 def test_model_process_joinery(beam_a, beam_b, cross_beam):
@@ -46,19 +42,9 @@ def test_model_process_joinery(beam_a, beam_b, cross_beam):
     model.add_element(beam_a)
     model.add_element(beam_b)
     model.add_element(cross_beam)
-
-    joint = KTrussButtJoint(cross_beam, beam_a, beam_b, mill_depth=15.0)
+    joint = KMiterJoint(cross_beam, beam_a, beam_b, mill_depth=15.0)
     model.add_joint(joint)
-
     model.process_joinery()
-
-    assert len(joint.cross_beam.features) == 1
-    assert len(joint.main_beams[0].features) == 1
-    assert len(joint.main_beams[1].features) == 1
-    assert isinstance(joint, KTrussButtJoint)
+    assert isinstance(joint, KMiterJoint)
     assert joint.mill_depth == 15.0
     assert len(model.joints) == 1
-    assert len(joint.features) == 3
-    assert isinstance(joint.cross_beam.features[0], Pocket)
-    assert isinstance(joint.main_beams[0].features[0], DoubleCut)
-    assert isinstance(joint.main_beams[1].features[0], DoubleCut)

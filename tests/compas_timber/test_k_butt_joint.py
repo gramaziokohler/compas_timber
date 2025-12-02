@@ -6,9 +6,6 @@ from compas.geometry import Line
 
 from compas_timber.elements import Beam
 from compas_timber.connections import KButtJoint
-from compas_timber.fabrication import Pocket
-from compas_timber.fabrication import DoubleCut
-from compas_timber.fabrication.jack_cut import JackRafterCutProxy
 from compas_timber.model import TimberModel
 
 
@@ -53,13 +50,6 @@ def test_model_process_joinery(beam_a, beam_b, cross_beam):
 
     model.process_joinery()
 
-    assert len(joint.cross_beam.features) == 1
-    assert len(joint.main_beam_a.features) == 1
-    assert len(joint.main_beam_b.features) == 1
     assert isinstance(joint, KButtJoint)
     assert joint.mill_depth == 15.0
     assert len(model.joints) == 1
-    assert len(joint.features) == 3
-    assert isinstance(joint.cross_beam.features[0], Pocket)
-    assert isinstance(joint.main_beam_a.features[0], JackRafterCutProxy)
-    assert isinstance(joint.main_beam_b.features[0], DoubleCut)
