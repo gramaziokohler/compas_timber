@@ -1,25 +1,18 @@
 import math
 
-from compas.geometry import Brep
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_plane_plane
-from numpy import angle
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.t_butt import TButtJoint
-from compas_timber.connections.l_butt import LButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import DoubleCut
-from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
 
@@ -73,15 +66,18 @@ class KButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         return data
 
-    def __init__(self, cross_beam: Beam = None, main_beam_a: Beam = None, main_beam_b: Beam = None, mill_depth: float = 0, **kwargs):
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
         super().__init__(**kwargs)
 
+        if not KButtJoint.is_cross_beam(cross_beam, main_beams[0], main_beams[1]):
+            cross_beam, main_beams = KButtJoint.identify_cross_beam(main_beams[0], main_beams[1], cross_beam)
+
         self.cross_beam = cross_beam
-        self.main_beam_a = main_beam_a
-        self.main_beam_b = main_beam_b
+        self.main_beam_a = main_beams[0]
+        self.main_beam_b = main_beams[1]
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(main_beam_a.guid)
-        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(main_beam_b.guid)
+        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(self.main_beam_a.guid)
+        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(self.main_beam_b.guid)
         self.mill_depth = mill_depth
         self.features = []
 
@@ -93,17 +89,15 @@ class KButtJoint(Joint):
     def elements(self):
         return self.beams
 
-    
     @property
     def are_beams_coplanar(self):
-        if  (
+        if (
             are_beams_aligned_with_cross_vector(self.elements[0], self.elements[1])
             and are_beams_aligned_with_cross_vector(self.elements[1], self.elements[2])
-            and are_beams_aligned_with_cross_vector(self.elements[0], self.elements[2])):
+            and are_beams_aligned_with_cross_vector(self.elements[0], self.elements[2])
+        ):
             return True
-        return False        
-
-
+        return False
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
@@ -155,9 +149,9 @@ class KButtJoint(Joint):
 
         if self.are_beams_coplanar:
             self._cut_cross_beam()
-            cross_beam = self.cross_beam.copy()     # cut with a pocket // provides a dummy cross beam
+            cross_beam = self.cross_beam.copy()  # cut with a pocket // provides a dummy cross beam
         else:
-            cross_beam = self.cross_beam             # cut with T-butt joints below
+            cross_beam = self.cross_beam  # cut with T-butt joints below
 
         TJoint1 = TButtJoint(self.main_beam_a, cross_beam, mill_depth=self.mill_depth)
         TJoint1.add_features()
@@ -165,11 +159,6 @@ class KButtJoint(Joint):
         TJoint2.add_features()
         LJoint = TButtJoint(self.main_beam_b, self.main_beam_a)
         LJoint.add_features()
-
-        
-
-
-
 
     def _cut_cross_beam(self):
         """
@@ -203,7 +192,7 @@ class KButtJoint(Joint):
             result, alternative_length = self._check_length_feasability(length, self.main_beam_a, angle_a)
             if not result:
                 length = alternative_length
-            
+
         else:
             raise ValueError("The two main beams cannot be parallel to each other.")
         # Independent BTLx parameters
@@ -274,7 +263,6 @@ class KButtJoint(Joint):
                 length += abs(x3)
         return length
 
-
     def _check_length_feasability(self, length, beam, angle):
         """
         Check that the lenght parameter is bigger that the main_beam_width projected on the cross beam.
@@ -285,8 +273,6 @@ class KButtJoint(Joint):
             return False, touching_beam_width
         return True, touching_beam_width
 
-
-
     def _find_width(self):
         """
         Computes the width BTLx parameter for the pocket in the cross beam.
@@ -295,7 +281,7 @@ class KButtJoint(Joint):
         beam_b_width, _ = self.main_beam_b.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(self.main_beam_b))
         width = max(beam_a_width, beam_b_width)
         return width
-    
+
     def _find_start_y(self, width):
         """
         Computes the start_y BTLx parameter for the pocket in the cross beam.
@@ -325,6 +311,48 @@ class KButtJoint(Joint):
         return angle, dot
 
     @classmethod
+    def is_cross_beam(cls, potential_cross, beam1, beam2, tolerance=1e-3):
+        """
+        Checks if a line is the cross beam in a K topology.
+
+        A line is the cross beam if both of its intersections with the other two beams
+        fall within its segment length (not requiring extension).
+
+        """
+
+        potential_cross_line = potential_cross.centerline
+
+        p1, _ = intersection_line_line(potential_cross_line, beam1.centerline)
+        p2, _ = intersection_line_line(potential_cross_line, beam2.centerline)
+
+        if p1 is None or p2 is None:
+            return False
+
+        length = potential_cross_line.length
+        dist1_from_start = potential_cross_line.start.distance_to_point(p1)
+        dist2_from_start = potential_cross_line.start.distance_to_point(p2)
+
+        # Both intersections must be within the segment (with tolerance from endpoints)
+        is_p1_on_segment = tolerance < dist1_from_start < length - tolerance
+        is_p2_on_segment = tolerance < dist2_from_start < length - tolerance
+        return is_p1_on_segment and is_p2_on_segment
+
+    @classmethod
+    def identify_cross_beam(cls, beam1, beam2, beam3):
+        """
+        Identifies the cross beam in a K topology.
+        """
+
+        if cls.is_cross_beam(beam1, beam2, beam3):
+            return beam1, [beam2, beam3]
+        elif cls.is_cross_beam(beam2, beam1, beam3):
+            return beam2, [beam1, beam3]
+        elif cls.is_cross_beam(beam3, beam1, beam2):
+            return beam3, [beam1, beam2]
+        else:
+            raise ValueError("Could not identify cross beam in K configuration")
+
+    @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         """
         Checks if the cluster of beams complies with the requirements for the KButtJoint.
@@ -342,17 +370,9 @@ class KButtJoint(Joint):
             True if the requirements are met, False otherwise.
         """
 
-        # # For this joint, the beams have to be coplanar
-        # if not (
-        #     are_beams_aligned_with_cross_vector(elements[0], elements[1])
-        #     and are_beams_aligned_with_cross_vector(elements[1], elements[2])
-        #     and are_beams_aligned_with_cross_vector(elements[0], elements[2])
-        # ):
-        #     if not raise_error:
-        #         return False
-
-        #     if raise_error:
-        #         raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
-
-        # return True
-        return True
+        if len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT:
+            return True
+        else:
+            if raise_error:
+                raise BeamJoiningError("K-Butt joints require exactly three beams.")
+            return False

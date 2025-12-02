@@ -1,23 +1,20 @@
 import math
 
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
-from compas.geometry import intersection_plane_plane
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-from compas_timber.connections.butt_joint import ButtJoint
-from compas_timber.connections.t_butt import TButtJoint
+from compas_timber.connections.k_butt import KButtJoint
 from compas_timber.connections.l_miter import LMiterJoint
+from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
 
@@ -71,6 +68,9 @@ class KMiterJoint(Joint):
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
+        if not KButtJoint.is_cross_beam(cross_beam, main_beams[0], main_beams[1]):
+            cross_beam, main_beams = KButtJoint.identify_cross_beam(main_beams[0], main_beams[1], cross_beam)
+
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
@@ -86,19 +86,16 @@ class KMiterJoint(Joint):
     @property
     def elements(self):
         return self.beams
-    
-
 
     @property
     def are_beams_coplanar(self):
-        if  (
+        if (
             are_beams_aligned_with_cross_vector(self.elements[0], self.elements[1])
             and are_beams_aligned_with_cross_vector(self.elements[1], self.elements[2])
-            and are_beams_aligned_with_cross_vector(self.elements[0], self.elements[2])):
+            and are_beams_aligned_with_cross_vector(self.elements[0], self.elements[2])
+        ):
             return True
-        return False      
-
-
+        return False
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, beam, ignore_ends=True)
@@ -145,19 +142,16 @@ class KMiterJoint(Joint):
 
         if self.are_beams_coplanar:
             self._cut_cross_beam(beam_1, beam_2)
-            cross_beam = self.cross_beam.copy()     # cut with pocket // porvide a dummy cross beam the the T joints        
+            cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
         else:
-            cross_beam = self.cross_beam     # cut with T-butt joints below
+            cross_beam = self.cross_beam  # cut with T-butt joints below
 
         L_joint = LMiterJoint(beam_1, beam_2)
-        L_joint.add_features()        
+        L_joint.add_features()
         T_joint1 = TButtJoint(beam_1, cross_beam, mill_depth=self.mill_depth)
         T_joint1.add_features()
         T_joint2 = TButtJoint(beam_2, cross_beam, mill_depth=self.mill_depth)
         T_joint2.add_features()
-
-
-
 
     def _sort_main_beams(self):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
@@ -185,8 +179,6 @@ class KMiterJoint(Joint):
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot
-
-
 
     def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
         # find intersection points between cross beam and main beams
@@ -318,17 +310,9 @@ class KMiterJoint(Joint):
 
 
         """
-        return True
-        # # For this joint, the beams have to be coplanar
-        # if not (
-        #     are_beams_aligned_with_cross_vector(elements[0], elements[1])
-        #     and are_beams_aligned_with_cross_vector(elements[1], elements[2])
-        #     and are_beams_aligned_with_cross_vector(elements[0], elements[2])
-        # ):
-        #     if not raise_error:
-        #         return False
-
-        #     if raise_error:
-        #         raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
-
-        # return True
+        if len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT:
+            return True
+        else:
+            if raise_error:
+                raise BeamJoiningError("K-Butt joints require exactly three beams.")
+            return False
