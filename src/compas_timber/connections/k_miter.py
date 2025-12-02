@@ -86,6 +86,19 @@ class KMiterJoint(Joint):
     @property
     def elements(self):
         return self.beams
+    
+
+
+    @property
+    def are_beams_coplanar(self):
+        if  (
+            are_beams_aligned_with_cross_vector(self.elements[0], self.elements[1])
+            and are_beams_aligned_with_cross_vector(self.elements[1], self.elements[2])
+            and are_beams_aligned_with_cross_vector(self.elements[0], self.elements[2])):
+            return True
+        return False      
+
+
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, beam, ignore_ends=True)
@@ -127,16 +140,23 @@ class KMiterJoint(Joint):
 
         This method is automatically called when the joint is created by the call to `Joint.create()`.
         """
+        assert self.main_beams and self.cross_beam
         beam_1, beam_2 = self._sort_main_beams()
+
+        if self.are_beams_coplanar:
+            self._cut_cross_beam(beam_1, beam_2)
+            cross_beam = self.cross_beam.copy()     # cut with pocket // porvide a dummy cross beam the the T joints        
+        else:
+            cross_beam = self.cross_beam     # cut with T-butt joints below
+
         L_joint = LMiterJoint(beam_1, beam_2)
-        L_joint.add_features()
-        # dummy cross beam, so this class adds feature to the cross beam
-        dummy_cross = self.cross_beam.copy()
-        T_joint1 = TButtJoint(beam_1, dummy_cross, mill_depth=self.mill_depth)
+        L_joint.add_features()        
+        T_joint1 = TButtJoint(beam_1, cross_beam, mill_depth=self.mill_depth)
         T_joint1.add_features()
-        T_joint2 = TButtJoint(beam_2, dummy_cross, mill_depth=self.mill_depth)
+        T_joint2 = TButtJoint(beam_2, cross_beam, mill_depth=self.mill_depth)
         T_joint2.add_features()
-        self._cut_cross_beam(beam_1, beam_2)
+
+
 
 
     def _sort_main_beams(self):
