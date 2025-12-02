@@ -128,38 +128,16 @@ class KMiterJoint(Joint):
         This method is automatically called when the joint is created by the call to `Joint.create()`.
         """
         beam_1, beam_2 = self._sort_main_beams()
-
         L_joint = LMiterJoint(beam_1, beam_2)
         L_joint.add_features()
-
+        # dummy cross beam, so this class adds feature to the cross beam
         dummy_cross = self.cross_beam.copy()
-        T_joint = TButtJoint(beam_1, dummy_cross, mill_depth=self.mill_depth)
-        T_joint.add_features()
-
-        T_joint = TButtJoint(beam_2, dummy_cross, mill_depth=self.mill_depth)
-        T_joint.add_features()
-
+        T_joint1 = TButtJoint(beam_1, dummy_cross, mill_depth=self.mill_depth)
+        T_joint1.add_features()
+        T_joint2 = TButtJoint(beam_2, dummy_cross, mill_depth=self.mill_depth)
+        T_joint2.add_features()
         self._cut_cross_beam(beam_1, beam_2)
 
-    def _cut_main_beam(self, beam: Beam, mid_cutting_plane: Plane):
-        cross_cutting_frame = self.cross_beam.ref_sides[self.main_beam_ref_side_index(beam)]
-        cross_cutting_plane = Plane.from_frame(cross_cutting_frame)
-
-        if self.mill_depth:
-            cross_cutting_plane.point -= cross_cutting_plane.normal * self.mill_depth
-
-        # adjust cutting plane position to ensure correct orientation of the double cut
-        intersection = intersection_plane_plane(mid_cutting_plane, cross_cutting_plane)
-        intersection_line = Line(intersection[0], intersection[1])
-        if intersection_line.direction.dot(cross_cutting_frame.yaxis) > 0:
-            cross_cutting_plane.point += cross_cutting_frame.xaxis * self.cross_beam.length
-        else:
-            mid_cutting_plane.normal *= -1
-
-        double_cut = DoubleCut.from_planes_and_beam([cross_cutting_plane, mid_cutting_plane], beam)
-
-        beam.add_feature(double_cut)
-        self.features.append(double_cut)
 
     def _sort_main_beams(self):
         angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
@@ -188,34 +166,7 @@ class KMiterJoint(Joint):
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot
 
-    def _compute_middle_cutting_plane(self, beam_1, beam_2) -> Plane:
-        intersection_point, _ = intersection_line_line(beam_1.centerline, beam_2.centerline)
-        if intersection_point is None:
-            raise ValueError("Main beams do not intersect.")
 
-        # Get normalized direction vectors
-        p1, _ = intersection_line_line(beam_1.centerline, self.cross_beam.centerline)
-        end, _ = beam_1.endpoint_closest_to_point(Point(*p1))
-        if end == "start":
-            dir1 = beam_1.frame.xaxis
-        else:
-            dir1 = beam_1.frame.xaxis * -1
-
-        p2, _ = intersection_line_line(beam_2.centerline, self.cross_beam.centerline)
-        end, _ = beam_2.endpoint_closest_to_point(Point(*p2))
-        if end == "start":
-            dir2 = beam_2.frame.xaxis
-        else:
-            dir2 = beam_2.frame.xaxis * -1
-
-        # The bisector direction is the normalized sum of both directions
-        bisector_direction = (dir1 + dir2).unitized()
-        # Compute the normal of the cutting plane that runs along the bisector
-        cutting_plane_normal = bisector_direction.cross(dir2.cross(dir1)).unitized()
-        # Create plane perpendicular to the bisector at the intersection point
-        mid_cutting_plane = Plane(intersection_point, cutting_plane_normal)
-        mid_cutting_plane.point += bisector_direction * max(self.cross_beam.height, self.cross_beam.width)
-        return mid_cutting_plane
 
     def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
         # find intersection points between cross beam and main beams
@@ -347,17 +298,17 @@ class KMiterJoint(Joint):
 
 
         """
-
-        # For this joint, the beams have to be coplanar
-        if not (
-            are_beams_aligned_with_cross_vector(elements[0], elements[1])
-            and are_beams_aligned_with_cross_vector(elements[1], elements[2])
-            and are_beams_aligned_with_cross_vector(elements[0], elements[2])
-        ):
-            if not raise_error:
-                return False
-
-            if raise_error:
-                raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
-
         return True
+        # # For this joint, the beams have to be coplanar
+        # if not (
+        #     are_beams_aligned_with_cross_vector(elements[0], elements[1])
+        #     and are_beams_aligned_with_cross_vector(elements[1], elements[2])
+        #     and are_beams_aligned_with_cross_vector(elements[0], elements[2])
+        # ):
+        #     if not raise_error:
+        #         return False
+
+        #     if raise_error:
+        #         raise BeamJoiningError(beams=elements[1:3], joint=cls, debug_info="The three beams have to be coplanar.")
+
+        # return True
