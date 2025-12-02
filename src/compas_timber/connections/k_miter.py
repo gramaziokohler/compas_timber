@@ -21,7 +21,7 @@ from compas_timber.fabrication import Pocket
 
 class KMiterJoint(Joint):
     """
-    Represents a K-Butt type joint which joins the ends of two beams (`main_beams`),  along the length of another beam (`cross_beam`), trimming the two mian beams.
+    Represents a K-Butt type joint which joins the ends of two beams (`main_beams`),  along the length of another beam (`cross_beam`), trimming the two main beams.
     A `Pocket` feature is created in the `cross_beam` and `DoubleCut` features are created in each of the `main_beams`.
 
     This joint type is compatible with beams in K topology.
@@ -32,7 +32,7 @@ class KMiterJoint(Joint):
     Parameters
     ----------
     cross_beam : :class:`~compas_timber.elements.Beam`
-         The cross beam to be joined. The beam connected along its lenght.
+         The cross beam to be joined. The beam connected along its length.
     main_beams : list of :class:`~compas_timber.elements.Beam`
          The two main beams to be joined. The beams connected at their ends.
     mill_depth : float, optional
@@ -42,7 +42,7 @@ class KMiterJoint(Joint):
     Attributes
     ----------
     cross_beam : :class:`~compas_timber.elements.Beam`
-         The cross beam to be joined. The beam connected along its lenght.
+         The cross beam to be joined. The beam connected along its length.
     main_beams : list of :class:`~compas_timber.elements.Beam`
         The two main beams to be joined. The beams connected at their ends.
     mill_depth : float
@@ -135,7 +135,7 @@ class KMiterJoint(Joint):
         """
         Adds the required extension and trimming features to the three beams.
 
-        This method is automatically called when the joint is created by the call to `Joint.create()`.
+        This method is called when the joint is created by the call by `model.process_joinery()`.
         """
         assert self.main_beams and self.cross_beam
         beam_1, beam_2 = self._sort_main_beams()

@@ -59,7 +59,7 @@ class KButtJoint(Joint):
 
     @property
     def __data__(self):
-        data = super().__data__
+        data = super().__data__()
         data["cross_beam_guid"] = self.cross_beam_guid
         data["main_beam_a_guid"] = self.main_beam_a_guid
         data["main_beam_b_guid"] = self.main_beam_b_guid

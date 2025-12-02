@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `planar_surface_point_at` to `compas_timber.utils`.
-* Added new `compas_timber.connections.KTrussButtJoint` class for creating K-Topo joint with a cross beam and two main beams. 
+* Added new `compas_timber.connections.KMiterJoint` class for creating K-Topo joint with a cross beam and two main beams. 
 * Added new `compas_timber.connections.KButtJoint` class for creating K-Topo joint with a cross beam and two main beams. 
 
 
