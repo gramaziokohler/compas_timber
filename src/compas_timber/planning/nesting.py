@@ -253,16 +253,31 @@ class BeamStock(Stock):
         position_frame.point.x = self._current_x_position
         return position_frame
 
-    def _set_consoles_positions(self, model, threshold: float = 100.0, step: float = 5.0):
+    def _set_consoles_positions(self, model):
         # Compute and store console positions per assigned beam in the stock as a flat list.
         count = len(self.element_data)
         stock_console_positions = []
-        for guid, data in self.element_data.items():
+
+        # prepare stock beam lengths in the same order as element_data
+        guids_in_order = list(self.element_data.keys())
+        stock_lengths = []
+        for guid in guids_in_order:
+            b = model.element_by_guid(str(guid))
+            stock_lengths.append(float(b.blank_length))
+
+        for i, guid in enumerate(guids_in_order):
+            data = self.element_data[guid]
             beam = model.element_by_guid(str(guid))
-            positions = get_consoles_positions(beam, threshold=threshold, step=step, beams_on_stock=count)
+            positions = get_consoles_positions(
+                beam,
+                beams_on_stock=count,
+                beam_index=i,
+                stock_beam_lengths=tuple(stock_lengths)
+            )
             frame = data.get("frame", Frame.worldXY())
             positions = [p + frame.point.x for p in positions]  # Offset by beam position on stock
             stock_console_positions.extend(positions)
+
         stock_console_positions.sort()
         self.consoles_positions = stock_console_positions
 

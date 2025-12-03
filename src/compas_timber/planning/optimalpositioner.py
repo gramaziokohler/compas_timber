@@ -1,8 +1,3 @@
-from typing import Optional
-from typing import Tuple
-
-from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.tolerance import TOL
 
 from compas_timber.connections import beam_ref_side_incidence_with_vector
@@ -10,21 +5,20 @@ from compas_timber.fabrication import Lap
 from compas_timber.fabrication import LongitudinalCutProxy
 from compas_timber.fabrication.btlx import MachiningLimits
 
-# Grippers Parameters
+# Gripper's Position Parameters
 GRIPPER_SEPARATION = 500.0
-SMALL_BEAM_THRESHOLD = 900.0
-MIN_MARGIN = 1.0
 
-# Laps Parameters
+# Gripper's Laps Parameters
 LAP_LENGTH = 110.0
 LAP_DEPTH = 80.0
 LAP_WIDTH = 140.0
-REF_SIDE_INDEX = 1
 
-# Consoles Parameters
+# Existing Laps Parameters
 LAP_THRESHOLD = 10.0
 ADJUST_STEP = 5.0
 
+# Consoles Position Parameters
+CONSOLE_WIDTH = 140.0
 
 def set_gripper_positions(model):
     for beam in model.beams:
@@ -194,7 +188,7 @@ def _get_gripper_positions(beam):
     # collect lap domains for the laps on the beam
     lap_domains = _get_lap_domains(beam)
 
-    # define initial fripper positions according to usable length
+    # define initial gripper positions according to usable length
     gripper_positions = _define_gripper_positions(usable_domain)
 
     # check if there are any conflicts, otherwise we are done!
@@ -264,382 +258,178 @@ def _get_gripper_positions(beam):
     # No valid position found - return original positions
     return tuple(float(round(g, 3)) for g in gripper_positions)
 
+def _define_consoles_positions(usable_domain, beams_on_stock, beam_index, stock_beam_lengths):
+    """Define initial console target positions inside the usable domain.
 
-def get_consoles_positions(
-    beam: object,
-    g1: Optional[float] = None,
-    g2: Optional[float] = None,
-    threshold: float = 100.0,
-    step: float = 5.0,
-    beams_on_stock: Optional[int] = None,
-) -> Tuple[float, ...]:
-    """Return console positions for a beam.
+    Positions are computed relative to the usable domain (i.e. cuts at
+    beam ends are respected). The number and locations depend on
+    ``beams_on_stock``.
 
-    By default the function returns two console positions near 1/4 and 3/4
-    of the beam length. When the caller knows how many beams are nested on
-    the same stock, it can pass ``beams_on_stock`` to alter the number of
-    consoles per beam:
-
-    - ``beams_on_stock == 3`` -> return 2 consoles (at ~1/3 and ~2/3)
-    - ``beams_on_stock == 2`` -> return 3 consoles (at ~1/6, 1/2, 5/6)
-
-    The function will attempt to shift each console away from the two
-    grippers (``g1``, ``g2``) and keep them at least ``threshold`` mm away
-    from any lap start in ``lap_starts``. Movement proceeds in ``step``
-    increments until a valid position is found or the beam bounds are
-    reached.
+    Returns a list of absolute positions (in the same coordinate as
+    beam.start_x) inside the usable domain.
     """
+    start, end = float(usable_domain[0]), float(usable_domain[1])
+    span = max(0.0, end - start)
+    # distribute a fixed total of 6 console positions across the beams
+    # and return the positions for this specific beam (by index).
 
-    length = float(beam.blank_length)
-    lap_starts = [f.start_x for f in beam.features if f.__class__.__name__ == "Lap"]
+    # Short-beam rule: if usable span is smaller than threshold, return
+    # a single console in the middle of the usable domain.
 
-    # (short-beam single-console handling is applied after adjust_one is defined)
+    # Determine number of beams in stock
+    try:
+        bis = int(beams_on_stock) if beams_on_stock is not None else 0
+    except Exception:
+        bis = 0
 
-    # New rule: if beams_on_stock is 2 or less -> return 3 consoles
-    #           if beams_on_stock is 3 or more -> return 2 consoles
-    if beams_on_stock is not None:
-        try:
-            bis = int(beams_on_stock)
-        except Exception:
-            bis = None
+    total_consoles = 6
+
+    # Distribution by length
+    counts = [0] * bis
+
+    # ensure positive lengths
+    lengths = [max(0.0, float(x)) for x in stock_beam_lengths[:bis]]
+    total_length = sum(lengths)
+    # if all lengths zero/falsy, fallback to equal distribution
+    if total_length <= 0.0:
+        base = total_consoles // bis
+        remainder = total_consoles % bis
+        for i in range(bis):
+            counts[i] = base + (1 if i < remainder else 0)
     else:
-        bis = None
+        # allocate at least 1 to each beam if possible
+        min_per_beam = 1 if total_consoles >= bis else 0
+        # raw allocation based on length proportion
+        raw = [x / total_length * total_consoles for x in lengths]
+        # initial floor allocation
+        floored = [int(max(min_per_beam, int(r))) for r in raw]
+        allocated = sum(floored)
+        # compute remainders for distributing remaining consoles
+        remainders = [(i, raw[i] - floored[i]) for i in range(bis)]
+        # if allocated exceeds total_consoles (rare), reduce from smallest remainders
+        if allocated > total_consoles:
+            surplus = allocated - total_consoles
+            # sort by smallest remainder first to remove
+            for i, _ in sorted(remainders, key=lambda x: x[1])[:surplus]:
+                if floored[i] > min_per_beam:
+                    floored[i] -= 1
+            counts = floored
+        else:
+            # distribute remaining consoles by largest fractional remainder
+            remaining = total_consoles - allocated
+            for i, _ in sorted(remainders, key=lambda x: x[1], reverse=True)[:remaining]:
+                floored[i] += 1
+            counts = floored
 
-    if bis is not None and bis <= 2:
-        targets = [float(length) * (1.0 / 6.0), float(length) * 0.5, float(length) * (5.0 / 6.0)]
-    elif bis is not None and bis >= 3:
-        targets = [float(length) * (1.0 / 3.0), float(length) * (2.0 / 3.0)]
+    # clamp beam_index
+    idx = int(beam_index) if beam_index is not None else 0
+    if idx < 0:
+        idx = 0
+    if idx >= bis:
+        idx = bis - 1
+
+    consoles_for_beam = counts[idx]
+
+    # map number of consoles to fractional positions within usable span
+    if consoles_for_beam >= 3:
+        fractions = (1.0 / 6.0, 0.5, 5.0 / 6.0)
+    elif consoles_for_beam == 2:
+        fractions = (1.0 / 3.0, 2.0 / 3.0)
+    elif consoles_for_beam == 1:
+        fractions = (0.5,)
     else:
-        # default fallback: two consoles at 1/4 and 3/4
-        targets = [float(length) * 0.25, float(length) * 0.75]
-    minv, maxv = float(MIN_MARGIN), float(max(MIN_MARGIN, length - MIN_MARGIN))
+        fractions = ()
 
-    try:
-        if g1 is not None:
-            g1 = float(g1)
-    except Exception:
-        g1 = None
-    try:
-        if g2 is not None:
-            g2 = float(g2)
-    except Exception:
-        g2 = None
-    try:
-        lap_list = [float(s) for s in (lap_starts or []) if s is not None]
-    except Exception:
-        lap_list = []
+    return [start + span * f for f in fractions]
 
-    def is_valid(x: float) -> bool:
-        if x < minv or x > maxv:
-            return False
-        if g1 is not None and abs(x - g1) < threshold:
-            return False
-        if g2 is not None and abs(x - g2) < threshold:
-            return False
-        for s in lap_list:
-            if abs(x - s) < threshold:
+def get_consoles_positions(beam, beams_on_stock, beam_index, stock_beam_lengths):
+    """Return console positions for a beam.
+    """
+    usable_domain = _get_usable_domain(beam)
+
+    # collect lap domains for the laps on the beam
+    lap_domains = _get_lap_domains(beam)
+
+    # define initial consoles positions according to usable length
+    console_positions = _define_consoles_positions(usable_domain, beams_on_stock, beam_index, stock_beam_lengths)
+
+    # console-specific validity: treat each position as the center of a
+    # console of width `CONSOLE_WIDTH` (so domain is [pos-half, pos+half]).
+    half_console = float(CONSOLE_WIDTH) * 0.5
+
+    def _console_positions_valid(positions_list):
+        for p in positions_list:
+            left, right = float(p) - half_console, float(p) + half_console
+            if left < usable_domain[0] or right > usable_domain[1]:
                 return False
+            for lap in lap_domains or []:
+                if _domains_overlap((left, right), lap):
+                    return False
         return True
 
-    def adjust_one(initial: float) -> float:
-        x = float(max(minv, min(maxv, initial)))
-        if is_valid(x):
-            return x
-        dir = 1
-        nearest = None
-        if g1 is not None or g2 is not None:
-            # pick nearest gripper
-            candidates = [p for p in (g1, g2) if p is not None]
-            if candidates:
-                nearest = min(candidates, key=lambda p: abs(initial - p))
-                dir = -1 if initial < nearest else 1
+    # check if there are any conflicts, otherwise we are done!
+    if _console_positions_valid(console_positions):
+        return tuple(float(round(g, 3) - half_console) for g in console_positions)
 
-        max_iter = int((maxv - minv) / max(step, 1e-6)) + 1
-        for _ in range(max_iter):
-            nx = x + dir * step
-            if nx < minv or nx > maxv:
+    # CONFLICT RESOLUTION: Find the first overlap and calculate offsets to clear it
+    overlapping_console_idx = None
+    overlapping_domain_idx = None
+
+    for i, domain in enumerate(lap_domains):
+        for j, c_pos in enumerate(console_positions):
+            console_domain = (float(c_pos) - half_console, float(c_pos) + half_console)
+            if _domains_overlap(console_domain, domain):
+                overlapping_console_idx = j
+                overlapping_domain_idx = i
                 break
-            if is_valid(nx):
-                return float(max(minv, min(maxv, nx)))
-            x = nx
+        if overlapping_console_idx is not None:
+            break
 
-        dir = -dir
-        x = float(max(minv, min(maxv, initial)))
-        for _ in range(max_iter):
-            nx = x + dir * step
-            if nx < minv or nx > maxv:
-                break
-            if is_valid(nx):
-                return float(max(minv, min(maxv, nx)))
-            x = nx
+    # If no overlap found, return current positions
+    if overlapping_console_idx is None:
+        return tuple(float(round(g, 3)) for g in console_positions)
 
-        return float(max(minv, min(maxv, initial)))
+    # Get the overlapping consoles's position and lap's domain
+    c_pos = float(console_positions[overlapping_console_idx])
+    lap_domain = lap_domains[overlapping_domain_idx]
+    console_domain = (c_pos - half_console, c_pos + half_console)
 
-    # Short-beam special case: return a single console at the (adjusted)
-    # midpoint when the beam is shorter than SMALL_BEAM_THRESHOLD.
-    try:
-        if SMALL_BEAM_THRESHOLD is not None and float(length) < float(SMALL_BEAM_THRESHOLD):
-            mid = float(round(length / 2.0, 3))
-            adj_mid = float(round(adjust_one(mid), 3))
-            return (adj_mid,)
-    except Exception:
-        # fall back to normal logic on error
-        pass
+    # Calculate how much to move to clear the lap domain (with threshold)
+    # To move backward (negative): need to move console END before lap START
+    distance_to_move_backward = console_domain[1] - lap_domain[0] + LAP_THRESHOLD
+    # To move forward (positive): need to move console START after lap END
+    distance_to_move_forward = lap_domain[1] - console_domain[0] + LAP_THRESHOLD
 
-    adjusted = []
-    for t in targets:
-        adjusted.append(float(round(adjust_one(t), 3)))
+    # Create offsets (negative for backward, positive for forward)
+    offsets = [-distance_to_move_backward, distance_to_move_forward]
 
-    return tuple(adjusted)
+    # Prefer the shorter distance
+    if distance_to_move_backward > distance_to_move_forward:
+        offsets.reverse()
 
+    # Try both offsets (deterministic - one should work)
+    for offset in offsets:
+        new_positions = [float(console_positions[0]) + offset]
+        if len(console_positions) > 1:
+            new_positions.append(float(console_positions[1]) + offset)
 
-# LAPS
+        if _console_positions_valid(new_positions):
+            return tuple(float(round(g, 3)) for g in new_positions)
 
+    # FALLBACK: Try incremental adjustments if both simple offsets failed
+    # (e.g., when moving in one direction hits another lap or boundary)
+    preferred_offset = offsets[0]
+    increment = ADJUST_STEP if preferred_offset > 0 else -ADJUST_STEP
 
-def _make_world_frame(beam, gx: float):
-    try:
-        base = beam.ref_frame
-        if base is None:
-            return None
-        origin = base.point.translated(base.xaxis * float(gx))
-        return Frame(origin, base.xaxis, base.yaxis)
-    except Exception:
-        return None
+    max_attempts = 100
+    for attempt in range(max_attempts):
+        test_offset = preferred_offset + (increment * (attempt + 1))
+        new_positions = [float(console_positions[0]) + test_offset]
+        if len(console_positions) > 1:
+            new_positions.append(float(console_positions[1]) + test_offset)
 
+        if _console_positions_valid(new_positions):
+            return tuple(float(round(g, 3)) for g in new_positions)
 
-def create_gripper_laps_for_beam(model, beam_index: int, g1: float, g2: float):
-    """Create two gripper laps on the beam at start_x g1 and g2.
-
-    This function mutates the given ``model`` by attaching Lap features to the
-    specified beam. It tries a plane-based factory first and falls back to the
-    Lap constructor with permissive machining limits.
-
-    Returns the mutated model.
-    """
-    if Lap is None:
-        raise RuntimeError("compas_timber not available: cannot create Lap features")
-
-    beams = model.beams
-    if beam_index < 0 or beam_index >= len(beams):
-        raise IndexError("beam_index out of range")
-
-    beam = beams[beam_index]
-    for gx in (g1, g2):
-        try:
-            try:
-                blen = float(beam.length or beam.xsize or beam.blank_length or 0.0)
-            except Exception:
-                blen = 0.0
-
-            # clamp requested start_x to the beam length to avoid extending beams
-            gx_clamped = gx
-            if blen and blen > 0:
-                try:
-                    gx_clamped = max(0.0, min(blen, float(gx)))
-                except Exception:
-                    gx_clamped = gx
-            else:
-                try:
-                    gx_clamped = float(gx)
-                except Exception:
-                    gx_clamped = gx
-
-            # skip beams explicitly marked as 'recess' or 'stud' (accept
-            # either 'stud' or 'studs' spelling, and tolerate misspelling
-            # 'caterogy')
-            attrs = {}
-            try:
-                attrs = getattr(beam, "attributes", {}) or {}
-            except Exception:
-                attrs = {}
-            try:
-                cat = attrs.get("category") or attrs.get("caterogy") or ""
-            except Exception:
-                cat = ""
-            try:
-                if isinstance(cat, str) and cat.lower() in ("stud", "studs", "recess"):
-                    continue
-            except Exception:
-                pass
-
-            world_frame = _make_world_frame(beam, gx_clamped)
-            if world_frame is None:
-                continue
-
-            # keep any existing longitudinal cuts if present (optional)
-            cuts = [f for f in beam.features or [] if f.__class__.__name__ == "LongitudinalCut"]
-
-            # choose ref side (prefer data from a longitudinal cut if available)
-            chosen_rs = None
-            try:
-                chosen_cut = None
-                if cuts:
-                    for c in cuts:
-                        try:
-                            sx = float(getattr(c, "start_x", getattr(c, "data", {}).get("start_x", None)))
-                            clen = float(getattr(c, "length", getattr(c, "data", {}).get("length", None) or 0.0))
-                        except Exception:
-                            sx = None
-                            clen = None
-                        if sx is not None and clen is not None and gx >= sx and gx <= sx + clen:
-                            chosen_cut = c
-                            break
-                    if chosen_cut is None:
-                        chosen_cut = cuts[0]
-                    try:
-                        chosen_rs = int(getattr(chosen_cut, "ref_side_index", None) or getattr(chosen_cut, "data", {}).get("ref_side_index", None))
-                    except Exception:
-                        chosen_rs = None
-            except Exception:
-                chosen_rs = None
-
-            ref_side = REF_SIDE_INDEX if REF_SIDE_INDEX is not None else (chosen_rs if chosen_rs is not None else 0)
-
-            # attempt plane-based creation
-            lap = None
-            try:
-                plane = Plane(world_frame.point, world_frame.zaxis)
-                lap = Lap.from_plane_and_beam(plane, beam, length=float(LAP_LENGTH), depth=float(LAP_DEPTH), ref_side_index=ref_side)
-            except Exception:
-                lap = None
-
-            # fallback to permissive constructor
-            if lap is None:
-                try:
-                    ml = MachiningLimits() if MachiningLimits is not None else None
-                    if ml is not None:
-                        ml.face_limited_top = False
-                        ml.face_limited_front = False
-                        ml.face_limited_back = False
-                        ml.face_limited_bottom = False
-                        lap = Lap(length=float(LAP_LENGTH), width=float(LAP_WIDTH), depth=float(LAP_DEPTH), machining_limits=ml.limits)
-                    else:
-                        lap = Lap(length=float(LAP_LENGTH), width=float(LAP_WIDTH), depth=float(LAP_DEPTH))
-                except Exception:
-                    lap = None
-
-            if lap is None:
-                continue
-
-            # set conservative/default attributes
-            try:
-                setattr(lap, "ref_side_index", int(ref_side))
-            except Exception:
-                pass
-            try:
-                lap.start_x = float(gx_clamped)
-            except Exception:
-                try:
-                    setattr(lap, "start_x", float(gx_clamped))
-                except Exception:
-                    pass
-            try:
-                setattr(lap, "start_y", 0.0)
-            except Exception:
-                pass
-            try:
-                setattr(lap, "width", float(LAP_WIDTH))
-            except Exception:
-                pass
-            try:
-                setattr(lap, "ysize", float(LAP_WIDTH))
-            except Exception:
-                pass
-            try:
-                setattr(lap, "depth", float(LAP_DEPTH))
-            except Exception:
-                pass
-            try:
-                setattr(lap, "inclination", 90.0)
-            except Exception:
-                pass
-            try:
-                setattr(lap, "angle", 90.0)
-            except Exception:
-                pass
-            try:
-                setattr(lap, "orientation", "start")
-            except Exception:
-                pass
-            try:
-                setattr(lap, "slope", 0.0)
-            except Exception:
-                pass
-
-            # attach
-            try:
-                beam.add_feature(lap)
-            except Exception:
-                try:
-                    beam.add_features([lap])
-                except Exception:
-                    if beam.features and isinstance(beam.features, list):
-                        beam.features.append(lap)
-        except Exception:
-            # do not abort on single-beam failures
-            continue
-
-    return model
-
-
-def create_gripper_laps(model, gripper_map: dict):
-    """Create gripper laps for multiple beams.
-
-    ``gripper_map`` should be a mapping beam_index -> (g1, g2) or a list of
-    tuples. The function mutates and returns the model.
-    """
-    if isinstance(gripper_map, dict):
-        items = gripper_map.items()
-    else:
-        items = list(gripper_map)
-
-    for k, v in items:
-        try:
-            # allow either a pair (g1, g2) or a single numeric value for
-            # small beams (treated as a single gripper location)
-            if isinstance(v, (list, tuple)) and len(v) >= 2:
-                g1, g2 = v[0], v[1]
-            else:
-                try:
-                    g1 = float(v)
-                    g2 = g1
-                except Exception:
-                    continue
-            create_gripper_laps_for_beam(model, int(k), float(g1), float(g2))
-        except Exception:
-            continue
-
-    return model
-
-
-def add_gripper_laps_to_model(model, grippers):
-    """Add gripper laps to every beam (except those explicitly
-    excluded by their `category` attribute).
-
-    ``grippers`` may be provided as a single iterable (``(g1, g2)`` or
-    ``[g1, g2]``) or a mapping per-beam. The function will unpack the
-    two start_x values and add laps at those positions to each beam.
-
-    The function mutates the model in-place and returns it.
-    """
-    if isinstance(grippers, dict):
-        return create_gripper_laps(model, grippers)
-
-    try:
-        if isinstance(grippers, (list, tuple)) and len(grippers) >= 2:
-            g1, g2 = float(grippers[0]), float(grippers[1])
-        else:
-            raise TypeError("grippers must be a (g1,g2) pair or a mapping")
-    except Exception:
-        raise
-
-    beams = model.beams
-    for i, beam in enumerate(beams):
-        try:
-            try:
-                create_gripper_laps_for_beam(model, int(i), g1, g2)
-            except Exception:
-                continue
-        except Exception:
-            continue
-    return model
+    # No valid position found - return original positions
+    return tuple(float(round(g, 3)) for g in console_positions)
