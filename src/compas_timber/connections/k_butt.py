@@ -322,6 +322,22 @@ class KButtJoint(Joint):
         A line is the cross beam if both of its intersections with the other two beams
         fall within its segment length (not requiring extension).
 
+        Parameters
+        ----------
+        potential_cross : :class:`~compas_timber.elements.Beam`
+            The beam to be checked as cross beam.
+        beam1 : :class:`~compas_timber.elements.Beam`
+            The first beam to be checked.
+        beam2 : :class:`~compas_timber.elements.Beam`
+            The second beam to be checked.  
+        tolerance : float, optional
+            A tolerance value to avoid intersections too close to the endpoints of the beam.
+            Default is 1e-3.    
+
+        Returns
+        -------
+        bool
+            True if the beam is the cross beam, False otherwise.
         """
 
         potential_cross_line = potential_cross.centerline
@@ -345,6 +361,20 @@ class KButtJoint(Joint):
     def identify_cross_beam(cls, beam1, beam2, beam3):
         """
         Identifies the cross beam in a K topology.
+
+        Parameters
+        ----------
+        beam1 : :class:`~compas_timber.elements.Beam`
+            The first beam to be checked.
+        beam2 : :class:`~compas_timber.elements.Beam`
+            The second beam to be checked.
+        beam3 : :class:`~compas_timber.elements.Beam`
+            The third beam to be checked.
+        
+        Returns
+        -------
+        :class:`~compas_timber.elements.Beam`, list of :class:`~compas_timber.elements.Beam`
+            The cross beam and the two main beams.
         """
 
         if cls.is_cross_beam(beam1, beam2, beam3):
