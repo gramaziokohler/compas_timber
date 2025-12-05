@@ -64,7 +64,7 @@ class ButtJoint(Joint):
         data["butt_plane"] = self.butt_plane
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, lap_feature=False, **kwargs):
         super(ButtJoint, self).__init__(**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
@@ -73,6 +73,7 @@ class ButtJoint(Joint):
         self.mill_depth = mill_depth or 0.0
         self.modify_cross = modify_cross
         self.butt_plane = butt_plane
+        self.lap_feature = lap_feature
         self.features = []
 
     @property
@@ -180,7 +181,7 @@ class ButtJoint(Joint):
         # store the feature
         self.features = [main_feature]
 
-        if are_beams_aligned_with_cross_vector(self.main_beam, self.cross_beam):
+        if are_beams_aligned_with_cross_vector(self.main_beam, self.cross_beam) and not self.lap_feature:
             self._apply_pocket_to_cross_beam()
         else:
             self._apply_lap_to_cross_beam()
