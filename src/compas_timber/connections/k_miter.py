@@ -54,13 +54,12 @@ class KMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
-    MAX_ELEMENT_COUNT = 3
+    MAX_ELEMENT_COUNT = 50
 
     @property
     def __data__(self):
         data = super().__data__()
-        data["main_beam_a_guid"] = self.main_beam_a.guid
-        data["main_beam_b_guid"] = self.main_beam_b.guid
+        data["main_beams_guids"] = self.main_beams_guids
         data["cross_beam_guid"] = self.cross_beam.guid
         data["mill_depth"] = self.mill_depth
         return data
@@ -72,8 +71,7 @@ class KMiterJoint(Joint):
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(self.main_beams[0].guid)
-        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(self.main_beams[1].guid)
+        self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
         self.features = []
 
     @property
@@ -143,7 +141,6 @@ class KMiterJoint(Joint):
             If the extension could not be calculated.
 
         """
-        assert self.cross_beam and len(self.main_beams) == 2
         for beam in self.main_beams:
             self._extend_beam(beam)
 
@@ -162,32 +159,41 @@ class KMiterJoint(Joint):
         This method is called by `model.process_joinery()`..
         """
         assert self.main_beams and self.cross_beam
-        beam_1, beam_2 = self._sort_main_beams()
+
+        # self.main_beams is sorted based on their dot product with the cross beam direction
+        sorted_angles, sorted_dots = self._sort_main_beams()
 
         if self.are_beams_coplanar:
-            self._add_pocket_to_cross_beam(beam_1, beam_2)
+            self._add_pocket_to_cross_beam(self.main_beams[0], self.main_beams[-1])
             cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
         else:
             cross_beam = self.cross_beam  # cut with T-butt joints below
 
-        L_joint = LMiterJoint(beam_1, beam_2)
-        L_joint.add_features()
-        T_joint1 = TButtJoint(beam_1, cross_beam, mill_depth=self.mill_depth)
-        T_joint1.add_features()
-        T_joint2 = TButtJoint(beam_2, cross_beam, mill_depth=self.mill_depth)
-        T_joint2.add_features()
+        for i in range(len(self.main_beams) - 1):
+            beam_1 = self.main_beams[i]
+            beam_2 = self.main_beams[i + 1]
+            L_joint = LMiterJoint(beam_1, beam_2)
+            L_joint.add_features()
+            T_joint = TButtJoint(beam_1, cross_beam, mill_depth=self.mill_depth)
+            T_joint.add_features()
+        # apply T on last main beam
+        T_joint = TButtJoint(self.main_beams[-1], cross_beam, mill_depth=self.mill_depth)
+        T_joint.add_features()
 
     def _sort_main_beams(self):
-        angle_a, dot_a = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[0])
-        angle_b, dot_b = self._compute_angle_and_dot_between_cross_beam_and_main_beam(self.main_beams[1])
-        if dot_a < dot_b:
-            # Beam B first
-            return self.main_beams[0], self.main_beams[1]
-        elif dot_a > dot_b:
-            # Beam A first
-            return self.main_beams[1], self.main_beams[0]
-        else:
-            raise ValueError("The two main beams cannot be parallel to each other.")
+        angles = []
+        dots = []
+        for main_beam in self.main_beams:
+            angle, dot = self._compute_angle_and_dot_between_cross_beam_and_main_beam(main_beam)
+            angles.append(angle)
+            dots.append(dot)
+        # Sort main_beams based on dots (ascending order)
+        sorted_indices = sorted(range(len(dots)), key=lambda i: dots[i])
+        sorted_beams = [self.main_beams[i] for i in sorted_indices]
+        sorted_angles = [angles[i] for i in sorted_indices]
+        sorted_dots = [dots[i] for i in sorted_indices]
+        self.main_beams = sorted_beams
+        return sorted_angles, sorted_dots
 
     def _compute_angle_and_dot_between_cross_beam_and_main_beam(self, main_beam: Beam):
         p1x, _ = intersection_line_line(main_beam.centerline, self.cross_beam.centerline)
@@ -199,7 +205,7 @@ class KMiterJoint(Joint):
             main_beam_direction = main_beam.centerline.vector
         else:
             main_beam_direction = main_beam.centerline.vector * -1
-
+        main_beam_direction = main_beam_direction.unitized()
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot

@@ -12,7 +12,6 @@ from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
-from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
 
@@ -59,7 +58,6 @@ class KButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
-
 
     @property
     def __data__(self):

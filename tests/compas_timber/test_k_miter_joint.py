@@ -6,6 +6,10 @@ from compas.geometry import Line
 
 from compas_timber.elements import Beam
 from compas_timber.connections.k_miter import KMiterJoint
+from compas_timber.connections import JointTopology
+from compas_timber.design import JointRuleSolver
+from compas_timber.design.workflow import TopologyRule
+from compas_timber.fabrication.pocket import Pocket
 from compas_timber.model import TimberModel
 
 
@@ -24,6 +28,11 @@ def beam_a():
 @pytest.fixture
 def beam_b():
     line = Line(Point(270, 0.0, 0.0), Point(350, 0.0, 200))
+    return Beam.from_centerline(line, width=20.0, height=30.0)
+
+@pytest.fixture
+def beam_c():
+    line = Line(Point(260, 0, 0), Point(260, 0.0, 200))
     return Beam.from_centerline(line, width=20.0, height=30.0)
 
 
@@ -48,3 +57,31 @@ def test_model_process_joinery(beam_a, beam_b, cross_beam):
     assert isinstance(joint, KMiterJoint)
     assert joint.mill_depth == 15.0
     assert len(model.joints) == 1
+
+def test_joint_with_rules(beam_a, beam_b, cross_beam):
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+    model.add_element(cross_beam)
+    toporules = []
+    toporules.append(TopologyRule(JointTopology.TOPO_K, KMiterJoint, 25, mill_depth=10))
+    solver = JointRuleSolver(toporules)
+    solver.apply_rules_to_model(model)
+    model.process_joinery()
+    joints = list(model.joints)
+    assert isinstance(joints[0], KMiterJoint)
+    assert len(joints) == 1
+    assert joints[0].elements == [cross_beam, beam_a, beam_b]
+    assert joints[0].mill_depth == 10
+    assert isinstance(joints[0].elements[0].features[0], Pocket)
+
+def test_joint_with_more_beams(beam_a, beam_b, beam_c, cross_beam):
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+    model.add_element(beam_c)
+    model.add_element(cross_beam)
+    joint = KMiterJoint.create(model, cross_beam, beam_a, beam_b, beam_c, mill_depth=15.0)
+    assert len(model.joints) == 1
+    assert isinstance(joint, KMiterJoint)
+    assert len(joint.elements) == 4
