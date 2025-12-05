@@ -73,9 +73,6 @@ class KButtJoint(Joint):
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
         super().__init__(**kwargs)
 
-        if not KButtJoint.is_cross_beam(cross_beam, main_beams[0], main_beams[1]):
-            cross_beam, main_beams = KButtJoint.identify_cross_beam(main_beams[0], main_beams[1], cross_beam)
-
         self.cross_beam = cross_beam
         self.main_beam_a = main_beams[0]
         self.main_beam_b = main_beams[1]
@@ -102,6 +99,34 @@ class KButtJoint(Joint):
         ):
             return True
         return False
+
+    @classmethod
+    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
+        """Create an instance of this joint from a cluster of elements.
+        Automatically parse the elements in the cluster to identify the cross beam and the two main beams.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.Model`
+            The model to which the joint will be added.
+        cluster : :class:`~compas_timber.clusters.BeamCluster`
+            The cluster of beams to be used to create the joint.
+        reordered_elements : list of :class:`~compas_timber.elements.Beam`, optional
+            The elements in the order required by the joint. If not provided, the elements in the cluster will be used.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.KButtJoint`
+            The created joint instance.
+
+        """
+        if len(cluster.joints) <= 2 or len(cluster.joints) >= 4:  # not a K_TOPO
+            raise BeamJoiningError("Cluster does not represent a K topology joint.")
+        main_beams, cross_beams = cluster.parse_main_and_cross_beams()
+        elements = list(cross_beams) + list(main_beams)
+        return cls.create(model, *elements, **kwargs)
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
@@ -311,80 +336,7 @@ class KButtJoint(Joint):
 
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-
         return angle, dot
-
-    @classmethod
-    def is_cross_beam(cls, potential_cross, beam1, beam2, tolerance=1e-3):
-        """
-        Checks if a line is the cross beam in a K topology.
-
-        A line is the cross beam if both of its intersections with the other two beams
-        fall within its segment length (not requiring extension).
-
-        Parameters
-        ----------
-        potential_cross : :class:`~compas_timber.elements.Beam`
-            The beam to be checked as cross beam.
-        beam1 : :class:`~compas_timber.elements.Beam`
-            The first beam to be checked.
-        beam2 : :class:`~compas_timber.elements.Beam`
-            The second beam to be checked.  
-        tolerance : float, optional
-            A tolerance value to avoid intersections too close to the endpoints of the beam.
-            Default is 1e-3.    
-
-        Returns
-        -------
-        bool
-            True if the beam is the cross beam, False otherwise.
-        """
-
-        potential_cross_line = potential_cross.centerline
-
-        p1, _ = intersection_line_line(potential_cross_line, beam1.centerline)
-        p2, _ = intersection_line_line(potential_cross_line, beam2.centerline)
-
-        if p1 is None or p2 is None:
-            return False
-
-        length = potential_cross_line.length
-        dist1_from_start = potential_cross_line.start.distance_to_point(p1)
-        dist2_from_start = potential_cross_line.start.distance_to_point(p2)
-
-        # Both intersections must be within the segment (with tolerance from endpoints)
-        is_p1_on_segment = tolerance < dist1_from_start < length - tolerance
-        is_p2_on_segment = tolerance < dist2_from_start < length - tolerance
-        return is_p1_on_segment and is_p2_on_segment
-
-    @classmethod
-    def identify_cross_beam(cls, beam1, beam2, beam3):
-        """
-        Identifies the cross beam in a K topology.
-
-        Parameters
-        ----------
-        beam1 : :class:`~compas_timber.elements.Beam`
-            The first beam to be checked.
-        beam2 : :class:`~compas_timber.elements.Beam`
-            The second beam to be checked.
-        beam3 : :class:`~compas_timber.elements.Beam`
-            The third beam to be checked.
-        
-        Returns
-        -------
-        :class:`~compas_timber.elements.Beam`, list of :class:`~compas_timber.elements.Beam`
-            The cross beam and the two main beams.
-        """
-
-        if cls.is_cross_beam(beam1, beam2, beam3):
-            return beam1, [beam2, beam3]
-        elif cls.is_cross_beam(beam2, beam1, beam3):
-            return beam2, [beam1, beam3]
-        elif cls.is_cross_beam(beam3, beam1, beam2):
-            return beam3, [beam1, beam2]
-        else:
-            raise ValueError("Could not identify cross beam in K configuration")
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):

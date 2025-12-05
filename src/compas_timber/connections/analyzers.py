@@ -72,6 +72,20 @@ class Cluster(object):
             return JointTopology.TOPO_K
         return JointTopology.TOPO_Y
 
+    def parse_main_and_cross_beams(self):
+        """Parses main and cross beams from the joints in the cluster."""
+        cross_beams = []
+        main_beams = []
+        for candidate in self.joints:
+            if candidate.topology == JointTopology.TOPO_L:
+                main_beams.extend(candidate.elements)
+            elif candidate.topology == JointTopology.TOPO_T:
+                main_beams.append(candidate.elements[0])
+                cross_beams.append(candidate.elements[1])
+            elif candidate.topology == JointTopology.TOPO_X:
+                cross_beams.extend(candidate.elements)
+        return set(main_beams), set(cross_beams)
+
 
 class BeamGroupAnalyzer(object):
     """Interface for a beam group analyzer."""

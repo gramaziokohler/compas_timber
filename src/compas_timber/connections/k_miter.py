@@ -8,7 +8,6 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
-from compas_timber.connections.k_butt import KButtJoint
 from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
@@ -69,9 +68,6 @@ class KMiterJoint(Joint):
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
-        if not KButtJoint.is_cross_beam(cross_beam, main_beams[0], main_beams[1]):
-            cross_beam, main_beams = KButtJoint.identify_cross_beam(main_beams[0], main_beams[1], cross_beam)
-
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
@@ -97,6 +93,33 @@ class KMiterJoint(Joint):
         ):
             return True
         return False
+
+    @classmethod
+    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
+        """Create an instance of this joint form a cluster of elements.
+        Automatically parse the elements in the cluster to indentify the cross beams and the two main beams.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.Model`
+            The model to which the joint will be added.
+        cluster : :class:`~compas_timber.clusters.BeamCluster`
+            The cluster of beams to be used to create the joint.
+        reordered_elements : list of :class:`~compas_timber.elements.Beam`, optional
+            The elements in the order required by the joint. If not provided, the elements in the cluster will be used.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.KMiterJoint`
+            The created joint instance.
+        """
+        if len(cluster.joints) <= 2 or len(cluster.joints) >= 4:  # not a K_TOPO
+            raise BeamJoiningError("Cluster does not represent a K topology joint.")
+        main_beams, cross_beams = cluster.parse_main_and_cross_beams()
+        elements = list(cross_beams) + list(main_beams)
+        return cls.create(model, *elements, **kwargs)
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, beam, ignore_ends=True)
