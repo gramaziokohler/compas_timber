@@ -71,9 +71,9 @@ class KMiterJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None)
-        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None)
-        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None)
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(self.main_beams[0].guid)
+        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(self.main_beams[1].guid)
         self.features = []
 
     @property
@@ -115,9 +115,9 @@ class KMiterJoint(Joint):
         :class:`~compas_timber.connections.KMiterJoint`
             The created joint instance.
         """
-        if len(cluster.joints) <= 2 or len(cluster.joints) >= 4:  # not a K_TOPO
-            raise BeamJoiningError("Cluster does not represent a K topology joint.")
         main_beams, cross_beams = cluster.parse_main_and_cross_beams()
+        if len(cross_beams) != 1:
+            raise BeamJoiningError("K-Miter joints require exactly one cross beam.")
         elements = list(cross_beams) + list(main_beams)
         return cls.create(model, *elements, **kwargs)
 
@@ -165,7 +165,7 @@ class KMiterJoint(Joint):
         beam_1, beam_2 = self._sort_main_beams()
 
         if self.are_beams_coplanar:
-            self._cut_cross_beam(beam_1, beam_2)
+            self._add_pocket_to_cross_beam(beam_1, beam_2)
             cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
         else:
             cross_beam = self.cross_beam  # cut with T-butt joints below
@@ -204,7 +204,7 @@ class KMiterJoint(Joint):
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot
 
-    def _cut_cross_beam(self, beam_1: Beam, beam_2: Beam):
+    def _add_pocket_to_cross_beam(self, beam_1: Beam, beam_2: Beam):
         # find intersection points between cross beam and main beams
         P1, _ = intersection_line_line(self.cross_beam.centerline, beam_1.centerline)
         P2, _ = intersection_line_line(self.cross_beam.centerline, beam_2.centerline)
@@ -314,29 +314,7 @@ class KMiterJoint(Joint):
         width = max(beam_1_width, beam_2_width)
         return width
 
-    @classmethod
-    def check_elements_compatibility(cls, elements, raise_error=False):
-        """
-        Checks if the cluster og beams complies  with the requirements for the KTrussButtJoint.
-
-        Parameters
-        ----------
-        elements : list of :class:`~compas_timber.parts.Beam`
-            The beams to be checked.
-        raise_error : bool, optional
-            If True, raises `BeamJoiningError` if the requirements are not met. Default is False.
-
-
-        Returns
-        -------
-        bool
-            True if the requirements are met, False otherwise.
-
-
-        """
-        if len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT:
-            return True
-        else:
-            if raise_error:
-                raise BeamJoiningError("K-Butt joints require exactly three beams.")
-            return False
+    def restore_beams_from_keys(self, model):
+        """After de-seriallization, restores refernces to the main and cross beams saved in the model."""
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beams = [model.element_by_guid(self.main_beam_a_guid), model.element_by_guid(self.main_beam_b_guid)]

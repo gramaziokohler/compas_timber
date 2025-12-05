@@ -59,7 +59,7 @@ class KButtJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
-    MAX_ELEMENT_COUNT = 3
+
 
     @property
     def __data__(self):
@@ -122,8 +122,6 @@ class KButtJoint(Joint):
             The created joint instance.
 
         """
-        if len(cluster.joints) <= 2 or len(cluster.joints) >= 4:  # not a K_TOPO
-            raise BeamJoiningError("Cluster does not represent a K topology joint.")
         main_beams, cross_beams = cluster.parse_main_and_cross_beams()
         elements = list(cross_beams) + list(main_beams)
         return cls.create(model, *elements, **kwargs)
@@ -177,7 +175,7 @@ class KButtJoint(Joint):
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
 
         if self.are_beams_coplanar:
-            self._cut_cross_beam()
+            self._add_pocket_to_cross_beam()
             cross_beam = self.cross_beam.copy()  # cut with a pocket // provides a dummy cross beam
         else:
             cross_beam = self.cross_beam  # cut with T-butt joints below
@@ -189,7 +187,7 @@ class KButtJoint(Joint):
         LJoint = TButtJoint(self.main_beam_b, self.main_beam_a)
         LJoint.add_features()
 
-    def _cut_cross_beam(self):
+    def _add_pocket_to_cross_beam(self):
         """
         Adds the pocket features to the cross beam.
         """
@@ -338,27 +336,8 @@ class KButtJoint(Joint):
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot
 
-    @classmethod
-    def check_elements_compatibility(cls, elements, raise_error=False):
-        """
-        Checks if the cluster of beams complies with the requirements for the KButtJoint.
-
-        Parameters
-        ----------
-        elements : list of :class:`~compas_timber.parts.Beam`
-            The beams to be checked.
-        raise_error : bool, optional
-            If True, raises `BeamJoiningError` if the requirements are not met. Default is False.
-
-        Returns
-        -------
-        bool
-            True if the requirements are met, False otherwise.
-        """
-
-        if len(elements) >= cls.MIN_ELEMENT_COUNT and len(elements) <= cls.MAX_ELEMENT_COUNT:
-            return True
-        else:
-            if raise_error:
-                raise BeamJoiningError("K-Butt joints require exactly three beams.")
-            return False
+    def restore_beams_from_keys(self, model):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.cross_beam = model.elemnt_by_guid(self.cross_beam_guid)
+        self.main_beam_a = model.elemnt_by_guid(self.main_beam_a_guid)
+        self.main_beam_b = model.elemnt_by_guid(self.main_beam_b_guid)
