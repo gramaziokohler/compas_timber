@@ -1,9 +1,20 @@
+import math
+
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_line
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
+from compas_timber.fabrication import MachiningLimits
+from compas_timber.fabrication import Pocket
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 
 
@@ -59,7 +70,7 @@ class ButtJoint(Joint):
         self.cross_beam = cross_beam
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.mill_depth = mill_depth
+        self.mill_depth = mill_depth or 0.0
         self.modify_cross = modify_cross
         self.butt_plane = butt_plane
         self.features = []
@@ -169,6 +180,22 @@ class ButtJoint(Joint):
         # store the feature
         self.features = [main_feature]
 
+        if are_beams_aligned_with_cross_vector(self.main_beam, self.cross_beam):
+            self._apply_pocket_to_cross_beam()
+        else:
+            self._apply_lap_to_cross_beam()
+
+        # apply a refinement cut on the cross beam
+        if self.modify_cross:
+            if self.back_plane:
+                modification_plane = self.back_plane
+            else:
+                modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            self.cross_beam.add_features(cross_refinement_feature)
+            self.features.append(cross_refinement_feature)
+
+    def _apply_lap_to_cross_beam(self):
         # apply the pocket on the cross beam
         if self.mill_depth and not self.butt_plane:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
@@ -183,15 +210,77 @@ class ButtJoint(Joint):
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
 
-        # apply a refinement cut on the cross beam
-        if self.modify_cross:
-            if self.back_plane:
-                modification_plane = self.back_plane
-            else:
-                modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
-            self.cross_beam.add_features(cross_refinement_feature)
-            self.features.append(cross_refinement_feature)
+    def _apply_pocket_to_cross_beam(self):
+        int_point, _ = intersection_line_line(self.cross_beam.centerline, self.main_beam.centerline)
+        angle, dot = self._compute_angle_and_dot_poroduct(int_point)
+        tilt_start_side = angle
+        tilt_end_side = math.pi - angle
+        start_x = self._find_start_x(int_point, angle)
+        length = self._find_length(angle)
+        width = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[0]
+        start_y = self._find_start_y(width)
+
+        machining_limits = MachiningLimits()
+        pocket = Pocket(
+            start_x=start_x,
+            start_y=start_y,
+            start_depth=self.mill_depth,
+            angle=0,
+            inclination=0,
+            slope=0.0,
+            length=length,
+            width=width,
+            internal_angle=90.0,
+            tilt_ref_side=90.0,
+            tilt_end_side=math.degrees(tilt_end_side),
+            tilt_opp_side=90.0,
+            tilt_start_side=math.degrees(tilt_start_side),
+            machining_limits=machining_limits.limits,
+            ref_side_index=self.cross_beam_ref_side_index,
+        )
+        self.cross_beam.add_features(pocket)
+        self.features.append(pocket)
+
+    def _compute_angle_and_dot_poroduct(self, intersection_point):
+        end, _ = self.main_beam.endpoint_closest_to_point(Point(*intersection_point))
+        if end == "start":
+            main_beam_direction = self.main_beam.centerline.vector
+        else:
+            main_beam_direction = self.main_beam.centerline.vector * -1
+        angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
+        dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
+        return angle, dot
+
+    def _find_start_x(self, intersection_point, angle):
+        beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
+        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
+
+        print(angle)
+
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        ref_side_plane = Plane.from_frame(ref_side)
+        intersection_point_projected = ref_side_plane.projected_point(Point(*intersection_point))
+
+        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
+
+        # Calculate start_x
+        start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
+        x2 = (beam_height / 2) / math.sin(math.pi - angle)
+        start_x -= x1
+        start_x -= x2
+
+        return start_x
+
+    def _find_length(self, angle):
+        beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
+        length = beam_height / math.sin(angle)
+        return length
+
+    def _find_start_y(self, width):
+        cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
+        start_y = (cross_width - width) / 2
+        return start_y
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
