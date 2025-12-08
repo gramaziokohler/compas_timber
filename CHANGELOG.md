@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`.
 * Changed `ButtJoint.add_features()`, if the beams are coplanar it applies a `Pocket` feature otherwise a `Lap` feature.
-* Refactored `ButtJoint.__init__()` to accept `lap_feature: Bool` parameter. 
+* Refactored `ButtJoint.__init__()` to accept `lap_feature: bool` parameter. 
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
