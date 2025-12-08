@@ -17,13 +17,6 @@
                 "flatten": true
             },
             {
-                "name": "Containers",
-                "description": "Container elements, such as walls, floors, roofs, etc.",
-                "typeHintID": "none",
-                "scriptParamAccess": 1,
-                "flatten": true
-            },
-            {
                 "name": "JointRules",
                 "description": "Collection of joint rules.",
                 "typeHintID": "none",
