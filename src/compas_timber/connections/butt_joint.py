@@ -208,7 +208,7 @@ class ButtJoint(Joint):
 
     def _apply_pocket_to_cross_beam(self):
         int_point, _ = intersection_line_line(self.cross_beam.centerline, self.main_beam.centerline)
-        angle, _ = self._compute_angle_and_dot_poroduct(int_point)
+        angle, _ = self._compute_angle_and_dot_product(int_point)
         tilt_start_side = angle
         tilt_end_side = math.pi - angle
         start_x = self._find_start_x(int_point, angle)
@@ -236,7 +236,7 @@ class ButtJoint(Joint):
         self.cross_beam.add_features(pocket)
         self.features.append(pocket)
 
-    def _compute_angle_and_dot_poroduct(self, intersection_point):
+    def _compute_angle_and_dot_product(self, intersection_point):
         end, _ = self.main_beam.endpoint_closest_to_point(Point(*intersection_point))
         if end == "start":
             main_beam_direction = self.main_beam.centerline.vector
