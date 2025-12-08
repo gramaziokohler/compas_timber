@@ -59,6 +59,15 @@ def test_L_butt_joint_features_coplanar(planar_beam, cross_beam):
     assert isinstance(cross_beam.features[0], Pocket)
 
 
+def test_L_butt_joint_feature_planar_lap(planar_beam, cross_beam):
+    # planar_beam and cross_beam are coplanar
+    joint = LButtJoint(planar_beam, cross_beam, mill_depth=10.0, modify_cross=False, lap_feature=True)
+    joint.add_features()
+    assert len(cross_beam.features) == 1
+    assert len(planar_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Lap)
+
+
 def test_L_butt_joint_features_non_coplanar(non_planar_beam, cross_beam):
     # non_planar_beam and cross_beam are non-coplanar
     joint = LButtJoint(non_planar_beam, cross_beam, mill_depth=10.0, modify_cross=False)
