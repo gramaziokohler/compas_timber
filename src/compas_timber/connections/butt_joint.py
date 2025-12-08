@@ -106,7 +106,6 @@ class ButtJoint(Joint):
         ------
         BeamJoiningError
             If the extension could not be calculated.
-
         """
         assert self.main_beam and self.cross_beam
         # extend the main beam
@@ -120,7 +119,6 @@ class ButtJoint(Joint):
                     end_main + extension_tolerance,
                     self.guid,
                 )
-
             else:
                 cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
                 if self.mill_depth:
@@ -158,14 +156,12 @@ class ButtJoint(Joint):
         """Adds the required extension and trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
-
         """
         assert self.main_beam and self.cross_beam
 
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
-
         # get the cutting plane for the main beam
         if self.butt_plane:
             cutting_plane = self.butt_plane
@@ -174,7 +170,6 @@ class ButtJoint(Joint):
             cutting_plane.xaxis = -cutting_plane.xaxis
             if self.mill_depth:
                 cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-
         # apply the cut on the main beam
         main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
         self.main_beam.add_features(main_feature)
@@ -185,7 +180,6 @@ class ButtJoint(Joint):
             self._apply_pocket_to_cross_beam()
         else:
             self._apply_lap_to_cross_beam()
-
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             if self.back_plane:
@@ -213,14 +207,13 @@ class ButtJoint(Joint):
 
     def _apply_pocket_to_cross_beam(self):
         int_point, _ = intersection_line_line(self.cross_beam.centerline, self.main_beam.centerline)
-        angle, dot = self._compute_angle_and_dot_poroduct(int_point)
+        angle, _ = self._compute_angle_and_dot_poroduct(int_point)
         tilt_start_side = angle
         tilt_end_side = math.pi - angle
         start_x = self._find_start_x(int_point, angle)
         length = self._find_length(angle)
         width = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[0]
         start_y = self._find_start_y(width)
-
         machining_limits = MachiningLimits()
         pocket = Pocket(
             start_x=start_x,
@@ -254,27 +247,21 @@ class ButtJoint(Joint):
 
     def _find_start_x(self, intersection_point, angle):
         beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-
-        print(angle)
-
+        _, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
         ref_side_plane = Plane.from_frame(ref_side)
         intersection_point_projected = ref_side_plane.projected_point(Point(*intersection_point))
-
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
-
         # Calculate start_x
         start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
         x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
         x2 = (beam_height / 2) / math.sin(math.pi - angle)
         start_x -= x1
         start_x -= x2
-
         return start_x
 
     def _find_length(self, angle):
-        beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
+        _, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
         length = beam_height / math.sin(angle)
         return length
 
