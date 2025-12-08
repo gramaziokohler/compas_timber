@@ -192,7 +192,7 @@ class ButtJoint(Joint):
             self.features.append(cross_refinement_feature)
 
     def _apply_lap_to_cross_beam(self):
-        # apply the pocket on the cross beam
+        # apply the lap on the cross beam
         if self.mill_depth and not self.butt_plane:
             cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
             lap_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
