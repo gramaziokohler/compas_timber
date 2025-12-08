@@ -117,6 +117,8 @@ temp/**
 
 .vscode
 
+.vs
+
 .idea
 
 docs/api/generated/
