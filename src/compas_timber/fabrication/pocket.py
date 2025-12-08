@@ -20,6 +20,7 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -568,7 +569,7 @@ class Pocket(BTLxProcessing):
         ref_side = element.ref_sides[self.ref_side_index]
         ref_surface = element.side_as_surface(self.ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
 
-        p_origin = ref_surface.point_at(self.start_x, self.start_y)
+        p_origin = planar_surface_point_at(ref_surface, self.start_x, self.start_y)
         p_origin.translate(-ref_side.normal * self.start_depth)
         bottom_frame = Frame(p_origin, ref_side.xaxis, ref_side.yaxis)
 
@@ -790,7 +791,7 @@ class PocketProxy(object):
         return self.unproxified()
 
     def __init__(self, volume, element, machining_limits=None, ref_side_index=None):
-        self.volume = volume
+        self.volume = volume.transformed(element.transformation_to_local())
         self.element = element
         self.machining_limits = machining_limits
         self.ref_side_index = ref_side_index
@@ -805,7 +806,8 @@ class PocketProxy(object):
 
         """
         if not self._processing:
-            self._processing = Pocket.from_volume_and_element(self.volume, self.element, self.machining_limits, self.ref_side_index)
+            volume = self.volume.transformed(self.element.modeltransformation)
+            self._processing = Pocket.from_volume_and_element(volume, self.element, self.machining_limits, self.ref_side_index)
         return self._processing
 
     @classmethod
