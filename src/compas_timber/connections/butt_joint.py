@@ -62,6 +62,7 @@ class ButtJoint(Joint):
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
         data["butt_plane"] = self.butt_plane
+        data["lap_feature"] = self.lap_feature
         return data
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, lap_feature=False, **kwargs):
