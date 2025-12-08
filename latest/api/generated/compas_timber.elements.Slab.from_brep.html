@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Slab.rotate" href="compas_timber.elements.Slab.rotate.html" />
-    <link rel="prev" title="Slab.from_boundary" href="compas_timber.elements.Slab.from_boundary.html" />
+    <link rel="next" title="Slab.from_json" href="compas_timber.elements.Slab.from_json.html" />
+    <link rel="prev" title="Slab.copy" href="compas_timber.elements.Slab.copy.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -603,8 +603,29 @@ document.write(`
 <h1>Slab.from_brep</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Slab.from_brep">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Slab.</span></span><span class="sig-name descname"><span class="pre">from_brep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">brep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/fd7d2d2/src/compas_timber/elements/slab.py#L236"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Creates a wall from a brep with a single planar face.</p>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Slab.</span></span><span class="sig-name descname"><span class="pre">from_brep</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">brep</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/bf86104/src/compas_timber/elements/plate_geometry.py#L205"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Creates a plate from a brep.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>brep</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Brep</span></code></a></span></dt><dd><p>The brep of the plate.</p>
+</dd>
+<dt><strong>thickness</strong><span class="classifier">float</span></dt><dd><p>The thickness of the plate.</p>
+</dd>
+<dt><strong>vector</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Vector.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vector</span></code></a>, optional</span></dt><dd><p>The vector in which the plate is extruded.</p>
+</dd>
+<dt><strong>**kwargs</strong><span class="classifier">dict, optional</span></dt><dd><p>Additional keyword arguments.
+These are passed to the <code class="xref py py-class docutils literal notranslate"><span class="pre">PlateGeometry</span></code> constructor.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">PlateGeometry</span></code></dt><dd><p>A PlateGeometry object representing the plate with the given brep and thickness.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

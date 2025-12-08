@@ -979,7 +979,6 @@ document.write(`
       +debug_info : list
       +is_beam : bool
       +is_plate : bool
-      +is_wall : bool
       +is_group_element : bool
       +is_fastener : bool
       +reset()
@@ -1036,7 +1035,7 @@ document.write(`
    class Slab {
       +outline : Polyline
       +thickness : float
-      +openings : list[Opening]
+      +openings : list[Polyline]
       +frame : Frame
       +origin : Point
       +baseline : Line
@@ -1048,7 +1047,6 @@ document.write(`
       +faces : tuple[Frame]
       +end_faces : tuple[Frame]
       +envelope_faces : tuple[Frame]
-      +is_slab : bool = True
       +is_group_element : bool = True
       +from_boundary()
       +from_brep()
@@ -1058,12 +1056,6 @@ document.write(`
       +rotate()
    }
 
-   class Wall {
-      +outline : Polyline
-      +thickness : float
-      +openings : list[Polyline]
-      +is_wall : bool = True
-   }
 
    class Fastener {
       +shape : Geometry
@@ -1073,11 +1065,6 @@ document.write(`
       +compute_geometry()
    }
 
-   class Opening {
-      +polyline : Polyline
-      +opening_type : str
-      +orient_polyline(normal)
-   }
 
    class FastenerTimberInterface {
       +outline_points : list[Point]
@@ -1093,12 +1080,10 @@ document.write(`
    Element &lt;|-- TimberElement
    TimberElement &lt;|-- Beam
    TimberElement &lt;|-- Plate
-   TimberElement &lt;|-- Slab
+   Element &lt;|-- Slab
    TimberElement &lt;|-- Fastener
-   Slab &lt;|-- Wall
 
    %% Composition relationships
-   Slab ..&gt; Opening : contains
    Fastener ..&gt; FastenerTimberInterface : contains
     </pre></section>
 <section id="connections-subsystem">
@@ -1217,11 +1202,6 @@ document.write(`
       +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
    }
 
-   class WallJoint {
-      +wall_a : Wall
-      +wall_b : Wall
-      +interface : WallToWallInterface
-   }
 
    %% Inheritance relationships
    Interaction &lt;|-- Joint
@@ -1233,7 +1213,6 @@ document.write(`
    Joint &lt;|-- BallNodeJoint
    Joint &lt;|-- TenonMortiseJoint
    Joint &lt;|-- PlateJoint
-   Joint &lt;|-- WallJoint
 
    ButtJoint &lt;|-- LButtJoint
    ButtJoint &lt;|-- TButtJoint
