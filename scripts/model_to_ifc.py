@@ -37,7 +37,7 @@ for slab in model.slabs:
         geometry=slab.geometry,
         Name=slab.name,
     )
-    for beam in slab.name.children:
+    for beam in slab.children:
         ifc_model.create(
             "IfcBeam",
             parent=ifc_wall,

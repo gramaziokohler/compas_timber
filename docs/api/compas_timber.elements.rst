@@ -18,7 +18,4 @@ Classes
     BallNodeFastener
     PlateFastener
     TimberElement
-    Opening
-    OpeningType
     Slab
-    
