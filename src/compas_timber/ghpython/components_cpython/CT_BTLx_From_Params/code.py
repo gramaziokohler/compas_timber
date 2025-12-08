@@ -21,7 +21,7 @@ class BTLxFromParams(Grasshopper.Kernel.GH_ScriptInstance):
         super(BTLxFromParams, self).__init__()
         self.classes = {}
         for cls in get_leaf_subclasses(BTLxProcessing):
-            if cls.__name__ == "FreeContour":
+            if cls.PROCESSING_NAME == "FreeContour":
                 continue
             self.classes[cls.__name__] = cls
         if ghenv.Component.Params.Output[0].NickName == "Processing":
