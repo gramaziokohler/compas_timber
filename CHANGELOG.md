@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Slot.apply()` to visualize the slot geometry. 
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
+* Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -70,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed all Rhino7 components!
 * Removed method `add_group_element` from `TimberModel`.
 * Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
+* Removed `Wall`, `WallJoint`, `WallToWallInterface`, `InterfaceRole`, `InterfaceLocation`, `Opening`, `OpeningType`,
+  `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
+  GH components and component functionality.
 
 ## [1.0.1] 2025-10-16
 
