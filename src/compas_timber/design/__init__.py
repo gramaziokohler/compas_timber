@@ -8,7 +8,6 @@ from .workflow import guess_joint_topology_2beams
 from .workflow import set_default_joints
 from .workflow import get_clusters_from_model
 from .workflow import JointRuleSolver
-from .slab_features import SlabConnectionInterface
 
 
 __all__ = [
@@ -22,5 +21,4 @@ __all__ = [
     "set_default_joints",
     "ContainerDefinition",
     "get_clusters_from_model",
-    "SlabConnectionInterface",
 ]

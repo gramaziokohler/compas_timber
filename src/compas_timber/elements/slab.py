@@ -5,8 +5,6 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
-from compas_timber.design import SlabConnectionInterface
-
 from .plate_geometry import PlateGeometry
 
 
@@ -100,7 +98,6 @@ class Slab(PlateGeometry, Element):
         self.length = length
         self.width = width
         self.height = thickness
-        self.interfaces = []
         self.type = type or SlabType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -113,33 +110,33 @@ class Slab(PlateGeometry, Element):
 
     @property
     def interfaces(self):
-        """list[:class:`~compas_timber.elements.SlabConnectionInterface`]: The interfaces associated with this slab."""
-        return [f for f in self.features if isinstance(f, SlabConnectionInterface)]
-     
+        """list[:class:`~compas_timber.slab_features.SlabConnectionInterface`]: The interfaces associated with this slab."""
+        return [f for f in self.features if f.slab_feature_type == "CONNECTION_INTERFACE"]
+
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         PlateGeometry.reset(self)  # reset outline_a and outline_b
-        self.features = []
+        self._features = []
         self.debug_info = []
 
     @reset_computed
-    def remove_interfaces(self, interfaces=None):
+    def remove_features(self, features=None):
         # type: (None | SlabConnectionInterface | list[SlabConnectionInterface]) -> None
         """Removes interfaces from the element.
 
         Parameters
         ----------
-        interfaces : :class:`~compas_timber.elements.SlabConnectionInterface` | list[:class:`~compas_timber.elements.SlabConnectionInterface`], optional
+        interfaces : :class:`~compas_timber.slab_features.SlabConnectionInterface` | list[:class:`~compas_timber.slab_features.SlabConnectionInterface`], optional
             The interfaces to be removed. If None, all interfaces will be removed.
 
         """
-        if interfaces is None:
-            self.features = [f for f in self.features if not isinstance(f, SlabConnectionInterface)]
+        if features is None:
+            self._features = []
         else:
-            if not isinstance(interfaces, list):
-                interfaces = [interfaces]
-            self.features = [f for f in self.features if f not in interfaces]
+            if not isinstance(features, list):
+                features = [features]
+            self._features = [f for f in self.features if f not in features]
 
     @property
     def is_group_element(self):

@@ -149,12 +149,12 @@ def test_slab_remove_interfaces():
     assert len(joints) == 3, "Expected three joints"
     assert all([len(s.interfaces) == 2 for s in [slab_a, slab_b, slab_c]]), "Expected each slab to have two interfaces"
 
-    slab_a.remove_interfaces(joints[0].interfaces)
+    slab_a.remove_features(joints[0].interfaces)
     assert len(slab_a.interfaces) == 1, "Expected slab_a to have one interface after removing one"
     assert len(slab_b.interfaces) == 2, "Expected slab_b to still have two interfaces"
-    slab_b.remove_interfaces()
+    slab_b.remove_features()
     assert len(slab_b.interfaces) == 0, "Expected slab_b to have no interfaces after removing all"
     assert len(slab_c.interfaces) == 2, "Expected slab_c to still have two interfaces"
-    slab_c.remove_interfaces(joints[1].interfaces + joints[2].interfaces)
+    slab_c.remove_features(joints[1].interfaces + joints[2].interfaces)
     assert len(slab_c.interfaces) == 0, "Expected slab_c to have no interfaces after removing both"
     assert len(slab_a.interfaces) == 1, "Expected slab_a to still have one interface"

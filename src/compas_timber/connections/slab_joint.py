@@ -3,7 +3,7 @@ from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import dot_vectors
 
-from compas_timber.design import SlabConnectionInterface
+from compas_timber.slab_features import SlabConnectionInterface
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
@@ -119,12 +119,13 @@ class SlabJoint(PlateJoint):
     def add_features(self):
         # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of a joint-generated feature.
         """Add features to the plates based on the joint."""
+        print("adding slab joint features")
         if self.interface_a and self.interface_b:
-            self.slab_a.remove_interfaces(self.interface_a)
-            self.slab_b.interfaces.remove(self.interface_b)
+            self.slab_a.remove_features(self.interface_a)
+            self.slab_b.remove_features(self.interface_b)
         self.interface_a, self.interface_b = self.create_interfaces()
-        self.slab_a.interfaces.append(self.interface_a)
-        self.slab_b.interfaces.append(self.interface_b)
+        self.slab_a.add_feature(self.interface_a)
+        self.slab_b.add_feature(self.interface_b)
 
     def get_interface_for_plate(self, plate):
         if plate is self.slab_a:

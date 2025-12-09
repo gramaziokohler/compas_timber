@@ -1,33 +1,8 @@
-from compas.data import Data
-from compas.geometry import Frame
 from compas.geometry import Plane
-from compas.geometry import Transformation
 from compas.geometry import distance_line_line
 
-
-class SlabFeature(Data):
-    #TODO: should this inherit from Element?
-    def __init__(self, frame, name=None):
-        super(SlabFeature, self).__init__()
-        self.transformation=Transformation.from_frame(frame)
-        self.name=name
-
-    @property
-    def __data__(self):
-        data = {"frame": self.frame}
-        return data
-
-    @property
-    def frame(self):
-        return Frame.from_transformation(self.transformation)
-
-    def transform(self, transformation):
-        self.transformation = transformation * self.transformation
-
-    def transformed(self, transformation):
-        new = self.copy()
-        new.transform(transformation)
-        return new
+from .slab_features import SlabFeature
+from .slab_features import SlabFeatureType
 
 
 class InterfaceRole(object):
@@ -46,11 +21,12 @@ class InterfaceRole(object):
 
     MAIN = "MAIN"
     CROSS = "CROSS"
-    NONE = "NONE" #TODO: add a "MITER" role?
+    NONE = "NONE"  # TODO: add a "MITER" role?
+
 
 class SlabConnectionInterface(SlabFeature):
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None, name="SlabConnectionInterface"):
-        super(SlabConnectionInterface, self).__init__(frame=frame, name=name)
+        super(SlabConnectionInterface, self).__init__(frame=frame, slab_feature_type=SlabFeatureType.CONNECTION_INTERFACE, name=name)
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         # self.topology = topology  # TODO: don't like this here
@@ -94,4 +70,3 @@ class SlabConnectionInterface(SlabFeature):
     def width(self):
         """Returns the width of the interface polyline."""
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])
-
