@@ -25,6 +25,7 @@ Added BTLx Machining Limits component
 Changed 'BTLxFromGeometry' to allow Brep as input.
 Fixed Shape options for Mortise and Tenon input.
 Fixed BTLx from Parameters component. 
+Fixed Show Elements by Category component.
 
 ### Removed
 
