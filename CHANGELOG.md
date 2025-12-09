@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `transform()` method override to `TimberModel` to properly invalidate element caches when model transformation is applied, fixing inconsistent element transformation behavior.
 * Added `__from_data__` class method override in `TimberElement` to handle frame/transformation conversion during deserialization.
 * Added standalone element support through minimal overrides in `compute_modeltransformation()` and `compute_modelgeometry()` methods in `TimberElement`.
-
 * Added new `compas_timber.planning.Stock` base class for representing raw material stock pieces with polymorphic element handling.
 * Added new `compas_timber.planning.BeamStock` class for 1D beam stock pieces with length-based nesting and dimensional compatibility checking.
 * Added new `compas_timber.planning.PlateStock` class for 2D plate stock pieces with area-based nesting and dimensional compatibility checking.
@@ -24,11 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
+* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operation.
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `PlateGeometry` class.
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `planar_surface_point_at` to `compas_timber.utils`.
+* Added `NestedElementData` class to `compas_timber.planning` for explicit typing of nested element information.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -52,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
+* Refactor `BTLxWriter` to use `graphnode` as part identifier in `BTLxpart` creation instead of the enumeration index, for consistent part referencing.
+* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a dictionary containing its frame, a human-readable key, and length, instead of just the frame. 
+* Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
