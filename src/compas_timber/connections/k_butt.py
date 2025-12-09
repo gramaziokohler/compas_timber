@@ -17,66 +17,64 @@ from compas_timber.fabrication import Pocket
 
 
 class KButtJoint(Joint):
-    """
-    Represents a K-Butt type joint which joins the ends of two beams along the length of another beam, trimming the two main beams.
-    A `Pocket` feature is applied to the cross beam.
+    """Represents a K-Butt type joint which joins the ends of two beams along the length of another beam.
 
-    This joint type is compatible with beams in K topology.
-
-    If the three beams are coplanare, the cross beam is cut with a :class:`~compas_timber.fabrication.Pocket` feature
-    otherwise with a :class:`~compas_timber.fabrication.Lap` feature.
+    This joint type is compatible with beams in K topology. The two main beams are trimmed at their
+    ends to meet the cross beam. If the three beams are coplanar, the cross beam receives a
+    :class:`~compas_timber.fabrication.Pocket` feature; otherwise, the joint uses
+    :class:`~compas_timber.connections.t_butt.TButtJoint` features.
 
     Parameters
     ----------
-    cross_beam : :class:`~compas_timber.parts.Beam`, optional
-        The cross beam to be joined. The beam connected along its length.
-    *main_beams : :class:`~compas_timber.parts.Beam`
-        The two main beams to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`, optional
+        The cross beam to be joined. This beam is connected along its length.
+    *main_beams : :class:`~compas_timber.elements.Beam`
+        The two main beams to be joined. These beams connect at their ends to the cross beam.
     mill_depth : float, optional
-        The depth of the pocket to be milled in the cross beam. Default is 0.
+        The depth of the pocket to be milled in the cross beam, by default 0.
     **kwargs : dict
-        Additional keyword arguments passed to the parent Joint class.
+        Additional keyword arguments passed to the parent :class:`~compas_timber.connections.Joint` class.
 
     Attributes
     ----------
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
-    main_beam_a : :class:`~compas_timber.parts.Beam`
-        The first main beam to be joined.
-    main_beam_b : :class:`~compas_timber.parts.Beam`
-        The second main beam to be joined.
+    main_beams : list of :class:`~compas_timber.elements.Beam`
+        The two main beams to be joined.
+    main_beam_a : :class:`~compas_timber.elements.Beam`
+        The first main beam.
+    main_beam_b : :class:`~compas_timber.elements.Beam`
+        The second main beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
     cross_beam_guid : str
         The GUID of the cross beam.
-    main_beam_a_guid : str
-        The GUID of the first main beam.
-    main_beam_b_guid : str
-        The GUID of the second main beam.
+    main_beams_guids : list of str
+        The GUIDs of the main beams.
+    features : list
+        List of fabrication features added to the beams.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
+    MAX_ELEMENT_COUNT = 3
 
     @property
     def __data__(self):
-        data = super().__data__()
+        data = super().__data__
         data["cross_beam_guid"] = self.cross_beam_guid
-        data["main_beam_a_guid"] = self.main_beam_a_guid
-        data["main_beam_b_guid"] = self.main_beam_b_guid
         data["mill_depth"] = self.mill_depth
+        data["main_beams_guids"] = self.main_beams_guids
         return data
 
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
         self.cross_beam = cross_beam
-        self.main_beam_a = main_beams[0]
-        self.main_beam_b = main_beams[1]
+        self.main_beams = list(main_beams)
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.main_beam_a_guid = kwargs.get("main_beam_a_guid", None) or str(self.main_beam_a.guid)
-        self.main_beam_b_guid = kwargs.get("main_beam_b_guid", None) or str(self.main_beam_b.guid)
+        self.main_beams_guids = [str(beam.guid) for beam in main_beams]
         self.mill_depth = mill_depth
         self.features = []
 
@@ -97,6 +95,14 @@ class KButtJoint(Joint):
         ):
             return True
         return False
+
+    @property
+    def main_beam_a(self):
+        return self.main_beams[0]
+
+    @property
+    def main_beam_b(self):
+        return self.main_beams[1]
 
     @classmethod
     def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
@@ -336,6 +342,5 @@ class KButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.cross_beam = model.elemnt_by_guid(self.cross_beam_guid)
-        self.main_beam_a = model.elemnt_by_guid(self.main_beam_a_guid)
-        self.main_beam_b = model.elemnt_by_guid(self.main_beam_b_guid)
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beams = [model.element_by_guid(guid) for guid in self.main_beams_guids]

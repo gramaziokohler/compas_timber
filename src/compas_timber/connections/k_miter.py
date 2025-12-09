@@ -20,20 +20,20 @@ from compas_timber.fabrication import Pocket
 
 class KMiterJoint(Joint):
     """
-    Represents a K-Miter type joint which joins the ends of two beams (`main_beams`) along the length of another beam (`cross_beam`).
+    Represents a K-Miter type joint which joins the ends of multiple beams (`main_beams`) along the length of another beam (`cross_beam`).
 
-    The main beams are joined with Miter joint where they meet, and each main beam is joined to the cross beam with a Butt joint.
-    If the beams are coplanar, a  :class:`~compas_timber.fabrication.Pocket` feature is created in the `cross_beam` otherwise
-    with a :class:`~compas_timber.fabrication.Lap` feature.
+    The main beams are joined with L-Miter joints where they meet consecutively, and each main beam is joined to the cross beam with a T-Butt joint.
+    If the beams are coplanar, a :class:`~compas_timber.fabrication.Pocket` feature is created in the `cross_beam`, otherwise
+    T-Butt joints are applied directly.
 
-    This joint type is compatible with beams in K topology.
+    This joint type is compatible with beams in K topology and supports 3 to 50 beams.
 
     Parameters
     ----------
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined. The beam connected along its length.
     *main_beams : :class:`~compas_timber.elements.Beam`
-        The two main beams to be joined. The beams connected at their ends.
+        The main beams to be joined (minimum 2). The beams connected at their ends.
     mill_depth : float, optional
         The depth of material to be milled from the cross beam at the cutting planes. Default is 0.
     **kwargs : dict
@@ -44,7 +44,7 @@ class KMiterJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined. The beam connected along its length.
     main_beams : list of :class:`~compas_timber.elements.Beam`
-        The two main beams to be joined. The beams connected at their ends.
+        The main beams to be joined. The beams connected at their ends.
     mill_depth : float
         The depth of material to be milled from the cross beam at the cutting planes.
     features : list of :class:`~compas_timber.fabrication.Feature`
@@ -58,15 +58,14 @@ class KMiterJoint(Joint):
 
     @property
     def __data__(self):
-        data = super().__data__()
-        data["main_beams_guids"] = self.main_beams_guids
-        data["cross_beam_guid"] = self.cross_beam.guid
+        data = super().__data__
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["mill_depth"] = self.mill_depth
+        data["main_beams_guids"] = self.main_beams_guids
         return data
 
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
-
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
@@ -321,6 +320,6 @@ class KMiterJoint(Joint):
         return width
 
     def restore_beams_from_keys(self, model):
-        """After de-seriallization, restores refernces to the main and cross beams saved in the model."""
+        """After de-seriallization, restores references to the main and cross beams saved in the model."""
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)
-        self.main_beams = [model.element_by_guid(self.main_beam_a_guid), model.element_by_guid(self.main_beam_b_guid)]
+        self.main_beams = [model.element_by_guid(guid) for guid in self.main_beams_guids]
