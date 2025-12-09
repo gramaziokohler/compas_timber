@@ -11,9 +11,16 @@ class ShowElementsByCategory(Grasshopper.Kernel.GH_ScriptInstance):
     def __init__(self):
         super(ShowElementsByCategory, self).__init__()
         ghenv.Component.Params.Output[0].NickName == "elements"
-        self.element_type = ghenv.Component.Message if ghenv.Component.Message else None
+        self.element_type =  None
 
     def RunScript(self, model):
+
+        if model is None:
+            self.names = set()
+            ghenv.Component.Message = "Please connect Model"
+            ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Please connect Model")
+            return None
+        
         self.names = set(element.attributes.get("category") for element in model.elements())
         self.names.discard(None)
 
@@ -22,8 +29,8 @@ class ShowElementsByCategory(Grasshopper.Kernel.GH_ScriptInstance):
             ghenv.Component.AddRuntimeMessage(Grasshopper.Kernel.GH_RuntimeMessageLevel.Warning, "Select element type from context menu (right click)")
             return None
         
-        ghenv.Component.Message = self.element_type
-        
+        ghenv.Component.Message = f"Category: {self.element_type}"
+
         scene = Scene()
         for element in model.elements():
             if element.attributes.get("category") == self.element_type:
