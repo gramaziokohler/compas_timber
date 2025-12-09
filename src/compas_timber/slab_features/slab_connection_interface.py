@@ -25,11 +25,10 @@ class InterfaceRole(object):
 
 
 class SlabConnectionInterface(SlabFeature):
-    def __init__(self, polyline, frame, edge_index, topology, interface_role=None, name="SlabConnectionInterface"):
+    def __init__(self, polyline, frame, edge_index, interface_role=None, name="SlabConnectionInterface"):
         super(SlabConnectionInterface, self).__init__(frame=frame, slab_feature_type=SlabFeatureType.CONNECTION_INTERFACE, name=name)
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
-        # self.topology = topology  # TODO: don't like this here
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
     @property
@@ -38,7 +37,6 @@ class SlabConnectionInterface(SlabFeature):
         data["polyline"] = self._polyline
         data["frame"] = self.frame
         data["edge_index"] = self.edge_index
-        # data["topology"] = self.topology
         data["interface_role"] = self.interface_role
         return data
 
@@ -48,12 +46,11 @@ class SlabConnectionInterface(SlabFeature):
 
     @property
     def geometry(self):
-        return [self.polyline]
+        return self.polyline
 
     def __repr__(self):
         return "SlabConnectionInterface({0})".format(
             self.interface_role,
-            # self.topology,
         )
 
     def as_plane(self):
@@ -69,4 +66,5 @@ class SlabConnectionInterface(SlabFeature):
     @property
     def width(self):
         """Returns the width of the interface polyline."""
+        print(self.polyline)
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])

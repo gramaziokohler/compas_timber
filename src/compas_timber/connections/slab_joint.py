@@ -1,5 +1,6 @@
 from compas.geometry import Frame
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import dot_vectors
 
@@ -86,14 +87,14 @@ class SlabJoint(PlateJoint):
                 self.a_outlines[0][self.a_segment_index],
             ]
         )
+
         frame_a = Frame.from_points(a_interface_polyline.points[0], a_interface_polyline.points[1], a_interface_polyline.points[-2])
         if dot_vectors(frame_a.normal, Vector.from_start_end(self.b_planes[1].point, self.b_planes[0].point)) < 0:
             frame_a = Frame.from_points(a_interface_polyline.points[1], a_interface_polyline.points[0], a_interface_polyline.points[2])
         interface_a = SlabConnectionInterface(
-            a_interface_polyline,
-            frame_a,
+            a_interface_polyline.transformed(Transformation.from_frame(frame_a).inverse()),
+            frame_a.transformed(self.slab_a.modeltransformation.inverse()),
             self.a_segment_index,
-            self.topology,
         )
 
         b_interface_polyline = Polyline(
@@ -109,17 +110,15 @@ class SlabJoint(PlateJoint):
         if dot_vectors(frame_b.normal, Vector.from_start_end(self.b_planes[0].point, self.b_planes[1].point)) < 0:
             frame_b = Frame.from_points(b_interface_polyline.points[1], b_interface_polyline.points[0], b_interface_polyline.points[2])
         interface_b = SlabConnectionInterface(
-            b_interface_polyline,
-            frame_b,
+            b_interface_polyline.transformed(Transformation.from_frame(frame_b).inverse()),
+            frame_b.transformed(self.slab_b.modeltransformation.inverse()),
             self.b_segment_index,
-            self.topology,
         )
         return interface_a, interface_b
 
     def add_features(self):
         # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of a joint-generated feature.
         """Add features to the plates based on the joint."""
-        print("adding slab joint features")
         if self.interface_a and self.interface_b:
             self.slab_a.remove_features(self.interface_a)
             self.slab_b.remove_features(self.interface_b)
