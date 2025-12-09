@@ -5,6 +5,8 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
+from compas_timber.design import SlabConnectionInterface
+
 from .plate_geometry import PlateGeometry
 
 
@@ -109,11 +111,16 @@ class Slab(PlateGeometry, Element):
     def __str__(self):
         return "Slab(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
+    @property
+    def interfaces(self):
+        """list[:class:`~compas_timber.elements.SlabConnectionInterface`]: The interfaces associated with this slab."""
+        return [f for f in self.features if isinstance(f, SlabConnectionInterface)]
+     
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         PlateGeometry.reset(self)  # reset outline_a and outline_b
-        self.interfaces = []
+        self.features = []
         self.debug_info = []
 
     @reset_computed
@@ -128,11 +135,11 @@ class Slab(PlateGeometry, Element):
 
         """
         if interfaces is None:
-            self.interfaces = []
+            self.features = [f for f in self.features if not isinstance(f, SlabConnectionInterface)]
         else:
             if not isinstance(interfaces, list):
                 interfaces = [interfaces]
-            self.interfaces = [i for i in self.interfaces if i not in interfaces]
+            self.features = [f for f in self.features if f not in interfaces]
 
     @property
     def is_group_element(self):

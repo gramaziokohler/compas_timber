@@ -25,12 +25,16 @@ class SlabButtJoint(SlabJoint, PlateButtJoint):
 class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
+
     def __repr__(self):
         return "SlabLButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
 
 
 class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
+
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
     def __repr__(self):
         return "SlabTButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))

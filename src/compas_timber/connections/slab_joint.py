@@ -1,77 +1,12 @@
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Vector
-from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
+
+from compas_timber.design import SlabConnectionInterface
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint
-
-
-class InterfaceRole(object):
-    """
-    Enumeration of the possible interface roles.
-
-    Attributes
-    ----------
-    MAIN : literal("MAIN")
-        The interface is the main interface.
-    CROSS : literal("CROSS")
-        The interface is the cross interface.
-    NONE : literal("NONE")
-        The interface has no specific role. E.g. when a miter joint is used.
-    """
-
-    MAIN = "MAIN"
-    CROSS = "CROSS"
-    NONE = "NONE"
-
-
-class SlabConnectionInterface(object):
-    """
-    polyline : :class:`compas.geometry.Polyline`
-        The outline of the interface area.
-    frame : :class:`compas.geometry.Frame`
-        The frame of the interface area.
-        xaxis : interface normal (towards other plate)
-        yaxis : up along the interface side
-        normal: width direction, perpendicular to the interface
-    topology : literal(JointTopology)
-        The topology of the joint in which the interface is used.
-        E.g. L or T
-    interface_role : literal(InterfaceRole)
-        The role of the interface in the joint.
-
-    """
-
-    def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
-        self.polyline = polyline
-        self.frame = frame
-        self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
-        self.topology = topology  # TODO: don't like this here
-        self.interface_role = interface_role if interface_role else InterfaceRole.NONE
-
-    # def __repr__(self):
-    #     return "SlabConnectionInterface({0}, {1})".format(
-    #         self.interface_role,
-    #         JointTopology.get_name(self.topology),
-    #     )
-
-    def as_plane(self):
-        """Returns the interface as a plane.
-
-        Returns
-        -------
-        :class:`compas.geometry.Plane`
-            The plane of the interface.
-        """
-        return Plane.from_frame(self.frame)
-
-    @property
-    def width(self):
-        """Returns the width of the interface polyline."""
-        return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])
 
 
 class SlabJoint(PlateJoint):
@@ -182,10 +117,10 @@ class SlabJoint(PlateJoint):
         return interface_a, interface_b
 
     def add_features(self):
-        # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of feature.
+        # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of a joint-generated feature.
         """Add features to the plates based on the joint."""
         if self.interface_a and self.interface_b:
-            self.slab_a.interfaces.remove(self.interface_a)
+            self.slab_a.remove_interfaces(self.interface_a)
             self.slab_b.interfaces.remove(self.interface_b)
         self.interface_a, self.interface_b = self.create_interfaces()
         self.slab_a.interfaces.append(self.interface_a)

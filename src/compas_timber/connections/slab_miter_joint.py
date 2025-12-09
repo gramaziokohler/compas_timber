@@ -6,5 +6,7 @@ from .slab_joint import SlabJoint
 class SlabMiterJoint(SlabJoint, PlateMiterJoint):
     """Creates a mitered edge plate-to-plate connection."""
 
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
+
     def __repr__(self):
         return "SlabMiterJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))
