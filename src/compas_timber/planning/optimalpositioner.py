@@ -35,7 +35,7 @@ def set_gripper_positions(model):
                 # store the central gripper position as beam attribute
                 beam.attributes["gripper_position"] = (sum(gripper_positions) + LAP_LENGTH) * 0.5
             elif len(gripper_positions) == 1:
-                beam.attributes["gripper_position"] = gripper_positions[0] + (GRIPPER_SEPARATION + LAP_LENGTH) * 0.5
+                beam.attributes["gripper_position"] = gripper_positions[0] - (GRIPPER_SEPARATION - LAP_LENGTH) * 0.5
             else:
                 raise ValueError("Unexpected number of gripper positions returned.")
 
