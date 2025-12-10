@@ -15,31 +15,31 @@ class SlabJoint(PlateJoint):
 
     Parameters
     ----------
-    plate_a : :class:`compas_timber.elements.Plate`
+    slab_a : :class:`compas_timber.elements.Slab`
         The first plate.
-    plate_b : :class:`compas_timber.elements.Plate`
+    slab_b : :class:`compas_timber.elements.Slab`
         The second plate.
     topology : literal(JointTopology)
         The topology in which the plates are connected.
     a_segment_index : int
-        The index of the segment in plate_a's outline where the plates are connected.
+        The index of the segment in slab_a's outline where the plates are connected.
     b_segment_index : int
-        The index of the segment in plate_b's outline where the plates are connected.
+        The index of the segment in slab_b's outline where the plates are connected.
     **kwargs : dict, optional
         Additional keyword arguments to pass to the parent class.
 
     Attributes
     ----------
-    plate_a : :class:`compas_timber.elements.Plate`
+    slab_a : :class:`compas_timber.elements.Slab`
         The first plate.
-    plate_b : :class:`compas_timber.elements.Plate`
+    slab_b : :class:`compas_timber.elements.Slab`
         The second plate.
-    plates : tuple of :class:`compas_timber.elements.Plate`
-        The plates that are connected.
+    slabs : tuple of :class:`compas_timber.elements.Slab`
+        The slabs that are connected.
     interface_a : :class:`compas.geometry.PlanarSurface`
-        The interface surface of plate_a where it meets plate_b.
+        The interface surface of slab_a where it meets slab_b.
     interface_b : :class:`compas.geometry.PlanarSurface`
-        The interface surface of plate_b where it meets plate_a.
+        The interface surface of slab_b where it meets slab_a.
 
     """
 
