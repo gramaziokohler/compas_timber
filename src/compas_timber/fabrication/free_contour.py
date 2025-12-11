@@ -27,6 +27,7 @@ from shapely import Point, transform
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
+from compas_timber.utils import move_polyline_segment_to_plane
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -244,6 +245,13 @@ class FreeContour(BTLxProcessing):
         if isinstance(self.contour_param_object, Contour):
             pline_a = self.contour_param_object.polyline
             pline_b = pline_a.translated([0, 0, -self.contour_param_object.depth])
+            if any([ i != 0 for i in self.contour_param_object.inclination]):
+                inclinations = [self.contour_param_object.inclination[0] for _ in range(len(pline_a)-1)] if len(self.contour_param_object.inclination) == 1 else self.contour_param_object.inclination
+                for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
+                    plane = Plane.from_points([seg.start, seg.end, seg.start + Vector(0, 0, -1)])
+                    plane.rotate(math.radians(inclination), seg.direction, seg.start)
+                    move_polyline_segment_to_plane(pline_b, i, plane)
+
         else:
             pline_a = self.contour_param_object.principal_polyline
             pline_b = self.contour_param_object.associated_polyline

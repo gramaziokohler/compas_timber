@@ -256,7 +256,7 @@ class Slab(PlateGeometry, Element):
         super().transform(transformation)
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, design_surface_outside=False, recognize_doors=False, **kwargs):
+    def from_outlines(cls, outline_a, outline_b, openings=None, design_surface_outside=False, recognize_doors=False, horizontal_openings=False, **kwargs):
         """
         Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
 
@@ -279,13 +279,14 @@ class Slab(PlateGeometry, Element):
         """
         if design_surface_outside:
             outline_a, outline_b = outline_b, outline_a
+        if openings:       
+            openings = [(o, "window") for o in openings]
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
             if door_openings:
                 if openings is None:
-                    openings = door_openings
+                    openings = [(o, "door") for o in door_openings]
                 else:
-                    openings = [(o, "window") for o in openings]
                     openings.extend([(o, "door") for o in door_openings])
 
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
@@ -295,7 +296,7 @@ class Slab(PlateGeometry, Element):
         slab = cls(**kwargs)
         if openings:
             for polyline, opening_type in openings:
-                opening = Opening.from_outline_slab(polyline, slab, opening_type=opening_type)
+                opening = Opening.from_outline_slab(polyline, slab, opening_type=opening_type, project_horizontal=horizontal_openings)
                 slab.add_feature(opening)
         return slab
 

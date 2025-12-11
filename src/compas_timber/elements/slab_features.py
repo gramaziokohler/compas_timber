@@ -109,7 +109,7 @@ class Opening(SlabFeature):
 
 
     @classmethod
-    def from_outline_slab(cls, outline, slab, opening_type=None, horizontal_sill=False, name=None):
+    def from_outline_slab(cls, outline, slab, opening_type=None, project_horizontal=False, name=None):
         """Creates an opening from a single outline and a slab.
 
         The outline defined locally relative to the slab frame. The outline is projected
@@ -137,7 +137,7 @@ class Opening(SlabFeature):
         box = Box.from_points(pts_a)
         frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
         pts_b = []
-        if horizontal_sill:
+        if project_horizontal:
             vector = Vector(slab.frame.normal[0], slab.frame.normal[1], 0).transformed(slab.modeltransformation.inverse())
             for pt in pts_a:
                 line = Line.from_point_and_vector(pt, vector)
@@ -148,6 +148,7 @@ class Opening(SlabFeature):
             if not pts_b or not all(pts_b):
                 for pt in pts_a:
                     pts_b.append(Point(pt[0], pt[1], slab.thickness))
+            print("Projected pts_b:", pts_b)
         else:
             for pt in pts_a:
                 pts_b.append(Point(pt[0], pt[1], slab.thickness))
