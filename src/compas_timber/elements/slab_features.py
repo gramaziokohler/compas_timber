@@ -131,26 +131,27 @@ class Opening(SlabFeature):
         """
         # project outline onto top and bottom faces of slab
         outline.transform(slab.modeltransformation.inverse())
-        pts_a = []
-        for pt in outline.points:
-            pts_a.append(Point(pt[0], pt[1], 0))  # project to slab.planes[0]/slab.outline_a
-        box = Box.from_points(pts_a)
+        box = Box.from_points(outline.points)
         frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
+        pts_a = []
         pts_b = []
         if project_horizontal:
             vector = Vector(slab.frame.normal[0], slab.frame.normal[1], 0).transformed(slab.modeltransformation.inverse())
-            for pt in pts_a:
+            for pt in outline.points:
                 line = Line.from_point_and_vector(pt, vector)
-                intersection = intersection_line_plane(line, Plane(Point(0, 0, slab.thickness), Vector(0, 0, 1)))
-                if intersection:
-                    pts_b.append(intersection)
-
-            if not pts_b or not all(pts_b):
-                for pt in pts_a:
-                    pts_b.append(Point(pt[0], pt[1], slab.thickness))
-            print("Projected pts_b:", pts_b)
+                intersection_a = intersection_line_plane(line, Plane.worldXY())
+                if intersection_a:
+                    pts_a.append(intersection_a)
+                else:
+                    raise ValueError("Could not project opening outline point onto slab inner plane.")
+                intersection_b = intersection_line_plane(line, Plane(Point(0, 0, slab.thickness), Vector(0, 0, 1)))
+                if intersection_b:
+                    pts_b.append(intersection_b)
+                else:
+                    raise ValueError("Could not project opening outline point onto slab outer plane.")
         else:
-            for pt in pts_a:
+            for pt in outline.points:
+                pts_a.append(Point(pt[0], pt[1], 0))  # project to slab.planes[0]/slab.outline_a
                 pts_b.append(Point(pt[0], pt[1], slab.thickness))
         pl_a = Polyline(pts_a).transformed(Transformation.from_frame(frame).inverse())
         pl_b = Polyline(pts_b).transformed(Transformation.from_frame(frame).inverse())
