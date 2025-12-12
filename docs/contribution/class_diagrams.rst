@@ -6,58 +6,45 @@ This section provides visual representations of the class hierarchies and relati
 
 .. contents::
    :local:
-   classDiagram
+   :depth: 2
 
-      class Element {
-         <<abstract>>
-         +frame : Frame
-      }
+Timber Element Subsystem
+========================
+
+The elements subsystem contains all the core timber elements that can be modeled and manipulated. These inherit from the base :class:`~compas_timber.elements.TimberElement` class.
+
+.. mermaid::
+
+   classDiagram
 
       class TimberElement {
          <<abstract>>
-         +length : float
-         +width : float
-         +height : float
          +features : list[Feature]
          +debug_info : list
-         +is_beam() : bool
-         +is_plate() : bool
-         +is_group_element() : bool
+         +is_beam : bool
+         +is_plate : bool
+         +is_group_element : bool
+         +is_fastener : bool
          +reset()
          +add_features(features)
          +remove_features(features)
          +remove_blank_extension()
-         +ref_frame : Frame
-         +ref_sides : tuple[Frame]
-         +ref_edges : tuple[Line]
-      }
-
-      class PlateGeometry {
-         +outline_a : Polyline
-         +outline_b : Polyline
-         +openings : list[Polyline]
-         +outlines : tuple[Polyline, Polyline]
-         +thickness : float
-         +planes : tuple[Plane, Plane]
-         +normal : Vector
-         +edge_planes : list[Frame]
-         +reset()
-         +from_outlines()
-         +from_outline_thickness()
-         +from_brep()
-         +shape : Brep
-         +compute_aabb()
-         +compute_obb()
-         +compute_collision_mesh()
       }
 
       class Beam {
          +attributes : dict
+         +width : float
+         +height : float
+         +length : float
+         +frame : Frame
          +shape : Box
          +blank : Box
          +blank_length : float
          +blank_frame : Frame
+         +ref_frame : Frame
          +faces : list[Frame]
+         +ref_sides : tuple[Frame]
+         +ref_edges : tuple[Line]
          +centerline : Line
          +centerline_start : Point
          +centerline_end : Point
@@ -70,43 +57,49 @@ This section provides visual representations of the class hierarchies and relati
          +compute_aabb()
          +compute_obb()
          +compute_collision_mesh()
-         +add_blank_extension()
-         +remove_blank_extension()
       }
 
       class Plate {
-         +is_plate : bool = True
-         +blank : Box
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +openings : list[Polyline]
+         +frame : Frame
+         +thickness : float
+         +planes : tuple[Plane]
          +blank_length : float
-         +features : list[Feature]
+         +width : float
+         +height : float
+         +ref_frame : Frame
+         +is_plate : bool = True
          +compute_geometry()
+         +compute_aabb()
+         +compute_obb()
       }
 
       class Slab {
-         +name : str
-         +interfaces : list
-         +attributes : dict
-         +is_slab : bool = True
-         +is_group_element : bool = True
-         +reset()
-         +remove_interfaces()
-      }
-
-      class Wall {
          +outline : Polyline
+         +thickness : float
+         +openings : list[Polyline]
+         +frame : Frame
          +origin : Point
          +baseline : Line
          +centerline : Line
+         +width : float
+         +length : float
+         +height : float
          +corners : tuple[Point]
          +faces : tuple[Frame]
-         +end_faces : tuple[Frame, Frame]
+         +end_faces : tuple[Frame]
          +envelope_faces : tuple[Frame]
-         +is_wall : bool = True
+         +is_group_element : bool = True
+         +from_boundary()
+         +from_brep()
          +compute_geometry()
          +compute_aabb()
          +compute_obb()
          +rotate()
       }
+
 
       class Fastener {
          +shape : Geometry
@@ -116,11 +109,6 @@ This section provides visual representations of the class hierarchies and relati
          +compute_geometry()
       }
 
-      class Opening {
-         +polyline : Polyline
-         +opening_type : str
-         +orient_polyline(normal)
-      }
 
       class FastenerTimberInterface {
          +outline_points : list[Point]
@@ -134,17 +122,14 @@ This section provides visual representations of the class hierarchies and relati
 
       %% Inheritance relationships
       Element <|-- TimberElement
-      Element <|-- Fastener
-      PlateGeometry <|-- Plate
-      TimberElement <|-- Plate
       TimberElement <|-- Beam
-      PlateGeometry <|-- Slab
+      TimberElement <|-- Plate
       Element <|-- Slab
-      Slab <|-- Wall
+      TimberElement <|-- Fastener
 
-         %% Composition relationships
-      Slab ..> Opening : contains
+      %% Composition relationships
       Fastener ..> FastenerTimberInterface : contains
+
 Connections Subsystem
 =====================
 
@@ -264,11 +249,6 @@ The connections subsystem defines joints and their relationships. All joints inh
          +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
       }
 
-      class WallJoint {
-         +wall_a : Wall
-         +wall_b : Wall
-         +interface : WallToWallInterface
-      }
 
       %% Inheritance relationships
       Interaction <|-- Joint
@@ -280,7 +260,6 @@ The connections subsystem defines joints and their relationships. All joints inh
       Joint <|-- BallNodeJoint
       Joint <|-- TenonMortiseJoint
       Joint <|-- PlateJoint
-      Joint <|-- WallJoint
 
       ButtJoint <|-- LButtJoint
       ButtJoint <|-- TButtJoint

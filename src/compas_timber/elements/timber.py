@@ -54,8 +54,6 @@ class TimberElement(Element, abc.ABC):
         True if the element is a beam.
     is_plate : bool
         True if the element is a plate.
-    is_wall : bool
-        True if the element is a wall.
     is_group_element : bool
         True if the element can be used as container for other elements.
     features : list[:class:`~compas_timber.parts.Feature`]
