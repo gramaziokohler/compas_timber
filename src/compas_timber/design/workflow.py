@@ -516,6 +516,7 @@ class TopologyRule(JointRule):
 
     def try_create_joint(self, model, cluster, max_distance=None):
         """Returns a Joint if the given cluster's elements comply with this TopologyRule.
+
         It checks:
         that the max_distance is not exceeded,
         that the joint supports the topology of the elements.
