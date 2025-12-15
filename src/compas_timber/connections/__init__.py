@@ -39,6 +39,7 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 
 
 __all__ = [
@@ -84,4 +85,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "parse_cross_beam_and_main_beams_from_cluster",
 ]

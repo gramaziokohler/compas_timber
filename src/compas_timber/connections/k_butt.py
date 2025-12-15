@@ -8,6 +8,7 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
@@ -64,11 +65,12 @@ class KButtJoint(Joint):
     def __data__(self):
         data = super().__data__
         data["cross_beam_guid"] = self.cross_beam_guid
-        data["mill_depth"] = self.mill_depth
         data["main_beams_guids"] = self.main_beams_guids
+        data["mill_depth"] = self.mill_depth
+        data["conical_tool"] = self.conical_tool
         return data
 
-    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, conical_tool=False, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
         self.cross_beam = cross_beam
@@ -76,6 +78,7 @@ class KButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in main_beams]
         self.mill_depth = mill_depth
+        self.conical_tool = conical_tool
         self.features = []
 
     @property
@@ -124,9 +127,8 @@ class KButtJoint(Joint):
         -------
         :class:`~compas_timber.connections.KButtJoint`
             The created joint instance.
-
         """
-        main_beams, cross_beams = cluster.parse_main_and_cross_beams()
+        cross_beams, main_beams = parse_cross_beam_and_main_beams_from_cluster(cluster)
         elements = list(cross_beams) + list(main_beams)
         return cls.create(model, *elements, **kwargs)
 
@@ -183,7 +185,7 @@ class KButtJoint(Joint):
             cross_beam = self.cross_beam.copy()  # cut with a pocket // provides a dummy cross beam
         else:
             cross_beam = self.cross_beam  # cut with T-butt joints below
-
+        # TODO: figure out a better way to use other joints within this joint.
         TJoint1 = TButtJoint(self.main_beam_a, cross_beam, mill_depth=self.mill_depth)
         TJoint1.add_features()
         TJoint2 = TButtJoint(self.main_beam_b, cross_beam, mill_depth=self.mill_depth)
@@ -229,6 +231,14 @@ class KButtJoint(Joint):
         # Independent BTLx parameters
         width = self._find_width()
         start_y = self._find_start_y(width)
+
+        # adjust tilt angles if conicla tool is not used
+        if not self.conical_tool:
+            if tilt_end_side < math.pi / 2:
+                tilt_end_side = math.pi / 2
+            if tilt_start_side < math.pi / 2:
+                tilt_start_side = math.pi / 2
+
         # Create pocket feature
         machining_limits = MachiningLimits()
         pocket = Pocket(
@@ -275,23 +285,31 @@ class KButtJoint(Joint):
         """
         beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
         cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
+
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
         ref_side_plane = Plane.from_frame(ref_side)
         intersection_point_projected = ref_side_plane.projected_point(intersection_point)
+
         air_distance = ref_side.point.distance_to_point(intersection_point_projected)
+
         # Calculate end_x
         end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle) if self.mill_depth < cross_height / 2 else 0
-        x2 = (beam_height / 2) / math.sin(math.pi - angle)
-        end_x += abs(x1)
+        x1 = (cross_height / 2 - self.mill_depth) / math.tan(angle) if self.mill_depth < cross_height / 2 else 0
+        x2 = (beam_height / 2) / math.sin(angle)
+
+        end_x += x1
         end_x += abs(x2)
+
         length = end_x - start_x
+
         if self.mill_depth >= cross_height / 2:
             x3 = (self.mill_depth - cross_height / 2) / math.tan(math.pi - angle)
+
             if angle < math.pi / 2:
                 length -= abs(x3)
             else:
                 length += abs(x3)
+
         return length
 
     def _check_length_feasability(self, length, beam, angle):

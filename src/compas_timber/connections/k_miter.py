@@ -8,6 +8,7 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
@@ -60,15 +61,17 @@ class KMiterJoint(Joint):
     def __data__(self):
         data = super().__data__
         data["cross_beam_guid"] = self.cross_beam_guid
-        data["mill_depth"] = self.mill_depth
         data["main_beams_guids"] = self.main_beams_guids
+        data["mill_depth"] = self.mill_depth
+        data["conical_tool"] = self.conical_tool
         return data
 
-    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, **kwargs):
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, conical_tool=False, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
+        self.conical_tool = conical_tool
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
         self.features = []
@@ -112,7 +115,7 @@ class KMiterJoint(Joint):
         :class:`~compas_timber.connections.KMiterJoint`
             The created joint instance.
         """
-        main_beams, cross_beams = cluster.parse_main_and_cross_beams()
+        cross_beams, main_beams = parse_cross_beam_and_main_beams_from_cluster(cluster)
         if len(cross_beams) != 1:
             raise BeamJoiningError("K-Miter joints require exactly one cross beam.")
         elements = list(cross_beams) + list(main_beams)
@@ -167,7 +170,7 @@ class KMiterJoint(Joint):
             cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
         else:
             cross_beam = self.cross_beam  # cut with T-butt joints below
-
+        # TODO: figure out a better way to use other joints within this joint.
         for i in range(len(self.main_beams) - 1):
             beam_1 = self.main_beams[i]
             beam_2 = self.main_beams[i + 1]
@@ -223,6 +226,13 @@ class KMiterJoint(Joint):
         length = self._find_length(P2, start_x, angle_2, beam_2)
         width = self._find_width(beam_1, beam_2)
         start_y = self._find_start_y(width, beam_1)
+
+        # adjust tilt  angles if conicla tool is not used
+        if not self.conical_tool:
+            if tilt_end_side < math.pi / 2:
+                tilt_end_side = math.pi / 2
+            if tilt_start_side < math.pi / 2:
+                tilt_start_side = math.pi / 2
 
         # Create pocket feature
         machining_limits = MachiningLimits()
