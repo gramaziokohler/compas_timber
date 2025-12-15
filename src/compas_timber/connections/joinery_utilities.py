@@ -4,6 +4,19 @@ from compas_timber.elements.beam import Beam
 
 
 def parse_cross_beam_and_main_beams_from_cluster(cluster: Cluster) -> tuple[set[Beam], set[Beam]]:
+    """
+    Parses cross beams and main beams from a cluster of joints.
+
+    Parameters
+    ----------
+    cluster : :class:`~compas_timber.connections.analyzers.Cluster`
+        The cluster of joints to parse.
+    
+    Returns
+    -------
+    set[:class:`~compas_timber.elements.beam.Beam`], set[:class:`~compas_timber.elements.beam.Beam`]
+        Two sets containing the cross beams and main beams respectively.
+    """
     cross_beams = []
     main_beams = []
     for candidate in cluster.joints:

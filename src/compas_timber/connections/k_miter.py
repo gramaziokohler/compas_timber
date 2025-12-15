@@ -55,7 +55,7 @@ class KMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
-    MAX_ELEMENT_COUNT = 50
+    MAX_ELEMENT_COUNT = 100
 
     @property
     def __data__(self):
