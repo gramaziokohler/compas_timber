@@ -1,9 +1,9 @@
 {
-    "name": "ShowBeamsByCategory",
-    "nickname": "ShowBeamType",
+    "name": "ShowElementsByCategory",
+    "nickname": "ShowElementsByCategory",
     "category": "COMPAS Timber",
     "subcategory": "08 Show",
-    "description": "allows user to visualize beam categories in timber model.",
+    "description": "allows user to visualize elements by categories in timber model.",
     "exposure": 4,
     "ghpython": {
         "isAdvancedMode": true,
@@ -11,7 +11,7 @@
         "inputParameters": [
                 {
                     "name": "model",
-                    "description": "Model object.",
+                    "description": "TimberModel object",
                     "typeHintID": "none",
                     "scriptParamAccess": 0
                 }
@@ -19,7 +19,7 @@
         "outputParameters": [
             {
                 "name": "elements",
-                "description": "beam type to visualize."
+                "description": "view geometry in the selected category."
             }
         ]
     }
