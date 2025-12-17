@@ -195,7 +195,7 @@ class BTLxWriter(object):
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
         for i, element in enumerate(elements):
-            part_element = self._create_part(element, element.graphnode)
+            part_element = self._create_part(element, order_num=element.graphnode)
             parts_element.append(part_element)
         return project_element
 
@@ -369,11 +369,12 @@ class BTLxGenericPart(object):
         The scale factor to apply to the part's dimensions. Defaults to 1.0.
     """
 
-    def __init__(self, order_num, length, width, height, scale_factor=1.0):
+    def __init__(self, order_num, length, width, height, group="", scale_factor=1.0):
         self.order_num = order_num
         self.length = length * scale_factor
         self.width = width * scale_factor
         self.height = height * scale_factor
+        self.group = group
         self._scale_factor = scale_factor
 
     @property
@@ -433,7 +434,7 @@ class BTLxGenericPart(object):
             "Designation": "",
             "Annotation": "",
             "Storey": "",
-            "Group": "",
+            "Group": self.group,
             "Package": "",
             "Material": "",
             "TimberGrade": "",
@@ -487,6 +488,7 @@ class BTLxRawpart(BTLxGenericPart):
             stock.length,
             stock.width,
             stock.height,
+            stock.group,
             scale_factor,
         )
         self.stock = stock
@@ -577,7 +579,7 @@ class BTLxPart(BTLxGenericPart):
     """
 
     def __init__(self, element, order_num, scale_factor=1.0):
-        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, scale_factor)
+        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, element.parent.name if element.parent else "", scale_factor)
         self.element = element
         self.processings = []
         self._shape_strings = None

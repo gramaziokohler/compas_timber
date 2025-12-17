@@ -156,6 +156,9 @@ class BeamStock(Stock):
         self.consoles_positions = consoles_positions
         self._current_x_position = 0.0  # Track current position along length for placing beams
         self._spacing = spacing if spacing is not None else 0.0
+        self.group = ""
+        self.groups = set()  # Track unique groups in this stock
+        self.group_indices = set()  # Track group indices in this stock
 
     @property
     def __data__(self):
@@ -211,7 +214,7 @@ class BeamStock(Stock):
             return True, True
         return TOL.is_close(a, x) and TOL.is_close(b, y)
 
-    def add_element(self, beam):
+    def add_element(self, beam, group_index=None):
         """
         Add a beam to this stock assignment.
 
@@ -219,6 +222,8 @@ class BeamStock(Stock):
         ----------
         beam : :class:`~compas_timber.elements.Beam`
             The beam to add
+        group_index : int, optional
+            The index of the group this beam belongs to
 
         Raises
         ------
@@ -231,6 +236,12 @@ class BeamStock(Stock):
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
         self._current_x_position += beam.blank_length + self._spacing  # Update position for next beam
+        # Track which group this beam belongs to
+        beam_group = beam.parent.name if beam.parent else ""
+        if beam_group:
+            self.groups.add(beam_group)
+        if group_index is not None:
+            self.group_indices.add(group_index)
         # Store element data with frame, blank length and graphnode key
         self.element_data[str(beam.guid)] = {
             "frame": position_frame,
@@ -268,12 +279,7 @@ class BeamStock(Stock):
         for i, guid in enumerate(guids_in_order):
             data = self.element_data[guid]
             beam = model.element_by_guid(str(guid))
-            positions = get_consoles_positions(
-                beam,
-                beams_on_stock=count,
-                beam_index=i,
-                stock_beam_lengths=tuple(stock_lengths)
-            )
+            positions = get_consoles_positions(beam, beams_on_stock=count, beam_index=i, stock_beam_lengths=tuple(stock_lengths))
             frame = data.get("frame", Frame.worldXY())
             positions = [p + frame.point.x for p in positions]  # Offset by beam position on stock
             stock_console_positions.extend(positions)
@@ -445,6 +451,7 @@ class NestingResult(Data):
                 lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
                 lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
                 lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
+                lines.append(f"Groups: {list(stock.groups)}")
                 if valid_console_positions:
                     lines.append(f"ConsolePositions({self.tolerance.unit}): {valid_console_positions}")
                 lines.append("--------")
@@ -503,7 +510,7 @@ class BeamNester(object):
                 raise TypeError(f"All items in stock_catalog must be BeamStock instances. Item at index {i} is {type(stock).__name__}")
         self._stock_catalog = value
 
-    def nest(self, fast=True, consoles=False):
+    def nest(self, fast=True, consoles=False, optimize=False, exclude_groups=[]):
         """
         Perform 1D nesting of all beams in the model.
 
@@ -514,12 +521,18 @@ class BeamNester(object):
             accurate one (Best Fit Decreasing). Default is True (fast).
         consoles : bool, optional
             Whether to consider console positions in the nesting process. Default is False.
+        optimize : bool, optional
+            Only applies when per_group=True. If True, allows filling leftover space in stocks
+            from previous groups with beams from the next consecutive group (optimized per_group).
+            If False, keeps groups strictly separate (strict per_group). Has no effect when
+            per_group=False. Default is False.
         Returns
         -------
         :class:`NestingResult`
             Nesting result containing stocks with assigned beams and metadata
         """
         nesting_stocks = []
+
         if self.per_group:
             # Collect beam groups
             beam_groups = []  # list of lists of beams per group
@@ -536,9 +549,35 @@ class BeamNester(object):
             if standalone_beams:
                 beam_groups.append(standalone_beams)
 
-            # Nest groups in order, continuing to fill partially-used stocks
-            for beams in beam_groups:
-                stocks = self._nest_beam_collection(beams, fast, existing_stocks=nesting_stocks)
+            # Nest groups in order, optionally continuing to fill partially-used stocks
+            for group_index, beams in enumerate(beam_groups):
+                # Determine which stocks to pass for optimization
+                stocks_to_pass = []
+                if optimize:
+                    # If optimization is enabled, allow stocks from the previous group to be filled
+                    # Filter out stocks that belong to excluded groups
+                    if exclude_groups:
+                        # Get current group name
+                        current_group_name = beams[0].parent.name if beams and beams[0].parent else ""
+                        # Extract integer from group name format "S{int}"
+                        current_group_int = int(current_group_name[1:]) if current_group_name.startswith("S") else None
+
+                        # If the current group is excluded, don't pass any existing stocks (isolate it)
+                        if current_group_int in exclude_groups:
+                            stocks_to_pass = []
+                        else:
+                            # Otherwise, pass all stocks except those from excluded groups
+                            # Extract integers from stock group names and filter
+                            stocks_to_pass = []
+                            for s in nesting_stocks:
+                                stock_group_int = int(s.group[1:]) if s.group.startswith("S") else None
+                                if stock_group_int not in exclude_groups:
+                                    stocks_to_pass.append(s)
+                    else:
+                        # No exclusions, pass all existing stocks
+                        stocks_to_pass = nesting_stocks
+
+                stocks = self._nest_beam_collection(beams, fast, existing_stocks=stocks_to_pass, group_index=group_index)
                 # Only extend with NEW stocks, existing_stocks are already in nesting_stocks
                 nesting_stocks.extend([s for s in stocks if s not in nesting_stocks])
         else:
@@ -550,10 +589,9 @@ class BeamNester(object):
         if consoles:
             for stock in nesting_stocks:
                 stock._set_consoles_positions(self.model)
-
         return NestingResult(nesting_stocks)
 
-    def _nest_beam_collection(self, beams, fast=True, existing_stocks=None):
+    def _nest_beam_collection(self, beams, fast=True, existing_stocks=None, group_index=None):
         # Nest a collection of beams into stock pieces.
         # If existing_stocks is provided, try to fill those first before creating new ones.
         stocks = existing_stocks if existing_stocks is not None else []
@@ -565,9 +603,9 @@ class BeamNester(object):
                 continue
             # Apply selected algorithm, passing existing stocks to continue filling them
             if fast:
-                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks)
+                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks, group_index=group_index)
             else:
-                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks)
+                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks, group_index=group_index)
 
             stocks = result_stocks
         return stocks
@@ -601,51 +639,69 @@ class BeamNester(object):
         return stock_beam_map
 
     @staticmethod
-    def _first_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None):
+    def _first_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None, group_index=None):
         # Fast but more wasteful packing
         # Places each beam in the first stock that has enough space, without optimizing for minimal waste.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
         stocks = existing_stocks if existing_stocks is not None else []
         for beam in sorted_beams:
-            # Try to fit in existing stocks (filter for compatible cross-section)
+            # Try to fit in existing stocks (filter for compatible cross-section and consecutive group constraint)
             fitted = False
+            beam_group = beam.parent.name if beam.parent else ""
             for stock_piece in stocks:
-                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam):
-                    stock_piece.add_element(beam)
+                # Check if this stock can accept beams from this group
+                # Allow if: stock is empty, stock has this group, or stock has previous group (group_index-1)
+                can_accept_group = True
+                if group_index is not None and stock_piece.group_indices:
+                    # Stock must contain the previous group (group_index - 1) to accept current group
+                    can_accept_group = group_index in stock_piece.group_indices or (group_index - 1) in stock_piece.group_indices
+
+                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam) and can_accept_group:
+                    stock_piece.add_element(beam, group_index=group_index)
                     fitted = True
                     break
             # If not fitted, create new stock
             if not fitted:
                 new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
-                new_stock.add_element(beam)
+                new_stock.group = beam_group
+                new_stock.add_element(beam, group_index=group_index)
                 stocks.append(new_stock)
 
         return stocks
 
     @staticmethod
-    def _best_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None):
+    def _best_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None, group_index=None):
         # Slower but more efficient packing
         # Minimizes waste by selecting the stock piece with the smallest remaining space that can still fit the beam.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
         stocks = existing_stocks if existing_stocks is not None else []
         for beam in sorted_beams:
-            # Find best fitting existing stock (smallest waste that still fits, compatible cross-section)
+            # Find best fitting existing stock (smallest waste that still fits, compatible cross-section, consecutive groups)
             best_stock = None
             best_waste = float("inf")
+            beam_group = beam.parent.name if beam.parent else ""
 
             for stock_piece in stocks:
-                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam) and stock_piece._remaining_length < best_waste:
+                # Check if this stock can accept beams from this group
+                # Allow if: stock is empty, stock has this group, or stock has previous group (group_index-1)
+                can_accept_group = True
+                if group_index is not None and stock_piece.group_indices:
+                    # Stock must contain the previous group (group_index - 1) to accept current group
+                    can_accept_group = group_index in stock_piece.group_indices or (group_index - 1) in stock_piece.group_indices
+
+                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam) and can_accept_group and stock_piece._remaining_length < best_waste:
                     best_waste = stock_piece._remaining_length
                     best_stock = stock_piece
             # If found a fitting stock, use it
             if best_stock is not None:
-                best_stock.add_element(beam)
+                best_stock.add_element(beam, group_index=group_index)
             else:
                 # Create new stock
                 new_stock = BeamStock(stock.length, stock.cross_section, spacing=spacing)
-                new_stock.add_element(beam)
+                new_stock.group = beam_group
+                new_stock.add_element(beam, group_index=group_index)
                 stocks.append(new_stock)
 
         return stocks
