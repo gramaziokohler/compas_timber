@@ -166,7 +166,7 @@ class Plate(PlateGeometry, TimberElement):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Slabs.
+        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Panels.
 
         Parameters
         ----------
