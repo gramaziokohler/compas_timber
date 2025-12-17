@@ -27,15 +27,15 @@ from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .plate_joint import PlateJoint
-from .slab_joint import SlabJoint
+from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-from .slab_butt_joint import SlabButtJoint
-from .slab_butt_joint import SlabLButtJoint
-from .slab_butt_joint import SlabTButtJoint
-from .slab_miter_joint import SlabMiterJoint
+from .panel_butt_joint import PanelButtJoint
+from .panel_butt_joint import PanelLButtJoint
+from .panel_butt_joint import PanelTButtJoint
+from .panel_miter_joint import PanelMiterJoint
 from .analyzers import NBeamKDTreeAnalyzer
 from .analyzers import TripletAnalyzer
 from .analyzers import QuadAnalyzer
@@ -75,15 +75,15 @@ __all__ = [
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
     "PlateJoint",
-    "SlabJoint",
+    "PanelJoint",
     "PlateButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
-    "SlabButtJoint",
-    "SlabLButtJoint",
-    "SlabTButtJoint",
-    "SlabMiterJoint",
+    "PanelButtJoint",
+    "PanelLButtJoint",
+    "PanelTButtJoint",
+    "PanelMiterJoint",
     "NBeamKDTreeAnalyzer",
     "TripletAnalyzer",
     "QuadAnalyzer",

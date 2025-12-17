@@ -30,7 +30,7 @@ class InterfaceRole(object):
     NONE = "NONE"
 
 
-class SlabConnectionInterface(Data):
+class PanelConnectionInterface(Data):
     """
     polyline : :class:`compas.geometry.Polyline`
         The outline of the interface area.
@@ -58,7 +58,7 @@ class SlabConnectionInterface(Data):
         }
 
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None):
-        super(SlabConnectionInterface, self).__init__()
+        super(PanelConnectionInterface, self).__init__()
         self.polyline = polyline
         self.frame = frame
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
@@ -66,7 +66,7 @@ class SlabConnectionInterface(Data):
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
     # def __repr__(self):
-    #     return "SlabConnectionInterface({0}, {1})".format(
+    #     return "PanelConnectionInterface({0}, {1})".format(
     #         self.interface_role,
     #         JointTopology.get_name(self.topology),
     #     )
@@ -87,7 +87,7 @@ class SlabConnectionInterface(Data):
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])
 
 
-class SlabJoint(PlateJoint):
+class PanelJoint(PlateJoint):
     """Models a plate to plate interaction.
 
     Parameters
@@ -122,28 +122,28 @@ class SlabJoint(PlateJoint):
 
     @property
     def __data__(self):
-        data = super(SlabJoint, self).__data__
+        data = super(PanelJoint, self).__data__
         # data["interfaces"] = self.interfaces
         return data
 
-    def __init__(self, slab_a=None, slab_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        super(SlabJoint, self).__init__(slab_a, slab_b, topology, a_segment_index, b_segment_index, **kwargs)
+    def __init__(self, panel_a=None, panel_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
+        super(PanelJoint, self).__init__(panel_a, panel_b, topology, a_segment_index, b_segment_index, **kwargs)
         self.interface_a = None
         self.interface_b = None
 
     def __repr__(self):
-        return "SlabJoint({0}, {1}, {2})".format(self.slab_a, self.slab_b, JointTopology.get_name(self.topology))
+        return "PanelJoint({0}, {1}, {2})".format(self.panel_a, self.panel_b, JointTopology.get_name(self.topology))
 
     @property
-    def slabs(self):
+    def panels(self):
         return self.elements
 
     @property
-    def slab_a(self):
+    def panel_a(self):
         return self.plate_a
 
     @property
-    def slab_b(self):
+    def panel_b(self):
         return self.plate_b
 
     @property
@@ -167,7 +167,7 @@ class SlabJoint(PlateJoint):
         frame_a = Frame.from_points(a_interface_polyline.points[0], a_interface_polyline.points[1], a_interface_polyline.points[-2])
         if dot_vectors(frame_a.normal, Vector.from_start_end(self.b_planes[1].point, self.b_planes[0].point)) < 0:
             frame_a = Frame.from_points(a_interface_polyline.points[1], a_interface_polyline.points[0], a_interface_polyline.points[2])
-        interface_a = SlabConnectionInterface(
+        interface_a = PanelConnectionInterface(
             a_interface_polyline,
             frame_a,
             self.a_segment_index,
@@ -186,7 +186,7 @@ class SlabJoint(PlateJoint):
         frame_b = Frame.from_points(b_interface_polyline.points[0], b_interface_polyline.points[1], b_interface_polyline.points[-2])
         if dot_vectors(frame_b.normal, Vector.from_start_end(self.b_planes[0].point, self.b_planes[1].point)) < 0:
             frame_b = Frame.from_points(b_interface_polyline.points[1], b_interface_polyline.points[0], b_interface_polyline.points[2])
-        interface_b = SlabConnectionInterface(
+        interface_b = PanelConnectionInterface(
             b_interface_polyline,
             frame_b,
             self.b_segment_index,
@@ -195,19 +195,19 @@ class SlabJoint(PlateJoint):
         return interface_a, interface_b
 
     def add_features(self):
-        # NOTE: I called this add_features to fit with joint workflow, as interface is the slab equivalent of feature.
+        # NOTE: I called this add_features to fit with joint workflow, as interface is the panel equivalent of feature.
         """Add features to the plates based on the joint."""
         if self.interface_a and self.interface_b:
-            self.slab_a.interfaces.remove(self.interface_a)
-            self.slab_b.interfaces.remove(self.interface_b)
+            self.panel_a.interfaces.remove(self.interface_a)
+            self.panel_b.interfaces.remove(self.interface_b)
         self.interface_a, self.interface_b = self.create_interfaces()
-        self.slab_a.interfaces.append(self.interface_a)
-        self.slab_b.interfaces.append(self.interface_b)
+        self.panel_a.interfaces.append(self.interface_a)
+        self.panel_b.interfaces.append(self.interface_b)
 
     def get_interface_for_plate(self, plate):
-        if plate is self.slab_a:
+        if plate is self.panel_a:
             return self.interface_a
-        elif plate is self.slab_b:
+        elif plate is self.panel_b:
             return self.interface_b
         else:
             raise ValueError("Plate not part of this joint.")

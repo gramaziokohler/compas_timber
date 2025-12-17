@@ -29,10 +29,10 @@ class CollectionDef(object):
 
 
 class ContainerDefinition(object):
-    """Holds a pair of slab and its configuration set if available."""
+    """Holds a pair of panel and its configuration set if available."""
 
-    def __init__(self, slab, config_set=None):
-        self.slab = slab
+    def __init__(self, panel, config_set=None):
+        self.panel = panel
         self.config_set = config_set
 
 
@@ -641,7 +641,7 @@ def get_clusters_from_model(model, max_distance=None):
     """
     model.connect_adjacent_beams(max_distance=max_distance)  # ensure that the model is connected before analyzing
     model.connect_adjacent_plates(max_distance=max_distance)  # ensure that the model is connected before analyzing
-    model.connect_adjacent_slabs(max_distance=max_distance)  # ensure that the model is connected before analyzing
+    model.connect_adjacent_panels(max_distance=max_distance)  # ensure that the model is connected before analyzing
     analyzer = MaxNCompositeAnalyzer(model, n=len(list(model.elements())), max_distance=max_distance)
     clusters = analyzer.find()
     return clusters

@@ -18,22 +18,22 @@ from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import combine_parallel_segments
 
 from .plate_geometry import PlateGeometry
-from .slab_features import Opening
+from .panel_features import Opening
 
 
-class SlabType(object):
-    """Constants for different types of slabs.
+class PanelType(object):
+    """Constants for different types of panels.
 
     Attributes
     ----------
     WALL : str
-        Constant for wall slabs.
+        Constant for wall panels.
     FLOOR : str
-        Constant for floor slabs.
+        Constant for floor panels.
     ROOF : str
-        Constant for roof slabs.
+        Constant for roof panels.
     GENERIC : str
-        Constant for generic slabs.
+        Constant for generic panels.
     """
 
     WALL = "wall"
@@ -42,60 +42,60 @@ class SlabType(object):
     GENERIC = "generic"
 
 
-class Slab(PlateGeometry, Element):
-    """Represents a timber slab element (wall, floor, roof, etc.).
+class Panel(PlateGeometry, Element):
+    """Represents a timber panel element (wall, floor, roof, etc.).
 
-    Serves as container for beams, joints and other related elements and groups them together to form a slab.
-    A slab is often a single unit of prefabricated timber element.
+    Serves as container for beams, joints and other related elements and groups them together to form a panel.
+    A panel is often a single unit of prefabricated timber element.
     It is often referred to as an enveloping body.
 
     Parameters
     ----------
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this slab.
+        The coordinate system (frame) of this panel.
     length : float
-        Length of the slab.
+        Length of the panel.
     width : float
-        Width of the slab.
+        Width of the panel.
     thickness : float
-        Thickness of the slab.
+        Thickness of the panel.
     outline_a : :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the principal outline of this slab.
+        A polyline representing the principal outline of this panel.
     outline_b : :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the associated outline of this slab.
+        A polyline representing the associated outline of this panel.
     name : str, optional
-        Name of the slab. Defaults to "Slab".
+        Name of the panel. Defaults to "Panel".
     **kwargs : dict, optional
         Additional keyword arguments.
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this slab.
+        The coordinate system (frame) of this panel.
     length : float
-        Length of the slab.
+        Length of the panel.
     width : float
-        Width of the slab.
+        Width of the panel.
     height : float
-        Height (thickness) of the slab.
+        Height (thickness) of the panel.
     thickness : float
-        Thickness of the slab.
+        Thickness of the panel.
     name : str
-        Name of the slab.
+        Name of the panel.
     interfaces : list
-        List of interfaces associated with this slab.
+        List of interfaces associated with this panel.
     attributes : dict
         Dictionary of additional attributes.
-    is_slab : bool
-        Always True for slabs.
+    is_panel : bool
+        Always True for panels.
     is_wall : bool
-        False for base Slab class.
+        False for base Panel class.
     is_floor : bool
-        False for base Slab class.
+        False for base Panel class.
     is_roof : bool
-        False for base Slab class.
+        False for base Panel class.
     is_group_element : bool
-        Always True for slabs as they can contain other elements.
+        Always True for panels as they can contain other elements.
 
     """
 
@@ -117,16 +117,16 @@ class Slab(PlateGeometry, Element):
         self.length = length
         self.width = width
         self.height = thickness
-        self.name = name or "Slab"
+        self.name = name or "Panel"
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
+        return "Panel(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
+        return "Panel(name={}, {}, {}, {:.3f})".format(self.name, self.transformation, self.outline_a, self.thickness)
 
     @reset_computed
     def reset(self):
@@ -137,12 +137,12 @@ class Slab(PlateGeometry, Element):
 
     @reset_computed
     def remove_interfaces(self, interfaces=None):
-        # type: (None | SlabConnectionInterface | list[SlabConnectionInterface]) -> None
+        # type: (None | PanelConnectionInterface | list[PanelConnectionInterface]) -> None
         """Removes interfaces from the element.
 
         Parameters
         ----------
-        interfaces : :class:`~compas_timber.elements.SlabConnectionInterface` | list[:class:`~compas_timber.elements.SlabConnectionInterface`], optional
+        interfaces : :class:`~compas_timber.elements.PanelConnectionInterface` | list[:class:`~compas_timber.elements.PanelConnectionInterface`], optional
             The interfaces to be removed. If None, all interfaces will be removed.
 
         """
@@ -154,13 +154,13 @@ class Slab(PlateGeometry, Element):
             self.interfaces = [i for i in self.interfaces if i not in interfaces]
 
     @property
-    def is_slab(self):
-        """Check if this element is a slab.
+    def is_panel(self):
+        """Check if this element is a panel.
 
         Returns
         -------
         bool
-            Always True for slabs.
+            Always True for panels.
         """
         return True
 
@@ -171,7 +171,7 @@ class Slab(PlateGeometry, Element):
         Returns
         -------
         bool
-            False for the base Slab class.
+            False for the base Panel class.
         """
         return False
 
@@ -182,7 +182,7 @@ class Slab(PlateGeometry, Element):
         Returns
         -------
         bool
-            False for the base Slab class.
+            False for the base Panel class.
         """
         return False
 
@@ -193,7 +193,7 @@ class Slab(PlateGeometry, Element):
         Returns
         -------
         bool
-            False for the base Slab class.
+            False for the base Panel class.
         """
         return False
 
@@ -204,7 +204,7 @@ class Slab(PlateGeometry, Element):
         Returns
         -------
         bool
-            Always True for slabs as they can contain other elements.
+            Always True for panels as they can contain other elements.
         """
         return True
 
@@ -258,7 +258,7 @@ class Slab(PlateGeometry, Element):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, design_surface_outside=False, recognize_doors=False, horizontal_openings=False, **kwargs):
         """
-        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+        Constructs a PlateGeometry from two polyline outlines. to be implemented to instantialte Plates and Panels.
 
         Parameters
         ----------
@@ -293,12 +293,12 @@ class Slab(PlateGeometry, Element):
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
-        slab = cls(**kwargs)
+        panel = cls(**kwargs)
         if openings:
             for polyline, opening_type in openings:
-                opening = Opening.from_outline_slab(polyline, slab, opening_type=opening_type, project_horizontal=horizontal_openings)
-                slab.add_feature(opening)
-        return slab
+                opening = Opening.from_outline_panel(polyline, panel, opening_type=opening_type, project_horizontal=horizontal_openings)
+                panel.add_feature(opening)
+        return panel
 
 
 def extract_door_openings(outline_a, outline_b):
@@ -329,13 +329,13 @@ def extract_door_openings(outline_a, outline_b):
     while not done:
         for seg_index in internal_segment_indices_a:
             i_a = seg_index
-            slab_segments_a = outline_a.lines
-            slab_segments_b = outline_b.lines
+            panel_segments_a = outline_a.lines
+            panel_segments_b = outline_b.lines
             door_segments = []
             door_segments_b = []
             for i in range(i_a-2, i_a + 3):
-                door_segments.append(slab_segments_a[i % (len(slab_segments_a))])
-                door_segments_b.append(slab_segments_b[i % (len(slab_segments_b))])
+                door_segments.append(panel_segments_a[i % (len(panel_segments_a))])
+                door_segments_b.append(panel_segments_b[i % (len(panel_segments_b))])
             parallel = True
             for a,b in zip(door_segments, door_segments_b):
                 if angle_vectors(a.direction, b.direction) > TOL.ABSOLUTE:
@@ -352,11 +352,11 @@ def extract_door_openings(outline_a, outline_b):
             vertical.unitize()
             segs_a = []
             segs_b = []
-            for i in range(len(slab_segments_a)):
-                if slab_segments_a[i] in door_segments:
+            for i in range(len(panel_segments_a)):
+                if panel_segments_a[i] in door_segments:
                     continue
-                segs_a.append(slab_segments_a[i])
-                segs_b.append(slab_segments_b[i])
+                segs_a.append(panel_segments_a[i])
+                segs_b.append(panel_segments_b[i])
             opening = join_polyline_segments(door_segments[1:4])
             opening[0] -= vertical*1.0
             opening[3] -= vertical*1.0
@@ -371,7 +371,7 @@ def extract_door_openings(outline_a, outline_b):
     return outline_a, outline_b, openings
 
 def get_interior_corner_indices(outline):
-        """Get the indices of the interior corners of the slab outline."""
+        """Get the indices of the interior corners of the panel outline."""
         _interior_corner_indices=[]
         vector = Plane.from_points(outline.points).normal
         points = outline.points[0:-1]
@@ -383,7 +383,7 @@ def get_interior_corner_indices(outline):
         return _interior_corner_indices
 
 def get_interior_segment_indices(polyline):
-    """Get the indices of the interior segments of the slab outline."""
+    """Get the indices of the interior segments of the panel outline."""
     interior_corner_indices = get_interior_corner_indices(polyline)
     edge_count = len(polyline.points) - 1
     _interior_segment_indices=[]

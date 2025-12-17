@@ -18,10 +18,10 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.fabrication import FreeContour
 
-class SlabFeature(Data):
+class PanelFeature(Data):
     #TODO: should this inherit from Element?
     def __init__(self, frame, name=None):
-        super(SlabFeature, self).__init__()
+        super(PanelFeature, self).__init__()
         self.transformation=Transformation.from_frame(frame)
         self.name=name
 
@@ -42,7 +42,7 @@ class SlabFeature(Data):
         new.transform(transformation)
         return new
 
-class Opening(SlabFeature):
+class Opening(PanelFeature):
     def __init__(self, frame, outline_a, outline_b, opening_type=None, name="Opening"):
         super(Opening, self).__init__(frame=frame, name=name)
         self._outline_a = outline_a
@@ -79,48 +79,48 @@ class Opening(SlabFeature):
             self._shape.cap_planar_holes()
         return self._shape
 
-    def apply(self, slab_geometry, slab):
-        """Applies the opening to the given slab geometry.
+    def apply(self, panel_geometry, panel):
+        """Applies the opening to the given panel geometry.
 
         Parameters
         ----------
-        slab_geometry : :class:`compas.geometry.Brep`
-            The geometry of the slab to which the opening will be applied.
-        slab : :class:`compas_timber.elements.Slab`
-            The slab element.
+        panel_geometry : :class:`compas.geometry.Brep`
+            The geometry of the panel to which the opening will be applied.
+        panel : :class:`compas_timber.elements.Panel`
+            The panel element.
 
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The modified slab geometry with the opening applied.
+            The modified panel geometry with the opening applied.
 
         Raises
         ------
         :class:`compas_timber.errors.FeatureApplicationError`
-            If the opening cannot be applied to the slab geometry.
+            If the opening cannot be applied to the panel geometry.
 
         """
         try:
-            slab_geometry -= self.shape.transformed(self.transformation)
-            return slab_geometry
+            panel_geometry -= self.shape.transformed(self.transformation)
+            return panel_geometry
         except Exception as e:
-            raise FeatureApplicationError(slab_geometry, self.shape, f"Failed to apply opening to slab geometry: {e}")
+            raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
 
 
 
     @classmethod
-    def from_outline_slab(cls, outline, slab, opening_type=None, project_horizontal=False, name=None):
-        """Creates an opening from a single outline and a slab.
+    def from_outline_panel(cls, outline, panel, opening_type=None, project_horizontal=False, name=None):
+        """Creates an opening from a single outline and a panel.
 
-        The outline defined locally relative to the slab frame. The outline is projected
-        onto the outline_a side of the slab.
+        The outline defined locally relative to the panel frame. The outline is projected
+        onto the outline_a side of the panel.
 
         Parameters
         ----------
         outline : :class:`compas.geometry.Polyline`
             The outline of the opening.
-        slab : :class:`compas_timber.elements.Slab`
-            The slab in which the opening is located.
+        panel : :class:`compas_timber.elements.Panel`
+            The panel in which the opening is located.
         name : str, optional
             The name of the opening.
 
@@ -129,30 +129,30 @@ class Opening(SlabFeature):
         :class:`Opening`
             The created opening.
         """
-        # project outline onto top and bottom faces of slab
-        outline.transform(slab.modeltransformation.inverse())
+        # project outline onto top and bottom faces of panel
+        outline.transform(panel.modeltransformation.inverse())
         box = Box.from_points(outline.points)
         frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
         pts_a = []
         pts_b = []
         if project_horizontal:
-            vector = Vector(slab.frame.normal[0], slab.frame.normal[1], 0).transformed(slab.modeltransformation.inverse())
+            vector = Vector(panel.frame.normal[0], panel.frame.normal[1], 0).transformed(panel.modeltransformation.inverse())
             for pt in outline.points:
                 line = Line.from_point_and_vector(pt, vector)
                 intersection_a = intersection_line_plane(line, Plane.worldXY())
                 if intersection_a:
                     pts_a.append(intersection_a)
                 else:
-                    raise ValueError("Could not project opening outline point onto slab inner plane.")
-                intersection_b = intersection_line_plane(line, Plane(Point(0, 0, slab.thickness), Vector(0, 0, 1)))
+                    raise ValueError("Could not project opening outline point onto panel inner plane.")
+                intersection_b = intersection_line_plane(line, Plane(Point(0, 0, panel.thickness), Vector(0, 0, 1)))
                 if intersection_b:
                     pts_b.append(intersection_b)
                 else:
-                    raise ValueError("Could not project opening outline point onto slab outer plane.")
+                    raise ValueError("Could not project opening outline point onto panel outer plane.")
         else:
             for pt in outline.points:
-                pts_a.append(Point(pt[0], pt[1], 0))  # project to slab.planes[0]/slab.outline_a
-                pts_b.append(Point(pt[0], pt[1], slab.thickness))
+                pts_a.append(Point(pt[0], pt[1], 0))  # project to panel.planes[0]/panel.outline_a
+                pts_b.append(Point(pt[0], pt[1], panel.thickness))
         pl_a = Polyline(pts_a).transformed(Transformation.from_frame(frame).inverse())
         pl_b = Polyline(pts_b).transformed(Transformation.from_frame(frame).inverse())
         return cls(frame, pl_a, pl_b, opening_type=opening_type, name=name)
@@ -190,9 +190,9 @@ class InterfaceRole(object):
     CROSS = "CROSS"
     NONE = "NONE"
 
-class SlabConnectionInterface(SlabFeature):
-    def __init__(self, polyline, frame, edge_index, topology, interface_role=None, name="SlabConnectionInterface"):
-        super(SlabConnectionInterface, self).__init__(frame=frame, name=name)
+class PanelConnectionInterface(PanelFeature):
+    def __init__(self, polyline, frame, edge_index, topology, interface_role=None, name="PanelConnectionInterface"):
+        super(PanelConnectionInterface, self).__init__(frame=frame, name=name)
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.topology = topology  # TODO: don't like this here
@@ -200,7 +200,7 @@ class SlabConnectionInterface(SlabFeature):
 
     @property
     def __data__(self):
-        data = super(SlabConnectionInterface, self).__data__
+        data = super(PanelConnectionInterface, self).__data__
         data["polyline"] = self._polyline
         data["frame"] = self.frame
         data["edge_index"] = self.edge_index
@@ -217,7 +217,7 @@ class SlabConnectionInterface(SlabFeature):
         return [self.polyline]
 
     def __repr__(self):
-        return "SlabConnectionInterface({0}, {1})".format(
+        return "PanelConnectionInterface({0}, {1})".format(
             self.interface_role,
             self.topology,
         )
@@ -237,7 +237,7 @@ class SlabConnectionInterface(SlabFeature):
         """Returns the width of the interface polyline."""
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])
 
-class LinearService(SlabFeature):
+class LinearService(PanelFeature):
     def __init__(self, frame, polyline, name="LinearService"):
         super(LinearService, self).__init__(frame=frame, name=name)
         self._polyline = polyline
@@ -256,7 +256,7 @@ class LinearService(SlabFeature):
     def geometry(self):
         return [self.polyline]
 
-class VolumetricService(SlabFeature):
+class VolumetricService(PanelFeature):
     def __init__(self, frame, volume, name="VolumetricService"):
         super(VolumetricService, self).__init__(frame=frame, name=name)
         self._volume=volume

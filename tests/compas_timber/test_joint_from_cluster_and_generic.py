@@ -266,7 +266,7 @@ def test_from_cluster_empty_cluster(model):
     # Create empty cluster
     cluster = Cluster([])
 
-    with pytest.raises(AttributeError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
+    with pytest.raises(TypeError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
         TButtJoint.promote_cluster(model, cluster)
 
 

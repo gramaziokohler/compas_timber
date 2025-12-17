@@ -22,7 +22,7 @@ from compas_timber.utils import combine_parallel_segments
 
 class PlateGeometry(object):
     """
-    A class to represent plate-like objects (plate, slab, etc.) defined by polylines on top and bottom faces of shape.
+    A class to represent plate-like objects (plate, panel, etc.) defined by polylines on top and bottom faces of shape.
 
     Parameters
     ----------
@@ -93,7 +93,7 @@ class PlateGeometry(object):
 
     @property
     def thickness(self):
-        return self.height
+        return self._mutable_outlines[1][0][2] # z-coordinate of outline_b point 0 in local frame
 
     @property
     def planes(self):
@@ -111,18 +111,20 @@ class PlateGeometry(object):
         return self._mutable_outlines
 
     @property
-    def edge_planes(self):
+    def edge_planes(self):  #TODO: cache this?
         _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
             plane = self._extension_planes.get(i, None)
             if not plane:
                 plane = Plane.from_points([self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i]])
                 plane = self._corrected_edge_plane(i, plane)
+                plane.transform(self.modeltransformation)
             _edge_planes[i] = plane
         return _edge_planes
 
     def set_extension_plane(self, edge_index, plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
+        plane = plane.transformed(self.modeltransformation.inverse()) 
         self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
@@ -155,7 +157,7 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
+        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Panel.")
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
