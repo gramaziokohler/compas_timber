@@ -16,7 +16,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
-from compas_timber.connections import SlabJoint
+from compas_timber.connections import PanelJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
@@ -472,7 +472,7 @@ class TimberModel(Model):
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
-    def connect_adjacent_slabs(self, max_distance=None):
+    def connect_adjacent_panels(self, max_distance=None):
         """Connects adjacent plates in the model.
 
         Parameters
@@ -481,16 +481,16 @@ class TimberModel(Model):
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
         for joint in self.joints:
-            if isinstance(joint, SlabJoint):
+            if isinstance(joint, PanelJoint):
                 self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
-        slabs = self.slabs
+        panels = self.panels
         solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(slabs, rtree=True, max_distance=max_distance)
+        pairs = solver.find_intersecting_pairs(panels, rtree=True, max_distance=max_distance)
         for pair in pairs:
-            slab_a, slab_b = pair
-            result = solver.find_topology(slab_a, slab_b, tol=TOL.relative, max_distance=max_distance)
+            panel_a, panel_b = pair
+            result = solver.find_topology(panel_a, panel_b, tol=TOL.relative, max_distance=max_distance)
 
             if result.topology is JointTopology.TOPO_UNKNOWN:
                 continue

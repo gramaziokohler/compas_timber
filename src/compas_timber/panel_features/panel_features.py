@@ -3,7 +3,7 @@ from compas.geometry import Frame
 from compas.geometry import Transformation
 
 
-class SlabFeatureType:
+class PanelFeatureType:
     CONNECTION_INTERFACE = "CONNECTION_INTERFACE"
     RECESS = "RECESS"
     OPENING = "OPENING"
@@ -12,11 +12,11 @@ class SlabFeatureType:
     NONE = "NONE"
 
 
-class SlabFeature(Data):
+class PanelFeature(Data):
     # TODO: should this inherit from Element?
-    def __init__(self, frame, slab_feature_type=SlabFeatureType.NONE, name=None):
-        super(SlabFeature, self).__init__()
-        self.slab_feature_type = slab_feature_type
+    def __init__(self, frame, panel_feature_type=PanelFeatureType.NONE, name=None):
+        super(PanelFeature, self).__init__()
+        self.panel_feature_type = panel_feature_type
         self.transformation = Transformation.from_frame(frame)
         self.name = name
 

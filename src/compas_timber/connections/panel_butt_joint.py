@@ -2,39 +2,39 @@ from .joint import JointTopology
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
-from .slab_joint import SlabJoint
+from .panel_joint import PanelJoint
 
 
-class SlabButtJoint(SlabJoint, PlateButtJoint):
+class PanelButtJoint(PanelJoint, PlateButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
     @property
-    def main_slab(self):
+    def main_panel(self):
         """Return the main plate."""
         return self.plate_a
 
     @property
-    def cross_slab(self):
+    def cross_panel(self):
         """Return the cross plate."""
         return self.plate_b
 
     def __repr__(self):
-        return "SlabButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
+        return "PanelButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
 
 
-class SlabLButtJoint(SlabButtJoint, PlateLButtJoint):
+class PanelLButtJoint(PanelButtJoint, PlateLButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_EDGE
 
     def __repr__(self):
-        return "SlabLButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
+        return "PanelLButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
 
 
-class SlabTButtJoint(SlabButtJoint, PlateTButtJoint):
+class PanelTButtJoint(PanelButtJoint, PlateTButtJoint):
     """Creates a plate-to-plate butt-joint connection."""
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_EDGE_FACE
 
     def __repr__(self):
-        return "SlabTButtJoint({0}, {1}, {2})".format(self.main_slab, self.cross_slab, JointTopology.get_name(self.topology))
+        return "PanelTButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))

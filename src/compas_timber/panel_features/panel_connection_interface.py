@@ -1,8 +1,8 @@
 from compas.geometry import Plane
 from compas.geometry import distance_line_line
 
-from .slab_features import SlabFeature
-from .slab_features import SlabFeatureType
+from .panel_features import PanelFeature
+from .panel_features import PanelFeatureType
 
 
 class InterfaceRole(object):
@@ -24,16 +24,16 @@ class InterfaceRole(object):
     NONE = "NONE"  # TODO: add a "MITER" role?
 
 
-class SlabConnectionInterface(SlabFeature):
-    def __init__(self, polyline, frame, edge_index, interface_role=None, name="SlabConnectionInterface"):
-        super(SlabConnectionInterface, self).__init__(frame=frame, slab_feature_type=SlabFeatureType.CONNECTION_INTERFACE, name=name)
+class PanelConnectionInterface(PanelFeature):
+    def __init__(self, polyline, frame, edge_index, interface_role=None, name="PanelConnectionInterface"):
+        super(PanelConnectionInterface, self).__init__(frame=frame, panel_feature_type=PanelFeatureType.CONNECTION_INTERFACE, name=name)
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
     @property
     def __data__(self):
-        data = super(SlabConnectionInterface, self).__data__
+        data = super(PanelConnectionInterface, self).__data__
         data["polyline"] = self._polyline
         data["frame"] = self.frame
         data["edge_index"] = self.edge_index
@@ -49,7 +49,7 @@ class SlabConnectionInterface(SlabFeature):
         return self.polyline
 
     def __repr__(self):
-        return "SlabConnectionInterface({0})".format(
+        return "PanelConnectionInterface({0})".format(
             self.interface_role,
         )
 

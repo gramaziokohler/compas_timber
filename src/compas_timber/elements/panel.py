@@ -8,19 +8,19 @@ from compas_model.elements import reset_computed
 from .plate_geometry import PlateGeometry
 
 
-class SlabType(object):
-    """Constants for different types of slabs.
+class PanelType(object):
+    """Constants for different types of panels.
 
     Attributes
     ----------
     WALL : str
-        Constant for wall slabs.
+        Constant for wall panels.
     FLOOR : str
-        Constant for floor slabs.
+        Constant for floor panels.
     ROOF : str
-        Constant for roof slabs.
+        Constant for roof panels.
     GENERIC : str
-        Constant for generic slabs.
+        Constant for generic panels.
     """
 
     WALL = "wall"
@@ -29,54 +29,54 @@ class SlabType(object):
     GENERIC = "generic"
 
 
-class Slab(PlateGeometry, Element):
-    """Represents a timber slab element (wall, floor, roof, etc.).
+class Panel(PlateGeometry, Element):
+    """Represents a timber panel element (wall, floor, roof, etc.).
 
-    Serves as container for beams, plates, and other related elements and groups them together to form a slab.
-    A slab is often a single unit of prefabricated timber element.
+    Serves as container for beams, plates, and other related elements and groups them together to form a panel.
+    A panel is often a single unit of prefabricated timber element.
     It is often referred to as an enveloping body.
 
     Parameters
     ----------
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this slab.
+        The coordinate system (frame) of this panel.
     length : float
-        Length of the slab.
+        Length of the panel.
     width : float
-        Width of the slab.
+        Width of the panel.
     thickness : float
-        Thickness of the slab.
+        Thickness of the panel.
     local_outline_a: :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the principal outline of this slab.
+        A polyline representing the principal outline of this panel.
     local_outline_b: :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the associated outline of this slab.
+        A polyline representing the associated outline of this panel.
     openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this slab.
+        A list of Polyline objects representing openings in this panel.
     name : str, optional
-        Name of the slab. Defaults to "Slab".
+        Name of the panel. Defaults to "Panel".
     **kwargs : dict, optional
         Additional keyword arguments.
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this slab.
+        The coordinate system (frame) of this panel.
     length : float
-        Length of the slab.
+        Length of the panel.
     width : float
-        Width of the slab.
+        Width of the panel.
     height : float
-        Height (thickness) of the slab.
+        Height (thickness) of the panel.
     thickness : float
-        Thickness of the slab.
+        Thickness of the panel.
     name : str
-        Name of the slab.
+        Name of the panel.
     interfaces : list
-        List of interfaces associated with this slab.
+        List of interfaces associated with this panel.
     attributes : dict
         Dictionary of additional attributes.
     is_group_element : bool
-        Always True for slabs as they can contain other elements.
+        Always True for panels as they can contain other elements.
 
     """
 
@@ -98,20 +98,20 @@ class Slab(PlateGeometry, Element):
         self.length = length
         self.width = width
         self.height = thickness
-        self.type = type or SlabType.GENERIC
+        self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
 
     def __repr__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
+        return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     def __str__(self):
-        return "Slab(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
+        return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     @property
     def interfaces(self):
-        """list[:class:`~compas_timber.slab_features.SlabConnectionInterface`]: The interfaces associated with this slab."""
-        return [f for f in self.features if f.slab_feature_type == "CONNECTION_INTERFACE"]
+        """list[:class:`~compas_timber.panel_features.PanelConnectionInterface`]: The interfaces associated with this panel."""
+        return [f for f in self.features if f.panel_feature_type == "CONNECTION_INTERFACE"]
 
     @reset_computed
     def reset(self):
@@ -122,12 +122,12 @@ class Slab(PlateGeometry, Element):
 
     @reset_computed
     def remove_features(self, features=None):
-        # type: (None | SlabConnectionInterface | list[SlabConnectionInterface]) -> None
+        # type: (None | PanelConnectionInterface | list[PanelConnectionInterface]) -> None
         """Removes interfaces from the element.
 
         Parameters
         ----------
-        interfaces : :class:`~compas_timber.slab_features.SlabConnectionInterface` | list[:class:`~compas_timber.slab_features.SlabConnectionInterface`], optional
+        interfaces : :class:`~compas_timber.panel_features.PanelConnectionInterface` | list[:class:`~compas_timber.panel_features.PanelConnectionInterface`], optional
             The interfaces to be removed. If None, all interfaces will be removed.
 
         """
@@ -161,24 +161,24 @@ class Slab(PlateGeometry, Element):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a Slab from two polyline outlines. to be implemented to instantialte Plates and Slabs.
+        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
 
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the slab geometry in parent space.
+            A polyline representing the principal outline of the panel geometry in parent space.
         outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the slab geometry in parent space.
+            A polyline representing the associated outline of the panel geometry in parent space.
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the slab geometry.
+            A list of openings to be added to the panel geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
         Returns
         -------
-        :class:`~compas_timber.elements.Slab`
-            A Slab object representing the slab geometry with the given outlines.
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel geometry with the given outlines.
         """
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
