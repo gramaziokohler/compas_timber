@@ -15,6 +15,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -512,9 +513,9 @@ class StepJoint(BTLxProcessing):
         )
 
         # Get the points at the start of the step, at the end and at the heel
-        p_ref = ref_side.point_at(self.start_x, 0)
-        p_opp = opp_side.point_at(self.start_x + x_displacement_end, beam.width)
-        p_heel = ref_side.point_at(self.start_x + x_displacement_heel, 0)
+        p_ref = planar_surface_point_at(ref_side, self.start_x, 0)
+        p_opp = planar_surface_point_at(opp_side, self.start_x + x_displacement_end, beam.width)
+        p_heel = planar_surface_point_at(ref_side, self.start_x + x_displacement_heel, 0)
         # Create cutting planes at the start of the step, at the end and at the heel
         cutting_plane_ref = Frame(p_ref, ref_side.frame.xaxis, ref_side.frame.yaxis)
         cutting_plane_opp = Frame(p_opp, ref_side.frame.xaxis, ref_side.frame.yaxis)
@@ -652,7 +653,7 @@ class StepJoint(BTLxProcessing):
         start_y = ref_surface.ysize/2
 
         # create a box volume for the tenon
-        box_origin = ref_surface.point_at(start_x, start_y)
+        box_origin = planar_surface_point_at(ref_surface, start_x, start_y)
         box_frame = Frame(box_origin, ref_side.xaxis, ref_side.yaxis)
         tenon_box = Box(dx, dy, self.tenon_height, box_frame)
 

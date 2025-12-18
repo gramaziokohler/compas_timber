@@ -17,6 +17,7 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -332,7 +333,7 @@ class FrenchRidgeLap(BTLxProcessing):
         # get the origin of the cutting frame
         start_x = self.start_x
         start_y = ref_surface.ysize if self.ref_position == EdgePositionType.OPPEDGE else 0
-        origin = ref_surface.point_at(start_x, start_y)
+        origin = planar_surface_point_at(ref_surface, start_x, start_y)
 
         # flip the rot_axis if the orientation is END
         rot_axis = -ref_surface.frame.normal
