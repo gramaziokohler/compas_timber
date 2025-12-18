@@ -498,29 +498,6 @@ def get_segment_overlap(segment_a, segment_b, unitize=False):
     return (dots[0], dots[1])
 
 
-def move_polyline_segment_to_plane(polyline, segment_index, plane):
-    """Move a segment of a polyline to lay on a given plane. this is accomplished by extending the adjacent segments to intersect with the plane.
-    Parameters
-    ----------
-    polyline : :class:`~compas.geometry.Polyline`
-        The polyline to modify.
-    segment_index : int
-        The index of the segment to move.
-    plane : :class:`~compas.geometry.Plane`
-        The plane to intersect with.
-    """
-    start_pt = intersection_line_plane(polyline.lines[segment_index - 1], plane)
-    if start_pt:
-        polyline[segment_index] = start_pt
-        if segment_index == 0:
-            polyline[-1] = start_pt
-    end_pt = intersection_line_plane(polyline.lines[(segment_index + 1) % len(polyline.lines)], plane)
-    if end_pt:
-        polyline[segment_index + 1] = end_pt
-        if segment_index + 1 == len(polyline.lines):
-            polyline[0] = end_pt
-
-
 def planar_surface_point_at(surface, u, v):
     """
     Returns the point at parameters u, v on a planar surface transformed using the surface's transformation.
@@ -567,6 +544,5 @@ __all__ = [
     "is_point_in_polyline",
     "do_segments_overlap",
     "get_segment_overlap",
-    "move_polyline_segment_to_plane",
     "planar_surface_point_at",
 ]
