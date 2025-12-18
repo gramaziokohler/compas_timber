@@ -19,13 +19,13 @@ from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import SlabJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Panel
 from compas_timber.elements import Plate
-from compas_timber.elements import Slab
 from compas_timber.errors import BeamJoiningError
 
 
 class TimberModel(Model):
-    """Represents a timber model containing different elements such as slabs, beams and joints.
+    """Represents a timber model containing different elements such as panels, beams and joints.
 
     The timber model allows expressing the hierarchy and interactions between the different elements it contains.
 
@@ -39,8 +39,8 @@ class TimberModel(Model):
         A set of all actual joints assigned to this model.
     joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model.
-    slabs : Generator[:class:`~compas_timber.elements.Slab`]
-        A Generator object of all slabs assigned to this model.
+    panels : Generator[:class:`~compas_timber.elements.Panel`]
+        A Generator object of all panels assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -92,9 +92,9 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Plate)
 
     @property
-    def slabs(self):
-        # type: () -> List[Slab]
-        return self.find_all_elements_of_type(Slab)
+    def panels(self):
+        # type: () -> List[Panel]
+        return self.find_all_elements_of_type(Panel)
 
     @property
     def fasteners(self):
