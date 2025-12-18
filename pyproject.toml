@@ -19,7 +19,7 @@ authors = [
     { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" },
     { name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch" }
 ]
-license = { file = "LICENSE" }
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.9"
 dynamic = ["dependencies", "optional-dependencies", "version"]
