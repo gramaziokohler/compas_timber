@@ -59,6 +59,8 @@ dev = [
 ]
 
 gh = [
+    "compas_invocations2",
+    "tomlkit",
     "pythonnet",
 ]
 
