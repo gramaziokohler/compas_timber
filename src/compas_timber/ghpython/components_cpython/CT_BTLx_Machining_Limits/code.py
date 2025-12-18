@@ -8,9 +8,9 @@ import Rhino
 
 from compas_timber.fabrication import MachiningLimits
 
+
 class BTLxMachiningLimits(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(self, face_limited_start: bool, face_limited_end: bool, face_limited_front: bool, face_limited_back: bool, face_limited_top: bool, face_limited_bottom: bool):
-        
         # provide default value
         inputs = [
             face_limited_start,
@@ -33,7 +33,7 @@ class BTLxMachiningLimits(Grasshopper.Kernel.GH_ScriptInstance):
             face_limited_top,
             face_limited_bottom,
         ) = inputs
-        
+
         # get MachiningLimits object
         machining_limits = MachiningLimits()
         machining_limits.face_limited_start = face_limited_start
