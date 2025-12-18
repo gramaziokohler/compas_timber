@@ -1,3 +1,11 @@
+try:
+    from typing import TYPE_CHECKING
+
+    if TYPE_CHECKING:
+        from compas_timber.fabrication import FreeContour  # noqa: F401
+except ImportError:
+    pass
+
 from compas.geometry import Box
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -5,7 +13,6 @@ from compas.geometry import Transformation
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication import FreeContour
 
 from .plate_geometry import PlateGeometry
 from .timber import TimberElement
@@ -112,6 +119,8 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def features(self):
+        from compas_timber.fabrication import FreeContour
+        
         if not self._outline_feature:
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
