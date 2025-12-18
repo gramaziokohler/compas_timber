@@ -1,4 +1,6 @@
+from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Polyline
 from compas.geometry import distance_line_line
 
 from .panel_features import PanelFeature
@@ -25,46 +27,44 @@ class InterfaceRole(object):
 
 
 class PanelConnectionInterface(PanelFeature):
-    def __init__(self, polyline, frame, edge_index, interface_role=None, name="PanelConnectionInterface"):
-        super(PanelConnectionInterface, self).__init__(frame=frame, panel_feature_type=PanelFeatureType.CONNECTION_INTERFACE, name=name)
+    def __init__(
+        self, polyline: Polyline, frame: Frame, edge_index: int | None, interface_role: InterfaceRole | str = InterfaceRole.NONE, name="PanelConnectionInterface", **kwargs
+    ):
+        super(PanelConnectionInterface, self).__init__(frame=frame, panel_feature_type=PanelFeatureType.CONNECTION_INTERFACE, name=name, **kwargs)
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
 
     @property
-    def __data__(self):
+    def __data__(self) -> dict:
         data = super(PanelConnectionInterface, self).__data__
         data["polyline"] = self._polyline
-        data["frame"] = self.frame
         data["edge_index"] = self.edge_index
         data["interface_role"] = self.interface_role
         return data
 
     @property
-    def polyline(self):
+    def polyline(self) -> Polyline:
+        """Returns the interface polyline in the coordinates of the containing Panel."""
         return self._polyline.transformed(self.transformation)
 
     @property
-    def geometry(self):
+    def geometry(self) -> Polyline:
         return self.polyline
 
-    def __repr__(self):
+    def compute_elementgeometry(self, include_features=False) -> Polyline:
+        return self._polyline
+
+    def __repr__(self) -> str:
         return "PanelConnectionInterface({0})".format(
             self.interface_role,
         )
 
-    def as_plane(self):
-        """Returns the interface as a plane.
-
-        Returns
-        -------
-        :class:`compas.geometry.Plane`
-            The plane of the interface.
-        """
+    def as_plane(self) -> Plane:
+        """Returns the interface as a plane."""
         return Plane.from_frame(self.frame)
 
     @property
-    def width(self):
+    def width(self) -> float:
         """Returns the width of the interface polyline."""
-        print(self.polyline)
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])

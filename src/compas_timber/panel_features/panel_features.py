@@ -1,6 +1,9 @@
-from compas.data import Data
+from abc import ABC
+
 from compas.geometry import Frame
+from compas.geometry import Geometry
 from compas.geometry import Transformation
+from compas_model.elements import Element
 
 
 class PanelFeatureType:
@@ -12,27 +15,33 @@ class PanelFeatureType:
     NONE = "NONE"
 
 
-class PanelFeature(Data):
-    # TODO: should this inherit from Element?
-    def __init__(self, frame, panel_feature_type=PanelFeatureType.NONE, name=None):
-        super(PanelFeature, self).__init__()
+class PanelFeature(Element, ABC):
+    def __init__(self, frame: Frame, panel_feature_type: PanelFeatureType | str = PanelFeatureType.NONE, name: str | None = None, **kwargs) -> None:
+        super(PanelFeature, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.panel_feature_type = panel_feature_type
-        self.transformation = Transformation.from_frame(frame)
         self.name = name
 
     @property
-    def __data__(self):
-        data = {"frame": self.frame}
+    def __data__(self) -> dict:
+        data = super(PanelFeature, self).__data__
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         return data
 
     @property
-    def frame(self):
-        return Frame.from_transformation(self.transformation)
+    def geometry(self) -> Geometry:
+        """The geometry of the element in the model's global coordinates."""
+        if self._geometry is None:
+            self._geometry = self.compute_modelgeometry()
+        return self._geometry
 
-    def transform(self, transformation):
-        self.transformation = transformation * self.transformation
+    def compute_modeltransformation(self) -> Transformation:
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
 
-    def transformed(self, transformation):
-        new = self.copy()
-        new.transform(transformation)
-        return new
+    def compute_modelgeometry(self) -> Geometry:
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()

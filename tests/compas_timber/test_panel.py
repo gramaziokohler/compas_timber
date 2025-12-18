@@ -1,5 +1,7 @@
 import pytest
 
+from compas.data import json_dumps, json_loads
+
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.tolerance import TOL
@@ -44,3 +46,8 @@ def test_sloped_panel_creation():
     assert TOL.is_close(panel_a.thickness, 1), "Expected panel thickness to match input thickness"
     assert TOL.is_close(panel_a.length, 14.1421356237), "Expected panel length to be 10*sqrt(2)"
     assert TOL.is_close(panel_a.width, 20), "Expected panel width to be 20"
+
+
+def test_copy_panel_model(model):
+    model_copy = json_loads(json_dumps(model))
+    assert len(list(model_copy.elements())) == len(list(model.elements())), "Expected copied model to have same number of elements"

@@ -13,10 +13,10 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
-from compas_timber.connections import PanelJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel

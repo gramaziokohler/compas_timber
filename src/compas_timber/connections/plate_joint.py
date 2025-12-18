@@ -1,3 +1,5 @@
+from abc import ABC
+
 from compas.geometry import dot_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -8,7 +10,7 @@ from .joint import JointTopology
 from .solver import PlateConnectionSolver
 
 
-class PlateJoint(Joint):
+class PlateJoint(Joint, ABC):
     """Models a plate to plate interaction.
 
     Parameters
@@ -59,8 +61,9 @@ class PlateJoint(Joint):
                 self.calculate_topology()
         self.reverse_a_planes = False
         self.reverse_b_planes = False
-        self.plate_a_guid = kwargs.get("plate_a_guid", None) or str(self.plate_a.guid) if self.plate_a else None  # type: ignore
-        self.plate_b_guid = kwargs.get("plate_b_guid", None) or str(self.plate_b.guid) if self.plate_b else None  # type: ignore
+
+        self.plate_a_guid = str(self.plate_a.guid) if self.plate_a else kwargs.get("plate_a_guid", None)  # type: ignore
+        self.plate_b_guid = str(self.plate_b.guid) if self.plate_b else kwargs.get("plate_b_guid", None)  # type: ignore
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -147,6 +150,10 @@ class PlateJoint(Joint):
                 self.calculate_topology()
             self.reorder_planes_and_outlines()
             self.set_edge_planes()
+
+    def set_edge_planes(self):
+        """Sets the edge planes of the plates based on the joint topology."""
+        raise NotImplementedError("This method should be implemented in subclasses.")
 
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""

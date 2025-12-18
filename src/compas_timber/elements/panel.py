@@ -5,6 +5,8 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
+from compas_timber.panel_features import PanelFeatureType
+
 from .plate_geometry import PlateGeometry
 
 
@@ -82,12 +84,14 @@ class Panel(PlateGeometry, Element):
 
     @property
     def __data__(self):
-        data = Element.__data__(self)
-        data.update(PlateGeometry.__data__(self))
+        data = Element.__data__.fget(self)
+        data.update(PlateGeometry.__data__.fget(self))
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
-        data["height"] = self.height
+        data["thickness"] = self.height
         data["name"] = self.name
+        data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, name=None, **kwargs):
@@ -111,7 +115,7 @@ class Panel(PlateGeometry, Element):
     @property
     def interfaces(self):
         """list[:class:`~compas_timber.panel_features.PanelConnectionInterface`]: The interfaces associated with this panel."""
-        return [f for f in self.features if f.panel_feature_type == "CONNECTION_INTERFACE"]
+        return [f for f in self.features if f.panel_feature_type == PanelFeatureType.CONNECTION_INTERFACE]
 
     @reset_computed
     def reset(self):
