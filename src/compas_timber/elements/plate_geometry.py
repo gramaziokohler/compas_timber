@@ -20,7 +20,7 @@ from compas_timber.utils import move_polyline_segment_to_plane
 
 class PlateGeometry(object):
     """
-    A class to represent plate-like objects (plate, slab, etc.) defined by polylines on top and bottom faces of shape.
+    A class to represent plate-like objects (plate, panel, etc.) defined by polylines on top and bottom faces of shape.
 
     Parameters
     ----------
@@ -158,7 +158,7 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
+        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Panel.")
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
