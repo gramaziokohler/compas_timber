@@ -9,6 +9,8 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
+from compas_timber.utils import planar_surface_point_at
+
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
@@ -265,10 +267,10 @@ class Slot(BTLxProcessing):
         ref_side = beam.side_as_surface(ref_side_index)
         # find 2 points of intersection
         # TODO: shove this into some function. what are we? savages?
-        small_edge_bottom = Line(ref_side.point_at(0, 0), ref_side.point_at(beam.width, 0))
-        small_edge_top = Line(ref_side.point_at(0, beam.height), ref_side.point_at(beam.width, beam.height))
-        small_edge_left = Line(ref_side.point_at(0, 0), ref_side.point_at(0, beam.height))
-        small_edge_right = Line(ref_side.point_at(beam.width, 0), ref_side.point_at(beam.width, beam.height))
+        small_edge_bottom = Line(planar_surface_point_at(ref_side, 0, 0), planar_surface_point_at(ref_side, beam.width, 0))
+        small_edge_top = Line(planar_surface_point_at(ref_side, 0, beam.height), planar_surface_point_at(ref_side, beam.width, beam.height))
+        small_edge_left = Line(planar_surface_point_at(ref_side, 0, 0), planar_surface_point_at(ref_side, 0, beam.height))
+        small_edge_right = Line(planar_surface_point_at(ref_side, beam.width, 0), planar_surface_point_at(ref_side, beam.width, beam.height))
 
         slot_plane = Plane.from_frame(plane)
         intersection_bottom = intersection_segment_plane(small_edge_bottom, slot_plane)
