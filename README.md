@@ -1,4 +1,8 @@
-# compas_timber
+<h1>
+  <img src="logo.png" alt="Logo" width="70" height="70" style="vertical-align:middle">
+    COMPAS Timber
+</h1>
+
 
 [![Github Actions Build Status](https://github.com/gramaziokohler/compas_timber/workflows/build/badge.svg)](https://github.com/gramaziokohler/compas_timber/actions)
 [![codecov](https://codecov.io/gh/gramaziokohler/compas_timber/graph/badge.svg?token=EFI7G1T18Z)](https://codecov.io/gh/gramaziokohler/compas_timber)
