@@ -1,3 +1,5 @@
+from typing import Union
+
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
@@ -28,7 +30,7 @@ class InterfaceRole(object):
 
 class PanelConnectionInterface(PanelFeature):
     def __init__(
-        self, polyline: Polyline, frame: Frame, edge_index: int | None, interface_role: InterfaceRole | str = InterfaceRole.NONE, name="PanelConnectionInterface", **kwargs
+        self, polyline: Polyline, frame: Frame, edge_index: Union[int , None], interface_role: Union[InterfaceRole , str ]= InterfaceRole.NONE, name="PanelConnectionInterface", **kwargs
     ):
         super(PanelConnectionInterface, self).__init__(frame=frame, panel_feature_type=PanelFeatureType.CONNECTION_INTERFACE, name=name, **kwargs)
         self._polyline = polyline
