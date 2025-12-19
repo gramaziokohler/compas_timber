@@ -6,7 +6,7 @@ from compas.geometry import Transformation
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication import FreeContour, free_contour
+from compas_timber.fabrication import FreeContour
 
 from .plate_geometry import PlateGeometry
 from .timber import TimberElement
