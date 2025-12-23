@@ -3,6 +3,9 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas_model.elements import Element
+from compas_model.elements import reset_computed
+
+from compas_timber.panel_features import PanelFeatureType
 
 from .plate_geometry import PlateGeometry
 
@@ -81,12 +84,14 @@ class Panel(PlateGeometry, Element):
 
     @property
     def __data__(self):
-        data = Element.__data__(self)
-        data.update(PlateGeometry.__data__(self))
+        data = Element.__data__.fget(self)
+        data.update(PlateGeometry.__data__.fget(self))
+        data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
-        data["height"] = self.height
+        data["thickness"] = self.height
         data["name"] = self.name
+        data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, name=None, **kwargs):
@@ -97,7 +102,6 @@ class Panel(PlateGeometry, Element):
         self.length = length
         self.width = width
         self.height = thickness
-        self.interfaces = []
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -107,6 +111,36 @@ class Panel(PlateGeometry, Element):
 
     def __str__(self):
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
+
+    @property
+    def interfaces(self):
+        """list[:class:`~compas_timber.panel_features.PanelConnectionInterface`]: The interfaces associated with this panel."""
+        return [f for f in self.features if f.panel_feature_type == PanelFeatureType.CONNECTION_INTERFACE]
+
+    @reset_computed
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        PlateGeometry.reset(self)  # reset outline_a and outline_b
+        self._features = []
+        self.debug_info = []
+
+    @reset_computed
+    def remove_features(self, features=None):
+        # type: (Optional[Union["PanelConnectionInterface", list["PanelConnectionInterface"]]]) -> None
+        """Removes interfaces from the element.
+
+        Parameters
+        ----------
+        interfaces : :class:`~compas_timber.panel_features.PanelConnectionInterface` | list[:class:`~compas_timber.panel_features.PanelConnectionInterface`], optional
+            The interfaces to be removed. If None, all interfaces will be removed.
+
+        """
+        if features is None:
+            self._features = []
+        else:
+            if not isinstance(features, list):
+                features = [features]
+            self._features = [f for f in self.features if f not in features]
 
     @property
     def is_group_element(self):
