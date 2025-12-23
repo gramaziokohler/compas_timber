@@ -17,7 +17,7 @@ class PanelFeatureType:
 
 
 class PanelFeature(Element, ABC):
-    def __init__(self, frame: Frame, panel_feature_type: Union[PanelFeatureType , str ]= PanelFeatureType.NONE, name: Union[str , None ]= None, **kwargs) -> None:
+    def __init__(self, frame: Frame, panel_feature_type: Union[PanelFeatureType, str] = PanelFeatureType.NONE, name: Union[str, None] = None, **kwargs) -> None:
         super(PanelFeature, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.panel_feature_type = panel_feature_type
         self.name = name

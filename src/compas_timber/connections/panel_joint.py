@@ -54,11 +54,11 @@ class PanelJoint(PlateJoint):
 
     def __init__(
         self,
-        panel_a: Union[Panel , None] = None,
-        panel_b: Union[Panel , None]= None,
-        topology: Union[JointTopology , None ]= None,
-        a_segment_index: Union[int , None ]= None,
-        b_segment_index: Union[int , None ]= None,
+        panel_a: Union[Panel, None] = None,
+        panel_b: Union[Panel, None] = None,
+        topology: Union[JointTopology, None] = None,
+        a_segment_index: Union[int, None] = None,
+        b_segment_index: Union[int, None] = None,
         **kwargs,
     ):
         super(PanelJoint, self).__init__(panel_a, panel_b, topology, a_segment_index, b_segment_index, **kwargs)
@@ -69,19 +69,19 @@ class PanelJoint(PlateJoint):
         return "PanelJoint({0}, {1}, {2})".format(self.panel_a, self.panel_b, JointTopology.get_name(self.topology))
 
     @property
-    def panels(self) -> tuple[Union[Panel , None], Union[Panel , None]]:
+    def panels(self) -> tuple[Union[Panel, None], Union[Panel, None]]:
         return self.elements
 
     @property
-    def panel_a(self) -> Union[Panel , None]:
+    def panel_a(self) -> Union[Panel, None]:
         return self.plate_a
 
     @property
-    def panel_b(self) -> Union[Panel , None]:
+    def panel_b(self) -> Union[Panel, None]:
         return self.plate_b
 
     @property
-    def interfaces(self) -> Union[list[PanelConnectionInterface] , None]:
+    def interfaces(self) -> Union[list[PanelConnectionInterface], None]:
         return [self.interface_a, self.interface_b] if self.interface_a and self.interface_b else None
 
     def create_interfaces(self) -> tuple[PanelConnectionInterface, PanelConnectionInterface]:
