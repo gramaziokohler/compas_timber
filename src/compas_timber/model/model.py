@@ -19,8 +19,8 @@ from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
-from compas_timber.elements import Plate
 from compas_timber.elements import Panel
+from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 
 
