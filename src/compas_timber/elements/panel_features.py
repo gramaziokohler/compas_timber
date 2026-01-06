@@ -1,29 +1,27 @@
-from compas.geometry import Brep
-from compas.geometry import NurbsCurve
-from compas.geometry import distance_line_line
-from compas.geometry import Plane
-from compas.geometry import Line
-from compas.geometry import Vector
-from compas.geometry import Polyline
-from compas.geometry import Point
-from compas.geometry import Frame
-from compas.geometry import Box
-from compas.geometry import Transformation
-from compas.geometry import intersection_line_plane
-
 from compas.data import Data
-from shapely import intersection
+from compas.geometry import Box
+from compas.geometry import Brep
+from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import NurbsCurve
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.geometry import distance_line_line
+from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
-from compas_timber.fabrication import FreeContour
+
 
 class PanelFeature(Data):
-    #TODO: should this inherit from Element?
+    # TODO: should this inherit from Element?
     def __init__(self, frame, name=None):
         super(PanelFeature, self).__init__()
-        self.transformation=Transformation.from_frame(frame)
-        self.name=name
+        self.transformation = Transformation.from_frame(frame)
+        self.name = name
 
     @property
     def __data__(self):
@@ -41,6 +39,7 @@ class PanelFeature(Data):
         new = self.copy()
         new.transform(transformation)
         return new
+
 
 class Opening(PanelFeature):
     def __init__(self, frame, outline_a, outline_b, opening_type=None, name="Opening"):
@@ -106,8 +105,6 @@ class Opening(PanelFeature):
         except Exception as e:
             raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
 
-
-
     @classmethod
     def from_outline_panel(cls, outline, panel, opening_type=None, project_horizontal=False, name=None):
         """Creates an opening from a single outline and a panel.
@@ -157,6 +154,7 @@ class Opening(PanelFeature):
         pl_b = Polyline(pts_b).transformed(Transformation.from_frame(frame).inverse())
         return cls(frame, pl_a, pl_b, opening_type=opening_type, name=name)
 
+
 class OpeningType(object):
     """Constants for different types of openings in walls.
 
@@ -189,6 +187,7 @@ class InterfaceRole(object):
     MAIN = "MAIN"
     CROSS = "CROSS"
     NONE = "NONE"
+
 
 class PanelConnectionInterface(PanelFeature):
     def __init__(self, polyline, frame, edge_index, topology, interface_role=None, name="PanelConnectionInterface"):
@@ -237,6 +236,7 @@ class PanelConnectionInterface(PanelFeature):
         """Returns the width of the interface polyline."""
         return distance_line_line(self.polyline.lines[0], self.polyline.lines[2])
 
+
 class LinearService(PanelFeature):
     def __init__(self, frame, polyline, name="LinearService"):
         super(LinearService, self).__init__(frame=frame, name=name)
@@ -256,10 +256,11 @@ class LinearService(PanelFeature):
     def geometry(self):
         return [self.polyline]
 
+
 class VolumetricService(PanelFeature):
     def __init__(self, frame, volume, name="VolumetricService"):
         super(VolumetricService, self).__init__(frame=frame, name=name)
-        self._volume=volume
+        self._volume = volume
 
     def __data__(self):
         data = super(VolumetricService, self).__data__

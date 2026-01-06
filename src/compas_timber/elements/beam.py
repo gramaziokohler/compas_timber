@@ -1,4 +1,3 @@
-import copy
 import math
 
 from compas.geometry import Box

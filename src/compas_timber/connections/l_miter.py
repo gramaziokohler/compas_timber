@@ -5,15 +5,13 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
-from compas.geometry import intersection_plane_plane
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
 
+from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.utils import intersection_line_line_param
-from compas_timber.connections.utilities import beam_ref_side_incidence
-
-
 
 from .joint import Joint
 from .solver import JointTopology
@@ -23,6 +21,7 @@ from .utilities import point_centerline_towards_joint
 class MiterType:
     BISECTOR = "bisector"
     REF_SURFACES = "ref_surfaces"
+
 
 class LMiterJoint(Joint):
     """Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane
@@ -83,14 +82,12 @@ class LMiterJoint(Joint):
         self.trim_plane_b = trim_plane_b
         self.features = []
 
-
-
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
 
-
-    def create(model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, trim_plane_a=None, trim_plane_b=None, **kwargs):
+    @classmethod
+    def create(cls, model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, trim_plane_a=None, trim_plane_b=None, **kwargs):
         """Creates an L-Butt joint and associates it with the provided model.
 
         Parameters
@@ -106,7 +103,6 @@ class LMiterJoint(Joint):
         small_beam_butts : bool, default False
             If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed."""
 
-
         if miter_plane:
             miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
         if trim_plane_a:
@@ -114,17 +110,18 @@ class LMiterJoint(Joint):
         if trim_plane_b:
             trim_plane_b = trim_plane_b.transformed(beam_b.modeltransformation.inverse())
 
-        joint = LMiterJoint(beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, trim_plane_a=trim_plane_a, trim_plane_b=trim_plane_b, **kwargs)
+        joint = LMiterJoint(
+            beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, trim_plane_a=trim_plane_a, trim_plane_b=trim_plane_b, **kwargs
+        )
         model.add_joint(joint)
         return joint
-
 
     def _get_cut_planes_from_miter_plane(self, miter_plane):
         # create two cutting planes from the butt plane
         pln_a = miter_plane
         pln_b = Plane(miter_plane.point, -miter_plane.normal)
         if dot_vectors(Vector.from_start_end(miter_plane.point, self.beam_a.centerline.midpoint), miter_plane.normal) > 0:
-            pln_a , pln_b = pln_b, pln_a
+            pln_a, pln_b = pln_b, pln_a
         return Frame.from_plane(pln_a), Frame.from_plane(pln_b)
 
     def _get_cut_planes_from_ref_sides(self):
@@ -277,7 +274,6 @@ class LMiterJoint(Joint):
 
             clean_cut_a = JackRafterCutProxy.from_plane_and_beam(back_b, self.beam_a)
             clean_cut_b = JackRafterCutProxy.from_plane_and_beam(back_a, self.beam_b)
-
 
             self.beam_a.add_features(clean_cut_a)
             self.beam_b.add_features(clean_cut_b)

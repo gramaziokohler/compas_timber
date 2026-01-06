@@ -1,5 +1,3 @@
-from compas.geometry import Transformation
-
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 

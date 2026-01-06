@@ -20,6 +20,7 @@ ADJUST_STEP = 5.0
 # Consoles Position Parameters
 CONSOLE_WIDTH = 140.0
 
+
 def set_gripper_positions(model):
     for beam in model.beams:
         # determine gripper positions for each beam
@@ -258,6 +259,7 @@ def _get_gripper_positions(beam):
     # No valid position found - return original positions
     return tuple(float(round(g, 3)) for g in gripper_positions)
 
+
 def _define_consoles_positions(usable_domain, beams_on_stock, beam_index, stock_beam_lengths):
     """Define initial console target positions inside the usable domain.
 
@@ -342,9 +344,9 @@ def _define_consoles_positions(usable_domain, beams_on_stock, beam_index, stock_
 
     return [start + span * f for f in fractions]
 
+
 def get_consoles_positions(beam, beams_on_stock, beam_index, stock_beam_lengths):
-    """Return console positions for a beam.
-    """
+    """Return console positions for a beam."""
     usable_domain = _get_usable_domain(beam)
 
     # collect lap domains for the laps on the beam

@@ -7,18 +7,18 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import closest_point_on_plane
-from compas.geometry import dot_vectors
 from compas.geometry import cross_vectors
+from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
+from compas_timber.utils import combine_parallel_segments
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
 from compas_timber.utils import polyline_from_brep_loop
-from compas_timber.utils import combine_parallel_segments
+
 
 class PlateGeometry(object):
     """
@@ -93,7 +93,7 @@ class PlateGeometry(object):
 
     @property
     def thickness(self):
-        return self._mutable_outlines[1][0][2] # z-coordinate of outline_b point 0 in local frame
+        return self._mutable_outlines[1][0][2]  # z-coordinate of outline_b point 0 in local frame
 
     @property
     def planes(self):
@@ -111,7 +111,7 @@ class PlateGeometry(object):
         return self._mutable_outlines
 
     @property
-    def edge_planes(self):  #TODO: cache this?
+    def edge_planes(self):  # TODO: cache this?
         _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
             plane = self._extension_planes.get(i, None)
@@ -124,7 +124,7 @@ class PlateGeometry(object):
 
     def set_extension_plane(self, edge_index, plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
-        plane = plane.transformed(self.modeltransformation.inverse()) 
+        plane = plane.transformed(self.modeltransformation.inverse())
         self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
@@ -188,7 +188,7 @@ class PlateGeometry(object):
         # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
         if TOL.is_zero(thickness):
             thickness = TOL.absolute
-        offset_vector = Vector(*cross_vectors(outline[1]-outline[0], outline[-2]-outline[0]))  # gets frame perpendicular to outline
+        offset_vector = Vector(*cross_vectors(outline[1] - outline[0], outline[-2] - outline[0]))  # gets frame perpendicular to outline
         if vector:
             if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
                 offset_vector = -offset_vector
@@ -397,4 +397,3 @@ class PlateGeometry(object):
             raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
         if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
-

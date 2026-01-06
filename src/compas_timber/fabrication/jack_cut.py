@@ -10,9 +10,7 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import Point
 from compas.tolerance import TOL
-from numpy import int_
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at

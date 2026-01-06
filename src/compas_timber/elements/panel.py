@@ -1,24 +1,23 @@
 import math
-from compas.geometry import Point
+
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import is_colinear_line_line
+from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-from compas.tolerance import TOL
-from numpy import flip
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import combine_parallel_segments
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import join_polyline_segments
-from compas_timber.utils import combine_parallel_segments
 
-from .plate_geometry import PlateGeometry
 from .panel_features import Opening
+from .plate_geometry import PlateGeometry
 
 
 class PanelType(object):
@@ -220,7 +219,7 @@ class Panel(PlateGeometry, Element):
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 
-    def compute_elementgeometry(self, include_features = True):
+    def compute_elementgeometry(self, include_features=True):
         """Compute the geometry of the element at local coordinates."""
         geometry = self.compute_shape()
         if include_features:
@@ -279,7 +278,7 @@ class Panel(PlateGeometry, Element):
         """
         if design_surface_outside:
             outline_a, outline_b = outline_b, outline_a
-        if openings:       
+        if openings:
             openings = [(o, "window") for o in openings]
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
@@ -323,7 +322,6 @@ def extract_door_openings(outline_a, outline_b):
     internal_segment_indices_b = get_interior_segment_indices(outline_b)
     if set(internal_segment_indices_a) != set(internal_segment_indices_b):
         raise ValueError("The internal segments of outline_a and outline_b do not match.")
-    intermediate=[]
     openings = []
     done = False
     while not done:
@@ -333,11 +331,11 @@ def extract_door_openings(outline_a, outline_b):
             panel_segments_b = outline_b.lines
             door_segments = []
             door_segments_b = []
-            for i in range(i_a-2, i_a + 3):
+            for i in range(i_a - 2, i_a + 3):
                 door_segments.append(panel_segments_a[i % (len(panel_segments_a))])
                 door_segments_b.append(panel_segments_b[i % (len(panel_segments_b))])
             parallel = True
-            for a,b in zip(door_segments, door_segments_b):
+            for a, b in zip(door_segments, door_segments_b):
                 if angle_vectors(a.direction, b.direction) > TOL.ABSOLUTE:
                     parallel = False
                     break
@@ -358,35 +356,37 @@ def extract_door_openings(outline_a, outline_b):
                 segs_a.append(panel_segments_a[i])
                 segs_b.append(panel_segments_b[i])
             opening = join_polyline_segments(door_segments[1:4])
-            opening[0] -= vertical*1.0
-            opening[3] -= vertical*1.0
+            opening[0] -= vertical * 1.0
+            opening[3] -= vertical * 1.0
             opening.append(opening.points[0])  # close loop
             openings.append(opening)
-            outline_a= join_polyline_segments(segs_a, close_loop=True)
-            outline_b= join_polyline_segments(segs_b, close_loop=True)
+            outline_a = join_polyline_segments(segs_a, close_loop=True)
+            outline_b = join_polyline_segments(segs_b, close_loop=True)
             internal_segment_indices_a = get_interior_segment_indices(outline_a)
             break
         else:
-            done=True
+            done = True
     return outline_a, outline_b, openings
 
+
 def get_interior_corner_indices(outline):
-        """Get the indices of the interior corners of the panel outline."""
-        _interior_corner_indices=[]
-        vector = Plane.from_points(outline.points).normal
-        points = outline.points[0:-1]
-        cw = is_polyline_clockwise(outline, vector)
-        for i in range(len(points)):
-            angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
-            if not (cw ^ (angle < 0)):
-                _interior_corner_indices.append(i)
-        return _interior_corner_indices
+    """Get the indices of the interior corners of the panel outline."""
+    _interior_corner_indices = []
+    vector = Plane.from_points(outline.points).normal
+    points = outline.points[0:-1]
+    cw = is_polyline_clockwise(outline, vector)
+    for i in range(len(points)):
+        angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
+        if not (cw ^ (angle < 0)):
+            _interior_corner_indices.append(i)
+    return _interior_corner_indices
+
 
 def get_interior_segment_indices(polyline):
     """Get the indices of the interior segments of the panel outline."""
     interior_corner_indices = get_interior_corner_indices(polyline)
     edge_count = len(polyline.points) - 1
-    _interior_segment_indices=[]
+    _interior_segment_indices = []
     for i in range(edge_count):
         if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
             _interior_segment_indices.append(i)

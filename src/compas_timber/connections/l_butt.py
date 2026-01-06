@@ -69,8 +69,8 @@ class LButtJoint(ButtJoint):
         self.back_plane = back_plane
         self.update_beam_roles()
 
-
-    def create(model, main_beam, cross_beam, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+    @classmethod
+    def create(cls, model, main_beam, cross_beam, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
         """Creates an L-Butt joint and associates it with the provided model.
 
         Parameters
@@ -91,7 +91,17 @@ class LButtJoint(ButtJoint):
         if back_plane:
             back_plane = back_plane.transformed(cross_beam.modeltransformation.inverse())
 
-        joint = LButtJoint(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, small_beam_butts=small_beam_butts, modify_cross=modify_cross, reject_i=reject_i, butt_plane=butt_plane, back_plane=back_plane, **kwargs)
+        joint = LButtJoint(
+            main_beam=main_beam,
+            cross_beam=cross_beam,
+            mill_depth=mill_depth,
+            small_beam_butts=small_beam_butts,
+            modify_cross=modify_cross,
+            reject_i=reject_i,
+            butt_plane=butt_plane,
+            back_plane=back_plane,
+            **kwargs,
+        )
         model.add_joint(joint)
         return joint
 

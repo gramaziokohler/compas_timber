@@ -1,11 +1,10 @@
+from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import distance_line_line
 from compas.geometry import dot_vectors
-
-from compas.data import Data
 
 from .joint import JointTopology
 from .plate_joint import PlateJoint

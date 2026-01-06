@@ -1,8 +1,6 @@
-import re
 from compas.geometry import Box
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
@@ -188,6 +186,6 @@ class Plate(PlateGeometry, TimberElement):
         plate = cls(**kwargs)
         if openings:
             for opening in openings:
-                free_contour=FreeContour.from_polyline_and_element(opening, plate, interior=True)
+                free_contour = FreeContour.from_polyline_and_element(opening, plate, interior=True)
                 plate.add_feature(free_contour)
         return plate

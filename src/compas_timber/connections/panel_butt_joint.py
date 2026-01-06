@@ -1,8 +1,8 @@
 from .joint import JointTopology
+from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
-from .panel_joint import PanelJoint
 
 
 class PanelButtJoint(PanelJoint, PlateButtJoint):

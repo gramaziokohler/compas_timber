@@ -268,12 +268,7 @@ class BeamStock(Stock):
         for i, guid in enumerate(guids_in_order):
             data = self.element_data[guid]
             beam = model.element_by_guid(str(guid))
-            positions = get_consoles_positions(
-                beam,
-                beams_on_stock=count,
-                beam_index=i,
-                stock_beam_lengths=tuple(stock_lengths)
-            )
+            positions = get_consoles_positions(beam, beams_on_stock=count, beam_index=i, stock_beam_lengths=tuple(stock_lengths))
             frame = data.get("frame", Frame.worldXY())
             positions = [p + frame.point.x for p in positions]  # Offset by beam position on stock
             stock_console_positions.extend(positions)

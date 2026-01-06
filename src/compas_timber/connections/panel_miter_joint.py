@@ -1,6 +1,6 @@
 from .joint import JointTopology
-from .plate_miter_joint import PlateMiterJoint
 from .panel_joint import PanelJoint
+from .plate_miter_joint import PlateMiterJoint
 
 
 class PanelMiterJoint(PanelJoint, PlateMiterJoint):

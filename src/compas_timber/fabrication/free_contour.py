@@ -14,18 +14,13 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
-from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
-from compas.geometry import intersection_line_line
-from compas.geometry import offset_polyline
 from compas.tolerance import TOL
-from shapely import Point, transform
 
-from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -139,7 +134,6 @@ class FreeContour(BTLxProcessing):
         tool_position = cls.parse_tool_position(top_polyline, ref_side, interior, tool_position)
         transformation_to_local = Transformation.from_frame(ref_side).inverse()
 
-
         top_polyline = top_polyline.transformed(transformation_to_local)
         bottom_polyline = bottom_polyline.transformed(transformation_to_local)
         if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
@@ -150,7 +144,7 @@ class FreeContour(BTLxProcessing):
             inclinations = []
             for top_line, bottom_line in zip(top_polyline.lines, bottom_polyline.lines):
                 cp = bottom_line.closest_point(top_line.start)
-                inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), Vector(0,0,-1), -top_line.direction, deg=True), 6))
+                inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), Vector(0, 0, -1), -top_line.direction, deg=True), 6))
             if len(set(inclinations)) == 1:
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
             depth = -bottom_polyline[0][2]
@@ -241,12 +235,14 @@ class FreeContour(BTLxProcessing):
         # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
         # TODO: should have a look at this also in regards to the global to local transformation of the features
 
-
         if isinstance(self.contour_param_object, Contour):
             pline_a = self.contour_param_object.polyline
             pline_b = pline_a.translated([0, 0, -self.contour_param_object.depth])
-            if any([ i != 0 for i in self.contour_param_object.inclination]):
-                inclinations = [self.contour_param_object.inclination[0] for _ in range(len(pline_a)-1)] if len(self.contour_param_object.inclination) == 1 else self.contour_param_object.inclination
+            if any([i != 0 for i in self.contour_param_object.inclination]):
+                if len(self.contour_param_object.inclination) == 1:
+                    inclinations = [self.contour_param_object.inclination[0] for _ in range(len(pline_a) - 1)]
+                else:
+                    self.contour_param_object.inclination
                 for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
                     plane = Plane.from_points([seg.start, seg.end, seg.start + Vector(0, 0, -1)])
                     plane.rotate(math.radians(inclination), seg.direction, seg.start)
@@ -255,7 +251,6 @@ class FreeContour(BTLxProcessing):
         else:
             pline_a = self.contour_param_object.principal_polyline
             pline_b = self.contour_param_object.associated_polyline
-
 
         pline_a.translate([0, 0, 0.001])
         pline_b.translate([0, 0, -0.001])

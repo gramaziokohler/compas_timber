@@ -1,5 +1,4 @@
 from compas.geometry import Plane
-from compas.geometry import Transformation
 from compas.geometry import intersection_plane_plane
 
 from .joint import JointTopology

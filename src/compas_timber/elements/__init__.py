@@ -32,6 +32,8 @@ __all__ = [
     "TimberElement",
     "Panel",
     "PlateGeometry",
+    "Opening",
+    "OpeningType",
     "PanelFeature",
     "LinearService",
     "VolumetricService",

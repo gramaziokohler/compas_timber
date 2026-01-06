@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.959" timestamp="2026-01-06T08:47:15.463958+01:00" hostname="ITA-GRAM-W-98"><testcase classname="" name="tests.compas_timber.test_analyzers" file="tests/compas_timber/test_analyzers.py" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\obucklin\repos\compas_timber\tests\compas_timber\test_analyzers.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\..\Miniconda3\envs\ct-dev\lib\importlib\__init__.py:127: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+tests\compas_timber\test_analyzers.py:7: in &lt;module&gt;
+    from compas_timber.connections import NBeamKDTreeAnalyzer
+src\compas_timber\connections\__init__.py:2: in &lt;module&gt;
+    from .butt_joint import ButtJoint
+src\compas_timber\connections\butt_joint.py:2: in &lt;module&gt;
+    from compas_timber.fabrication import JackRafterCutProxy
+src\compas_timber\fabrication\__init__.py:21: in &lt;module&gt;
+    from .slot import Slot
+src\compas_timber\fabrication\slot.py:19: in &lt;module&gt;
+    from compas_timber.elements.beam import Beam
+src\compas_timber\elements\__init__.py:2: in &lt;module&gt;
+    from .plate import Plate
+src\compas_timber\elements\plate.py:8: in &lt;module&gt;
+    from compas_timber.fabrication import FreeContour
+E   ImportError: cannot import name 'FreeContour' from partially initialized module 'compas_timber.fabrication' (most likely due to a circular import) (C:\Users\obucklin\repos\compas_timber\src\compas_timber\fabrication\__init__.py)</error></testcase></testsuite></testsuites>
