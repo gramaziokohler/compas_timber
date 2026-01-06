@@ -8,9 +8,8 @@ from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -167,12 +166,12 @@ class JackRafterCut(BTLxProcessing):
         start_depth = 0.0
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-        orientation = cls._calculate_orientation(ref_side, plane)
+        orientation = cls._calculate_orientation(beam, plane)
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
 
-        start_x = distance_point_point(ref_edge.point, point_start_x)
+        start_x = dot_vectors(Vector.from_start_end(ref_edge.point, point_start_x), ref_side.xaxis)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
@@ -199,10 +198,13 @@ class JackRafterCut(BTLxProcessing):
         return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
+    def _calculate_orientation(beam, cutting_plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        dot = dot_vectors(beam.frame.xaxis, cutting_plane.normal)
+        if TOL.is_zero(dot):
+            raise ValueError("Plane is parallel to beam, no orientation could be identified.")
+        if dot > 0:
             return OrientationType.END
         else:
             return OrientationType.START
@@ -435,7 +437,6 @@ class JackRafterCutProxy(object):
 
         """
         # type: (Brep, Beam) -> Brep
-
         try:
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
