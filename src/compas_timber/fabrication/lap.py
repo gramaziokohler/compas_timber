@@ -666,9 +666,9 @@ class Lap(BTLxProcessing):
             The resulting geometry after processing
 
         """
-
         # type: (Brep, Beam) -> Brep
         lap_volume = self.volume_from_params_and_beam(beam)
+        lap_volume.transform(beam.transformation_to_local())
 
         # convert mesh to brep
         try:
@@ -682,14 +682,13 @@ class Lap(BTLxProcessing):
 
         # subtract the lap volume from the beam geometry
         try:
-            geometry -= lap_volume
-        except (IndexError, TypeError):
+            return geometry - lap_volume
+        except IndexError:
             raise FeatureApplicationError(
                 lap_volume,
                 geometry,
                 "The lap volume does not intersect with the beam geometry.",
             )
-        return geometry
 
     def _start_frame_from_params_and_beam(self, beam):
         """Calculates the start frame of the lap from the machining parameters in this instance and the given beam.
