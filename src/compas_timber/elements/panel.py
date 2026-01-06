@@ -4,7 +4,6 @@ from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
-from typing import Optional, Union  # added
 
 from compas_timber.panel_features import PanelFeatureType
 
