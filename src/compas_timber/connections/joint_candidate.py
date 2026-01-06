@@ -90,3 +90,6 @@ class PlateJointCandidate(PlateJoint, JointCandidate):
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+
+    def _set_edge_planes(self):
+        pass

@@ -77,7 +77,6 @@ __all__ = [
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
-    "PanelButtJoint",
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",

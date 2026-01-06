@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `planar_surface_point_at` to `compas_timber.utils`.
 * Added `Panel` class as a renaming of `Slab`.
+* Added `PanelJoint` abstract base class for panel joints.
+* Added `PanelLButtJoint` class.
+* Added `PanelTButtJoint` class.
+* Added `PanelMiterJoint` class.
+* Added `TimberModel.connect_adjacent_panels()` method to find and create joint candidates between panels.
+* Added `PanelFeatureType` class for classifying panel feature types.
+* Added `panel_features` directory and `PanelFeature` abstract base class.
+* Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
+* Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -63,6 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 * Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `Panel.__data__` to enable proper serialization.
+* Changed some `PlateJoint` properties and methods to private.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -78,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
+* Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 
 ## [1.0.1] 2025-10-16
 
