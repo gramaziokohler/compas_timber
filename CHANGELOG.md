@@ -66,8 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
 * Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
 
-
-
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.
@@ -82,8 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
-* Changed `JackRafterCut` to calculate orientation based on beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
-* Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
 
 ## [1.0.1] 2025-10-16
 
