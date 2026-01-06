@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `planar_surface_point_at` to `compas_timber.utils`.
 * Added `Panel` class as a renaming of `Slab`.
+* Added `**kwargs` argument to `LongitudinalCut` and `LongitudinalCutProxy` constructors to allow passing additional parameters, particularly `is_joinery=False` to keep the processing during serialization.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -63,10 +64,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 * Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `LongitudinalCut` to properly generate `tool_position` parameter.
+* Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
+* Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
 * Changed `FreeContour` to compute geometry in local element coordinates.
 * Changed how `FreeContour` computes the `ref_side_index` when not provided.
 * Changed `FreeContour` constructors to work with new local geometry computation.
-
+* 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.

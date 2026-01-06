@@ -303,8 +303,16 @@ class LongitudinalCut(BTLxProcessing):
             max_depth = start_y * math.tan(math.radians(inclination))
         else:
             max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
-        depth = max_depth if depth is None else depth
-        depth_limited = depth < max_depth
+
+
+        depth_limited = depth <= max_depth if depth is not None else False
+        depth = 0.0 if depth is None else depth
+
+        # calculate tool_position
+        if TOL.is_negative(plane.normal.dot(ref_side.yaxis)):
+            tool_position = AlignmentType.RIGHT
+        else:
+            tool_position = AlignmentType.LEFT
 
         return cls(
             start_x,
@@ -317,7 +325,7 @@ class LongitudinalCut(BTLxProcessing):
             depth,
             angle_start,
             angle_end,
-            tool_position=tool_position,
+            tool_position,
             ref_side_index=ref_side_index,
             **kwargs,
         )
@@ -502,6 +510,20 @@ class LongitudinalCut(BTLxProcessing):
             neg_vol.flip()
         return neg_vol
 
+    def scale(self, factor):
+        """Scale the machining parameters of the Longitudinal Cut feature.
+
+        Parameters
+        ----------
+        factor : float
+            The scale factor.
+
+        """
+        self.start_x *= factor
+        self.start_y *= factor
+        self.length *= factor
+        self.depth *= factor
+
 
 class LongitudinalCutParams(BTLxProcessingParams):
     """A class to store the parameters of a Longitudinal Cut feature.
@@ -584,7 +606,7 @@ class LongitudinalCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None):
+    def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None, **kwargs):
         self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.start_x = start_x
@@ -595,6 +617,7 @@ class LongitudinalCutProxy(object):
         self.tool_position = tool_position
         self.ref_side_index = ref_side_index
         self._processing = None
+        self.kwargs = kwargs
 
     def unproxified(self):
         """Returns the unproxified processing instance.
@@ -617,6 +640,7 @@ class LongitudinalCutProxy(object):
                 self.angle_end,
                 self.tool_position,
                 self.ref_side_index,
+                **self.kwargs,
             )
         return self._processing
 
@@ -654,7 +678,7 @@ class LongitudinalCutProxy(object):
         """
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        return cls(plane, beam, start_x, length, depth, angle_start, angle_end, tool_position, ref_side_index)
+        return cls(plane, beam, start_x, length, depth, angle_start, angle_end, tool_position, ref_side_index, **kwargs)
 
     def apply(self, geometry, _):
         """Apply the feature to the beam geometry.
