@@ -231,9 +231,6 @@ class FreeContour(BTLxProcessing):
         :class:`compas.geometry.Brep`
             The resulting geometry after processing.
         """
-        # TODO: this doesn't work anymore with the new definition of FreeContour, needs fixing but currently not sure how to do it.
-        # TODO: this is only called when there features present other than the Plate's outline (i.e. inner cuts)
-        # TODO: should have a look at this also in regards to the global to local transformation of the features
 
         if isinstance(self.contour_param_object, Contour):
             pline_a = self.contour_param_object.polyline
@@ -260,7 +257,7 @@ class FreeContour(BTLxProcessing):
         if vol.volume < 0:
             vol.flip()
 
-        # contour is defined in the ref_side local frame, need to transform first to global then to element local
+        # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
         transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
         vol.transform(transformation_ref_side_to_local)
         if self.counter_sink:  # contour should remove material inside of the contour
