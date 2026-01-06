@@ -63,6 +63,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
 * Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `FreeContour` to compute geometry in local element coordinates.
+* Changed how `FreeContour` computes the `ref_side_index` when not provided.
+* Changed `FreeContour` constructors to work with new local geometry computation.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
