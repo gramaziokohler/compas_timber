@@ -2,10 +2,6 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
-from compas.tolerance import TOL
-from compas.tolerance import Tolerance
-
-from .optimalpositioner import get_consoles_positions
 
 
 class Stock(Data):
@@ -22,11 +18,8 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
-
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
     Attributes
     ----------
@@ -38,10 +31,8 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
+    element_data : dict[str, Frame]
+        Dictionary mapping element GUIDs to their assigned position frames.
     """
 
     def __init__(self, length, width, height, spacing=0.0, element_data=None):
@@ -50,7 +41,7 @@ class Stock(Data):
         self.width = width
         self.height = height
         self.spacing = spacing
-        self.element_data = element_data or {}  # {guid: {"frame": Frame, "key": int}}
+        self.element_data = element_data or {}  # {guid: Frame}
 
     @property
     def __data__(self):
@@ -122,12 +113,8 @@ class BeamStock(Stock):
         Cross-section dimensions (width, height).
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict], optional
-        Dictionary mapping element GUIDs to a dict with:
-            'frame': assigned position frame (Frame)
-            'length': element length (float)
-            'key': graphnode key
-    consoles_positions : list of float, optional
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
 
     Attributes
@@ -138,31 +125,23 @@ class BeamStock(Stock):
         Cross-section dimensions sorted in ascending order for consistent comparison.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping element GUIDs to a dict with:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
-            'length': element length (float)
-    consoles_positions : list of float
-        List of console positions per assigned beam.
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
     """
 
-    def __init__(self, length, cross_section, spacing=None, element_data=None, consoles_positions=None):
+    def __init__(self, length, cross_section, spacing=0.0, element_data=None):
         # Validate cross_section before passing to parent constructor
         if not isinstance(cross_section, (list, tuple)) or len(cross_section) != 2:
             raise ValueError("cross_section must be a tuple or list of 2 dimensions")
         super(BeamStock, self).__init__(length=length, width=cross_section[0], height=cross_section[1], spacing=spacing, element_data=element_data)
         self.cross_section = tuple(cross_section)
-        self.consoles_positions = consoles_positions
         self._current_x_position = 0.0  # Track current position along length for placing beams
-        self._spacing = spacing if spacing is not None else 0.0
 
     @property
     def __data__(self):
         data = super(BeamStock, self).__data__
         data["cross_section"] = self.cross_section
         data["length"] = self.length
-        data["consoles_positions"] = self.consoles_positions
         return data
 
     @property
@@ -203,13 +182,8 @@ class BeamStock(Stock):
         bool
             True if beam is compatible with this stock, False otherwise
         """
-        # Use a tolerance-based comparison for cross-section dimensions, regardless of order.
-        # Compare as sets, but with tolerance: both must have the same two values, order-insensitive.
-        a, b = sorted(self.cross_section)
-        x, y = sorted([beam.width, beam.height])
-        if TOL.is_close(beam.width, 280.0) and self.cross_section == (140.0, 140.0):
-            return True, True
-        return TOL.is_close(a, x) and TOL.is_close(b, y)
+        beam_cross_section = [beam.width, beam.height]
+        return set(beam_cross_section) == set(self.cross_section)
 
     def add_element(self, beam):
         """
@@ -226,55 +200,26 @@ class BeamStock(Stock):
             If beam doesn't fit in remaining space
         """
         if not self.can_fit_element(beam):
-            warn(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
-            return
+            raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
-        self._current_x_position += beam.blank_length + self._spacing  # Update position for next beam
-        # Store element data with frame, blank length and graphnode key
-        self.element_data[str(beam.guid)] = {
-            "frame": position_frame,
-            "key": beam.graphnode,
-            "length": beam.blank_length,
-        }
+        # Store element data
+        self.element_data[str(beam.guid)] = position_frame
+        self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
 
     def _get_position_frame(self, beam):
         # Get the position frame for a beam that is being added to this stock.
         # Orientation is based on the beam's cross-section relative to the stock's.
-        # beam_cross_section = tuple([beam.width, beam.height])
-        # # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
-        # if TOL.is_close(self.width, beam.width) and TOL.is_close(self.height, beam.height):
-        # position_frame = Frame.worldXY()
-        # # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
-        # else:
-        #     position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
-        #     position_frame.point.y = self.height  # offset in Y by stock height
-        position_frame = Frame.worldXY()
+        beam_cross_section = tuple([beam.width, beam.height])
+        # scenario where beam cross-section matches stock exactly (same width and height, same orientation)
+        if beam_cross_section == self.cross_section:
+            position_frame = Frame.worldXY()
+        # scenario where beam cross-section values are the same but orientation is rotated 90 degrees
+        else:
+            position_frame = Frame([0, 0, 0], [1, 0, 0], [0, 0, 1])
+            position_frame.point.y = self.cross_section[1]  # offset in Y by stock height
         position_frame.point.x = self._current_x_position
         return position_frame
-
-    def _set_consoles_positions(self, model):
-        # Compute and store console positions per assigned beam in the stock as a flat list.
-        count = len(self.element_data)
-        stock_console_positions = []
-
-        # prepare stock beam lengths in the same order as element_data
-        guids_in_order = list(self.element_data.keys())
-        stock_lengths = []
-        for guid in guids_in_order:
-            b = model.element_by_guid(str(guid))
-            stock_lengths.append(float(b.blank_length))
-
-        for i, guid in enumerate(guids_in_order):
-            data = self.element_data[guid]
-            beam = model.element_by_guid(str(guid))
-            positions = get_consoles_positions(beam, beams_on_stock=count, beam_index=i, stock_beam_lengths=tuple(stock_lengths))
-            frame = data.get("frame", Frame.worldXY())
-            positions = [p + frame.point.x for p in positions]  # Offset by beam position on stock
-            stock_console_positions.extend(positions)
-
-        stock_console_positions.sort()
-        self.consoles_positions = stock_console_positions
 
 
 class PlateStock(Stock):
@@ -291,11 +236,8 @@ class PlateStock(Stock):
         Thickness of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
-
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
 
     Attributes
     ----------
@@ -305,11 +247,8 @@ class PlateStock(Stock):
         Thickness of the stock piece
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, dict]
-        Dictionary mapping each element GUID to a dict containing at least:
-            'frame': assigned position frame (Frame)
-            'key': graphnode key (int)
-
+    element_data : dict[str, Frame], optional
+        Dictionary mapping element GUIDs to their assigned position frames.
     """
 
     def __init__(self, dimensions, thickness, spacing=0.0, element_data=None):
@@ -336,40 +275,24 @@ class NestingResult(Data):
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
-    tolerance : :class:`~compas.tolerance.Tolerance`, optional
-        The tolerance configuration used for this model. TOL if none provided.
+
     Attributes
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
-    tolerance : :class:`~compas.tolerance.Tolerance`
-        The tolerance configuration used for this model. TOL if none provided.
     total_material_volume : float
         Total material volume across all stocks in cubic millimeters
     total_stock_pieces : dict
         Detailed report of stock pieces needed with their dimensions
-    summary : str
-        Human-readable summary of the nesting result
     """
 
-    def __init__(self, stocks, tolerance=None):
+    def __init__(self, stocks):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
-        self._tolerance = tolerance or Tolerance(unit="MM")
-
-    @property
-    def tolerance(self):
-        return self._tolerance
-
-    @tolerance.setter
-    def tolerance(self, tolerance):
-        if tolerance.unit == "MM":
-            tolerance = Tolerance(unit="MM", precision=1)  # Ensure MM has at least 1 decimal place
-        self._tolerance = tolerance
 
     @property
     def __data__(self):
-        return {"stocks": self.stocks, "tolerance": self.tolerance}
+        return {"stocks": self.stocks}
 
     @property
     def total_material_volume(self):
@@ -384,21 +307,15 @@ class NestingResult(Data):
         for stock in self.stocks:
             if isinstance(stock, BeamStock):
                 # Format: "60x120x2000mm" (width x height x length)
-                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
-                    self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
-                )
+                dimensions_key = f"{int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}" + "mm"
                 stock_type = "BeamStock"
             elif isinstance(stock, PlateStock):
                 # Format: "1200x2400x18mm" (length x width x thickness)
-                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
-                    self.tolerance.unit, float(stock.dimensions[0]), float(stock.dimensions[1]), float(stock.thickness), prec=self.tolerance.precision
-                )
+                dimensions_key = f"{int(stock.dimensions[0])}x{int(stock.dimensions[1])}x{int(stock.height)}" + "mm"
                 stock_type = "PlateStock"
             else:
                 # Fallback for other stock types
-                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
-                    self.tolerance.unit, float(stock.length), float(stock.width), float(stock.height), prec=self.tolerance.precision
-                )
+                dimensions_key = f"{int(stock.length)}x{int(stock.width)}x{int(stock.height)}" + "mm"
                 stock_type = type(stock).__name__
 
             # Create nested structure: {stock_type: {dimensions: count}}
@@ -411,41 +328,6 @@ class NestingResult(Data):
             stock_report[stock_type][dimensions_key] += 1
 
         return stock_report
-
-    @property
-    def summary(self):
-        """Return a human-readable summary of the nesting result."""
-        lines = []
-        for i, stock in enumerate(self.stocks):
-            lines.append(f"{stock.__class__.__name__}_{i}:")
-            if isinstance(stock, BeamStock):
-                lines.append(
-                    "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
-                        self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
-                    )
-                )
-                beam_keys = []
-                lengths = []
-                consoles_positions = []
-                for data in stock.element_data.values():
-                    key = data.get("key", None)
-                    length = data.get("length", None)
-                    beam_keys.append(key)
-                    lengths.append(round(length, self.tolerance.precision))
-                    consoles_positions.append(data.get("console_positions", None))
-                waste = stock.length - sum(lengths) if lengths else stock.length
-                valid_console_positions = [cp for cp in consoles_positions if cp is not None]
-                # Formatted output
-                lines.append(f"BeamKeys: {beam_keys}")
-                lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
-                lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
-                lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
-                if valid_console_positions:
-                    lines.append(f"ConsolePositions({self.tolerance.unit}): {valid_console_positions}")
-                lines.append("--------")
-            else:
-                raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
-        return "\n".join(lines)
 
 
 class BeamNester(object):
@@ -498,7 +380,7 @@ class BeamNester(object):
                 raise TypeError(f"All items in stock_catalog must be BeamStock instances. Item at index {i} is {type(stock).__name__}")
         self._stock_catalog = value
 
-    def nest(self, fast=True, consoles=False):
+    def nest(self, fast=True):
         """
         Perform 1D nesting of all beams in the model.
 
@@ -507,8 +389,7 @@ class BeamNester(object):
         fast : bool, optional
             Whether to use a fast nesting algorithm (First Fit Decreasing) or a more
             accurate one (Best Fit Decreasing). Default is True (fast).
-        consoles : bool, optional
-            Whether to consider console positions in the nesting process. Default is False.
+
         Returns
         -------
         :class:`NestingResult`
@@ -531,40 +412,32 @@ class BeamNester(object):
             if standalone_beams:
                 beam_groups.append(standalone_beams)
 
-            # Nest groups in order, continuing to fill partially-used stocks
+            # Nest each group separately
             for beams in beam_groups:
-                stocks = self._nest_beam_collection(beams, fast, existing_stocks=nesting_stocks)
-                # Only extend with NEW stocks, existing_stocks are already in nesting_stocks
-                nesting_stocks.extend([s for s in stocks if s not in nesting_stocks])
+                stocks = self._nest_beam_collection(beams, fast)
+                nesting_stocks.extend(stocks)
         else:
             # Nest ALL beams together
             stocks = self._nest_beam_collection(self.model.beams, fast)
             nesting_stocks.extend(stocks)
 
-        # Populate consoles positions on each stock now that assignments are done
-        if consoles:
-            for stock in nesting_stocks:
-                stock._set_consoles_positions(self.model)
-
         return NestingResult(nesting_stocks)
 
-    def _nest_beam_collection(self, beams, fast=True, existing_stocks=None):
+    def _nest_beam_collection(self, beams, fast=True):
         # Nest a collection of beams into stock pieces.
-        # If existing_stocks is provided, try to fill those first before creating new ones.
-        stocks = existing_stocks if existing_stocks is not None else []
+        stocks = []
         stock_beam_map = self._sort_beams_by_stock(beams)
 
         for stock_type, compatible_beams in stock_beam_map.items():
-            spacing = self.spacing if stock_type.spacing is None else stock_type.spacing
             if not compatible_beams:
                 continue
-            # Apply selected algorithm, passing existing stocks to continue filling them
+            # Apply selected algorithm
             if fast:
-                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks)
+                result_stocks = self._first_fit_decreasing(compatible_beams, stock_type, self.spacing)
             else:
-                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, spacing, existing_stocks=stocks)
+                result_stocks = self._best_fit_decreasing(compatible_beams, stock_type, self.spacing)
 
-            stocks = result_stocks
+            stocks.extend(result_stocks)
         return stocks
 
     def _sort_beams_by_stock(self, beams):
@@ -596,17 +469,17 @@ class BeamNester(object):
         return stock_beam_map
 
     @staticmethod
-    def _first_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None):
+    def _first_fit_decreasing(beams, stock, spacing=0.0):
         # Fast but more wasteful packing
         # Places each beam in the first stock that has enough space, without optimizing for minimal waste.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
-        stocks = existing_stocks if existing_stocks is not None else []
+        stocks = []
         for beam in sorted_beams:
-            # Try to fit in existing stocks (filter for compatible cross-section)
+            # Try to fit in existing stocks
             fitted = False
             for stock_piece in stocks:
-                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam):
+                if stock_piece.can_fit_element(beam):
                     stock_piece.add_element(beam)
                     fitted = True
                     break
@@ -619,19 +492,19 @@ class BeamNester(object):
         return stocks
 
     @staticmethod
-    def _best_fit_decreasing(beams, stock, spacing=0.0, existing_stocks=None):
+    def _best_fit_decreasing(beams, stock, spacing=0.0):
         # Slower but more efficient packing
         # Minimizes waste by selecting the stock piece with the smallest remaining space that can still fit the beam.
         sorted_beams = sorted(beams, key=lambda b: b.blank_length, reverse=True)
 
-        stocks = existing_stocks if existing_stocks is not None else []
+        stocks = []
         for beam in sorted_beams:
-            # Find best fitting existing stock (smallest waste that still fits, compatible cross-section)
+            # Find best fitting existing stock (smallest waste that still fits)
             best_stock = None
             best_waste = float("inf")
 
             for stock_piece in stocks:
-                if stock_piece.is_compatible_with(beam) and stock_piece.can_fit_element(beam) and stock_piece._remaining_length < best_waste:
+                if stock_piece.can_fit_element(beam) and stock_piece._remaining_length < best_waste:
                     best_waste = stock_piece._remaining_length
                     best_stock = stock_piece
             # If found a fitting stock, use it
