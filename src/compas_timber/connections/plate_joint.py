@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from compas.geometry import dot_vectors
 
@@ -59,8 +59,8 @@ class PlateJoint(Joint, ABC):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
-        self.reverse_a_planes = False
-        self.reverse_b_planes = False
+        self._reverse_a_planes = False
+        self._reverse_b_planes = False
 
         self.plate_a_guid = str(self.plate_a.guid) if self.plate_a else kwargs.get("plate_a_guid", None)  # type: ignore
         self.plate_b_guid = str(self.plate_b.guid) if self.plate_b else kwargs.get("plate_b_guid", None)  # type: ignore
@@ -78,25 +78,25 @@ class PlateJoint(Joint, ABC):
 
     @property
     def a_planes(self):
-        if self.reverse_a_planes:
+        if self._reverse_a_planes:
             return (self.plate_a.planes[1], self.plate_a.planes[0])
         return (self.plate_a.planes[0], self.plate_a.planes[1])
 
     @property
     def b_planes(self):
-        if self.reverse_b_planes:
+        if self._reverse_b_planes:
             return (self.plate_b.planes[1], self.plate_b.planes[0])
         return (self.plate_b.planes[0], self.plate_b.planes[1])
 
     @property
     def a_outlines(self):
-        if self.reverse_a_planes:
+        if self._reverse_a_planes:
             return (self.plate_a.outlines[1], self.plate_a.outlines[0])
         return (self.plate_a.outlines[0], self.plate_a.outlines[1])
 
     @property
     def b_outlines(self):
-        if self.reverse_b_planes:
+        if self._reverse_b_planes:
             return (self.plate_b.outlines[1], self.plate_b.outlines[0])
         return (self.plate_b.outlines[0], self.plate_b.outlines[1])
 
@@ -148,10 +148,11 @@ class PlateJoint(Joint, ABC):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
-            self.reorder_planes_and_outlines()
-            self.set_edge_planes()
+            self._reorder_planes_and_outlines()
+            self._set_edge_planes()
 
-    def set_edge_planes(self):
+    @abstractmethod
+    def _set_edge_planes(self):
         """Sets the edge planes of the plates based on the joint topology."""
         raise NotImplementedError("This method should be implemented in subclasses.")
 
@@ -159,13 +160,13 @@ class PlateJoint(Joint, ABC):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
         pass
 
-    def reorder_planes_and_outlines(self):
+    def _reorder_planes_and_outlines(self):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
-            self.reverse_b_planes = True
+            self._reverse_b_planes = True
 
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
-                self.reverse_a_planes = True
+                self._reverse_a_planes = True
 
     def restore_beams_from_keys(self, *args, **kwargs):
         # TODO: this is just to keep the peace. change once we know where this is going.
