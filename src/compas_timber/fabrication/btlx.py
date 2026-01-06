@@ -224,9 +224,8 @@ class BTLxWriter(object):
 
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
-            for beam_guid, data in stock.element_data.items():
-                position_frame = data.get("frame", None)
-                # Apply scale factor to the frame
+            for beam_guid, position_frame in stock.element_data.items():
+
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
                 raw_part.add_part_ref(beam_guid, position_frame)
