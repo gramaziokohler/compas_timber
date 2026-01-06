@@ -58,24 +58,14 @@ class PlateButtJoint(PlateJoint):
         return self.plate_b.guid if self.plate_b else None
 
     @property
-    def main_planes(self):
+    def _main_planes(self):
         """Return the ordered planes of the main plate."""
         return self.a_planes
 
     @property
-    def cross_planes(self):
+    def _cross_planes(self):
         """Return the ordered planes of the cross plate."""
         return self.b_planes
-
-    @property
-    def main_outlines(self):
-        """Return the ordered outlines of the main plate."""
-        return self.a_outlines
-
-    @property
-    def cross_outlines(self):
-        """Return the ordered outlines of the cross plate."""
-        return self.b_outlines
 
     def __repr__(self):
         return "PlateButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
@@ -89,9 +79,9 @@ class PlateLButtJoint(PlateButtJoint):
     def __repr__(self):
         return "PlateLButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
-    def set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self.cross_planes[0].transformed(Transformation.from_frame(self.plate_a.frame).inverse()))
-        self.cross_plate.set_extension_plane(self.cross_segment_index, self.main_planes[1].transformed(Transformation.from_frame(self.cross_plate.frame).inverse()))
+    def _set_edge_planes(self):
+        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0].transformed(Transformation.from_frame(self.plate_a.frame).inverse()))
+        self.cross_plate.set_extension_plane(self.cross_segment_index, self._main_planes[1].transformed(Transformation.from_frame(self.cross_plate.frame).inverse()))
 
 
 class PlateTButtJoint(PlateButtJoint):
@@ -102,5 +92,5 @@ class PlateTButtJoint(PlateButtJoint):
     def __repr__(self):
         return "PlateTButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
-    def set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self.cross_planes[0].transformed(Transformation.from_frame(self.main_plate.frame).inverse()))
+    def _set_edge_planes(self):
+        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0].transformed(Transformation.from_frame(self.main_plate.frame).inverse()))
