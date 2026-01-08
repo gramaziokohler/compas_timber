@@ -1,15 +1,17 @@
-from typing import Union
+from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import distance_line_line
 
+from compas_timber.utils import StrEnum
+
 from .panel_features import PanelFeature
 from .panel_features import PanelFeatureType
 
 
-class InterfaceRole(object):
+class InterfaceRole(StrEnum):
     """
     Enumeration of the possible interface roles.
 
@@ -33,8 +35,8 @@ class PanelConnectionInterface(PanelFeature):
         self,
         polyline: Polyline,
         frame: Frame,
-        edge_index: Union[int, None],
-        interface_role: Union[InterfaceRole, str] = InterfaceRole.NONE,
+        edge_index: Optional[int],
+        interface_role: InterfaceRole = InterfaceRole.NONE,
         name="PanelConnectionInterface",
         **kwargs,
     ):
