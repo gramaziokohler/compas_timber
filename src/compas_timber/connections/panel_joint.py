@@ -138,14 +138,3 @@ class PanelJoint(PlateJoint):
         self.interface_a, self.interface_b = self.create_interfaces()
         self.panel_a.add_feature(self.interface_a)  # TODO: TypeError: should PanelFeature inherit from Element AND Feature?
         self.panel_b.add_feature(self.interface_b)
-
-    def get_edge_face_outline(self, panel: Panel, edge_index: int) -> Polyline:
-        return Polyline(
-            [
-                panel.outline_a[edge_index],
-                panel.outline_a[edge_index + 1],
-                panel.outline_b[edge_index + 1],
-                panel.outline_b[edge_index],
-                panel.outline_a[edge_index],
-            ]
-        )
