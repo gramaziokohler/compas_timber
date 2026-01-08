@@ -213,3 +213,23 @@ def test_create_negative_volumes_with_cut_plane_bias(mocker):
         lap.add_features()
         # Verify that _create_negative_volumes was called exactly once with the correct cut_plane_bias
         mock_negative_volumes.assert_called_once_with(lap.cut_plane_bias)
+
+
+def test_create_x_lap_serialize():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 200, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(0, 200, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    org_joint = XLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.3)
+
+    assert org_joint.__data__["cut_plane_bias"] == 0.3
+
+    model = json_loads(json_dumps(model))
+
+    assert len(model.joints) == 1
+    joint: XLapJoint = list(model.joints)[0]
+    assert isinstance(joint, XLapJoint)
+    assert joint.cut_plane_bias == org_joint.cut_plane_bias
