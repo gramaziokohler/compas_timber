@@ -65,9 +65,9 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def __data__(self):
-        data = TimberElement.__data__.fget(self)
+        data = super(PlateGeometry, self).__data__
         data["thickness"] = data.pop("height")
-        data.update(PlateGeometry.__data__.fget(self))
+        data.update(super().__data__)
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, **kwargs):
