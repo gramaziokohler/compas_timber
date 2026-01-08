@@ -13,14 +13,13 @@ class PanelFeatureType:
     OPENING = "OPENING"
     LINEAR = "LINEAR"
     VOLUMETRIC = "VOLUMETRIC"
-    NONE = "NONE"
+    NONE = "NONE"  # TODO: what does NONE mean here?
 
 
 class PanelFeature(Element, ABC):
-    def __init__(self, frame: Frame, panel_feature_type: Union[PanelFeatureType, str] = PanelFeatureType.NONE, name: Union[str, None] = None, **kwargs) -> None:
+    def __init__(self, frame: Frame, panel_feature_type: Union[PanelFeatureType, str] = PanelFeatureType.NONE, **kwargs) -> None:
         super(PanelFeature, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.panel_feature_type = panel_feature_type
-        self.name = name
 
     @property
     def __data__(self) -> dict:
@@ -38,11 +37,12 @@ class PanelFeature(Element, ABC):
     def compute_modeltransformation(self) -> Transformation:
         """Same as parent but handles standalone elements."""
         if not self.model:
+            assert self.transformation is not None
             return self.transformation
-        return super().compute_modeltransformation()
+        return super().compute_modeltransformation()  # type: ignore
 
     def compute_modelgeometry(self) -> Geometry:
         """Same as parent but handles standalone elements."""
         if not self.model:
-            return self.elementgeometry.transformed(self.transformation)
-        return super().compute_modelgeometry()
+            return self.elementgeometry.transformed(self.transformation)  # type: ignore
+        return super().compute_modelgeometry()  # type: ignore
