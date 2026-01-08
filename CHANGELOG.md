@@ -68,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
 * Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
 * Fixed models with `XLapJoint` fail to serialize.
+* Fixed circular import cause by typing import in `slot.py`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
