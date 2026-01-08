@@ -223,7 +223,7 @@ def test_create_x_lap_serialize():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    joint = XLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.5)
+    _ = XLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.5)
 
     model = json_loads(json_dumps(model))
 
