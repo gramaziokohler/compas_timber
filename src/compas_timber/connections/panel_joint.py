@@ -13,6 +13,18 @@ from .joint import JointTopology
 from .plate_joint import PlateJoint
 
 
+def _get_edge_face_outline(panel: Panel, edge_index: int) -> Polyline:
+    return Polyline(
+        [
+            panel.outline_a[edge_index],
+            panel.outline_a[edge_index + 1],
+            panel.outline_b[edge_index + 1],
+            panel.outline_b[edge_index],
+            panel.outline_a[edge_index],
+        ]
+    )
+
+
 class PanelJoint(PlateJoint):
     """Models a plate to plate interaction.
 
@@ -103,7 +115,7 @@ class PanelJoint(PlateJoint):
         if self.b_segment_index is None:  # panel_b is the cross panel and therefor has no edge index
             b_interface_polyline = Polyline(a_interface_polyline[::-1])
         else:
-            b_interface_polyline = self.get_edge_face_outline(self.panel_b, self.b_segment_index)
+            b_interface_polyline = _get_edge_face_outline(self.panel_b, self.b_segment_index)
         frame_b = Frame.from_points(b_interface_polyline.points[0], b_interface_polyline.points[1], b_interface_polyline.points[-2])
         if dot_vectors(frame_b.normal, Vector.from_start_end(self.b_planes[0].point, self.b_planes[1].point)) < 0:
             frame_b = Frame.from_points(b_interface_polyline.points[1], b_interface_polyline.points[0], b_interface_polyline.points[2])
