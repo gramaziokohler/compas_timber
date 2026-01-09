@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import math
+import typing
 from collections import OrderedDict
 
 from compas.geometry import Brep
@@ -16,7 +19,8 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements.beam import Beam
+if typing.TYPE_CHECKING:
+    from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 

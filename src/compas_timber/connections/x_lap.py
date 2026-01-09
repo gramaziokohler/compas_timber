@@ -38,7 +38,7 @@ class XLapJoint(LapJoint):
 
     @property
     def __data__(self):
-        data = super(XLapJoint, self).__data__()
+        data = super(XLapJoint, self).__data__
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
