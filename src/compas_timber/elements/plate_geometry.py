@@ -61,7 +61,9 @@ class PlateGeometry(Data):
     @property
     def __data__(self):
         data = super().__data__
-        data.update({"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1], "openings": self.openings})
+        data["local_outline_a"] = self._original_outlines[0]
+        data["local_outline_b"] = self._original_outlines[1]
+        data["openings"] = self.openings
         return data
 
     def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
