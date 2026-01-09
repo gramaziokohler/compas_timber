@@ -1,5 +1,6 @@
 import os
 import uuid
+import math
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -13,12 +14,17 @@ from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
+from compas.geometry import Plane
+from compas.geometry import Brep
+from compas.geometry import NurbsCurve
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import move_polyline_segment_to_plane
+
 
 
 class BTLxWriter(object):
@@ -1059,18 +1065,18 @@ class Contour(Data):
         The depth of the contour.
     depth_bounded : bool
         If True, the depth is bounded.
-    inclination : float
+    inclination : list[float]
         The inclination of the contour.
     polyline : :class:`compas.geometry.Polyline`
         The polyline of the contour.
     """
 
-    def __init__(self, polyline, depth=None, depth_bounded=True, inclination=None):
+    def __init__(self, polyline, depth, depth_bounded=True, inclination=None):
         super(Contour, self).__init__()
         self.polyline = polyline
         self.depth = depth
         self.depth_bounded = depth_bounded
-        self.inclination = inclination
+        self.inclination = inclination or [0]
 
     @property
     def __data__(self):
@@ -1108,6 +1114,32 @@ class Contour(Data):
         new_instance.scale(factor)
         return new_instance
 
+    def to_brep(self):
+        """Convert the contour to a COMPAS Brep object.
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The brep representation of the contour.
+        """
+        pline_a = self.polyline.copy()
+        pline_b = pline_a.translated([0, 0, -self.depth])
+        if any([i != 0 for i in self.inclination]):
+            if len(self.inclination) == 1:
+                inclinations = [self.inclination[0] for _ in range(len(pline_a) - 1)]
+            else:
+                inclinations = [i for i in self.inclination]
+            for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
+                plane = Plane.from_points([seg.start, seg.end, seg.start + [0, 0, -1]])
+                plane.rotate(math.radians(inclination), seg.direction, seg.start)
+                move_polyline_segment_to_plane(pline_b, i, plane)
+        pline_a.translate([0, 0, 0.001])
+        pline_b.translate([0, 0, -0.001])
+
+        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
+        vol.cap_planar_holes()
+        if vol.volume < 0:
+            vol.flip()
+        return vol
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
@@ -1170,6 +1202,15 @@ class DualContour(Data):
         new_instance.scale(factor)
         return new_instance
 
+    def to_brep(self):
+        pline_a = self.principal_contour.translated([0, 0, 0.001])
+        pline_b = self.associated_contour.translated([0, 0, -0.001])
+
+        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
+        vol.cap_planar_holes()
+        if vol.volume < 0:
+            vol.flip()
+        return vol
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
 

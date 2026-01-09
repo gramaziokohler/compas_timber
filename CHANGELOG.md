@@ -70,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `FreeContour` to compute geometry in local element coordinates.
 * Changed how `FreeContour` computes the `ref_side_index` when not provided.
 * Changed `FreeContour` constructors to work with new local geometry computation.
+
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
 * Removed `interactions` property from `TimberModel` in favor of direct edge-based joint lookup.

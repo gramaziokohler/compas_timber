@@ -1,10 +1,13 @@
 try:
     from typing import TYPE_CHECKING
+    from typing import Optional
+    from typing import Union
 
     if TYPE_CHECKING:
         from compas.geometry import Polyline  # noqa: F401
-
+        from compas_timber.elements import TimberElement  # noqa: F401
         from compas_timber.elements import Plate  # noqa: F401
+        from compas_timber.elements import Beam  # noqa: F401
 except ImportError:
     pass
 
@@ -78,7 +81,7 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline, element, depth=None, interior=False, tool_position=None, ref_side_index=None, **kwargs):
+    def from_polyline_and_element(cls, polyline: Polyline, element: TimberElement, depth:Optional[float]=None, interior:Optional[bool]=False, tool_position:Optional[str]=None, ref_side_index:Optional[int]=None, **kwargs):
         """Construct a Contour processing from a polyline and element.
 
         Parameters
@@ -101,14 +104,15 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polyline, element)
         ref_side = element.ref_sides[ref_side_index]
         tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
-        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[1]
+        # get_dimensions_relative_to_side [0] returns element dimension normal to ref_side
+        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[0]
         transformed_polyline = polyline.transformed(Transformation.from_frame(ref_side).inverse())
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
     def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None, **kwargs):
-        # type: (Polyline, Polyline, Plate, bool, str | None, int | None) -> FreeContour
+        # type: (Polyline, Polyline, Union[Plate, Beam], bool, str | None, int | None, dict) -> FreeContour
         """Construct a Contour processing from a list of polylines and element.
 
         Parameters
@@ -147,6 +151,7 @@ class FreeContour(BTLxProcessing):
                 inclinations.append(round(angle_vectors_signed(Vector.from_start_end(top_line.start, cp), Vector(0, 0, -1), -top_line.direction, deg=True), 6))
             if len(set(inclinations)) == 1:
                 inclinations = [inclinations[0]]  # all inclinations are the same, set one global inclination for FreeContour processing
+            # bottom polyline is parallel to ref_side. Use Z value of first point to calculate depth
             depth = -bottom_polyline[0][2]
             contour = Contour(top_polyline, depth=depth, inclination=inclinations)
 
@@ -197,7 +202,7 @@ class FreeContour(BTLxProcessing):
 
     @staticmethod
     def get_ref_face_index(contour_points, element):
-        # type: (Polyline, Plate) -> int
+        # type: (Polyline, Union[Plate, Beam]) -> int
         curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
         for i, ref_side in enumerate(element.ref_sides):
             distance = distance_point_plane(contour_points[0], Plane.from_frame(ref_side))
@@ -232,31 +237,7 @@ class FreeContour(BTLxProcessing):
             The resulting geometry after processing.
         """
 
-        if isinstance(self.contour_param_object, Contour):
-            pline_a = self.contour_param_object.polyline
-            pline_b = pline_a.translated([0, 0, -self.contour_param_object.depth])
-            if any([i != 0 for i in self.contour_param_object.inclination]):
-                if len(self.contour_param_object.inclination) == 1:
-                    inclinations = [self.contour_param_object.inclination[0] for _ in range(len(pline_a) - 1)]
-                else:
-                    self.contour_param_object.inclination
-                for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
-                    plane = Plane.from_points([seg.start, seg.end, seg.start + Vector(0, 0, -1)])
-                    plane.rotate(math.radians(inclination), seg.direction, seg.start)
-                    move_polyline_segment_to_plane(pline_b, i, plane)
-
-        else:
-            pline_a = self.contour_param_object.principal_polyline
-            pline_b = self.contour_param_object.associated_polyline
-
-        pline_a.translate([0, 0, 0.001])
-        pline_b.translate([0, 0, -0.001])
-
-        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
-        vol.cap_planar_holes()
-        if vol.volume < 0:
-            vol.flip()
-
+        vol = self.contour_param_object.to_brep()
         # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
         transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
         vol.transform(transformation_ref_side_to_local)
