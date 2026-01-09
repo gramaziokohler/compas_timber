@@ -84,8 +84,7 @@ class Panel(PlateGeometry, Element):
 
     @property
     def __data__(self):
-        data = super(PlateGeometry, self).__data__
-        data.update(super().__data__)
+        data = super().__data__
         data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
@@ -95,10 +94,18 @@ class Panel(PlateGeometry, Element):
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, **kwargs):
-        Element.__init__(self, transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
+        super().__init__(
+            transformation=frame.to_transformation(),  # NOTE: Element wants a transfomration, not a frame
+            length=length,
+            width=width,
+            height=thickness,
+            local_outline_a=local_outline_a,
+            local_outline_b=local_outline_b,
+            openings=openings,
+            **kwargs,
+        )
         self.length = length
         self.width = width
         self.height = thickness
