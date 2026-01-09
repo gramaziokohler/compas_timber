@@ -1,21 +1,18 @@
-try:
-    from typing import TYPE_CHECKING
-    from typing import Optional
-    from typing import Union
+from __future__ import annotations
 
-    if TYPE_CHECKING:
-        from compas.geometry import Polyline  # noqa: F401
-        from compas_timber.elements import TimberElement  # noqa: F401
-        from compas_timber.elements import Plate  # noqa: F401
-        from compas_timber.elements import Beam  # noqa: F401
-except ImportError:
-    pass
+from typing import TYPE_CHECKING
+from typing import Optional
+
+if TYPE_CHECKING:
+    from compas.geometry import Polyline  # noqa: F401
+
+    from compas_timber.elements import Beam  # noqa: F401
+    from compas_timber.elements import Plate  # noqa: F401
+    from compas_timber.elements import TimberElement  # noqa: F401
 
 import math
 
-from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import Vector
@@ -25,7 +22,6 @@ from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
 from compas_timber.utils import is_polyline_clockwise
-from compas_timber.utils import move_polyline_segment_to_plane
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
@@ -81,7 +77,16 @@ class FreeContour(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_polyline_and_element(cls, polyline: Polyline, element: TimberElement, depth:Optional[float]=None, interior:Optional[bool]=False, tool_position:Optional[str]=None, ref_side_index:Optional[int]=None, **kwargs):
+    def from_polyline_and_element(
+        cls,
+        polyline: Polyline,
+        element: TimberElement,
+        depth: Optional[float] = None,
+        interior: Optional[bool] = False,
+        tool_position: Optional[str] = None,
+        ref_side_index: Optional[int] = None,
+        **kwargs,
+    ):
         """Construct a Contour processing from a polyline and element.
 
         Parameters

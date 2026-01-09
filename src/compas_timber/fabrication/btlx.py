@@ -1,6 +1,6 @@
+import math
 import os
 import uuid
-import math
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -11,12 +11,12 @@ from warnings import warn
 
 import compas
 from compas.data import Data
+from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
+from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
-from compas.geometry import Plane
-from compas.geometry import Brep
-from compas.geometry import NurbsCurve
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
@@ -24,7 +24,6 @@ from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
-
 
 
 class BTLxWriter(object):
@@ -1141,6 +1140,7 @@ class Contour(Data):
             vol.flip()
         return vol
 
+
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
 
 
@@ -1211,6 +1211,7 @@ class DualContour(Data):
         if vol.volume < 0:
             vol.flip()
         return vol
+
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
 
