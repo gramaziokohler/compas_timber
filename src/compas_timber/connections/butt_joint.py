@@ -279,12 +279,13 @@ class ButtJoint(Joint):
             [1, 2, 6, 5],
             [2, 3, 7, 6],
             [0, 4, 7, 3],
-            [1, 5, 4, 0],
+            [0, 1, 5, 4],
             [4, 5, 6, 7]
         ]
 
         print(self.cross_beam_ref_side_index)
         cutout_volume = Polyhedron(vertices, faces)
+        # return cutout_volume
         pocket = Pocket.from_volume_and_element(cutout_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
         if not self.conical_tool:
             pocket.tilt_start_side = 90 if pocket.tilt_start_side < 90 else pocket.tilt_start_side
