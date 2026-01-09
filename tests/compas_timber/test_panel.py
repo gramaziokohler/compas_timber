@@ -20,8 +20,8 @@ def model():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
 
-    panel_a = Panel.from_outline_thickness(polyline_a, 1)
-    panel_b = Panel.from_outline_thickness(polyline_b, 1)
+    panel_a = Panel.from_outline_thickness(polyline_a, 1, name="Best Panel")
+    panel_b = Panel.from_outline_thickness(polyline_b, 1, name="Second Best Panel")
 
     model.add_element(panel_a)
     model.add_element(panel_b)
@@ -50,4 +50,13 @@ def test_sloped_panel_creation():
 
 def test_copy_panel_model(model):
     model_copy = json_loads(json_dumps(model))
+
     assert len(list(model_copy.elements())) == len(list(model.elements())), "Expected copied model to have same number of elements"
+
+    for original, copy in zip(model.panels, model_copy.panels):
+        assert isinstance(copy, Panel)
+        assert TOL.is_close(original.thickness, copy.thickness)
+        assert original.frame == copy.frame
+        assert TOL.is_close(original.width, copy.width)
+        assert TOL.is_close(original.length, copy.length)
+        assert original.name == copy.name

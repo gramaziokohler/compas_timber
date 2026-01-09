@@ -84,8 +84,7 @@ class Panel(PlateGeometry, Element):
 
     @property
     def __data__(self):
-        data = Element.__data__.fget(self)
-        data.update(PlateGeometry.__data__.fget(self))
+        data = super().__data__
         data["frame"] = Frame.from_transformation(data.pop("transformation"))
         data["length"] = self.length
         data["width"] = self.width
@@ -94,11 +93,19 @@ class Panel(PlateGeometry, Element):
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, name=None, **kwargs):
-        Element.__init__(self, transformation=Transformation.from_frame(frame) if frame else Transformation(), name=name, **kwargs)
+    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, **kwargs):
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
+        super().__init__(
+            transformation=frame.to_transformation(),  # NOTE: Element wants a transfomration, not a frame
+            length=length,
+            width=width,
+            height=thickness,
+            local_outline_a=local_outline_a,
+            local_outline_b=local_outline_b,
+            openings=openings,
+            **kwargs,
+        )
         self.length = length
         self.width = width
         self.height = thickness
@@ -150,13 +157,13 @@ class Panel(PlateGeometry, Element):
         """Same as parent but handles standalone elements."""
         if not self.model:
             return self.transformation
-        return super().compute_modeltransformation()
+        return super().compute_modeltransformation()  # type: ignore
 
     def compute_modelgeometry(self):
         """Same as parent but handles standalone elements."""
         if not self.model:
-            return self.elementgeometry.transformed(self.transformation)
-        return super().compute_modelgeometry()
+            return self.elementgeometry.transformed(self.transformation)  # type: ignore
+        return super().compute_modelgeometry()  # type: ignore
 
     def compute_elementgeometry(self, include_features=False):
         """Compute the geometry of the element at local coordinates."""

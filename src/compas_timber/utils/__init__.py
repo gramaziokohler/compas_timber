@@ -23,6 +23,15 @@ from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
 
+try:
+    from enum import StrEnum  # type: ignore
+except ImportError:
+    # not there yet in python3.9
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        pass
+
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
     """Find, if exists, the intersection point of `line1` and `line2` and returns parametric information about it.
@@ -504,4 +513,5 @@ __all__ = [
     "get_segment_overlap",
     "move_polyline_segment_to_plane",
     "planar_surface_point_at",
+    "StrEnum",
 ]
