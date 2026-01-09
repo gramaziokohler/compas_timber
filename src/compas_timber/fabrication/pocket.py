@@ -338,6 +338,9 @@ class Pocket(BTLxProcessing):
         planes = cls._sort_planes(planes, ref_side)
         start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
 
+        for plane in planes:
+            print(plane.normal)
+
         # get the intersection points
         try:
             start_point = Point(*intersection_plane_plane_plane(start_plane, front_plane, bottom_plane, tol=TOL.ABSOLUTE))
@@ -356,19 +359,20 @@ class Pocket(BTLxProcessing):
 
         # calculate the angle of the pocket
         angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal, deg=True)
-
+        print(angle)
         # x'-axis and y'-axis (see BTLx Documentation p.46)
         xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
         yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
         inclination = angle_vectors_projected(xaxis, xxaxis, yaxis, deg=True)
-
+        print(inclination)
         # calculate the slope of the pocket
         slope = angle_vectors_projected(yaxis, yyaxis, xxaxis, deg=True)
-
+        print(slope)
         # calculate internal_angle
         internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
+        print(internal_angle)
 
         # calculate length and width
         length = xxaxis.length*math.sin(math.radians(internal_angle))
@@ -638,16 +642,21 @@ class Pocket(BTLxProcessing):
             end_frame = element.ref_sides[5]
             end_frame.translate(end_frame.normal * tol.absolute)
 
+
+        bottom_frame.rotate(math.radians(180-self.internal_angle), -bottom_frame.normal, point=bottom_frame.point)
+
+
         # tilt front frame
+        # FIXME: tilt_opp_side and tilt_red_side shoudl be swapped here, they probably are swapped in another palce too :-/
         if self.machining_limits["FaceLimitedFront"]:
-            front_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.yaxis, point=bottom_frame.point)
+            front_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = element.front_side(self.ref_side_index)
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
         if self.machining_limits["FaceLimitedBack"]:
-            back_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.yaxis, point=bottom_frame.point)
+            back_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.xaxis, point=bottom_frame.point)
             back_frame.translate(back_frame.normal * self.width)
         else:
             back_frame = element.back_side(self.ref_side_index)
