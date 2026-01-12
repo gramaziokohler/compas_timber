@@ -1,37 +1,27 @@
 from __future__ import annotations
 
-import math
-from ast import Return
-from multiprocessing import Manager
 from typing import TYPE_CHECKING
 from typing import Optional
-from unittest.main import main
 
-from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import angle_vectors
-from compas.geometry import centroid_points
-from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
-from compas.geometry._core.centroids import midpoint_point_point
-from compas.geometry.offset import intersect
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
-from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Pocket
-from compas_timber.fabrication.pocket import Polyhedron
 
 from .joint import Joint
 from .solver import JointTopology
-from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
+    from compas_timber.model.model import TimberModel
+    from src.compas_timber.fabrication.btlx import BTLxProcessing
+
 
 class ButtJoint(Joint):
     """Represents an L-Butt type joint which joins two beam in their ends, trimming the main beam.
@@ -67,7 +57,14 @@ class ButtJoint(Joint):
         The depth of the pocket to be milled in the cross beam.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-
+    butt_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
+    features: list[BTLxProcessing]
+        List of features to be applied to the cross beam and main beam.
 
     """
 
@@ -85,26 +82,28 @@ class ButtJoint(Joint):
         data["conical_tool"] = self.conical_tool
         return data
 
-    def __init__(self,
-                main_beam: Beam = None,
-                cross_beam: Beam = None,
-                mill_depth: Optional[float] = None,
-                modify_cross: bool = True,
-                butt_plane: Optional[Plane] = None,
-                force_pocket: bool = False,
-                conical_tool: bool = False,
-                **kwargs):
+    def __init__(
+        self,
+        main_beam: Beam = None,
+        cross_beam: Beam = None,
+        mill_depth: Optional[float] = None,
+        modify_cross: bool = True,
+        butt_plane: Optional[Plane] = None,
+        force_pocket: bool = False,
+        conical_tool: bool = False,
+        **kwargs,
+    ):
         super(ButtJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-        self.mill_depth = mill_depth or 0.0
-        self.modify_cross = modify_cross
-        self.butt_plane = butt_plane
-        self.force_pocket = force_pocket
-        self.conical_tool = conical_tool
-        self.features = []
+        self.main_beam: Beam = main_beam
+        self.cross_beam: Beam = cross_beam
+        self.main_beam_guid: str = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
+        self.cross_beam_guid: str = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.mill_depth: float = mill_depth or 0.0
+        self.modify_cross: bool = modify_cross
+        self.butt_plane: Optional[Plane] = butt_plane
+        self.force_pocket: bool = force_pocket
+        self.conical_tool: bool = conical_tool
+        self.features: list[BTLxProcessing] = []
 
     @property
     def elements(self):
@@ -182,7 +181,7 @@ class ButtJoint(Joint):
                 self.guid,
             )
 
-    def add_features(self):
+    def add_features(self) -> None:
         """Adds the required extension and trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
@@ -236,19 +235,13 @@ class ButtJoint(Joint):
 
             self.features.append(cross_feature)
 
-
-
     def _apply_pocket_to_cross_beam(self):
-
-
         cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
         cutting_plane.xaxis = -cutting_plane.xaxis
         if self.mill_depth:
             cutting_plane.translate(cutting_plane.normal * self.mill_depth)
 
-
         main_beam_ref_sides = list(self.main_beam.ref_sides)
-
         plane_0 = Plane.from_frame(main_beam_ref_sides[0])
         plane_1 = Plane.from_frame(main_beam_ref_sides[1])
         plane_2 = Plane.from_frame(main_beam_ref_sides[2])
@@ -256,34 +249,16 @@ class ButtJoint(Joint):
         cutting_plane = Plane.from_frame(cutting_plane)
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
         vertices = [
-            Point(*intersection_plane_plane_plane(plane_2, plane_3, cutting_plane)), #v0
-            Point(*intersection_plane_plane_plane(plane_0, plane_3, cutting_plane)), #v1
-            Point(*intersection_plane_plane_plane(plane_1, plane_0, cutting_plane)), #v2
-            Point(*intersection_plane_plane_plane(plane_2, plane_1, cutting_plane)), #v3
-            Point(*intersection_plane_plane_plane(plane_2, plane_3, top_plane)), #v4
-            Point(*intersection_plane_plane_plane(plane_0, plane_3, top_plane)), #v5
-            Point(*intersection_plane_plane_plane(plane_1, plane_0, top_plane)), #v6
-            Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)), #v7
+            Point(*intersection_plane_plane_plane(plane_2, plane_3, cutting_plane)),  # v0
+            Point(*intersection_plane_plane_plane(plane_0, plane_3, cutting_plane)),  # v1
+            Point(*intersection_plane_plane_plane(plane_1, plane_0, cutting_plane)),  # v2
+            Point(*intersection_plane_plane_plane(plane_2, plane_1, cutting_plane)),  # v3
+            Point(*intersection_plane_plane_plane(plane_2, plane_3, top_plane)),  # v4
+            Point(*intersection_plane_plane_plane(plane_0, plane_3, top_plane)),  # v5
+            Point(*intersection_plane_plane_plane(plane_1, plane_0, top_plane)),  # v6
+            Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)),  # v7
         ]
-        # faces = [
-        #     [0, 1, 2, 3],
-        #     [1, 5, 6, 2],
-        #     [2, 6, 7, 3],
-        #     [0, 3, 7, 4],
-        #     [0, 4, 5, 1],
-        #     [4, 7, 6, 5]
-        # ]
-
-        faces = [
-            [0, 3, 2, 1],
-            [1, 2, 6, 5],
-            [2, 3, 7, 6],
-            [0, 4, 7, 3],
-            [0, 1, 5, 4],
-            [4, 5, 6, 7]
-        ]
-
-        print(self.cross_beam_ref_side_index)
+        faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
         cutout_volume = Polyhedron(vertices, faces)
         # return cutout_volume
         pocket = Pocket.from_volume_and_element(cutout_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
@@ -296,77 +271,7 @@ class ButtJoint(Joint):
         self.features.append(pocket)
         return cutout_volume
 
-
-
-
-
-
-    # def _apply_pocket_to_cross_beam(self):
-    #     int_point, _ = intersection_line_line(self.cross_beam.centerline, self.main_beam.centerline)
-    #     angle, _ = self._compute_angle_and_dot_product(int_point)
-    #     tilt_start_side = angle
-    #     tilt_end_side = math.pi - angle
-    #     start_x = self._find_start_x(int_point, angle)
-    #     length = self._find_length(angle)
-    #     width = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[0]
-    #     start_y = self._find_start_y(width)
-    #     machining_limits = MachiningLimits()
-    #     pocket = Pocket(
-    #         start_x=start_x,
-    #         start_y=start_y,
-    #         start_depth=self.mill_depth,
-    #         angle=0,
-    #         inclination=0,
-    #         slope=0.0,
-    #         length=length,
-    #         width=width,
-    #         internal_angle=90.0,
-    #         tilt_ref_side=90.0,
-    #         tilt_end_side=math.degrees(tilt_end_side),
-    #         tilt_opp_side=90.0,
-    #         tilt_start_side=math.degrees(tilt_start_side),
-    #         machining_limits=machining_limits.limits,
-    #         ref_side_index=self.cross_beam_ref_side_index,
-    #     )
-    #     self.cross_beam.add_features(pocket)
-    #     self.features.append(pocket)
-
-    # def _compute_angle_and_dot_product(self, intersection_point):
-    #     end, _ = self.main_beam.endpoint_closest_to_point(Point(*intersection_point))
-    #     if end == "start":
-    #         main_beam_direction = self.main_beam.centerline.vector
-    #     else:
-    #         main_beam_direction = self.main_beam.centerline.vector * -1
-    #     angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-    #     dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-    #     return angle, dot
-
-    # def _find_start_x(self, intersection_point, angle):
-    #     beam_width, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-    #     _, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-    #     ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-    #     ref_side_plane = Plane.from_frame(ref_side)
-    #     intersection_point_projected = ref_side_plane.projected_point(Point(*intersection_point))
-    #     air_distance = ref_side.point.distance_to_point(intersection_point_projected)
-    #     # Calculate start_x
-    #     start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-    #     x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
-    #     x2 = (beam_height / 2) / math.sin(math.pi - angle)
-    #     start_x -= x1
-    #     start_x -= x2
-    #     return start_x
-
-    # def _find_length(self, angle):
-    #     _, beam_height = self.main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-    #     length = beam_height / math.sin(angle)
-    #     return length
-
-    # def _find_start_y(self, width):
-    #     cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
-    #     start_y = (cross_width - width) / 2
-    #     return start_y
-
-    def restore_beams_from_keys(self, model):
+    def restore_beams_from_keys(self, model: TimberModel):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model.element_by_guid(self.main_beam_guid)
         self.cross_beam = model.element_by_guid(self.cross_beam_guid)

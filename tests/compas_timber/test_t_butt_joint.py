@@ -87,25 +87,49 @@ def non_planar_beam():
     return non_planar_beam
 
 
-def test_T_butt_joint_features_coplanar(planar_beam, cross_beam):
-    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10.0, modify_cross=False)
+def test_L_butt_joint_features_planar_lap(cross_beam, planar_beam):
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=False, conical_tool=False)
+    joint.add_features()
+    assert len(cross_beam.features) == 1
+    assert len(planar_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Lap)
+
+
+def test_L_butt_joint_features_non_planar_lap(cross_beam, non_planar_beam):
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=False, conical_tool=False)
+    joint.add_features()
+    assert len(cross_beam.features) == 1
+    assert len(non_planar_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Lap)
+
+
+def test_L_butt_joint_features_planar_pocket(cross_beam, planar_beam):
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(planar_beam.features) == 1
     assert isinstance(cross_beam.features[0], Pocket)
 
 
-def test_T_butt_joint_features_coplanar_lap(planar_beam, cross_beam):
-    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10.0, modify_cross=False, lap_feature=True)
+def test_L_butt_joint_features_planar_pocket_conical_tool(cross_beam, planar_beam):
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=True)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(planar_beam.features) == 1
-    assert isinstance(cross_beam.features[0], Lap)
+    assert isinstance(cross_beam.features[0], Pocket)
 
 
-def test_T_butt_joint_features_non_coplanar(non_planar_beam, cross_beam):
-    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10.0, modify_cross=False)
+def test_L_butt_joint_features_non_planar_pocket(cross_beam, non_planar_beam):
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
-    assert isinstance(cross_beam.features[0], Lap)
+    assert isinstance(cross_beam.features[0], Pocket)
+
+
+def test_L_butt_joint_features_non_planar_pocket_conical_tool(cross_beam, non_planar_beam):
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=True)
+    joint.add_features()
+    assert len(cross_beam.features) == 1
+    assert len(non_planar_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Pocket)

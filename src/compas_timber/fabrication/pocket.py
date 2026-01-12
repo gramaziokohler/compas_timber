@@ -24,11 +24,16 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.fabrication.free_contour import TYPE_CHECKING
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
+
+if TYPE_CHECKING:
+    from compas_timber.elements import Beam
+    from compas_timber.elements import Plate
 
 
 class Pocket(BTLxProcessing):
@@ -96,15 +101,15 @@ class Pocket(BTLxProcessing):
         start_depth: float =0.0,
         angle: float = 0.0,
         inclination: float = 0.0,
-        slope: float =0.0,
-        length: float =200.0,
-        width: float =50.0,
-        internal_angle: float =90.0,
-        tilt_ref_side: float =90.0,
-        tilt_end_side: float =90.0,
-        tilt_opp_side: float =90.0,
-        tilt_start_side: float =90.0,
-        machining_limits: MachiningLimits =None,
+        slope: float = 0.0,
+        length: float = 200.0,
+        width: float = 50.0,
+        internal_angle: float = 90.0,
+        tilt_ref_side: float = 90.0,
+        tilt_end_side: float = 90.0,
+        tilt_opp_side: float = 90.0,
+        tilt_start_side: float = 90.0,
+        machining_limits: dict = None,
         **kwargs
     ):
         super(Pocket, self).__init__(**kwargs)
@@ -123,20 +128,20 @@ class Pocket(BTLxProcessing):
         self._tilt_start_side = None
         self._machining_limits = None
 
-        self.start_x = start_x
-        self.start_y = start_y
-        self.start_depth = start_depth
-        self.angle = angle
-        self.inclination = inclination
-        self.slope = slope
-        self.length = length
-        self.width = width
-        self.internal_angle = internal_angle
-        self.tilt_ref_side = tilt_ref_side
-        self.tilt_end_side = tilt_end_side
-        self.tilt_opp_side = tilt_opp_side
-        self.tilt_start_side = tilt_start_side
-        self.machining_limits = machining_limits
+        self.start_x: float = start_x
+        self.start_y: float = start_y
+        self.start_depth: float = start_depth
+        self.angle: float = angle
+        self.inclination: float = inclination
+        self.slope: float = slope
+        self.length: float = length
+        self.width: float = width
+        self.internal_angle: float = internal_angle
+        self.tilt_ref_side: float = tilt_ref_side
+        self.tilt_end_side: float = tilt_end_side
+        self.tilt_opp_side: float = tilt_opp_side
+        self.tilt_start_side: float = tilt_start_side
+        self.machining_limits: dict = machining_limits
 
     ########################################################################
     # Properties
@@ -277,7 +282,7 @@ class Pocket(BTLxProcessing):
         self._tilt_start_side = tilt_start_side
 
     @property
-    def machining_limits(self) -> MachiningLimits:
+    def machining_limits(self) -> dict:
         return self._machining_limits
 
     @machining_limits.setter
@@ -297,7 +302,13 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_volume_and_element(cls, volume: Union[Polyhedron, Brep, Mesh], element: Union[Beam, Plate], machining_limits: Optional[dict] = None, ref_side_index: Optional[int]=None):
+    def from_volume_and_element(
+        cls,
+        volume: Union[Polyhedron, Brep, Mesh],
+        element: Union[Beam, Plate],
+        machining_limits: Optional[dict] = None,
+        ref_side_index: Optional[int]=None
+    ) -> Pocket:
         """Construct a Pocket feature from a volume and a TimberElement.
 
         Parameters
@@ -326,7 +337,6 @@ class Pocket(BTLxProcessing):
         elif isinstance(volume, Brep):
             volume_frames = [face.frame_at(0,0) for face in volume.faces]
             planes = [Plane.from_frame(frame) for frame in volume_frames]
-
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
 
@@ -341,9 +351,6 @@ class Pocket(BTLxProcessing):
         # sort the planes based on the reference side
         planes = cls._sort_planes(planes, ref_side)
         start_plane, end_plane, front_plane, back_plane, bottom_plane, _ = planes
-
-        for plane in planes:
-            print(plane.normal)
 
         # get the intersection points
         try:
@@ -363,20 +370,18 @@ class Pocket(BTLxProcessing):
 
         # calculate the angle of the pocket
         angle = angle_vectors_projected(ref_side.xaxis, xxaxis, ref_side.normal, deg=True)
-        print(angle)
         # x'-axis and y'-axis (see BTLx Documentation p.46)
         xaxis = ref_side.xaxis.rotated(math.radians(angle), ref_side.normal)
         yaxis = ref_side.yaxis.rotated(math.radians(angle), ref_side.normal)
 
         # calculate the inclination of the pocket
         inclination = angle_vectors_projected(xaxis, xxaxis, yaxis, deg=True)
-        print(inclination)
+
         # calculate the slope of the pocket
         slope = angle_vectors_projected(yaxis, yyaxis, xxaxis, deg=True)
-        print(slope)
+
         # calculate internal_angle
         internal_angle = angle_vectors_signed(xxaxis, yyaxis, ref_side.normal, deg=True)
-        print(internal_angle)
 
         # calculate length and width
         length = xxaxis.length*math.sin(math.radians(internal_angle))
@@ -410,7 +415,7 @@ class Pocket(BTLxProcessing):
             ref_side_index=ref_side_index)
 
     @classmethod
-    def from_shapes_and_element(cls, volume, element, **kwargs):
+    def from_shapes_and_element(cls, volume, element, **kwargs) -> Pocket:
         """Construct a Pocket feature from a volume and a TimberElement.
 
         Parameters
@@ -433,7 +438,7 @@ class Pocket(BTLxProcessing):
         return cls.from_volume_and_element(volume, element, **kwargs)
 
     @staticmethod
-    def _get_optimal_ref_side_index(element, volume):
+    def _get_optimal_ref_side_index(element, volume) -> int:
         # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
         # get the volume edges
         if isinstance(volume, Brep):
@@ -455,7 +460,7 @@ class Pocket(BTLxProcessing):
         return optimal_index
 
     @staticmethod
-    def _sort_planes(planes, ref_side):
+    def _sort_planes(planes, ref_side) -> list[Plane]:
         # Sort planes based on the dot product of face normals with the x-axis
         planes.sort(key=lambda plane: plane.normal.dot(ref_side.xaxis))
         start_plane, end_plane = planes[0], planes[-1]
@@ -471,7 +476,7 @@ class Pocket(BTLxProcessing):
         return start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane
 
     @staticmethod
-    def _calculate_start_x_y_depth(ref_side, start_point):
+    def _calculate_start_x_y_depth(ref_side, start_point) -> tuple[float, float, float]:
         # calculate the start_x, start_y, and start_depth of the pocket based on the start_corner_point and the ref_side
         start_vector = Vector.from_start_end(ref_side.point, start_point)
         start_x = dot_vectors(start_vector, ref_side.xaxis)
@@ -480,12 +485,12 @@ class Pocket(BTLxProcessing):
         return start_x, start_y, start_depth
 
     @staticmethod
-    def _calculate_tilt_angle(bottom_plane, plane):
+    def _calculate_tilt_angle(bottom_plane, plane) -> float:
         # calculate the tilt angle of the pocket based on the bottom_plane and the plane of the face to be tilted
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
 
     @staticmethod
-    def _define_machining_limits(planes, element, ref_side_index):
+    def _define_machining_limits(planes, element, ref_side_index) -> dict:
         # define machining limits based on the planes
         ref_sides = [Plane.from_frame(frame) for frame in element.ref_sides]
         start_side, end_side = ref_sides[-2:]
@@ -508,7 +513,7 @@ class Pocket(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, element):
+    def apply(self, geometry: Brep, element: Union(Beam, Plate)):
         """Apply the feature to the element geometry.
 
         Parameters
@@ -552,7 +557,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume does not intersect with the element geometry." + str(e),
             )
 
-    def _bottom_frame_from_params_and_element(self, element):
+    def _bottom_frame_from_params_and_element(self, element: Union[Beam, Plate]) -> Frame:
         """Calculates the bottom frame of the pocket from the machining parameters in this instance and the given element.
 
         Parameters
@@ -594,7 +599,7 @@ class Pocket(BTLxProcessing):
         bottom_frame.rotate(math.radians(180-self.internal_angle), bottom_frame.normal, point=bottom_frame.point)
         return bottom_frame
 
-    def _planes_from_params_and_element(self, element):
+    def _planes_from_params_and_element(self, element: Union[Beam, Plate]) -> list[Plane]:
         """Calculates the planes that create the pocket from the machining parameters in this instance and the given element
 
         Parameters
@@ -667,7 +672,7 @@ class Pocket(BTLxProcessing):
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
 
-    def volume_from_params_and_element(self, element):
+    def volume_from_params_and_element(self, element: Union[Beam, Plate]) -> Polyhedron:
         """
         Calculates the subtracting volume from the machining parameters in this instance and the given element, ensuring correct face orientation.
 
@@ -710,7 +715,7 @@ class Pocket(BTLxProcessing):
 
         return Polyhedron(vertices, faces)
 
-    def scale(self, factor):
+    def scale(self, factor: float) -> None:
         """Scale the parameters of this processing by a given factor.
 
         Note
