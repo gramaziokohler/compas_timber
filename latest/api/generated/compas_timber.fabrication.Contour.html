@@ -598,7 +598,7 @@ document.write(`
 <h1>Contour</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.Contour">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Contour</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/f13ec19/src/compas_timber/fabrication/btlx.py#L1051"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Contour</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c0858cd/src/compas_timber/fabrication/btlx.py#L1056"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.data.Data.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Data</span></code></a></p>
 <p>Represens the generic contour for specific free contour processings.</p>
 <p>TODO: add point attributes for other types like NailContour</p>
@@ -609,7 +609,7 @@ document.write(`
 </dd>
 <dt><strong>depth_bounded</strong><span class="classifier">bool</span></dt><dd><p>If True, the depth is bounded.</p>
 </dd>
-<dt><strong>inclination</strong><span class="classifier">float</span></dt><dd><p>The inclination of the contour.</p>
+<dt><strong>inclination</strong><span class="classifier">list[float]</span></dt><dd><p>The inclination of the contour.</p>
 </dd>
 <dt><strong>polyline</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Polyline.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas.geometry.Polyline</span></code></a></span></dt><dd><p>The polyline of the contour.</p>
 </dd>
@@ -624,6 +624,9 @@ document.write(`
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.fabrication.Contour.scaled.html#compas_timber.fabrication.Contour.scaled" title="compas_timber.fabrication.Contour.scaled"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scaled</span></code></a></p></td>
 <td><p>Returns a new instance of the contour with the parameters scaled by a given factor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.fabrication.Contour.to_brep.html#compas_timber.fabrication.Contour.to_brep" title="compas_timber.fabrication.Contour.to_brep"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_brep</span></code></a></p></td>
+<td><p>Convert the contour to a COMPAS Brep object. Returns ------- <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Brep.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Brep</span></code></a>     The brep representation of the contour.</p></td>
 </tr>
 </tbody>
 </table>
