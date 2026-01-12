@@ -7,6 +7,7 @@ from compas.data import json_loads
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
+from compas_timber.elements import PlateGeometry
 
 
 def test_flat_plate_creation():
@@ -81,3 +82,4 @@ def test_sloped_plate_serialization():
     assert TOL.is_close(plate.thickness, plate_copy.thickness), "Expected plate thickness to match input thickness"
     assert TOL.is_close(plate.length, plate_copy.length), "Expected plate length to be 10*sqrt(2)"
     assert TOL.is_close(plate.width, plate_copy.width), "Expected plate width to be 20"
+

@@ -34,23 +34,15 @@ class PlateGeometry(Data):
     Attributes
     ----------
     outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate in parent space.
+        A line representing the principal outline of this plate in local space.
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate in parent space.
+        A line representing the associated outline of this plate in local space.
     outlines : tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
         A tuple containing both outline_a and outline_b.
-    thickness : float
-        Thickness of the plate (same as height).
-    planes : tuple[:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`]
-        The top and bottom planes of the plate.
-    normal : :class:`~compas.geometry.Vector`
-        Normal vector of the plate.
     edge_planes : list[:class:`~compas.geometry.Frame`]
         Frames representing the edge planes of the plate.
     shape : :class:`~compas.geometry.Brep`
         The geometry of the Plate before other machining features are applied.
-    interfaces : list
-        List of interfaces associated with this plate.
     openings : list[:class:`~compas.geometry.Polyline`]
         A list of Polyline objects representing openings in this plate.
 
@@ -58,7 +50,7 @@ class PlateGeometry(Data):
 
     @property
     def __data__(self):
-        data = super().__data__
+        data = {}
         data["local_outline_a"] = self._original_outlines[0]
         data["local_outline_b"] = self._original_outlines[1]
         data["openings"] = self.openings
