@@ -11,11 +11,9 @@ from compas.geometry import Vector
 from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
-from compas_model.elements import reset_computed
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
-from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
@@ -74,7 +72,7 @@ class PlateGeometry(Data):
 
         self._planes = None
         self.openings = openings or []
-        self._extension_planes = {}
+        self._edge_planes = {}
 
     def __repr__(self):
         # type: () -> str
@@ -88,50 +86,29 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @property
-    def outlines(self):
-        return (self.outline_a, self.outline_b)
-
-    @property
     def outline_a(self):
-        return self._mutable_outlines[0].transformed(self.modeltransformation)
+        return self._mutable_outlines[0]
 
     @property
     def outline_b(self):
-        return self._mutable_outlines[1].transformed(self.modeltransformation)
-
-    @property
-    def thickness(self):
-        return self.height
-
-    @property
-    def planes(self):
-        if not self._planes:
-            planes = (Plane.worldXY(), Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)))
-            self._planes = (planes[0].transformed(self.modeltransformation), planes[1].transformed(self.modeltransformation))
-        return self._planes
-
-    @property
-    def normal(self):
-        return Vector(0, 0, 1).transformed(self.modeltransformation)
-
-    @property
-    def local_outlines(self):
-        return self._mutable_outlines
+        return self._mutable_outlines[1]
 
     @property
     def edge_planes(self):
-        _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
-            plane = self._extension_planes.get(i, None)
-            if not plane:
-                plane = Plane.from_points(self._mutable_outlines[0][i], self._mutable_outlines[0][i + 1], self._mutable_outlines[1][i])
-                plane = self.corrected_edge_plane(i, plane)
-            _edge_planes[i] = plane
-        return _edge_planes
+            if not self._edge_planes.get(i, None):
+                plane = Plane.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+                plane = self._corrected_edge_plane(i, plane)
+                self._edge_planes[i] = plane
+        return self._edge_planes
+
+    @property
+    def aabb(self):
+        return Box.from_points(self._mutable_outlines[0].points + self._mutable_outlines[1].points)
 
     def set_extension_plane(self, edge_index, plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
-        self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
+        self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
         if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
@@ -140,110 +117,24 @@ class PlateGeometry(Data):
 
     def apply_edge_extensions(self):
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
-        for edge_index, plane in self._extension_planes.items():
+        for edge_index, plane in self._edge_planes.items():
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
     def remove_blank_extension(self, edge_index=None):
-        """Removes any extension plane for the given edge index."""
+        """Reverts any extension plane for the given edge index to the original and adjusts that ."""
         if edge_index is None:
-            self._extension_planes = {}
-        elif edge_index in self._extension_planes:
-            del self._extension_planes[edge_index]
+            self.reset()
+        elif edge_index in self._edge_planes:
+            del self._edge_planes[edge_index]
+            plane = Plane.from_points(self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index])
+            for pl in self._mutable_outlines:
+                move_polyline_segment_to_plane(pl, edge_index, plane)
 
-    @reset_computed
     def reset(self):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
         self._edge_frames = {}
-
-    # ==========================================================================
-    # Alternate constructors
-    # ==========================================================================
-
-    @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Panel.")
-
-    @classmethod
-    def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
-        """
-        Constructs a PlateGeometry from a polyline outline and a thickness.
-        The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
-
-        Parameters
-        ----------
-        outline : :class:`~compas.geometry.Polyline`
-            A polyline representing the outline of the plate geometry.
-        thickness : float
-            The thickness of the plate geometry.
-        vector : :class:`~compas.geometry.Vector`, optional
-            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of polyline openings to be added to the plate geometry.
-        **kwargs : dict, optional
-            Additional keyword arguments to be passed to the constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate geometry with the given outline and thickness.
-        """
-        # this ensure the plate geometry can always be computed
-        if TOL.is_zero(thickness):
-            thickness = TOL.absolute
-        # TODO: @obucklin `vector` is never actually used here, at most it is used to determine the direction of the thickness vector which is always calculated from the outline.
-        # TODO: is this the intention? should it maybe be replaced with some kind of a boolean flag?
-        if TOL.is_zero(thickness):
-            thickness = TOL.absolute
-        offset_vector = Frame.from_points(outline[0], outline[1], outline[-2]).normal  # gets frame perpendicular to outline
-        if vector:
-            if vector.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
-                offset_vector = -offset_vector
-        elif not is_polyline_clockwise(outline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
-            offset_vector = -offset_vector
-        offset_vector.unitize()
-        offset_vector *= thickness
-        outline_b = Polyline(outline).translated(offset_vector)
-        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
-
-    @classmethod
-    def from_brep(cls, brep, thickness, vector=None, **kwargs):
-        """Creates a plate from a brep.
-
-        Parameters
-        ----------
-        brep : :class:`~compas.geometry.Brep`
-            The brep of the plate.
-        thickness : float
-            The thickness of the plate.
-        vector : :class:`~compas.geometry.Vector`, optional
-            The vector in which the plate is extruded.
-        **kwargs : dict, optional
-            Additional keyword arguments.
-            These are passed to the :class:`~compas_timber.elements.PlateGeometry` constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.PlateGeometry`
-            A PlateGeometry object representing the plate with the given brep and thickness.
-        """
-
-        if len(brep.faces) > 1:
-            raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
-        face = brep.faces[0]
-        outer_polyline = None
-        inner_polylines = []
-        for loop in face.loops:
-            polyline_points = []
-            for edge in loop.edges:
-                polyline_points.append(edge.start_vertex.point)
-            polyline_points.append(polyline_points[0])
-            if loop.is_outer:
-                outer_polyline = Polyline(polyline_points)
-            else:
-                inner_polylines.append(Polyline(polyline_points))
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     # ==========================================================================
     #  Implementation of abstract methods
@@ -273,58 +164,6 @@ class PlateGeometry(Data):
             brep.cap_planar_holes()
             plate_geo -= brep
         return plate_geo
-
-    def compute_aabb(self, inflate=0.0):
-        # type: (float) -> compas.geometry.Box
-        """Computes the Axis Aligned Bounding Box (AABB) of the element.
-
-        Parameters
-        ----------
-        inflate : float, optional
-            Offset of box to avoid floating point errors.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Box`
-            The AABB of the element.
-
-        """
-        vertices = self.outline_a.points + self.outline_b.points
-        box = Box.from_points(vertices)
-        box.xsize += inflate
-        box.ysize += inflate
-        box.zsize += inflate
-        return box
-
-    def compute_obb(self, inflate=0.0):
-        # type: (float | None) -> compas.geometry.Box
-        """Computes the Oriented Bounding Box (OBB) of the element.
-
-        Returns
-        -------
-        :class:`compas.geometry.Box`
-            The OBB of the element.
-
-        """
-
-        obb = Box.from_points(self._mutable_outlines[0].points + self._mutable_outlines[1].points)
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
-        obb.transform(self.modeltransformation)
-        return obb
-
-    def compute_collision_mesh(self):
-        # type: () -> compas.datastructures.Mesh
-        """Computes the collision geometry of the element.
-
-        Returns
-        -------
-        :class:`compas.datastructures.Mesh`
-            The collision geometry of the element.
-
-        """
-        return self.obb.to_mesh()
 
     # ==========================================================================
     #  static methods
@@ -375,6 +214,7 @@ class PlateGeometry(Data):
         vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
+        PlateGeometry._check_outlines(local_outline_a, local_outline_b)
         openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,
@@ -388,7 +228,7 @@ class PlateGeometry(Data):
 
     @staticmethod
     def _check_outlines(outline_a, outline_b):
-        # type: (Polyline, Polyline) -> bool
+        # type: (Polyline, Polyline) -> None
         """Checks if the outlines are valid. Outlines should already be at the plate's local frame.
 
         Parameters
@@ -398,10 +238,9 @@ class PlateGeometry(Data):
         outline_b : :class:`~compas.geometry.Polyline`
             A line representing the associated outline of this plate.
 
-        Returns
-        -------
-        bool
-            True if the outlines are valid, False otherwise.
+        raises
+        ------
+        ValueError if the outlines are not valid.
 
         """
         if not TOL.is_allclose(outline_a[0], outline_a[-1]):

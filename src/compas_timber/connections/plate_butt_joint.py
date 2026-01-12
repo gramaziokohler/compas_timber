@@ -1,5 +1,3 @@
-from compas.geometry import Transformation
-
 from .joint import JointTopology
 from .plate_joint import PlateJoint
 
@@ -80,8 +78,8 @@ class PlateLButtJoint(PlateButtJoint):
         return "PlateLButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
     def _set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0].transformed(Transformation.from_frame(self.plate_a.frame).inverse()))
-        self.cross_plate.set_extension_plane(self.cross_segment_index, self._main_planes[1].transformed(Transformation.from_frame(self.cross_plate.frame).inverse()))
+        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0])
+        self.cross_plate.set_extension_plane(self.cross_segment_index, self._main_planes[1])
 
 
 class PlateTButtJoint(PlateButtJoint):
@@ -93,4 +91,4 @@ class PlateTButtJoint(PlateButtJoint):
         return "PlateTButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))
 
     def _set_edge_planes(self):
-        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0].transformed(Transformation.from_frame(self.main_plate.frame).inverse()))
+        self.main_plate.set_extension_plane(self.main_segment_index, self._cross_planes[0])

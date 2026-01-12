@@ -1,10 +1,14 @@
 from math import fabs
+from typing import Optional
 
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import Polygon
+from compas.geometry import Line
+from compas.geometry import angle_vectors
+from compas.geometry import intersection_line_line
 from compas.geometry import is_point_in_polygon_xy
 from compas.geometry import angle_vectors_signed
 from compas.geometry import add_vectors
@@ -500,6 +504,117 @@ def planar_surface_point_at(surface, u, v):
     return point
 
 
+def move_polyline_segment_to_line(polyline, segment_index, line):
+    """Move a segment of a polyline to lay colinear to the projection of a line on that polyline.
+    This is accomplished by extending the adjacent segments to intersect with the line.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    line : :class:`~compas.geometry.Line`
+        The line to intersect with.
+    """
+    start_pt = intersection_line_line(polyline.lines[segment_index - 1], line)[0]
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_line(polyline.lines[(segment_index + 1) % len(polyline.lines)], line)[0]
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt
+
+
+def join_polyline_segments(segments, close_loop=False):
+    """Join segments into a polyline."""
+    points = [segments[0].start, segments[0].end]
+    remaining_segments = segments[1:]
+    while remaining_segments:
+        for seg in remaining_segments:
+            if seg.start == points[-1]:
+                points.append(seg.end)
+                remaining_segments.remove(seg)
+                break
+            elif seg.end == points[-1]:
+                points.append(seg.start)
+                remaining_segments.remove(seg)
+                break
+            elif seg.end == points[0]:
+                points.insert(0, seg.start)
+                remaining_segments.remove(seg)
+                break
+            elif seg.start == points[0]:
+                points.insert(0, seg.end)
+                remaining_segments.remove(seg)
+                break
+        else:
+            break
+    if close_loop and not TOL.is_allclose(points[0], points[-1]):
+        print("closing loop")
+        points.append(points[0])
+    return Polyline(points)
+
+
+def polyline_from_brep_loop(loop):
+    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
+    return join_polyline_segments(segments, close_loop=True)
+
+
+def polylines_from_brep_face(face):
+    """Extract polylines from a BRep face.
+    Parameters
+    ----------
+    face : :class:`~compas.datastructures.BRepFace`
+        The BRep face to extract polylines from.
+    Returns
+    -------
+    tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
+        The extracted polylines.
+    """
+    outer = None
+    openings = []
+    for loop in face.loops:
+        if loop.is_outer:
+            outer = polyline_from_brep_loop(loop)
+        else:
+            openings.append(polyline_from_brep_loop(loop))
+    return outer, openings
+
+
+def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
+    """Get the vector normal to a polyline. if no normal direction is given, the normal is determined based on the polyline's winding order.
+    parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to get the normal vector from.
+    normal_direction : :class:`compas.geometry.Vector`, optional
+        A vector indicating the desired normal direction.
+
+    Returns
+    -------
+    :class:`compas.geometry.Vector`
+        The normal vector of the polyline.
+    """
+    offset_vector = Frame.from_points(polyline[0], polyline[1], polyline[-2]).normal  # gets frame perpendicular to outline
+    if normal_direction:
+        if normal_direction.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
+            offset_vector = -offset_vector
+    elif not is_polyline_clockwise(polyline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
+        offset_vector = -offset_vector
+    return offset_vector.unitized()
+
+
+def combine_parallel_segments(polyline, tol=TOL):
+    for i in range(len(polyline) - 2, 0, -1):
+        v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
+        if tol.is_zero(angle_vectors(v1, v2)):
+            polyline.points.pop(i)
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -514,4 +629,10 @@ __all__ = [
     "move_polyline_segment_to_plane",
     "planar_surface_point_at",
     "StrEnum",
+    "move_polyline_segment_to_line",
+    "join_polyline_segments",
+    "polyline_from_brep_loop",
+    "polylines_from_brep_face",
+    "get_polyline_normal_vector",
+    "combine_parallel_segments",
 ]
