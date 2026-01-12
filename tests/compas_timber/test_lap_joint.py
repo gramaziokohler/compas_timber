@@ -223,9 +223,13 @@ def test_create_x_lap_serialize():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    _ = XLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.5)
+    org_joint = XLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.3)
+
+    assert org_joint.__data__["cut_plane_bias"] == 0.3
 
     model = json_loads(json_dumps(model))
 
     assert len(model.joints) == 1
-    assert isinstance(list(model.joints)[0], XLapJoint)
+    joint: XLapJoint = list(model.joints)[0]
+    assert isinstance(joint, XLapJoint)
+    assert joint.cut_plane_bias == org_joint.cut_plane_bias
