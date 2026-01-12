@@ -83,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `FreeContour` constructors to work with new local geometry computation.
 * Fixed models with `XLapJoint` fail to serialize.
 * Fixed circular import cause by typing import in `slot.py`.
-* Fixed a bug in `DualContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
+* Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
