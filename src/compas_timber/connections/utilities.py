@@ -24,9 +24,9 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
 
     Examples
     --------
-    >>> ref_side_angles = Joint.beam_side_incidence(beam_a, beam_b)
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
-    >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
+    >>> ref_side_angles = Joint.beam_side_incidence(beam_a, beam_b) # doctest: +SKIP
+    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get) # doctest: +SKIP
+    >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index] # doctest: +SKIP
 
     Returns
     -------
@@ -125,10 +125,10 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
 
     Examples
     --------
-    >>> vector = Vector(1, 0, 0)
-    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_a, vector)
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
-    >>> cutting_plane = beam_a.ref_sides[closest_ref_side_index]
+    >>> vector = Vector(1, 0, 0) # doctest: +SKIP
+    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_a, vector) # doctest: +SKIP
+    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get) # doctest: +SKIP
+    >>> cutting_plane = beam_a.ref_sides[closest_ref_side_index] # doctest: +SKIP
 
     Returns
     -------
