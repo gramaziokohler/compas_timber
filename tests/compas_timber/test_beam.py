@@ -108,7 +108,7 @@ def test_deepcopy(beam):
 
     assert B2 is not B1
     assert B2.frame is not B1.frame
-    assert B2.width is B1.width
+    assert B2.width == B1.width
 
 
 def test_serialization_beam_with_joinery_processings(beam):
