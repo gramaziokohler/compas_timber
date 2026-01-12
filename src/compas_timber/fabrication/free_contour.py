@@ -1,12 +1,9 @@
-try:
-    from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-    if TYPE_CHECKING:
-        from compas.geometry import Polyline  # noqa: F401
+if TYPE_CHECKING:
+    from compas.geometry import Polyline  # noqa: F401
 
-        from compas_timber.elements import Plate  # noqa: F401
-except ImportError:
-    pass
+    from compas_timber.elements import Plate  # noqa: F401
 
 import math
 
