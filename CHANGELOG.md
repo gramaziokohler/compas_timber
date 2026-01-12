@@ -60,7 +60,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`.
 * Changed `ButtJoint.add_features()`, if the beams are coplanar it applies a `Pocket` feature otherwise a `Lap` feature.
-* Refactored `ButtJoint.__init__()` to accept `lap_feature: bool` parameter. 
+* Refactored `ButtJoint.__init__()` to accept `force_pocket: bool` and `conical_tool: bool` parameters.
+* Fixed minor bug in `Pocket.apply()` and `Pocket.from_volume_and_element()`
+* Changed default values for `Pocket.__init__()` to match BTLx standard values. 
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
