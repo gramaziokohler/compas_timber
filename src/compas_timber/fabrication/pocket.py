@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 import math
 from collections import OrderedDict
+from typing import Optional
+from typing import Union
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -87,20 +91,20 @@ class Pocket(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        start_x=0.0,
-        start_y=0.0,
-        start_depth=0.0,
-        angle=90.0,
-        inclination=90.0,
-        slope=0.0,
-        length=200.0,
-        width=50.0,
-        internal_angle=90.0,
-        tilt_ref_side=90.0,
-        tilt_end_side=90.0,
-        tilt_opp_side=90.0,
-        tilt_start_side=90.0,
-        machining_limits=None,
+        start_x: float =0.0,
+        start_y: float =0.0,
+        start_depth: float =0.0,
+        angle: float = 0.0,
+        inclination: float = 0.0,
+        slope: float =0.0,
+        length: float =200.0,
+        width: float =50.0,
+        internal_angle: float =90.0,
+        tilt_ref_side: float =90.0,
+        tilt_end_side: float =90.0,
+        tilt_opp_side: float =90.0,
+        tilt_start_side: float =90.0,
+        machining_limits: MachiningLimits =None,
         **kwargs
     ):
         super(Pocket, self).__init__(**kwargs)
@@ -139,11 +143,11 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @property
-    def params(self):
+    def params(self) -> PocketParams:
         return PocketParams(self)
 
     @property
-    def start_x(self):
+    def start_x(self) -> float:
         return self._start_x
 
     @start_x.setter
@@ -153,7 +157,7 @@ class Pocket(BTLxProcessing):
         self._start_x = start_x
 
     @property
-    def start_y(self):
+    def start_y(self) -> float:
         return self._start_y
 
     @start_y.setter
@@ -163,7 +167,7 @@ class Pocket(BTLxProcessing):
         self._start_y = start_y
 
     @property
-    def start_depth(self):
+    def start_depth(self) -> float:
         return self._start_depth
 
     @start_depth.setter
@@ -173,7 +177,7 @@ class Pocket(BTLxProcessing):
         self._start_depth = start_depth
 
     @property
-    def angle(self):
+    def angle(self) -> float:
         return self._angle
 
     @angle.setter
@@ -183,7 +187,7 @@ class Pocket(BTLxProcessing):
         self._angle = angle
 
     @property
-    def inclination(self):
+    def inclination(self) -> float:
         return self._inclination
 
     @inclination.setter
@@ -193,7 +197,7 @@ class Pocket(BTLxProcessing):
         self._inclination = inclination
 
     @property
-    def slope(self):
+    def slope(self) -> float:
         return self._slope
 
     @slope.setter
@@ -203,7 +207,7 @@ class Pocket(BTLxProcessing):
         self._slope = slope
 
     @property
-    def length(self):
+    def length(self) -> float:
         return self._length
 
     @length.setter
@@ -213,7 +217,7 @@ class Pocket(BTLxProcessing):
         self._length = length
 
     @property
-    def width(self):
+    def width(self) -> float:
         return self._width
 
     @width.setter
@@ -223,7 +227,7 @@ class Pocket(BTLxProcessing):
         self._width = width
 
     @property
-    def internal_angle(self):
+    def internal_angle(self) -> float:
         return self._internal_angle
 
     @internal_angle.setter
@@ -233,7 +237,7 @@ class Pocket(BTLxProcessing):
         self._internal_angle = internal_angle
 
     @property
-    def tilt_ref_side(self):
+    def tilt_ref_side(self) -> float:
         return self._tilt_ref_side
 
     @tilt_ref_side.setter
@@ -243,7 +247,7 @@ class Pocket(BTLxProcessing):
         self._tilt_ref_side = tilt_ref_side
 
     @property
-    def tilt_end_side(self):
+    def tilt_end_side(self) -> float:
         return self._tilt_end_side
 
     @tilt_end_side.setter
@@ -253,7 +257,7 @@ class Pocket(BTLxProcessing):
         self._tilt_end_side = tilt_end_side
 
     @property
-    def tilt_opp_side(self):
+    def tilt_opp_side(self) -> float:
         return self._tilt_opp_side
 
     @tilt_opp_side.setter
@@ -263,7 +267,7 @@ class Pocket(BTLxProcessing):
         self._tilt_opp_side = tilt_opp_side
 
     @property
-    def tilt_start_side(self):
+    def tilt_start_side(self) -> float:
         return self._tilt_start_side
 
     @tilt_start_side.setter
@@ -273,7 +277,7 @@ class Pocket(BTLxProcessing):
         self._tilt_start_side = tilt_start_side
 
     @property
-    def machining_limits(self):
+    def machining_limits(self) -> MachiningLimits:
         return self._machining_limits
 
     @machining_limits.setter
@@ -293,7 +297,7 @@ class Pocket(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_volume_and_element(cls, volume, element, machining_limits=None, ref_side_index=None):
+    def from_volume_and_element(cls, volume: Union[Polyhedron, Brep, Mesh], element: Union[Beam, Plate], machining_limits: Optional[dict] = None, ref_side_index: Optional[int]=None):
         """Construct a Pocket feature from a volume and a TimberElement.
 
         Parameters
@@ -539,7 +543,6 @@ class Pocket(BTLxProcessing):
                 geometry,
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
-
         try:
             return geometry - pocket_volume
         except Exception as e:
@@ -642,22 +645,21 @@ class Pocket(BTLxProcessing):
             end_frame = element.ref_sides[5]
             end_frame.translate(end_frame.normal * tol.absolute)
 
-
+        # Rotate the bottom frame so its xaxis is aligned to the axis of rotation.
         bottom_frame.rotate(math.radians(180-self.internal_angle), -bottom_frame.normal, point=bottom_frame.point)
 
-
         # tilt front frame
-        # FIXME: tilt_opp_side and tilt_red_side shoudl be swapped here, they probably are swapped in another palce too :-/
         if self.machining_limits["FaceLimitedFront"]:
-            front_frame = bottom_frame.rotated(math.radians(self.tilt_opp_side), bottom_frame.xaxis, point=bottom_frame.point)
+            front_frame = bottom_frame.rotated(-math.radians(self.tilt_ref_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = element.front_side(self.ref_side_index)
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
         if self.machining_limits["FaceLimitedBack"]:
-            back_frame = bottom_frame.rotated(math.radians(self.tilt_ref_side), -bottom_frame.xaxis, point=bottom_frame.point)
-            back_frame.translate(back_frame.normal * self.width)
+            back_frame = bottom_frame.rotated(math.radians(180 - self.tilt_opp_side), -bottom_frame.xaxis, point=bottom_frame.point)
+            # back_frame.translate(back_frame.normal * self.width)
+            back_frame.translate(bottom_frame.yaxis * self.width)
         else:
             back_frame = element.back_side(self.ref_side_index)
             back_frame.translate(back_frame.normal * tol.absolute)
