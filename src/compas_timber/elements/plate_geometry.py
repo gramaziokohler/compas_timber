@@ -60,7 +60,6 @@ class PlateGeometry(Data):
         super().__init__(**kwargs)
         self._original_outlines = (local_outline_a, local_outline_b)
         self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
-        self._edge_frames = {}
 
         self._planes = None
         self.openings = openings or []
@@ -89,7 +88,7 @@ class PlateGeometry(Data):
     def edge_planes(self):
         for i in range(len(self._mutable_outlines[0]) - 1):
             if not self._edge_planes.get(i, None):
-                plane = Plane.from_points(self.outline_a[i], self.outline_a[i + 1], self.outline_b[i])
+                plane = Plane.from_points([self.outline_a[i], self.outline_a[i + 1], self.outline_b[i]])
                 plane = self._corrected_edge_plane(i, plane)
                 self._edge_planes[i] = plane
         return self._edge_planes
@@ -119,14 +118,14 @@ class PlateGeometry(Data):
             self.reset()
         elif edge_index in self._edge_planes:
             del self._edge_planes[edge_index]
-            plane = Plane.from_points(self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index])
+            plane = Plane.from_points([self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index]])
             for pl in self._mutable_outlines:
                 move_polyline_segment_to_plane(pl, edge_index, plane)
 
     def reset(self):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
-        self._edge_frames = {}
+        self._edge_planes = {}
 
     # ==========================================================================
     #  Implementation of abstract methods
