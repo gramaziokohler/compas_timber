@@ -78,6 +78,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
 * Changed `Panel.__data__` to enable proper serialization.
 * Changed some `PlateJoint` properties and methods to private.
+* Changed `FreeContour` to compute geometry in local element coordinates.
+* Changed how `FreeContour` computes the `ref_side_index` when not provided.
+* Changed `FreeContour` constructors to work with new local geometry computation.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
