@@ -1,4 +1,4 @@
-from compas_timber.elements import Fastener
+from compas_timber.fasteners import Fastener
 
 
 def test_fastener_initialization():

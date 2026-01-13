@@ -4,8 +4,8 @@ from compas.geometry import Vector
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
-from compas_timber.elements import PlateFastener
-from compas_timber.elements import FastenerTimberInterface
+from compas_timber.fasteners import PlateFastener
+from compas_timber.fasteners import FastenerTimberInterface
 
 
 def test_create():

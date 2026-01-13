@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Optional
+
 # TODO: move this to compas_timber.fasteners
 from compas.data import Data
 from compas.geometry import Frame
@@ -8,6 +13,10 @@ from compas_model.elements import Element
 
 from compas_timber.fabrication import Drilling
 from compas_timber.utils import intersection_line_beam_param
+
+if TYPE_CHECKING:
+    from compas.geometry import Brep
+    from compas.geometry import Transformation
 
 
 class Fastener(Element):
@@ -53,25 +62,22 @@ class Fastener(Element):
         self.attributes.update(kwargs)
         self.debug_info = []
 
-    def __repr__(self):
-        # type: () -> str
+    def __repr__(self) -> str:
         return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)
 
-    def __str__(self):
-        # type: () -> str
+    def __str__(self) -> str:
         return "<Fastener {}>".format(self.name)
 
     @property
-    def is_fastener(self):
+    def is_fastener(self) -> bool:
         return True
 
     @property
-    def key(self):
-        # type: () -> int | None
+    def key(self) -> Optional[int]:
         return self.graphnode
 
     @property
-    def __data__(self):
+    def __data__(self) -> dict:
         return {
             "shape": self._shape,
             "transformation": self.transformation,
@@ -79,35 +85,30 @@ class Fastener(Element):
         }
 
     @property
-    def geometry(self):
+    def geometry(self) -> Brep:
         """The geometry of the element in the model's global coordinates."""
         if self._geometry is None:
             self._geometry = self.compute_modelgeometry()
         return self._geometry
 
-    def compute_elementgeometry(self):
-        """Returns the geometry of the fastener in the model.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Geometry`
-            The transformed geometry of the fastener.
-        """
-        return self.shape.transformed(self.transformation)
-
-    def compute_modeltransformation(self):
+    def compute_modeltransformation(self) -> Transformation:
         """Same as parent but handles standalone elements."""
         if not self.model:
             return self.transformation
         return super().compute_modeltransformation()
 
-    def compute_modelgeometry(self):
-        """Same as parent but handles standalone elements."""
+    def compute_modelgeometry(self) -> Brep:
+        """Computes the geometry of the element in model coordingares and taking into account the effect of interations with connected elements.
+
+        Returns:
+        -------
+        :class:`~compas.geometry.Geometry.Brep`
+        """
         if not self.model:
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 
-    def transformation_to_local(self):
+    def transformation_to_local(self) -> Transformation:
         """Compute the transformation to local coordinates of this element
         based on its position in the spatial hierarchy of the model.
 
@@ -116,7 +117,6 @@ class Fastener(Element):
         :class:`compas.geometry.Transformation`
 
         """
-        # type: () -> Transformation
         return self.modeltransformation.inverted()
 
 

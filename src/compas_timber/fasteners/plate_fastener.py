@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -14,11 +17,13 @@ from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.elements import Fastener
-from compas_timber.elements import FastenerTimberInterface
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.fasteners import Fastener
+from compas_timber.fasteners import FastenerTimberInterface
 from compas_timber.utils import intersection_line_line_param
 
+if TYPE_CHECKING:
+    from compas_timber.connections.joint import Joint
 TOL = Tolerance()
 
 
@@ -61,7 +66,7 @@ class PlateFastener(Fastener):
         self.debug_info = []
 
     @property
-    def __data__(self):
+    def __data__(self) -> dict:
         data = super(PlateFastener, self).__data__
         data["outline"] = self.outline
         data["thickness"] = self.thickness
@@ -84,16 +89,14 @@ class PlateFastener(Fastener):
             cutouts=data["cutouts"],
         )
 
-    def __repr__(self):
-        # type: () -> str
+    def __repr__(self) -> str:
         return "Plate Fastener(frame={!r}, name={})".format(self.frame, self.name)
 
-    def __str__(self):
-        # type: () -> str
+    def __str__(self) -> str:
         return "<Plate Fastener {} at frame={!r}>".format(self.name, self.frame)
 
     @property
-    def frame(self):
+    def frame(self) -> Frame:
         return self._frame
 
     @frame.setter
@@ -115,7 +118,8 @@ class PlateFastener(Fastener):
             for shape in interface.shapes:
                 yield shape
 
-    def set_default(self, joint):
+    # TODO: Shoud it be an alternate constructor?
+    def set_default(self, joint: Joint) -> None:
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
         if isinstance(joint.SUPPORTED_TOPOLOGY, list):
@@ -161,7 +165,7 @@ class PlateFastener(Fastener):
         elif 2 in joint_topo:  # JointTopology.TOPO_L TODO: implement
             raise NotImplementedError
 
-    def place_instances(self, joint):
+    def place_instances(self, joint: Joint) -> None:
         """Adds the fasteners to the joint.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
@@ -175,7 +179,7 @@ class PlateFastener(Fastener):
                 interface.element = element
             joint.fasteners.append(fastener)
 
-    def get_fastener_frames(self, joint):
+    def get_fastener_frames(self, joint: Joint) -> list[Frame]:
         """Calculates the frames of the fasteners.
 
         Returns
@@ -207,10 +211,15 @@ class PlateFastener(Fastener):
         back_frame.rotate(-math.pi / 2, back_frame.xaxis, back_point)
         return [front_frame, back_frame]
 
-    def validate_fastener_beam_compatibility(self, joint):
+    def validate_fastener_beam_compatibility(self, joint: Joint) -> tuple[int, int]:
         """Checks if the beams are compatible with the joint and sets the front and back face indices.
 
         returns the front and back face indices of the cross beam.
+
+        Returns
+        -------
+        tuple[int, int]
+            The front and back face indices of the cross beam.
 
         Raises
         ------
@@ -263,7 +272,7 @@ class PlateFastener(Fastener):
             interface.add_features(beam)
 
     @property
-    def shape(self):
+    def shape(self) -> Brep:
         """Constructs the base shape of the fastener.This is located at the origin of the XY plane with the x-axis pointing in the direction of the main_beam.
 
         Returns
@@ -296,7 +305,7 @@ class PlateFastener(Fastener):
                     self._shape += shape
         return self._shape
 
-    def compute_elementgeometry(self):
+    def compute_elementgeometry(self) -> Brep:
         """Compute the geomety of the element in local coordinates.
 
         Returns
@@ -304,16 +313,3 @@ class PlateFastener(Fastener):
         :class: `compas.geometry.Brep`
         """
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
-
-    def compute_modelgeometry(self):
-        return super().compute_modelgeometry()
-
-    # def compute_geometry(self):
-    #     """Constructs the geometry of the fastener as oriented in space.
-
-    #     Returns
-    #     -------
-    #     :class:`~compas.geometry.Brep`
-
-    #     """
-    #     return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None

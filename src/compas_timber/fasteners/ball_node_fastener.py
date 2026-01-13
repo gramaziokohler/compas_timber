@@ -8,10 +8,10 @@ from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
 
-from compas_timber.elements import Fastener
-from compas_timber.elements import FastenerTimberInterface
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.fasteners import Fastener
+from compas_timber.fasteners import FastenerTimberInterface
 from compas_timber.utils import correct_polyline_direction
 
 
