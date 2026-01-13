@@ -296,12 +296,24 @@ class PlateFastener(Fastener):
                     self._shape += shape
         return self._shape
 
-    def compute_geometry(self):
-        """Constructs the geometry of the fastener as oriented in space.
+    def compute_elementgeometry(self):
+        """Compute the geomety of the element in local coordinates.
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
-
+        :class: `compas.geometry.Brep`
         """
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None
+
+    def compute_modelgeometry(self):
+        return super().compute_modelgeometry()
+
+    # def compute_geometry(self):
+    #     """Constructs the geometry of the fastener as oriented in space.
+
+    #     Returns
+    #     -------
+    #     :class:`~compas.geometry.Brep`
+
+    #     """
+    #     return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None

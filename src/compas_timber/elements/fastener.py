@@ -78,6 +78,13 @@ class Fastener(Element):
             "interfaces": self.interfaces,
         }
 
+    @property
+    def geometry(self):
+        """The geometry of the element in the model's global coordinates."""
+        if self._geometry is None:
+            self._geometry = self.compute_modelgeometry()
+        return self._geometry
+
     def compute_elementgeometry(self):
         """Returns the geometry of the fastener in the model.
 
@@ -87,6 +94,30 @@ class Fastener(Element):
             The transformed geometry of the fastener.
         """
         return self.shape.transformed(self.transformation)
+
+    def compute_modeltransformation(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.transformation
+        return super().compute_modeltransformation()
+
+    def compute_modelgeometry(self):
+        """Same as parent but handles standalone elements."""
+        if not self.model:
+            return self.elementgeometry.transformed(self.transformation)
+        return super().compute_modelgeometry()
+
+    def transformation_to_local(self):
+        """Compute the transformation to local coordinates of this element
+        based on its position in the spatial hierarchy of the model.
+
+        Returns
+        -------
+        :class:`compas.geometry.Transformation`
+
+        """
+        # type: () -> Transformation
+        return self.modeltransformation.inverted()
 
 
 class FastenerTimberInterface(Data):
