@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `panel_features` directory and `PanelFeature` abstract base class.
 * Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
+* Added `move_polyline_segment_to_line` to compas_timber.utils.
+* Added `join_polyline_segments` to compas_timber.utils.
+* Added `polyline_from_brep_loop` to compas_timber.utils.
+* Added `polylines_from_brep_face` to compas_timber.utils.
+* Added `get_polyline_normal_vector` to compas_timber.utils.
+* Added `combine_parallel_segments` to compas_timber.utils.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
