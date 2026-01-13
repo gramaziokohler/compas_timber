@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 
     from compas_timber.panel_features import PanelFeature  # noqa: F401
 
-from compas.geometry import Frame
 from compas.geometry import Box
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -210,7 +210,7 @@ class Panel(Element):
         self.debug_info = []
 
     @reset_computed
-    def remove_features(self, features: Optional[Union[PanelFeature,list[PanelFeature]]] = None) -> None:
+    def remove_features(self, features: Optional[Union[PanelFeature, list[PanelFeature]]] = None) -> None:
         """Removes interfaces from the element.
 
         Parameters
@@ -222,7 +222,7 @@ class Panel(Element):
         if features is None:
             self._features = []
         else:
-            feature_list=features if isinstance(features, list) else [features]
+            feature_list = features if isinstance(features, list) else [features]
             self._features = [f for f in self.features if f not in feature_list]
 
     @property

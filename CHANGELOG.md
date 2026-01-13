@@ -84,6 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed models with `XLapJoint` fail to serialize.
 * Fixed circular import cause by typing import in `slot.py`.
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
+* Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
+* Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
 
 
 ### Removed
