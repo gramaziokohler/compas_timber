@@ -2,6 +2,7 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
+from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 
@@ -222,8 +223,11 @@ class BeamStock(Stock):
         bool
             True if beam is compatible with this stock, False otherwise
         """
-        beam_cross_section = [beam.width, beam.height]
-        return set(beam_cross_section) == set(self.cross_section)
+        # Use a tolerance-based comparison for cross-section dimensions, regardless of order.
+        # Compare as sets, but with tolerance: both must have the same two values, order-insensitive.
+        a, b = sorted(self.cross_section)
+        x, y = sorted([beam.width, beam.height])
+        return TOL.is_close(a, x) and TOL.is_close(b, y)
 
     def add_element(self, beam):
         """
