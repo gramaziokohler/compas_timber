@@ -129,22 +129,18 @@ class Beam(TimberElement):
         Compared to `shape`, this box includes any extensions added to the beam."""
         # type: () -> Box
         if not self._blank:
+            # NOTE: the end result is transfomed, so we need only unscaled attributes here
             start, _ = self._resolve_blank_extensions()
-            blank = Box(self.blank_length, self._width, self._height)
-            blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
+            unscaled_blank_length = self._calculate_blank_length()
+            blank = Box(unscaled_blank_length, self._width, self._height)
+            blank.translate(Vector.Xaxis() * ((unscaled_blank_length * 0.5) - start))
             self._blank = blank.transformed(self.modeltransformation)
         return self._blank
 
     @property
     def blank_length(self):
         # type: () -> float
-        start, end = self._resolve_blank_extensions()
-        return self._length + start + end
-
-    @property
-    def blank_length_scaled(self):
-        # type: () -> float
-        unscaled_blank_length = self.blank_length
+        unscaled_blank_length = self._calculate_blank_length()
         x_scale_factor = self.modeltransformation.scale.matrix[0][0]
         return unscaled_blank_length * x_scale_factor
 
@@ -154,6 +150,12 @@ class Beam(TimberElement):
         # type: () -> Line
         line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self._length)
         return line.transformed(self.modeltransformation)
+
+    def _calculate_blank_length(self) -> float:
+        # type: () -> float
+        """Calculate the blank length including any extensions added to the beam."""
+        start, end = self._resolve_blank_extensions()
+        return self._length + start + end
 
     # ==========================================================================
     # Implementations of abstract methods
