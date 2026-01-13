@@ -530,30 +530,32 @@ def move_polyline_segment_to_line(polyline, segment_index, line):
 
 def join_polyline_segments(segments, close_loop=False):
     """Join segments into a polyline."""
+    #TODO: make this recursively get multiple polylines if segments are not connected
+    def add_seg_to_points(seg, points):
+        if seg.start == points[-1]:
+            points.append(seg.end)
+            return True
+        elif seg.end == points[-1]:
+            points.append(seg.start)
+            return True
+        elif seg.end == points[0]:
+            points.insert(0, seg.start)
+            return True
+        elif seg.start == points[0]:
+            points.insert(0, seg.end)
+            return True
+        return False
+
     points = [segments[0].start, segments[0].end]
     remaining_segments = segments[1:]
     while remaining_segments:
         for seg in remaining_segments:
-            if seg.start == points[-1]:
-                points.append(seg.end)
+            if add_seg_to_points(seg, points):
                 remaining_segments.remove(seg)
                 break
-            elif seg.end == points[-1]:
-                points.append(seg.start)
-                remaining_segments.remove(seg)
-                break
-            elif seg.end == points[0]:
-                points.insert(0, seg.start)
-                remaining_segments.remove(seg)
-                break
-            elif seg.start == points[0]:
-                points.insert(0, seg.end)
-                remaining_segments.remove(seg)
-                break
-        else:
+        else: #no matching seg found
             break
     if close_loop and not TOL.is_allclose(points[0], points[-1]):
-        print("closing loop")
         points.append(points[0])
     return Polyline(points)
 
@@ -599,6 +601,8 @@ def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Ve
         The normal vector of the polyline.
     """
     offset_vector = Frame.from_points(polyline[0], polyline[1], polyline[-2]).normal  # gets frame perpendicular to outline
+    print("offset vector before correction:", offset_vector)
+    print("is polyline clockwise?", is_polyline_clockwise(polyline, offset_vector))
     if normal_direction:
         if normal_direction.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
             offset_vector = -offset_vector

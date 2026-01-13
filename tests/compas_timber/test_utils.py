@@ -7,6 +7,7 @@ from compas.geometry import Plane
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import angle_vectors
+from compas.geometry import Brep
 
 from compas_timber.utils import intersection_line_line_param
 from compas_timber.utils import intersection_line_plane_param
@@ -17,6 +18,12 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import do_segments_overlap
 from compas_timber.utils import distance_segment_segment
 from compas_timber.utils import get_segment_overlap
+from compas_timber.utils import move_polyline_segment_to_line
+from compas_timber.utils import join_polyline_segments
+from compas_timber.utils import polyline_from_brep_loop
+from compas_timber.utils import polylines_from_brep_face
+from compas_timber.utils import get_polyline_normal_vector
+from compas_timber.utils import combine_parallel_segments
 
 
 def test_intersection_line_line_param():
@@ -226,3 +233,101 @@ def test_get_segment_overlap():
 
     for seg_b, o in zip(segs, expected_overlaps):
         assert get_segment_overlap(seg_a, seg_b) == o
+
+
+def test_move_polyline_segment_to_line():
+    polyline = Polyline([[0, 0, 0], [2, 0, 0], [3, 2, 0], [0, 2, 0], [0, 0, 0]])
+    line = Line([2, 0, 0], [2, 2, 0])
+    move_polyline_segment_to_line(polyline, 1, line)
+    expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert polyline == expected
+
+def test_move_polyline_segment_to_line_angled():
+    polyline = Polyline([[0, 0, 0], [3, 3, 0], [5, 3, 0], [8, 0, 0], [0, 0, 0]])
+    line = Line([0, 2, 0], [8, 2, 0])
+    move_polyline_segment_to_line(polyline, 1, line)
+    expected = Polyline([[0, 0, 0], [2, 2, 0], [6, 2, 0], [8, 0, 0], [0, 0, 0]])
+    assert polyline == expected
+
+def test_join_polyline_segments():
+    segments = [
+        Line([0, 0, 0], [1, 0, 0]),
+        Line([1, 0, 0], [1, 1, 0]),
+        Line([1, 1, 0], [0, 1, 0]),
+        Line([0, 1, 0], [0, 0, 0]),
+    ]
+    polyline = join_polyline_segments(segments, close_loop=False)
+    expected = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    assert polyline == expected
+
+def test_join_polyline_segments_close_loop():
+    segments = [
+        Line([0, 0, 0], [1, 0, 0]),
+        Line([1, 0, 0], [1, 1, 0]),
+        Line([1, 1, 0], [0, 1, 0]),
+    ]
+    polyline = join_polyline_segments(segments, close_loop=True)
+    expected = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    assert polyline == expected
+
+def test_join_polyline_segments_segs_flipped():
+    segments = [
+        Line([0, 0, 0], [1, 0, 0]),
+        Line([1, 1, 0], [1, 0, 0]),
+        Line([1, 1, 0], [0, 1, 0]),
+        Line([0, 0, 0], [0, 1, 0]),
+    ]
+    polyline = join_polyline_segments(segments, close_loop=True)
+    expected = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    assert polyline == expected
+
+def test_join_polyline_segments_wrong_order():
+    segments = [
+        Line([0, 0, 0], [1, 0, 0]),
+        Line([0, 0, 0], [0, 1, 0]),
+        Line([1, 1, 0], [1, 0, 0]),
+        Line([1, 1, 0], [0, 1, 0]),
+    ]
+    polyline = join_polyline_segments(segments, close_loop=True)
+    expected = Polyline([[0, 1, 0], [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+    assert polyline == expected
+
+def test_join_polyline_segments_open():
+    segments = [
+        Line([0, 0, 0], [1, 0, 0]),
+        Line([1, 0, 0], [1, 1, 0]),
+    ]
+    polyline = join_polyline_segments(segments, close_loop=False)
+    expected = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+    assert polyline == expected
+
+
+def test_get_polyline_normal_vector():
+    polyline = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    normal = get_polyline_normal_vector(polyline)
+    expected = Vector(0, 0, -1)
+    assert TOL.is_allclose(normal, expected)
+
+def test_get_polyline_normal_vector_reversed():
+    polyline = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
+    normal = get_polyline_normal_vector(polyline)
+    expected = Vector(0, 0, 1)
+    assert TOL.is_allclose(normal, expected)
+
+def test_get_polyline_normal_vector_with_direction():
+    polyline = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
+    normal = get_polyline_normal_vector(polyline, Vector(0, 1, -1))
+    expected = Vector(0, 0, -1)
+    assert TOL.is_allclose(normal, expected)
+
+def test_get_polyline_normal_vector_angled():
+    polyline = Polyline([[0, 0, 0], [1, 0, 1], [1, 1, 1], [0, 1, 0], [0, 0, 0]])
+    normal = get_polyline_normal_vector(polyline)
+    expected = Vector((2.0**0.5)/2.0, 0, -(2.0**0.5)/2.0)
+    assert TOL.is_allclose(normal, expected)
+
+def test_combine_parallel_segments():
+    polyline = Polyline([[0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 1, 0], [2, 2, 0], [1, 2, 0], [0, 2, 0], [0, 0, 0]])
+    combine_parallel_segments(polyline)
+    expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert polyline == expected
