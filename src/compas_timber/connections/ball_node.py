@@ -138,5 +138,5 @@ class BallNodeJoint(Joint):
             beam.add_features(interface.get_features(beam))
 
     def restore_beams_from_keys(self, model):
-        self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
-        self.fastener = model.element_by_guid(self._fastener_guid)
+        self.beams = [model[guid] for guid in self._beam_guids]
+        self.fastener = model[self._fastener_guid]
