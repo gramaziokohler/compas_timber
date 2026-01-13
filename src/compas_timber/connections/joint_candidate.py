@@ -59,8 +59,8 @@ class JointCandidate(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to elements saved in the model."""
-        self.element_a = model.element_by_guid(self.element_a_guid)
-        self.element_b = model.element_by_guid(self.element_b_guid)
+        self.element_a = model[self.element_a_guid]
+        self.element_b = model[self.element_b_guid]
 
     def add_features(self):
         """This joint does not add any features."""
