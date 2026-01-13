@@ -83,6 +83,7 @@ class Plate(TimberElement):
     def __data__(self):
         data = super().__data__
         data["thickness"] = data.pop("height")
+        data.update(self.plate_geometry.__data__)
         return data
 
     def __init__(
@@ -184,7 +185,7 @@ class Plate(TimberElement):
     def features(self):
         if not self._outline_feature:
             # TODO FreeContour from Plate
-            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.plate_geometry.outline_a, self.plate_geometry.outline_b, self, interior=False)
+            self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
             # TODO remove openings from PlateGeometry, implement as feature.
             self._opening_features = [

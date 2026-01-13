@@ -114,8 +114,8 @@ class Panel(Element):
         data["length"] = self.length
         data["width"] = self.width
         data["thickness"] = self.height
-        data["name"] = self.name
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data.update(self.plate_geometry.__data__)
         return data
 
     def __init__(
