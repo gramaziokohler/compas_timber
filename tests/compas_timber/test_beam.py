@@ -111,6 +111,23 @@ def test_deepcopy(beam):
     assert B2.width == B1.width
 
 
+def test_eval_creates_beam():
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=60.0)
+    hopefully_another_beam = eval(repr(beam))
+
+    assert isinstance(hopefully_another_beam, Beam)
+    assert hopefully_another_beam.frame == beam.frame
+    assert hopefully_another_beam.length == beam.length
+    assert hopefully_another_beam.width == beam.width
+    assert hopefully_another_beam.height == beam.height
+
+
+def test_beam_str():
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=60.0, name="Melissa")
+
+    assert str(beam) == "Beam name: 'Melissa'  l:1000.000 w:100.000  h:60.000"
+
+
 def test_serialization_beam_with_joinery_processings(beam):
     cut = JackRafterCut()
 

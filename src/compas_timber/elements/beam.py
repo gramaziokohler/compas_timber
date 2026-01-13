@@ -100,12 +100,7 @@ class Beam(TimberElement):
         return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self._length, self._width, self._height)
 
     def __str__(self):
-        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
-            self.width,
-            self.height,
-            self.length,
-            self.frame,
-        )
+        return f"Beam name: '{self.name}'  l:{self.length:.3f} w:{self.width:.3f}  h:{self.height:.3f}"
 
     # ==========================================================================
     # Computed attributes
