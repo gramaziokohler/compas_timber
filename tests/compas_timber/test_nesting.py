@@ -7,7 +7,7 @@ from compas.geometry import Frame
 from compas.geometry import Polyline
 
 from compas_timber.elements import Beam
-from compas_timber.elements import Slab
+from compas_timber.elements import Panel
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import BeamNester
@@ -436,7 +436,7 @@ def test_nest_per_group_basic():
     model = TimberModel()
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with 2 beams
-    group_a = Slab(outline=polyline, thickness=0)
+    group_a = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_a)
@@ -444,7 +444,7 @@ def test_nest_per_group_basic():
     model.add_element(beam_a2, parent=group_a)
 
     # Create Group B with 2 beams
-    group_b = Slab(outline=polyline, thickness=0)
+    group_b = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_b1 = Beam(frame=Frame.worldXY(), length=800, width=120, height=60)
     beam_b2 = Beam(frame=Frame.worldXY(), length=1200, width=120, height=60)
     model.add_element(group_b)
@@ -490,7 +490,7 @@ def test_nest_per_group_with_standalone_beams():
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create a group with 2 beams
-    group = Slab(outline=polyline, thickness=0)
+    group = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_g1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_g2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group)
@@ -528,11 +528,11 @@ def test_nest_per_group_empty_groups():
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create an empty group
-    empty_group = Slab(outline=polyline, thickness=0)
+    empty_group = Panel.from_outline_thickness(outline=polyline, thickness=0)
     model.add_element(empty_group)
 
     # Add a group with beams
-    group_with_beams = Slab(outline=polyline, thickness=0)
+    group_with_beams = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_with_beams)
@@ -558,7 +558,7 @@ def test_nest_per_group_multiple_sections():
     model = TimberModel()
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with beams of multiple cross-sections
-    group_a = Slab(outline=polyline, thickness=0)
+    group_a = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
     model.add_element(group_a)

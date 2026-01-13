@@ -913,7 +913,7 @@ class LapProxy(object):
         return self.unproxified()
 
     def __init__(self, volume, beam, machining_limits=None, ref_side_index=None):
-        self.volume = volume
+        self.volume = volume.transformed(beam.transformation_to_local())
         self.beam = beam
         self.machining_limits = machining_limits
         self.ref_side_index = ref_side_index
@@ -928,7 +928,8 @@ class LapProxy(object):
 
         """
         if not self._processing:
-            self._processing = Lap.from_volume_and_beam(self.volume, self.beam, self.machining_limits, self.ref_side_index)
+            volume = self.volume.transformed(self.beam.modeltransformation)
+            self._processing = Lap.from_volume_and_beam(volume, self.beam, self.machining_limits, self.ref_side_index)
         return self._processing
 
     @classmethod

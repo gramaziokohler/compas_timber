@@ -23,12 +23,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.fabrication.BTLxGenericPart` as a new base class for BTLx part representations, upstreaming shared functionality from `BTLxPart` and `BTLxRawpart`.
 * Added new `compas_timber.fabrication.BTLxRawpart`, inheriting from `BTLxGenericPart`, to support raw part handling and nesting operations within the BTLx framework.
 * Added `reset_timber_attrs` decorator to invalidate cached `TimberElement` attributes.
-* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operation.
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `PlateGeometry` class.
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
+* Added new `DrillingProxy` and `DoubleCutProxy` classes.
 * Added `planar_surface_point_at` to `compas_timber.utils`.
+* Added `Panel` class as a renaming of `Slab`.
+* Added `**kwargs` argument to `LongitudinalCut` and `LongitudinalCutProxy` constructors to allow passing additional parameters, particularly `is_joinery=False` to keep the processing during serialization.
+* Added `PanelJoint` abstract base class for panel joints.
+* Added `PanelLButtJoint` class.
+* Added `PanelTButtJoint` class.
+* Added `PanelMiterJoint` class.
+* Added `TimberModel.connect_adjacent_panels()` method to find and create joint candidates between panels.
+* Added `PanelFeatureType` class for classifying panel feature types.
+* Added `panel_features` directory and `PanelFeature` abstract base class.
+* Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
+* Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 * Added `NestedElementData` class to `compas_timber.planning` for explicit typing of nested element information.
+* Added new `summary` property in `compas_timber.planning.NestingResult` that returns a human-readable string summarizing the nesting operation.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -52,14 +64,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
-* Refactored `BTLxGenericPart` to accept an optional name, now used for the `Annotation` and `ElementNumber` attributes in the `BTLxPart` and `BTLxRawpart` outputs.
-* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a `NestedElementData` object containing its frame, a human-readable key, and length.
-* Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Fixed the `ShowTopologyTypes` GH Component.
+* Changed `Slot.apply()` to visualize the slot geometry. 
+* Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
+* Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
+* Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `LongitudinalCut` to properly generate `tool_position` parameter.
+* Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
+* Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
+* Changed `Panel.__data__` to enable proper serialization.
+* Changed some `PlateJoint` properties and methods to private.
+* Changed `FreeContour` to compute geometry in local element coordinates.
+* Changed how `FreeContour` computes the `ref_side_index` when not provided.
+* Changed `FreeContour` constructors to work with new local geometry computation.
+* Fixed models with `XLapJoint` fail to serialize.
+* Fixed circular import cause by typing import in `slot.py`.
+* Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
+* Refactored `BTLxGenericPart` to accept an optional name, now used for the `Annotation` and `ElementNumber` attributes in the `BTLxPart` and `BTLxRawpart` outputs.
+* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a `NestedElementData` object containing its frame, a human-readable key, and length.
+* Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -71,6 +99,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed all Rhino7 components!
 * Removed method `add_group_element` from `TimberModel`.
 * Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
+* Removed `Wall`, `WallJoint`, `WallToWallInterface`, `InterfaceRole`, `InterfaceLocation`, `Opening`, `OpeningType`,
+  `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
+  GH components and component functionality.
+* Removed `Slab` class and renamed to `Panel`.
+* Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 
 ## [1.0.1] 2025-10-16
 

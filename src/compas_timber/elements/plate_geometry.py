@@ -1,3 +1,4 @@
+from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -18,9 +19,9 @@ from compas_timber.utils import is_polyline_clockwise
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
-class PlateGeometry(object):
+class PlateGeometry(Data):
     """
-    A class to represent plate-like objects (plate, slab, etc.) defined by polylines on top and bottom faces of shape.
+    A class to represent plate-like objects (plate, panel, etc.) defined by polylines on top and bottom faces of shape.
 
     Parameters
     ----------
@@ -29,8 +30,8 @@ class PlateGeometry(object):
     local_outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should be declared in the local frame of the plate and have the same number of points as outline_a.
         Must be parallel to outline_a. Must be in the +Z direction of the frame.
-    openings : list[:class:`~compas_timber.elements.Opening`], optional
-        A list of Opening objects representing openings in this plate.
+    openings : list[:class:`~compas.geometry.Polyline`], optional
+        A list of Polyline objects representing openings in this plate.
 
     Attributes
     ----------
@@ -52,17 +53,21 @@ class PlateGeometry(object):
         The geometry of the Plate before other machining features are applied.
     interfaces : list
         List of interfaces associated with this plate.
-    openings : list[:class:`~compas_timber.elements.Opening`]
-        A list of Opening objects representing openings in this plate.
+    openings : list[:class:`~compas.geometry.Polyline`]
+        A list of Polyline objects representing openings in this plate.
 
     """
 
     @property
     def __data__(self):
-        data = {"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1], "openings": self.openings}
+        data = super().__data__
+        data["local_outline_a"] = self._original_outlines[0]
+        data["local_outline_b"] = self._original_outlines[1]
+        data["openings"] = self.openings
         return data
 
-    def __init__(self, local_outline_a, local_outline_b, openings=None):
+    def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
+        super().__init__(**kwargs)
         self._original_outlines = (local_outline_a, local_outline_b)
         self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
         self._edge_frames = {}
@@ -158,7 +163,7 @@ class PlateGeometry(object):
 
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
-        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Slab.")
+        raise NotImplementedError("PlateGeometry is an abstract class and cannot be instantiated directly. Please use a subclass such as Plate or Panel.")
 
     @classmethod
     def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
@@ -174,8 +179,8 @@ class PlateGeometry(object):
             The thickness of the plate geometry.
         vector : :class:`~compas.geometry.Vector`, optional
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
-        openings : list[:class:`~compas_timber.elements.Opening`], optional
-            A list of openings to be added to the plate geometry.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of polyline openings to be added to the plate geometry.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -357,7 +362,6 @@ class PlateGeometry(object):
         # flip frame so that outline_b is in the +Z direction
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-
         # transform outlines to worldXY
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
