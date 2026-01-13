@@ -146,9 +146,7 @@ class FreeContour(BTLxProcessing):
         top_polyline = top_polyline.transformed(transformation_to_local)
         bottom_polyline = bottom_polyline.transformed(transformation_to_local)
         if not cls.are_all_segments_parallel(top_polyline, bottom_polyline):  # use DualContour
-            points_principal = [pt for pt in top_polyline]
-            points_associated = [pt for pt in bottom_polyline]
-            contour = DualContour(points_principal, points_associated)
+            contour = DualContour(top_polyline, bottom_polyline)
         else:  # use Contour with inclination
             inclinations = []
             for top_line, bottom_line in zip(top_polyline.lines, bottom_polyline.lines):
