@@ -1,5 +1,16 @@
+from __future__ import annotations
+
 from abc import ABC
+from typing import TYPE_CHECKING
 from typing import Union
+
+if TYPE_CHECKING:
+    from compas.datastructures import Mesh  # noqa: F401
+    from compas.geometry import Brep  # noqa: F401
+    from compas.geometry import Frame  # noqa: F401
+
+    from compas_timber.elements import Panel  # noqa: F401
+
 
 from compas.geometry import Frame
 from compas.geometry import Geometry
@@ -46,3 +57,7 @@ class PanelFeature(Element, ABC):
         if not self.model:
             return self.elementgeometry.transformed(self.transformation)  # type: ignore
         return super().compute_modelgeometry()  # type: ignore
+
+    def apply(self, geometry: Union[Brep, Mesh], panel: Panel) -> Union[Brep, Mesh]:
+        """Apply the panel feature to the panel geometry."""
+        return geometry

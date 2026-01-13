@@ -1,3 +1,5 @@
+from typing import Optional
+
 from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -77,15 +79,15 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @property
-    def outline_a(self):
+    def outline_a(self) -> Polyline:
         return self._mutable_outlines[0]
 
     @property
-    def outline_b(self):
+    def outline_b(self) -> Polyline:
         return self._mutable_outlines[1]
 
     @property
-    def edge_planes(self):
+    def edge_planes(self) -> dict[int, Plane]:
         for i in range(len(self._mutable_outlines[0]) - 1):
             if not self._edge_planes.get(i, None):
                 plane = Plane.from_points([self.outline_a[i], self.outline_a[i + 1], self.outline_b[i]])
@@ -94,10 +96,10 @@ class PlateGeometry(Data):
         return self._edge_planes
 
     @property
-    def aabb(self):
+    def aabb(self) -> Box:
         return Box.from_points(self._mutable_outlines[0].points + self._mutable_outlines[1].points)
 
-    def set_extension_plane(self, edge_index, plane):
+    def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
         self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
@@ -112,7 +114,7 @@ class PlateGeometry(Data):
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
-    def remove_blank_extension(self, edge_index=None):
+    def remove_blank_extension(self, edge_index: Optional[int] = None):
         """Reverts any extension plane for the given edge index to the original and adjusts that ."""
         if edge_index is None:
             self.reset()
@@ -131,8 +133,7 @@ class PlateGeometry(Data):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    def compute_shape(self):
-        # type: () -> compas.geometry.Brep
+    def compute_shape(self) -> Brep:
         """The shape of the plate before other features area applied.
 
         Returns
@@ -161,7 +162,7 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @staticmethod
-    def get_args_from_outlines(outline_a, outline_b, openings=None):
+    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None):
         """
         Get constructor arguments for the PlateGeometry and subclasses from outlines.
         Outlines and openings are transformed to the local frame of the plate.
@@ -218,7 +219,7 @@ class PlateGeometry(Data):
         }
 
     @staticmethod
-    def _check_outlines(outline_a, outline_b):
+    def _check_outlines(outline_a: Polyline, outline_b: Polyline) -> None:
         # type: (Polyline, Polyline) -> None
         """Checks if the outlines are valid. Outlines should already be at the plate's local frame.
 

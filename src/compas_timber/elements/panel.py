@@ -1,5 +1,17 @@
-from compas.geometry import Box
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+
+if TYPE_CHECKING:
+    from compas.datastructures import Mesh  # noqa: F401
+    from compas.geometry import Brep  # noqa: F401
+
+    from compas_timber.panel_features import PanelFeature  # noqa: F401
+
 from compas.geometry import Frame
+from compas.geometry import Box
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -78,6 +90,12 @@ class Panel(Element):
         Height (thickness) of the panel.
     thickness : float
         Thickness of the panel.
+    planes : tuple (:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`)
+        The two main planes of the panel (bottom and top).
+    normal : :class:`~compas.geometry.Vector`
+        The normal vector of the panel.
+    edge_planes : dict[int, :class:`~compas.geometry.Plane`]
+        The edge planes of the panel by edge index.
     name : str
         Name of the panel.
     interfaces : list
@@ -100,7 +118,18 @@ class Panel(Element):
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, **kwargs):
+    def __init__(
+        self,
+        frame: Frame,
+        length: float,
+        width: float,
+        thickness: float,
+        local_outline_a: Optional[Polyline] = None,
+        local_outline_b: Optional[Polyline] = None,
+        openings: Optional[list[Polyline]] = None,
+        type: Optional[str] = None,
+        **kwargs,
+    ):
         super(Panel, self).__init__(transformation=frame.to_transformation(), **kwargs)  # NOTE: Element wants a transfomration, not a frame
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
@@ -114,10 +143,10 @@ class Panel(Element):
         self.attributes.update(kwargs)
         self._planes = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     @property
@@ -152,7 +181,7 @@ class Panel(Element):
         # TODO: transform to global?
         return self.edge_planes
 
-    def set_extension_plane(self, edge_index, plane):
+    def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
 
@@ -160,9 +189,13 @@ class Panel(Element):
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
         self.plate_geometry.apply_edge_extensions()
 
-    def remove_blank_extension(self, edge_index=None):
+    def remove_blank_extension(self, edge_index: Optional[int] = None):
         """Removes any extension plane for the given edge index."""
         self.plate_geometry.remove_blank_extension(edge_index)
+
+    @property
+    def features(self) -> list[PanelFeature]:
+        return self._features
 
     @property
     def interfaces(self):
@@ -177,8 +210,7 @@ class Panel(Element):
         self.debug_info = []
 
     @reset_computed
-    def remove_features(self, features=None):
-        # type: (Optional[Union["PanelConnectionInterface", list["PanelConnectionInterface"]]]) -> None
+    def remove_features(self, features: Optional[Union[PanelFeature,list[PanelFeature]]] = None) -> None:
         """Removes interfaces from the element.
 
         Parameters
@@ -190,9 +222,8 @@ class Panel(Element):
         if features is None:
             self._features = []
         else:
-            if not isinstance(features, list):
-                features = [features]
-            self._features = [f for f in self.features if f not in features]
+            feature_list=features if isinstance(features, list) else [features]
+            self._features = [f for f in self.features if f not in feature_list]
 
     @property
     def is_group_element(self):
@@ -202,8 +233,7 @@ class Panel(Element):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    def compute_aabb(self, inflate=0.0):
-        # type: (float) -> compas.geometry.Box
+    def compute_aabb(self, inflate: float = 0.0) -> Box:
         """Computes the Axis Aligned Bounding Box (AABB) of the element.
 
         Parameters
@@ -224,8 +254,7 @@ class Panel(Element):
         box.zsize += inflate
         return box
 
-    def compute_obb(self, inflate=0.0):
-        # type: (float | None) -> compas.geometry.Box
+    def compute_obb(self, inflate: float = 0.0) -> Box:
         """Computes the Oriented Bounding Box (OBB) of the element.
 
         Returns
@@ -242,8 +271,7 @@ class Panel(Element):
         obb.transform(self.modeltransformation)
         return obb
 
-    def compute_collision_mesh(self):
-        # type: () -> compas.datastructures.Mesh
+    def compute_collision_mesh(self) -> Mesh:
         """Computes the collision geometry of the element.
 
         Returns
@@ -270,8 +298,7 @@ class Panel(Element):
         """Compute the transformation from model space to local element space."""
         return self.modeltransformation.inverse()
 
-    def compute_elementgeometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+    def compute_elementgeometry(self, include_features: bool = True) -> Brep:
         """Compute the geometry of the element.
 
         Parameters
@@ -297,7 +324,7 @@ class Panel(Element):
         return plate_geo.transformed(Transformation.from_frame(self.frame))
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
 
@@ -323,7 +350,7 @@ class Panel(Element):
         return cls(**kwargs)
 
     @classmethod
-    def from_outline_thickness(cls, outline, thickness, vector=None, openings=None, **kwargs):
+    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
@@ -356,7 +383,7 @@ class Panel(Element):
         return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep, thickness, vector=None, **kwargs):
+    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
         """Creates a plate from a brep.
 
         Parameters
@@ -381,4 +408,6 @@ class Panel(Element):
             raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
+        if not outer_polyline:
+            raise ValueError("no valid outer outline could be extracted from brep face.")
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
