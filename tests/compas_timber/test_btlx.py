@@ -86,10 +86,13 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
     assert len(part_elements) == len(test_model.beams)
 
     # Validate each Part element
-    for part, beam in zip(part_elements, test_model.beams):
+    for i, (part, beam) in enumerate(zip(part_elements, test_model.beams)):
         assert part.get("Length") == "{:.3f}".format(beam.blank_length)
         assert part.get("Height") == "{:.3f}".format(beam.height)
         assert part.get("Width") == "{:.3f}".format(beam.width)
+        assert part.get("OrderNumber") == str(i)
+        assert part.get("ElementNumber") == str(beam.guid)[:4]
+        assert part.get("Annotation") == f"{beam.name}-{str(beam.guid)[:4]}"
 
 
 def test_btlx_processings(resulting_btlx, test_model, namespaces):

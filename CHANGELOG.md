@@ -52,8 +52,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed bug in `LongitudinalCut` that occured when the cutting plane intersected a ref_side but the normals pointed away from each other, resulting in the cut parameter being out of range. 
 * Changed `JointRuleSolver.apply_rules_to_model()` to consider `JointCandidate`s pairwise if larger clusters fail to create joints. 
 * Improved performance of `TimberModel.process_joinery()` by caching some attributes of `TimberElement`. 
-* Refactor `BTLxWriter` to use `graphnode` as part identifier in `BTLxpart` creation instead of the enumeration index, for consistent part referencing.
-* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a dictionary containing its frame, a human-readable key, and length, instead of just the frame. 
+* Refactored `BTLxGenericPart` to accept an optional name, now used for the `Annotation` and `ElementNumber` attributes in the `BTLxPart` and `BTLxRawpart` outputs.
+* Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a `NestedElementData` object containing its frame, a human-readable key, and length.
 * Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 * Changed `Fastener`, `Slab`, `Wall` to inherit from `compas_model.Element` instead of `TimberElement`. `TimberElement` now represents BTLx parts exclusively.
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.

@@ -81,7 +81,7 @@ def test_beam_addition_and_capacity_tracking():
     assert str(beam1.guid) in stock.element_data
     assert isinstance(element_info, NestedElementData)
     assert element_info.frame == expected_frame1
-    assert element_info.key == beam1.graphnode
+    assert element_info.key == beam1.name + "-" + str(beam1.guid)[:4]
     assert element_info.length == beam1.blank_length
     assert stock._current_x_position == expected_x_position1
 
@@ -98,7 +98,7 @@ def test_beam_addition_and_capacity_tracking():
     assert str(beam2.guid) in stock.element_data
     assert isinstance(element_info, NestedElementData)
     assert element_info.frame == expected_frame2
-    assert element_info.key == beam2.graphnode
+    assert element_info.key == beam2.name + "-" + str(beam2.guid)[:4]
     assert element_info.length == beam2.blank_length
     assert stock._current_x_position == expected_x_position2
 
@@ -153,10 +153,10 @@ def test_serialization():
     element_data1 = restored_data.element_data[str(beam1.guid)]
     element_data2 = restored_data.element_data[str(beam2.guid)]
     assert isinstance(element_data1.frame, Frame)
-    assert element_data1.key == beam1.graphnode
+    assert element_data1.key == beam1.name + "-" + str(beam1.guid)[:4]
     assert element_data1.length == beam1.blank_length
     assert isinstance(element_data2.frame, Frame)
-    assert element_data2.key == beam2.graphnode
+    assert element_data2.key == beam2.name + "-" + str(beam2.guid)[:4]
     assert element_data2.length == beam2.blank_length
 
 

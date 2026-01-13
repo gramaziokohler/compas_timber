@@ -14,8 +14,8 @@ class NestedElementData(Data):
     ----------
     frame : :class:`~compas.geometry.Frame`
         The position frame of the element within the stock.
-    key : int, optional
-        A human-readable identifier/index for the element.
+    key : str, optional
+        A human-readable identifier for the element.
     length : float, optional
         The length of the element (for beams).
 
@@ -23,8 +23,8 @@ class NestedElementData(Data):
     ----------
     frame : :class:`~compas.geometry.Frame`
         The position frame of the element within the stock.
-    key : int or None
-        A human-readable identifier/index for the element.
+    key : str or None
+        A human-readable identifier for the element.
     length : float or None
         The length of the element (for beams), None if not applicable.
     """
@@ -252,7 +252,7 @@ class BeamStock(Stock):
         # Store element data using NestedElementData type
         self.element_data[str(beam.guid)] = NestedElementData(
             frame=position_frame,
-            key=beam.graphnode,
+            key=beam.name + "-" + str(beam.guid)[:4],
             length=beam.blank_length,
         )
 
