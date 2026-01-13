@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `get_element()` method to `compas_timber.model.TimberModel` for optional element access by GUID.
+* Added `__getitem__` support to `TimberModel` to allow strict element access via `model[guid]`. 
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
@@ -42,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 
 ### Changed
+* Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
