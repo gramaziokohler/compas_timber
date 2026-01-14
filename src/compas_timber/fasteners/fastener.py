@@ -23,8 +23,7 @@ class Fastener(Element):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
-    TODO: we should rethink this class. it is not entirely clear if it's an abstract class or a generic fastener.
-    It inherits from TimberElement/Element but does not implement the appropriate methods.
+    This is an abstract class.
 
     Parameters
     ----------
@@ -54,13 +53,16 @@ class Fastener(Element):
 
     """
 
-    def __init__(self, shape=None, frame=None, **kwargs):
+    def __init__(self, frame: Optional[Frame] = None, interfaces: Optional[list["Interface"]] = [], **kwargs):
         super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
-        self._shape = shape
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+
+    @property
+    def __data__(self) -> dict:
+        return {"transformation": self.transformation, "interfaces": self.interfaces, "attributes": self.attributes}
 
     def __repr__(self) -> str:
         return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)
@@ -77,14 +79,6 @@ class Fastener(Element):
         return self.graphnode
 
     @property
-    def __data__(self) -> dict:
-        return {
-            "shape": self._shape,
-            "transformation": self.transformation,
-            "interfaces": self.interfaces,
-        }
-
-    @property
     def geometry(self) -> Brep:
         """The geometry of the element in the model's global coordinates."""
         if self._geometry is None:
@@ -98,7 +92,7 @@ class Fastener(Element):
         return super().compute_modeltransformation()
 
     def compute_modelgeometry(self) -> Brep:
-        """Computes the geometry of the element in model coordingares and taking into account the effect of interations with connected elements.
+        """Computes the geometry of the element in model coordinates and taking into account the effect of interations with connected elements.
 
         Returns:
         -------
@@ -118,6 +112,13 @@ class Fastener(Element):
 
         """
         return self.modeltransformation.inverted()
+
+
+# -------
+
+
+class Interface:
+    pass
 
 
 class FastenerTimberInterface(Data):

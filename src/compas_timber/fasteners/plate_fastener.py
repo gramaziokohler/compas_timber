@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -64,6 +65,7 @@ class PlateFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+        self._shape = None
 
     @property
     def __data__(self) -> dict:
@@ -305,7 +307,7 @@ class PlateFastener(Fastener):
                     self._shape += shape
         return self._shape
 
-    def compute_elementgeometry(self) -> Brep:
+    def compute_elementgeometry(self) -> Optional[Brep]:
         """Compute the geomety of the element in local coordinates.
 
         Returns
