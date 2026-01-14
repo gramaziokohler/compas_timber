@@ -413,7 +413,7 @@ class NestingResult(Data):
                 for data in stock.element_data.values():
                     beam_keys.append(data.key)
                     lengths.append(data.length)
-                formatted_lengths = ["{:.{prec}f}".format(l, prec=self.tolerance.precision) for l in lengths]
+                formatted_lengths = ["{:.{prec}f}".format(len, prec=self.tolerance.precision) for len in lengths]
                 waste = stock.length - sum(lengths) if lengths else stock.length
                 # Formatted output
                 lines.append(f"BeamKeys: {beam_keys}")
