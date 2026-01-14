@@ -16,6 +16,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
+from compas.topology.traversal import PriorityQueue
 
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.errors import FastenerApplicationError

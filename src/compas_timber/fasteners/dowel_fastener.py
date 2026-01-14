@@ -17,6 +17,7 @@ from compas_timber.errors import FastenerApplicationError
 from compas_timber.fasteners.fastener import Fastener
 from compas_timber.fasteners.interface import HoleInterface
 from compas_timber.fasteners.interface import Interface
+from compas_timber.fasteners.interface import RecessInterface
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
@@ -50,7 +51,9 @@ class PlateFastener2(Fastener):
     @classmethod
     def __from_data__(cls, data):
         fastener = cls(frame=Frame.__from_data__(data["frame"]), outline=Polyline.__from_data__(data["outline"]), thickness=data["thickness"])
-        interfaces = [HoleInterface.__from_data__(interface) for interface in data["interfaces"]]
+
+        interfaces = [globals()[iface["type"]].__from_data__(iface) for iface in data.get("interfaces", [])]
+
         for interface in interfaces:
             fastener.add_interface(interface)
         return fastener
@@ -65,7 +68,6 @@ class PlateFastener2(Fastener):
 
     @property
     def to_joint_transformation(self) -> Frame:
-        print("Self Frame", self.frame)
         return Transformation.from_frame_to_frame(self.frame, self.target_frame)
 
     def add_interface(self, interface: Interface) -> None:
@@ -93,6 +95,7 @@ class PlateFastener2(Fastener):
         if self.interfaces:
             for interface in self.interfaces:
                 geometry = interface.apply_to_fastener_geometry(geometry)
+
         geometry.transform(self.to_joint_transformation)
 
         return geometry
@@ -102,10 +105,12 @@ class PlateFastener2(Fastener):
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
+        This methoud shoudl be called bz Joint.apply() and not Joint.create()
+        Joint.apply() adds the features to the TimberElements, so does this method.
+
         """
         # get the frame where to pui the fastener on the joint
         frames = self.get_fastener_frames(joint)
-        print(frames)
         # build the fastener to append on the joint
         for frame in frames:
             joint_fastener = self.copy()
@@ -113,6 +118,9 @@ class PlateFastener2(Fastener):
 
             for interface, element in zip(joint_fastener.interfaces, joint.elements):
                 interface.element = element
+
+            for interface in joint_fastener.interfaces:
+                interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
 
             joint.fasteners.append(joint_fastener)
 

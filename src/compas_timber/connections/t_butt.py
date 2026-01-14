@@ -48,16 +48,16 @@ class TButtJoint(ButtJoint):
             if self.base_fastener:
                 self.base_fastener.place_instances(self)
 
-    @property
-    def interactions(self):
-        """Returns interactions between elements used by this joint."""
-        interactions = []
-        interactions.append((self.main_beam, self.cross_beam))
-        for fastener in self.fasteners:
-            for interface in fastener.interfaces:
-                if interface is not None:
-                    interactions.append((interface.element, fastener))
-        return interactions
+    # @property
+    # def interactions(self):
+    #     """Returns interactions between elements used by this joint."""
+    #     interactions = []
+    #     interactions.append((self.main_beam, self.cross_beam))
+    #     for fastener in self.fasteners:
+    #         for interface in fastener.interfaces:
+    #             if interface is not None:
+    #                 interactions.append((interface.element, fastener))
+    #     return interactions
 
     @property
     def elements(self):
