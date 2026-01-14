@@ -90,11 +90,9 @@ class PlateFastener2(Fastener):
         extrusion = self.frame.zaxis * self.thickness
         geometry = Brep.from_extrusion(self.outline, extrusion)
         # Modify it with the interfaces
-
         if self.interfaces:
             for interface in self.interfaces:
                 geometry = interface.apply_to_fastener_geometry(geometry)
-
         geometry.transform(self.to_joint_transformation)
 
         return geometry
@@ -111,15 +109,14 @@ class PlateFastener2(Fastener):
         # build the fastener to append on the joint
         for frame in frames:
             joint_fastener = self.copy()
-            joint_fastener.frame = self.frame
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
-            # joint_fastener.target_frame = frame
 
             for interface, element in zip(joint_fastener.interfaces, joint.elements):
                 interface.element = element
 
             joint.fasteners.append(joint_fastener)
 
+    # NOTE: This methods should be moved inside the joint... the joint sould give the Target Frame
     def get_fastener_frames(self, joint: Joint) -> list[Frame]:
         """Calculates the frames of the fasteners.
 
