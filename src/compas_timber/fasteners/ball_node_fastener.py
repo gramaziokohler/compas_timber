@@ -11,7 +11,8 @@ from compas.geometry import Vector
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
 from compas_timber.fasteners import Fastener
-from compas_timber.fasteners import FastenerTimberInterface
+
+# from compas_timber.fasteners.plate_fastner import FastenerTimberInterface
 from compas_timber.utils import correct_polyline_direction
 
 
@@ -87,9 +88,9 @@ class BallNodeFastener(Fastener):
     # Default Values for Fastener Interface
     # ==========================================================================
 
-    @property
-    def default_fastener_interface(self):
-        return FastenerTimberInterface(self._default_outline_points, self._default_thickness, shapes=self._default_shapes, features=self._default_features)
+    # @property
+    # def default_fastener_interface(self):
+    #     return FastenerTimberInterface(self._default_outline_points, self._default_thickness, shapes=self._default_shapes, features=self._default_features)
 
     @property
     def _default_outline_points(self):

@@ -1,5 +1,4 @@
 import math
-from typing import Optional
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -14,10 +13,10 @@ from compas.tolerance import Tolerance
 from compas_timber.connections import Joint
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.fasteners import HoleInterface  # noqa F401
+from compas_timber.fasteners import Interface
+from compas_timber.fasteners import RecessInterface  # noqa F401
 from compas_timber.fasteners.fastener import Fastener
-from compas_timber.fasteners.interface import HoleInterface
-from compas_timber.fasteners.interface import Interface
-from compas_timber.fasteners.interface import RecessInterface
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
