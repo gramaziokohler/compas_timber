@@ -406,3 +406,27 @@ def test_btlx_rawpart_unique_functionalities():
     assert len(btlx_rawpart.part_refs) == 1
     assert btlx_rawpart.part_refs[0]["guid"] == test_guid
     assert btlx_rawpart.part_refs[0]["frame"] == test_frame
+
+
+def test_rawpart_attributes():
+    """Test that BTLxRawpart has correct attributes and GUID handling."""
+    stock = BeamStock(length=2000, cross_section=(100, 100))
+    # Assign a specific name to the stock for testing
+    stock.name = "TestStock"
+    rawpart = BTLxRawpart(stock, order_number=7)
+
+    # Check basic attributes
+    assert rawpart.length == 2000
+    assert rawpart.width == 100
+    assert rawpart.height == 100
+    assert rawpart.order_num == 7
+
+    # Check GUID generation and format
+    assert hasattr(rawpart, "part_guid")
+    assert isinstance(rawpart.part_guid, str)
+
+    # Check ElementNumber and Annotation
+    base_attr = rawpart.base_attr
+    assert base_attr["OrderNumber"] == "7"
+    assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
+    assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])

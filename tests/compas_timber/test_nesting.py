@@ -160,6 +160,23 @@ def test_serialization():
     assert element_data2.length == beam2.blank_length
 
 
+def test_beam_stock_compatibility():
+    """Test BeamStock.is_compatible_with with tolerance."""
+    stock = BeamStock(6000, (120.0, 60.0))
+    # Test almost identical float dimensions
+    beam_float = Beam(frame=Frame.worldXY(), length=2000, width=120.0000001, height=59.9999999)
+    assert stock.is_compatible_with(beam_float)
+
+    # Test with a significant difference
+    beam_diff = Beam(frame=Frame.worldXY(), length=2000, width=120.1, height=60)
+    assert not stock.is_compatible_with(beam_diff)
+
+    # Test with tolerance on square sections
+    square_stock = BeamStock(6000, (100, 100))
+    beam_square_float = Beam(frame=Frame.worldXY(), length=2000, width=100.0000001, height=99.9999999)
+    assert square_stock.is_compatible_with(beam_square_float)
+
+
 # ============================================================================
 # BeamNester Tests
 # ============================================================================
@@ -617,8 +634,8 @@ def test_nesting_result_basic_properties():
     stock_pieces = result.total_stock_pieces
     assert isinstance(stock_pieces, dict)
     assert "BeamStock" in stock_pieces
-    assert "Dimensions(MM): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
-    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
+    assert "Dimensions(M): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
+    assert stock_pieces["BeamStock"]["Dimensions(M): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
 
 
 def test_nesting_result_serialization():
@@ -646,3 +663,47 @@ def test_nesting_result_serialization():
     # Test that properties match between original and restored
     assert restored_result.total_material_volume == result.total_material_volume
     assert restored_result.total_stock_pieces == result.total_stock_pieces
+
+
+def test_nesting_result_summary_output():
+    """Test the output format of the NestingResult summary property."""
+    stock = BeamStock(6000, (120, 60), spacing=5.0)
+    beam = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam.name = "B1"
+    stock.add_element(beam)
+
+    result = NestingResult(stock)
+    summary = result.summary
+
+    assert "BeamStock_0:" in summary
+    assert "Dimensions(M): 120.000x60.000x6000.000" in summary
+    assert "BeamKeys: ['B1-{}']".format(str(beam.guid)[:4]) in summary
+    assert "BeamLengths(M): [2000.000]" in summary
+    assert "Waste(M): 4000.000" in summary
+    assert "Spacing(M): 5.000" in summary
+
+
+def test_nesting_result_properties():
+    """Test NestingResult summary properties."""
+    stock1 = BeamStock(6000, (120.000, 60.000))
+    stock2 = BeamStock(5000, (80.00, 40.00))
+    stock3 = BeamStock(6000, (120, 60))  # Duplicate stock type
+
+    beam1 = Beam(frame=Frame.worldXY(), length=3000, width=120, height=60)
+    beam2 = Beam(frame=Frame.worldXY(), length=2000, width=80, height=40)
+    beam3 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
+
+    stock1.add_element(beam1)
+    stock2.add_element(beam2)
+    stock2.add_element(beam3)
+
+    result = NestingResult([stock1, stock2, stock3])
+
+    # Test total_material_volume
+    expected_volume = (6000 * 120 * 60) + (5000 * 80 * 40) + (6000 * 120 * 60)
+    assert result.total_material_volume == expected_volume
+
+    # Test total_stock_pieces
+    stock_pieces = result.total_stock_pieces
+    assert stock_pieces["BeamStock"]["Dimensions(M): 120.000x60.000x6000.000"] == 2
+    assert stock_pieces["BeamStock"]["Dimensions(M): 80.000x40.000x5000.000"] == 1

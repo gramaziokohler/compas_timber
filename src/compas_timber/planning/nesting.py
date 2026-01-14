@@ -345,17 +345,11 @@ class NestingResult(Data):
     def __init__(self, stocks, tolerance=None):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
-        self._tolerance = tolerance or Tolerance(unit="MM")
+        self._tolerance = tolerance or TOL
 
     @property
     def tolerance(self):
         return self._tolerance
-
-    @tolerance.setter
-    def tolerance(self, tolerance):
-        if tolerance.unit == "MM":
-            tolerance = Tolerance(unit="MM", precision=1)  # Ensure MM has at least 1 decimal place
-        self._tolerance = tolerance
 
     @property
     def __data__(self):
@@ -418,11 +412,12 @@ class NestingResult(Data):
                 lengths = []
                 for data in stock.element_data.values():
                     beam_keys.append(data.key)
-                    lengths.append(round(data.length, self.tolerance.precision))
+                    lengths.append(data.length)
+                formatted_lengths = ["{:.{prec}f}".format(l, prec=self.tolerance.precision) for l in lengths]
                 waste = stock.length - sum(lengths) if lengths else stock.length
                 # Formatted output
                 lines.append(f"BeamKeys: {beam_keys}")
-                lines.append(f"BeamLengths({self.tolerance.unit}): {lengths}")
+                lines.append("BeamLengths({}): [{}]".format(self.tolerance.unit, ", ".join(formatted_lengths)))
                 lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
                 lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
                 lines.append("--------")
