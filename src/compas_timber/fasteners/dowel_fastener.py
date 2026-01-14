@@ -34,13 +34,13 @@ class Dowel(Fastener):
 
 
 class PlateFastener2(Fastener):
-    def __init__(self, frame: Frame, outline: Polyline, thickness: float, interfaces: Optional[Interface] = None):
+    def __init__(self, frame: Frame, outline: Polyline, thickness: float, interfaces=None):
         super().__init__(frame=frame, interfaces=interfaces)
-        self.frame = frame
+        self.frame = frame.copy()
+        self.target_frame = frame.copy()
         self.outline = outline
         self.thickness = thickness
-        self.interfaces = interfaces or []
-        self.target_frame = None
+        self.interfaces = [] if not interfaces else interfaces
 
     @property
     def __data__(self):
@@ -49,22 +49,28 @@ class PlateFastener2(Fastener):
 
     @classmethod
     def __from_data__(cls, data):
-        return cls(
-            frame=Frame.__from_data__(data["frame"]),
-            outline=Polyline.__from_data__(data["outline"]),
-            thickness=data["thickness"],
-            interfaces=[HoleInterface.__from_data__(interface) for interface in data["interfaces"]],
-        )
+        fastener = cls(frame=Frame.__from_data__(data["frame"]), outline=Polyline.__from_data__(data["outline"]), thickness=data["thickness"])
+        interfaces = [HoleInterface.__from_data__(interface) for interface in data["interfaces"]]
+        for interface in interfaces:
+            fastener.add_interface(interface)
+        return fastener
 
     @property
     def frame(self) -> Frame:
         return self._frame
 
     @frame.setter
-    def frame(self, frame):
+    def frame(self, frame: Frame):
         self._frame = frame
 
+    @property
+    def to_joint_transformation(self) -> Frame:
+        print("Self Frame", self.frame)
+        return Transformation.from_frame_to_frame(self.frame, self.target_frame)
+
     def add_interface(self, interface: Interface) -> None:
+        # difference_transformation = Transformation.from_frame_to_frame(self.frame, interface.frame)
+        # interface.difference_to_fastener_frame = difference_transformation
         self.interfaces.append(interface)
 
     def compute_elementgeometry(self, include_interfaces=True) -> Brep:
@@ -83,16 +89,14 @@ class PlateFastener2(Fastener):
         # Compute basis geometry
         extrusion = self.frame.zaxis * self.thickness
         geometry = Brep.from_extrusion(self.outline, extrusion)
-
-        # Apply transformation
-        if self.target_frame:
-            transformation = Transformation.from_frame(self.target_frame)
-            geometry.transform(transformation)
-
         # Modify it with the interfaces
+
         if self.interfaces:
             for interface in self.interfaces:
                 geometry = interface.apply_to_fastener_geometry(geometry)
+
+        geometry.transform(self.to_joint_transformation)
+
         return geometry
 
     def place_instances(self, joint: Joint) -> None:
@@ -103,21 +107,16 @@ class PlateFastener2(Fastener):
         """
         # get the frame where to pui the fastener on the joint
         frames = self.get_fastener_frames(joint)
-
+        print(frames)
         # build the fastener to append on the joint
         for frame in frames:
             joint_fastener = self.copy()
+            joint_fastener.frame = self.frame
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+            # joint_fastener.target_frame = frame
 
-            for interface in joint_fastener.interfaces:
-                interface.frame = joint_fastener.target_frame
-                for element in joint.elements:
-                    interface.element = element
-                    element.features.extend(interface.features)
-                    print("target frame", interface.frame)
-
-            # for interface, element in zip(joint_fastener.interfaces, joint.elements):
-            #     interface.element = element
+            for interface, element in zip(joint_fastener.interfaces, joint.elements):
+                interface.element = element
 
             joint.fasteners.append(joint_fastener)
 

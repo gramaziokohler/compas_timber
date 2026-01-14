@@ -6,6 +6,7 @@ from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Vector
+from compas_model.models.model import Transformation
 
 from compas_timber.elements import TimberElement
 from compas_timber.fabrication import BTLxProcessing
@@ -39,6 +40,7 @@ class HoleInterface:
         self.depth = depth
         self.diameter = diameter
         self.element = element
+        self.difference_to_fastener_frame: Transformation = None
 
     @property
     def __data__(self):
@@ -46,7 +48,8 @@ class HoleInterface:
 
     @classmethod
     def __from_data__(cls, data):
-        return cls(frame=Frame.__from_data__(data["frame"]), depth=data["depth"], diameter=data["diameter"])
+        interface = cls(frame=Frame.__from_data__(data["frame"]), depth=data["depth"], diameter=data["diameter"])
+        return interface
 
     @property
     def features(self) -> list[BTLxProcessing]:
@@ -55,7 +58,6 @@ class HoleInterface:
             end_point = self.frame.point + self.depth * -self.frame.zaxis
             line = Line(start_point, end_point)
             drilling = Drilling.from_line_and_element(line=line, element=self.element, diameter=self.diameter)
-            print("Drilling succeded")
             return [drilling]
         except Exception:
             return []
@@ -70,8 +72,7 @@ class HoleInterface:
     def get_features(self):
         return self.features
 
-    def apply_to_fastener_geometry(self, fastener_geometry: Brep) -> Brep:
-        print("frame from instance", self.frame)
+    def apply_to_fastener_geometry(self, fastener_geometry) -> Brep:
         cylinder = Cylinder(radius=self.diameter * 0.5, height=self.depth, frame=self.frame)
         cylinder = Brep.from_cylinder(cylinder)
         fastener_geometry -= cylinder
