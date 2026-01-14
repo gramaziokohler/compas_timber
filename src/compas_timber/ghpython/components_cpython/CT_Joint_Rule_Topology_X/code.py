@@ -19,8 +19,8 @@ class X_TopologyJointRule(Grasshopper.Kernel.GH_ScriptInstance):
         super(X_TopologyJointRule, self).__init__()
         self.classes = {}
         for cls in get_createable_joints():
-            supported_topo = cls.SUPPORTED_TOPOLOGY if isinstance(cls.SUPPORTED_TOPOLOGY, list) else [cls.SUPPORTED_TOPOLOGY]
-            if JointTopology.TOPO_X in supported_topo and not issubclass(cls, PlateJoint):
+            supported_topo = cls.SUPPORTED_TOPOLOGY
+            if JointTopology.TOPO_X == supported_topo and not issubclass(cls, PlateJoint):
                 self.classes[cls.__name__] = cls
         self.joint_type = self.classes.get(ghenv.Component.Params.Output[0].NickName, None)
 
