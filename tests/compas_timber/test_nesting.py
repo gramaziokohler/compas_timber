@@ -5,6 +5,7 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Polyline
+from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Panel
@@ -162,6 +163,7 @@ def test_serialization():
 
 def test_beam_stock_compatibility():
     """Test BeamStock.is_compatible_with with tolerance."""
+    Tolerance().reset()  # TODO: this is a temporary fix to ensure TOL is at default state for this test
     stock = BeamStock(6000, (120.0, 60.0))
     # Test almost identical float dimensions
     beam_float = Beam(frame=Frame.worldXY(), length=2000, width=120.0000001, height=59.9999999)
