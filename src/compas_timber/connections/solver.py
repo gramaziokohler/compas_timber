@@ -186,30 +186,6 @@ class ConnectionSolver(object):
             return BeamSolverResult(JointTopology.TOPO_T, beam_b, beam_a, dist, location)
         return BeamSolverResult(JointTopology.TOPO_X, beam_a, beam_b, dist, location)
 
-    def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
-        """Calculates the topology of the intersection between two walls.
-
-        TODO: Passes-through to the beam topology calculation. This should be reworked.
-
-        Parameters
-        ----------
-        wall_a : :class:`~compas_timber.elements.Wall`
-            First potential intersecting wall.
-        wall_b : :class:`~compas_timber.elements.Wall`
-            Second potential intersecting wall.
-        tol : float
-            General tolerance to use for mathematical computations.
-        max_distance : float, optional
-            Maximum distance, in desigen units, at which two fs are considered intersecting.
-
-        Returns
-        -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Wall`, :class:`~compas_timber.element.Wall`)
-
-        """
-        # TODO: make find topology more generic. break down to find_line_line_topo etc.
-        return self.find_topology(wall_a, wall_b, tol, max_distance)
-
 
 class PlateConnectionSolver(ConnectionSolver):
     """Provides tools for detecting plate intersections and joint topologies."""

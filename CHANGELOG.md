@@ -27,6 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `PlateJoint.add_extensions()` which does the initial extension of plate outline edges. 
 * Added `PlateGeometry` class.
 * Fixed `TimberElement.transform` doesn't reflect in drawn geometry due to caching.
+* Added new `DrillingProxy` and `DoubleCutProxy` classes.
+* Added `planar_surface_point_at` to `compas_timber.utils`.
+* Added `Panel` class as a renaming of `Slab`.
+* Added `**kwargs` argument to `LongitudinalCut` and `LongitudinalCutProxy` constructors to allow passing additional parameters, particularly `is_joinery=False` to keep the processing during serialization.
+* Added `PanelJoint` abstract base class for panel joints.
+* Added `PanelLButtJoint` class.
+* Added `PanelTButtJoint` class.
+* Added `PanelMiterJoint` class.
+* Added `TimberModel.connect_adjacent_panels()` method to find and create joint candidates between panels.
+* Added `PanelFeatureType` class for classifying panel feature types.
+* Added `panel_features` directory and `PanelFeature` abstract base class.
+* Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
+* Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 * Added `LTenonMortiseJoint` and `TTenonMortiseJoint` class from which ``TenonMortiseJoint`` inherit to avoid Supported_Topology as list.
 
 ### Changed
@@ -55,6 +68,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed core definition of `Plate` to be same as `Beam`, (frame, length, width, height) with `outline_a` and `outline_b` optional arguments.
 * Changed `Plate` to inherit from `TimberElement` and `PlateGeometry`.
 * Fixed the `ShowTopologyTypes` GH Component.
+* Changed `Slot.apply()` to visualize the slot geometry. 
+* Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
+* Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
+* Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
+* Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
+* Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `LongitudinalCut` to properly generate `tool_position` parameter.
+* Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
+* Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
+* Changed `Panel.__data__` to enable proper serialization.
+* Changed some `PlateJoint` properties and methods to private.
+* Changed `FreeContour` to compute geometry in local element coordinates.
+* Changed how `FreeContour` computes the `ref_side_index` when not provided.
+* Changed `FreeContour` constructors to work with new local geometry computation.
+* Fixed models with `XLapJoint` fail to serialize.
+* Fixed circular import cause by typing import in `slot.py`.
+* Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
 * Renamed `OliGinaJoint` to `TOliginaJoint` for consistency wrt to the supported topology.
 
 ### Removed
@@ -67,6 +97,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed all Rhino7 components!
 * Removed method `add_group_element` from `TimberModel`.
 * Removed `PlateToPlateInterface` since plates should be given `BTLxProcessing` features.
+* Removed `Wall`, `WallJoint`, `WallToWallInterface`, `InterfaceRole`, `InterfaceLocation`, `Opening`, `OpeningType`,
+  `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
+  GH components and component functionality.
+* Removed `Slab` class and renamed to `Panel`.
+* Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 
 ## [1.0.1] 2025-10-16
 

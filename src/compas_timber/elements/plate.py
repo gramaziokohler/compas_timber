@@ -65,16 +65,14 @@ class Plate(PlateGeometry, TimberElement):
 
     @property
     def __data__(self):
-        data = TimberElement.__data__.fget(self)
+        data = super().__data__
         data["thickness"] = data.pop("height")
-        data.update(PlateGeometry.__data__.fget(self))
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, **kwargs):
-        TimberElement.__init__(self, frame=frame, length=length, width=width, height=thickness, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        PlateGeometry.__init__(self, local_outline_a, local_outline_b, openings=openings)
+        super().__init__(frame=frame, length=length, width=width, height=thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings, **kwargs)
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}
@@ -166,7 +164,7 @@ class Plate(PlateGeometry, TimberElement):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
         """
-        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Slabs.
+        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Panels.
 
         Parameters
         ----------

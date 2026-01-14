@@ -39,24 +39,13 @@ Joints
     LTenonMortiseJoint
     TTenonMortiseJoint
     YButtJoint
-    TOliGinaJoint
-    WallJoint
+    OliGinaJoint
     PlateJoint
     PlateButtJoint
     PlateLButtJoint
     PlateTButtJoint
     PlateMiterJoint
 
-Joint Interfaces
-=================
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    InterfaceLocation
-    InterfaceRole
-    PlateToPlateInterface
 
 Solvers
 =======
