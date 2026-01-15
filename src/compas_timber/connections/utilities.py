@@ -11,8 +11,6 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
 
     This is used to find a cutting plane when joining the two beams.
 
-    Compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new implementation system
-
     Parameters
     ----------
     beam_a : :class:`~compas_timber.parts.Beam`
@@ -21,12 +19,6 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
         The other beam.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
-
-    Examples
-    --------
-    >>> ref_side_angles = Joint.beam_side_incidence(beam_a, beam_b) # doctest: +SKIP
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get) # doctest: +SKIP
-    >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index] # doctest: +SKIP
 
     Returns
     -------
@@ -63,8 +55,6 @@ def beam_ref_side_incidence_cross(beam_a, beam_b, ignore_ends=True):
     """Returns a map of ref_side indices of beam_a and the angle of their normal with the cross product of beam_a's centerline and beam_b's centerline.
 
     This is used to find a cutting plane when joining the two beams.
-
-    Compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new implementation system
 
     Parameters
     ----------
@@ -122,13 +112,6 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
         The vector to compare against the ref_sides' normals.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
-
-    Examples
-    --------
-    >>> vector = Vector(1, 0, 0) # doctest: +SKIP
-    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_a, vector) # doctest: +SKIP
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get) # doctest: +SKIP
-    >>> cutting_plane = beam_a.ref_sides[closest_ref_side_index] # doctest: +SKIP
 
     Returns
     -------
