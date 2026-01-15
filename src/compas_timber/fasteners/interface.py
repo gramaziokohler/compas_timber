@@ -21,17 +21,9 @@ class Interface(Data, ABC):
         self.kwargs = kwargs
 
     @classmethod
-    def __from_data__(cls, data):
-        type_tag = data.get("type")
-        if not type_tag:
-            return
-        sub = cls._registry.get(type_tag.lower())
-        if not sub:
-            raise ValueError(f"Unknown Interface type '{type_tag}' in data: {data}")
-        ctor = getattr(sub, "__from_data__", getattr(sub, "from_data", None))
-        if not ctor:
-            raise TypeError(f"Registered Interface class {sub} has no from-data constructor")
-        return ctor(data)
+    @abstractmethod
+    def __from_data__(cls, data) -> Interface:
+        raise NotImplementedError
 
     @abstractmethod
     def apply_to_fastener_geometry(self, fastener_geometry) -> Brep:

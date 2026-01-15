@@ -2,21 +2,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Optional
+from typing import Union
 
-# TODO: move this to compas_timber.fasteners
-from compas.data import Data
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Transformation
-from compas.geometry import Vector
 from compas_model.elements import Element
 
-from compas_timber.fabrication import Drilling
-from compas_timber.utils import intersection_line_beam_param
-
 if TYPE_CHECKING:
+    from compas.datstructure import Mesh
     from compas.geometry import Brep
     from compas.geometry import Transformation
+
+    from compas_timber.fasteners.interface import Interface
 
 
 class Fastener(Element):
@@ -85,13 +82,13 @@ class Fastener(Element):
             self._geometry = self.compute_modelgeometry()
         return self._geometry
 
-    def compute_modeltransformation(self) -> Transformation:
+    def compute_modeltransformation(self) -> Optional[Transformation]:
         """Same as parent but handles standalone elements."""
         if not self.model:
             return self.transformation
         return super().compute_modeltransformation()
 
-    def compute_modelgeometry(self) -> Brep:
+    def compute_modelgeometry(self) -> Union[Brep, Mesh]:
         """Computes the geometry of the element in model coordinates and taking into account the effect of interations with connected elements.
 
         Returns:

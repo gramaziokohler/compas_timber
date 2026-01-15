@@ -43,7 +43,11 @@ class PlateFastener2(Fastener):
 
     @classmethod
     def __from_data__(cls, data):
-        fastener = cls(frame=Frame.__from_data__(data["frame"]), outline=Polyline.__from_data__(data["outline"]), thickness=data["thickness"])
+        fastener = cls(
+            frame=Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"]),
+            outline=Polyline.__from_data__(data["outline"]),  # type: ignore
+            thickness=data["thickness"],
+        )
 
         interfaces = [globals()[iface["type"]].__from_data__(iface) for iface in data.get("interfaces", [])]
 
@@ -60,7 +64,7 @@ class PlateFastener2(Fastener):
         self._frame = frame
 
     @property
-    def to_joint_transformation(self) -> Frame:
+    def to_joint_transformation(self) -> Transformation:
         return Transformation.from_frame_to_frame(self.frame, self.target_frame)
 
     def add_interface(self, interface: Interface) -> None:
@@ -115,7 +119,8 @@ class PlateFastener2(Fastener):
             for interface in joint_fastener.interfaces:
                 interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
 
-            joint.fasteners.append(joint_fastener)
+            if hasattr(joint, "fasteners"):
+                joint.fasteners.append(joint_fastener)
 
     # NOTE: This methods should be moved inside the joint... the joint sould give the Target Frame
     def get_fastener_frames(self, joint: Joint) -> list[Frame]:
@@ -172,8 +177,8 @@ class PlateFastener2(Fastener):
         cross_vector = cross_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
         main_faces = beam_ref_side_incidence_with_vector(beam_a, cross_vector)
         cross_faces = beam_ref_side_incidence_with_vector(beam_b, cross_vector)
-        front_face_index = min(main_faces, key=main_faces.get)
-        cross_face_index = min(cross_faces, key=cross_faces.get)
+        front_face_index = min(main_faces, key=main_faces.get)  # type: ignore
+        cross_face_index = min(cross_faces, key=cross_faces.get)  # type: ignore
         if not TOL.is_zero(main_faces[front_face_index]):
             raise FastenerApplicationError(
                 elements=[beam_a, beam_b],

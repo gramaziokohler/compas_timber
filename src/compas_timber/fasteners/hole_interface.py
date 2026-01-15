@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -48,7 +47,7 @@ class HoleInterface(Interface):
 
     @classmethod
     def __from_data__(cls, data):
-        interface = cls(frame=Frame.__from_data__(data["frame"]), depth=data["depth"], diameter=data["diameter"])
+        interface = cls(frame=Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"]), depth=data["depth"], diameter=data["diameter"])
         return interface
 
     @property
@@ -74,7 +73,7 @@ class HoleInterface(Interface):
         fastener_geometry -= cylinder
         return fastener_geometry
 
-    def feature(self, element, transformation_to_joint) -> Optional[BTLxProcessing]:
+    def feature(self, element, transformation_to_joint) -> list[BTLxProcessing]:
         """
         Creates a feature for the specified element.
 
@@ -96,10 +95,10 @@ class HoleInterface(Interface):
         line.transform(transformation_to_joint)
         try:
             drilling = Drilling.from_line_and_element(line=line, element=element, diameter=self.diameter)
-            return [drilling], line
+            return [drilling]
         except Exception as e:
             print("Drilling not succeded: ", e)
-            return [], None
+            return []
 
     def apply_features_to_elements(self, joint, transformation_to_joint):
         """
@@ -116,7 +115,7 @@ class HoleInterface(Interface):
         for element in joint.elements:
             if not isinstance(element, TimberElement):
                 continue
-            processings, line = self.feature(element, transformation_to_joint)
+            processings = self.feature(element, transformation_to_joint)
             if processings:
                 element.features.extend(processings)
             else:

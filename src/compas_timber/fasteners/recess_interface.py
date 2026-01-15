@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -29,12 +28,17 @@ class RecessInterface(Interface):
 
     @classmethod
     def __from_data__(cls, data):
-        return cls(frame=Frame.__from_data__(data["frame"]), depth=data["depth"], width=data["width"], height=data["height"])
+        return cls(
+            frame=Frame.__from_data__(data["frame"]),  # type: ignore
+            depth=data["depth"],
+            width=data["width"],
+            height=data["height"],
+        )
 
     def apply_to_fastener_geometry(self, fastener_geometry) -> Brep:
         return fastener_geometry
 
-    def feature(self, element, transformation_to_joint) -> Optional[BTLxProcessing]:
+    def feature(self, element, transformation_to_joint) -> list[BTLxProcessing]:
         volume = Box(xsize=self.width, ysize=self.height, zsize=self.depth, frame=self.frame)
         volume.frame.point -= self.frame.zaxis * self.depth / 2
         volume = Brep.from_box(volume)
