@@ -61,20 +61,20 @@ class LFrenchRidgeLapJoint(LapJoint):
             If the extension could not be calculated.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.beam_a and self.beam_b
 
         start_main, start_cross = None, None
         try:
-            start_main, end_main = self.main_beam.extension_to_plane(self.main_cutting_plane)
-            start_cross, end_cross = self.cross_beam.extension_to_plane(self.cross_cutting_plane)
+            start_main, end_main = self.beam_a.extension_to_plane(self.cutting_plane_a)
+            start_cross, end_cross = self.beam_b.extension_to_plane(self.cutting_plane_b)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [self.cross_cutting_plane] if start_main is not None else [self.main_cutting_plane]
+            geometries = [self.cutting_plane_b] if start_main is not None else [self.cutting_plane_a]
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        self.main_beam.add_blank_extension(start_main, end_main, self.main_beam_guid)
-        self.cross_beam.add_blank_extension(start_cross, end_cross, self.cross_beam_guid)
+        self.beam_a.add_blank_extension(start_main, end_main, self.guid)
+        self.beam_b.add_blank_extension(start_cross, end_cross, self.guid)
 
     def add_features(self):
         """Adds the necessary features to the beams.
@@ -84,17 +84,17 @@ class LFrenchRidgeLapJoint(LapJoint):
         have been added via `Joint.add_extensions()`.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.beam_a and self.beam_b
 
         if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
 
-        main_frl_feature = FrenchRidgeLap.from_beam_beam_and_plane(self.main_beam, self.cross_beam, self.main_cutting_plane, self.drillhole_diam, self.main_ref_side_index)
-        cross_frl_feature = FrenchRidgeLap.from_beam_beam_and_plane(self.cross_beam, self.main_beam, self.cross_cutting_plane, self.drillhole_diam, self.cross_ref_side_index)
+        main_frl_feature = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_a, self.beam_b, self.cutting_plane_a, self.drillhole_diam, self.ref_side_index_a)
+        cross_frl_feature = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_b, self.beam_a, self.cutting_plane_b, self.drillhole_diam, self.ref_side_index_b)
         # store the features to the beams
-        self.main_beam.add_features(main_frl_feature)
-        self.cross_beam.add_features(cross_frl_feature)
+        self.beam_a.add_features(main_frl_feature)
+        self.beam_b.add_features(cross_frl_feature)
         # register the features in the joint
         self.features = [main_frl_feature, cross_frl_feature]
 

@@ -44,19 +44,13 @@ class PlateJoint(Joint, ABC):
     @property
     def __data__(self):
         data = super(PlateJoint, self).__data__
-        data["plate_a_guid"] = self.plate_a_guid
-        data["plate_b_guid"] = self.plate_b_guid
         data["topology"] = self.topology
         data["a_segment_index"] = self.a_segment_index
         data["b_segment_index"] = self.b_segment_index
         return data
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
-        super(PlateJoint, self).__init__(topology=topology, **kwargs)
-        self.plate_a = plate_a
-        self.plate_b = plate_b
-        self.a_segment_index = a_segment_index
-        self.b_segment_index = b_segment_index
+        super(PlateJoint, self).__init__(elements=(plate_a,plate_b), topology=topology, **kwargs)
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
@@ -74,8 +68,21 @@ class PlateJoint(Joint, ABC):
         return self.elements
 
     @property
-    def elements(self):
-        return self.plate_a, self.plate_b
+    def plate_a(self):
+        return self.elements[0]
+
+    @plate_a.setter
+    def plate_a(self, value):
+        self.elements[0] = value
+
+    @property
+    def plate_b(self):
+        return self.elements[1]
+
+    @plate_b.setter
+    def plate_b(self, value):
+        self.elements[1] = value
+
 
     @property
     def a_planes(self):
@@ -169,14 +176,3 @@ class PlateJoint(Joint, ABC):
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
                 self._reverse_a_planes = True
 
-    def restore_beams_from_keys(self, *args, **kwargs):
-        # TODO: this is just to keep the peace. change once we know where this is going.
-        self.restore_plates_from_keys(*args, **kwargs)
-
-    def restore_plates_from_keys(self, model):
-        self.plate_a = model.element_by_guid(self.plate_a_guid)
-        self.plate_b = model.element_by_guid(self.plate_b_guid)
-
-    def flip_roles(self):
-        self.plate_a, self.plate_b = self.plate_b, self.plate_a
-        self.plate_a_guid, self.plate_b_guid = self.plate_b_guid, self.plate_a_guid

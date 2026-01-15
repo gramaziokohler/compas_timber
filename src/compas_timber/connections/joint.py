@@ -46,15 +46,34 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, topology=None, location=None, name=None, **kwargs):
+    def __init__(self,elements=None, topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
+        if elements:
+            self.elements = elements
+            self.element_guids = (str(e.guid) for e in elements)
+        else:
+            self.elements = ()
+            self.element_guids = kwargs.get("element_guids") 
+
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location or Point(0, 0, 0)
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name}
+        return {
+            "name": self.name,
+            "element_guids": self.element_guids
+            }
+
+    @property
+    def element_a(self):
+        return self.elements[0]
+
+    @property
+    def element_b(self):
+        return self.elements[1]
+
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -78,10 +97,6 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
-
-    @property
-    def elements(self):
-        raise NotImplementedError
 
     @property
     def generated_elements(self):
@@ -167,7 +182,7 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        raise NotImplementedError
+        self.elements = (model.element_by_guid(guid) for guid in self.element_guids))
 
     @classmethod
     def create(cls, model, *elements, **kwargs):

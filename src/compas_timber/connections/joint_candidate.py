@@ -29,38 +29,11 @@ class JointCandidate(Joint):
 
     """
 
-    @property
-    def __data__(self):
-        data_dict = {
-            "element_a_guid": self.element_a_guid,
-            "element_b_guid": self.element_b_guid,
-        }
-        data_dict.update(super(JointCandidate, self).__data__)
-        return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(**value)
-        instance.element_a_guid = value["element_a_guid"]
-        instance.element_b_guid = value["element_b_guid"]
-        return instance
-
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
         super(JointCandidate, self).__init__(**kwargs)
-        self.element_a = element_a
-        self.element_b = element_b
-        self.element_a_guid = str(element_a.guid) if element_a else None
-        self.element_b_guid = str(element_b.guid) if element_b else None
+        # TODO: make distance a property of `Joint`?
         self.distance = distance if distance is not None else None
 
-    @property
-    def elements(self):
-        return [self.element_a, self.element_b]
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to elements saved in the model."""
-        self.element_a = model.element_by_guid(self.element_a_guid)
-        self.element_b = model.element_by_guid(self.element_b_guid)
 
     def add_features(self):
         """This joint does not add any features."""

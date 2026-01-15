@@ -1,3 +1,4 @@
+from _pytest.raises import P
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
@@ -46,27 +47,35 @@ class ButtJoint(Joint):
     @property
     def __data__(self):
         data = super(ButtJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
         data["butt_plane"] = self.butt_plane
         return data
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, **kwargs):
-        super(ButtJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
         self.modify_cross = modify_cross
         self.butt_plane = butt_plane
         self.features = []
 
+
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.elements[0]
+
+    @main_beam.setter
+    def main_beam(self, value):
+        self.elements = (value, self.elements[1])
+
+    @property
+    def cross_beam(self):
+        return self.elements[1]
+
+    @cross_beam.setter
+    def cross_beam(self, value):
+        self.elements = (self.elements[0], value)
+
 
     @property
     def beams(self):
@@ -192,8 +201,3 @@ class ButtJoint(Joint):
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)

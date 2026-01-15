@@ -24,9 +24,9 @@ class XLapJoint(LapJoint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.parts.Beam`
         The first beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.parts.Beam`
         The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -36,37 +36,27 @@ class XLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    @property
-    def __data__(self):
-        data = super(XLapJoint, self).__data__
-        data["cut_plane_bias"] = self.cut_plane_bias
-        return data
-
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(XLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
-        self.cut_plane_bias = cut_plane_bias
-
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.beam_a and self.beam_b
 
         if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
 
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
 
-        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
-        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
+        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.beam_a, ref_side_index=self.ref_side_index_a)
+        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.beam_b, ref_side_index=self.ref_side_index_b)
 
         # add features to the beams
-        self.main_beam.add_features(main_lap_feature)
-        self.cross_beam.add_features(cross_lap_feature)
+        self.beam_a.add_features(main_lap_feature)
+        self.beam_b.add_features(cross_lap_feature)
 
         # register processings to the joint
         self.features.extend([main_lap_feature, cross_lap_feature])

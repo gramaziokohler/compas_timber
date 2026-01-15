@@ -50,8 +50,8 @@ def test_create_lap_serialize(beam_a, beam_b):
 
     deserialized_joint = list(model.joints)[0]
     assert isinstance(deserialized_joint, LLapJoint)
-    assert deserialized_joint.main_beam is not None
-    assert deserialized_joint.cross_beam is not None
+    assert deserialized_joint.beam_a is not None
+    assert deserialized_joint.beam_b is not None
 
 
 def test_standard_lap_joint_cut_plane_bias_serialization(beam_a, beam_b):
