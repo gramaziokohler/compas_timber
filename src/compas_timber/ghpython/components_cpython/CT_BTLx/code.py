@@ -8,7 +8,7 @@ from compas_timber.ghpython.ghcomponent_helpers import item_input_valid_cpython
 
 
 class WriteBTLx(Grasshopper.Kernel.GH_ScriptInstance):
-    def RunScript(self, model, path, write: bool):
+    def RunScript(self, model, nesting_result, path, write: bool):
         if not item_input_valid_cpython(ghenv, model, "Model"):
             return
 
@@ -17,8 +17,8 @@ class WriteBTLx(Grasshopper.Kernel.GH_ScriptInstance):
         if write:
             if not item_input_valid_cpython(ghenv, path, "Path"):
                 return
-            XML = btlx.write(model, path)
+            XML = btlx.write(model, path, nesting_result=nesting_result)
         else:
-            XML = btlx.model_to_xml(model)
+            XML = btlx.model_to_xml(model, nesting_result=nesting_result)
 
         return XML

@@ -16,6 +16,12 @@
                 "scriptParamAccess": 0
             },
             {
+                "name": "nesting_result",
+                "description": "NestingResult object containing details of the nesting operation.",
+                "typeHintID": "none",
+                "scriptParamAccess": 0
+            },
+            {
                 "name": "path",
                 "description": "Filepath for new BTLx.",
                 "typeHintID": "none",
@@ -27,7 +33,6 @@
                 "typeHintID": "bool",
                 "scriptParamAccess": 0
             }
-
         ],
         "outputParameters": [
             {
