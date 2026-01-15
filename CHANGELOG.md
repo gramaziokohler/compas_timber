@@ -69,6 +69,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the `ShowTopologyTypes` GH Component.
 * Changed `Slot.apply()` to visualize the slot geometry. 
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
+* Refactored `ButtJoint.__init__()` to accept `force_pocket: bool` and `conical_tool: bool` parameters.
+* Fixed minor bug in `Pocket.apply()` that caused to the tilt angle to be assigned wrong. 
+* Changed default values for `Pocket.__init__()` to match BTLx standard values. 
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
