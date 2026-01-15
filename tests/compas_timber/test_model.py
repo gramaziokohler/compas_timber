@@ -1,3 +1,5 @@
+from pytest import raises
+
 from copy import deepcopy
 from compas.data import json_dumps
 from compas.data import json_loads
@@ -490,12 +492,9 @@ def test_getitem_raises_keyerror_for_invalid_guid():
     model = TimberModel()
     beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
     model.add_element(beam)
-    try:
+    
+    with raises(KeyError):
         _ = model["invalid-guid"]
-    except KeyError:
-        pass
-    else:
-        assert False, "Expected KeyError was not raised"
 
 def test_getitem_returns_correct_element():
     model = TimberModel()
