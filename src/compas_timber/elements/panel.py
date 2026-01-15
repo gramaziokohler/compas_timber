@@ -1,7 +1,6 @@
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
