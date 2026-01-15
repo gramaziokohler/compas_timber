@@ -439,10 +439,6 @@ def test_l_tenon_mortise_joint_creation(cross_beam, main_beams):
 
     # Test that features are created
     model.process_joinery()
-    assert len(joint.features) > 0
-
-    # Test that features are created
-    model.process_joinery()
     assert len(joint.features) == 3  # One tenon and one mortise and one cut on cross beam
 
 

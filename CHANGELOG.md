@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `panel_features` directory and `PanelFeature` abstract base class.
 * Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
-* Added `LTenonMortiseJoint` and `TTenonMortiseJoint` class from which ``TenonMortiseJoint`` inherit to avoid Supported_Topology as list.
+* Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes from which ``TenonMortiseJoint`` inherit to avoid Supported_Topology as list.
 
 ### Changed
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed models with `XLapJoint` fail to serialize.
 * Fixed circular import cause by typing import in `slot.py`.
 * Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
-* Renamed `OliGinaJoint` to `TOliginaJoint` for consistency wrt to the supported topology.
+* Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.

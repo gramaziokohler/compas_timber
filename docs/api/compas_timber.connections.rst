@@ -39,7 +39,7 @@ Joints
     LTenonMortiseJoint
     TTenonMortiseJoint
     YButtJoint
-    OliGinaJoint
+    TOliGinaJoint
     PlateJoint
     PlateButtJoint
     PlateLButtJoint
