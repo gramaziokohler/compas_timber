@@ -167,7 +167,7 @@ class TimberModel(Model):
 
         """
         return self._elements.get(guid)
-    
+
     def __getitem__(self, guid):
         # type: (str) -> Element
         """Get an element by its unique identifier.
@@ -201,12 +201,7 @@ class TimberModel(Model):
             The element with the specified GUID.
 
         """
-        warnings.warn(
-            "element_by_guid() is deprecated;"
-            "use get_element() for optional access or TimberModel[guid] for strict access.",
-            DeprecationWarning,
-            stacklevel=2
-        )
+        warnings.warn("element_by_guid() is deprecated;use get_element() for optional access or TimberModel[guid] for strict access.", DeprecationWarning, stacklevel=2)
         return self[guid]
 
     # =============================================================================
