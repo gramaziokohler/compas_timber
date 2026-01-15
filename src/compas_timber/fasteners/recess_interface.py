@@ -45,10 +45,10 @@ class RecessInterface(Interface):
         volume.transform(transformation_to_joint)
         try:
             pocket = Pocket.from_volume_and_element(volume, element)
-            print(pocket)
+            self._logs.append(f"Pocket feature in RecessInterface succeded: {pocket}")
             return [pocket]
         except Exception as e:
-            print("Pocket not succeded. ", e)
+            self._logs.append(f"Pocket feature in RecessInterface not succeded: {e}")
             return []
 
     def apply_features_to_elements(self, joint, transformation_to_joint):

@@ -19,6 +19,7 @@ class Interface(Data, ABC):
     def __init__(self, frame, **kwargs):
         self.frame = frame
         self.kwargs = kwargs
+        self._logs = []
 
     @classmethod
     @abstractmethod

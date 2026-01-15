@@ -96,8 +96,9 @@ class HoleInterface(Interface):
         try:
             drilling = Drilling.from_line_and_element(line=line, element=element, diameter=self.diameter)
             return [drilling]
+            self._logs.append(f"Drilling feature in HoleInterface succeded: {drilling}")
         except Exception as e:
-            print("Drilling not succeded: ", e)
+            self._logs.append(f"Drilling feature in HoleInterface not succeded: {e}")
             return []
 
     def apply_features_to_elements(self, joint, transformation_to_joint):

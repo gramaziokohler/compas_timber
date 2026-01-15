@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -28,13 +29,10 @@ TOL = Tolerance()
 
 
 class PlateFastener2(Fastener):
-    def __init__(self, frame: Frame, outline: Polyline, thickness: float, interfaces=None):
-        super().__init__(frame=frame, interfaces=interfaces)
-        self.frame = frame.copy()
-        self.target_frame = frame.copy()
+    def __init__(self, frame: Frame, outline: Polyline, thickness: float, interfaces: Optional[list[Interface]] = None, **kwargs):
+        super().__init__(frame=frame, interfaces=interfaces, **kwargs)
         self.outline = outline
         self.thickness = thickness
-        self.interfaces = [] if not interfaces else interfaces
 
     @property
     def __data__(self):
@@ -56,20 +54,17 @@ class PlateFastener2(Fastener):
         return fastener
 
     @property
-    def frame(self) -> Frame:
-        return self._frame
-
-    @frame.setter
-    def frame(self, frame: Frame):
-        self._frame = frame
-
-    @property
     def to_joint_transformation(self) -> Transformation:
         return Transformation.from_frame_to_frame(self.frame, self.target_frame)
 
     def add_interface(self, interface: Interface) -> None:
-        # difference_transformation = Transformation.from_frame_to_frame(self.frame, interface.frame)
-        # interface.difference_to_fastener_frame = difference_transformation
+        """
+        Adds an Inteface object to the the Fastener.
+
+        Parameters
+        ----------
+        interface : :class:`compas_timber.fasteners.Interface`
+        """
         self.interfaces.append(interface)
 
     def compute_elementgeometry(self, include_interfaces=True) -> Brep:

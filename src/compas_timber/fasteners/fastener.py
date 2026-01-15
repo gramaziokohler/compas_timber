@@ -53,8 +53,10 @@ class Fastener(Element, ABC):
 
     """
 
-    def __init__(self, frame: Optional[Frame] = None, interfaces: Optional[list["Interface"]] = [], **kwargs):
+    def __init__(self, frame: Frame, interfaces: Optional[list["Interface"]] = [], **kwargs):
         super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
+        self.frame = frame
+        self.target_frame = frame
         self.interfaces = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -77,6 +79,14 @@ class Fastener(Element, ABC):
     @property
     def key(self) -> Optional[int]:
         return self.graphnode
+
+    @property
+    def frame(self) -> Frame:
+        return self._frame
+
+    @frame.setter
+    def frame(self, frame) -> None:
+        self._frame = frame
 
     @abstractmethod
     def place_instances(self, joint: Joint) -> None:
@@ -102,13 +112,8 @@ class Fastener(Element, ABC):
         self.interfaces.append(interface)
 
     @property
-    @abstractmethod
     def to_joint_transformation(self) -> Transformation:
-        """
-        Return the transformation necessaryt to move the fastener to the position on the joint.
-        The transformation moves an object from `Fastener.frame` to `Fastener.target_frame`.
-        """
-        raise NotImplementedError
+        return Transformation.from_frame_to_frame(self.frame, self.target_frame)
 
     # ---- GEOMETRY -----
 

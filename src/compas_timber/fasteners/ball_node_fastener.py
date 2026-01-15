@@ -38,11 +38,6 @@ class BallNodeFastener(Fastener):
 
     """
 
-    @property
-    def __data__(self):
-        data = super(Fastener, self).__data__
-        return data
-
     def __init__(self, node_point, ball_diameter=100, base_interface=None, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
@@ -55,6 +50,11 @@ class BallNodeFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+
+    @property
+    def __data__(self):
+        data = super(Fastener, self).__data__
+        return data
 
     def __repr__(self):
         # type: () -> str
