@@ -1,3 +1,4 @@
+from compas.datastructures import Mesh
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
@@ -7,6 +8,7 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry.geometry import Geometry
 
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
@@ -123,8 +125,7 @@ class BallNodeFastener(Fastener):
             if value:
                 setattr(self.base_interface, key, value)
 
-    def compute_geometry(self):
-        # type: () -> compas.geometry.Geometry
+    def compute_geometry(self) -> Geometry:
         """Returns the geometry of the fastener including all interfaces."""
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
@@ -137,8 +138,7 @@ class BallNodeFastener(Fastener):
     # TODO: implement compute_aabb()
     # TODO: implement compute_obb()
 
-    def compute_collision_mesh(self):
-        # type: () -> compas.datastructures.Mesh
+    def compute_collision_mesh(self) -> Mesh:
         """Computes the collision geometry of the element.
 
         Returns

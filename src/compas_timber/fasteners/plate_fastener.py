@@ -79,7 +79,7 @@ class PlateFastener2(Fastener):
         Parameters
         ----------
         include_interfaces : bool, optional
-            If True, the interfaces are applied to the the creation of the geometry. Default is True.
+            If True, the interfaces are applied to the creation of the geometry. Default is True.
 
         Returns
         -------
@@ -88,8 +88,9 @@ class PlateFastener2(Fastener):
         # Compute basis geometry
         extrusion = self.frame.zaxis * self.thickness
         geometry = Brep.from_extrusion(self.outline, extrusion)
+
         # Modify it with the interfaces
-        if self.interfaces:
+        if self.interfaces and include_interfaces:
             for interface in self.interfaces:
                 geometry = interface.apply_to_fastener_geometry(geometry)
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from abc import ABC
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
@@ -13,10 +15,11 @@ if TYPE_CHECKING:
     from compas.geometry import Brep
     from compas.geometry import Transformation
 
+    from compas_timber.connections.joint import Joint
     from compas_timber.fasteners.interface import Interface
 
 
-class Fastener(Element):
+class Fastener(Element, ABC):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
@@ -75,12 +78,58 @@ class Fastener(Element):
     def key(self) -> Optional[int]:
         return self.graphnode
 
+    @abstractmethod
+    def place_instances(self, joint: Joint) -> None:
+        """
+        Adds an instance of the fastener to the joint.
+
+        This method is automatically called when joint is created.
+
+        This methoud shoudl be called bz Joint.apply() and not Joint.create()
+        Joint.apply() adds the features to the TimberElements, so does this method.
+        """
+        raise NotImplementedError
+
+    def add_interface(self, interface: Interface) -> None:
+        """
+        Adds an interface to the fastener
+
+        Parameters
+        ----------
+        interface : :class:`compas_timber.fasteners.Interface`
+            The interface to add to the fastener.
+        """
+        self.interfaces.append(interface)
+
+    @property
+    @abstractmethod
+    def to_joint_transformation(self) -> Transformation:
+        """
+        Return the transformation necessaryt to move the fastener to the position on the joint.
+        The transformation moves an object from `Fastener.frame` to `Fastener.target_frame`.
+        """
+        raise NotImplementedError
+
+    # ---- GEOMETRY -----
+
     @property
     def geometry(self) -> Brep:
         """The geometry of the element in the model's global coordinates."""
         if self._geometry is None:
             self._geometry = self.compute_modelgeometry()
         return self._geometry
+
+    @abstractmethod
+    def compute_elementgeometry(self, include_interfaces=True) -> Brep:
+        """
+        Compute the geoemtry of the element in local coordinates.
+
+        Parameters
+        ----------
+        include_interfaces: bool, optional
+            If True, the geometry of the interfaces are applied to the creation of the geometry. Default is True.
+        """
+        raise NotImplementedError
 
     def compute_modeltransformation(self) -> Optional[Transformation]:
         """Same as parent but handles standalone elements."""
