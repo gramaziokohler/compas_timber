@@ -6,15 +6,20 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Vector
+from compas.geometry import Polyline
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import distance_segment_segment_points
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
+
+from compas.data import json_dump
 
 
 class SimpleScarf(BTLxProcessing):
@@ -190,13 +195,13 @@ class SimpleScarf(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
 
-    @staticmethod
-    def _calculate_orientation(beam, other_beam):
-        ctls_intersection = intersection_line_line(beam.centerline, other_beam.centerline)
+    @classmethod
+    def _calculate_orientation(cls, beam, other_beam):
+        ctls_intersection = cls._calculate_average_point(beam, other_beam)
         if not ctls_intersection:
             raise FeatureApplicationError("The beams should share an endpoint to apply a SimpleScarf joint.")
-        orientation = beam.endpoint_closest_to_point(ctls_intersection[0])
-        return OrientationType.START if orientation == "start" else OrientationType.END
+        side, _ = beam.endpoint_closest_to_point(ctls_intersection)
+        return OrientationType.START if side == "start" else OrientationType.END
 
     @staticmethod
     def _calculate_start_x(beam, orientation, length): #TODO: modify to accept bias
@@ -204,6 +209,11 @@ class SimpleScarf(BTLxProcessing):
             return length/2
         else:
             return beam.length - length/2
+
+    @staticmethod
+    def _calculate_average_point(beam, other_beam):
+        _, p1, p2 = distance_segment_segment_points(beam.centerline, other_beam.centerline)
+        return (p1 + p2) * 0.5
 
 
     #########################################################################
@@ -234,9 +244,15 @@ class SimpleScarf(BTLxProcessing):
         """
         # type: (Brep, Beam) -> Brep
         scarf_volume = self.volume_from_params_and_beam(beam)
+        print(scarf_volume)
+
+
+        # transform scarf volume to local coordinates of the beam
+        # scarf_volume.transform(beam.transformation_to_local())
 
         try:
-            scarf_volume = Brep.from_mesh(scarf_volume)
+            # scarf_volume = Brep.from_mesh(scarf_volume)
+            json_dump(scarf_volume, "C:/Users/paulj/Downloads/scarf_volume.json")
         except Exception:
             raise FeatureApplicationError(
                 scarf_volume,
@@ -274,11 +290,16 @@ class SimpleScarf(BTLxProcessing):
         assert self.depth_ref_side is not None
         assert self.depth_opp_side is not None
 
-        ref_surface = beam.side_as_surface(self.ref_side_index)
-        p_origin = ref_surface.point_at(self.start_x, 0.0)
+        print(self.start_x, self.length, self.depth_ref_side, self.depth_opp_side)
 
-        top_frame = Frame(p_origin, ref_surface.xaxis, ref_surface.yaxis)
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        print("ref_surface:", ref_surface)
+        p_origin = ref_surface.point_at(self.start_x, 0.0)
+        print("p_origin:", p_origin)
+
+        top_frame = ref_surface.frame
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
+        print("ref_middle_frame:", ref_middle_frame)
 
         angle_sf = -90 if self.orientation == OrientationType.START else 90
         start_frame = top_frame.rotated(math.radians(angle_sf), top_frame.yaxis)
@@ -316,7 +337,7 @@ class SimpleScarf(BTLxProcessing):
 
         top_plane, ref_middle_plane, start_plane, blank_plane, end_plane, opp_middle_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_beam(beam)
 
-        verticies = [
+        vertices = [
             Point(*intersection_plane_plane_plane(top_plane, blank_plane, front_plane)),            #v0
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, front_plane)),         #v1
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, front_plane)),           #v2
@@ -330,20 +351,49 @@ class SimpleScarf(BTLxProcessing):
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),            #v10
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, back_plane)),          #v11
         ]
+        print(vertices)
 
-        faces = [
-            [0,1,2,3,4,5],      # Front face
-            [6,7,8,9,10,11],    # Back face
-            [0,5,7,6],          # Top face
-            [1,11,10,2],        # Bottom face
-            [0,6,11,1],         # Start face
-            [9,3,2,10],         # End face
-            [4,3,9,8],          # Middle face
-        ]
+        # polylines = [
+        #     Polyline([vertices[i] for i in [0, 1, 2, 3, 4, 5, 0]]),
+        #     Polyline([vertices[i] for i in [6, 7, 8, 9, 10, 11, 6]])
+        #     # [0,1,2,3,4,5],      # Front face
+        #     # [6,7,8,9,10,11],    # Back face
+        #     # [0,5,7,6],          # Top face
+        #     # [1,11,10,2],        # Bottom face
+        #     # [0,6,11,1],         # Start face
+        #     # [9,3,2,10],         # End face
+        #     # [4,3,9,8],          # Middle face
+        # ]
+        poly = Polyline([vertices[i] for i in [0, 1, 2, 3, 4, 5, 0]])
+        print(poly)
+        # poly = Polyline([vertices[i] for i in [0, 5, 4, 3, 2, 1, 0]])
+        vector = Vector.from_start_end(vertices[0], vertices[6])
+        print(vector)
+        # if self.orientation == OrientationType.END:
+        #     faces = [face[::-1] for face in faces]
+        # return Polyhedron(vertices, faces)
+        # print(polylines)
+        return Brep.from_extrusion(poly, vector)
 
-        if self.orientation == OrientationType.END:
-            faces = [face[::-1] for face in faces]
-        return Polyhedron(verticies, faces)
+    def scale(self, factor):
+        """Scale the parameters of this processing by a given factor.
+
+        Note
+        ----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        self.start_x *= factor
+        self.length *= factor
+        self.depth_ref_side *= factor
+        self.depth_opp_side *= factor
+        self.drill_hole_diam_1 *= factor
+        self.drill_hole_diam_2 *= factor
 
 class SimpleScarfParams(BTLxProcessingParams):
     """Parameters for the SimpleScarf feature.
@@ -377,4 +427,3 @@ class SimpleScarfParams(BTLxProcessingParams):
         result["DrillHoleDiam1"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_1), prec=TOL.precision)
         result["DrillHoleDiam2"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_2), prec=TOL.precision)
         return result
-
