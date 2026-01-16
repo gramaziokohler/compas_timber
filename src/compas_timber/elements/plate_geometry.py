@@ -105,6 +105,7 @@ class PlateGeometry(Data):
 
     def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
+        print(f"Setting extension plane for edge {edge_index}: {plane}")
         self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
@@ -115,12 +116,12 @@ class PlateGeometry(Data):
     def apply_edge_extensions(self, edge_index: Optional[int] = None)-> None:
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
         if edge_index is not None:
-            if edge_index in self._edge_planes:
-                plane = self._edge_planes[edge_index]
-                for polyline in self._mutable_outlines:
-                    move_polyline_segment_to_plane(polyline, edge_index, plane)
+            plane = self.edge_planes[edge_index]
+            for polyline in self._mutable_outlines:
+                move_polyline_segment_to_plane(polyline, edge_index, plane)
             return
-        for edge_index, plane in self._edge_planes.items():
+        for edge_index, plane in self.edge_planes.items():
+            print(f"index: {edge_index}, plane: {plane}")
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
@@ -129,7 +130,8 @@ class PlateGeometry(Data):
         if edge_index is None:
             self.reset()
         elif edge_index in self._edge_planes:
-            del self._extension_planes[edge_index]
+            if edge_index in self._extension_planes:
+                del self._extension_planes[edge_index]
             plane = Plane.from_points([self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index]])
             self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
             for pl in self._mutable_outlines:
@@ -139,6 +141,7 @@ class PlateGeometry(Data):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
         self._edge_planes = {}
+        self._extension_planes = {}
 
     # ==========================================================================
     #  Implementation of abstract methods
