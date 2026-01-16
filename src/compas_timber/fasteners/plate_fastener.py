@@ -103,107 +103,23 @@ class PlateFastener2(Fastener):
 
         """
         # get the frame where to pui the fastener on the joint
-        frames = self.get_fastener_frames(joint)
+        # frames = self.get_fastener_frames(joint)
         # build the fastener to append on the joint
+
+        frames = joint.fastener_frames
+        print("In the loop baby")
         for frame in frames:
             joint_fastener = self.copy()
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
 
-            for interface, element in zip(joint_fastener.interfaces, joint.elements):
-                interface.element = element
+            # for interface, element in zip(joint_fastener.interfaces, joint.elements):
+            #     interface.element = element
 
             for interface in joint_fastener.interfaces:
                 interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
 
             if hasattr(joint, "fasteners"):
                 joint.fasteners.append(joint_fastener)
-
-    # NOTE: This methods should be moved inside the joint... the joint sould give the Target Frame
-    def get_fastener_frames(self, joint: Joint) -> list[Frame]:
-        """Calculates the frames of the fasteners.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The frames of the fasteners with the x-axis along the main_beam.centerline and the y-axis along the cross_beam.centerline, offset to lay on the beam_faces.
-
-        """
-        front_face_index, back_face_index = self.validate_fastener_beam_compatibility(joint)
-        beam_a, beam_b = joint.elements[0:2]
-        (main_point, main_param), (cross_point, _) = intersection_line_line_param(beam_a.centerline, beam_b.centerline)
-        int_point = (main_point + cross_point) * 0.5
-        front_face = beam_a.ref_sides[front_face_index]
-        front_point = Plane.from_frame(front_face).closest_point(int_point)
-        front_frame = Frame(
-            front_point,
-            beam_a.centerline.direction if main_param < 0.5 else -beam_a.centerline.direction,
-            front_face.normal,
-        )
-        front_frame.rotate(-math.pi / 2, front_frame.xaxis, front_point)
-        back_face = beam_a.ref_sides[back_face_index]
-        back_point = Plane.from_frame(back_face).closest_point(int_point)
-
-        back_frame = Frame(
-            back_point,
-            beam_a.centerline.direction if main_param < 0.5 else -beam_a.centerline.direction,
-            back_face.normal,
-        )
-        back_frame.rotate(-math.pi / 2, back_frame.xaxis, back_point)
-        return [front_frame, back_frame]
-
-    def validate_fastener_beam_compatibility(self, joint: Joint) -> tuple[int, int]:
-        """Checks if the beams are compatible with the joint and sets the front and back face indices.
-
-        returns the front and back face indices of the cross beam.
-
-        Returns
-        -------
-        tuple[int, int]
-            The front and back face indices of the cross beam.
-
-        Raises
-        ------
-        BeamJoiningError
-            If the beams are not compatible.
-
-        """
-        beam_a, beam_b = joint.elements[0:2]
-        if not TOL.is_zero(angle_vectors(beam_a.frame.xaxis, beam_b.frame.xaxis) - (math.pi * 0.5)):
-            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="Beams are not perpendicular")
-        cross_vector = cross_vectors(beam_a.centerline.direction, beam_b.centerline.direction)
-        main_faces = beam_ref_side_incidence_with_vector(beam_a, cross_vector)
-        cross_faces = beam_ref_side_incidence_with_vector(beam_b, cross_vector)
-        front_face_index = min(main_faces, key=main_faces.get)  # type: ignore
-        cross_face_index = min(cross_faces, key=cross_faces.get)  # type: ignore
-        if not TOL.is_zero(main_faces[front_face_index]):
-            raise FastenerApplicationError(
-                elements=[beam_a, beam_b],
-                fastener=self,
-                message="beam_a is not perpendicular to the cross vector",
-            )
-        if not TOL.is_zero(cross_faces[cross_face_index]):
-            raise FastenerApplicationError(
-                elements=[beam_a, beam_b],
-                fastener=self,
-                message="Cross beam is not perpendicular to the cross vector",
-            )
-        if not TOL.is_zero(
-            distance_point_plane(
-                beam_a.ref_sides[front_face_index].point,
-                Plane.from_frame(beam_b.ref_sides[cross_face_index]),
-            )
-        ):
-            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar")
-        back_face_index = (front_face_index + 2) % 4
-        cross_back_face_index = (cross_face_index + 2) % 4
-        if not TOL.is_zero(
-            distance_point_plane(
-                beam_a.ref_sides[back_face_index].point,
-                Plane.from_frame(beam_b.ref_sides[cross_back_face_index]),
-            )
-        ):
-            raise FastenerApplicationError(elements=[beam_a, beam_b], fastener=self, message="beam faces are not coplanar")
-        return front_face_index, back_face_index
 
 
 # class PlateFastener(Fastener):
