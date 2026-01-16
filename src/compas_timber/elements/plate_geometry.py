@@ -60,12 +60,11 @@ class PlateGeometry(Data):
 
     def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
         super().__init__(**kwargs)
-        self._original_outlines = (local_outline_a, local_outline_b)
-        self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
-
-        self._planes = None
+        self._original_outlines = None
+        self._mutable_outlines = None
+        self._original_edge_planes = {}
+        self._set_original_attributes(local_outline_a, local_outline_b)
         self.openings = openings or []
-        self._edge_planes = {}
         self._extension_planes = {}
 
     def __repr__(self):
@@ -89,23 +88,25 @@ class PlateGeometry(Data):
 
     @property
     def edge_planes(self) -> dict[int, Plane]:
+        _edge_planes = {}
         for i in range(len(self._mutable_outlines[0]) - 1):
-            if i in self._extension_planes:
-                self._edge_planes[i] = self._extension_planes[i]
-                continue
-            if not i in self._edge_planes:
-                plane = Plane.from_points([self.outline_a[i], self.outline_a[i + 1], self.outline_b[i]])
-                plane = self._corrected_edge_plane(i, plane)
-                self._edge_planes[i] = plane
-        return self._edge_planes
+            _edge_planes[i] = self._extension_planes.get(i) or self._original_edge_planes[i]
+        return _edge_planes
 
     @property
     def aabb(self) -> Box:
         return Box.from_points(self._mutable_outlines[0].points + self._mutable_outlines[1].points)
 
+    def _set_original_attributes(self, outline_a, outline_b) -> None:
+        self._original_outlines = (outline_a, outline_b)
+        self._mutable_outlines = (outline_a.copy(), outline_b.copy())
+
+        for edge_index in range(len(outline_a) - 1):
+            plane = Plane.from_points([outline_a[edge_index], outline_a[edge_index + 1], outline_b[edge_index]])
+            self._original_edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
+
     def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
-        print(f"Setting extension plane for edge {edge_index}: {plane}")
         self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
@@ -113,34 +114,31 @@ class PlateGeometry(Data):
             return Plane(plane.point, -plane.normal)
         return plane
 
-    def apply_edge_extensions(self, edge_index: Optional[int] = None)-> None:
+    def apply_edge_extensions(self)-> None:
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
-        if edge_index is not None:
-            plane = self.edge_planes[edge_index]
-            for polyline in self._mutable_outlines:
-                move_polyline_segment_to_plane(polyline, edge_index, plane)
-            return
+        #TODO: Add an optional edge_index argument to only apply a specific edge extension for performance?
         for edge_index, plane in self.edge_planes.items():
-            print(f"index: {edge_index}, plane: {plane}")
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
 
     def remove_blank_extension(self, edge_index: Optional[int] = None):
         """Reverts any extension plane for the given edge index to the original and adjusts that ."""
         if edge_index is None:
+            #reset all edges to original
             self.reset()
-        elif edge_index in self._edge_planes:
-            if edge_index in self._extension_planes:
-                del self._extension_planes[edge_index]
-            plane = Plane.from_points([self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index]])
-            self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
-            for pl in self._mutable_outlines:
-                move_polyline_segment_to_plane(pl, edge_index, plane)
+            return
+        if edge_index > len(self._mutable_outlines[0]) - 1:
+            raise ValueError("Edge index out of range.")
+        if edge_index in self._extension_planes:
+            #delete the externally set extension plane
+            del self._extension_planes[edge_index]
+        for pl in self._mutable_outlines:
+            #revert the polyline segment to the original edge plane
+            move_polyline_segment_to_plane(pl, edge_index, self._original_edge_planes[edge_index])
 
     def reset(self):
         """Resets the element outlines to their initial state."""
         self._mutable_outlines = (self._original_outlines[0].copy(), self._original_outlines[1].copy())
-        self._edge_planes = {}
         self._extension_planes = {}
 
     # ==========================================================================
