@@ -66,6 +66,7 @@ class PlateGeometry(Data):
         self._planes = None
         self.openings = openings or []
         self._edge_planes = {}
+        self._extension_planes = {}
 
     def __repr__(self):
         # type: () -> str
@@ -89,7 +90,10 @@ class PlateGeometry(Data):
     @property
     def edge_planes(self) -> dict[int, Plane]:
         for i in range(len(self._mutable_outlines[0]) - 1):
-            if not self._edge_planes.get(i, None):
+            if i in self._extension_planes:
+                self._edge_planes[i] = self._extension_planes[i]
+                continue
+            if not i in self._edge_planes:
                 plane = Plane.from_points([self.outline_a[i], self.outline_a[i + 1], self.outline_b[i]])
                 plane = self._corrected_edge_plane(i, plane)
                 self._edge_planes[i] = plane
@@ -101,15 +105,21 @@ class PlateGeometry(Data):
 
     def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
-        self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
+        self._extension_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
 
     def _corrected_edge_plane(self, edge_index, plane):
         if dot_vectors(plane.normal, get_polyline_segment_perpendicular_vector(self._mutable_outlines[0], edge_index)) < 0:
             return Plane(plane.point, -plane.normal)
         return plane
 
-    def apply_edge_extensions(self):
+    def apply_edge_extensions(self, edge_index: Optional[int] = None)-> None:
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
+        if edge_index is not None:
+            if edge_index in self._edge_planes:
+                plane = self._edge_planes[edge_index]
+                for polyline in self._mutable_outlines:
+                    move_polyline_segment_to_plane(polyline, edge_index, plane)
+            return
         for edge_index, plane in self._edge_planes.items():
             for polyline in self._mutable_outlines:
                 move_polyline_segment_to_plane(polyline, edge_index, plane)
@@ -119,8 +129,9 @@ class PlateGeometry(Data):
         if edge_index is None:
             self.reset()
         elif edge_index in self._edge_planes:
-            del self._edge_planes[edge_index]
+            del self._extension_planes[edge_index]
             plane = Plane.from_points([self._original_outlines[0][edge_index], self._original_outlines[0][edge_index + 1], self._original_outlines[1][edge_index]])
+            self._edge_planes[edge_index] = self._corrected_edge_plane(edge_index, plane)
             for pl in self._mutable_outlines:
                 move_polyline_segment_to_plane(pl, edge_index, plane)
 
