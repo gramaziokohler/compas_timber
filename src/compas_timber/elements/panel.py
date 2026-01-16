@@ -179,7 +179,7 @@ class Panel(Element):
     @property
     def edge_planes(self):
         # TODO: transform to global?
-        return self.edge_planes
+        return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
