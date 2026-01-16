@@ -35,11 +35,12 @@ class HoleInterface(Interface):
         element (:class:`compas_timber.elements.TimberElement`): The timber element to which the interface is applied.
     """
 
-    def __init__(self, frame: Frame, depth: float, diameter: float, **kwargs):
+    def __init__(self, frame: Frame, depth: float, diameter: float, apply_dowel: bool = False, **kwargs):
         super().__init__(frame, **kwargs)
         self.frame = frame
         self.depth = depth
         self.diameter = diameter
+        self.sub_fasteners = []
 
     @property
     def __data__(self):
@@ -56,6 +57,9 @@ class HoleInterface(Interface):
         cylinder.frame.point += self.depth / 2 * self.frame.zaxis
         cylinder = Brep.from_cylinder(cylinder)
         return cylinder
+
+    def add_sub_fastener(self, sub_fastener):
+        self.sub_fasteners.append(sub_fastener)
 
     def apply_to_fastener_geometry(self, fastener_geometry) -> Brep:
         """

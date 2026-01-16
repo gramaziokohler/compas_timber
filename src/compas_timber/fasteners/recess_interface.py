@@ -21,6 +21,7 @@ class RecessInterface(Interface):
         self.depth = depth
         self.width = width
         self.height = height
+        self.sub_fasteners = []
 
     @property
     def __data__(self):

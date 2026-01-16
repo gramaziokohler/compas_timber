@@ -10,8 +10,8 @@ from compas.tolerance import Tolerance
 from compas_timber.fasteners.fastener import Fastener
 
 if TYPE_CHECKING:
+    from compas_timber.connection import Joint
     from compas_timber.fasteners.interface import Interface
-
 
 TOL = Tolerance()
 
@@ -19,19 +19,41 @@ TOL = Tolerance()
 class Dowel(Fastener):
     """Class description"""
 
-    def __init__(self, frame: Frame, height: float, radius: float, interfaces: Optional[list[Interface]]):
-        super().__init__(frame=frame)
+    def __init__(self, frame: Frame, height: float, diameter: float, interfaces: Optional[list[Interface]] = None):
+        super().__init__(frame=frame, interfaces=interfaces)
         self.height = height
-        self.radius = radius
-        self.interfaces = []
-        self._shape = None
+        self.diameter = diameter
 
-    def place_instances(self, frames: list[Frame]) -> None:
-        pass
+    @property
+    def __data__(self):
+        return {"frame": self.frame.__data__, "height": self.height, "diameter": self.diameter, "interfaces": [interface.__data__ for interface in self.interfaces]}
+
+    @classmethod
+    def __from_data__(cls, data):
+        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
+        height = data["height"]
+        diameter = data["diameter"]
+        interfaces = [globals()[iface["type"]].__from_data__(iface) for iface in data.get("interfaces", [])]
+        return cls(frame, height, diameter, interfaces)
+
+    def place_instances(self, joint: Joint, target_frames: list[Frame]) -> None:
+        for tframe in target_frames:
+            joint_dowel = self.copy()
+            joint_dowel.target_frame = tframe.copy()
+
+            if hasattr(joint, "fasteners"):
+                joint.fasteners.append(joint_dowel)
+
+    def apply(self, joint: Joint):
+        if not self.interfaces:
+            return
+        for interface in self.interfaces:
+            interface.appy_features_to_elements(joint, self.to_joint_transformation)
 
     def compute_elementgeometry(self, include_interfaces=True):
-        cylinder_frame = self.frame.point + self.heigth / 2 * self.frame.zaxis
-        geometry = Cylinder(radius=self.radius, height=self.height, frame=cylinder_frame)
+        cylinder_frame = self.frame.copy()
+        cylidnder
+        geometry = Cylinder(radius=self.diameter, height=self.height, frame=self.frame)
         self._geometry = geometry
 
         if self.interfaces and include_interfaces:

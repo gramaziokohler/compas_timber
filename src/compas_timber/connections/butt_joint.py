@@ -195,9 +195,6 @@ class ButtJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
 
-        for fastener in self.fasteners:
-            fastener.apply(self)
-
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
@@ -228,6 +225,10 @@ class ButtJoint(Joint):
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
+
+        if self.fasteners:
+            for fastener in self.fasteners:
+                fastener.apply(self)
 
     def _apply_lap_to_cross_beam(self):
         # apply the lap on the cross beam

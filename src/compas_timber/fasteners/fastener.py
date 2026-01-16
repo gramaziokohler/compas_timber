@@ -54,7 +54,8 @@ class Fastener(Element, ABC):
     """
 
     def __init__(self, frame: Frame, interfaces: Optional[list["Interface"]] = [], **kwargs):
-        super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
+        # super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
+        super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
         self.frame = frame
         self.target_frame = frame
         self.interfaces = []

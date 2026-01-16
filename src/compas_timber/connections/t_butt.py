@@ -56,10 +56,10 @@ class TButtJoint(ButtJoint):
         return self.fasteners
 
     @property
-    def fastener_frames(self):
-        return self._compute_plate_fastener_frames()
+    def fastener_target_frames(self):
+        return self._compute_fastener_target_frames()
 
-    def _compute_plate_fastener_frames(self):
+    def _compute_fastener_target_frames(self):
         """
         Computes the frames to position a plate fastener.
 

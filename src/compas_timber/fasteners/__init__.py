@@ -4,5 +4,6 @@ from .interface import Interface
 from .hole_interface import HoleInterface
 from .recess_interface import RecessInterface
 from .ball_node_fastener import BallNodeFastener
+from .dowel_fastener import Dowel
 
-__all__ = ["Fastener", "PlateFastener2", "BallNodeFastener", "Interface", "HoleInterface", "RecessInterface"]
+__all__ = ["Fastener", "PlateFastener2", "BallNodeFastener", "Interface", "HoleInterface", "RecessInterface", "Dowel"]

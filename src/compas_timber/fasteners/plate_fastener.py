@@ -98,15 +98,17 @@ class PlateFastener2(Fastener):
         # frames = self.get_fastener_frames(joint)
         # build the fastener to append on the joint
 
-        frames = joint.fastener_frames
+        frames = joint.fastener_target_frames
         for frame in frames:
             joint_fastener = self.copy()
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
-            # for interface in joint_fastener.interfaces:
-            #     interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
+            joint.fasteners.append(joint_fastener)
 
-            if hasattr(joint, "fasteners"):
-                joint.fasteners.append(joint_fastener)
+            for interface in self.interfaces:
+                for sub_fastener in interface.sub_fasteners:
+                    joint_subfastener = sub_fastener.copy()
+                    joint_subfastener.target_frame = sub_fastener.frame.transformed(joint_fastener.to_joint_transformation)
+                    joint.fasteners.append(joint_subfastener)
 
     def apply(self, joint: Joint) -> None:
         for interface in self.interfaces:
