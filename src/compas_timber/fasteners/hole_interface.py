@@ -93,6 +93,7 @@ class HoleInterface(Interface):
         end_point = self.frame.point + self.depth * -self.frame.zaxis
         line = Line(start_point, end_point)
         line.transform(transformation_to_joint)
+
         try:
             drilling = Drilling.from_line_and_element(line=line, element=element, diameter=self.diameter)
             return [drilling]

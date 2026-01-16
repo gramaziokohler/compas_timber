@@ -7,11 +7,13 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
+from referencing.jsonschema import ObjectSchema
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.fasteners import Fastener
 
 from .joint import Joint
 from .solver import JointTopology
@@ -91,6 +93,7 @@ class ButtJoint(Joint):
         butt_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
+        base_fastener: Optional[Fastener] = None,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(**kwargs)
@@ -104,6 +107,10 @@ class ButtJoint(Joint):
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
+        self.fasteners = []
+        self.base_fastener: Optional[Fastener] = base_fastener
+        if self.base_fastener:
+            self.base_fastener.place_instances(self)
 
     @property
     def elements(self):
@@ -187,6 +194,9 @@ class ButtJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
         """
         assert self.main_beam and self.cross_beam
+
+        for fastener in self.fasteners:
+            fastener.apply(self)
 
         if self.features:
             self.main_beam.remove_features(self.features)

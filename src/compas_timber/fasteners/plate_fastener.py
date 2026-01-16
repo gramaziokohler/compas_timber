@@ -1,26 +1,18 @@
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING
 from typing import Optional
 
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
-from compas.geometry import angle_vectors
-from compas.geometry import cross_vectors
-from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
-from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.errors import FastenerApplicationError
 from compas_timber.fasteners.fastener import Fastener
 from compas_timber.fasteners.hole_interface import HoleInterface  # noqa F401
 from compas_timber.fasteners.interface import Interface
 from compas_timber.fasteners.recess_interface import RecessInterface  # noqa F401
-from compas_timber.utils import intersection_line_line_param
 
 if TYPE_CHECKING:
     from compas_timber.connections.joint import Joint
@@ -107,19 +99,18 @@ class PlateFastener2(Fastener):
         # build the fastener to append on the joint
 
         frames = joint.fastener_frames
-        print("In the loop baby")
         for frame in frames:
             joint_fastener = self.copy()
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
-
-            # for interface, element in zip(joint_fastener.interfaces, joint.elements):
-            #     interface.element = element
-
-            for interface in joint_fastener.interfaces:
-                interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
+            # for interface in joint_fastener.interfaces:
+            #     interface.apply_features_to_elements(joint, joint_fastener.to_joint_transformation)
 
             if hasattr(joint, "fasteners"):
                 joint.fasteners.append(joint_fastener)
+
+    def apply(self, joint: Joint) -> None:
+        for interface in self.interfaces:
+            interface.apply_features_to_elements(joint, self.to_joint_transformation)
 
 
 # class PlateFastener(Fastener):
