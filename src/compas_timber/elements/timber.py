@@ -71,10 +71,13 @@ class TimberElement(Element, abc.ABC):
         data["width"] = self.width
         data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
+        data.update(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
         super().__init__(transformation=Transformation.from_frame(frame), **kwargs)
+        self.attributes = {}
+        self.attributes.update(kwargs)
         self.length = length
         self.width = width
         self.height = height

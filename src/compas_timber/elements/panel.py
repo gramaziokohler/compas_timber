@@ -90,6 +90,7 @@ class Panel(PlateGeometry, Element):
         data["thickness"] = self.height
         data["name"] = self.name
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data.update(self.attributes)
         return data
 
     def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, type=None, **kwargs):
