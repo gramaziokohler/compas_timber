@@ -3,15 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Optional
 
-from attr.filters import include
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Sphere
 
-from compas_timber.fasteners.ball_node_interface import BallNodeInterface
+from compas_timber.fasteners.ball_node_interface import BallNodeInterface  # noqa F401
 from compas_timber.fasteners.fastener import Fastener
-from compas_timber.fasteners.hole_interface import HoleInterface
-from compas_timber.fasteners.recess_interface import RecessInterface
+from compas_timber.fasteners.hole_interface import HoleInterface  # noqa F401
+from compas_timber.fasteners.recess_interface import RecessInterface  # noqa F401
 
 if TYPE_CHECKING:
     from compas_timber.fasteners.interface import Interface
@@ -39,6 +38,18 @@ class BallNodeFastener2(Fastener):
         return self.ball_diameter / 2
 
     def compute_elementgeometry(self, include_interfaces=True) -> Brep:
+        """Compute the geometry of the fastener element.
+
+        Parameters
+        ----------
+        include_interfaces : bool, optional
+            Whether to include the interfaces in the geometry.
+
+        Returns
+        -------
+        Brep
+            The geometry of the fastener element.
+        """
         sphere = Sphere(radius=self.ball_diameter, frame=self.frame)
         geometry = Brep.from_sphere(sphere)
         geometry.transform(self.to_joint_transformation)

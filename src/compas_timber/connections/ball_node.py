@@ -164,15 +164,7 @@ class BallNodeJoint(Joint):
         and adds it to the fastener.
 
         """
-
-        # for beam in self.beams:
-        #     # interface = self.fastener.base_interface.copy()
-        #     pt = beam.centerline.closest_point(self._node_point)
-        #     # interface.frame = Frame(pt, Vector.from_start_end(pt, beam.centerline.midpoint), beam.frame.zaxis)
-        #     self.fastener.interfaces.append(interface)
-        #     beam.add_features(interface.get_features(beam))
         for fastener in self.fasteners:
-            print(fastener.interfaces)
             fastener.apply(self)
 
     def restore_beams_from_keys(self, model):
