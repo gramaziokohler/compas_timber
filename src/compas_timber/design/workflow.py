@@ -173,13 +173,13 @@ class JointRule(object):
             True if the elements comply with the topology, False otherwise.
 
         """
-        supported_topology = self.joint_type.SUPPORTED_TOPOLOGY if isinstance(self.joint_type.SUPPORTED_TOPOLOGY, list) else [self.joint_type.SUPPORTED_TOPOLOGY]
-        if cluster.topology not in supported_topology:
+        supported_topology = self.joint_type.SUPPORTED_TOPOLOGY
+        if cluster.topology != supported_topology:
             if raise_error:
                 raise BeamJoiningError(
                     beams=cluster.elements,
                     joint=self.joint_type,
-                    debug_info="The cluster topology must be one of: {} for {}.".format([JointTopology.get_name(t) for t in supported_topology], self.joint_type.__name__),
+                    debug_info="The cluster topology must be one of: {} for {}.".format([JointTopology.get_name(supported_topology)], self.joint_type.__name__),
                     debug_geometries=[e.shape for e in cluster.elements],
                 )
             return False

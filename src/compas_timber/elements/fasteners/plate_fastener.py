@@ -118,11 +118,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if isinstance(joint.SUPPORTED_TOPOLOGY, list):
-            joint_topo = joint.SUPPORTED_TOPOLOGY
-        else:
-            joint_topo = [joint.SUPPORTED_TOPOLOGY]
-        if 3 in joint_topo:  # JointTopology.TOPO_T TODO: fix joint.SUPPORTED_TOPOLOGY import
+        if joint.SUPPORTED_TOPOLOGY == 3:  # JointTopology.TOPO_T
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),
@@ -156,9 +152,9 @@ class PlateFastener(Fastener):
                     )
                 )
             self.thickness = width_a / 20
-        elif 4 in joint_topo:  #  JointTopology.TOPO_X TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == 4:  #  JointTopology.TOPO_X
             raise NotImplementedError
-        elif 2 in joint_topo:  # JointTopology.TOPO_L TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == 2:  # JointTopology.TOPO_L
             raise NotImplementedError
 
     def place_instances(self, joint):
