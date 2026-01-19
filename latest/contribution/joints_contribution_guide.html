@@ -671,8 +671,8 @@ The base class provides shared methods while concrete classes define topology-sp
 
     <span class="k">def</span><span class="w"> </span><span class="nf">restore_beams_from_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;After de-serialization, restores references to the main and cross beams saved in the model.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">main_beam</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">element_by_guid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main_beam_guid</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cross_beam</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">element_by_guid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_beam_guid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main_beam</span> <span class="o">=</span> <span class="n">model</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">main_beam_guid</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cross_beam</span> <span class="o">=</span> <span class="n">model</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cross_beam_guid</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="admonition note">
