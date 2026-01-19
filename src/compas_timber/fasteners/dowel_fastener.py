@@ -36,24 +36,10 @@ class Dowel(Fastener):
         interfaces = [globals()[iface["type"]].__from_data__(iface) for iface in data.get("interfaces", [])]
         return cls(frame, height, diameter, interfaces)
 
-    def place_instances(self, joint: Joint, target_frames: list[Frame]) -> None:
-        for tframe in target_frames:
-            joint_dowel = self.copy()
-            joint_dowel.target_frame = tframe.copy()
-
-            if hasattr(joint, "fasteners"):
-                joint.fasteners.append(joint_dowel)
-
-    def apply(self, joint: Joint):
-        if not self.interfaces:
-            return
-        for interface in self.interfaces:
-            interface.appy_features_to_elements(joint, self.to_joint_transformation)
-
     def compute_elementgeometry(self, include_interfaces=True):
         cylinder_frame = self.frame.copy()
-        cylidnder
-        geometry = Cylinder(radius=self.diameter, height=self.height, frame=self.frame)
+        cylinder_frame.point += self.height / 2 * cylinder_frame.zaxis
+        geometry = Cylinder(radius=self.diameter, height=self.height, frame=cylinder_frame)
         self._geometry = geometry
 
         if self.interfaces and include_interfaces:

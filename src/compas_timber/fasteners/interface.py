@@ -19,7 +19,9 @@ class Interface(Data, ABC):
     def __init__(self, frame, **kwargs):
         self.frame = frame
         self.kwargs = kwargs
+        self.sub_fasteners = []
         self._logs = []
+        self._name = None
 
     @classmethod
     @abstractmethod

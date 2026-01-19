@@ -53,12 +53,12 @@ class Fastener(Element, ABC):
 
     """
 
-    def __init__(self, frame: Frame, interfaces: Optional[list["Interface"]] = [], **kwargs):
+    def __init__(self, frame: Frame, interfaces: Optional[list["Interface"]] = None, **kwargs):
         # super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
         super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
         self.frame = frame
         self.target_frame = frame
-        self.interfaces = []
+        self.interfaces = interfaces or []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -89,17 +89,43 @@ class Fastener(Element, ABC):
     def frame(self, frame) -> None:
         self._frame = frame
 
-    @abstractmethod
     def place_instances(self, joint: Joint) -> None:
-        """
-        Adds an instance of the fastener to the joint.
+        """Adds the fasteners to the joint.
 
-        This method is automatically called when joint is created.
+        This method is automatically called when joint is created by the call to `Joint.create()`.
 
         This methoud shoudl be called bz Joint.apply() and not Joint.create()
         Joint.apply() adds the features to the TimberElements, so does this method.
+
         """
-        raise NotImplementedError
+        frames = joint.fastener_target_frames
+
+        for frame in frames:
+            joint_fastener = self.copy()
+            joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+            joint.fasteners.append(joint_fastener)
+
+            print(joint_fastener.interfaces, "place")
+            for interface in self.interfaces:
+                for sub_fastener in interface.sub_fasteners:
+                    joint_subfastener = sub_fastener.copy()
+                    joint_subfastener.target_frame = sub_fastener.frame.transformed(joint_fastener.to_joint_transformation)
+                    joint.fasteners.append(joint_subfastener)
+
+    def apply(self, joint: Joint) -> None:
+        """
+        If the fastener contains intefaces, the interfaces are applied to the elements of the joint.
+
+        Parameters
+        ----------
+        joint: :class:`compas_timber.connections.Joint`
+            The joint to wiche the fastener is to be applied.
+
+        """
+        if not self.interfaces:
+            return
+        for interface in self.interfaces:
+            interface.apply_features_to_elements(joint, self.to_joint_transformation)
 
     def add_interface(self, interface: Interface) -> None:
         """
