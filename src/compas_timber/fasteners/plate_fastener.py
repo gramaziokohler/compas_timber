@@ -6,7 +6,6 @@ from typing import Optional
 from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas.tolerance import Tolerance
 
 from compas_timber.fasteners.fastener import Fastener
@@ -15,7 +14,7 @@ from compas_timber.fasteners.interface import Interface
 from compas_timber.fasteners.recess_interface import RecessInterface  # noqa F401
 
 if TYPE_CHECKING:
-    from compas_timber.connections.joint import Joint
+    pass
 
 TOL = Tolerance()
 

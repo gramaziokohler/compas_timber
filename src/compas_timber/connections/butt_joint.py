@@ -7,7 +7,6 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
-from referencing.jsonschema import ObjectSchema
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy

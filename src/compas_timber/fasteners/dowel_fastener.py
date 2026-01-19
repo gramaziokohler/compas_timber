@@ -10,7 +10,6 @@ from compas.tolerance import Tolerance
 from compas_timber.fasteners.fastener import Fastener
 
 if TYPE_CHECKING:
-    from compas_timber.connection import Joint
     from compas_timber.fasteners.interface import Interface
 
 TOL = Tolerance()

@@ -10,8 +10,6 @@ from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.fasteners import BallNodeFastener2
 from compas_timber.fasteners import BallNodeInterface
-from compas_timber.fasteners import HoleInterface
-from compas_timber.fasteners import Interface
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
