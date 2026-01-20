@@ -177,8 +177,8 @@ class LapJoint(Joint):
         planes_a = self._sort_beam_planes(beam_a, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
 
-        planes_cross = self._sort_beam_planes(beam_b, -plane_cut_vector)
-        plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
+        planes_b = self._sort_beam_planes(beam_b, -plane_cut_vector)
+        plane_b0, plane_b1, plane_b2, plane_b3 = planes_b
 
         # Lines as Frame Intersections
         lines = []
