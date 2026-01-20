@@ -2,9 +2,9 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import intersection_line_line
 
-from compas_timber.connections.elements import Beam
 from compas_timber.connections.joint import Joint
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.elements import Beam
 
 
 class YSpatialLapJoint(Joint):
@@ -28,7 +28,7 @@ class YSpatialLapJoint(Joint):
     @property
     def main_beams_plane(self):
         intersection_point = intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)
-        point = Point(*intersction_point[0])
+        point = Point(*intersection_point[0])
         plane = Plane.from_point_and_two_vectors(point, self.main_beams[0].centerline.direction, self.main_beams[1].centerline.direction)
         return plane
 
@@ -48,6 +48,18 @@ class YSpatialLapJoint(Joint):
         Calculates and adds the necessary extensions to the beams.
         """
         # Extend the cross beam, to the plane created by the two main_beam
+
+    def _extend_cross_beam(self):
+        intersection_point = intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)
+        max_main_beams_height = max([beam.get_dimensions_relative_to_side(self.ref_side_index(beam, self.cross_beam))[1] for beam in self.main_beams])
+        cross_beam_direction = self.cross_beam.centerline.direction
+        if self.cross_beam.centerline.point.distance_to_point(Point(*intersection_point[0])) < self.cross_beam.centerline.end.distance_to_point(Point(*intersection_point[0])):
+            cross_beam_direction = cross_beam_direction.scaled(-1)
+        plane = self.main_beams_plane
+        plane.point += max_main_beams_height / 2 * cross_beam_direction
+        blank = self.cross_beam.extension_to_plane(plane)
+        print(blank)
+        self.cross_beam.add_blank_extension(*blank)
 
     def add_features(self):
         raise NotImplementedError
