@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import warnings
 
 import compas
@@ -5,8 +7,11 @@ import compas
 if not compas.IPY:
     from typing import Generator  # noqa: F401
     from typing import List  # noqa: F401
+    from typing import cast  # noqa: F401
 
     from compas.tolerance import Tolerance  # noqa: F401
+
+    from compas_timber.structural import StructuralSegment  # noqa: F401
 
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -24,6 +29,7 @@ from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.structural import StructuralElementSolver
 
 
 class TimberModel(Model):
@@ -329,21 +335,46 @@ class TimberModel(Model):
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
 
-    def add_element_structural_segments(self, element: TimberElement, segments: List[Line]):
-        # type: (TimberElement, StructuralSegment) -> None
-        """Adds a structural segment to the model node corresponding to the given element.
+    def add_beam_structural_segments(self, beam: Beam, segments: List[StructuralSegment]) -> None:
+        """Adds a structural segment to the model node corresponding to the given beam.
 
         Parameters
         ----------
-        element : :class:`~compas_timber.elements.TimberElement`
-            The timber element to which the structural segment belongs.
-        segment : :class:`~compas_timber.elements.StructuralSegment`
-            The structural segment to add.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to which the structural segments belong.
+        segments : list[:class:`~compas_timber.elements.StructuralSegment`]
+            The structural segments to add.
         """
-        node = element.graphnode
-        segments = self._graph.node_attribute(node, "structural_segments") or []
-        segments.append(segment)
-        self._graph.node_attribute(node, "structural_segments", segments)
+        node = beam.graphnode
+        existing_segments = cast(List[StructuralSegment], self._graph.node_attribute(node, "structural_segments")) or []
+        existing_segments.extend(segments)
+        self._graph.node_attribute(node, "structural_segments", existing_segments)
+
+    def get_beam_structural_segments(self, beam: Beam) -> List[StructuralSegment]:
+        """Gets the structural segments assigned to the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam whose structural segments to retrieve.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.elements.StructuralSegment`]
+            The structural segments assigned to the beam.
+        """
+        segments = cast(List[StructuralSegment], self._graph.node_attribute(beam.graphnode, "structural_segments"))
+        return segments or []
+
+    def remove_beam_structural_segments(self, beam: Beam) -> None:
+        """Removes all structural segments assigned to the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam whose structural segments to remove.
+        """
+        self._graph.unset_node_attribute(beam.graphnode, "structural_segments")
 
     def remove_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
@@ -476,6 +507,21 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def create_structural_segments(self) -> None:
+        """Creates structural segments for all beams in the model based on their joints."""
+        if not self.joints:
+            raise ValueError("No joints in the model to create structural segments from.")
+
+        if not self.beams:
+            raise ValueError("No beams in the model to create structural segments for.")
+
+        for beam in self.beams:
+            self.remove_beam_structural_segments(beam)
+
+        solver = StructuralElementSolver()
+        for beam in self.beams:
+            solver.add_structural_segments(beam, model=self)
 
     def connect_adjacent_beams(self, max_distance=None):
         # Clear existing joint candidates
