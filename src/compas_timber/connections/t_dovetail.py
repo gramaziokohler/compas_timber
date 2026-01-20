@@ -23,9 +23,9 @@ class TDovetailJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     start_y : float
         Start position of the dovetail cut along the y-axis of the main beam.
@@ -50,9 +50,9 @@ class TDovetailJoint(Joint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     start_y : float
         Start position of the dovetail cut along the y-axis of the main beam.

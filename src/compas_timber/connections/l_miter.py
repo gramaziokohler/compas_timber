@@ -25,18 +25,18 @@ class LMiterJoint(Joint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
 
     Attributes
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.

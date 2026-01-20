@@ -20,9 +20,9 @@ class TStepJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     step_shape : int
         Shape of the step feature. 0: step, 1: heel, 2: double.
@@ -37,9 +37,9 @@ class TStepJoint(Joint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     step_shape : int
         Shape of the step feature. 0: step, 1: heel, 2: double.

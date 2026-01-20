@@ -46,16 +46,16 @@ class PlateJointCandidate(PlateJoint):
 
     Parameters
     ----------
-    plate_a : :class:`~compas_timber.parts.Plate`
+    plate_a : :class:`~compas_timber.elements.Plate`
         First plate to be joined.
-    plate_b : :class:`~compas_timber.parts.Plate`
+    plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
 
     Attributes
     ----------
-    plate_a : :class:`~compas_timber.parts.Plate`
+    plate_a : :class:`~compas_timber.elements.Plate`
         First plate to be joined.
-    plate_b : :class:`~compas_timber.parts.Plate`
+    plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
 
     """

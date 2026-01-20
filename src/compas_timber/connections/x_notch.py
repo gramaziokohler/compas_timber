@@ -21,16 +21,16 @@ class XNotchJoint(Joint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     Attributes
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     """
