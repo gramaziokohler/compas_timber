@@ -51,13 +51,6 @@ class HoleInterface(Interface):
         interface = cls(frame=Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"]), depth=data["depth"], diameter=data["diameter"])
         return interface
 
-    @property
-    def shape(self):
-        cylinder = Cylinder(radius=self.diameter * 0.5, height=self.depth, frame=self.frame)
-        cylinder.frame.point += self.depth / 2 * self.frame.zaxis
-        cylinder = Brep.from_cylinder(cylinder)
-        return cylinder
-
     def add_sub_fastener(self, sub_fastener):
         self.sub_fasteners.append(sub_fastener)
 
