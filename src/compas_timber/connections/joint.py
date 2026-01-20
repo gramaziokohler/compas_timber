@@ -49,7 +49,7 @@ class Joint(Data):
     def __init__(self, elements=(), topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
         self.elements = elements
-        if not all([e for e in elements]):
+        if not elements or not all([e for e in elements]):
             self.element_guids = tuple(g for g in kwargs.get("element_guids", ()))
         else:
             self.element_guids = tuple(str(e.guid) for e in elements)
