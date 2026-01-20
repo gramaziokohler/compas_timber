@@ -3,9 +3,13 @@ from compas.geometry import Point
 from compas.geometry import intersection_line_line
 
 from compas_timber.connections.joint import Joint
+from compas_timber.connections.lap_joint import LapJoint
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
 from compas_timber.fabrication import FrenchRidgeLap
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
+from compas_timber.fabrication.jack_cut import JackRafterCut
 
 
 class YSpatialLapJoint(Joint):
@@ -13,8 +17,12 @@ class YSpatialLapJoint(Joint):
         super().__init__(**kwargs)
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
-        self.mill_depth_0 = 2
-        self.mill_depth_1 = 4
+        self.mill_depth_a = 2
+        self.mill_depth_b = 4
+        self._plane_a = None
+        self._plane_b = None
+        self._plane_a_lap = None
+        self._plane_b_lap = None
 
     @property
     def __data__(self):
@@ -27,6 +35,49 @@ class YSpatialLapJoint(Joint):
     @property
     def elements(self):
         return self.beams
+
+    @property
+    def beam_a(self):
+        return self.main_beams[0]
+
+    @property
+    def beam_b(self):
+        return self.main_beams[1]
+
+    @property
+    def plane_a(self):
+        if not self._plane_a:
+            ref_side_index = (self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4
+            plane_a = Plane.from_frame(self.beam_a.ref_sides[ref_side_index])
+            plane_a.point += self.mill_depth_a * -plane_a.normal
+            self._plane_a = plane_a
+        return self._plane_a
+
+    @property
+    def plane_b(self):
+        if not self._plane_b:
+            ref_side_index = (self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4
+            plane_b = Plane.from_frame(self.beam_b.ref_sides[ref_side_index])
+            plane_b.point += self.mill_depth_b * -plane_b.normal
+            self._plane_b = plane_b
+        return self._plane_b
+
+    @property
+    def plane_a_lap(self):
+        if not self._plane_a_lap:
+            ref_side_index = self.ref_side_index(self.cross_beam, self.beam_a)
+            plane_a_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
+            self._plane_a_lap = plane_a_lap
+        return self._plane_a_lap
+
+    @property
+    def plane_b_lap(self):
+        if not self._plane_b_lap:
+            ref_side_index = (self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4
+            plane_b_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
+            plane_b_lap.normal *= -1
+            self._plane_b_lap = plane_b_lap
+        return self._plane_b_lap
 
     @property
     def main_beams_plane(self):
@@ -74,11 +125,15 @@ class YSpatialLapJoint(Joint):
         return beam
 
     def add_features(self):
-        # Main beam 0 and Cross beam
-        mb0_ref_side_index = (self.ref_side_index(self.main_beams[0], self.main_beams[1]) + 2) % 4
-        mb0_cb_plane = Plane.from_frame(self.main_beams[0].ref_sides[mb0_ref_side_index])
-        mb0_cb_plane.point += self.mill_depth_0 * (-mb0_cb_plane.normal)
-        frl_mb0_cb = FrenchRidgeLap.from_beam_beam_and_plane(self.main_beams[0], self.cross_beam, mb0_cb_plane)
+        # Apply the lap_feature to the beam_a
+        ref_side_index = self.ref_side_index(self.cross_beam, self.beam_a)
+        plane_a_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
+        length = self.cross_beam.get_dimensions_relative_to_side(ref_side_index)[1]
+        lap_a = Lap.from_plane_and_beam(plane_a_lap, self.beam_a, length=length, depth=5, ref_side_index=1)
+        jack_plane = self.cross_beam.ref_sides[(ref_side_index + 2) % 4]
+        jackrc_a = JackRafterCut.from_plane_and_beam(jack_plane, self.beam_a)
+        self.beam_a.add_feature(lap_a)
+        self.beam_a.add_feature(jackrc_a)
 
     def restore_beams_from_keys(self, model):
         raise NotImplementedError
