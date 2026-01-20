@@ -603,7 +603,7 @@ document.write(`
 <h1>ConnectionSolver.find_topology</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.ConnectionSolver.find_topology">
-<span class="sig-prename descclassname"><span class="pre">ConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_topology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d51e153/src/compas_timber/connections/solver.py#L128"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">ConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_topology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3d6e8b/src/compas_timber/connections/solver.py#L128"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>If <cite>beam_a</cite> and <cite>beam_b</cite> intersect within the given <cite>max_distance</cite>, return the topology type of the intersection.</p>
 <p>If the topology is role-sensitive, the method outputs the beams in a consistent specific order
 (e.g. main beam first, cross beam second), otherwise, the beams are outputted in the same
@@ -611,9 +611,9 @@ order as they were inputted.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beam_a</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>First beam from intersecting pair.</p>
+<dt><strong>beam_a</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>First beam from intersecting pair.</p>
 </dd>
-<dt><strong>beam_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>Second beam from intersecting pair.</p>
+<dt><strong>beam_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>Second beam from intersecting pair.</p>
 </dd>
 <dt><strong>max_distance</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum distance, in design units, at which two beams are considered intersecting.</p>
 </dd>

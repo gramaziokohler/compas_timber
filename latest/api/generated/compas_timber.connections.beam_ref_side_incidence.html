@@ -598,15 +598,15 @@ document.write(`
 <h1>beam_ref_side_incidence</h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="compas_timber.connections.beam_ref_side_incidence">
-<span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">beam_ref_side_incidence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_ends</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d51e153/src/compas_timber/connections/utilities.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">beam_ref_side_incidence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beam_a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beam_b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_ends</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3d6e8b/src/compas_timber/connections/utilities.py#L9"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Returns a map of ref_side indices of beam_b and the angle of their normal with beam_a’s centerline.</p>
 <p>This is used to find a cutting plane when joining the two beams.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beam_a</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The beam that attaches with one of its ends to the side of beam_b.</p>
+<dt><strong>beam_a</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The beam that attaches with one of its ends to the side of beam_b.</p>
 </dd>
-<dt><strong>beam_b</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The other beam.</p>
+<dt><strong>beam_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The other beam.</p>
 </dd>
 <dt><strong>ignore_ends</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, only the first four ref_sides of <cite>beam_b</cite> are considered. Otherwise all ref_sides are considered.</p>
 </dd>

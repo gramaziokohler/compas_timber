@@ -598,7 +598,7 @@ document.write(`
 <h1>LLapJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LLapJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d51e153/src/compas_timber/connections/l_lap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LLapJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3d6e8b/src/compas_timber/connections/l_lap.py#L11"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.LapJoint.html#compas_timber.connections.LapJoint" title="compas_timber.connections.lap_joint.LapJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">LapJoint</span></code></a></p>
 <p>Represents an L-Lap type joint which joins the ends of two beams with a lap.</p>
 <p>This joint type is compatible with beams in L topology.</p>
@@ -606,9 +606,9 @@ document.write(`
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>main_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The first beam to be joined.</p>
+<dt><strong>beam_a</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The first beam to be joined.</p>
 </dd>
-<dt><strong>cross_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The second beam to be joined.</p>
+<dt><strong>beam_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The second beam to be joined.</p>
 </dd>
 <dt><strong>flip_lap_side</strong><span class="classifier">bool</span></dt><dd><p>If True, the lap is flipped to the other side of the beams.</p>
 </dd>
@@ -618,9 +618,9 @@ document.write(`
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><dl>
-<dt><strong>main_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The first beam to be joined.</p>
+<dt><strong>beam_a</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The first beam to be joined.</p>
 </dd>
-<dt><strong>cross_beam</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></span></dt><dd><p>The second beam to be joined.</p>
+<dt><strong>beam_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>The second beam to be joined.</p>
 </dd>
 <dt><strong>flip_lap_side</strong><span class="classifier">bool</span></dt><dd><p>If True, the lap is flipped to the other side of the beams.</p>
 </dd>
@@ -671,7 +671,7 @@ document.write(`
 <td><p>Creates an instance of this joint from a joint candidate.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LLapJoint.restore_beams_from_keys.html#compas_timber.connections.LLapJoint.restore_beams_from_keys" title="compas_timber.connections.LLapJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
-<td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
+<td><p>After de-serialization, restores references to the beam_a and beam_b saved in the model.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LLapJoint.sha256.html#compas_timber.connections.LLapJoint.sha256" title="compas_timber.connections.LLapJoint.sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sha256</span></code></a></p></td>
 <td><p>Compute a hash of the data for comparison during version control using the sha256 algorithm.</p></td>

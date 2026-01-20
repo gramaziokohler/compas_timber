@@ -603,12 +603,12 @@ document.write(`
 <h1>PlateConnectionSolver.find_intersecting_pairs</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.connections.PlateConnectionSolver.find_intersecting_pairs">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PlateConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_intersecting_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beams</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d51e153/src/compas_timber/connections/solver.py#L106"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">PlateConnectionSolver.</span></span><span class="sig-name descname"><span class="pre">find_intersecting_pairs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">beams</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3d6e8b/src/compas_timber/connections/solver.py#L106"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Finds pairs of intersecting beams in the given list of beams.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>beams</strong><span class="classifier">list(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>)</span></dt><dd><p>A list of beam objects.</p>
+<dt><strong>beams</strong><span class="classifier">list(<a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>)</span></dt><dd><p>A list of beam objects.</p>
 </dd>
 <dt><strong>rtree</strong><span class="classifier">bool</span></dt><dd><p>When set to True R-tree will be used to search for neighboring beams.</p>
 </dd>
@@ -619,7 +619,7 @@ non-touching beams are still considered intersecting.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>list(set(<code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code>))</dt><dd><p>List containing sets or neightboring pairs beams.</p>
+<dt>list(set(<a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>, <a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a>))</dt><dd><p>List containing sets or neightboring pairs beams.</p>
 </dd>
 </dl>
 </dd>
