@@ -8,7 +8,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.elements import Beam
-from compas_timber.fasteners import BallNodeFastener2
+from compas_timber.fasteners import BallNodeFastener
 from compas_timber.fasteners import BallNodeInterface
 from compas_timber.utils import intersection_line_line_param
 
@@ -52,7 +52,7 @@ class BallNodeJoint(Joint):
         data["base_interface"] = self.fastener.base_interface
         return data
 
-    def __init__(self, beams: list[Beam], base_fastener: Optional[BallNodeFastener2] = None, **kwargs):
+    def __init__(self, beams: list[Beam], base_fastener: Optional[BallNodeFastener] = None, **kwargs):
         super().__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
@@ -71,7 +71,7 @@ class BallNodeJoint(Joint):
         self._fastener_guid = kwargs.get("fastener_guid", None)
 
     def create_base_fastener(self):
-        fastener = BallNodeFastener2(Frame.worldXY(), 10)
+        fastener = BallNodeFastener(Frame.worldXY(), 10)
         # add the interfaces to the fastener
         for beam in self.beams:
             # Hole Interface
