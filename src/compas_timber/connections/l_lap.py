@@ -30,7 +30,7 @@ class LLapJoint(LapJoint):
     ----------
     beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
