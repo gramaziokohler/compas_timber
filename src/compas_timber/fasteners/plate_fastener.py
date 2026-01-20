@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 TOL = Tolerance()
 
 
-class PlateFastener2(Fastener):
+class PlateFastener(Fastener):
     def __init__(self, frame: Frame, outline: Polyline, thickness: float, interfaces: Optional[list[Interface]] = None, **kwargs):
         super().__init__(frame=frame, interfaces=interfaces, **kwargs)
         self.outline = outline

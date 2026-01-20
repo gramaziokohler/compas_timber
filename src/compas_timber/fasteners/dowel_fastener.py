@@ -38,7 +38,7 @@ class Dowel(Fastener):
     def compute_elementgeometry(self, include_interfaces=True):
         cylinder_frame = self.frame.copy()
         cylinder_frame.point += self.height / 2 * cylinder_frame.zaxis
-        geometry = Cylinder(radius=self.diameter, height=self.height, frame=cylinder_frame)
+        geometry = Cylinder(radius=self.diameter / 2, height=self.height, frame=cylinder_frame)
         self._geometry = geometry
 
         if self.interfaces and include_interfaces:

@@ -74,14 +74,6 @@ class BallNodeJoint(Joint):
         fastener = BallNodeFastener(Frame.worldXY(), 10)
         # add the interfaces to the fastener
         for beam in self.beams:
-            # Hole Interface
-            # direction = Vector.from_start_end(self.node_point, beam.centerline.midpoint)
-            # direction.unitize()
-            # frame = Frame.from_plane(Plane(self.node_point, direction))
-            # frame.point += fastener.ball_radius * direction
-            # hole_interface = HoleInterface(frame, 3, 3)
-            # fastener.add_interface(hole_interface)
-
             # BallNodeInterface
             direction = Vector.from_start_end(self.node_point, beam.centerline.midpoint)
             direction.unitize()
