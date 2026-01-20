@@ -30,7 +30,7 @@ class JointCandidate(Joint):
     """
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
-        super(JointCandidate, self).__init__(elements=(element_a,element_b),**kwargs)
+        super(JointCandidate, self).__init__(elements=(element_a, element_b), **kwargs)
         # TODO: make distance a property of `Joint`?
         self.distance = distance if distance is not None else None
 

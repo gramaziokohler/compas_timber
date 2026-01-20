@@ -59,7 +59,6 @@ class TButtJoint(ButtJoint):
                     interactions.append((interface.element, fastener))
         return interactions
 
-
     @property
     def generated_elements(self):
         return self.fasteners

@@ -84,7 +84,7 @@ class LButtJoint(ButtJoint):
         """Flips the main and cross beams based on the joint parameters.
         Prioritizes the beam with the smaller cross-section if `small_beam_butts` is True.
         """
-        #TODO: maybe this should be moved to a constructor
+        # TODO: maybe this should be moved to a constructor
         if self.small_beam_butts:
             if self.main_beam.width * self.main_beam.height > self.cross_beam.width * self.cross_beam.height:
                 self.elements = (self.cross_beam, self.main_beam)

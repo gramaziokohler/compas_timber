@@ -58,7 +58,7 @@ class YButtJoint(Joint):
 
     @property
     def beams(self):
-        return self.elements 
+        return self.elements
 
     @property
     def cross_beams(self):

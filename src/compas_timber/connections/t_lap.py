@@ -39,15 +39,8 @@ class TLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    @property
-    def __data__(self):
-        data = super(TLapJoint, self).__data__
-        data["cut_plane_bias"] = self.cut_plane_bias
-        return data
-
     def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
         super(TLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
-        self.cut_plane_bias = cut_plane_bias
 
     @property
     def main_beam(self):
@@ -56,8 +49,6 @@ class TLapJoint(LapJoint):
     @property
     def cross_beam(self):
         return self.elements[1] if len(self.elements) > 1 else None
-
-
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.

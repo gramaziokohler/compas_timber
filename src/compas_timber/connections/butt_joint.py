@@ -19,7 +19,6 @@ from .utilities import beam_ref_side_incidence
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
-    from compas_timber.model.model import TimberModel
     from src.compas_timber.fabrication.btlx import BTLxProcessing
 
 
@@ -178,9 +177,7 @@ class ButtJoint(Joint):
             )
 
     def add_features(self) -> None:
-        """Removes this joint's previously generated features and adds new features to each beam.
-
-        """
+        """Removes this joint's previously generated features and adds new features to each beam."""
         assert self.main_beam and self.cross_beam
 
         if self.features:
@@ -265,5 +262,3 @@ class ButtJoint(Joint):
         self.cross_beam.add_features(pocket)
         self.features.append(pocket)
         return cutout_volume
-
-

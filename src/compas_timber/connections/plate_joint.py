@@ -58,8 +58,7 @@ class PlateJoint(Joint, ABC):
                 self.calculate_topology()
         self._reverse_a_planes = False
         self._reverse_b_planes = False
-        self.distance = 0.0 # HACK: to pass joint rules that expect a distance attribute
-
+        self.distance = 0.0  # HACK: to pass joint rules that expect a distance attribute
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))

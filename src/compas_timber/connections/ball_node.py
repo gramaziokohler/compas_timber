@@ -46,7 +46,7 @@ class BallNodeJoint(Joint):
         return data
 
     def __init__(self, beams=None, base_interface=None, ball_diameter=None, **kwargs):
-        super(BallNodeJoint, self).__init__(elements=(b for b in beams),**kwargs)
+        super(BallNodeJoint, self).__init__(elements=(b for b in beams), **kwargs)
         self._beam_guids = []
         self.beams = beams or []
         if ball_diameter:
