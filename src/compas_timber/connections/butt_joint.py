@@ -127,8 +127,6 @@ class ButtJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
         Raises
         ------
         BeamJoiningError
@@ -180,9 +178,8 @@ class ButtJoint(Joint):
             )
 
     def add_features(self) -> None:
-        """Adds the required extension and trimming features to both beams.
+        """Removes this joint's previously generated features and adds new features to each beam.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
         """
         assert self.main_beam and self.cross_beam
 
