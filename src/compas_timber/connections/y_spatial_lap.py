@@ -58,7 +58,6 @@ class YSpatialLapJoint(Joint):
         plane = self.main_beams_plane
         plane.point += max_main_beams_height / 2 * cross_beam_direction
         blank = self.cross_beam.extension_to_plane(plane)
-        print(blank)
         self.cross_beam.add_blank_extension(*blank)
 
     def add_features(self):
