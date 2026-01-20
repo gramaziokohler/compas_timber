@@ -5,6 +5,7 @@ from compas.geometry import intersection_line_line
 from compas_timber.connections.joint import Joint
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
+from compas_timber.fabrication import FrenchRidgeLap
 
 
 class YSpatialLapJoint(Joint):
@@ -12,6 +13,8 @@ class YSpatialLapJoint(Joint):
         super().__init__(**kwargs)
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
+        self.mill_depth_0 = 2
+        self.mill_depth_1 = 4
 
     @property
     def __data__(self):
@@ -71,7 +74,11 @@ class YSpatialLapJoint(Joint):
         return beam
 
     def add_features(self):
-        raise NotImplementedError
+        # Main beam 0 and Cross beam
+        mb0_ref_side_index = (self.ref_side_index(self.main_beams[0], self.main_beams[1]) + 2) % 4
+        mb0_cb_plane = Plane.from_frame(self.main_beams[0].ref_sides[mb0_ref_side_index])
+        mb0_cb_plane.point += self.mill_depth_0 * (-mb0_cb_plane.normal)
+        frl_mb0_cb = FrenchRidgeLap.from_beam_beam_and_plane(self.main_beams[0], self.cross_beam, mb0_cb_plane)
 
     def restore_beams_from_keys(self, model):
         raise NotImplementedError
