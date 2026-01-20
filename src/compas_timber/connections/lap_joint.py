@@ -31,8 +31,8 @@ class LapJoint(Joint):
     ----------
     elements : list of :class:`~compas_timber.elements.Beam`
         The beams to be joined.
-    beam_b : :class:`~compas_timber.elements.Beam`
-        The second beam to be joined.
+    beam_a : :class:`~compas_timber.elements.Beam`
+        The first beam to be joined.
     beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined.
     flip_lap_side : bool
@@ -68,28 +68,28 @@ class LapJoint(Joint):
 
     @property
     def ref_side_index_a(self):
-        """The reference side index of the first beam."""
+        """The reference side index of the beam_a."""
         if self._ref_side_index_a is None:
             self._ref_side_index_a = self._get_beam_ref_side_index(self.beam_a, self.beam_b, self.flip_lap_side)
         return self._ref_side_index_a
 
     @property
     def ref_side_index_b(self):
-        """The reference side index of the second beam."""
+        """The reference side index of the beam_b."""
         if self._ref_side_index_b is None:
             self._ref_side_index_b = self._get_beam_ref_side_index(self.beam_b, self.beam_a, self.flip_lap_side)
         return self._ref_side_index_b
 
     @property
     def cutting_plane_a(self):
-        """The face of the second beam that cuts the first beam as a plane."""
+        """The face of the beam_b that cuts the beam_a, as a plane."""
         if self._cutting_plane_a is None:
             self._cutting_plane_a = self._get_cutting_plane(self.beam_b, self.beam_a)
         return self._cutting_plane_a
 
     @property
     def cutting_plane_b(self):
-        """The face of the first beam that cuts the second beam as a plane."""
+        """The face of the beam_a that cuts the beam_b, as a plane."""
         if self._cutting_plane_b is None:
             self._cutting_plane_b = self._get_cutting_plane(self.beam_a, self.beam_b)
         return self._cutting_plane_b
@@ -173,7 +173,6 @@ class LapJoint(Joint):
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_a = self._sort_beam_planes(beam_a, plane_cut_vector)
         planes_a = self._sort_beam_planes(beam_a, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
 
