@@ -17,7 +17,7 @@ class LLapJoint(LapJoint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined.
     beam_b : :class:`~compas_timber.parts.Beam`
         The second beam to be joined.
