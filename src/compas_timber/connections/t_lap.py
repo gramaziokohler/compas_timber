@@ -15,9 +15,9 @@ class TLapJoint(LapJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -26,9 +26,9 @@ class TLapJoint(LapJoint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
