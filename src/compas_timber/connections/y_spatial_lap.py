@@ -47,6 +47,9 @@ class YSpatialLapJoint(Joint):
         """
         Calculates and adds the necessary extensions to the beams.
         """
+        self._extend_cross_beam()
+        self._extend_main_beam(self.main_beams[0], self.main_beams[1])
+        self._extend_main_beam(self.main_beams[1], self.main_beams[0])
         # Extend the cross beam, to the plane created by the two main_beam
 
     def _extend_cross_beam(self):
@@ -59,6 +62,13 @@ class YSpatialLapJoint(Joint):
         plane.point += max_main_beams_height / 2 * cross_beam_direction
         blank = self.cross_beam.extension_to_plane(plane)
         self.cross_beam.add_blank_extension(*blank)
+
+    def _extend_main_beam(self, beam, other_beam):
+        plane_ref_side_index = (self.ref_side_index(other_beam, beam) + 2) % 4
+        plane = Plane.from_frame(other_beam.ref_sides[plane_ref_side_index])
+        blank = beam.extension_to_plane(plane)
+        beam.add_blank_extension(*blank)
+        return beam
 
     def add_features(self):
         raise NotImplementedError
