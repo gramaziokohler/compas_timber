@@ -1,3 +1,5 @@
+import warnings
+
 import compas
 
 if not compas.IPY:
@@ -13,18 +15,19 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Panel
 from compas_timber.elements import Plate
-from compas_timber.elements import Slab
 from compas_timber.errors import BeamJoiningError
 
 
 class TimberModel(Model):
-    """Represents a timber model containing different elements such as slabs, beams and joints.
+    """Represents a timber model containing different elements such as panels, beams and joints.
 
     The timber model allows expressing the hierarchy and interactions between the different elements it contains.
 
@@ -38,8 +41,8 @@ class TimberModel(Model):
         A set of all actual joints assigned to this model.
     joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model.
-    slabs : Generator[:class:`~compas_timber.elements.Slab`]
-        A Generator object of all slabs assigned to this model.
+    panels : Generator[:class:`~compas_timber.elements.Panel`]
+        A Generator object of all panels assigned to this model.
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -91,9 +94,9 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Plate)
 
     @property
-    def slabs(self):
-        # type: () -> List[Slab]
-        return self.find_all_elements_of_type(Slab)
+    def panels(self):
+        # type: () -> List[Panel]
+        return self.find_all_elements_of_type(Panel)
 
     @property
     def fasteners(self):
@@ -147,14 +150,32 @@ class TimberModel(Model):
     # Elements
     # =============================================================================
 
-    def element_by_guid(self, guid):
-        # type: (str) -> Beam
-        """Get a beam by its unique identifier.
+    def get_element(self, guid):
+        # type: (str) -> Element | None
+        """Get an element by its unique identifier.
 
         Parameters
         ----------
         guid : str
-            The GUID of the beam to retrieve.
+            The GUID of the element to retrieve.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Element` or None
+            The element with the specified GUID.
+            None if an element with this GUID is not in the Model.
+
+        """
+        return self._elements.get(guid)
+
+    def __getitem__(self, guid):
+        # type: (str) -> Element
+        """Get an element by its unique identifier.
+
+        Parameters
+        ----------
+        guid : str
+            The GUID of the element to retrieve.
 
         Returns
         -------
@@ -163,6 +184,25 @@ class TimberModel(Model):
 
         """
         return self._elements[guid]
+
+    def element_by_guid(self, guid):
+        # type: (str) -> Element
+        """DEPRECATED
+        Get an element by its unique identifier.
+
+        Parameters
+        ----------
+        guid : str
+            The GUID of the element to retrieve.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Element`
+            The element with the specified GUID.
+
+        """
+        warnings.warn("element_by_guid() is deprecated;use get_element() for optional access or TimberModel[guid] for strict access.", DeprecationWarning, stacklevel=2)
+        return self[guid]
 
     # =============================================================================
     # Groups
@@ -460,6 +500,36 @@ class TimberModel(Model):
         for pair in pairs:
             plate_a, plate_b = pair
             result = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
+
+            if result.topology is JointTopology.TOPO_UNKNOWN:
+                continue
+            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
+
+            if result.topology == JointTopology.TOPO_EDGE_EDGE:
+                kwargs["b_segment_index"] = result.b_segment_index
+
+            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
+            self.add_joint_candidate(candidate)
+
+    def connect_adjacent_panels(self, max_distance=None):
+        """Connects adjacent plates in the model.
+
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
+        """
+        for joint in self.joints:
+            if isinstance(joint, PanelJoint):
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+
+        max_distance = max_distance or TOL.absolute
+        panels = self.panels
+        solver = PlateConnectionSolver()
+        pairs = solver.find_intersecting_pairs(panels, rtree=True, max_distance=max_distance)
+        for pair in pairs:
+            panel_a, panel_b = pair
+            result = solver.find_topology(panel_a, panel_b, tol=TOL.relative, max_distance=max_distance)
 
             if result.topology is JointTopology.TOPO_UNKNOWN:
                 continue

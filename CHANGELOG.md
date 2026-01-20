@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `get_element()` method to `compas_timber.model.TimberModel` for optional element access by GUID.
+* Added `__getitem__` support to `TimberModel` to allow strict element access via `model[guid]`. 
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
 * Added `geometry` property in `compas_timber.elements.TimberElement` following its removal from the base `Element` that returns the result of `compute_modelgeometry()`.
 * Added `compute_elementgeometry` method in `TimberElement` that returns the element geometry in local coordinates.
@@ -32,8 +34,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new `compas_timber.connections.KMiterJoint` class for creating K-Topo joint with a cross beam and two main beams. 
 * Added new `compas_timber.connections.KButtJoint` class for creating K-Topo joint with a cross beam and two main beams. 
 
+* Added `Panel` class as a renaming of `Slab`.
+* Added `**kwargs` argument to `LongitudinalCut` and `LongitudinalCutProxy` constructors to allow passing additional parameters, particularly `is_joinery=False` to keep the processing during serialization.
+* Added `PanelJoint` abstract base class for panel joints.
+* Added `PanelLButtJoint` class.
+* Added `PanelTButtJoint` class.
+* Added `PanelMiterJoint` class.
+* Added `TimberModel.connect_adjacent_panels()` method to find and create joint candidates between panels.
+* Added `PanelFeatureType` class for classifying panel feature types.
+* Added `panel_features` directory and `PanelFeature` abstract base class.
+* Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
+* Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 
 ### Changed
+* Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
 * Replaced `face.frame_at()` with `surface.frame_at()` on NURBS surfaces in `Lap.from_volume_and_element` to avoid `NotImplementedError` in `OCC`.
@@ -61,9 +75,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed the `ShowTopologyTypes` GH Component.
 * Changed `Slot.apply()` to visualize the slot geometry. 
 * Changed `BTLxProcessing` `*Proxy` classes to define geometry locally to the element to enable transform operations on elements with features defined with Proxies.
+* Refactored `ButtJoint.__init__()` to accept `force_pocket: bool` and `conical_tool: bool` parameters.
+* Fixed minor bug in `Pocket.apply()` that caused to the tilt angle to be assigned wrong. 
+* Changed default values for `Pocket.__init__()` to match BTLx standard values. 
 * Replaced calls to `PlanarSurface.point_at()` with calls to the new `planar_surface_point_at` to fix processing visualization issue since `compas==2.15.0`. 
 * Changed `Slab` to inherit from `PlateGeometry` and `compas_model.Element`.
 * Changed `Slab.from_boundary` to `Slab.from_outline_thickness`, inherited from `PlateGeometry`.
+* Renamed `Slab` to `Panel` everywhere in code and docs. 
+* Changed `LongitudinalCut` to properly generate `tool_position` parameter.
+* Changed `JackRafterCut` to compute `orientation` based on the beam centerline and plane normal instead of ref_frame.point and plane normal for when the plane does not fully cross the beam.
+* Changed `JackRafterCut` to allow negative `start_x` values in case the cutting plane does not fully cross the beam.
+* Changed `Panel.__data__` to enable proper serialization.
+* Changed some `PlateJoint` properties and methods to private.
+* Changed `FreeContour` to compute geometry in local element coordinates.
+* Changed how `FreeContour` computes the `ref_side_index` when not provided.
+* Changed `FreeContour` constructors to work with new local geometry computation.
+* Fixed models with `XLapJoint` fail to serialize.
+* Fixed circular import cause by typing import in `slot.py`.
+* Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -78,6 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `Wall`, `WallJoint`, `WallToWallInterface`, `InterfaceRole`, `InterfaceLocation`, `Opening`, `OpeningType`,
   `TimberModel.connect_adjacent_walls`, `TimberModel._clear_wall_joints` and related
   GH components and component functionality.
+* Removed `Slab` class and renamed to `Panel`.
+* Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 
 ## [1.0.1] 2025-10-16
 

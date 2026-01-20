@@ -44,6 +44,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+TestResults/
 
 # Translations
 *.mo
@@ -116,6 +117,8 @@ temp/**
 .DS_Store
 
 .vscode
+
+.vs
 
 .idea
 

@@ -99,7 +99,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             return
 
     def add_elements_to_model(self, model, elements, containers):
-        """Adds elements to the model and groups them by slab."""
+        """Adds elements to the model and groups them by panel."""
         elements = [e for e in elements if e is not None]
         for element in elements:
             element.reset()
@@ -108,8 +108,8 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
         containers = [c for c in containers if c is not None]
 
         for c_def in containers:
-            slab = c_def.slab
-            model.add_element(slab)
+            panel = c_def.panel
+            model.add_element(panel)
 
     def handle_features(self, features):
         feature_errors = []
