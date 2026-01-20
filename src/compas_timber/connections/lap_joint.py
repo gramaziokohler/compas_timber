@@ -48,7 +48,7 @@ class LapJoint(Joint):
         data["flip_lap_side"] = self.flip_lap_side
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, **kwargs):  
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, **kwargs):
         super(LapJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b

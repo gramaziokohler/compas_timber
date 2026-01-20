@@ -76,9 +76,7 @@ class LLapJoint(LapJoint):
         self.beam_b.add_blank_extension(start_b + tol, end_b + tol, self.beam_b_guid)
 
     def add_features(self):
-        """Adds the required joint features to both beams.
-
-        """
+        """Adds the required joint features to both beams."""
         assert self.beam_a and self.beam_b
 
         if self.features:

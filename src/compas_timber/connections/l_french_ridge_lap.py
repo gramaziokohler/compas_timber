@@ -46,7 +46,7 @@ class LFrenchRidgeLapJoint(LapJoint):
         data["drillhole_diam"] = self.drillhole_diam
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, drillhole_diam=None, **kwargs):  
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, drillhole_diam=None, **kwargs):
         super(LFrenchRidgeLapJoint, self).__init__(beam_a, beam_b, flip_lap_side, **kwargs)
         self.drillhole_diam = drillhole_diam
 
