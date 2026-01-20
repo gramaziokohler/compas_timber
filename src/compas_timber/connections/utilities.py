@@ -13,9 +13,9 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
@@ -58,9 +58,9 @@ def beam_ref_side_incidence_cross(beam_a, beam_b, ignore_ends=True):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
@@ -106,7 +106,7 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam for which ref_side angles will be calculated.
     vector : :class:`~compas.geometry.Vector`
         The vector to compare against the ref_sides' normals.
@@ -137,9 +137,9 @@ def are_beams_aligned_with_cross_vector(beam_a, beam_b, tol=TOL):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam.
     tol : :class:`compas.tolerance.Tolerance`, optional
         The tolerance for the dot product comparison.
@@ -174,9 +174,9 @@ def point_centerline_towards_joint(beam_a, beam_b):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
 
     Returns
