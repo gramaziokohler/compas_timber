@@ -100,11 +100,11 @@ class ButtJoint(Joint):
 
     @property
     def main_beam(self):
-        return self.elements[0] if len(self.elements) > 0 else None
+        return self.element_a
 
     @property
     def cross_beam(self):
-        return self.elements[1] if len(self.elements) > 1 else None
+        return self.element_b
 
     @property
     def beams(self):
@@ -126,7 +126,7 @@ class ButtJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        Raises
+        Raisesself.elements[0] if len(self.elements) > 0 else None
         ------
         BeamJoiningError
             If the extension could not be calculated.

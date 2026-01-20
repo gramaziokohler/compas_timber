@@ -44,11 +44,11 @@ class XNotchJoint(Joint):
 
     @property
     def beam_a(self):
-        return self.elements[0] if len(self.elements) > 0 else None
+        return self.element_a
 
     @property
     def beam_b(self):
-        return self.elements[1] if len(self.elements) > 1 else None
+        return self.element_b
 
     @property
     def main_ref_side_index(self):

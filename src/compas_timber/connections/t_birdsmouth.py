@@ -50,11 +50,11 @@ class TBirdsmouthJoint(Joint):
 
     @property
     def main_beam(self):
-        return self.elements[0] if len(self.elements) > 0 else None
+        return self.element_a
 
     @property
     def cross_beam(self):
-        return self.elements[1] if len(self.elements) > 1 else None
+        return self.element_b
 
     @property
     def cross_ref_side_indices(self):

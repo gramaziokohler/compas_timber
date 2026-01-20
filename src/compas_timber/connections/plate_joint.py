@@ -69,11 +69,11 @@ class PlateJoint(Joint, ABC):
 
     @property
     def plate_a(self):
-        return self.elements[0] if len(self.elements) > 0 else None
+        return self.element_a
 
     @property
     def plate_b(self):
-        return self.elements[1] if len(self.elements) > 1 else None
+        return self.element_b
 
     @property
     def a_planes(self):
