@@ -125,15 +125,33 @@ class YSpatialLapJoint(Joint):
         return beam
 
     def add_features(self):
-        # Apply the lap_feature to the beam_a
+        self._add_features_beam_a()
+        self._add_features_beam_b()
+
+    def _add_features_beam_a(self):
+        # Add Lap
         ref_side_index = self.ref_side_index(self.cross_beam, self.beam_a)
         plane_a_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
         length = self.cross_beam.get_dimensions_relative_to_side(ref_side_index)[1]
-        lap_a = Lap.from_plane_and_beam(plane_a_lap, self.beam_a, length=length, depth=5, ref_side_index=1)
+        lap_side = self.ref_side_index(self.beam_a, self.beam_b)
+        lap_a = Lap.from_plane_and_beam(plane_a_lap, self.beam_a, length=length, depth=5, ref_side_index=lap_side)
+        self.beam_a.add_feature(lap_a)
+        # Add Rafter Cut at the end
         jack_plane = self.cross_beam.ref_sides[(ref_side_index + 2) % 4]
         jackrc_a = JackRafterCut.from_plane_and_beam(jack_plane, self.beam_a)
-        self.beam_a.add_feature(lap_a)
         self.beam_a.add_feature(jackrc_a)
+
+    def _add_features_beam_b(self):
+        ref_side_index = self.ref_side_index(self.cross_beam, self.beam_b)
+        plane_b_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
+        length = self.cross_beam.get_dimensions_relative_to_side(ref_side_index)[1]
+        lap_side = self.ref_side_index(self.beam_b, self.beam_a)
+        lap_b = Lap.from_plane_and_beam(plane_b_lap, self.beam_b, length=length, depth=5, ref_side_index=lap_side)
+        self.beam_b.add_feature(lap_b)
+        # Add Rafter Cut at the end
+        # jack_plane = self.cross_beam.ref_sides[(ref_side_index + 2) % 4]
+        # jackrc_a = JackRafterCut.from_plane_and_beam(jack_plane, self.beam_a)
+        # self.beam
 
     def restore_beams_from_keys(self, model):
         raise NotImplementedError
