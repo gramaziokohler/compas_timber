@@ -127,7 +127,7 @@ class Plate(TimberElement):
     @property
     def blank(self):
         if not self._blank:
-            box = self.plate_geometry.aabb
+            box = self.plate_geometry.compute_aabb()
             box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
             box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
             self._blank = box.transformed(self.modeltransformation)
@@ -166,8 +166,7 @@ class Plate(TimberElement):
 
     @property
     def edge_planes(self):
-        # TODO: transform to global?
-        return self.edge_planes
+        return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
@@ -243,10 +242,7 @@ class Plate(TimberElement):
 
         """
 
-        obb = self.plate_geometry.aabb
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
+        obb = self.plate_geometry.compute_aabb(inflate)
         obb.transform(self.modeltransformation)
         return obb
 

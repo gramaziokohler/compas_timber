@@ -528,39 +528,80 @@ def move_polyline_segment_to_line(polyline, segment_index, line):
             polyline[0] = end_pt
 
 
-def join_polyline_segments(segments, close_loop=False):
-    """Join segments into a polyline."""
-    #TODO: make this recursively get multiple polylines if segments are not connected
-    def add_seg_to_points(seg, points):
+def join_polyline_segments(segments: list[Line], close_loop: bool = False):
+    """Join segments into one or more polylines.
+
+    Parameters
+    ----------
+    segments : list of :class:`~compas.geometry.Line`
+        the line segments to be joined
+    close_loop : bool
+        if True, each returned Polyline will be closed by appending the first point to the end, if not already the case.
+
+    Returns
+    -------
+    tuple(list[:class:`~compas.geometry.Polyline`], list[:class:`~compas.geometry.Line`])
+        A tuple with a list of joined Polylines and a list of segments that could not be joined.
+    """
+
+    # helper to add a segment to an existing ordered points list if it connects
+    def add_seg_to_points(seg: Line, points: list) -> bool:
         if seg.start == points[-1]:
             points.append(seg.end)
             return True
-        elif seg.end == points[-1]:
+        if seg.end == points[-1]:
             points.append(seg.start)
             return True
-        elif seg.end == points[0]:
+        if seg.end == points[0]:
             points.insert(0, seg.start)
             return True
-        elif seg.start == points[0]:
+        if seg.start == points[0]:
             points.insert(0, seg.end)
             return True
         return False
 
-    points = [segments[0].start, segments[0].end]
-    remaining_segments = segments[1:]
-    while remaining_segments:
-        for seg in remaining_segments:
-            if add_seg_to_points(seg, points):
-                remaining_segments.remove(seg)
-                break
-        else: #no matching seg found
-            break
-    if close_loop and not TOL.is_allclose(points[0], points[-1]):
-        points.append(points[0])
-    return Polyline(points)
+    if not segments:
+        return [], []
+
+    remaining = segments[:]  # copy so we don't mutate caller's list
+    polylines: list[Polyline] = []
+    unjoined: list[Line] = []
+
+    while remaining:
+        # start a new chain from the first remaining segment
+        start_seg = remaining.pop(0)
+        points = [start_seg.start, start_seg.end]
+
+        extended = True
+        while extended and remaining:
+            extended = False
+            for seg in remaining:
+                if add_seg_to_points(seg, points):
+                    remaining.remove(seg)
+                    extended = True
+                    break
+
+        if len(points) == 2:  # no segments joined, points to unjoined
+            unjoined.append(start_seg)
+        else:
+            if close_loop and not TOL.is_allclose(points[0], points[-1]):
+                points.append(points[0])
+            polylines.append(Polyline(points))
+
+    return polylines, unjoined
 
 
 def polyline_from_brep_loop(loop):
+    """Creates a Polyline from a BrepLoop. BrepLoop edges are not always aligned in the same direction, so this is necessary.
+    Parameters
+    ----------
+    loop : :class:`~compas.geometry.BrepLoop`
+
+    Returns
+    -------
+    :class:`~compas.geometry.Polyline`
+        The Polyline resulting from joining the BrepLoop edges.
+    """
     segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
     return join_polyline_segments(segments, close_loop=True)
 
@@ -569,8 +610,8 @@ def polylines_from_brep_face(face):
     """Extract polylines from a BRep face.
     Parameters
     ----------
-    face : :class:`~compas.datastructures.BRepFace`
-        The BRep face to extract polylines from.
+    face : :class:`~compas.geometry.BrepFace`
+        The Brep face to extract polylines from.
     Returns
     -------
     tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
@@ -601,8 +642,6 @@ def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Ve
         The normal vector of the polyline.
     """
     offset_vector = Frame.from_points(polyline[0], polyline[1], polyline[-2]).normal  # gets frame perpendicular to outline
-    print("offset vector before correction:", offset_vector)
-    print("is polyline clockwise?", is_polyline_clockwise(polyline, offset_vector))
     if normal_direction:
         if normal_direction.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
             offset_vector = -offset_vector

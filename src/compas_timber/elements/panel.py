@@ -264,10 +264,7 @@ class Panel(Element):
 
         """
 
-        obb = self.plate_geometry.aabb
-        obb.xsize += inflate
-        obb.ysize += inflate
-        obb.zsize += inflate
+        obb = self.plate_geometry.compute_aabb(inflate)
         obb.transform(self.modeltransformation)
         return obb
 
