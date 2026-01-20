@@ -132,7 +132,3 @@ class BallNodeJoint(Joint):
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.centerline.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))
-
-    # def restore_beams_from_keys(self, model):
-    #     self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
-    #     self.fastener = model.element_by_guid(self._fastener_guid)

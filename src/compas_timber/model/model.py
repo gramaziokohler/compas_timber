@@ -1,3 +1,5 @@
+import warnings
+
 import compas
 
 if not compas.IPY:
@@ -148,14 +150,32 @@ class TimberModel(Model):
     # Elements
     # =============================================================================
 
-    def element_by_guid(self, guid):
-        # type: (str) -> Beam
-        """Get a beam by its unique identifier.
+    def get_element(self, guid):
+        # type: (str) -> Element | None
+        """Get an element by its unique identifier.
 
         Parameters
         ----------
         guid : str
-            The GUID of the beam to retrieve.
+            The GUID of the element to retrieve.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Element` or None
+            The element with the specified GUID.
+            None if an element with this GUID is not in the Model.
+
+        """
+        return self._elements.get(guid)
+
+    def __getitem__(self, guid):
+        # type: (str) -> Element
+        """Get an element by its unique identifier.
+
+        Parameters
+        ----------
+        guid : str
+            The GUID of the element to retrieve.
 
         Returns
         -------
@@ -164,6 +184,25 @@ class TimberModel(Model):
 
         """
         return self._elements[guid]
+
+    def element_by_guid(self, guid):
+        # type: (str) -> Element
+        """DEPRECATED
+        Get an element by its unique identifier.
+
+        Parameters
+        ----------
+        guid : str
+            The GUID of the element to retrieve.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Element`
+            The element with the specified GUID.
+
+        """
+        warnings.warn("element_by_guid() is deprecated;use get_element() for optional access or TimberModel[guid] for strict access.", DeprecationWarning, stacklevel=2)
+        return self[guid]
 
     # =============================================================================
     # Groups
