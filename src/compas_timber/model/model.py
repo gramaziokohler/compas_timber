@@ -55,7 +55,8 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None}
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
+    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
 
     @classmethod
     def __from_data__(cls, data):
@@ -69,6 +70,7 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
+        self._graph.update_default_node_attributes(**self._TIMBER_GRAPH_NODE_ATTRIBUTES)
 
     def __str__(self):
         # type: () -> str
@@ -326,6 +328,22 @@ class TimberModel(Model):
             # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
+
+    def add_element_structural_segments(self, element: TimberElement, segments: List[Line]):
+        # type: (TimberElement, StructuralSegment) -> None
+        """Adds a structural segment to the model node corresponding to the given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.TimberElement`
+            The timber element to which the structural segment belongs.
+        segment : :class:`~compas_timber.elements.StructuralSegment`
+            The structural segment to add.
+        """
+        node = element.graphnode
+        segments = self._graph.node_attribute(node, "structural_segments") or []
+        segments.append(segment)
+        self._graph.node_attribute(node, "structural_segments", segments)
 
     def remove_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
