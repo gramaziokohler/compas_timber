@@ -50,14 +50,6 @@ class TLapJoint(LapJoint):
     def cross_beam(self):
         return self.beam_b
 
-    @property
-    def main_beam(self):
-        return self.beam_a
-
-    @property
-    def cross_beam(self):
-        return self.beam_b
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 

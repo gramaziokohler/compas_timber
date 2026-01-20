@@ -96,3 +96,15 @@ def test_L_butt_joint_features_non_planar_pocket_conical_tool(cross_beam, non_pl
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
     assert isinstance(cross_beam.features[0], Pocket)
+
+
+def test_small_beam_butts():
+    big_beam = Beam(frame=Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), width=100, height=200, length=100)
+    small_beam = Beam(frame=Frame([0, 0, 0], [0, 1, 0], [1, 0, 0]), width=100, height=100, length=100)
+    joint = LButtJoint(big_beam, small_beam, mill_depth=50, small_beam_butts=False, modify_cross=True)
+    joint_sbb = LButtJoint(big_beam, small_beam, mill_depth=50, small_beam_butts=True, modify_cross=True)
+
+    assert big_beam == joint.main_beam, "small_beam_butts is False, Order stays the same"
+    assert small_beam == joint.cross_beam, "small_beam_butts is False, Order stays the same"
+    assert big_beam == joint_sbb.cross_beam, "small_beam_butts is True, Order changes"
+    assert small_beam == joint_sbb.main_beam, "small_beam_butts is False, Order changes"

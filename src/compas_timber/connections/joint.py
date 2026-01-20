@@ -170,6 +170,7 @@ class Joint(Data):
 
         """
         self.elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
