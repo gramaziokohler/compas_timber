@@ -52,26 +52,17 @@ class LMiterJoint(Joint):
         return data
 
     def __init__(self, beam_a=None, beam_b=None, cutoff=None, **kwargs):
-        super(LMiterJoint, self).__init__(elements=(beam_a,beam_b),**kwargs)
+        super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.cutoff = cutoff
         self.features = []
 
     @property
     def beam_a(self):
-        return self.elements[0]
-
-    @beam_a.setter
-    def beam_a(self, value):
-        self.elements[0] = value
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def beam_b(self):
-        return self.elements[1]
-
-    @beam_b.setter
-    def beam_b(self, value):
-        self.elements[1] = value
-
+        return self.elements[1] if len(self.elements) > 1 else None
 
     def get_cutting_planes(self):
         assert self.beam_a and self.beam_b
@@ -181,4 +172,3 @@ class LMiterJoint(Joint):
                 cutoff = JackRafterCutProxy.from_plane_and_beam(cutoff_plane, beam)
                 beam.add_features(cutoff)
                 self.features.append(cutoff)
-

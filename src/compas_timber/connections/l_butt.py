@@ -87,5 +87,5 @@ class LButtJoint(ButtJoint):
         """
         if self.small_beam_butts:
             if self.main_beam.width * self.main_beam.height > self.cross_beam.width * self.cross_beam.height:
-                self.main_beam, self.cross_beam = self.cross_beam, self.main_beam
-                self.main_beam_guid, self.cross_beam_guid = self.cross_beam_guid, self.main_beam_guid
+                self.elements = (self.cross_beam, self.main_beam)
+                self.element_guids = tuple(g for g in self.element_guids[::-1])

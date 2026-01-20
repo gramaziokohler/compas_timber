@@ -52,41 +52,29 @@ class YButtJoint(Joint):
         return data
 
     def __init__(self, main_beam=None, cross_beam_a=None, cross_beam_b=None, mill_depth=None, **kwargs):
-        super(YButtJoint, self).__init__(elements = (main_beam,cross_beam_a,cross_beam_b),**kwargs)
+        super(YButtJoint, self).__init__(elements=(main_beam, cross_beam_a, cross_beam_b), **kwargs)
         self.mill_depth = mill_depth
         self.features = []
 
     @property
     def beams(self):
-        return self.elements
+        return self.elements 
 
     @property
     def cross_beams(self):
-        return self.elements[1:3]
+        return self.elements[1:3] if len(self.elements) >= 3 else []
 
     @property
     def main_beam(self):
-        return self.elements[0]
-
-    @main_beam.setter
-    def main_beam(self, value):
-        self.elements = (value, self.elements[1], self.elements[2])
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def cross_beam_a(self):
-        return self.elements[1]
-
-    @cross_beam_a.setter
-    def cross_beam_a(self, value):
-        self.elements = (self.elements[0], value, self.elements[2])
+        return self.elements[1] if len(self.elements) > 1 else None
 
     @property
     def cross_beam_b(self):
-        return self.elements[2]
-
-    @cross_beam_b.setter
-    def cross_beam_b(self, value):
-        self.elements = (self.elements[0], self.elements[1], value)
+        return self.elements[2] if len(self.elements) > 2 else None
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
@@ -234,7 +222,6 @@ class YButtJoint(Joint):
         self.cross_beams[0].add_features(cut1)
         self.cross_beams[1].add_features(cut2)
         self.features = [cut1, cut2]
-
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):

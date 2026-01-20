@@ -43,27 +43,18 @@ class TBirdsmouthJoint(Joint):
         return data
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
-        super(TBirdsmouthJoint, self).__init__(elements=(main_beam,cross_beam),**kwargs)
+        super(TBirdsmouthJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
 
-        self.features = [] #TODOL remove?
+        self.features = []  # TODOL remove?
 
     @property
     def main_beam(self):
-        return self.elements[0]
-
-    @main_beam.setter
-    def main_beam(self, value):
-        self.elements = (value, self.elements[1])
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def cross_beam(self):
-        return self.elements[1]
-
-    @cross_beam.setter
-    def cross_beam(self, value):
-        self.elements = (self.elements[0], value)
-
+        return self.elements[1] if len(self.elements) > 1 else None
 
     @property
     def cross_ref_side_indices(self):

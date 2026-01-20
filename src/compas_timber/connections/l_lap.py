@@ -40,7 +40,6 @@ class LLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 

@@ -46,14 +46,13 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self,elements=None, topology=None, location=None, name=None, **kwargs):
+    def __init__(self, elements=(), topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
-        if elements:
-            self.elements = elements
-            self.element_guids = (str(e.guid) for e in elements)
+        self.elements = elements
+        if not all([e for e in elements]):
+            self.element_guids = tuple(g for g in kwargs.get("element_guids", ()))
         else:
-            self.elements = ()
-            self.element_guids = kwargs.get("element_guids") 
+            self.element_guids = tuple(str(e.guid) for e in elements)
 
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location or Point(0, 0, 0)
@@ -61,19 +60,7 @@ class Joint(Data):
     @property
     def __data__(self):
         # type: () -> dict
-        return {
-            "name": self.name,
-            "element_guids": self.element_guids
-            }
-
-    @property
-    def element_a(self):
-        return self.elements[0]
-
-    @property
-    def element_b(self):
-        return self.elements[1]
-
+        return {"name": self.name, "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -166,7 +153,7 @@ class Joint(Data):
         """
         pass
 
-    def restore_beams_from_keys(self, model):
+    def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
 
         During serialization, :class:`compas_timber.parts.Beam` objects
@@ -182,7 +169,7 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        self.elements = (model.element_by_guid(guid) for guid in self.element_guids))
+        self.elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
 
     @classmethod
     def create(cls, model, *elements, **kwargs):

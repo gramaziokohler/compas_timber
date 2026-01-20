@@ -37,27 +37,18 @@ class XNotchJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-
     def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(XNotchJoint, self).__init__(elements=(beam_a,beam_b), **kwargs)
+        super(XNotchJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.features = []
         self._main_ref_side_index = None
 
     @property
     def beam_a(self):
-        return self.elements[0]
-
-    @beam_a.setter
-    def beam_a(self, value):
-        self.elements[0] = value
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def beam_b(self):
-        return self.elements[1]
-
-    @beam_b.setter
-    def beam_b(self, value):
-        self.elements[1] = value
+        return self.elements[1] if len(self.elements) > 1 else None
 
     @property
     def main_ref_side_index(self):
@@ -129,4 +120,3 @@ class XNotchJoint(Joint):
 
         # register processings to the joint
         self.features.append(pocket_feature)
-

@@ -1,4 +1,3 @@
-from _pytest.raises import P
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
@@ -59,23 +58,13 @@ class ButtJoint(Joint):
         self.butt_plane = butt_plane
         self.features = []
 
-
     @property
     def main_beam(self):
         return self.elements[0]
 
-    @main_beam.setter
-    def main_beam(self, value):
-        self.elements = (value, self.elements[1])
-
     @property
     def cross_beam(self):
         return self.elements[1]
-
-    @cross_beam.setter
-    def cross_beam(self, value):
-        self.elements = (self.elements[0], value)
-
 
     @property
     def beams(self):

@@ -47,8 +47,8 @@ class LapJoint(Joint):
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs): 
-        super(LapJoint, self).__init__(elements=(beam_a,beam_b),**kwargs)
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+        super(LapJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
         self.features = []
@@ -60,20 +60,11 @@ class LapJoint(Joint):
 
     @property
     def beam_a(self):
-        return self.elements[0]
-
-    @beam_a.setter
-    def beam_a(self, value):
-        self.elements[0] = value
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def beam_b(self):
-        return self.elements[1]
-
-    @beam_b.setter
-    def beam_b(self, value):
-        self.elements[1] = value
-
+        return self.elements[1] if len(self.elements) > 1 else None
 
     @property
     def ref_side_index_a(self):
@@ -171,7 +162,7 @@ class LapJoint(Joint):
         )
 
     def _create_negative_volumes(self, cut_plane_bias):
-        assert self.elements
+        assert len(self.elements) > 1, "LapJoint requires two elements."
         beam_a, beam_b = self.elements
 
         # Get Cut Plane
@@ -214,4 +205,3 @@ class LapJoint(Joint):
         if self.flip_lap_side:
             return negative_polyhedron_beam_b, negative_polyhedron_beam_a
         return negative_polyhedron_beam_a, negative_polyhedron_beam_b
-

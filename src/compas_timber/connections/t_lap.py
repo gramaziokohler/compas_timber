@@ -49,6 +49,13 @@ class TLapJoint(LapJoint):
         super(TLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, cut_plane_bias, **kwargs)
 
 
+    @property
+    def main_beam(self):
+        return self.elements[0] if len(self.elements) > 0 else None
+
+    @property
+    def cross_beam(self):
+        return self.elements[1] if len(self.elements) > 1 else None
 
 
     def add_extensions(self):

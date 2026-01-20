@@ -46,7 +46,7 @@ class BallNodeJoint(Joint):
         return data
 
     def __init__(self, beams=None, base_interface=None, ball_diameter=None, **kwargs):
-        super(BallNodeJoint, self).__init__(**kwargs)
+        super(BallNodeJoint, self).__init__(elements=(b for b in beams),**kwargs)
         self._beam_guids = []
         self.beams = beams or []
         if ball_diameter:
@@ -67,10 +67,6 @@ class BallNodeJoint(Joint):
     @property
     def generated_elements(self):
         return [self.fastener]
-
-    @property
-    def elements(self):
-        return list(self.beams) + self.generated_elements
 
     @property
     def interactions(self):
@@ -137,6 +133,6 @@ class BallNodeJoint(Joint):
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))
 
-    def restore_beams_from_keys(self, model):
-        self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
-        self.fastener = model.element_by_guid(self._fastener_guid)
+    # def restore_beams_from_keys(self, model):
+    #     self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
+    #     self.fastener = model.element_by_guid(self._fastener_guid)

@@ -29,20 +29,11 @@ class OliGinaJoint(TenonMortiseJoint):
 
     @property
     def main_beam(self):
-        return self.elements[0]
-
-    @main_beam.setter
-    def main_beam(self, value):
-        self.elements = (value, self.elements[1])
+        return self.elements[0] if len(self.elements) > 0 else None
 
     @property
     def cross_beam(self):
-        return self.elements[1]
-
-    @cross_beam.setter
-    def cross_beam(self, value):
-        self.elements = (self.elements[0], value)
-
+        return self.elements[1] if len(self.elements) > 1 else None
 
     def add_features(self):
         super(OliGinaJoint, self).add_features()

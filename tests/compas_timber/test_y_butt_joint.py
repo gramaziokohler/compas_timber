@@ -27,7 +27,7 @@ def test_create():
     assert len(instance.elements) == 3
     assert isinstance(instance, YButtJoint)
     assert instance.main_beam == beams[0]
-    assert instance.cross_beams == beams[1:]
+    assert instance.cross_beams == tuple(beams[1:])
     assert instance.mill_depth == 10.0
     assert len(instance.main_beam.features) == 1
     assert isinstance(instance.main_beam.features[0], DoubleCut)

@@ -30,17 +30,16 @@ class JointCandidate(Joint):
     """
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
-        super(JointCandidate, self).__init__(**kwargs)
+        super(JointCandidate, self).__init__(elements=(element_a,element_b),**kwargs)
         # TODO: make distance a property of `Joint`?
         self.distance = distance if distance is not None else None
-
 
     def add_features(self):
         """This joint does not add any features."""
         pass
 
 
-class PlateJointCandidate(PlateJoint, JointCandidate):
+class PlateJointCandidate(PlateJoint):
     """A PlateJointCandidate is an information-only joint for plate connections.
 
     It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.

@@ -88,8 +88,13 @@ class TStepJoint(Joint):
         self.features = []
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.elements[0] if len(self.elements) > 0 else None
+
+    @property
+    def cross_beam(self):
+        return self.elements[1] if len(self.elements) > 1 else None
+
 
     @property
     def cross_beam_ref_side_index(self):
@@ -232,4 +237,3 @@ class TStepJoint(Joint):
                 raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
 
         return True
-
