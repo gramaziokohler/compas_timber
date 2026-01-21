@@ -6,6 +6,7 @@ from compas.geometry import Vector
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import plane
 from numpy import negative
 
 from compas_timber.connections.joint import Joint
@@ -16,6 +17,7 @@ from compas_timber.fabrication import FrenchRidgeLap
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import LongitudinalCut
+from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.fabrication.jack_cut import JackRafterCut
 
 
@@ -121,6 +123,8 @@ class YSpatialLapJoint(Joint):
         self._jack_rafter_cut_on_a()
         self._lap_on_b()
         self._jack_rafter_cut_on_b()
+        self._lap_a_on_cross()
+        self._lap_b_on_cross()
 
     def _brep_from_planes(self, plane_a, plane_b, plane_c, plane_d, plane_e, plane_f):
         v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))
@@ -135,9 +139,7 @@ class YSpatialLapJoint(Joint):
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
         # faces = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
         faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
-        print(faces)
         faces = _ensure_faces_outward(vertices, faces)
-        print(faces)
         polyhedron = Polyhedron(vertices, faces)
         return polyhedron
         mesh = polyhedron.to_mesh()
@@ -178,57 +180,60 @@ class YSpatialLapJoint(Joint):
 
     def _jack_rafter_cut_on_b(self):
         cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
+        cutting_plane.point -= 5 * cutting_plane.normal
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_b)
         self.beam_b.add_feature(jack_rafter_cut)
 
     def _lap_a_on_cross(self):
-        pass
+        plane_a = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4])
+        plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
+        plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
+        plane_d = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam))])
+        plane_b = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
+        plane_f = plane_a.copy()
+        plane_f.normal *= -1
+        plane_f.point += 5 * plane_f.normal
+        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+
+        mac_lim = MachiningLimits()
+        mac_lim.face_limited_front = False
+        mac_lim.face_limited_top = False
+        mac_lim.face_limited_back = False
+        mac_lim.face_limited_end = False
+
+        lap_a_on_cross = Lap.from_volume_and_beam(
+            negative_volume,
+            self.cross_beam,
+            ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4,
+            machining_limits=mac_lim.limits,
+        )
+        self.cross_beam.add_feature(lap_a_on_cross)
+        print(lap_a_on_cross.machining_limits)
+        return negative_volume
 
     def _lap_b_on_cross(self):
-        pass
+        plane_a = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4])
+        plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
+        plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
+        plane_c.point -= (5 - 0.1) * plane_c.normal
+        plane_d = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam))])
+        plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
+        plane_f = plane_a.copy()
+        plane_f.normal *= -1
+        plane_f.point += 5 * plane_f.normal
+        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
-    # def _add_features_beam_a(self):
-    #     # Add Lap
-    #     ref_side_index = self.ref_side_index(self.cross_beam, self.beam_a)
-    #     plane_a_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
-    #     length = self.cross_beam.get_dimensions_relative_to_side(ref_side_index)[1]
-    #     self.lap_side_a = self.ref_side_index(self.beam_a, self.beam_b)
-    #     depth = self.beam_a.get_dimensions_relative_to_side(self.lap_side_a)[1] * (1 - self.cut_plane_bias_a)
-    #     self.lap_a = Lap.from_plane_and_beam(plane_a_lap, self.beam_a, length=length, depth=depth, ref_side_index=self.lap_side_a)
-    #     self.beam_a.add_feature(self.lap_a)
+        mac_lim = MachiningLimits()
+        mac_lim.face_limited_front = False
+        mac_lim.face_limited_top = False
+        mac_lim.face_limited_back = True
+        mac_lim.face_limited_end = False
 
-    #     # Add Rafter Cut at the end
-    #     ref_side_index = self.ref_side_index(self.beam_b, self.beam_a)
-    #     jack_plane = self.beam_b.ref_sides[(ref_side_index + 2) % 4]
-    #     jackrc_a = JackRafterCut.from_plane_and_beam(jack_plane, self.beam_a)
-    #     self.beam_a.add_feature(jackrc_a)
-
-    # def _add_features_beam_b(self):
-    #     ref_side_index = self.ref_side_index(self.cross_beam, self.beam_b)
-    #     plane_b_lap = Plane.from_frame(self.cross_beam.ref_sides[ref_side_index])
-    #     length = self.cross_beam.get_dimensions_relative_to_side(ref_side_index)[1]
-    #     self.lap_side_b = self.ref_side_index(self.beam_b, self.beam_a)
-    #     depth = self.beam_b.get_dimensions_relative_to_side(self.lap_side_b)[1] * (1 - self.cut_plane_bias_b)
-    #     self.lap_p = Lap.from_plane_and_beam(plane_b_lap, self.beam_b, length=length, depth=depth, ref_side_index=self.lap_side_b)
-    #     self.beam_b.add_feature(self.lap_p)
-
-    #     # Add Rafter Cut at the end
-    #     ref_side_index = self.ref_side_index(self.beam_a, self.beam_b)
-    #     jack_plane = self.beam_a.ref_sides[(ref_side_index + 2) % 4]
-    #     lap_thickness = self.beam_a.get_dimensions_relative_to_side(self.lap_side_a)[1] - self.lap_a.depth
-    #     jack_plane.point += lap_thickness * -jack_plane.normal
-    #     jackrc_a = JackRafterCut.from_plane_and_beam(jack_plane, self.beam_b)
-    #     self.beam_b.add_feature(jackrc_a)
-
-    # def _add_features_cross_beam(self):
-    #     # longitudinal cut beam_a
-    #     ref_side_index_a = (self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4
-    #     plane = Plane.from_frame(self.beam_a.ref_sides[ref_side_index_a])
-    #     plane.point -= 4 * plane.normal
-    #     long_cut = LongitudinalCut.from_plane_and_beam(plane, self.cross_beam, start_x=40, ref_side_index=self.ref_side_index(self.cross_beam, self.beam_a))
-    #     self.cross_beam.add_feature(long_cut)
-
-    # longitudinal cut beam _b
+        lap_b_on_cross = Lap.from_volume_and_beam(
+            negative_volume, self.cross_beam, ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4, machining_limits=mac_lim.limits
+        )
+        self.cross_beam.add_feature(lap_b_on_cross)
+        return negative_volume
 
     def restore_beams_from_keys(self, model):
         raise NotImplementedError
