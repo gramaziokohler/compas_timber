@@ -11,7 +11,7 @@ def parse_cross_beam_and_main_beams_from_cluster(cluster: Cluster) -> tuple[set[
     ----------
     cluster : :class:`~compas_timber.connections.analyzers.Cluster`
         The cluster of joints to parse.
-    
+
     Returns
     -------
     set[:class:`~compas_timber.elements.beam.Beam`], set[:class:`~compas_timber.elements.beam.Beam`]

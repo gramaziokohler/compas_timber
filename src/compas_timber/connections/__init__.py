@@ -72,6 +72,7 @@ __all__ = [
     "BallNodeJoint",
     "TenonMortiseJoint",
     "YButtJoint",
+    "YSpatialLapJoint",
     "OliGinaJoint",
     "KMiterJoint",
     "KButtJoint",
