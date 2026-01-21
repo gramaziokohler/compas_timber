@@ -1,40 +1,32 @@
-from compas.geometry import Brep
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import Vector
-from compas.geometry import intersection_line_line
-from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
-from compas.geometry import plane
-from numpy import negative
 
 from compas_timber.connections.joint import Joint
-from compas_timber.connections.lap_joint import LapJoint
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
-from compas_timber.fabrication import FrenchRidgeLap
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
-from compas_timber.fabrication import LongitudinalCut
 from compas_timber.fabrication.btlx import MachiningLimits
-from compas_timber.fabrication.btlx import OrientationType
-from compas_timber.fabrication.jack_cut import JackRafterCut
+
+if TYPE_CHECKING:
+    from compas_timber.elements import TimberModel
 
 
 class YSpatialLapJoint(Joint):
-    def __init__(self, cross_beam: Beam, *main_beams: Beam, **kwargs):
+    def __init__(self, cross_beam: Beam, *main_beams: Beam, cut_plane_bias_a: float = 0.5, cut_plane_bias_b: float = 0.5, **kwargs):
         super().__init__(**kwargs)
-        self.cross_beam = cross_beam
-        self.main_beams = list(main_beams)
-        self.mill_depth_a = 2
-        self.mill_depth_b = 4
-        self.cut_plane_bias_a = 0.5
-        self.cut_plane_bias_b = 0.4
-        self._plane_a = None
-        self._plane_b = None
-        self._plane_a_lap = None
-        self._plane_b_lap = None
+        self.cross_beam: Beam = cross_beam
+        self.main_beams: list[Beam] = list(main_beams)
+
+        # TODO: add the features based on the biases
+        self.cut_plane_bias_a: float = 0.5
+        self.cut_plane_bias_b: float = 0.4
 
     @property
     def __data__(self):
@@ -45,36 +37,29 @@ class YSpatialLapJoint(Joint):
         return [self.cross_beam] + self.main_beams
 
     @property
-    def elements(self):
+    def elements(self) -> list[Beam]:
         return self.beams
 
     @property
-    def beam_a(self):
+    def beam_a(self) -> Beam:
         return self.main_beams[0]
 
     @property
-    def beam_b(self):
+    def beam_b(self) -> Beam:
         return self.main_beams[1]
 
-    @property
-    def main_beams_plane(self):
-        intersection_point = intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)
-        point = Point(*intersection_point[0])
-        plane = Plane.from_point_and_two_vectors(point, self.main_beams[0].centerline.direction, self.main_beams[1].centerline.direction)
-        return plane
-
-    def cross_beam_ref_side_inde(self, beam):
+    def cross_beam_ref_side_inde(self, beam: Beam):
         raise NotImplementedError
 
-    def main_beam_ref_side_index(self, beam):
+    def main_beam_ref_side_index(self, beam: Beam):
         raise NotImplementedError
 
-    def ref_side_index(self, beam, ref_beam):
+    def ref_side_index(self, beam: Beam, ref_beam: Beam) -> int:
         ref_side_dict = beam_ref_side_incidence(ref_beam, beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        ref_side_index = min(ref_side_dict, key=lambda k: ref_side_dict.get(k, float("inf")))
         return ref_side_index
 
-    def add_extensions(self):
+    def add_extensions(self) -> None:
         """
         Calculates and adds the necessary extensions to the beams.
         """
@@ -83,11 +68,11 @@ class YSpatialLapJoint(Joint):
         self._extend_main_beam(self.main_beams[1], self.main_beams[0])
         # Extend the cross beam, to the plane created by the two main_beam
 
-    def _extend_cross_beam(self):
-        ext_plane_a = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
+    def _extend_cross_beam(self) -> None:
+        ext_plane_a = self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4]
         blank_a = self.cross_beam.extension_to_plane(ext_plane_a)
 
-        ext_plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
+        ext_plane_b = self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4]
         blank_b = self.cross_beam.extension_to_plane(ext_plane_b)
 
         blank = [0.0, 0.0]
@@ -122,26 +107,22 @@ class YSpatialLapJoint(Joint):
         self._lap_a_on_cross()
         self._lap_b_on_cross()
 
-    def _brep_from_planes(self, plane_a, plane_b, plane_c, plane_d, plane_e, plane_f):
-        v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))
-        v1 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_b))
-        v2 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_b))
-        v3 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_d))
-        v4 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_d))
-        v5 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_b))
-        v6 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_b))
-        v7 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_d))
-
+    def _brep_from_planes(self, plane_a, plane_b, plane_c, plane_d, plane_e, plane_f) -> Polyhedron:
+        v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))  # type: ignore
+        v1 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_b))  # type: ignore
+        v2 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_b))  # type: ignore
+        v3 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_d))  # type: ignore
+        v4 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_d))  # type: ignore
+        v5 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_b))  # type: ignore
+        v6 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_b))  # type: ignore
+        v7 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_d))  # type: ignore
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
-        # faces = [[0, 3, 2, 1], [4, 5, 6, 7], [0, 1, 5, 4], [1, 2, 6, 5], [2, 3, 7, 6], [3, 0, 4, 7]]
         faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
         faces = _ensure_faces_outward(vertices, faces)
         polyhedron = Polyhedron(vertices, faces)
         return polyhedron
-        mesh = polyhedron.to_mesh()
-        return mesh
 
-    def _lap_on_a(self):
+    def _lap_on_a(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_a.ref_sides[self.ref_side_index(self.beam_a, self.beam_b)])
         plane_e = Plane.from_frame(self.beam_a.ref_sides[self.ref_side_index(self.beam_a, self.cross_beam)])
         plane_c = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
@@ -155,12 +136,13 @@ class YSpatialLapJoint(Joint):
         self.beam_a.add_feature(lap_on_a)
         return negative_volume
 
-    def _jack_rafter_cut_on_a(self):
+    def _jack_rafter_cut_on_a(self) -> Plane:
         cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_a)
         self.beam_a.add_feature(jack_rafter_cut)
+        return cutting_plane
 
-    def _lap_on_b(self):
+    def _lap_on_b(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_b.ref_sides[self.ref_side_index(self.beam_b, self.beam_a)])
         plane_e = Plane.from_frame(self.beam_b.ref_sides[self.ref_side_index(self.beam_b, self.cross_beam)])
         plane_c = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
@@ -174,13 +156,14 @@ class YSpatialLapJoint(Joint):
         self.beam_b.add_feature(lap_on_b)
         return negative_volume
 
-    def _jack_rafter_cut_on_b(self):
+    def _jack_rafter_cut_on_b(self) -> Plane:
         cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
         cutting_plane.point -= 5 * cutting_plane.normal
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_b)
         self.beam_b.add_feature(jack_rafter_cut)
+        return cutting_plane
 
-    def _compute_machining_limits(self, beam):
+    def _compute_machining_limits(self, beam: Beam) -> MachiningLimits:
         mac_lim = MachiningLimits()
         mac_lim.face_limited_front = False
         mac_lim.face_limited_top = False
@@ -193,7 +176,7 @@ class YSpatialLapJoint(Joint):
         mac_lim.face_limited_start = False
         return mac_lim
 
-    def _lap_a_on_cross(self):
+    def _lap_a_on_cross(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4])
         plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
         plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
@@ -213,7 +196,7 @@ class YSpatialLapJoint(Joint):
         self.cross_beam.add_feature(lap_a_on_cross)
         return negative_volume
 
-    def _lap_b_on_cross(self):
+    def _lap_b_on_cross(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4])
         plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
         plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
@@ -234,7 +217,7 @@ class YSpatialLapJoint(Joint):
         self.cross_beam.add_feature(lap_b_on_cross)
         return negative_volume
 
-    def restore_beams_from_keys(self, model):
+    def restore_beams_from_keys(self, model: TimberModel):
         raise NotImplementedError
 
     @classmethod
@@ -242,7 +225,7 @@ class YSpatialLapJoint(Joint):
         raise NotImplementedError
 
 
-def _ensure_faces_outward(vertices, faces):
+def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]) -> list[list[int]]:
     """Reorder face indices so face normals point outward.
 
     vertices: list of Point or 3-tuples
