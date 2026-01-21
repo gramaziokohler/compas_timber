@@ -184,6 +184,19 @@ class YSpatialLapJoint(Joint):
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_b)
         self.beam_b.add_feature(jack_rafter_cut)
 
+    def _compute_machining_limits(self, beam):
+        mac_lim = MachiningLimits()
+        mac_lim.face_limited_front = False
+        mac_lim.face_limited_top = False
+        if beam is self.beam_a:
+            mac_lim.face_limited_back = False
+        else:
+            mac_lim.face_limited_back = True
+        mac_lim.face_limited_end = False
+        mac_lim.face_limited_side = True
+        mac_lim.face_limited_start = False
+        return mac_lim
+
     def _lap_a_on_cross(self):
         plane_a = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4])
         plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
@@ -195,11 +208,7 @@ class YSpatialLapJoint(Joint):
         plane_f.point += 5 * plane_f.normal
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
-        mac_lim = MachiningLimits()
-        mac_lim.face_limited_front = False
-        mac_lim.face_limited_top = False
-        mac_lim.face_limited_back = False
-        mac_lim.face_limited_end = False
+        mac_lim = self._compute_machining_limits(self.beam_a)
 
         lap_a_on_cross = Lap.from_volume_and_beam(
             negative_volume,
@@ -223,14 +232,13 @@ class YSpatialLapJoint(Joint):
         plane_f.point += 5 * plane_f.normal
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
-        mac_lim = MachiningLimits()
-        mac_lim.face_limited_front = False
-        mac_lim.face_limited_top = False
-        mac_lim.face_limited_back = True
-        mac_lim.face_limited_end = False
+        mac_lim = self._compute_machining_limits(self.beam_b)
 
         lap_b_on_cross = Lap.from_volume_and_beam(
-            negative_volume, self.cross_beam, ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4, machining_limits=mac_lim.limits
+            negative_volume,
+            self.cross_beam,
+            ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4,
+            machining_limits=mac_lim.limits,
         )
         self.cross_beam.add_feature(lap_b_on_cross)
         return negative_volume
