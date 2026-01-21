@@ -18,6 +18,7 @@ from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import LongitudinalCut
 from compas_timber.fabrication.btlx import MachiningLimits
+from compas_timber.fabrication.btlx import OrientationType
 from compas_timber.fabrication.jack_cut import JackRafterCut
 
 
@@ -56,24 +57,6 @@ class YSpatialLapJoint(Joint):
         return self.main_beams[1]
 
     @property
-    def plane_a(self):
-        if not self._plane_a:
-            ref_side_index = (self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4
-            plane_a = Plane.from_frame(self.beam_a.ref_sides[ref_side_index])
-            plane_a.point += self.mill_depth_a * -plane_a.normal
-            self._plane_a = plane_a
-        return self._plane_a
-
-    @property
-    def plane_b(self):
-        if not self._plane_b:
-            ref_side_index = (self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4
-            plane_b = Plane.from_frame(self.beam_b.ref_sides[ref_side_index])
-            plane_b.point += self.mill_depth_b * -plane_b.normal
-            self._plane_b = plane_b
-        return self._plane_b
-
-    @property
     def main_beams_plane(self):
         intersection_point = intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)
         point = Point(*intersection_point[0])
@@ -101,15 +84,28 @@ class YSpatialLapJoint(Joint):
         # Extend the cross beam, to the plane created by the two main_beam
 
     def _extend_cross_beam(self):
-        intersection_point = intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)
-        max_main_beams_height = max([beam.get_dimensions_relative_to_side(self.ref_side_index(beam, self.cross_beam))[1] for beam in self.main_beams])
-        cross_beam_direction = self.cross_beam.centerline.direction
-        if self.cross_beam.centerline.point.distance_to_point(Point(*intersection_point[0])) < self.cross_beam.centerline.end.distance_to_point(Point(*intersection_point[0])):
-            cross_beam_direction = cross_beam_direction.scaled(-1)
-        plane = self.main_beams_plane
-        plane.point += max_main_beams_height / 2 * cross_beam_direction
-        blank = self.cross_beam.extension_to_plane(plane)
-        self.cross_beam.add_blank_extension(*blank)
+        ext_plane_a = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
+        blank_a = self.cross_beam.extension_to_plane(ext_plane_a)
+
+        ext_plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
+        blank_b = self.cross_beam.extension_to_plane(ext_plane_b)
+
+        blank = [0.0, 0.0]
+
+        if blank_a[0] > blank_b[0]:
+            blank[0] = blank_a[0]
+        elif blank_a[0] == blank_b[0] and blank_a[0] == 0:
+            blank[0] = 0
+        else:
+            blank[0] = blank_b[0]
+
+        if blank_a[1] > blank_b[1]:
+            blank[1] = blank_a[1]
+        elif blank_a[1] == blank_b[1] and blank_a[1] == 0:
+            blank[1] = 0
+        else:
+            blank[1] = blank_b[1]
+        self.cross_beam.add_blank_extension(blank[0], blank[1])
 
     def _extend_main_beam(self, beam, other_beam):
         plane_ref_side_index = (self.ref_side_index(other_beam, beam) + 2) % 4
@@ -192,8 +188,8 @@ class YSpatialLapJoint(Joint):
             mac_lim.face_limited_back = False
         else:
             mac_lim.face_limited_back = True
-        mac_lim.face_limited_end = False
-        mac_lim.face_limited_side = True
+        mac_lim.face_limited_end = True
+        mac_lim.face_limited_bottom = True
         mac_lim.face_limited_start = False
         return mac_lim
 
@@ -206,39 +202,34 @@ class YSpatialLapJoint(Joint):
         plane_f = plane_a.copy()
         plane_f.normal *= -1
         plane_f.point += 5 * plane_f.normal
+
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_a)
 
         lap_a_on_cross = Lap.from_volume_and_beam(
-            negative_volume,
-            self.cross_beam,
-            ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4,
-            machining_limits=mac_lim.limits,
+            volume=negative_volume, beam=self.cross_beam, ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4, machining_limits=mac_lim.limits
         )
         self.cross_beam.add_feature(lap_a_on_cross)
-        print(lap_a_on_cross.machining_limits)
         return negative_volume
 
     def _lap_b_on_cross(self):
         plane_a = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4])
         plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
         plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
-        plane_c.point -= (5 - 0.1) * plane_c.normal
+        plane_c.point -= (5) * plane_c.normal
         plane_d = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam))])
         plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
         plane_f = plane_a.copy()
         plane_f.normal *= -1
         plane_f.point += 5 * plane_f.normal
+
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_b)
 
         lap_b_on_cross = Lap.from_volume_and_beam(
-            negative_volume,
-            self.cross_beam,
-            ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4,
-            machining_limits=mac_lim.limits,
+            volume=negative_volume, beam=self.cross_beam, ref_side_index=(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4, machining_limits=mac_lim.limits
         )
         self.cross_beam.add_feature(lap_b_on_cross)
         return negative_volume
