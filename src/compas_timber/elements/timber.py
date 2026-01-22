@@ -122,7 +122,6 @@ class TimberElement(Element, abc.ABC):
     def features(self, features):
         self._features = features
 
-    @reset_computed
     @reset_timber_attrs
     def transform(self, transformation):
         # override to reset timber-specific cached attributes

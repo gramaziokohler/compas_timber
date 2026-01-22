@@ -1,3 +1,4 @@
+import copy
 import math
 
 from compas.geometry import Box
@@ -6,7 +7,6 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
@@ -83,17 +83,17 @@ class Beam(TimberElement):
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
-        data["attributes"] = self.attributes
+        data["attributes"] = copy.deepcopy(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
         super(Beam, self).__init__(frame=frame, length=length, width=width, height=height, **kwargs)
+
         self.attributes = {}
-        self.attributes.update(kwargs.get("attributes", {}))
+        self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
         self._blank = None
-        self.attributes["blank_extension_transformation"] = None
 
     def __repr__(self):
         # type: () -> str
@@ -393,7 +393,6 @@ class Beam(TimberElement):
         for s, e in self._blank_extensions.values():
             start = max(start, s)
             end = max(end, e)
-        self.attributes["blank_extension_transformation"] = Translation.from_vector(Vector.Xaxis() * start)
         return start, end
 
     # ==========================================================================
