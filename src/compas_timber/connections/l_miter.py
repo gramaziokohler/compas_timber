@@ -69,7 +69,7 @@ class LMiterJoint(Joint):
 
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False,  **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
@@ -86,7 +86,7 @@ class LMiterJoint(Joint):
         return [self.beam_a, self.beam_b]
 
     @classmethod
-    def create(cls, model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, trim_plane_a=None, trim_plane_b=None, **kwargs):
+    def create(cls, model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
         """Creates an L-Butt joint and associates it with the provided model.
 
         Parameters
@@ -105,11 +105,8 @@ class LMiterJoint(Joint):
         if miter_plane:
             miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
             miter_type = MiterType.USER_DEFINED
-        
 
-        joint = LMiterJoint(
-            beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, **kwargs
-        )
+        joint = LMiterJoint(beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, **kwargs)
         model.add_joint(joint)
         return joint
 
@@ -150,7 +147,7 @@ class LMiterJoint(Joint):
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
         # intersection point (average) of both centrelines
-        p= self.location
+        p = self.location
         if not p:
             [pxA, tA], [pxB, tB] = intersection_line_line_param(
                 self.beam_a.centerline,
@@ -259,7 +256,7 @@ class LMiterJoint(Joint):
         if self.clean:
             vector_a = Vector.from_start_end(self.beam_a.centerline.midpoint, self.location)
             vector_b = Vector.from_start_end(self.beam_b.centerline.midpoint, self.location)
-            
+
             back_a = [Plane.from_frame(fr) for fr in self.beam_a.ref_sides if TOL.is_positive(dot_vectors(vector_b, fr.normal))]
             back_b = [Plane.from_frame(fr) for fr in self.beam_b.ref_sides if TOL.is_positive(dot_vectors(vector_a, fr.normal))]
 

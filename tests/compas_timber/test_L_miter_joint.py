@@ -33,6 +33,7 @@ def beam_a():
     )
     return beam_a
 
+
 @pytest.fixture
 def beam_a_big():
     beam_a_big = Beam(
@@ -42,6 +43,7 @@ def beam_a_big():
         length=200.000,
     )
     return beam_a_big
+
 
 @pytest.fixture
 def perp_beam():
@@ -53,6 +55,7 @@ def perp_beam():
     )
     return perp_beam
 
+
 @pytest.fixture
 def non_planar_beam():
     non_planar_beam = Beam(
@@ -62,6 +65,7 @@ def non_planar_beam():
         length=200.000,
     )
     return non_planar_beam
+
 
 @pytest.fixture
 def angle_beam():
@@ -80,57 +84,65 @@ def test_L_miter_joint_bisector_extensions(beam_a, perp_beam):
     assert TOL.is_close(beam_a.blank_length, 215)
     assert TOL.is_close(perp_beam.blank_length, 215)
 
+
 def test_L_miter_joint_bisector_extensions_big(beam_a_big, perp_beam):
     joint = LMiterJoint(beam_a_big, perp_beam)
     joint.add_extensions()
-    #bisector miter at 90deg should extend each beam by half its width
+    # bisector miter at 90deg should extend each beam by half its width
     assert TOL.is_close(beam_a_big.blank_length, 240)
     assert TOL.is_close(perp_beam.blank_length, 215)
+
 
 def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
     joint = LMiterJoint(beam_a_big, perp_beam, miter_type=MiterType.REF_SURFACES)
     joint.add_extensions()
-    #bisector miter at 90deg should extend each beam by half of the other beam's width
+    # bisector miter at 90deg should extend each beam by half of the other beam's width
     assert joint.miter_type == "ref_surfaces"
     assert TOL.is_close(beam_a_big.blank_length, 215)
     assert TOL.is_close(perp_beam.blank_length, 240)
 
+
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
-    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0,0,0],[1,0,0]))
+    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     joint.add_extensions()
     assert joint.miter_type == "user_defined"
     assert TOL.is_close(beam_a.blank_length, 200)
     assert TOL.is_close(angle_beam.blank_length, 215)
 
+
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
-    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0,0,0],[1,-1,0]))
+    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, -1, 0]))
     joint.add_extensions()
     assert joint.miter_type == "user_defined"
     assert TOL.is_close(beam_a.blank_length, 215)
     assert TOL.is_close(angle_beam.blank_length, 200)
-    
+
+
 def test_L_miter_joint_bisector_features(beam_a, perp_beam):
     joint = LMiterJoint(beam_a, perp_beam)
     joint.add_extensions()
     joint.add_features()
-    assert len(beam_a.features)==1
-    assert len(perp_beam.features)==1
+    assert len(beam_a.features) == 1
+    assert len(perp_beam.features) == 1
+
 
 def test_L_miter_joint_bisector_features_clean(beam_a, perp_beam):
     joint = LMiterJoint(beam_a, perp_beam, clean=True)
     joint.add_extensions()
     joint.add_features()
     # since beams are coplanar, there should only be one cleaning cut per beam, 2 features per beam including miter cut
-    assert len(beam_a.features)==2
-    assert len(perp_beam.features)==2
+    assert len(beam_a.features) == 2
+    assert len(perp_beam.features) == 2
+
 
 def test_L_miter_joint_bisector_features_clean_non_planar(beam_a, non_planar_beam):
     joint = LMiterJoint(beam_a, non_planar_beam, clean=True)
     joint.add_extensions()
     joint.add_features()
-    # beam_a gets 2 cleaning cuts from non_planar_beam. non_planar_beam only gets one cleaning cut from beam_a 
-    assert len(beam_a.features)==3
-    assert len(non_planar_beam.features)==2
+    # beam_a gets 2 cleaning cuts from non_planar_beam. non_planar_beam only gets one cleaning cut from beam_a
+    assert len(beam_a.features) == 3
+    assert len(non_planar_beam.features) == 2
+
 
 def test_l_miter_joint_serialization(beam_a, perp_beam):
     model = TimberModel()
@@ -138,7 +150,7 @@ def test_l_miter_joint_serialization(beam_a, perp_beam):
     joint = LMiterJoint.create(model, beam_a, perp_beam, miter_type=MiterType.REF_SURFACES, clean=True)
     assert list(model.joints)[0] == joint
     model_copy = json_loads(json_dumps(model))
-    assert len(list(model_copy.joints))==1
+    assert len(list(model_copy.joints)) == 1
     joint_copy = list(model_copy.joints)[0]
     beam_a_copy = joint_copy.beam_a
     perp_beam_copy = joint_copy.beam_b
@@ -147,17 +159,18 @@ def test_l_miter_joint_serialization(beam_a, perp_beam):
     assert joint.miter_type == MiterType.REF_SURFACES
     assert joint.miter_type == joint_copy.miter_type
     assert joint.clean and joint_copy.clean
-    assert len(beam_a_copy.features)==0 
-    assert len(perp_beam_copy.features)==0 
+    assert len(beam_a_copy.features) == 0
+    assert len(perp_beam_copy.features) == 0
 
     model_copy.process_joinery()
-    assert len(beam_a_copy.features)==2 
-    assert len(perp_beam_copy.features)==2
+    assert len(beam_a_copy.features) == 2
+    assert len(perp_beam_copy.features) == 2
+
 
 def test_l_miter_joint_serialization_user_plane(beam_a, angle_beam):
     model = TimberModel()
     model.add_elements([beam_a, angle_beam])
-    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=Plane([0,0,0],[1,0,0]))
+    _ = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     model_copy = json_loads(json_dumps(model))
     joint_copy = list(model_copy.joints)[0]
-    assert joint_copy.miter_plane == Plane([0,0,0],[1,0,0])
+    assert joint_copy.miter_plane == Plane([0, 0, 0], [1, 0, 0])

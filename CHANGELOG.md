@@ -42,6 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `panel_features` directory and `PanelFeature` abstract base class.
 * Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
+* Added `MiterType` class.
+* Added `miter_type`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
+* Added `ref_surface` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
+* Added `user_defined` miter plane to allow users to define an arbitrary cut plane for miter joints.
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
