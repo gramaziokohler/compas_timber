@@ -17,6 +17,7 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
@@ -27,6 +28,10 @@ from compas_timber.panel_features import Opening
 
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
+from compas_timber.utils import combine_parallel_segments
+from compas_timber.utils import join_polyline_segments
+from compas_timber.utils import get_interior_segment_indices
+
 
 from .plate_geometry import PlateGeometry
 
@@ -503,25 +508,4 @@ def extract_door_openings(outline_a, outline_b):
     return outline_a, outline_b, openings
 
 
-def get_interior_corner_indices(outline):
-    """Get the indices of the interior corners of the panel outline."""
-    _interior_corner_indices = []
-    vector = Plane.from_points(outline.points).normal
-    points = outline.points[0:-1]
-    cw = is_polyline_clockwise(outline, vector)
-    for i in range(len(points)):
-        angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
-        if not (cw ^ (angle < 0)):
-            _interior_corner_indices.append(i)
-    return _interior_corner_indices
 
-
-def get_interior_segment_indices(polyline):
-    """Get the indices of the interior segments of the panel outline."""
-    interior_corner_indices = get_interior_corner_indices(polyline)
-    edge_count = len(polyline.points) - 1
-    _interior_segment_indices = []
-    for i in range(edge_count):
-        if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
-            _interior_segment_indices.append(i)
-    return _interior_segment_indices
