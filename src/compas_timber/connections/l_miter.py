@@ -7,6 +7,7 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
+from compas.tolerance import TOL
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
@@ -256,10 +257,11 @@ class LMiterJoint(Joint):
                 self.features.append(cutoff)
 
         if self.clean:
-            ref_side_a = beam_ref_side_incidence(self.beam_a, self.beam_b)
-            back_a = [Plane.from_frame(self.beam_a.ref_sides[rsi]) for rsi, angle in ref_side_a if angle>math.pi/2]
-            ref_side_b = beam_ref_side_incidence(self.beam_b, self.beam_a)
-            back_b = [Plane.from_frame(self.beam_b.ref_sides[rsi]) for rsi, angle in ref_side_b if angle>math.pi/2]
+            vector_a = Vector.from_start_end(self.beam_a.centerline.midpoint, self.location)
+            vector_b = Vector.from_start_end(self.beam_b.centerline.midpoint, self.location)
+            
+            back_a = [Plane.from_frame(fr) for fr in self.beam_a.ref_sides if TOL.is_positive(dot_vectors(vector_b, fr.normal))]
+            back_b = [Plane.from_frame(fr) for fr in self.beam_b.ref_sides if TOL.is_positive(dot_vectors(vector_a, fr.normal))]
 
             clean_cuts_a = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_a) for cut in back_b]
             clean_cuts_b = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_b) for cut in back_a]
