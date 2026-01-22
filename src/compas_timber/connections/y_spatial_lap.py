@@ -168,10 +168,12 @@ class YSpatialLapJoint(Joint):
     def add_features(self):
         # Features on main_beam_A: Lap and JackRafterCut
         self._lap_on_main_beam(self.beam_a, self.beam_b)
-        self._jack_rafter_cut_on_a()
+        self._jack_on_main_beam(self.beam_a)
+
         # Features on main_beam_B: Lap and JackRafterCut
         self._lap_on_main_beam(self.beam_b, self.beam_a)
-        self._jack_rafter_cut_on_b()
+        self._jack_on_main_beam(self.beam_b)
+
         # Features on cross_beam: Lap cause by beamA and Lap cause by beamB
         self._lap_a_on_cross()
         self._lap_b_on_cross()
@@ -196,16 +198,15 @@ class YSpatialLapJoint(Joint):
         beam.add_feature(lap)
         return negative_volume
 
-    def _jack_rafter_cut_on_a(self) -> Plane:
-        cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
-        jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_a)
-        self.beam_a.add_feature(jack_rafter_cut)
-        return cutting_plane
-
-    def _jack_rafter_cut_on_b(self) -> Plane:
-        cutting_plane = self.cut_plane_a
-        jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_b)
-        self.beam_b.add_feature(jack_rafter_cut)
+    def _jack_on_main_beam(self, beam) -> Plane:
+        # Find the cutting plane
+        if beam is self.beam_a:
+            cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, beam) + 2) % 4])
+        elif beam is self.beam_b:
+            cutting_plane = self.cut_plane_a
+        # Build the porcessing and add it to the beam
+        jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, beam)
+        beam.add_feature(jack_rafter_cut)
         return cutting_plane
 
     def _compute_machining_limits(self, beam: Beam) -> MachiningLimits:
