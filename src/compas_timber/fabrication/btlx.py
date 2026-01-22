@@ -199,7 +199,7 @@ class BTLxWriter(object):
         parts_element = ET.SubElement(project_element, "Parts")
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
-        for i, element in enumerate(elements):
+        for element in elements:
             part_element = self._create_part(element, element.graphnode)
             parts_element.append(part_element)
         return project_element

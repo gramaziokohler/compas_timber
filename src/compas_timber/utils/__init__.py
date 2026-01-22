@@ -24,6 +24,7 @@ from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
+from compas.geometry import intersection_line_segment
 
 from compas.tolerance import TOL
 
@@ -658,6 +659,83 @@ def combine_parallel_segments(polyline, tol=TOL):
             polyline.points.pop(i)
 
 
+def intersection_line_beams(line, beams, max_distance=None):
+    """Find intersections between a line and a list of beams.
+    Parameters
+    ----------
+    line : :class:`compas.geometry.Line`
+        The line to check for intersections.
+    beams : list of :class:`compas_timber.elements.Beam`
+        The beams to check for intersections.
+    max_distance : float, optional
+        The maximum distance from the line to consider an intersection valid.
+        Defaults to 0.0, meaning no distance check.
+    Returns
+    -------
+    list of dict
+        A list of dictionaries containing the intersection points, dot products, and the corresponding beams.
+    Each dictionary has the keys "point", "dot", and "beam".
+    """
+    intersections = []
+    max_distance = max_distance or TOL.relative
+    for beam in beams:
+        line_pt, beam_pt = intersection_line_segment(line, beam.centerline)
+        if line_pt:
+            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
+                continue
+            intersection = {}
+            intersection["point"] = Point(*line_pt)
+            intersection["dot"] = dot_vectors(Vector.from_start_end(line.start, Point(*line_pt)), line.direction)
+            intersection["beam"] = beam
+            intersections.append(intersection)
+    return intersections
+
+
+def split_beam_at_lengths(beam, lengths):
+    """Splits a beam at given lengths.
+
+    Parameters
+    ----------
+    beam : :class:`compas_timber.elements.Beam`
+        The beam to split.
+    length : float
+        The length at which to split the beam.
+
+    Returns
+    -------
+    :class:`compas_timber.elements.Beam` or None
+        The new beam that is created by the split, or None if the length is outside the beam's length.
+
+    """
+    lengths.sort(reverse=True)
+    for length in lengths:
+        if length <= 0.0 or length >= beam.length:
+            lengths.remove(length)  # remove lengths that are outside the beam's length
+    beams = [beam]
+    for length in lengths:
+        new_beam = beam.copy()
+        new_beam.attributes.update(beam.attributes)
+        new_beam.length = beam.length - length
+        beam.length = length
+        new_beam.frame.translate(beam.frame.xaxis * length)
+        beams.insert(1, new_beam)
+    return beams
+
+
+def extend_line_segments(segments, close_loop=False):
+    """Extend segments to their intersections."""
+    start = 0 if close_loop else 1
+    for i in range(start, len(segments)):
+        if TOL.is_allclose(segments[i - 1].end, segments[i].start):  # points are already coincident
+            continue
+        ints = intersection_line_line(segments[i - 1], segments[i])
+        if not ints[0]:
+            continue
+        segments[i - 1] = Line(segments[i - 1].start, ints[0])
+        segments[i] = Line(ints[0], segments[i].end)
+
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -678,4 +756,7 @@ __all__ = [
     "polylines_from_brep_face",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
+    "intersection_line_beams",
+    "split_beam_at_lengths",
+    "extend_line_segments",
 ]

@@ -22,7 +22,6 @@ from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
 from compas_timber.utils import is_polyline_clockwise
-from compas_timber.utils import move_polyline_segment_to_plane
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
