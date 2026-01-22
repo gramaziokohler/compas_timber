@@ -21,6 +21,7 @@ from .panel_features import VolumetricService
 __all__ = [
     "Beam",
     "Plate",
+    "Panel",
     "Fastener",
     "FastenerTimberInterface",
     "CutFeature",
@@ -30,7 +31,6 @@ __all__ = [
     "BallNodeFastener",
     "PlateFastener",
     "TimberElement",
-    "Panel",
     "PlateGeometry",
     "Opening",
     "OpeningType",
