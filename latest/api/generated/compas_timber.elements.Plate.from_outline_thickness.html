@@ -59,8 +59,8 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Plate.front_side" href="compas_timber.elements.Plate.front_side.html" />
-    <link rel="prev" title="Plate.from_jsonstring" href="compas_timber.elements.Plate.from_jsonstring.html" />
+    <link rel="next" title="Plate.from_outlines" href="compas_timber.elements.Plate.from_outlines.html" />
+    <link rel="prev" title="Plate.from_brep" href="compas_timber.elements.Plate.from_brep.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -603,8 +603,8 @@ document.write(`
 <h1>Plate.from_outline_thickness</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.elements.Plate.from_outline_thickness">
-<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">from_outline_thickness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3d6e8b/src/compas_timber/elements/plate_geometry.py#L168"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Constructs a PlateGeometry from a polyline outline and a thickness.
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">Plate.</span></span><span class="sig-name descname"><span class="pre">from_outline_thickness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">openings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/b3d965f/src/compas_timber/elements/plate.py#L311"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Constructs a Plate from a polyline outline and a thickness.
 The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -623,7 +623,7 @@ The outline is the top face of the plate_geometry, and the thickness is the dist
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><code class="xref py py-class docutils literal notranslate"><span class="pre">PlateGeometry</span></code></dt><dd><p>A PlateGeometry object representing the plate geometry with the given outline and thickness.</p>
+<dt><a class="reference internal" href="compas_timber.elements.Plate.html#compas_timber.elements.Plate" title="compas_timber.elements.Plate"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plate</span></code></a></dt><dd><p>A Plate object representing the plate geometry with the given outline and thickness.</p>
 </dd>
 </dl>
 </dd>
