@@ -25,8 +25,8 @@ class YSpatialLapJoint(Joint):
         self.main_beams: list[Beam] = list(main_beams)
 
         # TODO: add the features based on the biases
-        self.cut_plane_bias_a: float = 0.5
-        self.cut_plane_bias_b: float = 0.4
+        self.cut_plane_bias_a: float = cut_plane_bias_a
+        self.cut_plane_bias_b: float = cut_plane_bias_b
 
     @property
     def __data__(self):
@@ -147,9 +147,7 @@ class YSpatialLapJoint(Joint):
         plane_c = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
-        plane_f = plane_a.copy()
-        plane_f.normal *= -1
-        plane_f.point += 5 * plane_f.normal
+        plane_f = self.cut_plane_a
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_a = Lap.from_volume_and_beam(negative_volume, self.beam_a, ref_side_index=self.ref_side_index(self.beam_a, self.beam_b))
         self.beam_a.add_feature(lap_on_a)
@@ -167,17 +165,14 @@ class YSpatialLapJoint(Joint):
         plane_c = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
-        plane_f = plane_a.copy()
-        plane_f.normal *= -1
-        plane_f.point += 5 * plane_f.normal
+        plane_f = self.cut_plane_b
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_b = Lap.from_volume_and_beam(negative_volume, self.beam_b, ref_side_index=self.ref_side_index(self.beam_b, self.beam_a))
         self.beam_b.add_feature(lap_on_b)
         return negative_volume
 
     def _jack_rafter_cut_on_b(self) -> Plane:
-        cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
-        cutting_plane.point -= 5 * cutting_plane.normal
+        cutting_plane = self.cut_plane_a
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_b)
         self.beam_b.add_feature(jack_rafter_cut)
         return cutting_plane
@@ -201,9 +196,7 @@ class YSpatialLapJoint(Joint):
         plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
         plane_d = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam))])
         plane_b = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
-        plane_f = plane_a.copy()
-        plane_f.normal *= -1
-        plane_f.point += 5 * plane_f.normal
+        plane_f = self.cut_plane_a
 
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
@@ -218,13 +211,10 @@ class YSpatialLapJoint(Joint):
     def _lap_b_on_cross(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4])
         plane_e = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
-        plane_c = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
-        plane_c.point -= (5) * plane_c.normal
+        plane_c = self.cut_plane_a
         plane_d = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam))])
         plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
-        plane_f = plane_a.copy()
-        plane_f.normal *= -1
-        plane_f.point += 5 * plane_f.normal
+        plane_f = self.cut_plane_b
 
         negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
