@@ -39,10 +39,14 @@ class LMiterJoint(Joint):
         First beam to be joined.
     beam_b : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
-    miter_plane : :class:`~compas.geometry.Plane`, optional
-        A plane that defines the miter cut location and orientation. If not provided, it will be calculated automatically.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A plane that defines the miter cut location and orientation. If not provided, it will be calculated automatically.
+    miter_type : :class: `~compas_timber.connections.MiterType`, optional
+        one of `MiterType.BISECTOR`, `MiterType.REF_SURFACES`, or `MiterType.USER_DEFINED` if `USER_DEFINED`, a `miter_plane` must be provided.
+    clean : bool, optional
+        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
 
     Attributes
     ----------
@@ -52,7 +56,12 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A plane that defines the miter cut location and orientation.
+    miter_type : :class: `~compas_timber.connections.MiterType`
+        one of `MiterType.BISECTOR`, `MiterType.REF_SURFACES`, or `MiterType.USER_DEFINED`.
+    clean : bool, optional
+        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
@@ -86,27 +95,32 @@ class LMiterJoint(Joint):
         return [self.beam_a, self.beam_b]
 
     @classmethod
-    def create(cls, model, beam_a, beam_b, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
+    def create(cls, model, beam_a, beam_b, cutoff=False, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
         """Creates an L-Butt joint and associates it with the provided model.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.Model`
             The model to which the joint will be added.
-        main_beam : :class:`~compas_timber.parts.Beam`
-            The main beam to be joined.
-        cross_beam : :class:`~compas_timber.parts.Beam`
-            The cross beam to be joined.
-        mill_depth : float
-            The depth of the pocket to be milled in the cross beam. This will be ignored if `miter_plane` is provided.
-        small_beam_butts : bool, default False
-            If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed."""
+        beam_a : :class:`~compas_timber.elements.Beam`
+            First beam to be joined.
+        beam_b : :class:`~compas_timber.elements.Beam`
+            Second beam to be joined.
+        cutoff : bool, optional
+            If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
+        miter_plane : :class:`~compas.geometry.Plane`, optional
+            A plane that defines the miter cut location and orientation. If not provided, it will be calculated automatically.
+        miter_type : :class: `~compas_timber.connections.MiterType`, optional
+            one of `MiterType.BISECTOR`, `MiterType.REF_SURFACES`, or `MiterType.USER_DEFINED` if `USER_DEFINED`, a `miter_plane` must be provided.
+        clean : bool, optional
+            if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+        """
 
         if miter_plane:
             miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse())
             miter_type = MiterType.USER_DEFINED
 
-        joint = LMiterJoint(beam_a=beam_a, beam_b=beam_b, miter_plane=miter_plane, miter_type=miter_type, clean=clean, **kwargs)
+        joint = LMiterJoint(beam_a, beam_b, cutoff, miter_plane, miter_type, clean, **kwargs)
         model.add_joint(joint)
         return joint
 
