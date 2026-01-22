@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+from telnetlib import VT3270REGIME
 from typing import TYPE_CHECKING
 
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Vector
+from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections.joint import Joint
@@ -125,21 +128,20 @@ class YSpatialLapJoint(Joint):
         return ref_side_index
 
     def add_extensions(self) -> None:
-        """
-        Calculates and adds the necessary extensions to the beams.
-        """
+        """Calculates and adds the necessary extensions to the beams."""
         self._extend_cross_beam()
         self._extend_main_beam(self.main_beams[0], self.main_beams[1])
         self._extend_main_beam(self.main_beams[1], self.main_beams[0])
         # Extend the cross beam, to the plane created by the two main_beam
 
     def _extend_cross_beam(self) -> None:
+        # blank beam a
         ext_plane_a = self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4]
         blank_a = self.cross_beam.extension_to_plane(ext_plane_a)
-
+        # blank beam b
         ext_plane_b = self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4]
         blank_b = self.cross_beam.extension_to_plane(ext_plane_b)
-
+        # computes the final blank
         blank = [0.0, 0.0]
         # extensions at start
         if blank_a[0] > blank_b[0]:
@@ -155,7 +157,7 @@ class YSpatialLapJoint(Joint):
             blank[1] = 0
         else:
             blank[1] = blank_b[1]
-        # final extension
+        # final extension :yay:
         self.cross_beam.add_blank_extension(blank[0], blank[1])
 
     def _extend_main_beam(self, beam, other_beam):
@@ -166,14 +168,14 @@ class YSpatialLapJoint(Joint):
         return beam
 
     def add_features(self):
+        """Adds the required joint features to the three beams."""
+        assert self.beam_a and self.beam_b and self.cross_beam
         # Features on main_beam_A: Lap and JackRafterCut
         self._lap_on_main_beam(self.beam_a, self.beam_b)
         self._jack_on_main_beam(self.beam_a)
-
         # Features on main_beam_B: Lap and JackRafterCut
         self._lap_on_main_beam(self.beam_b, self.beam_a)
         self._jack_on_main_beam(self.beam_b)
-
         # Features on cross_beam: Lap cause by beamA and Lap cause by beamB
         self._cross_lap_from_beam(self.beam_a, self.beam_b)
         self._cross_lap_from_beam(self.beam_b, self.beam_a)
@@ -202,7 +204,6 @@ class YSpatialLapJoint(Joint):
             cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, beam) + 2) % 4])
         elif beam is self.beam_b:
             cutting_plane = self.cut_plane_a
-
         # Build the porcessing and add it to the beam
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, beam)
         beam.add_feature(jack_rafter_cut)
@@ -235,11 +236,8 @@ class YSpatialLapJoint(Joint):
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
         # the two main beams should not be on the same ref_side or on the opposite ref_side.
-
         # The two ref_sides must be one following the other
-
         # If not solved lap creating strange geometries, main_beams must be at a right angle
-
         raise NotImplementedError
 
     @staticmethod
@@ -259,57 +257,35 @@ class YSpatialLapJoint(Joint):
         return polyhedron
 
     @staticmethod
-    def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]) -> list[list[int]]:
+    def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]):
         """Reorder face indices so face normals point outward.
+        Parameters
+        ----------
+        vertices : list[Point]
+            list of Point or 3-tuples
+        faces : list[list[int]]
+            list of lists of indices
 
-        vertices: list of Point or 3-tuples
-        faces: list of lists of indices
-        Returns: new_faces (modified in place is fine too)
+        Returns
+        -------
+        list[list[int]]
+            new faces order
         """
-        # robustly extract coordinates
-        coords = []
-        for v in vertices:
-            try:
-                coords.append([v.x, v.y, v.z])
-            except AttributeError:
-                coords.append(list(v))
-
-        # polyhedron centroid
-        poly_centroid = [sum(c[i] for c in coords) / len(coords) for i in range(3)]
-
-        def vec(a, b):
-            return [b[i] - a[i] for i in range(3)]
-
-        def cross(a, b):
-            return [
-                a[1] * b[2] - a[2] * b[1],
-                a[2] * b[0] - a[0] * b[2],
-                a[0] * b[1] - a[1] * b[0],
-            ]
-
-        def dot(a, b):
-            return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-
+        poly_centroid = Point(*centroid_points(vertices))
         new_faces = []
         for face in faces:
-            # skip degenerate faces
-            if len(face) < 3:
-                new_faces.append(face)
-                continue
-            v0 = coords[face[0]]
-            v1 = coords[face[1]]
-            v2 = coords[face[2]]
+            v0 = vertices[face[0]]
+            v1 = vertices[face[1]]
+            v2 = vertices[face[2]]
 
-            e1 = vec(v0, v1)
-            e2 = vec(v0, v2)
-            n = cross(e1, e2)
+            e1 = Vector.from_start_end(v0, v1)
+            e2 = Vector.from_start_end(v0, v2)
+            n = e1.cross(e2)
 
-            # face centroid
-            face_centroid = [sum(coords[idx][k] for idx in face) / len(face) for k in range(3)]
-            outward = vec(poly_centroid, face_centroid)
+            face_centroid = centroid_points([vertices[i] for i in face])
+            outward = Vector.from_start_end(poly_centroid, face_centroid)
 
-            # if dot < 0 the normal points inward — reverse vertex order
-            if dot(n, outward) < 0:
+            if n.dot(outward) < 0:
                 new_faces.append(list(reversed(face)))
             else:
                 new_faces.append(list(face))
