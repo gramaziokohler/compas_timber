@@ -167,25 +167,33 @@ class YSpatialLapJoint(Joint):
 
     def add_features(self):
         # Features on main_beam_A: Lap and JackRafterCut
-        self._lap_on_a()
+        self._lap_on_main_beam(self.beam_a, self.beam_b)
         self._jack_rafter_cut_on_a()
         # Features on main_beam_B: Lap and JackRafterCut
-        self._lap_on_b()
+        self._lap_on_main_beam(self.beam_b, self.beam_a)
         self._jack_rafter_cut_on_b()
         # Features on cross_beam: Lap cause by beamA and Lap cause by beamB
         self._lap_a_on_cross()
         self._lap_b_on_cross()
 
-    def _lap_on_a(self) -> Polyhedron:
-        plane_a = Plane.from_frame(self.beam_a.ref_sides[self.ref_side_index(self.beam_a, self.beam_b)])
-        plane_e = Plane.from_frame(self.beam_a.ref_sides[self.ref_side_index(self.beam_a, self.cross_beam)])
-        plane_c = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
-        plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
-        plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
-        plane_f = self.cut_plane_a
+    def _lap_on_main_beam(self, beam, other_beam):
+        # Computes the planes
+        plane_a = Plane.from_frame(beam.ref_sides[self.ref_side_index(beam, other_beam)])
+        plane_e = Plane.from_frame(beam.ref_sides[self.ref_side_index(beam, self.cross_beam)])
+        plane_c = Plane.from_frame(beam.ref_sides[(self.ref_side_index(beam, self.cross_beam) + 2) % 4])
+        plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, beam)])
+        plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, beam) + 2) % 4])
+        if beam is self.beam_a:
+            plane_f = self.cut_plane_a
+        elif beam is self.beam_b:
+            plane_f = self.cut_plane_b
+
+        # Build the polyhedron
         negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
-        lap_on_a = Lap.from_volume_and_beam(negative_volume, self.beam_a, ref_side_index=self.ref_side_index(self.beam_a, self.beam_b))
-        self.beam_a.add_feature(lap_on_a)
+
+        # creates and add the processing to the beam
+        lap = Lap.from_volume_and_beam(negative_volume, beam, ref_side_index=self.ref_side_index(beam, other_beam))
+        beam.add_feature(lap)
         return negative_volume
 
     def _jack_rafter_cut_on_a(self) -> Plane:
@@ -193,18 +201,6 @@ class YSpatialLapJoint(Joint):
         jack_rafter_cut = JackRafterCut.from_plane_and_beam(cutting_plane, self.beam_a)
         self.beam_a.add_feature(jack_rafter_cut)
         return cutting_plane
-
-    def _lap_on_b(self) -> Polyhedron:
-        plane_a = Plane.from_frame(self.beam_b.ref_sides[self.ref_side_index(self.beam_b, self.beam_a)])
-        plane_e = Plane.from_frame(self.beam_b.ref_sides[self.ref_side_index(self.beam_b, self.cross_beam)])
-        plane_c = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
-        plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
-        plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
-        plane_f = self.cut_plane_b
-        negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
-        lap_on_b = Lap.from_volume_and_beam(negative_volume, self.beam_b, ref_side_index=self.ref_side_index(self.beam_b, self.beam_a))
-        self.beam_b.add_feature(lap_on_b)
-        return negative_volume
 
     def _jack_rafter_cut_on_b(self) -> Plane:
         cutting_plane = self.cut_plane_a
