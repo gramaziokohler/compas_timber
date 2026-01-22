@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `panel_features` directory and `PanelFeature` abstract base class.
 * Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
+* Added `move_polyline_segment_to_line` to compas_timber.utils.
+* Added `join_polyline_segments` to compas_timber.utils.
+* Added `polyline_from_brep_loop` to compas_timber.utils.
+* Added `polylines_from_brep_face` to compas_timber.utils.
+* Added `get_polyline_normal_vector` to compas_timber.utils.
+* Added `combine_parallel_segments` to compas_timber.utils.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -91,6 +97,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed circular import cause by typing import in `slot.py`.
 * Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
 * Changed `main_beam` to `beam_a` and `cross_beam` to `beam_b` in `LapJoint`, `LLapJoint`, `FrenchRidgeLapJoint`, and `XLapJoint`.
+* Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
+* Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
+* Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
