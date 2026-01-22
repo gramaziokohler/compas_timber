@@ -126,7 +126,7 @@ class ButtJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        Raisesself.elements[0] if len(self.elements) > 0 else None
+        Raises
         ------
         BeamJoiningError
             If the extension could not be calculated.

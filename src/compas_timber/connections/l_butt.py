@@ -59,9 +59,7 @@ class LButtJoint(ButtJoint):
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
-        if small_beam_butts and main_beam and cross_beam:  # TODO: maybe this should be moved to a constructor
-            main_beam, cross_beam = LButtJoint._update_beam_roles(main_beam, cross_beam)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
         super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
         self.reject_i = reject_i
         self.back_plane = back_plane
@@ -77,11 +75,12 @@ class LButtJoint(ButtJoint):
 
         return ref_side_index
 
-    @staticmethod
-    def _update_beam_roles(main_beam, cross_beam):
-        """Flips the main and cross beams based on the joint parameters.
-        Prioritizes the beam with the smaller cross-section if `small_beam_butts` is True.
-        """
-        if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
-            return (cross_beam, main_beam)
-        return (main_beam, cross_beam)
+    @classmethod
+    def create(cls, model, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+        if small_beam_butts:
+            if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
+                main_beam, cross_beam = cross_beam, main_beam
+        joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
+        model.add_joint(joint)
+        return joint
+

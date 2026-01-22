@@ -5,6 +5,7 @@ from compas_timber.elements import Beam
 from compas_timber.connections import LButtJoint
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.fabrication.lap import Lap
+from compas_timber.model import TimberModel
 
 import pytest
 
@@ -101,8 +102,10 @@ def test_L_butt_joint_features_non_planar_pocket_conical_tool(cross_beam, non_pl
 def test_small_beam_butts():
     big_beam = Beam(frame=Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), width=100, height=200, length=100)
     small_beam = Beam(frame=Frame([0, 0, 0], [0, 1, 0], [1, 0, 0]), width=100, height=100, length=100)
-    joint = LButtJoint(big_beam, small_beam, mill_depth=50, small_beam_butts=False, modify_cross=True)
-    joint_sbb = LButtJoint(big_beam, small_beam, mill_depth=50, small_beam_butts=True, modify_cross=True)
+    model = TimberModel()
+    model.add_elements([big_beam, small_beam])
+    joint = LButtJoint.create(model, big_beam, small_beam, mill_depth=50, small_beam_butts=False)
+    joint_sbb = LButtJoint.create(model, big_beam, small_beam, mill_depth=50, small_beam_butts=True)
 
     assert big_beam == joint.main_beam, "small_beam_butts is False, Order stays the same"
     assert small_beam == joint.cross_beam, "small_beam_butts is False, Order stays the same"
