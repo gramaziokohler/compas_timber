@@ -48,6 +48,24 @@ class YSpatialLapJoint(Joint):
     def beam_b(self) -> Beam:
         return self.main_beams[1]
 
+    @property
+    def cut_plane_a(self) -> Plane:
+        ref_side_index = (self.ref_side_index(self.beam_a, self.beam_b) + 2) % 4
+        _, a_width = self.beam_a.get_dimensions_relative_to_side(ref_side_index)
+        distance_bias = a_width * self.cut_plane_bias_a
+        cut_plane_a = Plane.from_frame(self.beam_a.ref_sides[ref_side_index])
+        cut_plane_a.point -= cut_plane_a.normal * distance_bias
+        return cut_plane_a
+
+    @property
+    def cut_plane_b(self) -> Plane:
+        ref_side_index = (self.ref_side_index(self.beam_b, self.beam_a) + 2) % 4
+        _, b_width = self.beam_b.get_dimensions_relative_to_side(ref_side_index)
+        distance_bias = b_width * self.cut_plane_bias_b
+        cut_plane_b = Plane.from_frame(self.beam_b.ref_sides[ref_side_index])
+        cut_plane_b.point -= cut_plane_b.normal * distance_bias
+        return cut_plane_b
+
     def cross_beam_ref_side_inde(self, beam: Beam):
         raise NotImplementedError
 
@@ -76,20 +94,21 @@ class YSpatialLapJoint(Joint):
         blank_b = self.cross_beam.extension_to_plane(ext_plane_b)
 
         blank = [0.0, 0.0]
-
+        # extensions at start
         if blank_a[0] > blank_b[0]:
             blank[0] = blank_a[0]
         elif blank_a[0] == blank_b[0] and blank_a[0] == 0:
             blank[0] = 0
         else:
             blank[0] = blank_b[0]
-
+        # extensiona at end
         if blank_a[1] > blank_b[1]:
             blank[1] = blank_a[1]
         elif blank_a[1] == blank_b[1] and blank_a[1] == 0:
             blank[1] = 0
         else:
             blank[1] = blank_b[1]
+        # final extension
         self.cross_beam.add_blank_extension(blank[0], blank[1])
 
     def _extend_main_beam(self, beam, other_beam):
