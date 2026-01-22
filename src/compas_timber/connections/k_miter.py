@@ -10,6 +10,7 @@ from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.l_miter import LMiterJoint
+from compas_timber.connections.t_butt import ButtJoint
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
@@ -176,11 +177,11 @@ class KMiterJoint(Joint):
             beam_2 = self.main_beams[i + 1]
             L_joint = LMiterJoint(beam_1, beam_2)
             L_joint.add_features()
-            T_joint = TButtJoint(beam_1, cross_beam, mill_depth=self.mill_depth)
-            T_joint.add_features()
-        # apply T on last main beam
-        T_joint = TButtJoint(self.main_beams[-1], cross_beam, mill_depth=self.mill_depth)
-        T_joint.add_features()
+
+        # Apply Jack Rafter Cuts to the main beams
+        for beam in self.main_beams:
+            feature = ButtJoint.cut_main_beam(self.cross_beam, beam, mill_depth=self.mill_depth)
+            self.features.append(feature)
 
     def _sort_main_beams(self):
         angles = []

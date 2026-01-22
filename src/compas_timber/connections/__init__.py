@@ -21,7 +21,6 @@ from .t_dovetail import TDovetailJoint
 from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
-from .y_spatial_lap import YSpatialLapJoint
 from .k_butt import KButtJoint
 from .k_miter import KMiterJoint
 from .oligina import OliGinaJoint
@@ -72,7 +71,6 @@ __all__ = [
     "BallNodeJoint",
     "TenonMortiseJoint",
     "YButtJoint",
-    "YSpatialLapJoint",
     "OliGinaJoint",
     "KMiterJoint",
     "KButtJoint",
