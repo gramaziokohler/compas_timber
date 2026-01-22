@@ -73,7 +73,6 @@ class YSpatialLapJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
 
-        # TODO: add the features based on the biases
         self.cut_plane_bias_a: float = cut_plane_bias_a
         self.cut_plane_bias_b: float = cut_plane_bias_b
 
@@ -184,7 +183,7 @@ class YSpatialLapJoint(Joint):
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
         plane_f = self.cut_plane_a
-        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_a = Lap.from_volume_and_beam(negative_volume, self.beam_a, ref_side_index=self.ref_side_index(self.beam_a, self.beam_b))
         self.beam_a.add_feature(lap_on_a)
         return negative_volume
@@ -202,7 +201,7 @@ class YSpatialLapJoint(Joint):
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
         plane_f = self.cut_plane_b
-        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_b = Lap.from_volume_and_beam(negative_volume, self.beam_b, ref_side_index=self.ref_side_index(self.beam_b, self.beam_a))
         self.beam_b.add_feature(lap_on_b)
         return negative_volume
@@ -234,7 +233,7 @@ class YSpatialLapJoint(Joint):
         plane_b = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
         plane_f = self.cut_plane_a
 
-        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_a)
 
@@ -252,7 +251,7 @@ class YSpatialLapJoint(Joint):
         plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
         plane_f = self.cut_plane_b
 
-        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = YSpatialLapJoint._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_b)
 
@@ -289,64 +288,64 @@ class YSpatialLapJoint(Joint):
         v7 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_d))  # type: ignore
         vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
         faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
-        faces = _ensure_faces_outward(vertices, faces)
+        faces = YSpatialLapJoint._ensure_faces_outward(vertices, faces)
         polyhedron = Polyhedron(vertices, faces)
         return polyhedron
 
+    @staticmethod
+    def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]) -> list[list[int]]:
+        """Reorder face indices so face normals point outward.
 
-def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]) -> list[list[int]]:
-    """Reorder face indices so face normals point outward.
+        vertices: list of Point or 3-tuples
+        faces: list of lists of indices
+        Returns: new_faces (modified in place is fine too)
+        """
+        # robustly extract coordinates
+        coords = []
+        for v in vertices:
+            try:
+                coords.append([v.x, v.y, v.z])
+            except AttributeError:
+                coords.append(list(v))
 
-    vertices: list of Point or 3-tuples
-    faces: list of lists of indices
-    Returns: new_faces (modified in place is fine too)
-    """
-    # robustly extract coordinates
-    coords = []
-    for v in vertices:
-        try:
-            coords.append([v.x, v.y, v.z])
-        except AttributeError:
-            coords.append(list(v))
+        # polyhedron centroid
+        poly_centroid = [sum(c[i] for c in coords) / len(coords) for i in range(3)]
 
-    # polyhedron centroid
-    poly_centroid = [sum(c[i] for c in coords) / len(coords) for i in range(3)]
+        def vec(a, b):
+            return [b[i] - a[i] for i in range(3)]
 
-    def vec(a, b):
-        return [b[i] - a[i] for i in range(3)]
+        def cross(a, b):
+            return [
+                a[1] * b[2] - a[2] * b[1],
+                a[2] * b[0] - a[0] * b[2],
+                a[0] * b[1] - a[1] * b[0],
+            ]
 
-    def cross(a, b):
-        return [
-            a[1] * b[2] - a[2] * b[1],
-            a[2] * b[0] - a[0] * b[2],
-            a[0] * b[1] - a[1] * b[0],
-        ]
+        def dot(a, b):
+            return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 
-    def dot(a, b):
-        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+        new_faces = []
+        for face in faces:
+            # skip degenerate faces
+            if len(face) < 3:
+                new_faces.append(face)
+                continue
+            v0 = coords[face[0]]
+            v1 = coords[face[1]]
+            v2 = coords[face[2]]
 
-    new_faces = []
-    for face in faces:
-        # skip degenerate faces
-        if len(face) < 3:
-            new_faces.append(face)
-            continue
-        v0 = coords[face[0]]
-        v1 = coords[face[1]]
-        v2 = coords[face[2]]
+            e1 = vec(v0, v1)
+            e2 = vec(v0, v2)
+            n = cross(e1, e2)
 
-        e1 = vec(v0, v1)
-        e2 = vec(v0, v2)
-        n = cross(e1, e2)
+            # face centroid
+            face_centroid = [sum(coords[idx][k] for idx in face) / len(face) for k in range(3)]
+            outward = vec(poly_centroid, face_centroid)
 
-        # face centroid
-        face_centroid = [sum(coords[idx][k] for idx in face) / len(face) for k in range(3)]
-        outward = vec(poly_centroid, face_centroid)
+            # if dot < 0 the normal points inward — reverse vertex order
+            if dot(n, outward) < 0:
+                new_faces.append(list(reversed(face)))
+            else:
+                new_faces.append(list(face))
 
-        # if dot < 0 the normal points inward — reverse vertex order
-        if dot(n, outward) < 0:
-            new_faces.append(list(reversed(face)))
-        else:
-            new_faces.append(list(face))
-
-    return new_faces
+        return new_faces
