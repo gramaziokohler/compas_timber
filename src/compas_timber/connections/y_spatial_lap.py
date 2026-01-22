@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from telnetlib import VT3270REGIME
 from typing import TYPE_CHECKING
 
 from compas.geometry import Plane
@@ -16,7 +15,6 @@ from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
-from compas_timber.fabrication.btlx import MachiningLimits
 
 if TYPE_CHECKING:
     from compas_timber.elements import TimberModel
@@ -72,10 +70,8 @@ class YSpatialLapJoint(Joint):
         super().__init__(**kwargs)
         self.cross_beam: Beam = cross_beam
         self.main_beams: list[Beam] = list(main_beams)
-
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
-
         self.cut_plane_bias_a: float = cut_plane_bias_a
         self.cut_plane_bias_b: float = cut_plane_bias_b
 
@@ -277,20 +273,19 @@ class YSpatialLapJoint(Joint):
         poly_centroid = Point(*centroid_points(vertices))
         new_faces = []
         for face in faces:
+            # vertices
             v0 = vertices[face[0]]
             v1 = vertices[face[1]]
             v2 = vertices[face[2]]
-
+            # vectors
             e1 = Vector.from_start_end(v0, v1)
             e2 = Vector.from_start_end(v0, v2)
             n = e1.cross(e2)
-
             face_centroid = centroid_points([vertices[i] for i in face])
             outward = Vector.from_start_end(poly_centroid, face_centroid)
-
+            # dots
             if n.dot(outward) < 0:
                 new_faces.append(list(reversed(face)))
             else:
                 new_faces.append(list(face))
-
         return new_faces
