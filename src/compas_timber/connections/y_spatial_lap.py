@@ -242,6 +242,9 @@ class YSpatialLapJoint(Joint):
 
     @staticmethod
     def _volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f) -> Polyhedron:
+        """
+        Computes the volume of a polyhedron from six planes.
+        """
         v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))  # type: ignore
         v1 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_b))  # type: ignore
         v2 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_b))  # type: ignore
