@@ -138,10 +138,9 @@ class ButtJoint(Joint):
         """
         assert self.main_beam and self.cross_beam
         # extend the main beam
-        cutting_plane_main = None
         try:
             if self.butt_plane:
-                cutting_plane_main = self.butt_plane.transformed(self.main_beam.modeltransformation)
+                cutting_plane_main = self.butt_plane
                 start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
                 extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
                 self.main_beam.add_blank_extension(
@@ -169,7 +168,7 @@ class ButtJoint(Joint):
         if self.modify_cross:
             try:
                 if self.back_plane:
-                    cutting_plane_cross = self.back_plane.transformed(self.cross_beam.modeltransformation)
+                    cutting_plane_cross = self.back_plane
                 else:
                     cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
                 start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
@@ -194,7 +193,7 @@ class ButtJoint(Joint):
             self.cross_beam.remove_features(self.features)
         # get the cutting plane for the main beam
         if self.butt_plane:
-            cutting_plane = self.butt_plane.transformed(self.main_beam.modeltransformation)
+            cutting_plane = self.butt_plane
         else:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
             cutting_plane.xaxis = -cutting_plane.xaxis

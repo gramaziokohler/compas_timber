@@ -3,7 +3,6 @@ from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
-from .l_miter import MiterType
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -42,6 +41,7 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .l_miter import MiterType
 
 __all__ = [
     "Joint",
@@ -53,7 +53,6 @@ __all__ = [
     "TStepJoint",
     "TBirdsmouthJoint",
     "LMiterJoint",
-    "MiterType",
     "XLapJoint",
     "XNotchJoint",
     "TLapJoint",
@@ -89,4 +88,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "MiterType",
 ]

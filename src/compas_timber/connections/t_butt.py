@@ -48,39 +48,6 @@ class TButtJoint(ButtJoint):
             if self.base_fastener:
                 self.base_fastener.place_instances(self)
 
-    @classmethod
-    def create(cls, model, main_beam, cross_beam, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, **kwargs):
-        """Creates an L-Butt joint and associates it with the provided model.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.Model`
-            The model to which the joint will be added.
-        main_beam : :class:`~compas_timber.parts.Beam`
-            The main beam to be joined.
-        cross_beam : :class:`~compas_timber.parts.Beam`
-            The cross beam to be joined.
-        mill_depth : float
-            The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane` is provided.
-        small_beam_butts : bool, default False
-            If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed."""
-
-        if butt_plane:
-            butt_plane = butt_plane.transformed(main_beam.modeltransformation.inverse())
-
-        joint = TButtJoint(
-            main_beam=main_beam,
-            cross_beam=cross_beam,
-            mill_depth=mill_depth,
-            small_beam_butts=small_beam_butts,
-            modify_cross=modify_cross,
-            reject_i=reject_i,
-            butt_plane=butt_plane,
-            **kwargs,
-        )
-        model.add_joint(joint)
-        return joint
-
     @property
     def interactions(self):
         """Returns interactions between elements used by this joint."""
