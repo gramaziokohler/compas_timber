@@ -78,7 +78,7 @@ class YSpatialLapJoint(Joint):
     @property
     def __data__(self):
         data = super().__data__
-        data["corss_beam_guid"] = self.cross_beam_guid
+        data["cross_beam_guid"] = self.cross_beam_guid
         data["main_beams_guids"] = self.main_beams_guids
         data["mill_depth"] = self.mill_depth
         data["conical_tool"] = self.conical_tool
