@@ -22,18 +22,18 @@ class YButtJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beams : list of :class:`~compas_timber.parts.Beam`
+    cross_beams : list of :class:`~compas_timber.elements.Beam`
         The cross beams to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beams.
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beams : :class:`~compas_timber.parts.Beam`
+    cross_beams : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beams.
@@ -221,8 +221,8 @@ class YButtJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beams = [model.element_by_guid(self.cross_beam_a_guid), model.element_by_guid(self.cross_beam_b_guid)]
+        self.main_beam = model[self.main_beam_guid]
+        self.cross_beams = [model[self.cross_beam_a_guid], model[self.cross_beam_b_guid]]
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
@@ -230,7 +230,7 @@ class YButtJoint(Joint):
 
         Parameters
         ----------
-        elements : list of :class:`~compas_timber.parts.Beam`
+        elements : list of :class:`~compas_timber.elements.Beam`
             The beams to check.
         raise_error : bool, optional
             If True, raises a `BeamJoiningError` if the requirements are not met.

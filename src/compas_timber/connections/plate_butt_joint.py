@@ -56,24 +56,14 @@ class PlateButtJoint(PlateJoint):
         return self.plate_b.guid if self.plate_b else None
 
     @property
-    def main_planes(self):
+    def _main_planes(self):
         """Return the ordered planes of the main plate."""
         return self.a_planes
 
     @property
-    def cross_planes(self):
+    def _cross_planes(self):
         """Return the ordered planes of the cross plate."""
         return self.b_planes
-
-    @property
-    def main_outlines(self):
-        """Return the ordered outlines of the main plate."""
-        return self.a_outlines
-
-    @property
-    def cross_outlines(self):
-        """Return the ordered outlines of the cross plate."""
-        return self.b_outlines
 
     def __repr__(self):
         return "PlateButtJoint({0}, {1}, {2})".format(self.main_plate, self.cross_plate, JointTopology.get_name(self.topology))

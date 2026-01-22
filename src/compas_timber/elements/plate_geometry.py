@@ -1,3 +1,4 @@
+from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -20,7 +21,7 @@ from compas_timber.utils import move_polyline_segment_to_plane
 from compas_timber.utils import polyline_from_brep_loop
 
 
-class PlateGeometry(object):
+class PlateGeometry(Data):
     """
     A class to represent plate-like objects (plate, panel, etc.) defined by polylines on top and bottom faces of shape.
 
@@ -57,10 +58,14 @@ class PlateGeometry(object):
 
     @property
     def __data__(self):
-        data = {"local_outline_a": self._original_outlines[0], "local_outline_b": self._original_outlines[1]}
+        data = super().__data__
+        data["local_outline_a"] = self._original_outlines[0]
+        data["local_outline_b"] = self._original_outlines[1]
+        data["openings"] = self.openings
         return data
 
-    def __init__(self, local_outline_a, local_outline_b):
+    def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
+        super().__init__(**kwargs)
         self._original_outlines = (local_outline_a, local_outline_b)
         self._mutable_outlines = (local_outline_a.copy(), local_outline_b.copy())
         self._edge_frames = {}

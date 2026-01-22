@@ -59,8 +59,8 @@ class JointCandidate(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to elements saved in the model."""
-        self.element_a = model.element_by_guid(self.element_a_guid)
-        self.element_b = model.element_by_guid(self.element_b_guid)
+        self.element_a = model[self.element_a_guid]
+        self.element_b = model[self.element_b_guid]
 
     def add_features(self):
         """This joint does not add any features."""
@@ -74,19 +74,22 @@ class PlateJointCandidate(PlateJoint, JointCandidate):
 
     Parameters
     ----------
-    plate_a : :class:`~compas_timber.parts.Plate`
+    plate_a : :class:`~compas_timber.elements.Plate`
         First plate to be joined.
-    plate_b : :class:`~compas_timber.parts.Plate`
+    plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
 
     Attributes
     ----------
-    plate_a : :class:`~compas_timber.parts.Plate`
+    plate_a : :class:`~compas_timber.elements.Plate`
         First plate to be joined.
-    plate_b : :class:`~compas_timber.parts.Plate`
+    plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
 
     """
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+
+    def _set_edge_planes(self):
+        pass

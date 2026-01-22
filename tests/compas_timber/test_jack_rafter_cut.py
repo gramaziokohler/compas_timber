@@ -69,6 +69,50 @@ def test_jack_rafter_cut_from_plane_end(tol):
     assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
 
 
+def test_jack_rafter_cut_from_plane_start_negative(tol):
+    centerline = Line(Point(0, 0, 0), Point(1000, 0, 0))
+    cross_section = (60, 120)
+    beam = Beam.from_centerline(centerline, cross_section[0], cross_section[1])
+
+    # cut the start of the beam
+    plane = Plane(Point(0, 0, 0), Vector(-1, 0, 1))
+    instance = JackRafterCut.from_plane_and_beam(plane, beam)
+
+    assert tol.is_close(instance.start_x, -60.0)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 90.0)
+    assert tol.is_close(instance.inclination, 45.0)
+    assert tol.is_close(instance.ref_side_index, 0)
+
+    cut_plane = instance.plane_from_params_and_beam(beam)
+
+    # should be the same plane, but point might be different
+    assert cut_plane.is_parallel(plane, tol=tol.absolute)
+    assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
+
+
+def test_jack_rafter_cut_from_plane_end_beyond(tol):
+    centerline = Line(Point(0, 0, 0), Point(1000, 0, 0))
+    cross_section = (60, 120)
+    beam = Beam.from_centerline(centerline, cross_section[0], cross_section[1])
+
+    # cut the start of the beam
+    plane = Plane(Point(1000, 0, 0), Vector(-1, 0, 1))
+    instance = JackRafterCut.from_plane_and_beam(plane, beam)
+
+    assert tol.is_close(instance.start_x, 940.0)
+    assert tol.is_close(instance.start_y, 0.0)
+    assert tol.is_close(instance.angle, 90.0)
+    assert tol.is_close(instance.inclination, 45.0)
+    assert tol.is_close(instance.ref_side_index, 0)
+
+    cut_plane = instance.plane_from_params_and_beam(beam)
+
+    # should be the same plane, but point might be different
+    assert cut_plane.is_parallel(plane, tol=tol.absolute)
+    assert is_point_on_plane(cut_plane.point, plane, tol=tol.absolute)
+
+
 def test_jack_rafter_cut_from_frame(tol):
     centerline = Line(Point(x=270.0, y=270.0, z=590.0), Point(x=1220.0, y=680.0, z=590.0))
     cross_section = (60, 120)
