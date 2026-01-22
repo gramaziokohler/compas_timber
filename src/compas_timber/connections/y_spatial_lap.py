@@ -8,6 +8,7 @@ from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections.joint import Joint
+from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
 from compas_timber.fabrication import JackRafterCut
@@ -19,10 +20,58 @@ if TYPE_CHECKING:
 
 
 class YSpatialLapJoint(Joint):
+    """
+    Y-shaped spatial lap joint. Or Table Joint.
+
+    Parameters
+    ----------
+    cross_beam : :class:`compas_timber.elements.Beam`
+        The cross beam of the joint.
+    main_beams : list[:class:`compas_timber.elements.Beam`]
+        The two main beams of the joint. The first beam will be considered `beam_a` and the second `beam_b`.
+    cut_plane_bias_a : float, optional
+        The bias for the cut plane of the first main beam (`beam_a`).
+    cut_plane_bias_b : float, optional
+        The bias for the cut plane of the second main beam (`beam_b`).
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    cross_beam : :class:`compas_timber.elements.Beam`
+        The cross beam of the joint.
+    main_beams : list[:class:`compas_timber.elements.Beam`]
+        The two main beams of the joint. The first beam will be considered `beam_a` and the second `beam_b`.
+    beam_a : :class:`compas_timber.elements.Beam`
+        The first main beam (`beam_a`).
+    beam_b : :class:`compas_timber.elements.Beam`
+        The second main beam (`beam_b`).
+    cut_plane_bias_a : float, optional
+        The bias for the cut plane of the first main beam (`beam_a`).
+    cut_plane_bias_b : float, optional
+        The bias for the cut plane of the second main beam (`beam_b`).
+    elements : list[:class:`compas_timber.elements.TimberElement`]
+        The elements of the joint.
+    cut_plane_a : :class:`compas.geometry.Plane`
+        The cut plane of the first main beam (`beam_a`).
+    cut_plane_b : :class:`compas.geometry.Plane`
+        The cut plane of the second main beam (`beam_b`).
+    **kwargs : dict
+        Additional keyword arguments.
+
+    """
+
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+    MIN_ELEMENT_COUNT = 3
+    MAX_ELEMENT_COUNT = 3
+
     def __init__(self, cross_beam: Beam, *main_beams: Beam, cut_plane_bias_a: float = 0.5, cut_plane_bias_b: float = 0.5, **kwargs):
         super().__init__(**kwargs)
         self.cross_beam: Beam = cross_beam
         self.main_beams: list[Beam] = list(main_beams)
+
+        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
 
         # TODO: add the features based on the biases
         self.cut_plane_bias_a: float = cut_plane_bias_a
@@ -30,7 +79,12 @@ class YSpatialLapJoint(Joint):
 
     @property
     def __data__(self):
-        raise NotImplementedError
+        data = super().__data__
+        data["corss_beam_guid"] = self.cross_beam_guid
+        data["main_beams_guids"] = self.main_beams_guids
+        data["mill_depth"] = self.mill_depth
+        data["conical_tool"] = self.conical_tool
+        return data
 
     @property
     def beams(self):
@@ -65,12 +119,6 @@ class YSpatialLapJoint(Joint):
         cut_plane_b = Plane.from_frame(self.beam_b.ref_sides[ref_side_index])
         cut_plane_b.point -= cut_plane_b.normal * distance_bias
         return cut_plane_b
-
-    def cross_beam_ref_side_inde(self, beam: Beam):
-        raise NotImplementedError
-
-    def main_beam_ref_side_index(self, beam: Beam):
-        raise NotImplementedError
 
     def ref_side_index(self, beam: Beam, ref_beam: Beam) -> int:
         ref_side_dict = beam_ref_side_incidence(ref_beam, beam, ignore_ends=True)
@@ -119,27 +167,15 @@ class YSpatialLapJoint(Joint):
         return beam
 
     def add_features(self):
+        # Features on main_beam_A: Lap and JackRafterCut
         self._lap_on_a()
         self._jack_rafter_cut_on_a()
+        # Features on main_beam_B: Lap and JackRafterCut
         self._lap_on_b()
         self._jack_rafter_cut_on_b()
+        # Features on cross_beam: Lap cause by beamA and Lap cause by beamB
         self._lap_a_on_cross()
         self._lap_b_on_cross()
-
-    def _brep_from_planes(self, plane_a, plane_b, plane_c, plane_d, plane_e, plane_f) -> Polyhedron:
-        v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))  # type: ignore
-        v1 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_b))  # type: ignore
-        v2 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_b))  # type: ignore
-        v3 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_d))  # type: ignore
-        v4 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_d))  # type: ignore
-        v5 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_b))  # type: ignore
-        v6 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_b))  # type: ignore
-        v7 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_d))  # type: ignore
-        vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
-        faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
-        faces = _ensure_faces_outward(vertices, faces)
-        polyhedron = Polyhedron(vertices, faces)
-        return polyhedron
 
     def _lap_on_a(self) -> Polyhedron:
         plane_a = Plane.from_frame(self.beam_a.ref_sides[self.ref_side_index(self.beam_a, self.beam_b)])
@@ -148,7 +184,7 @@ class YSpatialLapJoint(Joint):
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_a)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_a) + 2) % 4])
         plane_f = self.cut_plane_a
-        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_a = Lap.from_volume_and_beam(negative_volume, self.beam_a, ref_side_index=self.ref_side_index(self.beam_a, self.beam_b))
         self.beam_a.add_feature(lap_on_a)
         return negative_volume
@@ -166,7 +202,7 @@ class YSpatialLapJoint(Joint):
         plane_d = Plane.from_frame(self.cross_beam.ref_sides[self.ref_side_index(self.cross_beam, self.beam_b)])
         plane_b = Plane.from_frame(self.cross_beam.ref_sides[(self.ref_side_index(self.cross_beam, self.beam_b) + 2) % 4])
         plane_f = self.cut_plane_b
-        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
         lap_on_b = Lap.from_volume_and_beam(negative_volume, self.beam_b, ref_side_index=self.ref_side_index(self.beam_b, self.beam_a))
         self.beam_b.add_feature(lap_on_b)
         return negative_volume
@@ -198,7 +234,7 @@ class YSpatialLapJoint(Joint):
         plane_b = Plane.from_frame(self.beam_a.ref_sides[(self.ref_side_index(self.beam_a, self.cross_beam) + 2) % 4])
         plane_f = self.cut_plane_a
 
-        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_a)
 
@@ -216,7 +252,7 @@ class YSpatialLapJoint(Joint):
         plane_b = Plane.from_frame(self.beam_b.ref_sides[(self.ref_side_index(self.beam_b, self.cross_beam) + 2) % 4])
         plane_f = self.cut_plane_b
 
-        negative_volume = self._brep_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
+        negative_volume = self._volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f)
 
         mac_lim = self._compute_machining_limits(self.beam_b)
 
@@ -226,12 +262,36 @@ class YSpatialLapJoint(Joint):
         self.cross_beam.add_feature(lap_b_on_cross)
         return negative_volume
 
-    def restore_beams_from_keys(self, model: TimberModel):
-        raise NotImplementedError
+    def restore_beams_from_keys(self, model: TimberModel) -> None:
+        """Afeter de-serialization, restores references to the main and cross beams saved in the model."""
+        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beams = [model.element_by_guid(guid) for guid in self.main_beams_guids]
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
+        # the two main beams should not be on the same ref_side or on the opposite ref_side.
+
+        # The two ref_sides must be one following the other
+
+        # If not solved lap creating strange geometries, main_beams must be at a right angle
+
         raise NotImplementedError
+
+    @staticmethod
+    def _volume_from_planes(plane_a, plane_b, plane_c, plane_d, plane_e, plane_f) -> Polyhedron:
+        v0 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_d))  # type: ignore
+        v1 = Point(*intersection_plane_plane_plane(plane_a, plane_e, plane_b))  # type: ignore
+        v2 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_b))  # type: ignore
+        v3 = Point(*intersection_plane_plane_plane(plane_a, plane_c, plane_d))  # type: ignore
+        v4 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_d))  # type: ignore
+        v5 = Point(*intersection_plane_plane_plane(plane_f, plane_e, plane_b))  # type: ignore
+        v6 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_b))  # type: ignore
+        v7 = Point(*intersection_plane_plane_plane(plane_f, plane_c, plane_d))  # type: ignore
+        vertices = [v0, v1, v2, v3, v4, v5, v6, v7]
+        faces = [[0, 1, 2, 3], [4, 7, 6, 5], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
+        faces = _ensure_faces_outward(vertices, faces)
+        polyhedron = Polyhedron(vertices, faces)
+        return polyhedron
 
 
 def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]) -> list[list[int]]:
