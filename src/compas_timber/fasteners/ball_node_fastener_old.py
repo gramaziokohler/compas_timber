@@ -1,3 +1,4 @@
+from compas.datastructures import Mesh
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
@@ -7,11 +8,13 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry.geometry import Geometry
 
-from compas_timber.elements import Fastener
-from compas_timber.elements import FastenerTimberInterface
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.fasteners import Fastener
+
+# from compas_timber.fasteners.plate_fastner import FastenerTimberInterface
 from compas_timber.utils import correct_polyline_direction
 
 
@@ -35,11 +38,6 @@ class BallNodeFastener(Fastener):
 
     """
 
-    @property
-    def __data__(self):
-        data = super(Fastener, self).__data__
-        return data
-
     def __init__(self, node_point, ball_diameter=100, base_interface=None, **kwargs):
         super(BallNodeFastener, self).__init__(**kwargs)
         self.node_point = node_point
@@ -52,6 +50,11 @@ class BallNodeFastener(Fastener):
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
+
+    @property
+    def __data__(self):
+        data = super(Fastener, self).__data__
+        return data
 
     def __repr__(self):
         # type: () -> str
@@ -87,9 +90,9 @@ class BallNodeFastener(Fastener):
     # Default Values for Fastener Interface
     # ==========================================================================
 
-    @property
-    def default_fastener_interface(self):
-        return FastenerTimberInterface(self._default_outline_points, self._default_thickness, shapes=self._default_shapes, features=self._default_features)
+    # @property
+    # def default_fastener_interface(self):
+    #     return FastenerTimberInterface(self._default_outline_points, self._default_thickness, shapes=self._default_shapes, features=self._default_features)
 
     @property
     def _default_outline_points(self):
@@ -122,8 +125,7 @@ class BallNodeFastener(Fastener):
             if value:
                 setattr(self.base_interface, key, value)
 
-    def compute_geometry(self):
-        # type: () -> compas.geometry.Geometry
+    def compute_geometry(self) -> Geometry:
         """Returns the geometry of the fastener including all interfaces."""
         geometry = Brep.from_sphere(Sphere(self.ball_diameter / 2.0, point=self.node_point))
 
@@ -136,8 +138,7 @@ class BallNodeFastener(Fastener):
     # TODO: implement compute_aabb()
     # TODO: implement compute_obb()
 
-    def compute_collision_mesh(self):
-        # type: () -> compas.datastructures.Mesh
+    def compute_collision_mesh(self) -> Mesh:
         """Computes the collision geometry of the element.
 
         Returns

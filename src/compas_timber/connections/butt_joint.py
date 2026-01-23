@@ -12,6 +12,7 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.fasteners import Fastener
 
 from .joint import Joint
 from .solver import JointTopology
@@ -91,6 +92,7 @@ class ButtJoint(Joint):
         butt_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
+        base_fastener: Optional[Fastener] = None,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(**kwargs)
@@ -104,6 +106,10 @@ class ButtJoint(Joint):
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
+        self.fasteners = []
+        self.base_fastener: Optional[Fastener] = base_fastener
+        if self.base_fastener:
+            self.base_fastener.place_instances(self)
 
     @property
     def elements(self):
@@ -218,6 +224,10 @@ class ButtJoint(Joint):
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
+
+        if self.fasteners:
+            for fastener in self.fasteners:
+                fastener.apply(self)
 
     def _apply_lap_to_cross_beam(self):
         # apply the lap on the cross beam
