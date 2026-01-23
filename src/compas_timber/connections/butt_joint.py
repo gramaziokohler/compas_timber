@@ -270,9 +270,6 @@ class ButtJoint(Joint):
         ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
-        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
-        main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-
         cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
         cutting_plane.xaxis = -cutting_plane.xaxis
         if mill_depth:

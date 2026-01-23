@@ -11,7 +11,6 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.t_butt import ButtJoint
-from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements.beam import Beam
@@ -168,9 +167,10 @@ class KMiterJoint(Joint):
 
         if self.are_beams_coplanar:
             self._add_pocket_to_cross_beam(self.main_beams[0], self.main_beams[-1])
-            cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
+            # cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
         else:
-            cross_beam = self.cross_beam  # cut with T-butt joints below
+            pass
+            # cross_beam = self.cross_beam  # cut with T-butt joints below
         # TODO: figure out a better way to use other joints within this joint.
         for i in range(len(self.main_beams) - 1):
             beam_1 = self.main_beams[i]
