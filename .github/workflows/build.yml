@@ -18,9 +18,17 @@ jobs:
         python: ['3.9', '3.12', '3.14']
 
     steps:
-      - uses: compas-dev/compas-actions.build@v4
+      - uses: actions/checkout@v5
+      
+      - name: Install the latest version of uv and set the python version
+        uses: astral-sh/setup-uv@v7
         with:
-          invoke_lint: true
-          check_import: true
-          use_conda: false
-          python: ${{ matrix.python }}
+          python-version: ${{ matrix.python }}
+      
+      - name: Install dependencies
+        run: uv pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          invoke lint
+          invoke test
