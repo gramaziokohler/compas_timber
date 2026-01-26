@@ -286,6 +286,8 @@ class Lap(BTLxProcessing):
             self._machining_limits = machining_limits
         elif isinstance(machining_limits, dict):
             self._machining_limits = MachiningLimits.from_dictionary(machining_limits)
+        else:
+            machining_limits = MachiningLimits()
 
 
 
