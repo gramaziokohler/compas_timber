@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
 
+import math
+
 if TYPE_CHECKING:
     from compas.datastructures import Mesh  # noqa: F401
     from compas.geometry import Brep  # noqa: F401
@@ -17,6 +19,7 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
@@ -430,7 +433,6 @@ class Panel(Element):
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
         PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
-        kwargs["transformation"] = Transformation.from_frame(args.pop("frame"))
         panel = cls(**kwargs)
         if openings:
             for polyline, opening_type in openings:
@@ -494,13 +496,13 @@ def extract_door_openings(outline_a, outline_b):
                     continue
                 segs_a.append(panel_segments_a[i])
                 segs_b.append(panel_segments_b[i])
-            opening = join_polyline_segments(door_segments[1:4])
+            opening = join_polyline_segments(door_segments[1:4])[0][0]
             opening[0] -= vertical * 1.0
             opening[3] -= vertical * 1.0
             opening.append(opening.points[0])  # close loop
             openings.append(opening)
-            outline_a = join_polyline_segments(segs_a, close_loop=True)
-            outline_b = join_polyline_segments(segs_b, close_loop=True)
+            outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
+            outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
             internal_segment_indices_a = get_interior_segment_indices(outline_a)
             break
         else:

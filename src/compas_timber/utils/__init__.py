@@ -604,7 +604,10 @@ def polyline_from_brep_loop(loop):
         The Polyline resulting from joining the BrepLoop edges.
     """
     segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
-    return join_polyline_segments(segments, close_loop=True)
+    polylines, _ = join_polyline_segments(segments, close_loop=True)
+    if len(polylines) != 1:
+        raise ValueError("The BrepLoop returned multiple polylines")
+    return polylines[0]
 
 
 def polylines_from_brep_face(face):
