@@ -5,7 +5,11 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane
+from compas.tolerance import TOL
 
+from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.utils import intersection_line_line_param
@@ -13,6 +17,12 @@ from compas_timber.utils import intersection_line_line_param
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import point_centerline_towards_joint
+
+
+class MiterType:
+    BISECTOR = "bisector"
+    REF_SURFACES = "ref_surfaces"
+    USER_DEFINED = "user_defined"
 
 
 class LMiterJoint(Joint):
@@ -31,6 +41,15 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A plane that defines the miter cut location and orientation.
+        If not provided, it will be calculated automatically.
+        If provided, miter_type will be automatically set to `MiterType.USER_DEFINED`.
+    miter_type : :class: `~compas_timber.connections.MiterType`, optional
+        one of `MiterType.BISECTOR`, `MiterType.REF_SURFACES`, or `MiterType.USER_DEFINED`.
+        If `USER_DEFINED`, a `miter_plane` must be provided.
+    clean : bool, optional
+        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
 
     Attributes
     ----------
@@ -40,7 +59,12 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A plane that defines the miter cut location and orientation.
+    miter_type : :class: `~compas_timber.connections.MiterType`
+        one of `MiterType.BISECTOR`, `MiterType.REF_SURFACES`, or `MiterType.USER_DEFINED`.
+    clean : bool, optional
+        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
@@ -51,41 +75,82 @@ class LMiterJoint(Joint):
         data["beam_a_guid"] = self.beam_a_guid
         data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
+        data["miter_type"] = self.miter_type
+        data["miter_plane"] = self.miter_plane
+        data["clean"] = self.clean
+
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
+        self.miter_plane = miter_plane
+        self.miter_type = miter_type if not miter_plane else MiterType.USER_DEFINED
         self.cutoff = cutoff
+        self.clean = clean
         self.features = []
 
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
 
-    def get_cutting_planes(self):
+    def _get_cut_planes_from_miter_plane(self, miter_plane):
+        # create two cutting planes from the butt plane
+        pln_a = miter_plane
+        pln_b = Plane(miter_plane.point, -miter_plane.normal)
+        if dot_vectors(Vector.from_start_end(miter_plane.point, self.beam_a.centerline.midpoint), miter_plane.normal) > 0:
+            pln_a, pln_b = pln_b, pln_a
+        return Frame.from_plane(pln_a), Frame.from_plane(pln_b)
+
+    def _get_cut_planes_from_ref_sides(self):
+        # get the cutting planes from the reference sides of the beams
+
+        ref_side_main = beam_ref_side_incidence(self.beam_a, self.beam_b)
+        back_a = Plane.from_frame(self.beam_a.ref_sides[min(ref_side_main, key=ref_side_main.get)])
+        front_a = Plane.from_frame(self.beam_a.ref_sides[max(ref_side_main, key=ref_side_main.get)])
+
+        ref_side_cross = beam_ref_side_incidence(self.beam_b, self.beam_a)
+        back_b = Plane.from_frame(self.beam_b.ref_sides[min(ref_side_cross, key=ref_side_cross.get)])
+        front_b = Plane.from_frame(self.beam_b.ref_sides[max(ref_side_cross, key=ref_side_cross.get)])
+
+        inside_x = intersection_plane_plane(front_a, front_b)
+        outside_x = intersection_plane_plane(back_a, back_b)
+
+        return Plane.from_points([outside_x[0], outside_x[1], inside_x[0]])
+
+    def _get_cutting_planes(self):
         assert self.beam_a and self.beam_b
+        # miter_type = MiterType.USER_DEFINED
+        if self.miter_plane:
+            return self._get_cut_planes_from_miter_plane(self.miter_plane.transformed(self.beam_a.modeltransformation))
+        # miter_type = MiterType.REF_SURFACES
+        elif self.miter_type == MiterType.REF_SURFACES:
+            miter_plane = self._get_cut_planes_from_ref_sides()
+            return self._get_cut_planes_from_miter_plane(miter_plane)
+        # miter_type = MiterType.BISECTOR
         vA = Vector(*self.beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
         vB = Vector(*self.beam_b.frame.xaxis)
         # intersection point (average) of both centrelines
-        [pxA, tA], [pxB, tB] = intersection_line_line_param(
-            self.beam_a.centerline,
-            self.beam_b.centerline,
-            max_distance=float("inf"),
-            limit_to_segments=False,
-        )
-        # TODO: add error-trap + solution for I-miter joints
+        p = self.location
+        if not p:
+            [pxA, tA], [pxB, tB] = intersection_line_line_param(
+                self.beam_a.centerline,
+                self.beam_b.centerline,
+                max_distance=float("inf"),
+                limit_to_segments=False,
+            )
+            # TODO: add error-trap + solution for I-miter joints
 
-        p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
+            p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
         # makes sure they point outward of a joint point
-        tA, _ = self.beam_a.endpoint_closest_to_point(pxA)
+        tA, _ = self.beam_a.endpoint_closest_to_point(p)
         if tA == "end":
             vA *= -1.0
-        tB, _ = self.beam_b.endpoint_closest_to_point(pxB)
+        tB, _ = self.beam_b.endpoint_closest_to_point(p)
         if tB == "end":
             vB *= -1.0
 
@@ -104,9 +169,9 @@ class LMiterJoint(Joint):
         plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
-    def get_cutoff_plane(self):
+    def _get_cutoff_plane(self):
         """Returns a plane that is perpendicular to the miter plane at the intersection point of the two centerlines."""
-        cutting_plane = self.get_cutting_planes()[0]
+        cutting_plane = self._get_cutting_planes()[0]
         cross_vect = cross_vectors(self.beam_a.centerline.direction, self.beam_b.centerline.direction)
 
         cutoff_plane = cutting_plane.rotated(math.pi / 2, cross_vect, point=cutting_plane.point)
@@ -129,15 +194,15 @@ class LMiterJoint(Joint):
         start_a, start_b = None, None
         try:
             if self.cutoff:
-                plane_a = self.get_cutoff_plane()
+                plane_a = self._get_cutoff_plane()
                 plane_b = plane_a.copy()
             else:
-                plane_a, plane_b = self.get_cutting_planes()
+                plane_a, plane_b = self._get_cutting_planes()
             start_a, end_a = self.beam_a.extension_to_plane(plane_a)
             start_b, end_b = self.beam_b.extension_to_plane(plane_b)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [plane_b] if start_a is not None else [plane_a]
+            geometries = [plane_b] if start_a is not None and plane_b else [plane_a] if plane_a else []
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
@@ -157,7 +222,7 @@ class LMiterJoint(Joint):
             self.beam_b.remove_features(self.features)
 
         try:
-            plane_a, plane_b = self.get_cutting_planes()
+            plane_a, plane_b = self._get_cutting_planes()
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
 
@@ -169,11 +234,26 @@ class LMiterJoint(Joint):
 
         # add cutoffs if necessary
         if self.cutoff:
-            cutoff_plane = self.get_cutoff_plane()
+            cutoff_plane = self._get_cutoff_plane()
             for beam in self.elements:
                 cutoff = JackRafterCutProxy.from_plane_and_beam(cutoff_plane, beam)
                 beam.add_features(cutoff)
                 self.features.append(cutoff)
+
+        if self.clean:
+            vector_a = Vector.from_start_end(self.beam_a.centerline.midpoint, self.location)
+            vector_b = Vector.from_start_end(self.beam_b.centerline.midpoint, self.location)
+
+            back_a = [Plane.from_frame(fr) for fr in self.beam_a.ref_sides if TOL.is_positive(dot_vectors(vector_b, fr.normal))]
+            back_b = [Plane.from_frame(fr) for fr in self.beam_b.ref_sides if TOL.is_positive(dot_vectors(vector_a, fr.normal))]
+
+            clean_cuts_a = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_a) for cut in back_b]
+            clean_cuts_b = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_b) for cut in back_a]
+
+            self.beam_a.add_features(clean_cuts_a)
+            self.beam_b.add_features(clean_cuts_b)
+            self.features.extend(clean_cuts_a)
+            self.features.extend(clean_cuts_b)
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""

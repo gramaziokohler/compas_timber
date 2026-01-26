@@ -41,6 +41,7 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .l_miter import MiterType
 
 __all__ = [
     "Joint",
@@ -87,4 +88,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "MiterType",
 ]
