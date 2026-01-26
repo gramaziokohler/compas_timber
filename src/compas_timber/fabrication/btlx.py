@@ -7,6 +7,7 @@ from collections import OrderedDict
 from datetime import date
 from datetime import datetime
 from itertools import chain
+from pydoc import classify_class_attrs
 from warnings import warn
 
 import compas
@@ -17,6 +18,7 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
+from compas.geometry._core.distance import closest_point_on_segment
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
@@ -1001,6 +1003,28 @@ class MachiningLimits(object):
         self.face_limited_back = True
         self.face_limited_top = True
         self.face_limited_bottom = True
+
+    @classmethod
+    def from_dictionary(cls, dictionary):
+        machining_limits = cls()
+        for key, value in dictionary.items():
+            if key not in cls.EXPECTED_KEYS:
+                raise ValueError("The key must be one of the following: ", {cls.EXPECTED_KEYS})
+            if not isinstance(value, bool):
+                raise ValueError("The values must be a boolean.")
+            if key == "FaceLimitedStart":
+                machining_limits.face_limited_start = value
+            elif key == "FaceLimitedEnd":
+                machining_limits.face_limited_end = value
+            elif key == "FaceLimitedFront":
+                machining_limits.face_limited_front = value
+            elif key == "FaceLimitedBack":
+                machining_limits.face_limited_back = value
+            elif key == "FaceLimitedTop":
+                machining_limits.face_limited_top = value
+            elif key == "FaceLimitedBottom":
+                machining_limits.face_limited_bottom = value
+        return machining_limits
 
     @property
     def limits(self):
