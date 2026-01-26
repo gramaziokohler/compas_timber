@@ -23,7 +23,6 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python }}
-          activate-environment: true
       
       - name: Install dependencies
         run: |
@@ -31,5 +30,5 @@ jobs:
 
       - name: Run tests
         run: |
-          invoke lint
-          invoke test
+          uv run --frozen invoke lint
+          uv run --frozen invoke test
