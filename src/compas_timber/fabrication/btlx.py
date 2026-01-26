@@ -7,7 +7,6 @@ from collections import OrderedDict
 from datetime import date
 from datetime import datetime
 from itertools import chain
-from pydoc import classify_class_attrs
 from warnings import warn
 
 import compas
@@ -18,7 +17,6 @@ from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
-from compas.geometry._core.distance import closest_point_on_segment
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 

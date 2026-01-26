@@ -292,7 +292,7 @@ class Pocket(BTLxProcessing):
         elif isinstance(machining_limits, dict):
             self._machining_limits = MachiningLimits.from_dictionary(machining_limits)
         else:
-            machining_limits = MachiningLimits()
+            self._machining_limits = MachiningLimits()
 
 
 
