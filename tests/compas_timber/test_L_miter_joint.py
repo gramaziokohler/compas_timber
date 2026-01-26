@@ -134,6 +134,7 @@ def test_L_miter_joint_bisector_features_clean(beam_a, perp_beam):
     assert len(beam_a.features) == 2
     assert len(perp_beam.features) == 2
 
+
 def test_L_miter_joint_bisector_features_cutoff(beam_a, perp_beam):
     joint = LMiterJoint(beam_a, perp_beam, cutoff=True)
     joint.add_extensions()
@@ -141,6 +142,7 @@ def test_L_miter_joint_bisector_features_cutoff(beam_a, perp_beam):
     # since beams are coplanar, there should only be one cleaning cut per beam, 2 features per beam including miter cut
     assert len(beam_a.features) == 2
     assert len(perp_beam.features) == 2
+
 
 def test_L_miter_joint_bisector_features_clean_non_planar(beam_a, non_planar_beam):
     joint = LMiterJoint(beam_a, non_planar_beam, clean=True)
