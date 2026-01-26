@@ -44,6 +44,7 @@ class LFrenchRidgeLapJoint(LapJoint):
     def __data__(self):
         data = super(LFrenchRidgeLapJoint, self).__data__
         data["drillhole_diam"] = self.drillhole_diam
+        del data["cut_plane_bias"]
         return data
 
     def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, drillhole_diam=None, **kwargs):

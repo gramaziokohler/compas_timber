@@ -46,18 +46,37 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, topology=None, location=None, name=None, **kwargs):
+    def __init__(self, elements=(), topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
+        # TODO do we allow elements to contain Nones? how to deal?
+        if not elements or not all([e for e in elements]):
+            self.element_guids = tuple(g for g in kwargs.get("element_guids", ()))
+        else:
+            self.element_guids = tuple(str(e.guid) for e in elements)
+        self._elements = tuple(e for e in elements if e)
+
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location or Point(0, 0, 0)
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name}
+        return {"name": self.name, "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
+
+    @property
+    def elements(self):
+        return self._elements
+
+    @property
+    def element_a(self):
+        return self._elements[0] if len(self._elements) > 0 else None
+
+    @property
+    def element_b(self):
+        return self._elements[1] if len(self._elements) > 1 else None
 
     @property
     def topology(self):
@@ -78,10 +97,6 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
-
-    @property
-    def elements(self):
-        raise NotImplementedError
 
     @property
     def generated_elements(self):
@@ -151,7 +166,7 @@ class Joint(Data):
         """
         pass
 
-    def restore_beams_from_keys(self, model):
+    def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
 
         During serialization, :class:`compas_timber.elements.Beam` objects
@@ -167,7 +182,8 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        raise NotImplementedError
+        self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
