@@ -29,7 +29,6 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
     def RunScript(
         self,
         Elements: System.Collections.Generic.List[object],
-        Containers: System.Collections.Generic.List[object],
         JointRules: System.Collections.Generic.List[object],
         Features: System.Collections.Generic.List[object],
         MaxDistance: float,
@@ -37,7 +36,6 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
     ):
         # this used to be default behavior in Rhino7.. I think..
         Elements = Elements or []
-        Containers = Containers or []
         JointRules = JointRules or []
         Features = Features or []
 
@@ -45,7 +43,7 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             warning(self.component, "Input parameter Beams failed to collect data")
         if not JointRules:
             warning(self.component, "Input parameter JointRules failed to collect data")
-        if not (Elements or Containers):  # shows beams even if no joints are found
+        if not Elements:  # shows beams even if no joints are found
             return
         if MaxDistance is None:
             MaxDistance = TOL.ABSOLUTE  # compared to calculted distance, so shouldn't be just 0.0
@@ -98,18 +96,12 @@ class ModelComponent(Grasshopper.Kernel.GH_ScriptInstance):
             error(self.component, f"Unsupported unit: {units}")
             return
 
-    def add_elements_to_model(self, model, elements, containers):
+    def add_elements_to_model(self, model, elements):
         """Adds elements to the model and groups them by panel."""
         elements = [e for e in elements if e is not None]
         for element in elements:
             element.reset()
             model.add_element(element)
-
-        containers = [c for c in containers if c is not None]
-
-        for c_def in containers:
-            panel = c_def.panel
-            model.add_element(panel)
 
     def handle_features(self, features):
         feature_errors = []
