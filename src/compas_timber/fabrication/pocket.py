@@ -90,7 +90,7 @@ class Pocket(BTLxProcessing):
         data["tilt_end_side"] = self.tilt_end_side
         data["tilt_opp_side"] = self.tilt_opp_side
         data["tilt_start_side"] = self.tilt_start_side
-        data["machining_limits"] = self.machining_limits
+        data["machining_limits"] = self.machining_limits.limits
         return data
 
     # fmt: off
@@ -287,14 +287,13 @@ class Pocket(BTLxProcessing):
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        if not isinstance(machining_limits, dict):
-            raise ValueError("Machining limits must be a dictionary.")
-        for key, value in machining_limits.items():
-            if key not in MachiningLimits.EXPECTED_KEYS:
-                raise ValueError("The key must be one of the following: ", {self.EXPECTED_KEYS})
-            if not isinstance(value, bool):
-                raise ValueError("The values must be a boolean.")
-        self._machining_limits = machining_limits
+        if isinstance(machining_limits, MachiningLimits):
+            self._machining_limits = machining_limits
+        elif isinstance(machining_limits, dict):
+            self._machining_limits = MachiningLimits.from_dictionary(machining_limits)
+        else:
+            machining_limits = MachiningLimits()
+
 
 
     ########################################################################
@@ -490,7 +489,7 @@ class Pocket(BTLxProcessing):
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
 
     @staticmethod
-    def _define_machining_limits(planes, element, ref_side_index) -> dict:
+    def _define_machining_limits(planes, element, ref_side_index) -> MachiningLimits:
         # define machining limits based on the planes
         ref_sides = [Plane.from_frame(frame) for frame in element.ref_sides]
         start_side, end_side = ref_sides[-2:]
@@ -506,7 +505,7 @@ class Pocket(BTLxProcessing):
         machining_limits.face_limited_back = is_point_behind_plane(back_plane.point, back_side)
         machining_limits.face_limited_bottom = is_point_behind_plane(bottom_plane.point, opp_side)
 
-        return machining_limits.limits
+        return machining_limits
 
 
     ########################################################################
@@ -628,7 +627,7 @@ class Pocket(BTLxProcessing):
         bottom_frame = self._bottom_frame_from_params_and_element(element)
 
         # get top frame
-        if self.machining_limits["FaceLimitedTop"]:
+        if self.machining_limits.face_limited_top:
             top_frame = bottom_frame.translated(-bottom_frame.zaxis * self.start_depth)
             top_frame.xaxis = -top_frame.xaxis
         else:
@@ -636,14 +635,14 @@ class Pocket(BTLxProcessing):
             top_frame.translate(top_frame.normal * tol.absolute)
 
         # tilt start frame
-        if self.machining_limits["FaceLimitedStart"]:
+        if self.machining_limits.face_limited_start:
             start_frame = bottom_frame.rotated(math.radians(180-self.tilt_start_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             start_frame = element.ref_sides[4]
             start_frame.translate(start_frame.normal * tol.absolute)
 
         # tilt end frame
-        if self.machining_limits["FaceLimitedEnd"]:
+        if self.machining_limits.face_limited_end:
             end_frame = bottom_frame.translated(bottom_frame.yaxis * self.length)
             end_frame.rotate(math.radians(180-self.tilt_end_side), -end_frame.xaxis, point=end_frame.point)
         else:
@@ -654,14 +653,14 @@ class Pocket(BTLxProcessing):
         bottom_frame.rotate(math.radians(180-self.internal_angle), -bottom_frame.normal, point=bottom_frame.point)
 
         # tilt front frame
-        if self.machining_limits["FaceLimitedFront"]:
+        if self.machining_limits.face_limited_front:
             front_frame = bottom_frame.rotated(-math.radians(self.tilt_ref_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = element.front_side(self.ref_side_index)
             front_frame.translate(front_frame.normal * tol.absolute)
 
         # tilt back frame
-        if self.machining_limits["FaceLimitedBack"]:
+        if self.machining_limits.face_limited_back:
             back_frame = bottom_frame.rotated(math.radians(180 - self.tilt_opp_side), -bottom_frame.xaxis, point=bottom_frame.point)
             # back_frame.translate(back_frame.normal * self.width)
             back_frame.translate(bottom_frame.yaxis * self.width)
@@ -771,7 +770,7 @@ class PocketParams(BTLxProcessingParams):
         result["TiltEndSide"] = "{:.{prec}f}".format(float(self._instance.tilt_end_side), prec=TOL.precision)
         result["TiltOppSide"] = "{:.{prec}f}".format(float(self._instance.tilt_opp_side), prec=TOL.precision)
         result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
+        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
         return result
 
 

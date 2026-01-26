@@ -86,7 +86,7 @@ def test_pocket_from_polyhedron(tol, neg_vol, beam):
     assert tol.is_close(instance.tilt_end_side, 79.739)
     assert tol.is_close(instance.tilt_opp_side, 103.846)
     assert tol.is_close(instance.tilt_start_side, 100.261)
-    assert instance.machining_limits == {
+    assert instance.machining_limits.limits == {
         "FaceLimitedBack": False,
         "FaceLimitedStart": True,
         "FaceLimitedBottom": True,
@@ -118,7 +118,7 @@ def test_pocket_from_mesh(tol, neg_vol, beam):
     assert tol.is_close(instance.tilt_end_side, 79.739)
     assert tol.is_close(instance.tilt_opp_side, 103.846)
     assert tol.is_close(instance.tilt_start_side, 100.261)
-    assert instance.machining_limits == {
+    assert instance.machining_limits.limits == {
         "FaceLimitedBack": False,
         "FaceLimitedStart": True,
         "FaceLimitedBottom": True,
@@ -198,7 +198,7 @@ def test_pocket_data():
     assert copied_instance.tilt_end_side == instance.tilt_end_side
     assert copied_instance.tilt_opp_side == instance.tilt_opp_side
     assert copied_instance.tilt_start_side == instance.tilt_start_side
-    assert copied_instance.machining_limits == instance.machining_limits
+    assert copied_instance.machining_limits.limits == instance.machining_limits.limits
     assert copied_instance.ref_side_index == instance.ref_side_index
 
 
