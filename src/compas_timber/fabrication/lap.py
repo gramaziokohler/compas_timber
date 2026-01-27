@@ -23,12 +23,12 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
 class Lap(BTLxProcessing):
