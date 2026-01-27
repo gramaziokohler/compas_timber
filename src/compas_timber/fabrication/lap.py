@@ -62,7 +62,7 @@ class Lap(BTLxProcessing):
         The lead inclination is parallel to the beam axis.
     lead_inclination : float
         The lead inclination of the cut. 0.1 < lead_inclination < 179.9.
-    machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
+    machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
         The machining limits for the cut. Default is None
 
     """
