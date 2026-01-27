@@ -322,7 +322,7 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
             The element that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
+        machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
