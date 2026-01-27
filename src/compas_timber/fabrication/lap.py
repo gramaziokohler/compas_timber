@@ -24,12 +24,12 @@ from compas.tolerance import Tolerance
 from numpy import ma
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
+from .btlx import OrientationType
 
 
 class Lap(BTLxProcessing):
@@ -63,7 +63,7 @@ class Lap(BTLxProcessing):
         The lead inclination is parallel to the beam axis.
     lead_inclination : float
         The lead inclination of the cut. 0.1 < lead_inclination < 179.9.
-    machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
+    machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
         The machining limits for the cut. Default is None
 
     """
@@ -389,7 +389,7 @@ class Lap(BTLxProcessing):
             The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict
+        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
