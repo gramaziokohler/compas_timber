@@ -67,7 +67,7 @@ class Pocket(BTLxProcessing):
         The tilt angle of the opposing side. 0.1 < tilt_opp_side < 179.9.
     tilt_start_side : float
         The tilt angle of the start side. 0.1 < tilt_start_side < 179.9.
-    machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
+    machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
         The machining limits for the cut. Default is None
 
     """
