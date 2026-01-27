@@ -21,6 +21,8 @@ from .t_dovetail import TDovetailJoint
 from .t_tenon_mortise import TenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
+from .k_butt import KButtJoint
+from .k_miter import KMiterJoint
 from .oligina import OliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
@@ -41,6 +43,8 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
+
 
 __all__ = [
     "Joint",
@@ -68,6 +72,8 @@ __all__ = [
     "TenonMortiseJoint",
     "YButtJoint",
     "OliGinaJoint",
+    "KMiterJoint",
+    "KButtJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
@@ -87,4 +93,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "parse_cross_beam_and_main_beams_from_cluster",
 ]
