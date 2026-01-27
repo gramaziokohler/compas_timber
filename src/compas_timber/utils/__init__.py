@@ -189,7 +189,7 @@ def intersection_line_beam_param(line, beam, ignore_ends=False):
             if intersection_uv[0] >= 0 and intersection_uv[0] < beam.side_as_surface(i).xsize and intersection_uv[1] > 0 and intersection_uv[1] < beam.side_as_surface(i).ysize:
                 pts.append(intersection)
                 ref_side_indices.append(i)
-    return [Point(*coords) for coords in pts], ref_side_indices
+    return {i:p for i,p in zip(ref_side_indices, [Point(*coords) for coords in pts])}
 
 
 def _split_into_consecutive_sequences(source, wrap_on):

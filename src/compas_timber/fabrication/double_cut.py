@@ -208,21 +208,20 @@ class DoubleCut(BTLxProcessing):
             raise ValueError("The two cutting planes are parallel consider using a JackRafterCut")
 
         line = Line(Point(*ln[0]), Point(*ln[1]))
-        intersection_points, face_indices = intersection_line_beam_param(line, beam)
-        if not intersection_points:
+        face_intersections = intersection_line_beam_param(line, beam)
+        if not face_intersections:
             raise ValueError("Planes do not intersect with beam.")
         if not ref_side_index:
-            ref_side_index = face_indices[0]
+            ref_side_index = face_intersections.keys()[0]
             ref_side = beam.ref_sides[ref_side_index]
-            point_start_xy = intersection_points[0]
+            point_start_xy = face_intersections[ref_side_index]
 
         else:
-            if ref_side_index not in face_indices:
+            if ref_side_index not in face_intersections.keys():
                 raise ValueError("Planes do not intersect with selected ref_side {}.".format(ref_side_index))
             else:
                 ref_side = beam.ref_sides[ref_side_index]
-                index = face_indices.index(ref_side_index)
-                point_start_xy = intersection_points[index]
+                point_start_xy = face_intersections[ref_side]
 
         planes = cls._reorder_planes(planes, line, ref_side)
         orientation = cls._calculate_orientation(beam, planes)
