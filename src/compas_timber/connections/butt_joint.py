@@ -227,7 +227,7 @@ class ButtJoint(Joint):
 
         if self.fasteners:
             for fastener in self.fasteners:
-                fastener.apply(self)
+                fastener.apply_processings(self)
 
     def _apply_lap_to_cross_beam(self):
         # apply the lap on the cross beam
