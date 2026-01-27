@@ -151,6 +151,7 @@ class Panel(Element):
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
+        # self.features: Optional[list[PanelFeature]]=features or []
         self._planes = None
 
     def __repr__(self) -> str:
