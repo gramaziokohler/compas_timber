@@ -23,12 +23,12 @@ from compas.tolerance import TOL
 from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
-from .btlx import MachiningLimits
-from .btlx import OrientationType
 
 
 class Lap(BTLxProcessing):
@@ -282,7 +282,13 @@ class Lap(BTLxProcessing):
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        if isinstance(machining_limits, MachiningLimits):
+        if (hasattr(machining_limits, "face_limited_start")
+            and hasattr(machining_limits, "face_limited_end")
+            and hasattr(machining_limits, "face_limited_front")
+            and hasattr(machining_limits, "face_limited_back")
+            and hasattr(machining_limits, "face_limited_top")
+            and hasattr(machining_limits, "face_limited_bottom")
+        ):
             self._machining_limits = machining_limits
         elif isinstance(machining_limits, dict):
             self._machining_limits = MachiningLimits.from_dictionary(machining_limits)

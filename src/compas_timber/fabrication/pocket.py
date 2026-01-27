@@ -109,7 +109,7 @@ class Pocket(BTLxProcessing):
         tilt_end_side: float = 90.0,
         tilt_opp_side: float = 90.0,
         tilt_start_side: float = 90.0,
-        machining_limits: dict = None,
+        machining_limits: Optional[MachiningLimits] = None,
         **kwargs
     ):
         super(Pocket, self).__init__(**kwargs)
@@ -141,7 +141,7 @@ class Pocket(BTLxProcessing):
         self.tilt_end_side: float = tilt_end_side
         self.tilt_opp_side: float = tilt_opp_side
         self.tilt_start_side: float = tilt_start_side
-        self.machining_limits: dict = machining_limits
+        self.machining_limits: MachiningLimits = machining_limits
 
     ########################################################################
     # Properties
@@ -282,12 +282,18 @@ class Pocket(BTLxProcessing):
         self._tilt_start_side = tilt_start_side
 
     @property
-    def machining_limits(self) -> dict:
+    def machining_limits(self) -> MachiningLimits:
         return self._machining_limits
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        if isinstance(machining_limits, MachiningLimits):
+        if (hasattr(machining_limits, "face_limited_start")
+            and hasattr(machining_limits, "face_limited_end")
+            and hasattr(machining_limits, "face_limited_front")
+            and hasattr(machining_limits, "face_limited_back")
+            and hasattr(machining_limits, "face_limited_top")
+            and hasattr(machining_limits, "face_limited_bottom")
+        ):
             self._machining_limits = machining_limits
         elif isinstance(machining_limits, dict):
             self._machining_limits = MachiningLimits.from_dictionary(machining_limits)
@@ -625,7 +631,6 @@ class Pocket(BTLxProcessing):
 
         # get bottom frame
         bottom_frame = self._bottom_frame_from_params_and_element(element)
-
         # get top frame
         if self.machining_limits.face_limited_top:
             top_frame = bottom_frame.translated(-bottom_frame.zaxis * self.start_depth)
