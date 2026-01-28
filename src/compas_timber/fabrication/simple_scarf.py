@@ -243,15 +243,11 @@ class SimpleScarf(BTLxProcessing):
 
         """
         # type: (Brep, Beam) -> Brep
-        scarf_volume = self.volume_from_params_and_beam(beam)
-        print(scarf_volume)
-
-
-        # transform scarf volume to local coordinates of the beam
-        # scarf_volume.transform(beam.transformation_to_local())
+        scarf_volume = self.volume_from_params_and_beam(beam) 
+        scarf_volume.transform(beam.transformation_to_local())
 
         try:
-            # scarf_volume = Brep.from_mesh(scarf_volume)
+            scarf_volume = Brep.from_mesh(scarf_volume)
             json_dump(scarf_volume, "C:/Users/paulj/Downloads/scarf_volume.json")
         except Exception:
             raise FeatureApplicationError(
@@ -262,7 +258,14 @@ class SimpleScarf(BTLxProcessing):
 
         # Subtract the scarf volume from the beam geometry
         try:
-            return geometry - scarf_volume
+            json_dump(geometry, "C:/Users/paulj/Downloads/sub_geometry.json")
+            sub_brep = Brep.from_boolean_difference(geometry, scarf_volume)
+            for b in sub_brep:
+                if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
+                    return b
+                
+            
+            # return actual_b
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume,
@@ -290,19 +293,16 @@ class SimpleScarf(BTLxProcessing):
         assert self.depth_ref_side is not None
         assert self.depth_opp_side is not None
 
-        print(self.start_x, self.length, self.depth_ref_side, self.depth_opp_side)
-
+        
         ref_surface = beam.side_as_surface(self.ref_side_index)
-        print("ref_surface:", ref_surface)
-        p_origin = ref_surface.point_at(self.start_x, 0.0)
-        print("p_origin:", p_origin)
 
         top_frame = ref_surface.frame
+        if self.orientation == OrientationType.END:
+            top_frame.translate(top_frame.xaxis * (beam.length+self.length/2))
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
-        print("ref_middle_frame:", ref_middle_frame)
 
         angle_sf = -90 if self.orientation == OrientationType.START else 90
-        start_frame = top_frame.rotated(math.radians(angle_sf), top_frame.yaxis)
+        start_frame = top_frame.rotated(math.radians(angle_sf), top_frame.yaxis, top_frame.point)
 
         blank_frame = start_frame.translated(start_frame.normal * self.length/2)
 
@@ -351,29 +351,25 @@ class SimpleScarf(BTLxProcessing):
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),            #v10
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, back_plane)),          #v11
         ]
-        print(vertices)
-
-        # polylines = [
-        #     Polyline([vertices[i] for i in [0, 1, 2, 3, 4, 5, 0]]),
-        #     Polyline([vertices[i] for i in [6, 7, 8, 9, 10, 11, 6]])
-        #     # [0,1,2,3,4,5],      # Front face
-        #     # [6,7,8,9,10,11],    # Back face
-        #     # [0,5,7,6],          # Top face
-        #     # [1,11,10,2],        # Bottom face
-        #     # [0,6,11,1],         # Start face
-        #     # [9,3,2,10],         # End face
-        #     # [4,3,9,8],          # Middle face
-        # ]
-        poly = Polyline([vertices[i] for i in [0, 1, 2, 3, 4, 5, 0]])
-        print(poly)
-        # poly = Polyline([vertices[i] for i in [0, 5, 4, 3, 2, 1, 0]])
-        vector = Vector.from_start_end(vertices[0], vertices[6])
-        print(vector)
-        # if self.orientation == OrientationType.END:
-        #     faces = [face[::-1] for face in faces]
-        # return Polyhedron(vertices, faces)
-        # print(polylines)
-        return Brep.from_extrusion(poly, vector)
+        
+        faces = [
+            # [0,1,2,3,4,5],      # Front face
+            # [6,7,8,9,10,11],    # Back face
+            [0,1,4,5],          # Front face 1
+            [1,2,3,4],          # Front face 2
+            [6,7,8,11],         # Back face 1
+            [8,9,10,11],        # Back face 2
+            [0,5,7,6],          # Top face
+            [1,11,10,2],        # Bottom face
+            [0,6,11,1],         # Start face
+            [9,3,2,10],         # End face
+            [4,3,9,8],          # Middle face
+            [5,4,8,7]           #  face
+        ]
+        
+        if self.orientation == OrientationType.END:
+            faces = [face[::-1] for face in faces]
+        return Polyhedron(vertices, faces)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

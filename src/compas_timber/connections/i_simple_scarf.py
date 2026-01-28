@@ -63,19 +63,19 @@ class ISimpleScarf(Joint):
     def extension_plane(self, beam, point):
         side, _ = beam.endpoint_closest_to_point(point)
         if side == "start":
-            ref_side_index = 4
+            ext_side_index = 4
         else:
-            ref_side_index = 5
-        return beam.ref_sides[ref_side_index]
+            ext_side_index = 5
+        return beam.ref_sides[ext_side_index]
 
     def add_extensions(self):
         assert self.main_beam and self.other_beam
         try:
             ext_plane_origin = self.extension_plane_origin
             main_extension_frame = self.extension_plane(self.main_beam, ext_plane_origin)
-            main_extension_frame.translate(main_extension_frame.normal * self.length/2)
+            main_extension_frame.translate(main_extension_frame.normal * (self.length/2))
             other_extension_frame = self.extension_plane(self.other_beam, ext_plane_origin)
-            other_extension_frame.translate(other_extension_frame.normal * self.length/2)
+            other_extension_frame.translate(other_extension_frame.normal * (self.length/2))
             start_a, end_a = self.main_beam.extension_to_plane(Plane.from_frame(main_extension_frame))
             start_b, end_b = self.other_beam.extension_to_plane(Plane.from_frame(other_extension_frame))
         #nor sure about how the errors should be handled for two beams
@@ -101,6 +101,7 @@ class ISimpleScarf(Joint):
             drill_hole_diam_1=self.drill_hole_diam_1,
             drill_hole_diam_2=self.drill_hole_diam_2
             )
+        
         other_feature = SimpleScarf.from_beams(
             self.other_beam,
             self.main_beam,
