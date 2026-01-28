@@ -106,10 +106,6 @@ class ButtJoint(Joint):
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
-        self.fasteners = []
-        self.base_fastener: Optional[Fastener] = base_fastener
-        if self.base_fastener:
-            self.base_fastener.place_instances(self)
 
     @property
     def elements(self):

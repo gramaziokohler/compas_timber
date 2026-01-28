@@ -105,12 +105,6 @@ class Fastener(Element, ABC):
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
             joint.fasteners.append(joint_fastener)
 
-            # for interface in self.interfaces:
-            #     for sub_fastener in interface.sub_fasteners:
-            #         joint_subfastener = sub_fastener.copy()
-            #         joint_subfastener.target_frame = sub_fastener.frame.transformed(joint_fastener.to_joint_transformation)
-            #         joint.fasteners.append(joint_subfastener)
-
     @abstractmethod
     def apply_processings(self, joint: Joint) -> None:
         """
