@@ -298,7 +298,7 @@ class SimpleScarf(BTLxProcessing):
 
         top_frame = ref_surface.frame
         if self.orientation == OrientationType.END:
-            top_frame.translate(top_frame.xaxis * (beam.length+self.length/2))
+            top_frame.translate(top_frame.xaxis * (beam.length + self.length/2))
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
 
         angle_sf = -90 if self.orientation == OrientationType.START else 90
@@ -353,8 +353,6 @@ class SimpleScarf(BTLxProcessing):
         ]
         
         faces = [
-            # [0,1,2,3,4,5],      # Front face
-            # [6,7,8,9,10,11],    # Back face
             [0,1,4,5],          # Front face 1
             [1,2,3,4],          # Front face 2
             [6,7,8,11],         # Back face 1
