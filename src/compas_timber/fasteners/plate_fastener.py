@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from turtle import isdown
+from functools import singledispatchmethod
 from typing import TYPE_CHECKING
 from typing import Optional
+from typing import Union
+from typing import overload
 
 from compas.data import Data
 from compas.geometry import Brep
@@ -43,6 +45,11 @@ class PlateFastenerHole(Data):
     @classmethod
     def __from_data__(cls, data):
         return cls(Point.__from_data__(data["point"]), data["diameter"], data["depth"])
+
+
+#################################################################################################################
+#################################################################################################################
+#################################################################################################################
 
 
 class PlateFastener(Fastener):
@@ -94,6 +101,65 @@ class PlateFastener(Fastener):
         )
         return fastener
 
+    @singledispatchmethod
+    def add_hole(self, arg) -> PlateFastenerHole:
+        """Add a hole to this plate.
+
+        This method supports two calling forms:
+
+        1. Passing an existing PlateFastenerHole:
+           `add_hole(hole)` — the hole is appended to `self.holes`.
+
+        2. Passing a Point and numeric parameters to create a new hole:
+           `add_hole(point, diameter, depth)` — a new `PlateFastenerHole` is
+           created with the given `point`, `diameter`, and `depth`, then appended.
+
+        Parameters
+        ----------
+        arg : PlateFastenerHole | Point
+            Either an existing `PlateFastenerHole` instance to add, or a `Point`
+            indicating the hole location (in which case `diameter` and `depth`
+            must also be provided).
+
+        diameter : float, optional
+            Diameter of the new hole. Required when `arg` is a `Point`.
+        depth : float, optional
+            Depth of the new hole. Required when `arg` is a `Point`.
+
+        Returns
+        -------
+        PlateFastenerHole
+            The `PlateFastenerHole` instance that was added.
+
+        Raises
+        ------
+        TypeError
+            - If `arg` is neither a `PlateFastenerHole` nor a `Point`.
+            - If `arg` is a `Point` but `diameter` or `depth` is not provided.
+
+        Examples
+        --------
+        # Add an existing hole object:
+        >>> pf.add_hole(existing_hole)
+
+        # Create and add a hole at `pt`:
+        >>> pf.add_hole(pt, diameter=10.0, depth=5.0)
+        """
+        raise TypeError(f"Unsupported type: {type(arg)!r}")
+
+    @add_hole.register
+    def _(self, hole: "PlateFastenerHole") -> PlateFastenerHole:
+        self.holes.append(hole)
+        return hole
+
+    @add_hole.register
+    def _(self, point: "Point", diameter: Optional[float] = None, depth: Optional[float] = None) -> PlateFastenerHole:
+        if diameter is None or depth is None:
+            raise TypeError("When passing a Point you must also pass 'diameter' and 'depth'.")
+        hole = PlateFastenerHole(point=point, diameter=diameter, depth=depth)
+        self.holes.append(hole)
+        return hole
+
     def compute_elementgeometry(self, include_interfaces=True) -> Brep:
         """
         Compute the geometry of the element in local coordinates.
@@ -115,7 +181,7 @@ class PlateFastener(Fastener):
         for hole in self.holes:
             frame = self.frame.copy()
             frame.point = hole.point
-            cylinder = Cylinder(radius=self.diameter / 2, height=self.depth, frame=frame)
+            cylinder = Cylinder(radius=hole.diameter / 2, height=hole.depth, frame=frame)
             cylinder = Brep.from_cylinder(cylinder)
             geometry -= cylinder
 
