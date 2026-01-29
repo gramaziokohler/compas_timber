@@ -70,6 +70,12 @@ class PlateFastener(Fastener):
         self.recess = recess
         self.recess_offset = recess_offset
 
+        if self.recess:
+            self.recess_frame = self.frame.translated(self.frame.zaxis * self.recess)
+        else:
+            self.recess_offset = 0
+            self.recess_frame = self.frame.copy()
+
     @property
     def __data__(self):
         data = {
@@ -82,13 +88,6 @@ class PlateFastener(Fastener):
         }
         return data
 
-    @property
-    def recess_transformation(self) -> Optional[Translation]:
-        if self.recess:
-            translation = Translation.from_vector(self.frame.zaxis * -self.recess)
-            return translation
-        return None
-
     @classmethod
     def __from_data__(cls, data):
         fastener = cls(
@@ -100,6 +99,13 @@ class PlateFastener(Fastener):
             recess_offset=data["recess_offset"],
         )
         return fastener
+
+    @property
+    def to_joint_transformation(self) -> Transformation:
+        """
+        Computes the transformation from the fastener's local frame to the target frame in the joint.
+        """
+        return Transformation.from_frame_to_frame(self.recess_frame, self.target_frame)
 
     @singledispatchmethod
     def add_hole(self, arg) -> PlateFastenerHole:
@@ -185,10 +191,6 @@ class PlateFastener(Fastener):
             cylinder = Brep.from_cylinder(cylinder)
             geometry -= cylinder
 
-        # Apply Recess
-        if self.recess:
-            geometry.transform(self.recess_transformation)
-
         # Move to Join if target frame
         if self.target_frame:
             geometry.transform(self.to_joint_transformation)
@@ -199,7 +201,6 @@ class PlateFastener(Fastener):
         for element in joint.elements:
             if not isinstance(element, TimberElement):
                 continue
-
             drillings = self._create_drillings_features(element)
             if drillings:
                 element.features.extend(drillings)
@@ -211,7 +212,7 @@ class PlateFastener(Fastener):
         processings = []
         for hole in self.holes:
             drilling_line = Line(hole.point, hole.point + hole.depth * -self.frame.zaxis)
-            drilling_line.transform(self.to_joint_transformation)
+            drilling_line.transform(Transformation.from_frame_to_frame(self.frame, self.target_frame))
             try:
                 drilling = Drilling.from_line_and_element(line=drilling_line, element=element, diameter=hole.diameter)
                 processings.append(drilling)
@@ -223,7 +224,6 @@ class PlateFastener(Fastener):
         if not self.recess:
             return
         volume = self.recess_volume
-        volume.transform(self.to_joint_transformation)
         try:
             pocket = Pocket.from_volume_and_element(volume, element)
             return pocket
@@ -232,8 +232,8 @@ class PlateFastener(Fastener):
 
     @property
     def recess_volume(self):
-        moved_outline = self.outline.translated(self.frame.zaxis * -self.recess)
-        vertices = self.outline.points[:-1] + moved_outline.points[:-1]
+        moved_outline = self.outline.translated(self.frame.zaxis * self.recess)
+        vertices = moved_outline.points[:-1] + self.outline.points[:-1]
         hlen = int(len(vertices) / 2)
         faces = []
         for i in range(hlen):
@@ -247,15 +247,13 @@ class PlateFastener(Fastener):
         if self.recess_offset:
             polyhedron = self._offset_recess(polyhedron)
 
+        polyhedron.transform(self.to_joint_transformation)
         return polyhedron
 
     def _offset_recess(self, polyhedron):
-        new_faces = []
-        new_vertices = []
         for i, face in enumerate(polyhedron.faces):
             if i >= 4:
                 break
-            print("Offsetting")
             # Get face vertices
             face_verts = [polyhedron.vertices[i] for i in face]
             # Calculate normal from first three vertices

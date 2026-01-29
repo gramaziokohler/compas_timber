@@ -221,10 +221,6 @@ class ButtJoint(Joint):
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 
-        if self.fasteners:
-            for fastener in self.fasteners:
-                fastener.apply_processings(self)
-
     def _apply_lap_to_cross_beam(self):
         # apply the lap on the cross beam
         if self.mill_depth and not self.butt_plane:
