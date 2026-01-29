@@ -132,6 +132,14 @@ class Fastener(Element, ABC):
 
         return joint_fastener
 
+    def compute_sub_fasteners_interactions(self):
+        interactions = []
+        for sub_fastener in self.sub_fasteners:
+            interaction = (self, sub_fastener)
+            interactions.append(interaction)
+            interactions.extend(sub_fastener.compute_sub_fasteners_interactions())
+        return interactions
+
     @abstractmethod
     def apply_processings(self, joint: Joint) -> None:
         """

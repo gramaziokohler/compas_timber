@@ -35,6 +35,18 @@ class TButtJointPlateFastener(TButtJoint):
         for fastener in self._fasteners:
             fasteners.extend(fastener.find_all_nested_sub_fasteners())
         return fasteners
+        return self._fasteners
+
+    def compute_fasteners_interactions(self):
+        interactions = []
+        # beam ---- fastener ---- beam
+        for fastener in self._fasteners:
+            for beam in self.beams:
+                interactions.append((beam, fastener))
+
+            interactions.extend(fastener.compute_sub_fasteners_interactions())
+
+        return interactions
 
     def _place_fasteners_instances(self):
         for frame in self.fastener_target_frames:
