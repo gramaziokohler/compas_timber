@@ -11,9 +11,10 @@ class TButtJointPlateFastener(TButtJoint):
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, base_fastener=None, **kwargs):
         super().__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, butt_plane=butt_plane, **kwargs)
         self.base_fastener = base_fastener
-        self.fasteners = []
+        self._fasteners = []
         if self.base_fastener:
-            self.base_fastener.place_instances(self)
+            self._place_fasteners_instances()
+            self.base_fastener.compute_instance(self)
 
     def add_features(self) -> None:
         super().add_features()
@@ -26,12 +27,21 @@ class TButtJointPlateFastener(TButtJoint):
         return self.fasteners
 
     @property
-    def fasteners_interactions(self):
-        interactions = []
-
-    @property
     def fastener_target_frames(self):
         return self._compute_fastener_target_frames()
+
+    @property
+    def fasteners(self):
+        # TODO: make it recursive in findin all nested sub_fasteners
+        fasteners = []
+        for fastener in self._fasteners:
+            fasteners.extend(fastener.find_all_nested_sub_fasteners())
+        return fasteners
+
+    def _place_fasteners_instances(self):
+        for frame in self.fastener_target_frames:
+            fastener_instance = self.base_fastener.compute_instance(frame)
+            self._fasteners.append(fastener_instance)
 
     def _compute_fastener_target_frames(self):
         """
