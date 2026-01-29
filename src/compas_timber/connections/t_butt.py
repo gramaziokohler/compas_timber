@@ -1,10 +1,3 @@
-from compas.geometry import Frame
-from compas.geometry import Plane
-from compas.geometry import cross_vectors
-
-from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.utils import intersection_line_line_param
-
 from .butt_joint import ButtJoint
 from .solver import JointTopology
 

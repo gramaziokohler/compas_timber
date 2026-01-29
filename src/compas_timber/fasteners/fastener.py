@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from compas.geometry import Transformation
 
     from compas_timber.connections.joint import Joint
-    from compas_timber.fasteners.interface import Interface
 
 
 class Fastener(Element, ABC):
@@ -79,7 +78,14 @@ class Fastener(Element, ABC):
         frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
         target_frame_data = data["target_frame"]
         target_frame = Frame(target_frame_data["point"], target_frame_data["xaxis"], target_frame_data["yaxis"])
-        sub_fasteners = [sub_fastener.__from_data__(data) for data in data["sub_fasteners"]]
+        sub_fasteners = [Fastener.__from_data__(data) for data in data["sub_fasteners"]]
+        fastener = cls(frame=frame)
+        fastener.transformation = data["transformation"]
+        fastener.target_frame = target_frame
+        fastener.attributes = data["attributes"]
+        for sub_fastener in sub_fasteners:
+            fastener.add_sub_fastener(sub_fastener)
+        return fastener
 
     def __repr__(self) -> str:
         return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)

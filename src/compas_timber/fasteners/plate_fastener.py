@@ -3,8 +3,6 @@ from __future__ import annotations
 from functools import singledispatchmethod
 from typing import TYPE_CHECKING
 from typing import Optional
-from typing import Union
-from typing import overload
 
 from compas.data import Data
 from compas.geometry import Brep
@@ -17,7 +15,6 @@ from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import centroid_points
-from compas.geometry.translation import Translation
 from compas.tolerance import Tolerance
 
 from compas_timber.elements.timber import TimberElement
