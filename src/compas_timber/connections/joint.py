@@ -105,6 +105,10 @@ class Joint(Data):
             interactions.append((pair[0], pair[1]))
         return interactions
 
+    @property
+    def fasteners_interactions(self):
+        return []
+
     @classmethod
     def element_count_complies(cls, elements):
         """Checks if the number of elements complies with the joint's requirements.

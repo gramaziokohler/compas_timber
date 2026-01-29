@@ -25,26 +25,24 @@ class Dowel(Fastener):
 
     @property
     def __data__(self):
-        return {"frame": self.frame.__data__, "height": self.height, "diameter": self.diameter, "interfaces": [interface.__data__ for interface in self.interfaces]}
+        return {"frame": self.frame.__data__, "height": self.height, "diameter": self.diameter}
 
     @classmethod
     def __from_data__(cls, data):
         frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
         height = data["height"]
         diameter = data["diameter"]
-        interfaces = [globals()[iface["type"]].__from_data__(iface) for iface in data.get("interfaces", [])]
-        return cls(frame, height, diameter, interfaces)
+
+        return cls(frame, height, diameter)
 
     def compute_elementgeometry(self, include_interfaces=True):
         cylinder_frame = self.frame.copy()
         cylinder_frame.point += self.height / 2 * cylinder_frame.zaxis
         geometry = Cylinder(radius=self.diameter / 2, height=self.height, frame=cylinder_frame)
         self._geometry = geometry
-
-        if self.interfaces and include_interfaces:
-            for interface in self.interfaces:
-                geometry = interface.apply_to_fastener_geometry(geometry)
-
         geometry.transform(self.to_joint_transformation)
 
         return geometry
+
+    def apply_processings(self, joint) -> Union[Mesh, Brep]:
+        pass

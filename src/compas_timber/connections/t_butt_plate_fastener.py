@@ -26,6 +26,10 @@ class TButtJointPlateFastener(TButtJoint):
         return self.fasteners
 
     @property
+    def fasteners_interactions(self):
+        interactions = []
+
+    @property
     def fastener_target_frames(self):
         return self._compute_fastener_target_frames()
 

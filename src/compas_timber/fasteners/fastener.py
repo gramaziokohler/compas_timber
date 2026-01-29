@@ -58,7 +58,7 @@ class Fastener(Element, ABC):
         super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
         self.frame = frame
         self.target_frame = None
-        self.interfaces = interfaces or []
+        self.sub_fasteners = []
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -100,10 +100,15 @@ class Fastener(Element, ABC):
         """
         frames = joint.fastener_target_frames
 
+        # add the fasteners to the joint
         for frame in frames:
             joint_fastener = self.copy()
             joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
             joint.fasteners.append(joint_fastener)
+
+        # add the subfastener to the joint
+        for sub_fastener in self.sub_fasteners:
+            sub_fastener.place_instances(joint)
 
     @abstractmethod
     def apply_processings(self, joint: Joint) -> None:
