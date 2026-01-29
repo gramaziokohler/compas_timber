@@ -57,7 +57,7 @@ class Fastener(Element, ABC):
         # super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
         super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
         self.frame = frame
-        self.target_frame = None
+        self.target_frame = frame
         self._sub_fasteners = []
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -87,11 +87,6 @@ class Fastener(Element, ABC):
 
     @property
     def sub_fasteners(self):
-        # sub_fasteners = []
-        # for sub_fastener in self._sub_fasteners:
-        #     sub_fasteners.append(sub_fastener)
-        #     sub_fasteners.extend(sub_fastener.sub_fasteners)
-        # return sub_fasteners
         return self._sub_fasteners
 
     @frame.setter
@@ -106,32 +101,33 @@ class Fastener(Element, ABC):
             sub_fasteners.append(self)
         return sub_fasteners
 
-    def place_instances(self, joint: Joint) -> None:
-        """Adds the fasteners to the joint.
+    # def place_instances(self, joint: Joint) -> None:
+    #     """Adds the fasteners to the joint.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+    #     This method is automatically called when joint is created by the call to `Joint.create()`.
 
-        This methoud shoudl be called bz Joint.apply() and not Joint.create()
-        Joint.apply() adds the features to the Tis
-        """
-        frames = joint.fastener_target_frames
+    #     This methoud shoudl be called bz Joint.apply() and not Joint.create()
+    #     Joint.apply() adds the features to the Tis
+    #     """
+    #     frames = joint.fastener_target_frames
 
-        # add the fasteners to the joint
-        for frame in frames:
-            joint_fastener = self.copy()
-            joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
-            joint.fasteners.append(joint_fastener)
+    #     # add the fasteners to the joint
+    #     for frame in frames:
+    #         joint_fastener = self.copy()
+    #         joint_fastener.target_frame = Frame(frame.point, frame.xaxis, frame.yaxis)
+    #         joint.fasteners.append(joint_fastener)
 
-        # add the subfastener to the joint
-        for sub_fastener in self.sub_fasteners:
-            sub_fastener.place_instances(joint)
+    #     # add the subfastener to the joint
+    #     for sub_fastener in self.sub_fasteners:
+    #         sub_fastener.place_instances(joint)
 
     def compute_instance(self, target_frame):
         joint_fastener = self.copy()
         joint_fastener.target_frame = target_frame.copy()
 
         for sub_fastener in self.sub_fasteners:
-            sub_instance = sub_fastener.compute_instance(target_frame)
+            sub_target_frame = sub_fastener.frame.transformed(joint_fastener.to_joint_transformation)
+            sub_instance = sub_fastener.compute_instance(sub_target_frame)
             joint_fastener.sub_fasteners.append(sub_instance)
 
         return joint_fastener

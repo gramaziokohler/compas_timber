@@ -14,7 +14,6 @@ class TButtJointPlateFastener(TButtJoint):
         self._fasteners = []
         if self.base_fastener:
             self._place_fasteners_instances()
-            self.base_fastener.compute_instance(self)
 
     def add_features(self) -> None:
         super().add_features()
@@ -32,7 +31,6 @@ class TButtJointPlateFastener(TButtJoint):
 
     @property
     def fasteners(self):
-        # TODO: make it recursive in findin all nested sub_fasteners
         fasteners = []
         for fastener in self._fasteners:
             fasteners.extend(fastener.find_all_nested_sub_fasteners())
