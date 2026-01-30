@@ -146,8 +146,7 @@ def test_different_lap_joints_serialization_behavior():
 
     # Both should have common lap joint properties
     for data in [lap_data, french_data]:
-        assert "beam_a_guid" in data
-        assert "beam_b_guid" in data
+        assert "element_guids" in data
         assert "flip_lap_side" in data
 
 
@@ -179,14 +178,17 @@ def test_lap_joint_architecture_separation():
     # French Ridge Lap should have drillhole_diam
     assert hasattr(frl, "drillhole_diam")
     assert frl.drillhole_diam == 10.0
+    assert hasattr(tlap, "main_beam")
+    assert hasattr(tlap, "cross_beam")
+    assert hasattr(tlap, "flip_lap_side")
+    assert hasattr(tlap, "element_guids")
 
     # All should have common lap properties
-    for joint in [llap, tlap, frl]:
+    for joint in [llap, xlap, frl]:
         assert hasattr(joint, "beam_a")
         assert hasattr(joint, "beam_b")
         assert hasattr(joint, "flip_lap_side")
-        assert hasattr(joint, "beam_a_guid")
-        assert hasattr(joint, "beam_b_guid")
+        assert hasattr(joint, "element_guids")
 
 
 def test_create_negative_volumes_with_cut_plane_bias(mocker):

@@ -10,20 +10,10 @@ class PlateButtJoint(PlateJoint):
         """Return the main plate."""
         return self.plate_a
 
-    @main_plate.setter
-    def main_plate(self, value):
-        """Set the main plate."""
-        self.plate_a = value
-
     @property
     def cross_plate(self):
         """Return the cross plate."""
         return self.plate_b
-
-    @cross_plate.setter
-    def cross_plate(self, value):
-        """Set the cross plate."""
-        self.plate_b = value
 
     @property
     def main_segment_index(self):

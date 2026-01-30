@@ -61,7 +61,7 @@ class TimberModel(Model):
     def __from_data__(cls, data):
         model = super(TimberModel, cls).__from_data__(data)
         for joint in model.joints:  # TODO: allow for modifiers as well once they are implemented in compas_timber
-            joint.restore_beams_from_keys(model)  # type: ignore
+            joint.restore_elements_from_keys(model)  # type: ignore
         return model
 
     def __init__(self, tolerance=None, **kwargs):

@@ -21,41 +21,34 @@ class XNotchJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.elements.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    cross_beam : :class:`~compas_timber.elements.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.elements.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    cross_beam : :class:`~compas_timber.elements.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    @property
-    def __data__(self):
-        data = super(XNotchJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
-        return data
-
-    def __init__(self, main_beam=None, cross_beam=None, **kwargs):
-        super(XNotchJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+    def __init__(self, beam_a=None, beam_b=None, **kwargs):
+        super(XNotchJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.features = []
         self._main_ref_side_index = None
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def beam_a(self):
+        return self.element_a
+
+    @property
+    def beam_b(self):
+        return self.element_b
 
     @property
     def main_ref_side_index(self):
@@ -127,8 +120,3 @@ class XNotchJoint(Joint):
 
         # register processings to the joint
         self.features.append(pocket_feature)
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

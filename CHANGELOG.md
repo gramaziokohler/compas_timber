@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `polylines_from_brep_face` to compas_timber.utils.
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
+* Added `elements` argument to `Joint.__init__`.
+* Added `element_guids` property to `Joint` which are used for deserializing joints. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -100,6 +102,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
 * Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
 * Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
+* Implemented `get_elements_from_keys` in `Joint`.
+* Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 
+* Changed `LButtJoint.update_beam_roles` to a static method to avoid changing `Joint.elements`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -116,6 +121,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
+* Removed `get_beams_from_keys` in all `Joint` subclasses.
+* Removed `get_plates_from_keys` in `PlateJoint`.
+* Removed all *guid properties, eg `main_beam_guid`, `cross_beam_guid`, `beam_a_guid`, etc. from concrete joint classes.
 
 ## [1.0.1] 2025-10-16
 

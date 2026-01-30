@@ -1,1 +1,58 @@
-[{"dtype": "compas.geometry/Line", "guid": "ed0d2832-440a-4c95-aa4d-d14f4bcd3adf", "data": {"start": [0.0, -0.029999999999999999, 0.0], "end": [0.0, 2.0300000000000002, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "f286692e-e844-40fd-b61a-777394791829", "data": {"start": [-0.029999999999999805, 2.0, 0.0], "end": [3.0299999999999998, 2.0, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "4b3f61f6-854c-416f-8aaf-0cf3eb642057", "data": {"start": [3.0, 2.0299999999999998, 0.0], "end": [3.0, -0.029999999999999805, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "3fd24451-c642-43e2-a5fc-909b44d12973", "data": {"start": [3.0299999999999998, 0.0, 0.0], "end": [-0.030000000000000249, 0.0, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "0e8a3ffb-eeb4-4d08-8ce5-bd8b1fb18be7", "data": {"start": [0.57191292303231478, 2.0, 0.0], "end": [0.26499265851842146, 0.0, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "3ff5ce61-e88c-4a4e-9ac3-ffb50fc0b7b0", "data": {"start": [1.2278797628757312, 2.0, 0.0], "end": [1.5, 0.0, 0.0]}}, {"dtype": "compas.geometry/Line", "guid": "cea4d142-f2de-4bbd-b6a7-c78683bcf5ff", "data": {"start": [1.3639398814378656, 1.0, 0.0], "end": [3.0, 1.0, 0.0]}}]
+[
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "ed0d2832-440a-4c95-aa4d-d14f4bcd3adf",
+        "data": {
+            "start": [ 0.0, -0.029999999999999999, 0.0 ],
+            "end": [ 0.0, 2.0300000000000002, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "f286692e-e844-40fd-b61a-777394791829",
+        "data": {
+            "start": [ -0.029999999999999805, 2.0, 0.0 ],
+            "end": [ 3.0299999999999998, 2.0, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "4b3f61f6-854c-416f-8aaf-0cf3eb642057",
+        "data": {
+            "start": [ 3.0, 2.0299999999999998, 0.0 ],
+            "end": [ 3.0, -0.029999999999999805, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "3fd24451-c642-43e2-a5fc-909b44d12973",
+        "data": {
+            "start": [ 3.0299999999999998, 0.0, 0.0 ],
+            "end": [ -0.030000000000000249, 0.0, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "0e8a3ffb-eeb4-4d08-8ce5-bd8b1fb18be7",
+        "data": {
+            "start": [ 0.57191292303231478, 2.0, 0.0 ],
+            "end": [ 0.26499265851842146, 0.0, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "3ff5ce61-e88c-4a4e-9ac3-ffb50fc0b7b0",
+        "data": {
+            "start": [ 1.2278797628757312, 2.0, 0.0 ],
+            "end": [ 1.5, 0.0, 0.0 ]
+        }
+    },
+    {
+        "dtype": "compas.geometry/Line",
+        "guid": "cea4d142-f2de-4bbd-b6a7-c78683bcf5ff",
+        "data": {
+            "start": [ 1.3639398814378656, 1.0, 0.0 ],
+            "end": [ 3.0, 1.0, 0.0 ]
+        }
+    }
+]

@@ -48,29 +48,33 @@ class YButtJoint(Joint):
     @property
     def __data__(self):
         data = super(YButtJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_a_guid"] = self.cross_beam_a_guid
-        data["cross_beam_b_guid"] = self.cross_beam_b_guid
         data["mill_depth"] = self.mill_depth
         return data
 
     def __init__(self, main_beam=None, cross_beam_a=None, cross_beam_b=None, mill_depth=None, **kwargs):
-        super(YButtJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beams = [cross_beam_a, cross_beam_b]
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_a_guid = kwargs.get("cross_beam_a_guid", None) or str(cross_beam_a.guid)
-        self.cross_beam_b_guid = kwargs.get("cross_beam_b_guid", None) or str(cross_beam_b.guid)
+        super(YButtJoint, self).__init__(elements=(main_beam, cross_beam_a, cross_beam_b), **kwargs)
         self.mill_depth = mill_depth
         self.features = []
 
     @property
     def beams(self):
-        return [self.main_beam] + self.cross_beams
+        return self.elements
 
     @property
-    def elements(self):
-        return self.beams
+    def cross_beams(self):
+        return self.elements[1:3] if len(self.elements) >= 3 else []
+
+    @property
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam_a(self):
+        return self.element_b
+
+    @property
+    def cross_beam_b(self):
+        return self.elements[2] if len(self.elements) > 2 else None
 
     def cross_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(self.main_beam, beam, ignore_ends=True)
@@ -218,11 +222,6 @@ class YButtJoint(Joint):
         self.cross_beams[0].add_features(cut1)
         self.cross_beams[1].add_features(cut2)
         self.features = [cut1, cut2]
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beams = [model[self.cross_beam_a_guid], model[self.cross_beam_b_guid]]
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
