@@ -128,7 +128,8 @@ def test_panel_serialization_with_attributes():
     assert deserialized.attributes["custom_attribute"] == "custom_value"
     assert deserialized.attributes["another_attribute"] == 42
 
-    def test_from_outline_thickness():
+
+def test_from_outline_thickness():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
     panel_a = Panel.from_outlines(polyline_a, polyline_b)
