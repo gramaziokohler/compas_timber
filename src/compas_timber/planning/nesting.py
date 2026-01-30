@@ -3,7 +3,6 @@ from warnings import warn
 from compas.data import Data
 from compas.geometry import Frame
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 
 class NestedElementData(Data):
