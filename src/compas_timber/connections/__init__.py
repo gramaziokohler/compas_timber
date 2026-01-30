@@ -12,6 +12,7 @@ from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
+from .t_butt_plate_fastener import TButtJointPlateFastener
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
 from .t_lap import TLapJoint
@@ -47,6 +48,7 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "TButtJointPlateFastener",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
