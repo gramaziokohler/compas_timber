@@ -54,7 +54,7 @@ class BallNodeJoint(Joint):
         data["base_interface"] = self.fastener.base_interface
         return data
 
-    def __init__(self, beams: list[Beam], ball_diameter: float = 80, rods_length: float = 100, **kwargs):
+    def __init__(self, beams: list[Beam], ball_diameter: float = 10, rods_length: float = 30, **kwargs):
         super().__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
@@ -136,7 +136,8 @@ class BallNodeJoint(Joint):
         return self._node_point
 
     def place_fastener_instances(self):
-        target_frame = Frame(self.node_point, [1, 0, 0], [0, 1, 0])
+        target_frame = Frame.worldXY()
+        target_frame.point = self.node_point
         fastener_instance = self.base_fastener.compute_joint_instance(target_frame)
         self._fasteners.append(fastener_instance)
 
@@ -160,7 +161,7 @@ class BallNodeJoint(Joint):
 
         """
         for fastener in self.fasteners:
-            fastener.apply(self)
+            fastener.apply_processings(self)
 
     def restore_beams_from_keys(self, model):
         self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
