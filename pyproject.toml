@@ -56,6 +56,7 @@ dev = [
     "tomlkit",
     "compas_viewer",
     "pytest-cov",
+    "pytest-randomly",
     "pre-commit",
 ]
 
