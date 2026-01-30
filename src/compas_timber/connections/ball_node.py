@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Vector
 
 from compas_timber.elements import Beam
 from compas_timber.fasteners import BallNodeFastener

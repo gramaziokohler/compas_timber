@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from typing import Optional
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -9,11 +10,9 @@ from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Sphere
-from compas.geometry import Transformation
 from compas.geometry import Vector
-from numpy.random.mtrand import geometric
 
-from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.connections.joint import Joint
 from compas_timber.fabrication.jack_cut import JackRafterCutProxy
 from compas_timber.fasteners.fastener import Fastener
 
@@ -30,44 +29,12 @@ class Rod:
     beam: Beam
     plate_thickness: int = 3
 
-    def __data__(self):
-        return {
-            "frame": self.frame.__data__,
-            "length": self.length,
-            "beam_guid": self.beam.guid,
-            "plate_thickness": self.plate_thickness,
-        }
-
-    @classmethod
-    def __from_data__(cls, data):
-        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
-        length = data["length"]
-        beam_guid = data["beam_guid"]
-        plate_thickness = data.get("plate_thickness", 10)
-        # Note: beam needs to be linked after deserialization
-        rod = cls(frame, length, beam=None, plate_thickness=plate_thickness)
-        rod._beam_guid = beam_guid
-        return rod
-
 
 class BallNodeFastener(Fastener):
     def __init__(self, frame: Frame, ball_diameter: float, rods: list[Rod], **kwargs):
         super().__init__(frame=frame, **kwargs)
         self.ball_diameter = ball_diameter
         self.rods = rods
-        self._node_point = None
-
-    @property
-    def __data__(self):
-        data = {"frame": self.frame.__data__, "ball_diameter": self.ball_diameter, "rods": [rod.__data__ for rod in self.rods]}
-        return data
-
-    @classmethod
-    def __from_data__(cls, data):
-        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
-        ball_diameter = data["ball_diameter"]
-        rods = [Rod.__from_data__(rod_data) for rod_data in data["rods"]]
-        return cls(frame=frame, ball_diameter=ball_diameter, rods=rods)
 
     @classmethod
     def from_joint(cls, joint: BallNodeJoint, ball_diameter: float, rods_length: float) -> BallNodeFastener:
@@ -87,7 +54,7 @@ class BallNodeFastener(Fastener):
         return ball_node_fastener
 
     @property
-    def ball_radius(self):
+    def ball_radius(self) -> float:
         return self.ball_diameter / 2
 
     def copy(self) -> BallNodeFastener:
@@ -123,26 +90,32 @@ class BallNodeFastener(Fastener):
             geometry += cylinder_geometry
 
             # plate
-            # ref_side = min(rod.beam.ref_sides, key=lambda x: x.point.distance_to_point(rod.frame.point)).copy()
             height = rod.beam.height
             width = rod.beam.width
-            # ref_side.point = rod.frame.point + (rod.length - rod.plate_thickness / 2) * rod.frame.zaxis
             plate_frame = rod.beam.frame.copy()
             plate_frame.point = rod.frame.point + (rod.length - rod.plate_thickness / 2) * rod.frame.zaxis
             plate_geometry = Brep.from_box(Box(rod.plate_thickness, width, height, frame=plate_frame))
-            # plate_geometry.transform(Transformation.from_frame_to_frame(self.frame, rod.beam.frame))
             geometry += plate_geometry
 
         geometry.transform(self.to_joint_transformation)
 
         return geometry
 
-    def apply_processings(self, joint):
+    def apply_processings(self, joint: Joint) -> None:
+        """
+        Applies the necessary processing features to the beams connected by the ball node fastener.
+
+        Parameters
+        ----------
+        joint : :class:`compas_timber.connections.BallNodeJoint`
+            The joint to which the fastener is applied.
+
+        """
         for rod in self.rods:
             jack_rafter_cut = self._create_jack_rafter_cut_feature(rod)
             rod.beam.features.append(jack_rafter_cut)
 
-    def _create_jack_rafter_cut_feature(self, rod):
+    def _create_jack_rafter_cut_feature(self, rod) -> Optional[JackRafterCutProxy]:
         rafter_cut_frame = rod.frame.copy()
         rafter_cut_frame.point += rafter_cut_frame.zaxis * rod.length
         # rods frame anre in local space, transform it to global
