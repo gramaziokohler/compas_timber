@@ -6,7 +6,6 @@ from compas_timber.elements import Beam
 from compas_timber.structural import StructuralElementSolver
 from compas_timber.connections import Joint
 from compas_timber.model import TimberModel
-from compas_timber.model import TimberModel
 
 
 def test_create_segments_from_beam_and_its_joints(mocker: pytest_mock.MockerFixture):

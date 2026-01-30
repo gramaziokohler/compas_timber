@@ -15,8 +15,8 @@ if not compas.IPY:
 
 from compas.geometry import Point
 from compas.tolerance import TOL
-from compas_model.models import Model
 from compas_model.elements import Element
+from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointCandidate
