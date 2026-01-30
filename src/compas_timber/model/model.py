@@ -1,17 +1,8 @@
 from __future__ import annotations
 
 import warnings
-
-import compas
-
-if not compas.IPY:
-    from typing import Generator  # noqa: F401
-    from typing import List  # noqa: F401
-    from typing import cast  # noqa: F401
-
-    from compas.tolerance import Tolerance  # noqa: F401
-
-    from compas_timber.structural import StructuralSegment  # noqa: F401
+from typing import List
+from typing import cast
 
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -31,6 +22,7 @@ from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import StructuralElementSolver
+from compas_timber.structural import StructuralSegment
 
 
 class TimberModel(Model):
@@ -345,12 +337,14 @@ class TimberModel(Model):
             The first element.
         element_b : :class:`~compas_timber.elements.TimberElement`
             The second element.
-        segments : list[:class:`~compas_timber.elements.StructuralSegment`]
+        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
             The structural segments to add.
         """
         edge = (element_a.graphnode, element_b.graphnode)
         if edge not in self._graph.edges():
-            return
+            edge = (element_b.graphnode, element_a.graphnode)
+            if edge not in self._graph.edges():
+                raise ValueError("Interaction between elements {} and {} does not exist in the model.".format(element_a.name, element_b.name))
 
         existing_segments = self._graph.edge_attribute(edge, "structural_segments") or []
         existing_segments.extend(segments)
@@ -368,12 +362,15 @@ class TimberModel(Model):
 
         Returns
         -------
-        list[:class:`~compas_timber.elements.StructuralSegment`]
+        list[:class:`~compas_timber.structural.StructuralSegment`]
             The structural segments assigned to the interaction.
         """
         edge = (element_a.graphnode, element_b.graphnode)
         if edge not in self._graph.edges():
-            return []
+            edge = (element_b.graphnode, element_a.graphnode)
+            if edge not in self._graph.edges():
+                return []
+
         return self._graph.edge_attribute(edge, "structural_segments") or []
 
     def remove_interaction_structural_segments(self, element_a: Element, element_b: Element) -> None:
@@ -397,7 +394,7 @@ class TimberModel(Model):
         ----------
         beam : :class:`~compas_timber.elements.Beam`
             The beam to which the structural segments belong.
-        segments : list[:class:`~compas_timber.elements.StructuralSegment`]
+        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
             The structural segments to add.
         """
         node = beam.graphnode
@@ -415,7 +412,7 @@ class TimberModel(Model):
 
         Returns
         -------
-        list[:class:`~compas_timber.elements.StructuralSegment`]
+        list[:class:`~compas_timber.structural.StructuralSegment`]
             The structural segments assigned to the beam.
         """
         segments = cast(List[StructuralSegment], self._graph.node_attribute(beam.graphnode, "structural_segments"))

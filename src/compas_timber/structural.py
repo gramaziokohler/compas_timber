@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-import typing
+from typing import TYPE_CHECKING
 from typing import List
 
 from compas.data import Data
@@ -13,7 +13,7 @@ from compas.geometry import intersection_segment_segment
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from compas_timber.connections import Joint
     from compas_timber.elements import Beam
     from compas_timber.model import TimberModel
