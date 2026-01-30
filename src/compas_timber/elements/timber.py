@@ -65,8 +65,8 @@ class TimberElement(Element, abc.ABC):
 
     @property
     def __data__(self):
-        data = super(TimberElement, self).__data__
-        data["frame"] = Frame.from_transformation(data.pop("transformation"))
+        data = {}
+        data["frame"] = self.frame
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
@@ -74,8 +74,8 @@ class TimberElement(Element, abc.ABC):
         data.update(self.attributes)
         return data
 
-    def __init__(self, frame, length, width, height, **kwargs):
-        super().__init__(transformation=Transformation.from_frame(frame), **kwargs)
+    def __init__(self, frame, length, width, height, features=None, **kwargs):
+        super().__init__(transformation=Transformation.from_frame(frame), features=features)
         self.attributes = {}
         self.attributes.update(kwargs)
         self.length = length
@@ -84,13 +84,6 @@ class TimberElement(Element, abc.ABC):
         self._blank = None
         self._ref_frame = None
         self.debug_info = []
-
-    @classmethod
-    def __from_data__(cls, data):
-        transformation = data.pop("transformation", None)
-        if transformation:
-            data["frame"] = Frame.from_transformation(transformation)
-        return cls(**data)
 
     @reset_computed
     @reset_timber_attrs
