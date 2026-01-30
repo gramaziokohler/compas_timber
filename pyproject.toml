@@ -17,7 +17,8 @@ authors = [
     { name = "Jelle Feringa", email = "jelleferinga@gmail.com" },
     { name = "Joseph Kenny", email = "jk6372@princeton.edu" },
     { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" },
-    { name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch" }
+    { name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch" },
+    { name = "Rodrigo Arca Zimmermann", email = "rodrigo.arca@gmail.com" }
 ]
 license = "MIT"
 readme = "README.md"
@@ -55,6 +56,7 @@ dev = [
     "tomlkit",
     "compas_viewer",
     "pytest-cov",
+    "pytest-randomly",
     "pre-commit",
 ]
 

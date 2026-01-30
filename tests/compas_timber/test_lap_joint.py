@@ -50,8 +50,8 @@ def test_create_lap_serialize(beam_a, beam_b):
 
     deserialized_joint = list(model.joints)[0]
     assert isinstance(deserialized_joint, LLapJoint)
-    assert deserialized_joint.main_beam is not None
-    assert deserialized_joint.cross_beam is not None
+    assert deserialized_joint.beam_a is not None
+    assert deserialized_joint.beam_b is not None
 
 
 def test_standard_lap_joint_cut_plane_bias_serialization(beam_a, beam_b):
@@ -146,8 +146,8 @@ def test_different_lap_joints_serialization_behavior():
 
     # Both should have common lap joint properties
     for data in [lap_data, french_data]:
-        assert "main_beam_guid" in data
-        assert "cross_beam_guid" in data
+        assert "beam_a_guid" in data
+        assert "beam_b_guid" in data
         assert "flip_lap_side" in data
 
 
@@ -182,11 +182,11 @@ def test_lap_joint_architecture_separation():
 
     # All should have common lap properties
     for joint in [llap, tlap, frl]:
-        assert hasattr(joint, "main_beam")
-        assert hasattr(joint, "cross_beam")
+        assert hasattr(joint, "beam_a")
+        assert hasattr(joint, "beam_b")
         assert hasattr(joint, "flip_lap_side")
-        assert hasattr(joint, "main_beam_guid")
-        assert hasattr(joint, "cross_beam_guid")
+        assert hasattr(joint, "beam_a_guid")
+        assert hasattr(joint, "beam_b_guid")
 
 
 def test_create_negative_volumes_with_cut_plane_bias(mocker):
