@@ -104,6 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
 * Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
 * Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
+* Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
+* Added `attributes` dictionary contet to serialization of `Panel`.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
