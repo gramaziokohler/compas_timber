@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import typing
 from typing import List
 
@@ -8,6 +9,7 @@ from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point
+from compas.geometry import intersection_segment_segment
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
@@ -51,6 +53,35 @@ class StructuralElementSolver:
         segments = self._create_segments(beam, joints_for_beam)
         model.add_beam_structural_segments(beam, segments)
         return segments
+
+    def add_joint_structural_segments(self, joint: Joint, model: TimberModel) -> None:
+        """Creates and adds structural segments for a given joint to the timber model.
+
+        For joints connecting non-intersecting beams (e.g. crossing beams), this creates
+        a 'virtual' element connecting the centerlines of the beams.
+
+        Parameters
+        ----------
+        joint : :class:`compas_timber.connections.Joint`
+            The joint for which to create structural segments.
+        model : :class:`compas_timber.model.TimberModel`
+            The timber model containing the beams and joints.
+
+        """
+        for beam_a, beam_b in itertools.combinations(joint.elements, 2):
+            p1, p2 = intersection_segment_segment(beam_a.centerline, beam_b.centerline)
+
+            # NOTE: based on the documentation if the segments do not intersect, p1 and p2 are None
+            # however, it seems that even if they are parallel but adjacent, p1 and p2 are simply the closest points on each segment
+            if p1 is None or p2 is None:
+                continue
+
+            if TOL.is_zero(distance_point_point(p1, p2)):
+                # no need to create a virtual segment if centerlines intersect
+                continue
+
+            virtual_segment = Line(p1, p2)
+            model.add_interaction_structural_segments(beam_a, beam_b, [StructuralSegment(segment=virtual_segment)])
 
     def _create_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
         # create segments between joints

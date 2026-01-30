@@ -43,8 +43,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Panel.remove_features()` method to remove `PanelFeature` objects from a panel.
 * Added `Panel.interfaces` property to filter features for `PanelConnectionInterface` instances.
 * Added `compas_timber.structural.StructuralElementSolver` class to generate structural analysis segments from beams and joints.
-* Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments persistence.
-* Added `create_structural_segments` to `TimberModel` to generate structural segments for all beams.
+* Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
+* Added `add_interaction_structural_segments`, `get_interaction_structural_segments`, and `remove_interaction_structural_segments` to `TimberModel` to manage structural analysis segments for joints.
+* Added `create_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
