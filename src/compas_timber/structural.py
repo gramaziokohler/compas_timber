@@ -97,7 +97,7 @@ class StructuralElementSolver:
 
             split_points_with_distances.append((distance_from_start, point_on_segment))
 
-        # sort split point along the centeline
+        # sort split point along the centerline
         split_points_with_distances.sort(key=lambda x: x[0])
 
         split_points = [v[1] for v in split_points_with_distances]
