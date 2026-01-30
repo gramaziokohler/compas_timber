@@ -208,29 +208,28 @@ class DoubleCut(BTLxProcessing):
             raise ValueError("The two cutting planes are parallel consider using a JackRafterCut")
 
         line = Line(Point(*ln[0]), Point(*ln[1]))
-        face_intersections = intersection_line_beam_param(line, beam)
-        if not face_intersections:
+        _, int_params = intersection_line_beam_param(line, beam)
+        if not int_params:
             raise ValueError("Planes do not intersect with beam.")
         if not ref_side_index:
-            ref_side_index = face_intersections.keys()[0]
+            ref_side_index = list(int_params.keys())[0]
             ref_side = beam.ref_sides[ref_side_index]
-            point_start_xy = face_intersections[ref_side_index]
+            point_start_xy = int_params[ref_side_index]
 
         else:
-            if ref_side_index not in face_intersections.keys():
+            if ref_side_index not in int_params.keys():
                 raise ValueError("Planes do not intersect with selected ref_side {}.".format(ref_side_index))
             else:
                 ref_side = beam.ref_sides[ref_side_index]
-                point_start_xy = face_intersections[ref_side]
+                point_start_xy = int_params[ref_side]
 
         planes = cls._reorder_planes(planes, line, ref_side)
         orientation = cls._calculate_orientation(beam, planes)
-        start_x, start_y = cls._calculate_start_x_y(ref_side, point_start_xy)
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
         # TODO: evaluate if the planes should be cached for use in geometry creation.
-        return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
+        return cls(orientation, point_start_xy.x, point_start_xy.y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
 
 
     @staticmethod

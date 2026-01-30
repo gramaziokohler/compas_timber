@@ -12,7 +12,9 @@ from compas.geometry import Frame, Plane, Point, Rotation, Transformation, close
 from compas.geometry import Vector
 from compas.geometry import Line
 from compas.geometry import angle_vectors
+from compas.geometry import cross_vectors
 from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
@@ -27,7 +29,7 @@ class Birdsmouth(BTLxProcessing):
     Parameters correspond exactly to the BTLx table on page 28.
     """
 
-    PROCESSING_NAME = "Birdsmouth"  # type: ignore
+    PROCESSING_NAME = "BirdsMouth"  # type: ignore
 
     def __init__(
         self,
@@ -95,6 +97,17 @@ class Birdsmouth(BTLxProcessing):
                 "inclination2": self.inclination2,
                 "depth": self.depth,
                 "width": self.width,
+                "width_counterpart_limited": self.width_counterpart_limited,
+                "width_counterpart": self.width_counterpart,
+                "height_counterpart_limited": self.height_counterpart_limited,
+                "height_counterpart": self.height_counterpart,
+                "face_limited_front": self.face_limited_front,
+                "face_limited_back": self.face_limited_back,
+                "lead_angle_parallel": self.lead_angle_parallel,
+                "lead_angle": self.lead_angle,
+                "lead_inclination_parallel": self.lead_inclination_parallel,
+                "lead_inclination": self.lead_inclination,
+                "rafter_nail_hole": self.rafter_nail_hole,
             }
         )
         return data
@@ -181,7 +194,7 @@ class Birdsmouth(BTLxProcessing):
         self._width = v
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=None, **kwargs):
+    def from_planes_and_beam(cls, planes, beam, **kwargs):
         """Create a Birdsmouth instance from two cutting planes and the beam.
 
         This maps the detected geometry to Birdsmouth parameters.
@@ -196,70 +209,87 @@ class Birdsmouth(BTLxProcessing):
         if not ln:
             raise ValueError("The two cutting planes are parallel")
 
-        line = Line(Point(*ln[0]), Point(*ln[1]))
-        face_intersections = intersection_line_beam_param(line, beam)
-        if not face_intersections:
+        line = Line(*ln)
+        _, face_intersections = intersection_line_beam_param(line, beam)
+        if not len(face_intersections) == 2:
             raise ValueError("Planes do not intersect with beam.")
+        print(f"face_intersections = {face_intersections}")
 
+        face_indices = list(face_intersections.keys())
+        if not all([i < 4 for i in face_indices]):
+            raise ValueError("the planes' intersection line must not pass through end faces of the beam")
+        if not abs(face_indices[0]-face_indices[1])==2:
+            raise ValueError(f"the planes' intersection line must pass through opposite faces of the beam. intersection params are {face_intersections}")
+        for rsi in range(4):  # find the ref_side between intersected faces
+            if rsi in face_indices: # face is one of intersected faces, skip
+                continue 
+            ref_face_normal = beam.ref_sides[rsi].normal
+            for plane in planes:
+                cp = closest_point_on_line(plane.point, line)
+                # use the position of the plane.point relative to intersection line. point should be towards the ref_face
+                if dot_vectors(ref_face_normal, Vector.from_start_end(cp, plane.point)) < 0:
+                    #plane.point on the wrong side of line, go to next ref_side
+                    break
+            else: #both dot vectors positive
+                print(f"found rsi of {rsi}")
+                ref_side_index = rsi
+                break
 
-        if not ref_side_index:
-            face_indices = face_intersections.keys()
-            if not abs(face_indices[0]-face_indices[1])==2:
-                raise ValueError("the planes' intersection line must pass through opposite faces of the beam")
-            for rsi in range(4):
-                if rsi in face_indices:
-                    continue 
-                ref_face_normal = beam.ref_sides[rsi].normal
-                for plane in planes:
-                    cp = closest_point_on_line(plane.point, line)
-                    if dot_vectors(ref_face_normal, Vector.from_start_end(cp, plane.point)) <0:
-                        break
-                else: #both dot vectors positive
-                    ref_side_index = rsi
-
-        if not ref_side_index:
+        if ref_side_index is None:
             raise ValueError("ref_side_index could not be identified")
 
         ref_side = beam.ref_sides[ref_side_index]
-        planes = cls._reorder_planes(planes, beam)
-        orientation = OrientationType.START
-        
-        start_x, start_y = cls._calculate_start_x_y(ref_side, face_intersections[ref_side_index])
-        angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
-        incl_1, incl_2 = cls._calculate_inclination(ref_side, planes)
 
-        # map detected geometry to Birdsmouth params
-        angle = (angle_1 + angle_2) / 2.0
-        inclination1 = incl_1
-        inclination2 = incl_2
 
-        start_depth = 0.0
+        for plane in planes:
+            if dot_vectors(plane.normal,ref_side.normal) < 0:
+                plane = Plane(plane.point, -plane.normal)
+
+        if dot_vectors(line.direction, ref_side.yaxis)<0:
+            line=Line(line[1],line[0])
+
+
+        planes = cls._reorder_planes(planes, beam.ref_edges[ref_side_index])        
+        start_x = face_intersections[(ref_side_index + 1) % 4][0]
+        start_depth = beam.get_dimensions_relative_to_side(ref_side_index)[0] - face_intersections[(ref_side_index + 1) % 4][1]
+        depth = face_intersections[(ref_side_index - 1) % 4][1]
+        angle = cls._calculate_angle(ref_side, line)
+        incl_1, incl_2 = cls._calculate_inclination(planes, line, beam.frame.xaxis)
+
+        print(f"START_DEPTH = {start_depth}")
         return cls(
-            orientation,
-            start_x,
-            start_y,
-            start_depth,
-            angle,
-            inclination1,
-            inclination2,
-            ref_side_index=ref_side_index,
-            **kwargs,
+            ref_side_index = ref_side_index,
+            orientation=OrientationType.START,
+            start_x=start_x,
+            start_y=0.0,
+            start_depth=start_depth,
+            angle=angle,
+            inclination1=incl_1,
+            inclination2=incl_2,
+            depth=depth,
+            width=beam.get_dimensions_relative_to_side(ref_side_index)[1],
+            width_counterpart_limited=False,
+            width_counterpart=120.0,
+            height_counterpart_limited=False,
+            height_counterpart=120.0,
+            face_limited_front=False,
+            face_limited_back=False,
+            lead_angle_parallel=True,
+            lead_angle=90.0,
+            lead_inclination_parallel=True,
+            lead_inclination=90.0,
+            rafter_nail_hole=False,
         )
 
     @staticmethod
-    def _reorder_planes(planes, intersection_line, ref_side):
-        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
-        points = [Point(*intersection_plane_plane(line, Plane.from_frame(ref_side))) for line in lines]
-        dots = []
-        for point in points:
-            if hasattr(point, "x"):
-                dots.append(point.x * ref_side.yaxis[0] + point.y * ref_side.yaxis[1] + point.z * ref_side.yaxis[2])
-            else:
-                dots.append(0)
-        if dots[0] > dots[1]:
-            return [planes[1], planes[0]]
-        else:
-            return planes
+    def _reorder_planes(planes, ref_edge):
+        # Stable sort by the projection of each plane's point onto the beam x axis
+        def keyfn(plane):
+            pt = intersection_line_plane(ref_edge, plane)
+            vec = Vector.from_start_end(ref_edge.end, pt)
+            return dot_vectors(-ref_edge.direction, vec)
+
+        return sorted(planes, key=keyfn)
 
     @staticmethod
     def _calculate_orientation(beam, cutting_planes):
@@ -275,56 +305,47 @@ class Birdsmouth(BTLxProcessing):
         return pt_xy.x, pt_xy.y
 
     @staticmethod
-    def _calculate_angle(ref_side, planes, orientation):
-        angles = []
-        for plane in planes:
-            angle_vector = Vector.cross(ref_side.zaxis, plane.normal)
-            if Vector.dot(angle_vector, ref_side.yaxis) < 0:
-                angle_vector = -angle_vector
-            if orientation == OrientationType.START:
-                angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
-            else:
-                angle = angle_vectors(ref_side.xaxis, -angle_vector, deg=True)
-            angles.append(angle)
-        return angles
+    def _calculate_angle(ref_side, intersection_line):
+        line = intersection_line.transformed(Transformation.from_frame(ref_side).inverse())
+        #project to XY by setting z value to 0
+        line[0][2] = 0.0
+        line[1][2] = 0.0
+        return angle_vectors(-Vector(1,0,0),line.direction, deg=True) 
 
     @staticmethod
-    def _calculate_inclination(ref_side, planes):
+    def _calculate_inclination(planes, plane_intersection, xaxis):
         inclinations = []
+        ref_vector = cross_vectors(plane_intersection.direction,xaxis)
         for plane in planes:
-            inclination = angle_vectors(ref_side.normal, plane.normal, deg=True)
+            inclination = angle_vectors(ref_vector, plane.normal, deg=True)
             inclinations.append(inclination)
+        inclinations[1] = 180.0 - inclinations[1]
         return inclinations
 
     def planes_from_params_and_beam(self, beam):
-        ref_side = beam.side_as_surface(self.ref_side_index)
-        p_origin = planar_surface_point_at(ref_side, self.start_x, self.start_y)
-        ref_frame = Frame(p_origin, ref_side.frame.xaxis, ref_side.frame.yaxis)
+        ref_side = beam.ref_sides[self.ref_side_index]
+        ref_srf = beam.side_as_surface(self.ref_side_index)
+        start_pt = planar_surface_point_at(ref_srf, self.start_x,self.start_y)
+        vector = beam.centerline.direction
+        vector.transform(Rotation.from_axis_and_angle(ref_side.normal, (180-self.angle)*math.pi/180, point=start_pt))
+        distance = self.width/math.sin(self.angle)
+        end_pt = start_pt + (vector*distance)
+        start_pt += -ref_side.normal*self.start_depth
+        end_pt += -ref_side.normal*self.depth
+        base_plane = Plane(start_pt, cross_vectors(end_pt-start_pt, beam.centerline.direction))
+        plane_a = base_plane.transformed(Rotation.from_axis_and_angle(end_pt-start_pt, (180-self.inclination1)*math.pi/180, point=start_pt))
+        plane_b = base_plane.transformed(Rotation.from_axis_and_angle(end_pt-start_pt, (180-self.inclination2)*math.pi/180, point=start_pt))
+        plane_a = Plane(plane_a.point, -plane_a.normal)
+        print(self.__data__)
 
-        if self.orientation == OrientationType.END:
-            ref_frame.xaxis = -ref_frame.xaxis
+        print(f"pts = {[start_pt,end_pt]}")
+        return start_pt, end_pt, [plane_a,plane_b]
 
-        origin = Point(
-            p_origin.x - ref_frame.xaxis[0] * self.start_depth,
-            p_origin.y - ref_frame.xaxis[1] * self.start_depth,
-            p_origin.z - ref_frame.xaxis[2] * self.start_depth,
-        )
-
-        horiz = Rotation.from_axis_and_angle(ref_frame.zaxis, math.radians(self.angle), point=origin)
-
-        f1 = ref_frame.copy()
-        f1.transform(horiz)
-        f1.transform(Rotation.from_axis_and_angle(f1.xaxis, math.radians(self.inclination1), point=origin))
-
-        f2 = ref_frame.copy()
-        f2.transform(horiz)
-        f2.transform(Rotation.from_axis_and_angle(f2.xaxis, math.radians(self.inclination2), point=origin))
-
-        return [Plane(origin, f1.xaxis), Plane(origin, f2.xaxis)]
+    
 
     def apply(self, geometry, beam):
         try:
-            planes = self.planes_from_params_and_beam(beam)
+            _,_,planes = self.planes_from_params_and_beam(beam)
         except Exception as e:
             raise FeatureApplicationError(None, geometry, f"Failed to generate cutting planes: {e}")
 
@@ -352,17 +373,17 @@ class BirdsmouthParams(BTLxProcessingParams):
         result["Inclination2"] = "{:.{prec}f}".format(float(inst.inclination2), prec=TOL.precision)
         result["Depth"] = "{:.{prec}f}".format(float(inst.depth), prec=TOL.precision)
         result["Width"] = "{:.{prec}f}".format(float(inst.width), prec=TOL.precision)
-        result["WidthCounterPartLimited"] = {"Value": "yes" if inst.width_counterpart_limited else "no"}
+        result["WidthCounterPartLimited"] = "yes" if inst.width_counterpart_limited else "no"
         result["WidthCounterPart"] = "{:.{prec}f}".format(float(inst.width_counterpart), prec=TOL.precision)
-        result["HeightCounterPartLimited"] = {"Value": "yes" if inst.height_counterpart_limited else "no"}
+        result["HeightCounterPartLimited"] ="yes" if inst.height_counterpart_limited else "no"
         result["HeightCounterPart"] = "{:.{prec}f}".format(float(inst.height_counterpart), prec=TOL.precision)
-        result["FaceLimitedFront"] = {"Value": "yes" if inst.face_limited_front else "no"}
-        result["FaceLimitedBack"] = {"Value": "yes" if inst.face_limited_back else "no"}
-        result["LeadAngleParallel"] = {"Value": "yes" if inst.lead_angle_parallel else "no"}
+        result["FaceLimitedFront"] = "yes" if inst.face_limited_front else "no"
+        result["FaceLimitedBack"] = "yes" if inst.face_limited_back else "no"
+        result["LeadAngleParallel"] = "yes" if inst.lead_angle_parallel else "no"
         result["LeadAngle"] = "{:.{prec}f}".format(float(inst.lead_angle), prec=TOL.precision)
-        result["LeadInclinationParallel"] = {"Value": "yes" if inst.lead_inclination_parallel else "no"}
+        result["LeadInclinationParallel"] = "yes" if inst.lead_inclination_parallel else "no"
         result["LeadInclination"] = "{:.{prec}f}".format(float(inst.lead_inclination), prec=TOL.precision)
-        result["RafterNailHole"] = {"Value": "yes" if inst.rafter_nail_hole else "no"}
+        result["RafterNailHole"] = "yes" if inst.rafter_nail_hole else "no"
         return result
 
 
@@ -376,7 +397,7 @@ class BirdsmouthProxy(object):
     def unproxified(self):
         if not self._processing:
             planes = [plane.transformed(self.element.modeltransformation) for plane in self.planes]
-            self._processing = Birdsmouth.from_planes_and_beam(planes, self.element, self.ref_side_index)
+            self._processing = Birdsmouth.from_planes_and_beam(planes, self.element)
         return self._processing
 
     @classmethod

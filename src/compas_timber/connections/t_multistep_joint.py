@@ -12,7 +12,7 @@ from compas.geometry import intersection_line_plane
 from compas.itertools import pairwise
 
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import DoubleCut, JackRafterCut
+from compas_timber.fabrication import Birdsmouth, JackRafterCut, DoubleCut
 
 from .joint import Joint
 from .solver import JointTopology
@@ -165,15 +165,20 @@ class TMultistepJoint(Joint):
         # get dimensions for main and cross beams
         cross_features = []
         planes = self._get_cut_planes()
-        # planes_copy = [p for p in planes]
-        # self.main_beam.add_features(JackRafterCut.from_plane_and_beam(planes_copy.pop(0), self.main_beam))
-        # while len(planes_copy) > 1:
-        #     pair = planes_copy.pop(0), planes_copy.pop(0)
-        #     self.main_beam.add_features(DoubleCut.from_planes_and_beam(pair, self.main_beam))
-        planes_copy = [Plane(p.point, -p.normal) for p in planes]
+
+        planes_copy = [p for p in planes]
+        self.main_beam.add_features(JackRafterCut.from_plane_and_beam(planes_copy.pop(0), self.main_beam))
+        self.main_beam.add_features(JackRafterCut.from_plane_and_beam(planes_copy.pop(), self.main_beam))
+
         while len(planes_copy) > 1:
             pair = planes_copy.pop(0), planes_copy.pop(0)
-            self.cross_beam.add_features(DoubleCut.from_planes_and_beam(pair, self.cross_beam))
+            pair = [Plane(p.point, -p.normal) for p in pair]
+            self.main_beam.add_features(DoubleCut.from_planes_and_beam(pair, self.main_beam))
+
+        planes_copy = [p for p in planes]
+        while len(planes_copy) > 1:
+            pair = planes_copy.pop(0), planes_copy.pop(0)
+            self.cross_beam.add_features(Birdsmouth.from_planes_and_beam(pair, self.cross_beam))
 
 
     def restore_beams_from_keys(self, model):

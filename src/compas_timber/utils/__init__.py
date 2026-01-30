@@ -157,7 +157,7 @@ def intersection_line_plane_param(line, plane, tol=1e-6):
     return Point(*add_vectors(a, ab)), t
 
 
-def intersection_line_beam_param(line, beam, ignore_ends=False):
+def intersection_line_beam_param(line, beam, ignore_ends=False) -> tuple[list[Point], dict[int, Point]]:
     """Get the intersection of a line with a beam in the XY plane and the corresponding ref_face_indices.
 
     Parameters
@@ -180,7 +180,7 @@ def intersection_line_beam_param(line, beam, ignore_ends=False):
 
     sides = beam.ref_sides[:4] if ignore_ends else beam.ref_sides
     pts = []
-    ref_side_indices = []
+    ref_side_params = {}
     for i, face in enumerate(sides):
         intersection = intersection_line_plane(line, Plane.from_frame(face))
         if intersection:
@@ -188,8 +188,8 @@ def intersection_line_beam_param(line, beam, ignore_ends=False):
             intersection_uv = int_pt.transformed(Transformation.from_frame_to_frame(face, Frame.worldXY()))
             if intersection_uv[0] >= 0 and intersection_uv[0] < beam.side_as_surface(i).xsize and intersection_uv[1] > 0 and intersection_uv[1] < beam.side_as_surface(i).ysize:
                 pts.append(intersection)
-                ref_side_indices.append(i)
-    return {i:p for i,p in zip(ref_side_indices, [Point(*coords) for coords in pts])}
+                ref_side_params[i] = intersection_uv
+    return pts, ref_side_params
 
 
 def _split_into_consecutive_sequences(source, wrap_on):

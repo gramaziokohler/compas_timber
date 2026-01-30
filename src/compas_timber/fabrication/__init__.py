@@ -34,6 +34,8 @@ from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
+from .birdsmouth import Birdsmouth
+from .birdsmouth import BirdsmouthProxy
 
 __all__ = [
     "BTLxWriter",
@@ -72,4 +74,6 @@ __all__ = [
     "LongitudinalCut",
     "LongitudinalCutProxy",
     "BTLxRawpart",
+    "Birdsmouth",
+    "BirdsmouthProxy",
 ]

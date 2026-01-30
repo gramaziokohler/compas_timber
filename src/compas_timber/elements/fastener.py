@@ -221,7 +221,7 @@ class FastenerTimberInterface(Data):
         vector = hole.get("vector", None) or Vector(0.0, 0.0, 1.0)
         drill_line = Line.from_point_and_vector(hole["point"], vector)
         drill_line.transform(Transformation.from_frame(self.frame))
-        pts = intersection_line_beam_param(drill_line, element).values()
+        pts,_ = intersection_line_beam_param(drill_line, element)
         if pts:
             drill_line = Line(*pts)
         # TODO: this uses the obsolete Feature classes, we should replace these with deffered BTLx
