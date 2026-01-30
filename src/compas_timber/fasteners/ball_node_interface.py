@@ -8,10 +8,9 @@ from compas.geometry import Plane
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import JackRafterCutProxy
-from compas_timber.fasteners.interface import Interface
 
 
-class BallNodeInterface(Interface):
+class BallNodeInterface:
     def __init__(self, frame, length, **kwargs):
         super().__init__(frame=frame, **kwargs)
         self.length = length

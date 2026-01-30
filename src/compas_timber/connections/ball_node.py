@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Optional
 
 from compas.geometry import Frame
@@ -9,11 +10,13 @@ from compas.geometry import Vector
 
 from compas_timber.elements import Beam
 from compas_timber.fasteners import BallNodeFastener
-from compas_timber.fasteners import BallNodeInterface
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
 from .solver import JointTopology
+
+if TYPE_CHECKING:
+    from compas_timber.fasteners.fastener import Fastener
 
 
 class BallNodeJoint(Joint):
@@ -47,42 +50,22 @@ class BallNodeJoint(Joint):
     def __data__(self):
         data = super(BallNodeJoint, self).__data__
         data["beam_guids"] = self._beam_guids
-        data["ball_diameter"] = self.ball_diameter
         data["fastener_guid"] = self._fastener_guid
         data["base_interface"] = self.fastener.base_interface
         return data
 
-    def __init__(self, beams: list[Beam], base_fastener: Optional[BallNodeFastener] = None, **kwargs):
+    def __init__(self, beams: list[Beam], ball_diameter: float = 80, rods_length: float = 100, **kwargs):
         super().__init__(**kwargs)
         self._beam_guids = []
         self.beams = beams or []
-        self._node_point = None
-        self.fasteners = []
 
-        if base_fastener:
-            self.base_fastener = base_fastener
-        else:
-            self.base_fastener = self.create_base_fastener()
-
-        if self.base_fastener:
-            self.base_fastener.place_instances(self)
+        self.base_fastener = BallNodeFastener.from_joint(self, ball_diameter, rods_length)
+        self._fasteners = []
 
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
 
-    def create_base_fastener(self):
-        fastener = BallNodeFastener(Frame.worldXY(), 10)
-        # add the interfaces to the fastener
-        for beam in self.beams:
-            # BallNodeInterface
-            direction = Vector.from_start_end(self.node_point, beam.centerline.midpoint)
-            direction.unitize()
-            frame = Frame.from_plane(Plane(self.node_point, direction))
-            frame.point += fastener.ball_radius * direction
-            ball_node_interface = BallNodeInterface(frame, 15)
-            fastener.add_interface(ball_node_interface)
-
-        return fastener
+        self.place_fastener_instances()
 
     @property
     def generated_elements(self):
@@ -92,10 +75,20 @@ class BallNodeJoint(Joint):
     def elements(self):
         return list(self.beams) + self.generated_elements
 
-    # @property
-    # def interactions(self):
-    #     for beam in self.beams:
-    #         yield (beam, self.fastener)
+    @property
+    def fasteners(self) -> list[Fastener]:
+        """
+        Returns all fasteners of the joint.
+
+        Returns
+        -------
+        list[:class:`compas_timber.fasteners.Fastener`]
+            A list of all fasteners in the joint.
+        """
+        fasteners = []
+        for fastener in self._fasteners:
+            fasteners.extend(fastener.find_all_nested_sub_fasteners())
+        return fasteners
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
@@ -131,22 +124,34 @@ class BallNodeJoint(Joint):
     @property
     def node_point(self):
         """Returns the point at which the beams are joined, essentially the average of their intersection points."""
-        if not self._node_point:
-            beams = list(self.beams)
-            cpt = Point(0, 0, 0)
-            count = 0
-            for i, beam in enumerate(beams):
-                points = intersection_line_line_param(beams[i - 1].centerline, beam.centerline)  # TODO: include Tolerance check here.
-                if points[0][0] is not None and points[1][0] is not None:
-                    cpt += points[1][0]
-                    count += 1
-            self._node_point = cpt * (1.0 / count)
+        beams = list(self.beams)
+        cpt = Point(0, 0, 0)
+        count = 0
+        for i, beam in enumerate(beams):
+            points = intersection_line_line_param(beams[i - 1].centerline, beam.centerline)  # TODO: include Tolerance check here.
+            if points[0][0] is not None and points[1][0] is not None:
+                cpt += points[1][0]
+                count += 1
+        self._node_point = cpt * (1.0 / count)
         return self._node_point
 
-    @property
-    def fastener_target_frames(self) -> list[Frame]:
+    def place_fastener_instances(self):
         target_frame = Frame(self.node_point, [1, 0, 0], [0, 1, 0])
-        return [target_frame]
+        fastener_instance = self.base_fastener.compute_joint_instance(target_frame)
+        self._fasteners.append(fastener_instance)
+
+    def compute_fasteners_interactions(self) -> list[tuple]:
+        """
+        Computes the interactions between fasteners and beams and fastener and sub-fastnert participating to the joint.
+        """
+        interactions = []
+        # beam ---- fastener ---- beam
+        for fastener in self._fasteners:
+            for beam in self.beams:
+                interactions.append((beam, fastener))
+            # fastener ---- sub_fastener ---- sub-fastener
+            interactions.extend(fastener.compute_sub_fasteners_interactions())
+        return interactions
 
     def add_features(self):
         """Adds the features of the joint as generated by `FastenerTimberInterface` to the timber elements.
