@@ -43,7 +43,7 @@ class StructuralElementSolver:
 
         Parameters
         ----------
-        beam : :class:`compas_timber.model.Beam`
+        beam : :class:`compas_timber.elements.Beam`
             The beam for which to create structural segments.
         model : :class:`compas_timber.model.TimberModel`
             The timber model containing the beams and joints.
