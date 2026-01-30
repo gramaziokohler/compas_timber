@@ -598,7 +598,7 @@ document.write(`
 <h1>NestingResult</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.planning.NestingResult">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">NestingResult</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/7108636/src/compas_timber/planning/nesting.py#L270"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">NestingResult</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ca64efd/src/compas_timber/planning/nesting.py#L320"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.data.Data.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Data</span></code></a></p>
 <p>A wrapper class for nesting results that provides serialization capabilities.</p>
 <dl class="field-list">
@@ -606,15 +606,19 @@ document.write(`
 <dd class="field-odd"><dl>
 <dt><strong>stocks</strong><span class="classifier">list[<a class="reference internal" href="compas_timber.planning.Stock.html#compas_timber.planning.Stock" title="compas_timber.planning.Stock"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stock</span></code></a>]</span></dt><dd><p>List of stock pieces with assigned beams</p>
 </dd>
-</dl>
+<dt><strong>tolerance</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.tolerance.Tolerance.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tolerance</span></code></a>, optional</span></dt><dd><p>The tolerance configuration used for this model. TOL if none provided.</p>
 </dd>
-<dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl>
+<dt><strong>Attributes</strong></dt><dd></dd>
+<dt><strong>———-</strong></dt><dd></dd>
 <dt><strong>stocks</strong><span class="classifier">list[<a class="reference internal" href="compas_timber.planning.Stock.html#compas_timber.planning.Stock" title="compas_timber.planning.Stock"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stock</span></code></a>]</span></dt><dd><p>List of stock pieces with assigned beams</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">total_material_volume</span></code><span class="classifier">float</span></dt><dd><p>Calculate total material volume across all stocks in cubic millimeters.</p>
+<dt><strong>tolerance</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.tolerance.Tolerance.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tolerance</span></code></a></span></dt><dd><p>The tolerance configuration used for this model. TOL if none provided.</p>
 </dd>
-<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">total_stock_pieces</span></code><span class="classifier">dict</span></dt><dd><p>Generate a detailed report of stock pieces needed with their dimensions.</p>
+<dt><strong>total_material_volume</strong><span class="classifier">float</span></dt><dd><p>Total material volume across all stocks in cubic millimeters</p>
+</dd>
+<dt><strong>total_stock_pieces</strong><span class="classifier">dict</span></dt><dd><p>Detailed report of stock pieces needed with their dimensions</p>
+</dd>
+<dt><strong>summary</strong><span class="classifier">str</span></dt><dd><p>Human-readable summary of the nesting result</p>
 </dd>
 </dl>
 </dd>

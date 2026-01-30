@@ -598,32 +598,32 @@ document.write(`
 <h1>BeamStock</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.planning.BeamStock">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">BeamStock</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/7108636/src/compas_timber/planning/nesting.py#L102"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.planning.</span></span><span class="sig-name descname"><span class="pre">BeamStock</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ca64efd/src/compas_timber/planning/nesting.py#L142"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.planning.Stock.html#compas_timber.planning.Stock" title="compas_timber.planning.nesting.Stock"><code class="xref py py-class docutils literal notranslate"><span class="pre">Stock</span></code></a></p>
 <p>A class to represent a stock piece for nesting beams.</p>
 <p>Similar to a Beam but represents raw material stock that can have beams assigned to it.</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
+<dd class="field-odd"><dl>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the stock piece.</p>
 </dd>
 <dt><strong>cross_section</strong><span class="classifier">tuple of float</span></dt><dd><p>Cross-section dimensions (width, height).</p>
 </dd>
 <dt><strong>spacing</strong><span class="classifier">float, optional</span></dt><dd><p>Spacing tolerance for cutting operations (kerf width, etc.).</p>
 </dd>
-<dt><strong>element_data</strong><span class="classifier">dict[str, Frame], optional</span></dt><dd><p>Dictionary mapping element GUIDs to their assigned position frames.</p>
+<dt><strong>element_data</strong><span class="classifier">dict[str, <code class="xref py py-class docutils literal notranslate"><span class="pre">NestedElementData</span></code>], optional</span></dt><dd><p>Dictionary mapping element GUID (str) to nested element data.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
+<dd class="field-even"><dl>
 <dt><strong>length</strong><span class="classifier">float</span></dt><dd><p>Length of the stock piece.</p>
 </dd>
 <dt><strong>cross_section</strong><span class="classifier">tuple of float</span></dt><dd><p>Cross-section dimensions sorted in ascending order for consistent comparison.</p>
 </dd>
 <dt><strong>spacing</strong><span class="classifier">float, optional</span></dt><dd><p>Spacing tolerance for cutting operations (kerf width, etc.).</p>
 </dd>
-<dt><strong>element_data</strong><span class="classifier">dict[str, Frame], optional</span></dt><dd><p>Dictionary mapping element GUIDs to their assigned position frames.</p>
+<dt><strong>element_data</strong><span class="classifier">dict[str, <code class="xref py py-class docutils literal notranslate"><span class="pre">NestedElementData</span></code>]</span></dt><dd><p>Dictionary mapping element GUID (str) to nested element data.</p>
 </dd>
 </dl>
 </dd>
