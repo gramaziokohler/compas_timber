@@ -21,7 +21,6 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication.free_contour import TYPE_CHECKING
@@ -621,8 +620,7 @@ class Pocket(BTLxProcessing):
         assert self.tilt_start_side
         assert self.machining_limits
 
-        tol = Tolerance()
-        tol.absolute = 1e-3
+        tol = 1e-3  # TODO: use TOL.absolute if possible, but do not manipulate the global tolerance value
 
         # get bottom frame
         bottom_frame = self._bottom_frame_from_params_and_element(element)
@@ -633,14 +631,14 @@ class Pocket(BTLxProcessing):
             top_frame.xaxis = -top_frame.xaxis
         else:
             top_frame = element.ref_sides[self.ref_side_index]
-            top_frame.translate(top_frame.normal * tol.absolute)
+            top_frame.translate(top_frame.normal * tol)
 
         # tilt start frame
         if self.machining_limits["FaceLimitedStart"]:
             start_frame = bottom_frame.rotated(math.radians(180-self.tilt_start_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             start_frame = element.ref_sides[4]
-            start_frame.translate(start_frame.normal * tol.absolute)
+            start_frame.translate(start_frame.normal * tol)
 
         # tilt end frame
         if self.machining_limits["FaceLimitedEnd"]:
@@ -648,7 +646,7 @@ class Pocket(BTLxProcessing):
             end_frame.rotate(math.radians(180-self.tilt_end_side), -end_frame.xaxis, point=end_frame.point)
         else:
             end_frame = element.ref_sides[5]
-            end_frame.translate(end_frame.normal * tol.absolute)
+            end_frame.translate(end_frame.normal * tol)
 
         # Rotate the bottom frame so its xaxis is aligned to the axis of rotation.
         bottom_frame.rotate(math.radians(180-self.internal_angle), -bottom_frame.normal, point=bottom_frame.point)
@@ -658,7 +656,7 @@ class Pocket(BTLxProcessing):
             front_frame = bottom_frame.rotated(-math.radians(self.tilt_ref_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = element.front_side(self.ref_side_index)
-            front_frame.translate(front_frame.normal * tol.absolute)
+            front_frame.translate(front_frame.normal * tol)
 
         # tilt back frame
         if self.machining_limits["FaceLimitedBack"]:
@@ -667,7 +665,7 @@ class Pocket(BTLxProcessing):
             back_frame.translate(bottom_frame.yaxis * self.width)
         else:
             back_frame = element.back_side(self.ref_side_index)
-            back_frame.translate(back_frame.normal * tol.absolute)
+            back_frame.translate(back_frame.normal * tol)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]

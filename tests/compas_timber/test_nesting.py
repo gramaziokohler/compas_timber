@@ -226,7 +226,7 @@ def test_sort_beams_by_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Test sorting with warning capture
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100MM"):
         stock_beam_map = nester._sort_beams_by_stock(model.beams)
 
     # Check that compatible beams were sorted correctly
@@ -304,7 +304,7 @@ def test_nest_beams_no_compatible_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Should warn about incompatible beam cross-section
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100MM"):
         nesting_result = nester.nest()
 
     # Should return empty list since no compatible stock
@@ -341,8 +341,8 @@ def test_nest_beams_multiple_incompatible_cross_sections():
         warning_message = str(w[0].message)
         assert "Found 3 beam(s) incompatible with available stock catalog" in warning_message
         # Should contain both unique cross-sections
-        assert "200x100M" in warning_message
-        assert "150x80M" in warning_message
+        assert "200x100MM" in warning_message
+        assert "150x80MM" in warning_message
 
 
 def test_nest_beams_empty_model():
@@ -634,8 +634,8 @@ def test_nesting_result_basic_properties():
     stock_pieces = result.total_stock_pieces
     assert isinstance(stock_pieces, dict)
     assert "BeamStock" in stock_pieces
-    assert "Dimensions(M): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
-    assert stock_pieces["BeamStock"]["Dimensions(M): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
+    assert "Dimensions(MM): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
 
 
 def test_nesting_result_serialization():
@@ -676,11 +676,11 @@ def test_nesting_result_summary_output():
     summary = result.summary
 
     assert "BeamStock_0:" in summary
-    assert "Dimensions(M): 120.000x60.000x6000.000" in summary
+    assert "Dimensions(MM): 120.000x60.000x6000.000" in summary
     assert "BeamKeys: ['B1-{}']".format(str(beam.guid)[:4]) in summary
-    assert "BeamLengths(M): [2000.000]" in summary
-    assert "Waste(M): 4000.000" in summary
-    assert "Spacing(M): 5.000" in summary
+    assert "BeamLengths(MM): [2000.000]" in summary
+    assert "Waste(MM): 4000.000" in summary
+    assert "Spacing(MM): 5.000" in summary
 
 
 def test_nesting_result_properties():
@@ -705,5 +705,5 @@ def test_nesting_result_properties():
 
     # Test total_stock_pieces
     stock_pieces = result.total_stock_pieces
-    assert stock_pieces["BeamStock"]["Dimensions(M): 120.000x60.000x6000.000"] == 2
-    assert stock_pieces["BeamStock"]["Dimensions(M): 80.000x40.000x5000.000"] == 1
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 80.000x40.000x5000.000"] == 1
