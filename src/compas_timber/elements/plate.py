@@ -1,17 +1,33 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Optional
+from typing import Union
+
+if TYPE_CHECKING:
+    from compas.datastructures import Mesh  # noqa: F401
+    from compas.geometry import Brep  # noqa: F401
+    from compas.geometry import Frame  # noqa: F401
+
 from compas.geometry import Box
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
+from compas_timber.utils import get_polyline_normal_vector
+from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
 from .timber import TimberElement
 
 
-class Plate(PlateGeometry, TimberElement):
+class Plate(TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.
 
@@ -67,25 +83,38 @@ class Plate(PlateGeometry, TimberElement):
     def __data__(self):
         data = super().__data__
         data["thickness"] = data.pop("height")
+        data.update(self.plate_geometry.__data__)
         return data
 
-    def __init__(self, frame, length, width, thickness, local_outline_a=None, local_outline_b=None, openings=None, **kwargs):
+    def __init__(
+        self,
+        frame: Frame,
+        length: float,
+        width: float,
+        thickness: float,
+        local_outline_a: Optional[Polyline] = None,
+        local_outline_b: Optional[Polyline] = None,
+        openings: Optional[list[Polyline]] = None,
+        **kwargs,
+    ) -> None:
+        super(Plate, self).__init__(frame=frame, length=length, width=width, height=thickness, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        super().__init__(frame=frame, length=length, width=width, height=thickness, local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings, **kwargs)
+        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
         self._outline_feature = None
         self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
-        self._blank = None  # TODO: remove after #586 merged
+        self._planes = []
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
+        return "Plate(outline_a={!r}, outline_b={!r})".format(self.plate_geometry.outline_a, self.plate_geometry.outline_b)
 
     def __str__(self):
-        return "Plate {}, {} ".format(self.outline_a, self.outline_b)
+        # type: () -> str
+        return "Plate {}, {} ".format(self.plate_geometry.outline_a, self.plate_geometry.outline_b)
 
     # ==========================================================================
     # Computed attributes
@@ -98,7 +127,7 @@ class Plate(PlateGeometry, TimberElement):
     @property
     def blank(self):
         if not self._blank:
-            box = Box.from_points(self.local_outlines[0].points + self.local_outlines[1].points)
+            box = self.plate_geometry.compute_aabb()
             box.xsize += 2 * self.attributes.get("blank_extension", 0.0)
             box.ysize += 2 * self.attributes.get("blank_extension", 0.0)
             self._blank = box.transformed(self.modeltransformation)
@@ -109,11 +138,58 @@ class Plate(PlateGeometry, TimberElement):
         return self.blank.xsize
 
     @property
+    def outlines(self):
+        return (self.outline_a, self.outline_b)
+
+    @property
+    def outline_a(self):
+        return self.plate_geometry.outline_a.transformed(self.modeltransformation)
+
+    @property
+    def outline_b(self):
+        return self.plate_geometry.outline_b.transformed(self.modeltransformation)
+
+    @property
+    def thickness(self):
+        return self.height
+
+    @property
+    def planes(self):
+        if not self._planes:
+            planes = (Plane.worldXY(), Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)))
+            self._planes = (planes[0].transformed(self.modeltransformation), planes[1].transformed(self.modeltransformation))
+        return self._planes
+
+    @property
+    def normal(self):
+        return Vector(0, 0, 1).transformed(self.modeltransformation)
+
+    @property
+    def edge_planes(self):
+        return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
+
+    def set_extension_plane(self, edge_index: int, plane: Plane) -> None:
+        """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
+        self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+
+    def apply_edge_extensions(self) -> None:
+        """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
+        self.plate_geometry.apply_edge_extensions()
+
+    def remove_blank_extension(self, edge_index: Optional[int] = None):
+        """Removes any extension plane for the given edge index."""
+        self.plate_geometry.remove_blank_extension(edge_index)
+
+    @property
     def features(self):
         if not self._outline_feature:
+            # TODO FreeContour from Plate
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
         if not self._opening_features:
-            self._opening_features = [FreeContour.from_polyline_and_element(o.transformed(Transformation.from_frame(self.frame)), self, interior=True) for o in self.openings]
+            # TODO remove openings from PlateGeometry, implement as feature.
+            self._opening_features = [
+                FreeContour.from_polyline_and_element(o.transformed(Transformation.from_frame(self.frame)), self, interior=True) for o in self.plate_geometry.openings
+            ]
         return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
@@ -125,7 +201,7 @@ class Plate(PlateGeometry, TimberElement):
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        PlateGeometry.reset(self)  # reset outline_a and outline_b
+        self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
         self._opening_features = None
@@ -135,8 +211,53 @@ class Plate(PlateGeometry, TimberElement):
     #  Implementation of abstract methods
     # ==========================================================================
 
-    def compute_elementgeometry(self, include_features=True):
-        # type: (bool) -> compas.datastructures.Mesh | compas.geometry.Brep
+    def compute_aabb(self, inflate: float = 0.0) -> Box:
+        """Computes the Axis Aligned Bounding Box (AABB) of the element.
+
+        Parameters
+        ----------
+        inflate : float, optional
+            Offset of box to avoid floating point errors.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Box`
+            The AABB of the element.
+
+        """
+        vertices = self.outline_a.points + self.outline_b.points
+        box = Box.from_points(vertices)
+        box.xsize += inflate
+        box.ysize += inflate
+        box.zsize += inflate
+        return box
+
+    def compute_obb(self, inflate: float = 0.0) -> Box:
+        """Computes the Oriented Bounding Box (OBB) of the element.
+
+        Returns
+        -------
+        :class:`compas.geometry.Box`
+            The OBB of the element.
+
+        """
+
+        obb = self.plate_geometry.compute_aabb(inflate)
+        obb.transform(self.modeltransformation)
+        return obb
+
+    def compute_collision_mesh(self) -> Mesh:
+        """Computes the collision geometry of the element.
+
+        Returns
+        -------
+        :class:`compas.datastructures.Mesh`
+            The collision geometry of the element.
+
+        """
+        return self.obb.to_mesh()
+
+    def compute_elementgeometry(self, include_features: Optional[bool] = True) -> Union[Brep, Mesh]:
         """Compute the geometry of the element.
 
         Parameters
@@ -152,7 +273,7 @@ class Plate(PlateGeometry, TimberElement):
         """
 
         # TODO: consider if Brep.from_curves(curves) is faster/better
-        plate_geo = self.compute_shape()
+        plate_geo = self.plate_geometry.compute_shape()
         if include_features:
             for feature in self._features:
                 try:
@@ -162,7 +283,7 @@ class Plate(PlateGeometry, TimberElement):
         return plate_geo.transformed(Transformation.from_frame(self.frame))
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, **kwargs):
+    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Panels.
 
@@ -184,6 +305,68 @@ class Plate(PlateGeometry, TimberElement):
             A Plate object representing the plate geometry with the given outlines.
         """
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
-        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         return cls(**kwargs)
+
+    @classmethod
+    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
+        """
+        Constructs a Plate from a polyline outline and a thickness.
+        The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
+
+        Parameters
+        ----------
+        outline : :class:`~compas.geometry.Polyline`
+            A polyline representing the outline of the plate geometry.
+        thickness : float
+            The thickness of the plate geometry.
+        vector : :class:`~compas.geometry.Vector`, optional
+            The direction of the thickness vector. If None, the thickness vector is determined from the outline.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of polyline openings to be added to the plate geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate geometry with the given outline and thickness.
+        """
+        # this ensure the plate geometry can always be computed
+        if TOL.is_zero(thickness):
+            thickness = TOL.absolute
+
+        offset_vector = get_polyline_normal_vector(outline, vector)  # gets vector perpendicular to outline
+        offset_vector *= thickness
+        outline_b = Polyline(outline).translated(offset_vector)
+        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
+
+    @classmethod
+    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+        """Creates a plate from a brep.
+
+        Parameters
+        ----------
+        brep : :class:`~compas.geometry.Brep`
+            The brep of the plate.
+        thickness : float
+            The thickness of the plate.
+        vector : :class:`~compas.geometry.Vector`, optional
+            The vector in which the plate is extruded.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+            These are passed to the :class:`~compas_timber.elements.Plate` constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object representing the plate with the given brep and thickness.
+        """
+
+        if len(brep.faces) > 1:
+            raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
+        face = brep.faces[0]
+        outer_polyline, inner_polylines = polylines_from_brep_face(face)
+        if not outer_polyline:
+            raise ValueError("no outer loop for brep face was found")
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
