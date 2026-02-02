@@ -21,7 +21,6 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 from compas.tolerance import Tolerance
-from numpy import ma
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication.btlx import MachiningLimits
@@ -292,7 +291,7 @@ class Lap(BTLxProcessing):
         ):
             self._machining_limits = machining_limits
         elif isinstance(machining_limits, dict):
-            self._machining_limits = MachiningLimits.from_dictionary(machining_limits)
+            self._machining_limits = MachiningLimits.from_dict(machining_limits)
         elif machining_limits is None:
             self._machining_limits = MachiningLimits()
         else:
