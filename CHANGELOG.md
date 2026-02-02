@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `polylines_from_brep_face` to compas_timber.utils.
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
+* Added `MiterType` class.
+* Added `miter_type`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
+* Added `ref_surface` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
+* Added `user_defined` miter plane to allow users to define an arbitrary cut plane for miter joints.
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
