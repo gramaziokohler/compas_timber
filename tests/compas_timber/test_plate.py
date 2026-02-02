@@ -104,6 +104,34 @@ def test_plate_serialization():
     assert plate.thickness == 1
 
 
+def test_plate_serialization_with_attributes_kwargs():
+    plate = Plate(Frame.worldXY(), 10, 20, 1, custom_attribute="test_value", another_attribute=123)
+
+    plate = json_loads(json_dumps(plate))
+
+    assert plate.frame == Frame.worldXY()
+    assert plate.length == 10
+    assert plate.width == 20
+    assert plate.thickness == 1
+    assert plate.attributes["custom_attribute"] == "test_value"
+    assert plate.attributes["another_attribute"] == 123
+
+
+def test_plate_serialization_with_attributes():
+    plate = Plate(Frame.worldXY(), 10, 20, 1)
+    plate.attributes["custom_attribute"] = "test_value"
+    plate.attributes["another_attribute"] = 123
+
+    plate = json_loads(json_dumps(plate))
+
+    assert plate.frame == Frame.worldXY()
+    assert plate.length == 10
+    assert plate.width == 20
+    assert plate.thickness == 1
+    assert plate.attributes["custom_attribute"] == "test_value"
+    assert plate.attributes["another_attribute"] == 123
+
+
 def test_sloped_plate_serialization():
     polyline_a = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     plate = Plate.from_outline_thickness(polyline_a, 1)

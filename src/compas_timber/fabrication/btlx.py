@@ -18,7 +18,6 @@ from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
@@ -67,7 +66,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
-        self._tolerance = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        self._tolerance = TOL
         self._errors = []
 
     @property
@@ -200,7 +199,7 @@ class BTLxWriter(object):
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
         for i, element in enumerate(elements):
-            part_element = self._create_part(element, i)
+            part_element = self._create_part(element, order_num=i)
             parts_element.append(part_element)
         return project_element
 
@@ -229,7 +228,8 @@ class BTLxWriter(object):
 
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
-            for beam_guid, position_frame in stock.element_data.items():
+            for beam_guid, data in stock.element_data.items():
+                position_frame = data.frame
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
@@ -369,15 +369,18 @@ class BTLxGenericPart(object):
         The width of the part.
     height : float
         The height of the part.
+    name : str, optional
+        The name of the part. Defaults to an empty string.
     scale_factor : float, optional
         The scale factor to apply to the part's dimensions. Defaults to 1.0.
     """
 
-    def __init__(self, order_num, length, width, height, scale_factor=1.0):
+    def __init__(self, order_num, length, width, height, name="", scale_factor=1.0):
         self.order_num = order_num
         self.length = length * scale_factor
         self.width = width * scale_factor
         self.height = height * scale_factor
+        self.name = name
         self._scale_factor = scale_factor
 
     @property
@@ -435,7 +438,7 @@ class BTLxGenericPart(object):
             "AssemblyNumber": "",
             "OrderNumber": str(self.order_num),
             "Designation": "",
-            "Annotation": "",
+            "Annotation": str(self.name) + "-" + str(self.part_guid)[:4],
             "Storey": "",
             "Group": "",
             "Package": "",
@@ -449,7 +452,7 @@ class BTLxGenericPart(object):
             "Weight": "0",
             "ProcessingQuality": "automatic",
             "StoreyType": "",
-            "ElementNumber": "00",
+            "ElementNumber": str(self.part_guid)[:4],
             "Layer": "0",
             "ModuleNumber": "",
         }
@@ -491,6 +494,7 @@ class BTLxRawpart(BTLxGenericPart):
             stock.length,
             stock.width,
             stock.height,
+            stock.name,
             scale_factor,
         )
         self.stock = stock
@@ -581,7 +585,7 @@ class BTLxPart(BTLxGenericPart):
     """
 
     def __init__(self, element, order_num, scale_factor=1.0):
-        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, scale_factor)
+        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, element.name, scale_factor)
         self.element = element
         self.processings = []
         self._shape_strings = None

@@ -20,7 +20,6 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication.btlx import MachiningLimits
@@ -739,13 +738,12 @@ class Lap(BTLxProcessing):
         assert self.depth is not None
         assert self.machining_limits is not None
 
-        tol = Tolerance()
-        tol.absolute=1e-3
+        tol = 1e-3  # TODO: use TOL.absolute if possible, but do not manipulate the global tolerance value
 
         start_frame = self._start_frame_from_params_and_beam(beam)
 
         top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
-        top_frame.translate(top_frame.normal * TOL.absolute)
+        top_frame.translate(top_frame.normal * tol)
 
         if self.machining_limits.face_limited_end:
             end_frame = start_frame.translated(-start_frame.normal * self.length)
@@ -764,14 +762,14 @@ class Lap(BTLxProcessing):
             front_frame = bottom_frame.rotated(math.radians(self.lead_angle), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = beam.front_side(self.ref_side_index)
-            front_frame.translate(front_frame.normal * tol.absolute)
+            front_frame.translate(front_frame.normal * tol)
 
         if self.machining_limits.face_limited_back:
             back_frame = front_frame.translated(-front_frame.zaxis * self.width)
             back_frame.xaxis = -back_frame.xaxis
         else:
             back_frame = beam.back_side(self.ref_side_index)
-            back_frame.translate(back_frame.normal * tol.absolute)
+            back_frame.translate(back_frame.normal * tol)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]

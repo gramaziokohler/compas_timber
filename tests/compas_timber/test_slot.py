@@ -12,6 +12,8 @@ from compas_timber.fabrication import Slot
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import MachiningLimits
 
+from compas.tolerance import TOL
+
 
 @pytest.fixture
 def beam():
@@ -19,6 +21,12 @@ def beam():
     height = 120.0
     centerline = Line(Point(x=80.4429082858, y=26.8976400207, z=0.0), Point(x=542.848108719, y=26.8976400207, z=0.0))
     return Beam.from_centerline(centerline, width, height)
+
+
+@pytest.fixture
+def tol():
+    TOL.absolute = 0.001
+    TOL.relative = 0.01
 
 
 def test_horizontal_slot_negative_angle(beam):
@@ -205,7 +213,7 @@ def test_slot_scaled():
     assert scaled_slot.ref_side_index == slot.ref_side_index
 
 
-def test_slot_apply_points():
+def test_slot_apply_points(tol):
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
     ml = MachiningLimits()
     slot = slot = Slot(
@@ -242,7 +250,7 @@ def test_slot_apply_points():
     assert p4 == Point(x=32.036, y=-10.478, z=-22.587)
 
 
-def test_slot_apply_frames():
+def test_slot_apply_frames(tol):
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
     ml = MachiningLimits()
     slot = slot = Slot(
@@ -323,7 +331,7 @@ def test_slot_apply_frames():
     assert back_frame == Frame(point=Point(x=8.943, y=-0.769, z=24.607), xaxis=Vector(x=0.000, y=-0.174, z=-0.985), yaxis=Vector(x=-0.906, y=-0.416, z=0.073))
 
 
-def test_slot_volume_subtracting_polyhedron(beam):
+def test_slot_volume_subtracting_polyhedron(beam, tol):
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(100, 0, 0)), width=30, height=50)
     ml = MachiningLimits()
     slot = slot = Slot(
