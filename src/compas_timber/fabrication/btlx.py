@@ -21,11 +21,8 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
-from compas_timber.elements import TimberElement
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
-from compas_timber.model import TimberModel
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -1312,14 +1309,18 @@ class BTLxReader(object):
     """
 
     def __init__(self, tolerance=None):
+        from compas_timber.elements import Beam
+        from compas_timber.elements import Plate
+
         self._errors = []
         self._tolerance = tolerance or TOL
         self._scale_factor = 1.0
 
-        # Auto-discover all TimberElement subclasses
-        self._element_types = {}
-        for cls in get_leaf_subclasses(TimberElement):
-            self._element_types[cls.__name__] = cls
+        # Register supported element types for BTLx reading
+        self._element_types = {
+            "Beam": Beam,
+            "Plate": Plate,
+        }
 
     @property
     def errors(self):
@@ -1358,6 +1359,8 @@ class BTLxReader(object):
             The timber model containing the elements and features from the BTLx file.
 
         """
+        from compas_timber.model import TimberModel
+
         self._errors = []
 
         # Parse XML
@@ -1427,8 +1430,11 @@ class BTLxReader(object):
         if not element_class:
             raise ValueError("No Beam class found - cannot create default element")
 
-        # Create element
-        element = element_class(frame=frame, length=length, width=width, height=height)
+        # Create element with appropriate parameters based on type
+        if element_class.__name__ == "Plate":
+            element = element_class(frame=frame, length=length, width=width, thickness=height)
+        else:
+            element = element_class(frame=frame, length=length, width=width, height=height)
 
         # Set additional properties
         element.name = name

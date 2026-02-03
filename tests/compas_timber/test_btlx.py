@@ -469,7 +469,7 @@ def test_btlx_reader_beam_and_plate():
     """Test that both Beam and Plate elements are correctly read."""
     model = TimberModel()
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
-    plate = Plate(Frame.worldXY(), length=2000, width=500, height=20)
+    plate = Plate(Frame.worldXY(), length=2000, width=500, thickness=20)
     beam.name = "my_beam"
     plate.name = "my_plate"
     model.add_element(beam)
