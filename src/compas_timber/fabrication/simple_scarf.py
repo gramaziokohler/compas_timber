@@ -168,9 +168,9 @@ class SimpleScarf(BTLxProcessing):
         cls,
         beam,
         other_beam,
-        length=200.0,
-        depth_ref_side=20.0,
-        depth_opp_side=20.0,
+        length=None,
+        depth_ref_side=None,
+        depth_opp_side=None,
         num_drill_hole=0,
         drill_hole_diam_1=20.0,
         drill_hole_diam_2=20.0,
@@ -179,6 +179,18 @@ class SimpleScarf(BTLxProcessing):
         # type: (Beam, Beam, float, float, float, int, float, float, int) -> SimpleScarf
         if num_drill_hole not in [0, 1, 2]:
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
+
+        # Check that both beams have the same cross section
+        if abs(beam.width - other_beam.width) > TOL.absolute or abs(beam.height - other_beam.height) > TOL.absolute:
+            raise ValueError("Both beams must have the same cross section (width and height) to create a SimpleScarf joint.")
+
+        if depth_ref_side is None:
+            depth_ref_side = beam.height / 3.0
+        if depth_opp_side is None:
+            depth_opp_side = beam.height / 3.0
+
+        if length is None:
+            length = max(beam.height, beam.width)
 
         orientation = cls._calculate_orientation(beam, other_beam)
 
@@ -351,6 +363,7 @@ class SimpleScarf(BTLxProcessing):
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),            #v10
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, back_plane)),          #v11
         ]
+        # print(vertices)
         
         faces = [
             [0,1,4,5],          # Front face 1
