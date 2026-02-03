@@ -1,4 +1,5 @@
 from .btlx import BTLxWriter
+from .btlx import BTLxReader
 from .btlx import BTLxProcessing
 from .btlx import BTLxPart
 from .btlx import BTLxRawpart
@@ -37,6 +38,7 @@ from .longitudinal_cut import LongitudinalCutProxy
 
 __all__ = [
     "BTLxWriter",
+    "BTLxReader",
     "BTLxPart",
     "BTLxProcessing",
     "JackRafterCut",

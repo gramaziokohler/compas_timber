@@ -15,12 +15,17 @@ from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+from compas_timber.elements import TimberElement
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.ghpython.ghcomponent_helpers import get_leaf_subclasses
+from compas_timber.model import TimberModel
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -602,7 +607,12 @@ class BTLxPart(BTLxGenericPart):
     @property
     def attr(self):
         """Return the attributes dictionary for the part XML element."""
-        return self.base_attr
+        attr = self.base_attr.copy()
+        if self.element.is_beam:
+            attr["Designation"] = "Beam"
+        elif self.element.is_plate:
+            attr["Designation"] = "Plate"
+        return attr
 
     def ref_side_from_face(self, element_face):
         """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
@@ -1280,3 +1290,209 @@ class BTLxFromGeometryDefinition(Data):
             return self.processing.from_shapes_and_element(*self.geometries, element=element, **self.kwargs)
         except Exception as ex:
             raise FeatureApplicationError(self.geometries, element.blank, str(ex))
+
+
+class BTLxReader(object):
+    """Class for reading BTLx files and creating a TimberModel.
+
+    BTLx is a format used for representing timber fabrication data.
+
+    Use BTLxReader.read() to read a BTLx file and return a TimberModel.
+
+    Parameters
+    ----------
+    tolerance : :class:`~compas.tolerance.Tolerance`, optional
+        The tolerance to use for the model. If not provided, the default tolerance will be used.
+
+    Attributes
+    ----------
+    errors : list
+        A list of errors encountered during parsing.
+
+    """
+
+    def __init__(self, tolerance=None):
+        self._errors = []
+        self._tolerance = tolerance or TOL
+        self._scale_factor = 1.0
+
+        # Auto-discover all TimberElement subclasses
+        self._element_types = {}
+        for cls in get_leaf_subclasses(TimberElement):
+            self._element_types[cls.__name__] = cls
+
+    @property
+    def errors(self):
+        """Get the list of errors encountered during parsing."""
+        return self._errors
+
+    def read(self, file_path):
+        """Read a BTLx file and return a TimberModel.
+
+        Parameters
+        ----------
+        file_path : str
+            The path to the BTLx file to read.
+
+        Returns
+        -------
+        :class:`~compas_timber.model.TimberModel`
+            The timber model containing the elements and features from the BTLx file.
+
+        """
+        with open(file_path, "r") as f:
+            xml_string = f.read()
+        return self.xml_to_model(xml_string)
+
+    def xml_to_model(self, xml_string):
+        """Parse an XML string and return a TimberModel.
+
+        Parameters
+        ----------
+        xml_string : str
+            The XML string representation of a BTLx file.
+
+        Returns
+        -------
+        :class:`~compas_timber.model.TimberModel`
+            The timber model containing the elements and features from the BTLx file.
+
+        """
+        self._errors = []
+
+        # Parse XML
+        root = ET.fromstring(xml_string)
+
+        # Determine scale factor (BTLx is always mm)
+        self._scale_factor = 1.0 / 1000.0 if self._tolerance.unit == "M" else 1.0
+
+        # Create model
+        model = TimberModel(tolerance=self._tolerance)
+
+        # Find the Project element (wildcard namespace handles all cases)
+        project = root.find(".//{*}Project")
+        if project is None:
+            raise ValueError("No Project element found in BTLx file")
+
+        # Find Parts element
+        parts_elem = project.find("{*}Parts")
+        if parts_elem is None:
+            warn("No Parts element found in BTLx file")
+            return model
+
+        # Parse each Part element
+        for part_elem in parts_elem.findall("{*}Part"):
+            element = self._parse_part(part_elem)
+            if element:
+                model.add_element(element)
+
+        return model
+
+    def _parse_part(self, part_elem):
+        """Parse a Part XML element into a TimberElement (Beam or Plate).
+
+        Parameters
+        ----------
+        part_elem : :class:`~xml.etree.ElementTree.Element`
+            The Part XML element.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.TimberElement`
+            The parsed timber element.
+
+        """
+        # Extract attributes
+        designation = part_elem.get("Designation", "")
+        length = float(part_elem.get("Length", 0)) * self._scale_factor
+        width = float(part_elem.get("Width", 0)) * self._scale_factor
+        height = float(part_elem.get("Height", 0)) * self._scale_factor
+        annotation = part_elem.get("Annotation", "")
+
+        # Extract original name from annotation (format: "name-{guid[:4]}")
+        if annotation and "-" in annotation:
+            name = "-".join(annotation.split("-")[:-1])  # Remove last segment (GUID fragment)
+        else:
+            name = annotation  # No hyphen or empty, use as-is
+
+        # Extract GUID and Frame from Transformation
+        guid, frame = self._parse_transformation(part_elem)
+
+        # Determine element type and create
+        element_class = self._element_types.get(designation)
+        if not element_class:
+            self._errors.append("Unknown element type '{}', defaulting to Beam".format(designation))
+            element_class = self._element_types.get("Beam")
+
+        if not element_class:
+            raise ValueError("No Beam class found - cannot create default element")
+
+        # Create element
+        element = element_class(frame=frame, length=length, width=width, height=height)
+
+        # Set additional properties
+        element.name = name
+        try:
+            element._guid = uuid.UUID(guid)
+        except (ValueError, AttributeError) as e:
+            self._errors.append("Failed to set GUID for element: {}".format(e))
+
+        return element
+
+    def _parse_transformation(self, part_elem):
+        """Extract GUID and Frame from a Part's Transformation element.
+
+        Parameters
+        ----------
+        part_elem : :class:`~xml.etree.ElementTree.Element`
+            The Part XML element.
+
+        Returns
+        -------
+        tuple
+            A tuple of (guid, frame) where guid is a string and frame is a Frame object.
+
+        """
+        # Find Transformation element (wildcard namespace)
+        trans_elem = part_elem.find("{*}Transformations/{*}Transformation")
+        if trans_elem is None:
+            raise ValueError("No Transformation element found in Part")
+
+        # Extract GUID (remove curly braces)
+        guid_str = trans_elem.get("GUID", "")
+        guid = guid_str.strip("{}")
+
+        # Find Position element
+        position = trans_elem.find("{*}Position")
+        if position is None:
+            raise ValueError("No Position element found in Transformation")
+
+        # Extract point and vectors
+        ref_point = position.find("{*}ReferencePoint")
+        x_vector = position.find("{*}XVector")
+        y_vector = position.find("{*}YVector")
+
+        # Parse point (apply scale factor to coordinates)
+        point = Point(
+            float(ref_point.get("X")) * self._scale_factor,
+            float(ref_point.get("Y")) * self._scale_factor,
+            float(ref_point.get("Z")) * self._scale_factor,
+        )
+
+        # Parse vectors (no scale factor - they're directional)
+        xaxis = Vector(
+            float(x_vector.get("X")),
+            float(x_vector.get("Y")),
+            float(x_vector.get("Z")),
+        )
+
+        yaxis = Vector(
+            float(y_vector.get("X")),
+            float(y_vector.get("Y")),
+            float(y_vector.get("Z")),
+        )
+
+        # Create Frame (ZVector will be computed automatically)
+        frame = Frame(point, xaxis, yaxis)
+
+        return guid, frame

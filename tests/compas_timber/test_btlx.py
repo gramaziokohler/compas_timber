@@ -11,11 +11,13 @@ import xml.etree.ElementTree as ET
 import compas
 import compas_timber
 from compas_timber.fabrication import BTLxWriter
+from compas_timber.fabrication import BTLxReader
 from compas_timber.fabrication import BTLxPart
 from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
@@ -430,3 +432,55 @@ def test_rawpart_attributes():
     assert base_attr["OrderNumber"] == "7"
     assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
     assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])
+
+
+# =============================================================================
+# BTLxReader Tests
+# =============================================================================
+
+
+def test_btlx_reader_roundtrip(tol):
+    """Test that writing and reading produces equivalent model."""
+    # Create simple model
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    beam.name = "test_beam"
+    model.add_element(beam)
+
+    # Write to XML string
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    # Read back
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+    assert beam_read.name == "test_beam"
+    assert tol.is_close(beam_read.length, 1000)
+    assert tol.is_close(beam_read.width, 100)
+    assert tol.is_close(beam_read.height, 120)
+    assert beam_read.guid == beam.guid
+
+
+def test_btlx_reader_beam_and_plate():
+    """Test that both Beam and Plate elements are correctly read."""
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    plate = Plate(Frame.worldXY(), length=2000, width=500, height=20)
+    beam.name = "my_beam"
+    plate.name = "my_plate"
+    model.add_element(beam)
+    model.add_element(plate)
+
+    # Roundtrip
+    xml_string = BTLxWriter().model_to_xml(model)
+    model_read = BTLxReader().xml_to_model(xml_string)
+
+    # Verify counts and types
+    assert len(model_read.beams) == 1
+    assert len(model_read.plates) == 1
+    assert model_read.beams[0].name == "my_beam"
+    assert model_read.plates[0].name == "my_plate"
