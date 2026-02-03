@@ -417,7 +417,7 @@ class SimpleScarfParams(BTLxProcessingParams):
         result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
         result["DepthRefSide"] = "{:.{prec}f}".format(float(self._instance.depth_ref_side), prec=TOL.precision)
         result["DepthOppSide"] = "{:.{prec}f}".format(float(self._instance.depth_opp_side), prec=TOL.precision)
-        result["NumDrillHole"] = self._instance.num_drill_hole
+        result["NumDrillHole"] = str(self._instance.num_drill_hole)
         result["DrillHoleDiam1"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_1), prec=TOL.precision)
         result["DrillHoleDiam2"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_2), prec=TOL.precision)
         return result
