@@ -1023,7 +1023,7 @@ class MachiningLimits(object):
         machining_limits = cls()
         for key, value in dictionary.items():
             if key not in cls.EXPECTED_KEYS:
-                raise ValueError("The key must be one of the following: ", {cls.EXPECTED_KEYS})
+                raise ValueError("The key must be one of the following: ", [limit for limit in cls.EXPECTED_KEYS])
             if not isinstance(value, bool):
                 raise ValueError("The values must be a boolean.")
             if key == "FaceLimitedStart":
