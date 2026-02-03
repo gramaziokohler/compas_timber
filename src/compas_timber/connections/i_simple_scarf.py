@@ -2,6 +2,7 @@ from compas.tolerance import TOL
 
 from compas.geometry import Translation
 from compas.geometry import Plane
+from compas.geometry import Point
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import SimpleScarf
@@ -35,7 +36,7 @@ class ISimpleScarf(Joint):
         other_beam=None,
         length=None,
         num_drill_hole=0,
-        drill_hole_diam_1=20.0,
+        drill_hole_diam_1=20.0, 
         drill_hole_diam_2=20.0,
         **kwargs
     ):
@@ -44,7 +45,7 @@ class ISimpleScarf(Joint):
         self.other_beam = other_beam
         self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
         self.other_beam_guid = kwargs.get("other_beam_guid", None) or str(other_beam.guid)
-        self.length = max(self.main_beam.height, self.main_beam.width) if length is None else length
+        self.length = main_beam.height * 3.0 if length is None else length
         self.num_drill_hole = num_drill_hole if num_drill_hole is not None else 0
         self.drill_hole_diam_1 = drill_hole_diam_1 if drill_hole_diam_1 is not None else 20.0
         self.drill_hole_diam_2 = drill_hole_diam_2 if drill_hole_diam_2 is not None else 20.0
@@ -57,12 +58,13 @@ class ISimpleScarf(Joint):
 
     @property
     def extension_plane_origin(self):
-        _, p1, p2 = distance_segment_segment_points(self.main_beam.centerline, self.other_beam.centerline)
+        dist, p1, p2 = distance_segment_segment_points(self.main_beam.centerline, self.other_beam.centerline)
+        p1 = Point(*p1)
+        p2 = Point(*p2)
         return (p1 + p2) * 0.5
 
     def extension_plane(self, beam, point):
         side, _ = beam.endpoint_closest_to_point(point)
-        print(side)
         if side == "start":
             ext_side_index = 4
         else:
@@ -70,18 +72,13 @@ class ISimpleScarf(Joint):
         return beam.ref_sides[ext_side_index]
 
     def add_extensions(self):
-        print("Adding extensions for ISimpleScarf")
         assert self.main_beam and self.other_beam
         try:
             ext_plane_origin = self.extension_plane_origin
             main_extension_frame = self.extension_plane(self.main_beam, ext_plane_origin)
-            print(self.length)
             main_extension_frame.translate(main_extension_frame.normal * (self.length/2))
-            print(main_extension_frame)
             other_extension_frame = self.extension_plane(self.other_beam, ext_plane_origin)
-            print(other_extension_frame)
             other_extension_frame.translate(other_extension_frame.normal * (self.length/2))
-            print(other_extension_frame)
             start_a, end_a = self.main_beam.extension_to_plane(Plane.from_frame(main_extension_frame))
             start_b, end_b = self.other_beam.extension_to_plane(Plane.from_frame(other_extension_frame))
         #nor sure about how the errors should be handled for two beams
@@ -103,9 +100,9 @@ class ISimpleScarf(Joint):
             self.main_beam,
             self.other_beam,
             length=self.length,
-            num_drill_hole=self.num_drill_hole,
-            drill_hole_diam_1=self.drill_hole_diam_1,
-            drill_hole_diam_2=self.drill_hole_diam_2
+            # num_drill_hole=self.num_drill_hole,
+            # drill_hole_diam_1=self.drill_hole_diam_1,
+            # drill_hole_diam_2=self.drill_hole_diam_2
             )
         
         other_feature = SimpleScarf.from_beams(
@@ -113,9 +110,9 @@ class ISimpleScarf(Joint):
             self.main_beam,
             ref_side_index=2,
             length=self.length,
-            num_drill_hole=self.num_drill_hole,
-            drill_hole_diam_1=self.drill_hole_diam_1,
-            drill_hole_diam_2=self.drill_hole_diam_2
+            # num_drill_hole=self.num_drill_hole,
+            # drill_hole_diam_1=self.drill_hole_diam_1,
+            # drill_hole_diam_2=self.drill_hole_diam_2
             )
 
         self.main_beam.add_features(main_feature)

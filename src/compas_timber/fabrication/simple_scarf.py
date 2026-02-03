@@ -8,6 +8,7 @@ from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
 from compas.geometry import Polyline
+from compas.geometry import Point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
@@ -181,16 +182,17 @@ class SimpleScarf(BTLxProcessing):
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
 
         # Check that both beams have the same cross section
-        if abs(beam.width - other_beam.width) > TOL.absolute or abs(beam.height - other_beam.height) > TOL.absolute:
-            raise ValueError("Both beams must have the same cross section (width and height) to create a SimpleScarf joint.")
+        # if abs(beam.width - other_beam.width) > TOL.absolute or abs(beam.height - other_beam.height) > TOL.absolute:
+        #     raise ValueError("Both beams must have the same cross section (width and height) to create a SimpleScarf joint.")
 
         if depth_ref_side is None:
-            depth_ref_side = beam.height / 3.0
+            depth_ref_side = beam.height / 4.0
         if depth_opp_side is None:
-            depth_opp_side = beam.height / 3.0
+            depth_opp_side = beam.height / 4.0
 
         if length is None:
-            length = max(beam.height, beam.width)
+            # length = min(beam.height, beam.width) * 2.0
+            length = beam.height * 3.0
 
         orientation = cls._calculate_orientation(beam, other_beam)
 
@@ -218,13 +220,15 @@ class SimpleScarf(BTLxProcessing):
     @staticmethod
     def _calculate_start_x(beam, orientation, length): #TODO: modify to accept bias
         if orientation == OrientationType.START:
-            return length/2
+            return 0.0
         else:
-            return beam.length - length/2
+            return beam.length + length/2
 
     @staticmethod
     def _calculate_average_point(beam, other_beam):
-        _, p1, p2 = distance_segment_segment_points(beam.centerline, other_beam.centerline)
+        dist, p1, p2 = distance_segment_segment_points(beam.centerline, other_beam.centerline)
+        p1 = Point(*p1)
+        p2 = Point(*p2)
         return (p1 + p2) * 0.5
 
 
@@ -363,7 +367,6 @@ class SimpleScarf(BTLxProcessing):
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),            #v10
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, back_plane)),          #v11
         ]
-        # print(vertices)
         
         faces = [
             [0,1,4,5],          # Front face 1
