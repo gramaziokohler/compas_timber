@@ -598,12 +598,12 @@ document.write(`
 <h1>Lap</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.Lap">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Lap</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/ca64efd/src/compas_timber/fabrication/lap.py#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">Lap</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/558da03/src/compas_timber/fabrication/lap.py#L33"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.fabrication.BTLxProcessing.html#compas_timber.fabrication.BTLxProcessing" title="compas_timber.fabrication.btlx.BTLxProcessing"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxProcessing</span></code></a></p>
 <p>Represents a Lap feature to be made on a beam.</p>
-<dl class="field-list simple">
+<dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
+<dd class="field-odd"><dl>
 <dt><strong>orientation</strong><span class="classifier">int</span></dt><dd><p>The orientation of the cut. Must be either OrientationType.START or OrientationType.END.</p>
 </dd>
 <dt><strong>start_x</strong><span class="classifier">float</span></dt><dd><p>The start x-coordinate of the cut in parametric space of the reference side. -100000.0 &lt; start_x &lt; 100000.0.</p>
@@ -630,7 +630,7 @@ document.write(`
 </dd>
 <dt><strong>lead_inclination</strong><span class="classifier">float</span></dt><dd><p>The lead inclination of the cut. 0.1 &lt; lead_inclination &lt; 179.9.</p>
 </dd>
-<dt><strong>machining_limits</strong><span class="classifier">dict, optional</span></dt><dd><p>The machining limits for the cut. Default is None</p>
+<dt><strong>machining_limits</strong><span class="classifier"><a class="reference internal" href="compas_timber.fabrication.MachiningLimits.html#compas_timber.fabrication.MachiningLimits" title="compas_timber.fabrication.btlx.MachiningLimits"><code class="xref py py-class docutils literal notranslate"><span class="pre">MachiningLimits</span></code></a> or dict, optional</span></dt><dd><p>The machining limits for the cut. Default is None</p>
 </dd>
 </dl>
 </dd>
