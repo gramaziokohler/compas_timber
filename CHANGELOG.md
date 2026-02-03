@@ -49,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `polylines_from_brep_face` to compas_timber.utils.
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
+* Added alternative constructor `MachiningLimits.from_dict()`. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -104,8 +105,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
 * Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
 * Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
+* Changed `MachiningLimits` to accept machining limits parameters in the constructors.
+* Changed `Lap`, `Pocket` and `Slot` to accepte a `MachiningLimits` instance instead of a dictionary. 
 * Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
 * Added `attributes` dictionary contet to serialization of `Panel`.
+
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
