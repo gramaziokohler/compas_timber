@@ -3,6 +3,8 @@ import os
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
+from abc import ABC
+from abc import abstractmethod
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
@@ -855,7 +857,7 @@ class BTLxProcessing(Data):
         return new_instance
 
 
-class BTLxProcessingParams(object):
+class BTLxProcessingParams(object, ABC):
     """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
 
     Parameters
@@ -878,6 +880,18 @@ class BTLxProcessingParams(object):
         result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
         return result
 
+    @property
+    @abstractmethod
+    def attribute_map(self):
+        """Returns mapping of BTLx attribute names to Python attribute names.
+
+        Returns
+        -------
+        dict
+            Dictionary mapping BTLx XML attribute names (keys) to Python instance attribute names (values).
+        """
+        pass
+
     def as_dict(self):
         """Returns the processing parameters as a dictionary.
 
@@ -886,7 +900,34 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        raise NotImplementedError("as_dict must be implemented in subclasses!")
+        result = OrderedDict()
+        for btlx_name, python_name in self.attribute_map.items():
+            value = getattr(self._instance, python_name)
+            result[btlx_name] = self._format_value(value)
+        return result
+
+    @staticmethod
+    def _format_value(value):
+        """Formats a value for BTLx serialization.
+
+        Parameters
+        ----------
+        value : object
+            The value to format.
+
+        Returns
+        -------
+        str
+            The formatted value as a string.
+        """
+        if isinstance(value, bool):
+            return "yes" if value else "no"
+        elif isinstance(value, float):
+            return "{:.{prec}f}".format(value, prec=3)
+        elif isinstance(value, str):
+            return value
+        else:
+            raise ValueError("Unsupported value type for BTLx serialization: {}".format(type(value)))
 
 
 class OrientationType(object):
