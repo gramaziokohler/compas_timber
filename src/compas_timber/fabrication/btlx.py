@@ -879,12 +879,12 @@ class BTLxProcessingParams(ABC):
     @property
     @abstractmethod
     def attribute_map(self):
-        """Returns mapping of BTLx attribute names to Python attribute names.
+        """Returns mapping of BTLx XML child element tag names to Python attribute names.
 
         Returns
         -------
         dict
-            Dictionary mapping BTLx XML attribute names (keys) to Python instance attribute names (values).
+            Dictionary mapping BTLx XML child element tag names (keys) to Python instance attribute names (values).
         """
         pass
 
