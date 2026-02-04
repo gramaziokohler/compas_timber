@@ -740,32 +740,23 @@ class DovetailMortiseParams(BTLxProcessingParams):
         # type: (DovetailMortise) -> None
         super(DovetailMortiseParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Dovetail Mortise feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Dovetail Mortise as a dictionary.
-        """
-        # type: () -> OrderedDict
-
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        result["LimitationTop"] = self._instance.limitation_top
-        result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["ConeAngle"] = "{:.{prec}f}".format(float(self._instance.cone_angle), prec=TOL.precision)
-        result["UseFlankAngle"] = "yes" if self._instance.use_flank_angle else "no"
-        result["FlankAngle"] = "{:.{prec}f}".format(float(self._instance.flank_angle), prec=TOL.precision)
-        result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "StartDepth": "start_depth",
+            "Angle": "angle",
+            "Slope": "slope",
+            # "Inclination": "inclination", #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+            "LimitationTop": "limitation_top",
+            "LengthLimitedBottom": "length_limited_bottom",
+            "Length": "length",
+            "Width": "width",
+            "Depth": "depth",
+            "ConeAngle": "cone_angle",
+            "UseFlankAngle": "use_flank_angle",
+            "FlankAngle": "flank_angle",
+            "Shape": "shape",
+            "ShapeRadius": "shape_radius",
+        }

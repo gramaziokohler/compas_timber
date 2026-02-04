@@ -412,18 +412,20 @@ class Drilling(BTLxProcessing):
 
 class DrillingParams(BTLxProcessingParams):
     def __init__(self, instance):
+        # type: (Drilling) -> None
         super(DrillingParams, self).__init__(instance)
 
-    def as_dict(self):
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "Angle": "angle",
+            "Inclination": "inclination",
+            "DepthLimited": "depth_limited",
+            "Depth": "depth",
+            "Diameter": "diameter",
+        }
 
 
 class DrillingProxy(object):

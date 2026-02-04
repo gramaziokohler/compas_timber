@@ -270,6 +270,14 @@ class FreeCountourParams(BTLxProcessingParams):
         # type: (FreeContour) -> None
         super(FreeCountourParams, self).__init__(instance)
 
+    @property
+    def attribute_map(self):
+        return {
+            "CounterSink": "counter_sink",
+            "ToolPosition": "tool_position",
+            "DepthBounded": "depth_bounded",
+        }
+
     def as_dict(self):
         return {"Contour": self._instance.contour_param_object}
 

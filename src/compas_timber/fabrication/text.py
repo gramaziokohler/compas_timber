@@ -314,18 +314,20 @@ class Text(BTLxProcessing):
 
 class TextParams(BTLxProcessingParams):
     def __init__(self, instance):
+        # type: (Text) -> None
         super(TextParams, self).__init__(instance)
 
-    def as_dict(self):
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["AlignmentVertical"] = self._instance.alignment_vertical
-        result["AlignmentHorizontal"] = self._instance.alignment_horizontal
-        result["AlignmentMultiline"] = self._instance.alignment_multiline
-        result["StackedMarking"] = "yes" if self._instance.stacked_marking else "no"
-        result["TextHeightAuto"] = "yes" if self._instance.text_height_auto else "no"
-        result["TextHeight"] = "{:.{prec}f}".format(float(self._instance.text_height), prec=TOL.precision)
-        result["Text"] = self._instance.text
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "Angle": "angle",
+            "AlignmentVertical": "alignment_vertical",
+            "AlignmentHorizontal": "alignment_horizontal",
+            "AlignmentMultiline": "alignment_multiline",
+            "StackedMarking": "stacked_marking",
+            "TextHeightAuto": "text_height_auto",
+            "TextHeight": "text_height",
+            "Text": "text",
+        }

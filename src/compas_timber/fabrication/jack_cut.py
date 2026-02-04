@@ -333,23 +333,16 @@ class JackRafterCutParams(BTLxProcessingParams):
         # type: (JackRafterCut) -> None
         super(JackRafterCutParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Jack Rafter Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Jack Rafter Cut feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "Orientation": "orientation",
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "StartDepth": "start_depth",
+            "Angle": "angle",
+            "Inclination": "inclination",
+        }
 
 
 class JackRafterCutProxy(object):

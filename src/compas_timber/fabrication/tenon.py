@@ -700,29 +700,22 @@ class TenonParams(BTLxProcessingParams):
         # type: (Tenon) -> None
         super(TenonParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Tenon feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Tenon as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Rotation"] = "{:.{prec}f}".format(float(self._instance.rotation), prec=TOL.precision)
-        result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
-        result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Height"] = "{:.{prec}f}".format(float(self._instance.height), prec=TOL.precision)
-        result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
-        result["Chamfer"] = "yes" if self._instance.chamfer else "no"
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "Orientation": "orientation",
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "StartDepth": "start_depth",
+            "Angle": "angle",
+            "Inclination": "inclination",
+            "Rotation": "rotation",
+            "LengthLimitedTop": "length_limited_top",
+            "LengthLimitedBottom": "length_limited_bottom",
+            "Length": "length",
+            "Width": "width",
+            "Height": "height",
+            "Shape": "shape",
+            "ShapeRadius": "shape_radius",
+            "Chamfer": "chamfer",
+        }

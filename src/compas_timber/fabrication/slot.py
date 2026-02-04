@@ -707,27 +707,20 @@ class SlotParams(BTLxProcessingParams):
         # type: (Slot) -> None
         super(SlotParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Slot feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Slot feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["Thickness"] = "{:.{prec}f}".format(float(self._instance.thickness), prec=TOL.precision)
-        result["AngleRefPoint"] = "{:.{prec}f}".format(float(self._instance.angle_ref_point), prec=TOL.precision)
-        result["AngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.angle_opp_point), prec=TOL.precision)
-        result["AddAngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.add_angle_opp_point), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "Orientation": "orientation",
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "StartDepth": "start_depth",
+            "Angle": "angle",
+            "Inclination": "inclination",
+            "Length": "length",
+            "Depth": "depth",
+            "Thickness": "thickness",
+            "AngleRefPoint": "angle_ref_point",
+            "AngleOppPoint": "angle_opp_point",
+            "AddAngleOppPoint": "add_angle_opp_point",
+            "MachiningLimits": "machining_limits",
+        }

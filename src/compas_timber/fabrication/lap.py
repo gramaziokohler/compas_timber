@@ -853,31 +853,24 @@ class LapParams(BTLxProcessingParams):
         # type: (Lap) -> None
         super(LapParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["LeadAngleParallel"] = "yes" if self._instance.lead_angle_parallel else "no"
-        result["LeadAngle"] = "{:.{prec}f}".format(float(self._instance.lead_angle), prec=TOL.precision)
-        result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
-        result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "Orientation": "orientation",
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "Angle": "angle",
+            "Inclination": "inclination",
+            "Slope": "slope",
+            "Length": "length",
+            "Width": "width",
+            "Depth": "depth",
+            "LeadAngleParallel": "lead_angle_parallel",
+            "LeadAngle": "lead_angle",
+            "LeadInclinationParallel": "lead_inclination_parallel",
+            "LeadInclination": "lead_inclination",
+            "MachiningLimits": "machining_limits",
+        }
 
 
 class LapProxy(object):

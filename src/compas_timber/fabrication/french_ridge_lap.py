@@ -463,20 +463,13 @@ class FrenchRidgeLapParams(BTLxProcessingParams):
         # type: (FrenchRidgeLap) -> None
         super(FrenchRidgeLapParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the French Ridge Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the French Ridge Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["RefPosition"] = self._instance.ref_position
-        result["Drillhole"] = "yes" if self._instance.drillhole else "no"
-        result["DrillholeDiam"] = "{:.{prec}f}".format(float(self._instance.drillhole_diam), prec=TOL.precision)
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "Orientation": "orientation",
+            "StartX": "start_x",
+            "Angle": "angle",
+            "RefPosition": "ref_position",
+            "Drillhole": "drillhole",
+            "DrillholeDiam": "drillhole_diam",
+        }
