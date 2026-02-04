@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -12,7 +11,6 @@ from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param

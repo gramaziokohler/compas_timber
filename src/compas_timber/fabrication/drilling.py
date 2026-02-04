@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -16,7 +15,6 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at

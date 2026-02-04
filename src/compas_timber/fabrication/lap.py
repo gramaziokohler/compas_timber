@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep

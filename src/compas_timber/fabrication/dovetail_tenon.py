@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -13,7 +12,6 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at

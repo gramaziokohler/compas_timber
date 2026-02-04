@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import typing
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -17,7 +16,6 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at

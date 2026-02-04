@@ -16,7 +16,6 @@ from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
-from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult

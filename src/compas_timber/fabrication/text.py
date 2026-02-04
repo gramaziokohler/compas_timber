@@ -1,11 +1,9 @@
 import os
-from collections import OrderedDict
 
 from compas.data import json_loadz
 from compas.geometry import Frame
 from compas.geometry import Scale
 from compas.geometry import Transformation
-from compas.tolerance import TOL
 
 from compas_timber import DATA
 

@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
