@@ -551,7 +551,6 @@ class LongitudinalCutParams(BTLxProcessingParams):
             "Depth": "depth",
             "AngleStart": "angle_start",
             "AngleEnd": "angle_end",
-            "ToolPosition": "tool_position",
         }
 
     @property
