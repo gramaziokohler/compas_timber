@@ -857,7 +857,7 @@ class BTLxProcessing(Data):
         return new_instance
 
 
-class BTLxProcessingParams(object, ABC):
+class BTLxProcessingParams(ABC):
     """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
 
     Parameters
@@ -917,15 +917,17 @@ class BTLxProcessingParams(object, ABC):
 
         Returns
         -------
-        str
-            The formatted value as a string.
+        str or dict
+            The formatted value as a string, or a dictionary with formatted values.
         """
         if isinstance(value, bool):
             return "yes" if value else "no"
-        elif isinstance(value, float):
+        elif isinstance(value, (int, float)):
             return "{:.{prec}f}".format(value, prec=3)
         elif isinstance(value, str):
             return value
+        elif isinstance(value, MachiningLimits):
+            return {key: "yes" if val else "no" for key, val in value.as_dict().items()}
         else:
             raise ValueError("Unsupported value type for BTLx serialization: {}".format(type(value)))
 
