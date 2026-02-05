@@ -25,7 +25,6 @@ from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import Contour
 from .btlx import DualContour
 
@@ -37,20 +36,26 @@ class FreeContour(BTLxProcessing):
     ----------
     contour_param_object : :class:`compas_timber.fabrication.btlx.Contour` or :class:`compas_timber.fabrication.btlx.DualContour`
         The contour parameter object.
+    tool_id : int, optional
+        The tool ID for the processing. Default is 0.
     counter_sink : bool, optional
         If True, the contour is a counter sink. Default is False.
-    tool_position : str, optional
-        The position of the tool. Default is "left".
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'.
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
 
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Contour": "contour_param_object",
+    }
 
-    def __init__(self, contour_param_object, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
+    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
         super(FreeContour, self).__init__(**kwargs)
         self.contour_param_object = contour_param_object
+        self.tool_id = tool_id
         self.counter_sink = counter_sink
         self.tool_position = tool_position
         self.depth_bounded = depth_bounded
@@ -69,8 +74,44 @@ class FreeContour(BTLxProcessing):
         return data
 
     @property
-    def params(self):
-        return FreeCountourParams(self)
+    def tool_id(self):
+        return self._tool_id
+
+    @tool_id.setter
+    def tool_id(self, tool_id):
+        if not isinstance(tool_id, int):
+            raise ValueError("tool_id must be an integer value.")
+        self._tool_id = tool_id
+
+    @property
+    def counter_sink(self):
+        return self._counter_sink
+
+    @counter_sink.setter
+    def counter_sink(self, counter_sink):
+        if not isinstance(counter_sink, bool):
+            raise ValueError("counter_sink must be a boolean value.")
+        self._counter_sink = counter_sink
+
+    @property
+    def tool_position(self):
+        return self._tool_position
+
+    @tool_position.setter
+    def tool_position(self, tool_position):
+        if tool_position not in [AlignmentType.LEFT, AlignmentType.CENTER, AlignmentType.RIGHT]:
+            raise ValueError("tool_position must be one of 'left', 'center', or 'right'.")
+        self._tool_position = tool_position
+
+    @property
+    def depth_bounded(self):
+        return self._depth_bounded
+
+    @depth_bounded.setter
+    def depth_bounded(self, depth_bounded):
+        if not isinstance(depth_bounded, bool):
+            raise ValueError("depth_bounded must be a boolean value.")
+        self._depth_bounded = depth_bounded
 
     ########################################################################
     # Alternative constructors
@@ -263,32 +304,3 @@ class FreeContour(BTLxProcessing):
 
         """
         self.contour_param_object.scale(factor)
-
-
-class FreeCountourParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        # type: (FreeContour) -> None
-        super(FreeCountourParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "CounterSink": "counter_sink",
-            "ToolPosition": "tool_position",
-            "DepthBounded": "depth_bounded",
-        }
-
-    def as_dict(self):
-        return {"Contour": self._instance.contour_param_object}
-
-    @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self._instance.PROCESSING_NAME,
-            "CounterSink": "yes" if self._instance.counter_sink else "no",
-            "ToolID": "0",
-            "Process": "yes",
-            "ToolPosition": self._instance.tool_position,
-            "ReferencePlaneID": str(self._instance.ref_side_index + 1),
-        }
