@@ -36,33 +36,10 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, fastener=None, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, **kwargs):
         super(TButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, butt_plane=butt_plane, **kwargs)
         self.modify_cross = False
-        self.fasteners = []
-        if fastener:
-            if fastener.outline is None:
-                fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
-                fastener.set_default(joint=self)
-            self.base_fastener = fastener
-            if self.base_fastener:
-                self.base_fastener.place_instances(self)
-
-    @property
-    def interactions(self):
-        """Returns interactions between elements used by this joint."""
-        interactions = []
-        interactions.append((self.main_beam, self.cross_beam))
-        for fastener in self.fasteners:
-            for interface in fastener.interfaces:
-                if interface is not None:
-                    interactions.append((interface.element, fastener))
-        return interactions
 
     @property
     def elements(self):
-        return self.beams + self.fasteners
-
-    @property
-    def generated_elements(self):
-        return self.fasteners
+        return self.beams

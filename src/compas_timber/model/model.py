@@ -20,10 +20,10 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fasteners import Fastener
 
 
 class TimberModel(Model):
@@ -301,6 +301,13 @@ class TimberModel(Model):
             joints.append(joint)
             self._graph.edge_attribute(edge, "joints", value=joints)  # SET
             # TODO: should we create a bidirectional interaction here?
+
+        for interaction in joint.compute_fasteners_interactions():
+            element_a, element_b = interaction
+            edge = self.add_interaction(element_a, element_b)
+            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
+            joints.append(joint)
+            self._graph.edge_attribute(edge, "joints", value=joints)
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
