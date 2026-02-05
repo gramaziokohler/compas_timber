@@ -806,8 +806,8 @@ class BTLxProcessing(Data):
         self.subprocessings = None
         self._is_joinery = is_joinery
         # Optional header attributes - set by subclasses if needed
-        self._counter_sink = counter_sink
         self._tool_id = tool_id
+        self._counter_sink = counter_sink
         self._tool_position = tool_position
 
     @property
@@ -834,12 +834,12 @@ class BTLxProcessing(Data):
         return self._process_id
 
     @property
-    def counter_sink(self):
-        return self._counter_sink
-
-    @property
     def tool_id(self):
         return self._tool_id
+
+    @property
+    def counter_sink(self):
+        return self._counter_sink
 
     @property
     def tool_position(self):
