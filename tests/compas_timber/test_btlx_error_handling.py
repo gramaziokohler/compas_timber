@@ -17,6 +17,10 @@ class MockProcessingParams(BTLxProcessingParams):
         self._should_raise = should_raise
         self._error_message = error_message
 
+    @property
+    def attribute_map(self):
+        return {"TestParam": "test_param"}
+
     def as_dict(self):
         if self._should_raise:
             raise ValueError(self._error_message)

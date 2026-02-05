@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `polylines_from_brep_face` to compas_timber.utils.
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
+* Added alternative constructor `MachiningLimits.from_dict()`. 
+* Added abstract property `attribute_map` to `compas_timber.fabrication.BTLxProcessingParams` to define attribute-to-BTLx parameter mappings in subclasses.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -104,8 +106,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
 * Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
 * Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.
+* Changed `MachiningLimits` to accept machining limits parameters in the constructors.
+* Changed `Lap`, `Pocket` and `Slot` to accepte a `MachiningLimits` instance instead of a dictionary. 
 * Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
 * Added `attributes` dictionary contet to serialization of `Panel`.
+* Changed `compas_timber.fabrication.BTLxProcessingParams` to inherit from `ABC` (Abstract Base Class), establishing it as a proper abstract interface for BTLx processing parameters.
+* Refactored `as_dict()` method in all `BTLxProcessingParams` subclasses by upstreaming the common implementation to the base class, which now uses the abstract `attribute_map` property for parameter serialization.
+
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -122,6 +129,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
+* Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
 
 ## [1.0.1] 2025-10-16
 

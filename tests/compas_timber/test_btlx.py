@@ -18,7 +18,6 @@ from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
@@ -167,19 +166,6 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
         else:
             # If Processings is None in either, they should both be None
             assert resulting_processings == expected_processings
-
-
-def test_btlx_should_skip_feature():
-    writer = BTLxWriter()
-    model = TimberModel()
-    beam = Beam(Frame.worldXY(), 1000, 100, 100)
-    beam.add_features(CutFeature(Frame.worldXY()))
-    model.add_element(beam)
-
-    with pytest.warns():
-        result = writer.model_to_xml(model)
-
-    assert result is not None
 
 
 def test_float_formatting_of_param_dicts():

@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
@@ -539,28 +538,20 @@ class LongitudinalCutParams(BTLxProcessingParams):
         # type: (LongitudinalCut) -> None
         super(LongitudinalCutParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the Longitudinal Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Longitudinal Cut feature as a dictionary.
-
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["StartLimited"] = "yes" if self._instance.start_limited else "no"
-        result["EndLimited"] = "yes" if self._instance.end_limited else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["AngleStart"] = "{:.{prec}f}".format(float(self._instance.angle_start), prec=TOL.precision)
-        result["AngleEnd"] = "{:.{prec}f}".format(float(self._instance.angle_end), prec=TOL.precision)
-        return result
+    @property
+    def attribute_map(self):
+        return {
+            "StartX": "start_x",
+            "StartY": "start_y",
+            "Inclination": "inclination",
+            "StartLimited": "start_limited",
+            "EndLimited": "end_limited",
+            "Length": "length",
+            "DepthLimited": "depth_limited",
+            "Depth": "depth",
+            "AngleStart": "angle_start",
+            "AngleEnd": "angle_end",
+        }
 
     @property
     def header_attributes(self):

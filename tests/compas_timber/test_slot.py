@@ -57,7 +57,10 @@ def test_horizontal_slot_negative_angle(beam):
             ("AngleRefPoint", "90.000"),
             ("AngleOppPoint", "90.000"),
             ("AddAngleOppPoint", "0.000"),
-            ("MachiningLimits", {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}),
+            (
+                "MachiningLimits",
+                {"FaceLimitedStart": "yes", "FaceLimitedEnd": "yes", "FaceLimitedFront": "yes", "FaceLimitedBack": "yes", "FaceLimitedTop": "yes", "FaceLimitedBottom": "yes"},
+            ),
         ]
     )
 
@@ -95,7 +98,10 @@ def test_horizontal_slot_positive_angle(beam):
             ("AngleRefPoint", "90.000"),
             ("AngleOppPoint", "90.000"),
             ("AddAngleOppPoint", "0.000"),
-            ("MachiningLimits", {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}),
+            (
+                "MachiningLimits",
+                {"FaceLimitedStart": "yes", "FaceLimitedEnd": "yes", "FaceLimitedFront": "yes", "FaceLimitedBack": "yes", "FaceLimitedTop": "yes", "FaceLimitedBottom": "yes"},
+            ),
         ]
     )
 
@@ -134,7 +140,10 @@ def test_vertical_slot_positive_angle(beam):
             ("AngleRefPoint", "90.000"),
             ("AngleOppPoint", "90.000"),
             ("AddAngleOppPoint", "0.000"),
-            ("MachiningLimits", {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}),
+            (
+                "MachiningLimits",
+                {"FaceLimitedStart": "yes", "FaceLimitedEnd": "yes", "FaceLimitedFront": "yes", "FaceLimitedBack": "yes", "FaceLimitedTop": "yes", "FaceLimitedBottom": "yes"},
+            ),
         ]
     )
 
@@ -173,7 +182,10 @@ def test_vertical_slot_negative_angle(beam):
             ("AngleRefPoint", "90.000"),
             ("AngleOppPoint", "90.000"),
             ("AddAngleOppPoint", "0.000"),
-            ("MachiningLimits", {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}),
+            (
+                "MachiningLimits",
+                {"FaceLimitedStart": "yes", "FaceLimitedEnd": "yes", "FaceLimitedFront": "yes", "FaceLimitedBack": "yes", "FaceLimitedTop": "yes", "FaceLimitedBottom": "yes"},
+            ),
         ]
     )
 
@@ -294,7 +306,7 @@ def test_slot_apply_frames(tol):
         angle_ref_point=110.0,
         angle_opp_point=65.0,
         add_angle_opp_point=10.0,
-        machining_limits=ml.limits,
+        machining_limits=ml,
         ref_side_index=2,
     )
 
@@ -335,7 +347,7 @@ def test_slot_volume_subtracting_polyhedron(beam, tol):
         angle_ref_point=110.0,
         angle_opp_point=65.0,
         add_angle_opp_point=10.0,
-        machining_limits=ml.limits,
+        machining_limits=ml,
         ref_side_index=2,
     )
 

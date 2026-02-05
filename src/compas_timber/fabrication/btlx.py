@@ -3,6 +3,8 @@ import os
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
+from abc import ABC
+from abc import abstractmethod
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
@@ -267,16 +269,12 @@ class BTLxWriter(object):
         if element.features:
             processings_element = ET.Element("Processings")
             for feature in element.features:
-                # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
-                if hasattr(feature, "PROCESSING_NAME"):
-                    try:
-                        processing_element = self._create_processing(feature)
-                    except ValueError as ex:
-                        self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
-                    else:
-                        processings_element.append(processing_element)
+                try:
+                    processing_element = self._create_processing(feature)
+                except ValueError as ex:
+                    self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
                 else:
-                    warn("Unsupported feature will be skipped: {}".format(feature))
+                    processings_element.append(processing_element)
             part_element.append(processings_element)
         if element.is_beam and element._geometry:
             # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
@@ -862,7 +860,7 @@ class BTLxProcessing(Data):
         return new_instance
 
 
-class BTLxProcessingParams(object):
+class BTLxProcessingParams(ABC):
     """Base class for BTLx processing parameters. This creates the dictionary of key-value pairs for the processing as expected by the BTLx file format.
 
     Parameters
@@ -885,6 +883,18 @@ class BTLxProcessingParams(object):
         result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
         return result
 
+    @property
+    @abstractmethod
+    def attribute_map(self):
+        """Returns mapping of BTLx XML child element tag names to Python attribute names.
+
+        Returns
+        -------
+        dict
+            Dictionary mapping BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        """
+        pass
+
     def as_dict(self):
         """Returns the processing parameters as a dictionary.
 
@@ -893,7 +903,36 @@ class BTLxProcessingParams(object):
         dict
             The processing parameters as a dictionary.
         """
-        raise NotImplementedError("as_dict must be implemented in subclasses!")
+        result = OrderedDict()
+        for btlx_name, python_name in self.attribute_map.items():
+            value = getattr(self._instance, python_name)
+            result[btlx_name] = self._format_value(value)
+        return result
+
+    @staticmethod
+    def _format_value(value):
+        """Formats a value for BTLx serialization.
+
+        Parameters
+        ----------
+        value : object
+            The value to format.
+
+        Returns
+        -------
+        str or dict
+            The formatted value as a string, or a dictionary with formatted values.
+        """
+        if isinstance(value, bool):
+            return "yes" if value else "no"
+        elif isinstance(value, (int, float)):
+            return "{:.{prec}f}".format(value, prec=3)
+        elif isinstance(value, str):
+            return value
+        elif isinstance(value, MachiningLimits):
+            return {key: "yes" if val else "no" for key, val in value.as_dict().items()}
+        else:
+            raise ValueError("Unsupported value type for BTLx serialization: {}".format(type(value)))
 
 
 class OrientationType(object):
@@ -1005,16 +1044,49 @@ class MachiningLimits(object):
         "FaceLimitedBottom",
     ]
 
-    def __init__(self):
-        self.face_limited_start = True
-        self.face_limited_end = True
-        self.face_limited_front = True
-        self.face_limited_back = True
-        self.face_limited_top = True
-        self.face_limited_bottom = True
+    def __init__(
+        self,
+        face_limited_start: bool = True,
+        face_limited_end: bool = True,
+        face_limited_front: bool = True,
+        face_limited_back: bool = True,
+        face_limited_top: bool = True,
+        face_limited_bottom: bool = True,
+    ):
+        self.face_limited_start = face_limited_start
+        self.face_limited_end = face_limited_end
+        self.face_limited_front = face_limited_front
+        self.face_limited_back = face_limited_back
+        self.face_limited_top = face_limited_top
+        self.face_limited_bottom = face_limited_bottom
 
     @property
     def limits(self):
+        return self.as_dict()
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        machining_limits = cls()
+        for key, value in dictionary.items():
+            if key not in cls.EXPECTED_KEYS:
+                raise ValueError("The key must be one of the following: ", [limit for limit in cls.EXPECTED_KEYS])
+            if not isinstance(value, bool):
+                raise ValueError("The values must be a boolean.")
+            if key == "FaceLimitedStart":
+                machining_limits.face_limited_start = value
+            elif key == "FaceLimitedEnd":
+                machining_limits.face_limited_end = value
+            elif key == "FaceLimitedFront":
+                machining_limits.face_limited_front = value
+            elif key == "FaceLimitedBack":
+                machining_limits.face_limited_back = value
+            elif key == "FaceLimitedTop":
+                machining_limits.face_limited_top = value
+            elif key == "FaceLimitedBottom":
+                machining_limits.face_limited_bottom = value
+        return machining_limits
+
+    def as_dict(self):
         """Dynamically generate the limits dictionary with boolean values from instance attributes."""
         return {
             "FaceLimitedStart": self.face_limited_start,
