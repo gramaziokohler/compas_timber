@@ -9,7 +9,6 @@ from compas_timber import DATA
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class Text(BTLxProcessing):
@@ -41,6 +40,18 @@ class Text(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Text"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "AlignmentVertical": "alignment_vertical",
+        "AlignmentHorizontal": "alignment_horizontal",
+        "AlignmentMultiline": "alignment_multiline",
+        "StackedMarking": "stacked_marking",
+        "TextHeightAuto": "text_height_auto",
+        "TextHeight": "text_height",
+        "Text": "text",
+    }
     _CHARACTER_DICT = {}
 
     @property
@@ -107,10 +118,6 @@ class Text(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return TextParams(self)
 
     @property
     def start_x(self):
@@ -308,24 +315,3 @@ class Text(BTLxProcessing):
         self.start_x *= factor
         self.start_y *= factor
         self.text_height *= factor
-
-
-class TextParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        # type: (Text) -> None
-        super(TextParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "Angle": "angle",
-            "AlignmentVertical": "alignment_vertical",
-            "AlignmentHorizontal": "alignment_horizontal",
-            "AlignmentMultiline": "alignment_multiline",
-            "StackedMarking": "stacked_marking",
-            "TextHeightAuto": "text_height_auto",
-            "TextHeight": "text_height",
-            "Text": "text",
-        }

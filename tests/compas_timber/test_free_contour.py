@@ -60,7 +60,16 @@ def test_plate_contour():
     plate = Plate.from_outline_thickness(pline, thickness)
 
     expected = {
-        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "right", "ReferencePlaneID": "1", "CounterSink": "no", "Process": "yes"},
+        "header_attributes": {
+            "Priority": "0",
+            "ProcessID": "0",
+            "ToolID": "0",
+            "Name": "FreeContour",
+            "ToolPosition": "right",
+            "ReferencePlaneID": "1",
+            "CounterSink": "no",
+            "Process": "yes",
+        },
         "contour_attributes": {"Inclination": "0", "DepthBounded": "no", "Depth": "10.0"},
         "contour_points": [
             {"StartPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}},

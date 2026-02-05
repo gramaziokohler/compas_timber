@@ -15,7 +15,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import TenonShapeType
 
@@ -55,6 +54,21 @@ class Mortise(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Mortise"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Slope": "slope",
+        # "Inclination": "inclination",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LengthLimitedTop": "length_limited_top",
+        "LengthLimitedBottom": "length_limited_bottom",
+        "Length": "length",
+        "Width": "width",
+        "Depth": "depth",
+        "Shape": "shape",
+        "ShapeRadius": "shape_radius",
+    }
 
     @property
     def __data__(self):
@@ -124,10 +138,6 @@ class Mortise(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return MortiseParams(self)
 
     @property
     def start_x(self):
@@ -530,35 +540,3 @@ class Mortise(BTLxProcessing):
         self.width *= factor
         self.depth *= factor
         self.shape_radius *= factor
-
-
-class MortiseParams(BTLxProcessingParams):
-    """A class to store the parameters of a Mortise feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Mortise`
-        The instance of the Mortise feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Mortise) -> None
-        super(MortiseParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Slope": "slope",
-            # "Inclination": "inclination",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-            "LengthLimitedTop": "length_limited_top",
-            "LengthLimitedBottom": "length_limited_bottom",
-            "Length": "length",
-            "Width": "width",
-            "Depth": "depth",
-            "Shape": "shape",
-            "ShapeRadius": "shape_radius",
-        }

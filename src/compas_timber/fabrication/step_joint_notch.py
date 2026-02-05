@@ -16,7 +16,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import StepShapeType
 
@@ -56,6 +55,21 @@ class StepJointNotch(BTLxProcessing):
     """
 
     PROCESSING_NAME = "StepJointNotch"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StrutInclination": "strut_inclination",
+        "NotchLimited": "notch_limited",
+        "NotchWidth": "notch_width",
+        "StepDepth": "step_depth",
+        "HeelDepth": "heel_depth",
+        "StrutHeight": "strut_height",
+        "StepShape": "step_shape",
+        "Mortise": "mortise",
+        "MortiseWidth": "mortise_width",
+        "MortiseHeight": "mortise_height",
+    }
 
     @property
     def __data__(self):
@@ -125,10 +139,6 @@ class StepJointNotch(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return StepJointNotchParams(self)
 
     @property
     def orientation(self):
@@ -725,35 +735,3 @@ class StepJointNotch(BTLxProcessing):
         self.strut_height *= factor
         self.mortise_width *= factor
         self.mortise_height *= factor
-
-
-class StepJointNotchParams(BTLxProcessingParams):
-    """A class to store the parameters of a Step Joint Notch feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.StepJointNotch`
-        The instance of the Step Joint Notch feature.
-    """
-
-    def __init__(self, instance):
-        # type: (StepJointNotch) -> None
-        super(StepJointNotchParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StrutInclination": "strut_inclination",
-            "NotchLimited": "notch_limited",
-            "NotchWidth": "notch_width",
-            "StepDepth": "step_depth",
-            "HeelDepth": "heel_depth",
-            "StrutHeight": "strut_height",
-            "StepShape": "step_shape",
-            "Mortise": "mortise",
-            "MortiseWidth": "mortise_width",
-            "MortiseHeight": "mortise_height",
-        }

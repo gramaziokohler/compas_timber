@@ -19,7 +19,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import EdgePositionType
 from .btlx import OrientationType
 
@@ -45,6 +44,14 @@ class FrenchRidgeLap(BTLxProcessing):
     """
 
     PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "Angle": "angle",
+        "RefPosition": "ref_position",
+        "Drillhole": "drillhole",
+        "DrillholeDiam": "drillhole_diam",
+    }
 
     @property
     def __data__(self):
@@ -76,10 +83,6 @@ class FrenchRidgeLap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return FrenchRidgeLapParams(self)
 
     @property
     def orientation(self):
@@ -447,28 +450,3 @@ class FrenchRidgeLap(BTLxProcessing):
         # type: (float) -> None
         self.start_x *= factor
         self.drillhole_diam *= factor
-
-
-class FrenchRidgeLapParams(BTLxProcessingParams):
-    """A class to store the parameters of a French Ridge Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
-        The instance of the French Ridge Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (FrenchRidgeLap) -> None
-        super(FrenchRidgeLapParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "Angle": "angle",
-            "RefPosition": "ref_position",
-            "Drillhole": "drillhole",
-            "DrillholeDiam": "drillhole_diam",
-        }
