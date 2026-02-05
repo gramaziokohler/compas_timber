@@ -973,7 +973,10 @@ class BTLxProcessingParams(object):
         str or dict
             The formatted value as a string, or a dictionary with formatted values.
         """
-        if isinstance(value, bool):
+        # Check if the value is a registered complex type (e.g., Contour, DualContour)
+        if type(value).__name__ in BTLxWriter.SERIALIZERS:
+            return value  # Pass through unchanged for complex serialization
+        elif isinstance(value, bool):
             return "yes" if value else "no"
         elif isinstance(value, (int, float)):
             return "{:.{prec}f}".format(value, prec=3)
