@@ -17,7 +17,6 @@ from compas_timber.utils import intersection_line_beam_param
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -45,6 +44,15 @@ class DoubleCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DoubleCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle1": "angle_1",
+        "Inclination1": "inclination_1",
+        "Angle2": "angle_2",
+        "Inclination2": "inclination_2",
+    }
 
     @property
     def __data__(self):
@@ -90,10 +98,6 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DoubleCutParams(self)
 
     @property
     def orientation(self):
@@ -418,32 +422,6 @@ class DoubleCut(BTLxProcessing):
         assert self.start_y is not None
         self._start_x *= factor
         self._start_y *= factor
-
-
-class DoubleCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Double Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DoubleCut`
-        The instance of the Double Cut feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DoubleCut) -> None
-        super(DoubleCutParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "Angle1": "angle_1",
-            "Inclination1": "inclination_1",
-            "Angle2": "angle_2",
-            "Inclination2": "inclination_2",
-        }
 
 
 class DoubleCutProxy(object):

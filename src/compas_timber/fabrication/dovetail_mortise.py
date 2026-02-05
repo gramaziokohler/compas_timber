@@ -17,7 +17,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import LimitationTopType
 from .btlx import OrientationType
 from .btlx import TenonShapeType
@@ -64,6 +63,24 @@ class DovetailMortise(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DovetailMortise"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Slope": "slope",
+        # "Inclination": "inclination", #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LimitationTop": "limitation_top",
+        "LengthLimitedBottom": "length_limited_bottom",
+        "Length": "length",
+        "Width": "width",
+        "Depth": "depth",
+        "ConeAngle": "cone_angle",
+        "UseFlankAngle": "use_flank_angle",
+        "FlankAngle": "flank_angle",
+        "Shape": "shape",
+        "ShapeRadius": "shape_radius",
+    }
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -149,9 +166,6 @@ class DovetailMortise(BTLxProcessing):
     # Properties
     ########################################################################
 
-    @property
-    def params(self):
-        return DovetailMortiseParams(self)
 
     @property
     def start_x(self):
@@ -724,38 +738,3 @@ class DovetailMortise(BTLxProcessing):
         self._width *= factor
         self._depth *= factor
         self._shape_radius *= factor
-
-
-class DovetailMortiseParams(BTLxProcessingParams):
-    """A class to store the parameters of a Dovetail Mortise feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DovetailMortise`
-        The instance of the Dovetail Mortise feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DovetailMortise) -> None
-        super(DovetailMortiseParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Slope": "slope",
-            # "Inclination": "inclination", #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-            "LimitationTop": "limitation_top",
-            "LengthLimitedBottom": "length_limited_bottom",
-            "Length": "length",
-            "Width": "width",
-            "Depth": "depth",
-            "ConeAngle": "cone_angle",
-            "UseFlankAngle": "use_flank_angle",
-            "FlankAngle": "flank_angle",
-            "Shape": "shape",
-            "ShapeRadius": "shape_radius",
-        }

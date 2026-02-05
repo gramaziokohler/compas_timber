@@ -20,7 +20,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class Drilling(BTLxProcessing):
@@ -45,6 +44,15 @@ class Drilling(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Drilling"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "DepthLimited": "depth_limited",
+        "Depth": "depth",
+        "Diameter": "diameter",
+    }
 
     @property
     def __data__(self):
@@ -79,10 +87,6 @@ class Drilling(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DrillingParams(self)
 
     @property
     def start_x(self):
@@ -406,24 +410,6 @@ class Drilling(BTLxProcessing):
         self._start_y *= factor
         self._depth *= factor
         self._diameter *= factor
-
-
-class DrillingParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        # type: (Drilling) -> None
-        super(DrillingParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "DepthLimited": "depth_limited",
-            "Depth": "depth",
-            "Diameter": "diameter",
-        }
 
 
 class DrillingProxy(object):

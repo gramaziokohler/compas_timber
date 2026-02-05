@@ -16,7 +16,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import TenonShapeType
 
@@ -60,6 +59,23 @@ class Tenon(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Tenon"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Rotation": "rotation",
+        "LengthLimitedTop": "length_limited_top",
+        "LengthLimitedBottom": "length_limited_bottom",
+        "Length": "length",
+        "Width": "width",
+        "Height": "height",
+        "Shape": "shape",
+        "ShapeRadius": "shape_radius",
+        "Chamfer": "chamfer",
+    }
 
     @property
     def __data__(self):
@@ -137,10 +153,6 @@ class Tenon(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return TenonParams(self)
 
     @property
     def orientation(self):
@@ -683,37 +695,3 @@ class Tenon(BTLxProcessing):
         self.width *= factor
         self.height *= factor
         self.shape_radius *= factor
-
-
-class TenonParams(BTLxProcessingParams):
-    """A class to store the parameters of a Tenon feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Tenon`
-        The instance of the Tenon feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Tenon) -> None
-        super(TenonParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "Rotation": "rotation",
-            "LengthLimitedTop": "length_limited_top",
-            "LengthLimitedBottom": "length_limited_bottom",
-            "Length": "length",
-            "Width": "width",
-            "Height": "height",
-            "Shape": "shape",
-            "ShapeRadius": "shape_radius",
-            "Chamfer": "chamfer",
-        }

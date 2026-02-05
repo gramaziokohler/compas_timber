@@ -25,7 +25,6 @@ from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -66,6 +65,22 @@ class Lap(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Lap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Slope": "slope",
+        "Length": "length",
+        "Width": "width",
+        "Depth": "depth",
+        "LeadAngleParallel": "lead_angle_parallel",
+        "LeadAngle": "lead_angle",
+        "LeadInclinationParallel": "lead_inclination_parallel",
+        "LeadInclination": "lead_inclination",
+        "MachiningLimits": "machining_limits",
+    }
 
     @property
     def __data__(self):
@@ -139,10 +154,6 @@ class Lap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LapParams(self)
 
     @property
     def orientation(self):
@@ -837,39 +848,6 @@ class Lap(BTLxProcessing):
         self.length *= factor
         self.width *= factor
         self.depth *= factor
-
-
-class LapParams(BTLxProcessingParams):
-    """A class to store the parameters of a Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Lap`
-        The instance of the Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Lap) -> None
-        super(LapParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "Slope": "slope",
-            "Length": "length",
-            "Width": "width",
-            "Depth": "depth",
-            "LeadAngleParallel": "lead_angle_parallel",
-            "LeadAngle": "lead_angle",
-            "LeadInclinationParallel": "lead_inclination_parallel",
-            "LeadInclination": "lead_inclination",
-            "MachiningLimits": "machining_limits",
-        }
 
 
 class LapProxy(object):

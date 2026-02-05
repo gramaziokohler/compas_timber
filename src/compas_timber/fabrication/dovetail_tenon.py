@@ -17,7 +17,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import TenonShapeType
 
@@ -65,6 +64,25 @@ class DovetailTenon(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DovetailTenon"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Rotation": "rotation",
+        "LengthLimitedTop": "length_limited_top",
+        "LengthLimitedBottom": "length_limited_bottom",
+        "Length": "length",
+        "Width": "width",
+        "Height": "height",
+        "ConeAngle": "cone_angle",
+        "UseFlankAngle": "use_flank_angle",
+        "FlankAngle": "flank_angle",
+        "Shape": "shape",
+        "ShapeRadius": "shape_radius",
+    }
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -153,10 +171,6 @@ class DovetailTenon(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DovetailTenonParams(self)
 
     @property
     def orientation(self):
@@ -853,39 +867,3 @@ class DovetailTenon(BTLxProcessing):
         self.width *= factor
         self.height *= factor
         self.shape_radius *= factor
-
-
-class DovetailTenonParams(BTLxProcessingParams):
-    """A class to store the parameters of a Dovetail Tenon feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DovetailTenon`
-        The instance of the Dovetail Tenon feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DovetailTenon) -> None
-        super(DovetailTenonParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "Rotation": "rotation",
-            "LengthLimitedTop": "length_limited_top",
-            "LengthLimitedBottom": "length_limited_bottom",
-            "Length": "length",
-            "Width": "width",
-            "Height": "height",
-            "ConeAngle": "cone_angle",
-            "UseFlankAngle": "use_flank_angle",
-            "FlankAngle": "flank_angle",
-            "Shape": "shape",
-            "ShapeRadius": "shape_radius",
-        }

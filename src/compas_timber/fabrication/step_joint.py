@@ -16,7 +16,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import StepShapeType
 
@@ -48,6 +47,17 @@ class StepJoint(BTLxProcessing):
     """
 
     PROCESSING_NAME = "StepJoint"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StrutInclination": "strut_inclination",
+        "StepDepth": "step_depth",
+        "HeelDepth": "heel_depth",
+        "StepShape": "step_shape",
+        "Tenon": "tenon",
+        "TenonWidth": "tenon_width",
+        "TenonHeight": "tenon_height",
+    }
 
     @property
     def __data__(self):
@@ -101,10 +111,6 @@ class StepJoint(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return StepJointParams(self)
 
     @property
     def orientation(self):
@@ -696,31 +702,3 @@ class StepJoint(BTLxProcessing):
         self.heel_depth *= factor
         self.tenon_width *= factor
         self.tenon_height *= factor
-
-
-class StepJointParams(BTLxProcessingParams):
-    """A class to store the parameters of a Step Joint feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.StepJoint`
-        The instance of the Step Joint feature.
-    """
-
-    def __init__(self, instance):
-        # type: (StepJoint) -> None
-        super(StepJointParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StrutInclination": "strut_inclination",
-            "StepDepth": "step_depth",
-            "HeelDepth": "heel_depth",
-            "StepShape": "step_shape",
-            "Tenon": "tenon",
-            "TenonWidth": "tenon_width",
-            "TenonHeight": "tenon_height",
-        }

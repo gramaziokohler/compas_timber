@@ -21,7 +21,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 from .btlx import OrientationType
 
@@ -31,6 +30,21 @@ if typing.TYPE_CHECKING:
 
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Length": "length",
+        "Depth": "depth",
+        "Thickness": "thickness",
+        "AngleRefPoint": "angle_ref_point",
+        "AngleOppPoint": "angle_opp_point",
+        "AddAngleOppPoint": "add_angle_opp_point",
+        "MachiningLimits": "machining_limits",
+    }
 
     @property
     def __data__(self):
@@ -100,10 +114,6 @@ class Slot(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return SlotParams(self)
 
     @property
     def orientation(self):
@@ -689,36 +699,3 @@ class Slot(BTLxProcessing):
         self.length *= factor
         self.depth *= factor
         self.thickness *= factor
-
-
-class SlotParams(BTLxProcessingParams):
-    """A class to store the parameters of a Slot feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Slot`
-        The instance of the Slot feature.
-
-    """
-
-    def __init__(self, instance):
-        # type: (Slot) -> None
-        super(SlotParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "Length": "length",
-            "Depth": "depth",
-            "Thickness": "thickness",
-            "AngleRefPoint": "angle_ref_point",
-            "AngleOppPoint": "angle_opp_point",
-            "AddAngleOppPoint": "add_angle_opp_point",
-            "MachiningLimits": "machining_limits",
-        }

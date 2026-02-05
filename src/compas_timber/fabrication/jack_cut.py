@@ -15,7 +15,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -40,6 +39,14 @@ class JackRafterCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "JackRafterCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+    }
 
     @property
     def __data__(self):
@@ -71,10 +78,6 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return JackRafterCutParams(self)
 
     @property
     def orientation(self):
@@ -317,31 +320,6 @@ class JackRafterCut(BTLxProcessing):
         self._start_x *= factor
         self._start_y *= factor
         self._start_depth *= factor
-
-
-class JackRafterCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Jack Rafter Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.JackRafterCut`
-        The instance of the Jack Rafter Cut feature.
-    """
-
-    def __init__(self, instance):
-        # type: (JackRafterCut) -> None
-        super(JackRafterCutParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "Orientation": "orientation",
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Inclination": "inclination",
-        }
 
 
 class JackRafterCutProxy(object):

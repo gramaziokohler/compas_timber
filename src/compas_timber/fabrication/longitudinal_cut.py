@@ -19,7 +19,6 @@ from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class LongitudinalCut(BTLxProcessing):
@@ -53,6 +52,18 @@ class LongitudinalCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "LongitudinalCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Inclination": "inclination",
+        "StartLimited": "start_limited",
+        "EndLimited": "end_limited",
+        "Length": "length",
+        "DepthLimited": "depth_limited",
+        "Depth": "depth",
+        "AngleStart": "angle_start",
+        "AngleEnd": "angle_end",
+    }
 
     @property
     def __data__(self):
@@ -114,10 +125,6 @@ class LongitudinalCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LongitudinalCutParams(self)
 
     @property
     def start_x(self):
@@ -522,43 +529,6 @@ class LongitudinalCut(BTLxProcessing):
         self.start_y *= factor
         self.length *= factor
         self.depth *= factor
-
-
-class LongitudinalCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Longitudinal Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.LongitudinalCut`
-        The instance of the Longitudinal Cut feature.
-
-    """
-
-    def __init__(self, instance):
-        # type: (LongitudinalCut) -> None
-        super(LongitudinalCutParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "Inclination": "inclination",
-            "StartLimited": "start_limited",
-            "EndLimited": "end_limited",
-            "Length": "length",
-            "DepthLimited": "depth_limited",
-            "Depth": "depth",
-            "AngleStart": "angle_start",
-            "AngleEnd": "angle_end",
-        }
-
-    @property
-    def header_attributes(self):
-        # Returns the header attributes for the Longitudinal Cut feature
-        attrs = super().header_attributes.copy()
-        attrs["ToolPosition"] = self._instance.tool_position
-        return attrs
 
 
 class LongitudinalCutProxy(object):

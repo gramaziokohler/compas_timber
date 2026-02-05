@@ -26,7 +26,6 @@ from compas_timber.fabrication.free_contour import TYPE_CHECKING
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 
 if TYPE_CHECKING:
@@ -71,6 +70,22 @@ class Pocket(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Pocket"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Slope": "slope",
+        "Length": "length",
+        "Width": "width",
+        "InternalAngle": "internal_angle",
+        "TiltRefSide": "tilt_ref_side",
+        "TiltEndSide": "tilt_end_side",
+        "TiltOppSide": "tilt_opp_side",
+        "TiltStartSide": "tilt_start_side",
+        "MachiningLimits": "machining_limits",
+    }
 
     @property
     def __data__(self):
@@ -144,10 +159,6 @@ class Pocket(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self) -> PocketParams:
-        return PocketParams(self)
 
     @property
     def start_x(self) -> float:
@@ -728,39 +739,6 @@ class Pocket(BTLxProcessing):
         self.start_depth *= factor
         self.length *= factor
         self.width *= factor
-
-
-class PocketParams(BTLxProcessingParams):
-    """A class to store the parameters of a Pocket feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Pocket`
-        The instance of the Pocket feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Pocket) -> None
-        super(PocketParams, self).__init__(instance)
-
-    @property
-    def attribute_map(self):
-        return {
-            "StartX": "start_x",
-            "StartY": "start_y",
-            "StartDepth": "start_depth",
-            "Angle": "angle",
-            "Inclination": "inclination",
-            "Slope": "slope",
-            "Length": "length",
-            "Width": "width",
-            "InternalAngle": "internal_angle",
-            "TiltRefSide": "tilt_ref_side",
-            "TiltEndSide": "tilt_end_side",
-            "TiltOppSide": "tilt_opp_side",
-            "TiltStartSide": "tilt_start_side",
-            "MachiningLimits": "machining_limits",
-        }
 
 
 class PocketProxy(object):
