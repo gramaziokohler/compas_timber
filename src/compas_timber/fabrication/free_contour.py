@@ -53,11 +53,8 @@ class FreeContour(BTLxProcessing):
     }
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
-        super(FreeContour, self).__init__(**kwargs)
+        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
         self.contour_param_object = contour_param_object
-        self.tool_id = tool_id
-        self.counter_sink = counter_sink
-        self.tool_position = tool_position
         self.depth_bounded = depth_bounded
 
     ########################################################################
@@ -68,6 +65,7 @@ class FreeContour(BTLxProcessing):
     def __data__(self):
         data = super(FreeContour, self).__data__
         data["contour_param_object"] = self.contour_param_object
+        data["tool_id"] = self.tool_id
         data["counter_sink"] = self.counter_sink
         data["tool_position"] = self.tool_position
         data["depth_bounded"] = self.depth_bounded

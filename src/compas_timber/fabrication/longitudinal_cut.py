@@ -97,7 +97,7 @@ class LongitudinalCut(BTLxProcessing):
         tool_position=AlignmentType.LEFT,
         **kwargs
     ):
-        super(LongitudinalCut, self).__init__(**kwargs)
+        super(LongitudinalCut, self).__init__(tool_position=tool_position, **kwargs)
         self._start_x = None
         self._start_y = None
         self._inclination = None
@@ -108,7 +108,6 @@ class LongitudinalCut(BTLxProcessing):
         self._depth = None
         self._angle_start = None
         self._angle_end = None
-        self._tool_position = None
 
         self.start_x = start_x
         self.start_y = start_y
@@ -120,7 +119,6 @@ class LongitudinalCut(BTLxProcessing):
         self.depth = depth
         self.angle_start = angle_start
         self.angle_end = angle_end
-        self.tool_position = tool_position
 
     ########################################################################
     # Properties
