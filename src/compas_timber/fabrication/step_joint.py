@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -12,13 +11,11 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import StepShapeType
 
@@ -50,6 +47,17 @@ class StepJoint(BTLxProcessing):
     """
 
     PROCESSING_NAME = "StepJoint"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StrutInclination": "strut_inclination",
+        "StepDepth": "step_depth",
+        "HeelDepth": "heel_depth",
+        "StepShape": "step_shape",
+        "Tenon": "tenon",
+        "TenonWidth": "tenon_width",
+        "TenonHeight": "tenon_height",
+    }
 
     @property
     def __data__(self):
@@ -103,10 +111,6 @@ class StepJoint(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return StepJointParams(self)
 
     @property
     def orientation(self):
@@ -698,38 +702,3 @@ class StepJoint(BTLxProcessing):
         self.heel_depth *= factor
         self.tenon_width *= factor
         self.tenon_height *= factor
-
-
-class StepJointParams(BTLxProcessingParams):
-    """A class to store the parameters of a Step Joint feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.StepJoint`
-        The instance of the Step Joint feature.
-    """
-
-    def __init__(self, instance):
-        # type: (StepJoint) -> None
-        super(StepJointParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Step Joint feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Step Joint as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StrutInclination"] = "{:.{prec}f}".format(float(self._instance.strut_inclination), prec=TOL.precision)
-        result["StepDepth"] = "{:.{prec}f}".format(float(self._instance.step_depth), prec=TOL.precision)
-        result["HeelDepth"] = "{:.{prec}f}".format(float(self._instance.heel_depth), prec=TOL.precision)
-        result["StepShape"] = self._instance.step_shape
-        result["Tenon"] = "yes" if self._instance.tenon else "no"
-        result["TenonWidth"] = "{:.{prec}f}".format(float(self._instance.tenon_width), prec=TOL.precision)
-        result["TenonHeight"] = "{:.{prec}f}".format(float(self._instance.tenon_height), prec=TOL.precision)
-        return result

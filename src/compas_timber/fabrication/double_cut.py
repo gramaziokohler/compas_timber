@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -12,14 +11,12 @@ from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -47,6 +44,15 @@ class DoubleCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DoubleCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle1": "angle_1",
+        "Inclination1": "inclination_1",
+        "Angle2": "angle_2",
+        "Inclination2": "inclination_2",
+    }
 
     @property
     def __data__(self):
@@ -92,10 +98,6 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DoubleCutParams(self)
 
     @property
     def orientation(self):
@@ -420,39 +422,6 @@ class DoubleCut(BTLxProcessing):
         assert self.start_y is not None
         self._start_x *= factor
         self._start_y *= factor
-
-
-class DoubleCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Double Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DoubleCut`
-        The instance of the Double Cut feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DoubleCut) -> None
-        super(DoubleCutParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Double Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Double Cut feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle1"] = "{:.{prec}f}".format(float(self._instance.angle_1), prec=TOL.precision)
-        result["Inclination1"] = "{:.{prec}f}".format(float(self._instance.inclination_1), prec=TOL.precision)
-        result["Angle2"] = "{:.{prec}f}".format(float(self._instance.angle_2), prec=TOL.precision)
-        result["Inclination2"] = "{:.{prec}f}".format(float(self._instance.inclination_2), prec=TOL.precision)
-        return result
 
 
 class DoubleCutProxy(object):

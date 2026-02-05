@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -16,7 +15,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -41,6 +39,14 @@ class JackRafterCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "JackRafterCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+    }
 
     @property
     def __data__(self):
@@ -72,10 +78,6 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return JackRafterCutParams(self)
 
     @property
     def orientation(self):
@@ -318,38 +320,6 @@ class JackRafterCut(BTLxProcessing):
         self._start_x *= factor
         self._start_y *= factor
         self._start_depth *= factor
-
-
-class JackRafterCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Jack Rafter Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.JackRafterCut`
-        The instance of the Jack Rafter Cut feature.
-    """
-
-    def __init__(self, instance):
-        # type: (JackRafterCut) -> None
-        super(JackRafterCutParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Jack Rafter Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Jack Rafter Cut feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        return result
 
 
 class JackRafterCutProxy(object):

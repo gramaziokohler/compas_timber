@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import typing
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -17,13 +16,11 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 from .btlx import OrientationType
 
@@ -33,6 +30,21 @@ if typing.TYPE_CHECKING:
 
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Length": "length",
+        "Depth": "depth",
+        "Thickness": "thickness",
+        "AngleRefPoint": "angle_ref_point",
+        "AngleOppPoint": "angle_opp_point",
+        "AddAngleOppPoint": "add_angle_opp_point",
+        "MachiningLimits": "machining_limits",
+    }
 
     @property
     def __data__(self):
@@ -102,10 +114,6 @@ class Slot(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return SlotParams(self)
 
     @property
     def orientation(self):
@@ -691,43 +699,3 @@ class Slot(BTLxProcessing):
         self.length *= factor
         self.depth *= factor
         self.thickness *= factor
-
-
-class SlotParams(BTLxProcessingParams):
-    """A class to store the parameters of a Slot feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Slot`
-        The instance of the Slot feature.
-
-    """
-
-    def __init__(self, instance):
-        # type: (Slot) -> None
-        super(SlotParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Slot feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Slot feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["Thickness"] = "{:.{prec}f}".format(float(self._instance.thickness), prec=TOL.precision)
-        result["AngleRefPoint"] = "{:.{prec}f}".format(float(self._instance.angle_ref_point), prec=TOL.precision)
-        result["AngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.angle_opp_point), prec=TOL.precision)
-        result["AddAngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.add_angle_opp_point), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result

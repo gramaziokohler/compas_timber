@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -26,7 +25,6 @@ from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -67,6 +65,22 @@ class Lap(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Lap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Slope": "slope",
+        "Length": "length",
+        "Width": "width",
+        "Depth": "depth",
+        "LeadAngleParallel": "lead_angle_parallel",
+        "LeadAngle": "lead_angle",
+        "LeadInclinationParallel": "lead_inclination_parallel",
+        "LeadInclination": "lead_inclination",
+        "MachiningLimits": "machining_limits",
+    }
 
     @property
     def __data__(self):
@@ -140,10 +154,6 @@ class Lap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LapParams(self)
 
     @property
     def orientation(self):
@@ -838,46 +848,6 @@ class Lap(BTLxProcessing):
         self.length *= factor
         self.width *= factor
         self.depth *= factor
-
-
-class LapParams(BTLxProcessingParams):
-    """A class to store the parameters of a Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Lap`
-        The instance of the Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Lap) -> None
-        super(LapParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["LeadAngleParallel"] = "yes" if self._instance.lead_angle_parallel else "no"
-        result["LeadAngle"] = "{:.{prec}f}".format(float(self._instance.lead_angle), prec=TOL.precision)
-        result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
-        result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
 
 
 class LapProxy(object):
