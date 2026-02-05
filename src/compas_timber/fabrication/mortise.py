@@ -61,7 +61,7 @@ class Mortise(BTLxProcessing):
         "Angle": "angle",
         "Slope": "slope",
         # "Inclination": "inclination",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        "LimitationTop": "limitation_top",
+        "LengthLimitedTop": "length_limited_top",
         "LengthLimitedBottom": "length_limited_bottom",
         "Length": "length",
         "Width": "width",
