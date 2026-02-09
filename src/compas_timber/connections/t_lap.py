@@ -15,9 +15,9 @@ class TLapJoint(LapJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -26,9 +26,9 @@ class TLapJoint(LapJoint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -49,6 +49,14 @@ class TLapJoint(LapJoint):
         super(TLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
         self.cut_plane_bias = cut_plane_bias
 
+    @property
+    def main_beam(self):
+        return self.beam_a
+
+    @property
+    def cross_beam(self):
+        return self.beam_b
+
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -62,13 +70,13 @@ class TLapJoint(LapJoint):
         """
         assert self.main_beam and self.cross_beam
         try:
-            start_main, end_main = self.main_beam.extension_to_plane(self.main_cutting_plane)
+            start_main, end_main = self.main_beam.extension_to_plane(self.cutting_plane_a)
         except AttributeError as ae:
             raise BeamJoiningError(
                 beams=self.elements,
                 joint=self,
                 debug_info=str(ae),
-                debug_geometries=[self.main_cutting_plane],
+                debug_geometries=[self.cutting_plane_a],
             )
         except Exception as ex:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
@@ -93,11 +101,11 @@ class TLapJoint(LapJoint):
 
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
-        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
-        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
+        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.ref_side_index_a)
+        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.ref_side_index_b)
 
         # cutoff feature for main beam
-        main_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
+        main_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.cutting_plane_a, self.main_beam)
 
         # add processings to the beams
         self.cross_beam.add_feature(cross_lap_feature)

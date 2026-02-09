@@ -24,7 +24,7 @@ class BallNodeJoint(Joint):
 
     Parameters
     ----------
-    beams :  list(:class:`~compas_timber.parts.Beam`)
+    beams :  list(:class:`~compas_timber.elements.Beam`)
         The beams to be joined.
     base_interface : :class:`~compas_timber.connections.FastenerTimberInterface`
         Describes the interface between the fastener and each of the timber elements.
@@ -105,7 +105,7 @@ class BallNodeJoint(Joint):
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the beams and this joing belong.
-        elements : list(:class:`~compas_timber.parts.Beam`)
+        elements : list(:class:`~compas_timber.elements.Beam`)
             A list containing beams that whould be joined together
 
         Returns
@@ -161,5 +161,5 @@ class BallNodeJoint(Joint):
             fastener.apply_processings(self)
 
     def restore_beams_from_keys(self, model):
-        self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
-        self.fastener = model.element_by_guid(self._fastener_guid)
+        self.beams = [model[guid] for guid in self._beam_guids]
+        self.fastener = model[self._fastener_guid]

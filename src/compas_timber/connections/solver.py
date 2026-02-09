@@ -109,7 +109,7 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beams : list(:class:`~compas_timber.parts.Beam`)
+        beams : list(:class:`~compas_timber.elements.Beam`)
             A list of beam objects.
         rtree : bool
             When set to True R-tree will be used to search for neighboring beams.
@@ -119,7 +119,7 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
+        list(set(:class:`~compas_timber.elements.Beam`, :class:`~compas_timber.elements.Beam`))
             List containing sets or neightboring pairs beams.
 
         """
@@ -134,9 +134,9 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beam_a : :class:`~compas_timber.parts.Beam`
+        beam_a : :class:`~compas_timber.elements.Beam`
             First beam from intersecting pair.
-        beam_b : :class:`~compas_timber.parts.Beam`
+        beam_b : :class:`~compas_timber.elements.Beam`
             Second beam from intersecting pair.
         max_distance : float, optional
             Maximum distance, in design units, at which two beams are considered intersecting.
@@ -333,9 +333,9 @@ class BeamSolverResult(Data):
     ----------
     topology : :class:`~compas_timber.connections.JointTopology`
         The topology of the intersection.
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam involved in the intersection.
     distance : float
         The distance between the closest points of the two beams.
@@ -346,9 +346,9 @@ class BeamSolverResult(Data):
     ----------
     topology : :class:`~compas_timber.connections.JointTopology`
         The topology of the intersection.
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam involved in the intersection.
     distance : float
         The distance between the closest points of the two beams.

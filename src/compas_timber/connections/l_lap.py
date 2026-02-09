@@ -17,9 +17,9 @@ class LLapJoint(LapJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -28,9 +28,9 @@ class LLapJoint(LapJoint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
@@ -46,14 +46,12 @@ class LLapJoint(LapJoint):
         data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LLapJoint, self).__init__(main_beam, cross_beam, flip_lap_side, **kwargs)
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+        super(LLapJoint, self).__init__(beam_a, beam_b, flip_lap_side, **kwargs)
         self.cut_plane_bias = cut_plane_bias
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
 
         Raises
         ------
@@ -61,49 +59,45 @@ class LLapJoint(LapJoint):
             If the extension could not be calculated.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.beam_a and self.beam_b
 
-        start_main, start_cross = None, None
+        start_a, start_b = None, None
         try:
-            start_main, end_main = self.main_beam.extension_to_plane(self.main_cutting_plane)
-            start_cross, end_cross = self.cross_beam.extension_to_plane(self.cross_cutting_plane)
+            start_a, end_a = self.beam_a.extension_to_plane(self.cutting_plane_a)
+            start_b, end_b = self.beam_b.extension_to_plane(self.cutting_plane_b)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            geometries = [self.cross_cutting_plane] if start_main is not None else [self.main_cutting_plane]
+            geometries = [self.cutting_plane_b] if start_a is not None else [self.cutting_plane_a]
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         tol = TOL.absolute
-        self.main_beam.add_blank_extension(start_main + tol, end_main + tol, self.main_beam_guid)
-        self.cross_beam.add_blank_extension(start_cross + tol, end_cross + tol, self.cross_beam_guid)
+        self.beam_a.add_blank_extension(start_a + tol, end_a + tol, self.beam_a_guid)
+        self.beam_b.add_blank_extension(start_b + tol, end_b + tol, self.beam_b_guid)
 
     def add_features(self):
-        """Adds the required joint features to both beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-
-        """
-        assert self.main_beam and self.cross_beam
+        """Adds the required joint features to both beams."""
+        assert self.beam_a and self.beam_b
 
         if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+            self.beam_a.remove_features(self.features)
+            self.beam_b.remove_features(self.features)
 
         # create lap features
-        negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
-        main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.main_ref_side_index)
-        cross_lap_feature = LapProxy.from_volume_and_beam(negative_volume_cross, self.cross_beam, ref_side_index=self.cross_ref_side_index)
+        negative_volume_a, negative_volume_b = self._create_negative_volumes(self.cut_plane_bias)
+        lap_feature_a = LapProxy.from_volume_and_beam(negative_volume_a, self.beam_a, ref_side_index=self.ref_side_index_a)
+        lap_feature_b = LapProxy.from_volume_and_beam(negative_volume_b, self.beam_b, ref_side_index=self.ref_side_index_b)
 
         # create cutoff features
-        main_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.main_cutting_plane, self.main_beam)
-        cross_cut_feature = JackRafterCutProxy.from_plane_and_beam(self.cross_cutting_plane, self.cross_beam)
+        cut_feature_a = JackRafterCutProxy.from_plane_and_beam(self.cutting_plane_a, self.beam_a)
+        cut_feature_b = JackRafterCutProxy.from_plane_and_beam(self.cutting_plane_b, self.beam_b)
 
-        main_features = [main_cut_feature, main_lap_feature]
-        cross_features = [cross_cut_feature, cross_lap_feature]
+        features_a = [cut_feature_a, lap_feature_a]
+        features_b = [cut_feature_b, lap_feature_b]
 
         # add processings to beams
-        self.main_beam.add_features(main_features)
-        self.cross_beam.add_features(cross_features)
+        self.beam_a.add_features(features_a)
+        self.beam_b.add_features(features_b)
 
         # register processings to the joint
-        self.features.extend(main_features + cross_features)
+        self.features.extend(features_a + features_b)

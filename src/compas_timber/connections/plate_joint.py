@@ -174,8 +174,8 @@ class PlateJoint(Joint, ABC):
         self.restore_plates_from_keys(*args, **kwargs)
 
     def restore_plates_from_keys(self, model):
-        self.plate_a = model.element_by_guid(self.plate_a_guid)
-        self.plate_b = model.element_by_guid(self.plate_b_guid)
+        self.plate_a = model[self.plate_a_guid]
+        self.plate_b = model[self.plate_b_guid]
 
     def flip_roles(self):
         self.plate_a, self.plate_b = self.plate_b, self.plate_a
