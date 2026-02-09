@@ -115,6 +115,7 @@ class Panel(Element):
         data["width"] = self.width
         data["thickness"] = self.height
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data.update(self.attributes)
         data.update(self.plate_geometry.__data__)
         return data
 

@@ -19,14 +19,16 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
 
-if typing.TYPE_CHECKING:
-    from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
+from .btlx import MachiningLimits
 from .btlx import OrientationType
+
+if typing.TYPE_CHECKING:
+    from compas_timber.elements import Beam
 
 
 class Slot(BTLxProcessing):
@@ -47,7 +49,7 @@ class Slot(BTLxProcessing):
         data["angle_ref_point"] = self.angle_ref_point
         data["angle_opp_point"] = self.angle_opp_point
         data["add_angle_opp_point"] = self.add_angle_opp_point
-        data["machining_limits"] = self.machining_limits
+        data["machining_limits"] = self.machining_limits.limits
         return data
 
     # fmt: off
@@ -231,8 +233,15 @@ class Slot(BTLxProcessing):
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        # TODO: figure this one out, a generic class?
-        self._machining_limits = machining_limits
+        if isinstance(machining_limits, MachiningLimits):
+            self._machining_limits = machining_limits
+        elif isinstance(machining_limits, dict):
+            self._machining_limits = MachiningLimits.from_dict(machining_limits)
+        elif machining_limits is None:
+            self._machining_limits = MachiningLimits()
+        else:
+            raise ValueError("Invalid machining limits.")
+
 
     ########################################################################
     # Alternative constructors
@@ -371,7 +380,7 @@ class Slot(BTLxProcessing):
         try:
             cutted_geometry = geometry - subtraction_volume
             return cutted_geometry
-        
+
         except Exception:
             raise FeatureApplicationError(
                 subtraction_volume,
@@ -392,7 +401,7 @@ class Slot(BTLxProcessing):
         -------
         :class:`~compas.geometry.Polyhedron`
             The cutting volume of the slot.
-        """        
+        """
         origin_point = self._origin_point(beam)
         origin_frame = self._origin_frame(beam)
         p1 = self._find_p1(origin_point, origin_frame)
@@ -421,7 +430,7 @@ class Slot(BTLxProcessing):
             Point(*intersection_plane_plane_plane(top_plane, start_plane, front_plane)),   # v3
             Point(*intersection_plane_plane_plane(start_plane, bottom_plane, back_plane)), # v4
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),  # v5
-            Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),    # v6  
+            Point(*intersection_plane_plane_plane(end_plane, top_plane, back_plane)),    # v6
             Point(*intersection_plane_plane_plane(top_plane, start_plane, back_plane)),   # v7
         ]
         faces = [
@@ -436,7 +445,7 @@ class Slot(BTLxProcessing):
 
     def _top_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
 
-        if self.machining_limits["FaceLimitedTop"]:
+        if self.machining_limits.face_limited_top:
             if self.start_depth == 0:
                 top_frame = beam.ref_sides[self.ref_side_index]
             else:
@@ -451,8 +460,8 @@ class Slot(BTLxProcessing):
         return top_frame
 
     def _bottom_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
-        
-        if self.machining_limits["FaceLimitedBottom"]:
+
+        if self.machining_limits.face_limited_bottom:
             if self.start_depth == 0:
                 bottom_frame = slot_frame.copy()
                 bottom_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
@@ -462,14 +471,14 @@ class Slot(BTLxProcessing):
             else:
                 bottom_frame = slot_frame.copy()
                 bottom_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
-                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)   
+                bottom_frame.rotate(-math.radians(self.angle_ref_point), axis=slot_frame.zaxis, point=slot_frame.point)
         else:
             bottom_frame = beam.opp_side(self.ref_side_index)
         return bottom_frame
 
-    def _start_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame :    
-        if self.machining_limits["FaceLimitedStart"]:
-            
+    def _start_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame :
+        if self.machining_limits.face_limited_start:
+
             if self.start_depth == 0:
                 start_frame = slot_frame.copy()
                 start_frame.rotate(math.pi/2, axis=slot_frame.yaxis, point=slot_frame.point)
@@ -488,11 +497,11 @@ class Slot(BTLxProcessing):
         else:
             start_frame = beam.ref_sides[4]
             start_frame.point = beam.centerline.start
-        return start_frame  
+        return start_frame
 
-    def _end_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:  
-        
-        if self.machining_limits["FaceLimitedEnd"]:
+    def _end_frame(self, beam: Beam, slot_frame: Frame, p3: Point) -> Frame:
+
+        if self.machining_limits.face_limited_end:
 
             if self.start_depth == 0:
                 end_frame = slot_frame.copy()
@@ -511,15 +520,15 @@ class Slot(BTLxProcessing):
                 else:
                     end_frame = beam.ref_sides[5]
                     end_frame.point = beam.centerline.end
-        else: 
+        else:
             end_frame = beam.ref_sides[5]
         return end_frame
 
     def _front_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
-        if self.machining_limits["FaceLimitedFront"]:
+        if self.machining_limits.face_limited_front:
             if self.start_depth == 0:
                 front_frame = slot_frame.copy()
-                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))      
+                front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
             else:
                 front_frame = slot_frame.copy()
                 front_frame.translate(slot_frame.zaxis * (self.thickness / 2))
@@ -528,7 +537,7 @@ class Slot(BTLxProcessing):
         return front_frame
 
     def _back_frame(self, beam: Beam, slot_frame: Frame) -> Frame:
-        if self.machining_limits["FaceLimitedBack"]:
+        if self.machining_limits.face_limited_back:
 
             if self.start_depth == 0:
                 back_frame = slot_frame.copy()
@@ -630,10 +639,10 @@ class Slot(BTLxProcessing):
         distance_to_p4_from_p1  = self.depth / math.sin(angle_ref_point_radians)
         vector_to_p4 = slot_frame.yaxis.rotated(-angle_ref_point_radians, axis=slot_frame.zaxis, point=slot_frame.point).unitized()
         p4 = (p1 + vector_to_p4 * distance_to_p4_from_p1)
-        return p4    
+        return p4
 
     def _compute_slot_frame(self, p1: Point, origin_frame: Frame) -> Frame:
-        """ 
+        """
         Compute the frame aligned with the slot at point p1.
         This method applies the angle and inclination parameters to the frame.
         """
@@ -641,7 +650,7 @@ class Slot(BTLxProcessing):
         assert self.start_depth >= 0
 
         # create and adjust the frame in P1 with
-        # the polyline will be created on this frame        
+        # the polyline will be created on this frame
         if self.start_depth == 0:
             slot_frame_untrasformed = Frame(p1, xaxis=-origin_frame.zaxis, yaxis=origin_frame.xaxis)
         else:
@@ -655,9 +664,9 @@ class Slot(BTLxProcessing):
 
         if self.orientation == OrientationType.END:
             angle_radians *= -1
-            inclination_radians *= -1   
+            inclination_radians *= -1
         # set the angle parameter
-        slot_frame = slot_frame_untrasformed.rotated(-angle_radians, axis=slot_frame_untrasformed.xaxis, point=p1)       
+        slot_frame = slot_frame_untrasformed.rotated(-angle_radians, axis=slot_frame_untrasformed.xaxis, point=p1)
         # set the inclination parameter
         slot_frame = slot_frame.rotated(inclination_radians, axis=slot_frame_untrasformed.yaxis, point=p1)
 
@@ -720,5 +729,5 @@ class SlotParams(BTLxProcessingParams):
         result["AngleRefPoint"] = "{:.{prec}f}".format(float(self._instance.angle_ref_point), prec=TOL.precision)
         result["AngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.angle_opp_point), prec=TOL.precision)
         result["AddAngleOppPoint"] = "{:.{prec}f}".format(float(self._instance.add_angle_opp_point), prec=TOL.precision)
-        result["MachiningLimits"] = {"FaceLimitedStart": "no", "FaceLimitedEnd": "no"}
+        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
         return result
