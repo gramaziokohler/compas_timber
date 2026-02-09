@@ -67,9 +67,9 @@ class TimberElement(Element, abc.ABC):
     def __data__(self):
         data = {}
         data["frame"] = self.frame
-        data["length"] = self.length
-        data["width"] = self.width
-        data["height"] = self.height
+        data["length"] = self._length
+        data["width"] = self._width
+        data["height"] = self._height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
         data.update(self.attributes)
         return data
@@ -78,9 +78,9 @@ class TimberElement(Element, abc.ABC):
         super().__init__(transformation=Transformation.from_frame(frame), features=features)
         self.attributes = {}
         self.attributes.update(kwargs)
-        self.length = length
-        self.width = width
-        self.height = height
+        self._length = length
+        self._width = width
+        self._height = height
         self._blank = None
         self._ref_frame = None
         self.debug_info = []
@@ -94,6 +94,21 @@ class TimberElement(Element, abc.ABC):
     def reset_computed_properties(self):
         """Reset all computed/cached properties."""
         self._reset_computed_dummy()
+
+    @property
+    def length(self):
+        x_scale_factor = self.modeltransformation.scale.matrix[0][0]
+        return self._length * x_scale_factor
+
+    @property
+    def width(self):
+        y_scale_factor = self.modeltransformation.scale.matrix[1][1]
+        return self._width * y_scale_factor
+
+    @property
+    def height(self):
+        z_scale_factor = self.modeltransformation.scale.matrix[2][2]
+        return self._height * z_scale_factor
 
     @property
     def is_beam(self):

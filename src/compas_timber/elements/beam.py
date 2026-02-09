@@ -79,9 +79,10 @@ class Beam(TimberElement):
     @property
     def __data__(self):
         data = super(Beam, self).__data__
-        data["width"] = self.width
-        data["height"] = self.height
-        data["length"] = self.length
+        data["width"] = self._width
+        data["height"] = self._height
+        data["length"] = self._length
+        data["attributes"] = copy.deepcopy(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
@@ -92,15 +93,10 @@ class Beam(TimberElement):
 
     def __repr__(self):
         # type: () -> str
-        return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self.length, self.width, self.height)
+        return "Beam(frame={!r}, length={}, width={}, height={})".format(self.frame, self._length, self._width, self._height)
 
     def __str__(self):
-        return "Beam {:.3f} x {:.3f} x {:.3f} at {}".format(
-            self.width,
-            self.height,
-            self.length,
-            self.frame,
-        )
+        return f"Beam name: '{self.name}'  l:{self.length:.3f} w:{self.width:.3f}  h:{self.height:.3f}"
 
     # ==========================================================================
     # Computed attributes
@@ -114,8 +110,8 @@ class Beam(TimberElement):
     def shape(self):
         """The shape of the beam in model space."""
         # type: () -> Box
-        shape = Box(self.length, self.width, self.height)
-        shape.translate(Vector.Xaxis() * self.length * 0.5)
+        shape = Box(self._length, self._width, self._height)
+        shape.translate(Vector.Xaxis() * self._length * 0.5)
         return shape.transformed(self.modeltransformation)
 
     @property
@@ -124,24 +120,33 @@ class Beam(TimberElement):
         Compared to `shape`, this box includes any extensions added to the beam."""
         # type: () -> Box
         if not self._blank:
+            # NOTE: the end result is transfomed, so we need only unscaled attributes here
             start, _ = self._resolve_blank_extensions()
-            blank = Box(self.blank_length, self.width, self.height)
-            blank.translate(Vector.Xaxis() * ((self.blank_length * 0.5) - start))
+            unscaled_blank_length = self._calculate_blank_length()
+            blank = Box(unscaled_blank_length, self._width, self._height)
+            blank.translate(Vector.Xaxis() * ((unscaled_blank_length * 0.5) - start))
             self._blank = blank.transformed(self.modeltransformation)
         return self._blank
 
     @property
     def blank_length(self):
         # type: () -> float
-        start, end = self._resolve_blank_extensions()
-        return self.length + start + end
+        unscaled_blank_length = self._calculate_blank_length()
+        x_scale_factor = self.modeltransformation.scale.matrix[0][0]
+        return unscaled_blank_length * x_scale_factor
 
     @property
     def centerline(self):
         """The centerline of the beam in model space."""
         # type: () -> Line
-        line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self.length)
+        line = Line.from_point_direction_length(Point(0, 0, 0), Vector.Xaxis(), self._length)
         return line.transformed(self.modeltransformation)
+
+    def _calculate_blank_length(self) -> float:
+        # type: () -> float
+        """Calculate the blank length including any extensions added to the beam."""
+        start, end = self._resolve_blank_extensions()
+        return self._length + start + end
 
     # ==========================================================================
     # Implementations of abstract methods
@@ -374,10 +379,10 @@ class Beam(TimberElement):
         de = 0.0
         if side == "start":
             tmin = min(x.keys())
-            ds = tmin * self.length  # should be negative
+            ds = tmin * self._length  # should be negative
         elif side == "end":
             tmax = max(x.keys())
-            de = (tmax - 1.0) * self.length
+            de = (tmax - 1.0) * self._length
         return -ds, de
 
     def _resolve_blank_extensions(self):

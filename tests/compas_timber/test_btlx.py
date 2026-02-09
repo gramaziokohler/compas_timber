@@ -408,6 +408,65 @@ def test_btlx_rawpart_unique_functionalities():
     assert btlx_rawpart.part_refs[0]["frame"] == test_frame
 
 
+def test_btlx_transformed_model_reflects_new_position(namespaces):
+    from compas.geometry import Translation
+
+    # Create a baseline model to get initial coordinates
+    model_base = TimberModel()
+    beam_base = Beam(Frame.worldXY(), length=1000, width=100, height=200)
+    model_base.add_element(beam_base)
+
+    writer = BTLxWriter()
+    root_base = ET.fromstring(writer.model_to_xml(model_base))
+    part_base = root_base.find("d2m:Project", namespaces).find("d2m:Parts", namespaces).find("d2m:Part", namespaces)
+    trans_base = part_base.find("d2m:Transformations", namespaces).find("d2m:Transformation", namespaces)
+    pos_base = trans_base.find("d2m:Position", namespaces).find("d2m:ReferencePoint", namespaces)
+
+    base_x = float(pos_base.get("X"))
+    base_y = float(pos_base.get("Y"))
+    base_z = float(pos_base.get("Z"))
+
+    # Create transformed model
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=200)
+    model.add_element(beam)
+
+    z_move = 500.0
+    T = Translation.from_vector([0, 0, z_move])
+    model.transform(T)
+
+    root = ET.fromstring(writer.model_to_xml(model))
+    part = root.find("d2m:Project", namespaces).find("d2m:Parts", namespaces).find("d2m:Part", namespaces)
+    trans = part.find("d2m:Transformations", namespaces).find("d2m:Transformation", namespaces)
+    pos = trans.find("d2m:Position", namespaces).find("d2m:ReferencePoint", namespaces)
+
+    # Validate relative change
+    assert float(pos.get("X")) == pytest.approx(base_x)
+    assert float(pos.get("Y")) == pytest.approx(base_y)
+    assert float(pos.get("Z")) == pytest.approx(base_z + z_move)
+
+
+def test_btlx_scaled_model_reflects_new_dimensions(namespaces):
+    from compas.geometry import Scale
+
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    model.add_element(beam)
+
+    S = Scale.from_factors([2.0, 2.0, 2.0])
+    model.transform(S)
+
+    writer = BTLxWriter()
+    btlx_str = writer.model_to_xml(model)
+    root = ET.fromstring(btlx_str)
+
+    project = root.find("d2m:Project", namespaces)
+    part = project.find("d2m:Parts", namespaces).find("d2m:Part", namespaces)
+
+    # Validate that dimensions are scaled
+    assert float(part.get("Length")) == pytest.approx(2000.0)
+    assert float(part.get("Width")) == pytest.approx(200.0)
+    assert float(part.get("Height")) == pytest.approx(200.0)
 def test_rawpart_attributes():
     """Test that BTLxRawpart has correct attributes and GUID handling."""
     stock = BeamStock(length=2000, cross_section=(100, 100))
