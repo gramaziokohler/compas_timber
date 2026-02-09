@@ -86,10 +86,13 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
     assert len(part_elements) == len(test_model.beams)
 
     # Validate each Part element
-    for part, beam in zip(part_elements, test_model.beams):
+    for i, (part, beam) in enumerate(zip(part_elements, test_model.beams)):
         assert part.get("Length") == "{:.3f}".format(beam.blank_length)
         assert part.get("Height") == "{:.3f}".format(beam.height)
         assert part.get("Width") == "{:.3f}".format(beam.width)
+        assert part.get("OrderNumber") == str(i)
+        assert part.get("ElementNumber") == str(beam.guid)[:4]
+        assert part.get("Annotation") == f"{beam.name}-{str(beam.guid)[:4]}"
 
 
 def test_btlx_processings(resulting_btlx, test_model, namespaces):
@@ -464,3 +467,25 @@ def test_btlx_scaled_model_reflects_new_dimensions(namespaces):
     assert float(part.get("Length")) == pytest.approx(2000.0)
     assert float(part.get("Width")) == pytest.approx(200.0)
     assert float(part.get("Height")) == pytest.approx(200.0)
+def test_rawpart_attributes():
+    """Test that BTLxRawpart has correct attributes and GUID handling."""
+    stock = BeamStock(length=2000, cross_section=(100, 100))
+    # Assign a specific name to the stock for testing
+    stock.name = "TestStock"
+    rawpart = BTLxRawpart(stock, order_number=7)
+
+    # Check basic attributes
+    assert rawpart.length == 2000
+    assert rawpart.width == 100
+    assert rawpart.height == 100
+    assert rawpart.order_num == 7
+
+    # Check GUID generation and format
+    assert hasattr(rawpart, "part_guid")
+    assert isinstance(rawpart.part_guid, str)
+
+    # Check ElementNumber and Annotation
+    base_attr = rawpart.base_attr
+    assert base_attr["OrderNumber"] == "7"
+    assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
+    assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])

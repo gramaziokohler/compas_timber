@@ -1,3 +1,5 @@
+from pytest import raises
+
 from copy import deepcopy
 from compas.data import json_dumps
 from compas.data import json_loads
@@ -471,3 +473,48 @@ def test_model_transform_and_cache_invalidation():
 
     assert original_transformation != beam.modeltransformation
     assert beam.modeltransformation == translation * original_transformation
+
+
+def test_get_element_returns_none_for_invalid_guid():
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
+    model.add_element(beam)
+    result = model.get_element("invalid-guid")
+    assert result is None
+
+
+def test_get_element_returns_correct_element():
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
+    model.add_element(beam)
+    result = model.get_element(str(beam.guid))
+    assert result is beam
+
+
+def test_getitem_raises_keyerror_for_invalid_guid():
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
+    model.add_element(beam)
+
+    with raises(KeyError):
+        _ = model["invalid-guid"]
+
+
+def test_getitem_returns_correct_element():
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
+    model.add_element(beam)
+    result = model[str(beam.guid)]
+    assert result is beam
+
+
+def test_element_by_guid_deprecated_warning(mocker):
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
+    model.add_element(beam)
+
+    warn_spy = mocker.spy(model, "element_by_guid")
+
+    _ = model.element_by_guid(str(beam.guid))
+
+    warn_spy.assert_called_once()

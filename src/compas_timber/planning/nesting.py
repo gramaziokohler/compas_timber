@@ -2,6 +2,45 @@ from warnings import warn
 
 from compas.data import Data
 from compas.geometry import Frame
+from compas.tolerance import TOL
+
+
+class NestedElementData(Data):
+    """
+    Data container for elements nested within stock pieces.
+
+    Parameters
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The position frame of the element within the stock.
+    key : str, optional
+        A human-readable identifier for the element.
+    length : float, optional
+        The length of the element (for beams).
+
+    Attributes
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The position frame of the element within the stock.
+    key : str or None
+        A human-readable identifier for the element.
+    length : float or None
+        The length of the element (for beams), None if not applicable.
+    """
+
+    def __init__(self, frame, key=None, length=None):
+        super(NestedElementData, self).__init__()
+        self.frame = frame
+        self.key = key
+        self.length = length
+
+    @property
+    def __data__(self):
+        return {
+            "frame": self.frame,
+            "key": self.key,
+            "length": self.length,
+        }
 
 
 class Stock(Data):
@@ -18,8 +57,9 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
+
 
     Attributes
     ----------
@@ -31,8 +71,8 @@ class Stock(Data):
         Height of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame]
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
     """
 
     def __init__(self, length, width, height, spacing=0.0, element_data=None):
@@ -41,7 +81,7 @@ class Stock(Data):
         self.width = width
         self.height = height
         self.spacing = spacing
-        self.element_data = element_data or {}  # {guid: Frame}
+        self.element_data = element_data or {}
 
     @property
     def __data__(self):
@@ -113,8 +153,8 @@ class BeamStock(Stock):
         Cross-section dimensions (width, height).
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
 
 
     Attributes
@@ -125,8 +165,8 @@ class BeamStock(Stock):
         Cross-section dimensions sorted in ascending order for consistent comparison.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
     """
 
     def __init__(self, length, cross_section, spacing=0.0, element_data=None):
@@ -182,8 +222,11 @@ class BeamStock(Stock):
         bool
             True if beam is compatible with this stock, False otherwise
         """
-        beam_cross_section = [beam.width, beam.height]
-        return set(beam_cross_section) == set(self.cross_section)
+        # Use a tolerance-based comparison for cross-section dimensions, regardless of order.
+        # Compare as sets, but with tolerance: both must have the same two values, order-insensitive.
+        a, b = sorted(self.cross_section)
+        x, y = sorted([beam.width, beam.height])
+        return TOL.is_close(a, x) and TOL.is_close(b, y)
 
     def add_element(self, beam):
         """
@@ -200,12 +243,17 @@ class BeamStock(Stock):
             If beam doesn't fit in remaining space
         """
         if not self.can_fit_element(beam):
-            raise ValueError(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
+            warn(f"Beam with length {beam.blank_length} doesn't fit in remaining space {self._remaining_length}")
+            return
         # Get position frame based on orientation
         position_frame = self._get_position_frame(beam)
-        # Store element data
-        self.element_data[str(beam.guid)] = position_frame
         self._current_x_position += beam.blank_length + self.spacing  # Update position for next beam
+        # Store element data using NestedElementData type
+        self.element_data[str(beam.guid)] = NestedElementData(
+            frame=position_frame,
+            key=beam.name + "-" + str(beam.guid)[:4],
+            length=beam.blank_length,
+        )
 
     def _get_position_frame(self, beam):
         # Get the position frame for a beam that is being added to this stock.
@@ -236,8 +284,9 @@ class PlateStock(Stock):
         Thickness of the stock piece.
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`], optional
+        Dictionary mapping element GUID (str) to nested element data.
+
 
     Attributes
     ----------
@@ -247,8 +296,9 @@ class PlateStock(Stock):
         Thickness of the stock piece
     spacing : float, optional
         Spacing tolerance for cutting operations (kerf width, etc.).
-    element_data : dict[str, Frame], optional
-        Dictionary mapping element GUIDs to their assigned position frames.
+    element_data : dict[str, :class:`NestedElementData`]
+        Dictionary mapping element GUID (str) to nested element data.
+
     """
 
     def __init__(self, dimensions, thickness, spacing=0.0, element_data=None):
@@ -275,24 +325,34 @@ class NestingResult(Data):
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
-
+    tolerance : :class:`~compas.tolerance.Tolerance`, optional
+        The tolerance configuration used for this model. TOL if none provided.
     Attributes
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
+    tolerance : :class:`~compas.tolerance.Tolerance`
+        The tolerance configuration used for this model. TOL if none provided.
     total_material_volume : float
         Total material volume across all stocks in cubic millimeters
     total_stock_pieces : dict
         Detailed report of stock pieces needed with their dimensions
+    summary : str
+        Human-readable summary of the nesting result
     """
 
-    def __init__(self, stocks):
+    def __init__(self, stocks, tolerance=None):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
+        self._tolerance = tolerance or TOL
+
+    @property
+    def tolerance(self):
+        return self._tolerance
 
     @property
     def __data__(self):
-        return {"stocks": self.stocks}
+        return {"stocks": self.stocks, "tolerance": self.tolerance}
 
     @property
     def total_material_volume(self):
@@ -307,15 +367,21 @@ class NestingResult(Data):
         for stock in self.stocks:
             if isinstance(stock, BeamStock):
                 # Format: "60x120x2000mm" (width x height x length)
-                dimensions_key = f"{int(stock.cross_section[0])}x{int(stock.cross_section[1])}x{int(stock.length)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
+                )
                 stock_type = "BeamStock"
             elif isinstance(stock, PlateStock):
                 # Format: "1200x2400x18mm" (length x width x thickness)
-                dimensions_key = f"{int(stock.dimensions[0])}x{int(stock.dimensions[1])}x{int(stock.height)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.dimensions[0]), float(stock.dimensions[1]), float(stock.thickness), prec=self.tolerance.precision
+                )
                 stock_type = "PlateStock"
             else:
                 # Fallback for other stock types
-                dimensions_key = f"{int(stock.length)}x{int(stock.width)}x{int(stock.height)}" + "mm"
+                dimensions_key = "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                    self.tolerance.unit, float(stock.length), float(stock.width), float(stock.height), prec=self.tolerance.precision
+                )
                 stock_type = type(stock).__name__
 
             # Create nested structure: {stock_type: {dimensions: count}}
@@ -328,6 +394,35 @@ class NestingResult(Data):
             stock_report[stock_type][dimensions_key] += 1
 
         return stock_report
+
+    @property
+    def summary(self):
+        """Return a human-readable summary of the nesting result."""
+        lines = []
+        for i, stock in enumerate(self.stocks):
+            lines.append(f"{stock.__class__.__name__}_{i}:")
+            if isinstance(stock, BeamStock):
+                lines.append(
+                    "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                        self.tolerance.unit, float(stock.cross_section[0]), float(stock.cross_section[1]), float(stock.length), prec=self.tolerance.precision
+                    )
+                )
+                beam_keys = []
+                lengths = []
+                for data in stock.element_data.values():
+                    beam_keys.append(data.key)
+                    lengths.append(data.length)
+                formatted_lengths = ["{:.{prec}f}".format(len, prec=self.tolerance.precision) for len in lengths]
+                waste = stock.length - sum(lengths) if lengths else stock.length
+                # Formatted output
+                lines.append(f"BeamKeys: {beam_keys}")
+                lines.append("BeamLengths({}): [{}]".format(self.tolerance.unit, ", ".join(formatted_lengths)))
+                lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
+                lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
+                lines.append("--------")
+            else:
+                raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
+        return "\n".join(lines)
 
 
 class BeamNester(object):
@@ -421,7 +516,7 @@ class BeamNester(object):
             stocks = self._nest_beam_collection(self.model.beams, fast)
             nesting_stocks.extend(stocks)
 
-        return NestingResult(nesting_stocks)
+        return NestingResult(nesting_stocks, tolerance=self.model.tolerance)
 
     def _nest_beam_collection(self, beams, fast=True):
         # Nest a collection of beams into stock pieces.
@@ -459,7 +554,7 @@ class BeamNester(object):
             # Collect unique cross-sections from unnested beams
             beam_details = set((beam.width, beam.height) for beam in unnested_beams)
             # Format each cross-section as a string
-            formatted_sections = ["{}x{}mm".format(int(width), int(height)) for width, height in beam_details]
+            formatted_sections = ["{}x{}{}".format(width, height, self.model.tolerance.unit) for width, height in beam_details]
 
             warn(
                 "Found {} beam(s) incompatible with available stock catalog. Beams with the following cross-sections will be skipped during nesting: {}".format(  # noqa: E501

@@ -1,5 +1,4 @@
 from compas.geometry import Plane
-from compas.geometry import Transformation
 from compas.geometry import intersection_plane_plane
 
 from .joint import JointTopology
@@ -18,5 +17,5 @@ class PlateMiterJoint(PlateJoint):
         line_a = intersection_plane_plane(self.a_planes[0], self.b_planes[0])
         line_b = intersection_plane_plane(self.a_planes[1], self.b_planes[1])
         plane = Plane.from_three_points(line_a[0], line_a[1], line_b[0])
-        self.plate_a.set_extension_plane(self.a_segment_index, plane.transformed(Transformation.from_frame(self.plate_a.frame).inverse()))
-        self.plate_b.set_extension_plane(self.b_segment_index, plane.transformed(Transformation.from_frame(self.plate_b.frame).inverse()))
+        self.plate_a.set_extension_plane(self.a_segment_index, plane)
+        self.plate_b.set_extension_plane(self.b_segment_index, plane)
