@@ -4,7 +4,6 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas_timber.elements import Beam
 from compas_timber.connections import LMiterJoint
-from compas_timber.connections import MiterType
 from compas_timber.model import TimberModel
 from compas.tolerance import TOL
 
@@ -94,10 +93,10 @@ def test_L_miter_joint_bisector_extensions_big(beam_a_big, perp_beam):
 
 
 def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
-    joint = LMiterJoint(beam_a_big, perp_beam, miter_type=MiterType.REF_SURFACES)
+    joint = LMiterJoint(beam_a_big, perp_beam, ref_side_miter=True)
     joint.add_extensions()
     # bisector miter at 90deg should extend each beam by half of the other beam's width
-    assert joint.miter_type == "ref_surfaces"
+    assert joint.ref_side_miter
     assert TOL.is_close(beam_a_big.blank_length, 215)
     assert TOL.is_close(perp_beam.blank_length, 240)
 
@@ -105,7 +104,7 @@ def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
     joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     joint.add_extensions()
-    assert joint.miter_type == "user_defined"
+    assert not joint.ref_side_miter 
     assert TOL.is_close(beam_a.blank_length, 200)
     assert TOL.is_close(angle_beam.blank_length, 215)
 
@@ -113,7 +112,7 @@ def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
     joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, -1, 0]))
     joint.add_extensions()
-    assert joint.miter_type == "user_defined"
+    assert not joint.ref_side_miter 
     assert TOL.is_close(beam_a.blank_length, 215)
     assert TOL.is_close(angle_beam.blank_length, 200)
 
@@ -156,7 +155,7 @@ def test_L_miter_joint_bisector_features_clean_non_planar(beam_a, non_planar_bea
 def test_l_miter_joint_serialization(beam_a, perp_beam):
     model = TimberModel()
     model.add_elements([beam_a, perp_beam])
-    joint = LMiterJoint.create(model, beam_a, perp_beam, miter_type=MiterType.REF_SURFACES, clean=True)
+    joint = LMiterJoint.create(model, beam_a, perp_beam, ref_side_miter=True, clean=True)
     assert list(model.joints)[0] == joint
     model_copy = json_loads(json_dumps(model))
     assert len(list(model_copy.joints)) == 1
@@ -165,8 +164,8 @@ def test_l_miter_joint_serialization(beam_a, perp_beam):
     perp_beam_copy = joint_copy.beam_b
     assert joint.beam_a.guid == joint_copy.beam_a.guid
     assert joint.beam_b.guid == joint_copy.beam_b.guid
-    assert joint.miter_type == MiterType.REF_SURFACES
-    assert joint.miter_type == joint_copy.miter_type
+    assert joint.ref_side_miter
+    assert joint.ref_side_miter == joint_copy.ref_side_miter
     assert joint.clean and joint_copy.clean
     assert len(beam_a_copy.features) == 0
     assert len(perp_beam_copy.features) == 0

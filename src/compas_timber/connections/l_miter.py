@@ -19,12 +19,6 @@ from .solver import JointTopology
 from .utilities import point_centerline_towards_joint
 
 
-class MiterType:
-    BISECTOR = "bisector"
-    REF_SURFACES = "ref_surfaces"
-    USER_DEFINED = "user_defined"
-
-
 class LMiterJoint(Joint):
     """Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane
     at the bisector angle between the beams' centerlines.
@@ -75,20 +69,20 @@ class LMiterJoint(Joint):
         data["beam_a_guid"] = self.beam_a_guid
         data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
-        data["miter_type"] = self.miter_type
+        data["ref_side_miter"] = self.ref_side_miter
         data["miter_plane"] = self.miter_plane
         data["clean"] = self.clean
 
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, miter_type=MiterType.BISECTOR, clean=False, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
         super(LMiterJoint, self).__init__(**kwargs)
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
         self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
         self.miter_plane = miter_plane
-        self.miter_type = miter_type if not miter_plane else MiterType.USER_DEFINED
+        self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
         self.clean = clean
         self.features = []
@@ -107,6 +101,7 @@ class LMiterJoint(Joint):
 
     def _get_cut_planes_from_ref_sides(self):
         # get the cutting planes from the reference sides of the beams
+        assert self.beam_a and self.beam_b
 
         ref_side_main = beam_ref_side_incidence(self.beam_a, self.beam_b)
         back_a = Plane.from_frame(self.beam_a.ref_sides[min(ref_side_main, key=ref_side_main.get)])
@@ -123,11 +118,11 @@ class LMiterJoint(Joint):
 
     def _get_cutting_planes(self):
         assert self.beam_a and self.beam_b
-        # miter_type = MiterType.USER_DEFINED
+        # user defined miter plane
         if self.miter_plane:
             return self._get_cut_planes_from_miter_plane(self.miter_plane.transformed(self.beam_a.modeltransformation))
-        # miter_type = MiterType.REF_SURFACES
-        elif self.miter_type == MiterType.REF_SURFACES:
+        # ref_side_miter = True
+        elif self.ref_side_miter:
             miter_plane = self._get_cut_planes_from_ref_sides()
             return self._get_cut_planes_from_miter_plane(miter_plane)
         # miter_type = MiterType.BISECTOR
