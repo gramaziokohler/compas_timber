@@ -21,7 +21,6 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication.free_contour import TYPE_CHECKING
@@ -67,7 +66,7 @@ class Pocket(BTLxProcessing):
         The tilt angle of the opposing side. 0.1 < tilt_opp_side < 179.9.
     tilt_start_side : float
         The tilt angle of the start side. 0.1 < tilt_start_side < 179.9.
-    machining_limits : dict, optional
+    machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
         The machining limits for the cut. Default is None
 
     """
@@ -90,7 +89,7 @@ class Pocket(BTLxProcessing):
         data["tilt_end_side"] = self.tilt_end_side
         data["tilt_opp_side"] = self.tilt_opp_side
         data["tilt_start_side"] = self.tilt_start_side
-        data["machining_limits"] = self.machining_limits
+        data["machining_limits"] = self.machining_limits.limits
         return data
 
     # fmt: off
@@ -109,7 +108,7 @@ class Pocket(BTLxProcessing):
         tilt_end_side: float = 90.0,
         tilt_opp_side: float = 90.0,
         tilt_start_side: float = 90.0,
-        machining_limits: dict = None,
+        machining_limits: Optional[MachiningLimits] = None,
         **kwargs
     ):
         super(Pocket, self).__init__(**kwargs)
@@ -141,7 +140,7 @@ class Pocket(BTLxProcessing):
         self.tilt_end_side: float = tilt_end_side
         self.tilt_opp_side: float = tilt_opp_side
         self.tilt_start_side: float = tilt_start_side
-        self.machining_limits: dict = machining_limits
+        self.machining_limits: MachiningLimits = machining_limits
 
     ########################################################################
     # Properties
@@ -282,20 +281,19 @@ class Pocket(BTLxProcessing):
         self._tilt_start_side = tilt_start_side
 
     @property
-    def machining_limits(self) -> dict:
+    def machining_limits(self) -> MachiningLimits:
         return self._machining_limits
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        if not isinstance(machining_limits, dict):
-            raise ValueError("Machining limits must be a dictionary.")
-        for key, value in machining_limits.items():
-            if key not in MachiningLimits.EXPECTED_KEYS:
-                raise ValueError("The key must be one of the following: ", {self.EXPECTED_KEYS})
-            if not isinstance(value, bool):
-                raise ValueError("The values must be a boolean.")
-        self._machining_limits = machining_limits
-
+        if isinstance(machining_limits, MachiningLimits):
+            self._machining_limits = machining_limits
+        elif isinstance(machining_limits, dict):
+            self._machining_limits = MachiningLimits.from_dict(machining_limits)
+        elif machining_limits is None:
+            self._machining_limits = MachiningLimits()
+        else:
+            raise ValueError("Invalid machining limits.")
 
     ########################################################################
     # Alternative constructors
@@ -317,7 +315,7 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
             The element that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -424,7 +422,7 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
             The element that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -490,7 +488,7 @@ class Pocket(BTLxProcessing):
         return angle_vectors(-bottom_plane.normal, plane.normal, deg=True)
 
     @staticmethod
-    def _define_machining_limits(planes, element, ref_side_index) -> dict:
+    def _define_machining_limits(planes, element, ref_side_index) -> MachiningLimits:
         # define machining limits based on the planes
         ref_sides = [Plane.from_frame(frame) for frame in element.ref_sides]
         start_side, end_side = ref_sides[-2:]
@@ -506,7 +504,7 @@ class Pocket(BTLxProcessing):
         machining_limits.face_limited_back = is_point_behind_plane(back_plane.point, back_side)
         machining_limits.face_limited_bottom = is_point_behind_plane(bottom_plane.point, opp_side)
 
-        return machining_limits.limits
+        return machining_limits
 
 
     ########################################################################
@@ -621,53 +619,51 @@ class Pocket(BTLxProcessing):
         assert self.tilt_start_side
         assert self.machining_limits
 
-        tol = Tolerance()
-        tol.absolute = 1e-3
+        tol = 1e-3  # TODO: use TOL.absolute if possible, but do not manipulate the global tolerance value
 
         # get bottom frame
         bottom_frame = self._bottom_frame_from_params_and_element(element)
-
         # get top frame
-        if self.machining_limits["FaceLimitedTop"]:
+        if self.machining_limits.face_limited_top:
             top_frame = bottom_frame.translated(-bottom_frame.zaxis * self.start_depth)
             top_frame.xaxis = -top_frame.xaxis
         else:
             top_frame = element.ref_sides[self.ref_side_index]
-            top_frame.translate(top_frame.normal * tol.absolute)
+            top_frame.translate(top_frame.normal * tol)
 
         # tilt start frame
-        if self.machining_limits["FaceLimitedStart"]:
+        if self.machining_limits.face_limited_start:
             start_frame = bottom_frame.rotated(math.radians(180-self.tilt_start_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             start_frame = element.ref_sides[4]
-            start_frame.translate(start_frame.normal * tol.absolute)
+            start_frame.translate(start_frame.normal * tol)
 
         # tilt end frame
-        if self.machining_limits["FaceLimitedEnd"]:
+        if self.machining_limits.face_limited_end:
             end_frame = bottom_frame.translated(bottom_frame.yaxis * self.length)
             end_frame.rotate(math.radians(180-self.tilt_end_side), -end_frame.xaxis, point=end_frame.point)
         else:
             end_frame = element.ref_sides[5]
-            end_frame.translate(end_frame.normal * tol.absolute)
+            end_frame.translate(end_frame.normal * tol)
 
         # Rotate the bottom frame so its xaxis is aligned to the axis of rotation.
         bottom_frame.rotate(math.radians(180-self.internal_angle), -bottom_frame.normal, point=bottom_frame.point)
 
         # tilt front frame
-        if self.machining_limits["FaceLimitedFront"]:
+        if self.machining_limits.face_limited_front:
             front_frame = bottom_frame.rotated(-math.radians(self.tilt_ref_side), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = element.front_side(self.ref_side_index)
-            front_frame.translate(front_frame.normal * tol.absolute)
+            front_frame.translate(front_frame.normal * tol)
 
         # tilt back frame
-        if self.machining_limits["FaceLimitedBack"]:
+        if self.machining_limits.face_limited_back:
             back_frame = bottom_frame.rotated(math.radians(180 - self.tilt_opp_side), -bottom_frame.xaxis, point=bottom_frame.point)
             # back_frame.translate(back_frame.normal * self.width)
             back_frame.translate(bottom_frame.yaxis * self.width)
         else:
             back_frame = element.back_side(self.ref_side_index)
-            back_frame.translate(back_frame.normal * tol.absolute)
+            back_frame.translate(back_frame.normal * tol)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
@@ -771,7 +767,7 @@ class PocketParams(BTLxProcessingParams):
         result["TiltEndSide"] = "{:.{prec}f}".format(float(self._instance.tilt_end_side), prec=TOL.precision)
         result["TiltOppSide"] = "{:.{prec}f}".format(float(self._instance.tilt_opp_side), prec=TOL.precision)
         result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
+        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
         return result
 
 
@@ -788,7 +784,7 @@ class PocketProxy(object):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
             The element that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -836,7 +832,7 @@ class PocketProxy(object):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
             The element that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.

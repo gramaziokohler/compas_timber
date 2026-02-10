@@ -1,4 +1,3 @@
-import copy
 import math
 
 from compas.geometry import Box
@@ -83,14 +82,10 @@ class Beam(TimberElement):
         data["width"] = self.width
         data["height"] = self.height
         data["length"] = self.length
-        data["attributes"] = copy.deepcopy(self.attributes)
         return data
 
     def __init__(self, frame, length, width, height, **kwargs):
         super(Beam, self).__init__(frame=frame, length=length, width=width, height=height, **kwargs)
-
-        self.attributes = {}
-        self.attributes.update(kwargs)
         self._blank_extensions = {}
         self.debug_info = []
         self._blank = None
