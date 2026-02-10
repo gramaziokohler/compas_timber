@@ -1,12 +1,13 @@
 from abc import ABC
 from abc import abstractmethod
 
+from compas.data import Data
 from compas.geometry import Frame
 
 from compas_timber.fasteners.fastener import Fastener
 
 
-class JointFastener(ABC):
+class JointFastener(Data, ABC):
     def __init__(self, base_fastener: Fastener, **kwargs):
         super().__init__(**kwargs)
         self.base_fastener = base_fastener

@@ -7,6 +7,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import cross_vectors
 
+from compas_timber.connections.joint_fastener import JointFastener
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.utils import intersection_line_line_param
@@ -15,31 +16,16 @@ if TYPE_CHECKING:
     from compas_timber.fasteners.fastener import Fastener
 
 
-class TButtJointPlateFastener(TButtJoint):
+class TButtJointPlateFastener(JointFastener, TButtJoint):
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, base_fastener: Optional[Fastener] = None, **kwargs):
-        super().__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, butt_plane=butt_plane, **kwargs)
-        self.base_fastener = base_fastener
-        self._fasteners = []
-        self.place_fasteners_instances()
-
-    @property
-    def generated_elements(self):
-        return self.fasteners
-
-    @property
-    def fasteners(self) -> list[Fastener]:
-        """
-        Returns all fasteners of the joint.
-
-        Returns
-        -------
-        list[:class:`compas_timber.fasteners.Fastener`]
-            A list of all fasteners in the joint.
-        """
-        fasteners = []
-        for fastener in self._fasteners:
-            fasteners.extend(fastener.find_all_nested_sub_fasteners())
-        return fasteners
+        super().__init__(
+            main_beam=main_beam,
+            cross_beam=cross_beam,
+            mill_depth=mill_depth,
+            butt_plane=butt_plane,
+            base_fastener=base_fastener,
+            **kwargs,
+        )
 
     def add_features(self) -> None:
         super().add_features()
@@ -56,19 +42,6 @@ class TButtJointPlateFastener(TButtJoint):
         for frame in self.compute_fastener_target_frames():
             fastener_instance = self.base_fastener.compute_joint_instance(frame)
             self._fasteners.append(fastener_instance)
-
-    def compute_fasteners_interactions(self) -> list[tuple]:
-        """
-        Computes the interactions between fasteners and beams and fastener and sub-fastnert participating to the joint.
-        """
-        interactions = []
-        # beam ---- fastener ---- beam
-        for fastener in self._fasteners:
-            for beam in self.beams:
-                interactions.append((beam, fastener))
-            # fastener ---- sub_fastener ---- sub-fastener
-            interactions.extend(fastener.compute_sub_fasteners_interactions())
-        return interactions
 
     def compute_fastener_target_frames(self) -> list[Frame]:
         """
