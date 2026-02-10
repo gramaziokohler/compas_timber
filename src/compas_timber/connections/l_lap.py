@@ -40,16 +40,6 @@ class LLapJoint(LapJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
 
-    @property
-    def __data__(self):
-        data = super(LLapJoint, self).__data__
-        data["cut_plane_bias"] = self.cut_plane_bias
-        return data
-
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
-        super(LLapJoint, self).__init__(beam_a, beam_b, flip_lap_side, **kwargs)
-        self.cut_plane_bias = cut_plane_bias
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -72,8 +62,8 @@ class LLapJoint(LapJoint):
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
         tol = TOL.absolute
-        self.beam_a.add_blank_extension(start_a + tol, end_a + tol, self.beam_a_guid)
-        self.beam_b.add_blank_extension(start_b + tol, end_b + tol, self.beam_b_guid)
+        self.beam_a.add_blank_extension(start_a + tol, end_a + tol, self.guid)
+        self.beam_b.add_blank_extension(start_b + tol, end_b + tol, self.guid)
 
     def add_features(self):
         """Adds the required joint features to both beams."""

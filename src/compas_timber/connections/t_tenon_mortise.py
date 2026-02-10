@@ -76,8 +76,6 @@ class TenonMortiseJoint(Joint):
     @property
     def __data__(self):
         data = super(TenonMortiseJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
@@ -103,12 +101,7 @@ class TenonMortiseJoint(Joint):
         shape_radius=None,
         **kwargs
     ):
-        super(TenonMortiseJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-
+        super(TenonMortiseJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
         self.start_y = start_y
         self.start_depth = start_depth
         self.rotation = rotation
@@ -121,8 +114,12 @@ class TenonMortiseJoint(Joint):
         self.features = []
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+     
+    @property
+    def cross_beam(self):
+        return self.element_b
 
     @property
     def cross_beam_ref_side_index(self):
@@ -253,8 +250,3 @@ class TenonMortiseJoint(Joint):
         self.cross_beam.add_features(cross_feature)
         # add features to joint
         self.features = [cross_feature, main_feature]
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

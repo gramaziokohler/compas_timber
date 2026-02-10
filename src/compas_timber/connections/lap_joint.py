@@ -43,19 +43,14 @@ class LapJoint(Joint):
     @property
     def __data__(self):
         data = super(LapJoint, self).__data__
-        data["beam_a_guid"] = self.beam_a_guid
-        data["beam_b_guid"] = self.beam_b_guid
         data["flip_lap_side"] = self.flip_lap_side
+        data["cut_plane_bias"] = self.cut_plane_bias
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, **kwargs):
-        super(LapJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
-        self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
-
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+        super(LapJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.flip_lap_side = flip_lap_side
+        self.cut_plane_bias = cut_plane_bias
         self.features = []
 
         self._ref_side_index_a = None
@@ -64,8 +59,12 @@ class LapJoint(Joint):
         self._cutting_plane_b = None
 
     @property
-    def elements(self):
-        return [self.beam_a, self.beam_b]
+    def beam_a(self):
+        return self.element_a
+
+    @property
+    def beam_b(self):
+        return self.element_b
 
     @property
     def ref_side_index_a(self):
@@ -163,7 +162,7 @@ class LapJoint(Joint):
         )
 
     def _create_negative_volumes(self, cut_plane_bias):
-        assert self.elements
+        assert len(self.elements) > 1, "LapJoint requires two elements."
         beam_a, beam_b = self.elements
 
         # Get Cut Plane
@@ -205,8 +204,3 @@ class LapJoint(Joint):
         if self.flip_lap_side:
             return negative_polyhedron_beam_b, negative_polyhedron_beam_a
         return negative_polyhedron_beam_a, negative_polyhedron_beam_b
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the beam_a and beam_b saved in the model."""
-        self.beam_a = model[self.beam_a_guid]
-        self.beam_b = model[self.beam_b_guid]

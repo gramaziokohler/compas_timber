@@ -26,6 +26,15 @@ class OliGinaJoint(TenonMortiseJoint):
     ):
         super(OliGinaJoint, self).__init__(main_beam, cross_beam, **kwargs)
 
+
+    @property
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
+
     def add_features(self):
         super(OliGinaJoint, self).add_features()
         self.cross_beam.add_feature(self._make_oli_text())

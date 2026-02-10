@@ -89,8 +89,6 @@ class TDovetailJoint(Joint):
     @property
     def __data__(self):
         data = super(TDovetailJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
@@ -120,12 +118,7 @@ class TDovetailJoint(Joint):
         tool_height=None,
         **kwargs
     ):
-        super(TDovetailJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-
+        super(TDovetailJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
         # Default values if not provided
         self.start_y = start_y if start_y is not None else 0.0
         self.start_depth = start_depth if start_depth is not None else 0.0
@@ -146,8 +139,12 @@ class TDovetailJoint(Joint):
         self.features = []
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
 
     @property
     def cross_beam_ref_side_index(self):
@@ -284,8 +281,3 @@ class TDovetailJoint(Joint):
         self.height = tool_height
         self.flank_angle = tool_angle
         self.shape_radius = tool_top_radius
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

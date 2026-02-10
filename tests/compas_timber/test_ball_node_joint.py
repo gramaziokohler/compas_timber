@@ -16,6 +16,6 @@ def test_create():
     A.add_element(B3)
     instance = BallNodeJoint.create(A, *[B1, B2, B3])
 
-    assert len(instance.elements) == 4
+    assert len(list(instance.elements)) + len(instance.generated_elements) == 4
     assert isinstance(instance, BallNodeJoint)
     assert len(list(A.copy().elements())) == 4
