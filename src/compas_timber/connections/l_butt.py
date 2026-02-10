@@ -76,11 +76,12 @@ class LButtJoint(ButtJoint):
         return ref_side_index
 
     @classmethod
-    def create(cls, model, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+    def create(
+        cls, model, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs
+    ):
         if small_beam_butts:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
         joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
         model.add_joint(joint)
         return joint
-
