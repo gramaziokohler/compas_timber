@@ -6,6 +6,8 @@ from typing import Optional
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Vector
+from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.errors import BeamJoiningError
@@ -256,8 +258,8 @@ class ButtJoint(Joint):
             main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
             cutting_plane = main_beam.ref_sides[main_beam_ref_side_index]
-            lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)[1]
 
+            _, lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
             ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
             cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
@@ -293,6 +295,7 @@ class ButtJoint(Joint):
             Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)),  # v7
         ]
         faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
+        faces = ButtJoint._ensure_faces_outward(vertices, faces)
         cutout_volume = Polyhedron(vertices, faces)
         # return cutout_volume
         pocket = Pocket.from_volume_and_element(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
@@ -302,3 +305,38 @@ class ButtJoint(Joint):
             pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
             pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
         return pocket
+
+    @staticmethod
+    def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]):
+        """Reorder face indices so face normals point outward.
+        Parameters
+        ----------
+        vertices : list[Point]
+            list of Point or 3-tuples
+        faces : list[list[int]]
+            list of lists of indices
+
+        Returns
+        -------
+        list[list[int]]
+            new faces order
+        """
+        poly_centroid = Point(*centroid_points(vertices))
+        new_faces = []
+        for face in faces:
+            # vertices
+            v0 = vertices[face[0]]
+            v1 = vertices[face[1]]
+            v2 = vertices[face[2]]
+            # vectors
+            e1 = Vector.from_start_end(v0, v1)
+            e2 = Vector.from_start_end(v0, v2)
+            n = e1.cross(e2)
+            face_centroid = centroid_points([vertices[i] for i in face])
+            outward = Vector.from_start_end(poly_centroid, face_centroid)
+            # dots
+            if n.dot(outward) < 0:
+                new_faces.append(list(reversed(face)))
+            else:
+                new_faces.append(list(face))
+        return new_faces

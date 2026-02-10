@@ -147,9 +147,13 @@ class KMiterJoint(Joint):
             self._extend_beam(beam)
 
     def _extend_beam(self, beam: Beam):
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
+        ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cutting_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
+
         if self.mill_depth:
             cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+
         start_extension, end_extension = beam.extension_to_plane(cutting_plane)
         extension_tolerance = 0.01
         beam.add_blank_extension(start_extension + extension_tolerance, end_extension + extension_tolerance)
@@ -171,16 +175,20 @@ class KMiterJoint(Joint):
         else:
             pass
             # cross_beam = self.cross_beam  # cut with T-butt joints below
-        # TODO: figure out a better way to use other joints within this joint.
+
         for i in range(len(self.main_beams) - 1):
             beam_1 = self.main_beams[i]
             beam_2 = self.main_beams[i + 1]
+
+            # NOTE: LMiter currently going under refactor
+            # TODO: FixMe after LMiter refactoring
             L_joint = LMiterJoint(beam_1, beam_2)
             L_joint.add_features()
 
         # Apply Jack Rafter Cuts to the main beams
         for beam in self.main_beams:
             feature = ButtJoint.cut_main_beam(self.cross_beam, beam, mill_depth=self.mill_depth)
+            beam.add_feature(feature)
             self.features.append(feature)
 
     def _sort_main_beams(self):

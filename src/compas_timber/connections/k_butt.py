@@ -2,12 +2,15 @@ import math
 
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyhedron
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
+from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
@@ -70,7 +73,7 @@ class KButtJoint(Joint):
         data["conical_tool"] = self.conical_tool
         return data
 
-    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, conical_tool=False, **kwargs):
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, force_pocket=False, conical_tool=False, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
 
         self.cross_beam = cross_beam
@@ -78,6 +81,7 @@ class KButtJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in main_beams]
         self.mill_depth = mill_depth
+        self.force_pocket = force_pocket
         self.conical_tool = conical_tool
         self.features = []
 
@@ -180,18 +184,34 @@ class KButtJoint(Joint):
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
 
-        if self.are_beams_coplanar:
-            self._add_pocket_to_cross_beam()
-            cross_beam = self.cross_beam.copy()  # cut with a pocket // provides a dummy cross beam
-        else:
-            cross_beam = self.cross_beam  # cut with T-butt joints below
-        # TODO: figure out a better way to use other joints within this joint.
-        TJoint1 = TButtJoint(self.main_beam_a, cross_beam, mill_depth=self.mill_depth)
-        TJoint1.add_features()
-        TJoint2 = TButtJoint(self.main_beam_b, cross_beam, mill_depth=self.mill_depth)
-        TJoint2.add_features()
-        LJoint = TButtJoint(self.main_beam_b, self.main_beam_a)
-        LJoint.add_features()
+        if self.mill_depth:
+            if self.force_pocket:
+                pocket = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                self.cross_beam.add_feature(pocket)
+                self.features.append(pocket)
+                pocket = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                self.cross_beam.add_feature(pocket)
+                self.features.append(pocket)
+
+            else:
+                lap = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
+                self.cross_beam.add_feature(lap)
+                self.features.append(lap)
+                lap = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+                self.cross_beam.add_feature(lap)
+                self.features.append(lap)
+
+        feature = ButtJoint.cut_main_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
+        self.main_beam_a.add_feature(feature)
+        self.features.append(feature)
+
+        feature = ButtJoint.cut_main_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+        self.main_beam_b.add_feature(feature)
+        self.features.append(feature)
+
+        feature = ButtJoint.cut_main_beam(self.main_beam_a, self.main_beam_b, mill_depth=0)
+        self.main_beam_b.add_feature(feature)
+        self.features.append(feature)
 
     def _add_pocket_to_cross_beam(self):
         """
