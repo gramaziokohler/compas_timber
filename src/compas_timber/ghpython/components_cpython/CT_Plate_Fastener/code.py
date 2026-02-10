@@ -4,7 +4,7 @@ import Rhino
 import System
 from compas.scene import SceneObject
 
-from compas_timber.elements import PlateFastener
+from compas_timber.fasteners import PlateFastener
 
 
 class PlateFastenerComponent(Grasshopper.Kernel.GH_ScriptInstance):

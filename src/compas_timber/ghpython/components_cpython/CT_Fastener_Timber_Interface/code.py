@@ -5,7 +5,7 @@ import Rhino
 import System
 from compas.geometry import Brep
 
-from compas_timber.elements import FastenerTimberInterface
+from compas_timber.fasteners import FastenerTimberInterface
 
 
 class FastenerTimberInterfaceComponent(Grasshopper.Kernel.GH_ScriptInstance):
