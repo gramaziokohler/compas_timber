@@ -21,6 +21,7 @@ from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
+from compas.tolerance import TOL
 
 
 @pytest.fixture(scope="module")
@@ -93,7 +94,7 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
         assert part.get("Width") == "{:.3f}".format(beam.width)
         assert part.get("OrderNumber") == str(i)
         assert part.get("ElementNumber") == str(beam.guid)[:4]
-        assert part.get("Annotation") == f"{beam.name}-{str(beam.guid)[:4]}"
+        assert part.get("Annotation") == f"{beam.name}"
 
 
 def test_btlx_processings(resulting_btlx, test_model, namespaces):
@@ -417,7 +418,7 @@ def test_rawpart_attributes():
     base_attr = rawpart.base_attr
     assert base_attr["OrderNumber"] == "7"
     assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
-    assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])
+    assert base_attr["Annotation"] == stock.name
 
 
 # =============================================================================
@@ -425,7 +426,7 @@ def test_rawpart_attributes():
 # =============================================================================
 
 
-def test_btlx_reader_roundtrip(tol):
+def test_btlx_model_roundtrip(tol):
     """Test that writing and reading produces equivalent model."""
     # Create simple model
     model = TimberModel()
@@ -451,6 +452,42 @@ def test_btlx_reader_roundtrip(tol):
     assert beam_read.guid == beam.guid
 
 
+def test_btlx_transformation_roundtrip(tol):
+    """Test that BTLx read/write roundtrip preserves exact transformations."""
+    model = TimberModel()
+
+    # Create a beam with non-trivial orientation
+    beam_original = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam_original.name = "test_beam"
+    model.add_element(beam_original)
+
+    # Write to BTLx and read back
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify beam was read
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+
+    # Check dimensions
+    assert tol.is_close(beam_original.length, beam_read.length)
+    assert tol.is_close(beam_original.width, beam_read.width)
+    assert tol.is_close(beam_original.height, beam_read.height)
+
+    # Check centerline frame (origin and axes)
+    assert tol.is_allclose(beam_original.frame.point, beam_read.frame.point)
+    assert tol.is_allclose(beam_original.frame.xaxis, beam_read.frame.xaxis)
+    assert tol.is_allclose(beam_original.frame.yaxis, beam_read.frame.yaxis)
+
+    # Check ref_frame (BTLx reference frame) - this is what gets written to BTLx
+    # If centerline frame is preserved, ref_frame should also match
+    assert tol.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
+    assert tol.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
+
+
 def test_btlx_reader_beam_and_plate():
     """Test that both Beam and Plate elements are correctly read."""
     model = TimberModel()
@@ -470,3 +507,94 @@ def test_btlx_reader_beam_and_plate():
     assert len(model_read.plates) == 1
     assert model_read.beams[0].name == "my_beam"
     assert model_read.plates[0].name == "my_plate"
+
+
+def test_btlx_reader_with_processings():
+    """Test that a BTLx file with processings is read correctly."""
+    # 1. Create a model with a beam and a feature
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    beam.name = "beam_with_cut"
+
+    original_feature = JackRafterCut(orientation=OrientationType.END, start_x=50.0, start_y=10.0, start_depth=20.0, angle=45.0, inclination=30.0)
+    beam.features.append(original_feature)
+    model.add_element(beam)
+
+    # 2. Write to XML string
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    # 3. Read back
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # 4. Assertions
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+    assert beam_read.name == "beam_with_cut"
+
+    assert len(beam_read.features) == 1
+    feature_read = beam_read.features[0]
+
+    assert isinstance(feature_read, JackRafterCut)
+
+    # Workaround for comparing float values with tolerance
+    assert feature_read.orientation == original_feature.orientation
+    assert TOL.is_close(feature_read.start_x, original_feature.start_x)
+    assert TOL.is_close(feature_read.start_y, original_feature.start_y)
+    assert TOL.is_close(feature_read.start_depth, original_feature.start_depth)
+    assert TOL.is_close(feature_read.angle, original_feature.angle)
+    assert TOL.is_close(feature_read.inclination, original_feature.inclination)
+
+
+@pytest.mark.parametrize(
+    "dimensions, expected_type",
+    [
+        ((100, 100, 5000), "Beam"),  # Classic beam
+        ((5000, 100, 100), "Beam"),  # Classic beam, different order
+        ((100, 5000, 100), "Beam"),  # Classic beam, different order
+        ((2000, 1000, 50), "Plate"),  # Classic plate
+        ((50, 2000, 1000), "Plate"),  # Classic plate, different order
+        ((1000, 50, 2000), "Plate"),  # Classic plate, different order
+        ((1000, 800, 600), "Beam"),  # Chunky beam, fails plate criteria
+        ((300, 300, 300), "Beam"),  # A cube, defaults to beam
+        ((3000, 650, 200), "Beam"),  # Closer ratio, but still a beam (3000/650 < 5)
+        ((3000, 700, 100), "Plate"),  # d1/d2 < 5 and d2/d3 > 5
+    ],
+)
+def test_infer_element_type(dimensions, expected_type):
+    """Test the logic for inferring element type from dimensions."""
+    reader = BTLxReader()
+    width, height, length = dimensions
+    element_type = reader._infer_element_type(width, height, length)
+    assert element_type == expected_type
+
+
+def test_btlx_reader_full_file(test_model, tol):
+    """Test that a full BTLx file is read correctly and matches a reference model."""
+    btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
+    reader = BTLxReader(tol)
+    model_read = reader.read(btlx_path)
+
+    assert isinstance(model_read, TimberModel)
+    assert len(model_read.beams) == len(test_model.beams)
+
+    # Create a dictionary for the original beams for easy lookup
+    original_beams_map = {str(beam.guid): beam for beam in test_model.beams}
+
+    # Check for parsing errors
+    assert reader.errors == [], f"Errors encountered during BTLx reading: {reader.errors}"
+
+    # Check properties of each read beam against its original counterpart
+    for beam_read in model_read.beams:
+        beam_original = original_beams_map.get(str(beam_read.guid))
+        assert beam_original is not None, f"Beam with GUID {beam_read.guid} not found in original model."
+
+        # assert beam_read.name == beam_original.name
+        assert tol.is_close(beam_read.length, beam_original.blank_length)
+        assert tol.is_close(beam_read.width, beam_original.width)
+        assert tol.is_close(beam_read.height, beam_original.height)
+        assert beam_read.guid == beam_original.guid
+
+        # Check that processings were created
+        assert len(beam_read.features) == len(beam_original.features)
