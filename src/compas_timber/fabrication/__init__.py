@@ -1,5 +1,4 @@
 from .btlx import BTLxWriter
-from .btlx import BTLxReader
 from .btlx import BTLxProcessing
 from .btlx import BTLxPart
 from .btlx import BTLxRawpart

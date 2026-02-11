@@ -10,8 +10,8 @@ import xml.etree.ElementTree as ET
 
 import compas
 import compas_timber
+from compas_timber.btlx import BTLxReader
 from compas_timber.fabrication import BTLxWriter
-from compas_timber.fabrication import BTLxReader
 from compas_timber.fabrication import BTLxPart
 from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
@@ -573,7 +573,7 @@ def test_infer_element_type(dimensions, expected_type):
 def test_btlx_reader_full_file(test_model, tol):
     """Test that a full BTLx file is read correctly and matches a reference model."""
     btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
-    reader = BTLxReader(tol)
+    reader = BTLxReader()
     model_read = reader.read(btlx_path)
 
     assert isinstance(model_read, TimberModel)
