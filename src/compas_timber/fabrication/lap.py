@@ -66,20 +66,20 @@ class Lap(BTLxProcessing):
 
     PROCESSING_NAME = "Lap"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Slope": "slope",
-        "Length": "length",
-        "Width": "width",
-        "Depth": "depth",
-        "LeadAngleParallel": "lead_angle_parallel",
-        "LeadAngle": "lead_angle",
-        "LeadInclinationParallel": "lead_inclination_parallel",
-        "LeadInclination": "lead_inclination",
-        "MachiningLimits": "machining_limits",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "Slope": ("slope", float),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "Depth": ("depth", float),
+        "LeadAngleParallel": ("lead_angle_parallel", bool),
+        "LeadAngle": ("lead_angle", float),
+        "LeadInclinationParallel": ("lead_inclination_parallel", bool),
+        "LeadInclination": ("lead_inclination", float),
+        "MachiningLimits": ("machining_limits", MachiningLimits),
     }
 
     @property

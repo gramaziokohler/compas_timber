@@ -31,19 +31,19 @@ if typing.TYPE_CHECKING:
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Length": "length",
-        "Depth": "depth",
-        "Thickness": "thickness",
-        "AngleRefPoint": "angle_ref_point",
-        "AngleOppPoint": "angle_opp_point",
-        "AddAngleOppPoint": "add_angle_opp_point",
-        "MachiningLimits": "machining_limits",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "Length": ("length", float),
+        "Depth": ("depth", float),
+        "Thickness": ("thickness", float),
+        "AngleRefPoint": ("angle_ref_point", float),
+        "AngleOppPoint": ("angle_opp_point", float),
+        "AddAngleOppPoint": ("add_angle_opp_point", bool),
+        "MachiningLimits": ("machining_limits", MachiningLimits),
     }
 
     @property

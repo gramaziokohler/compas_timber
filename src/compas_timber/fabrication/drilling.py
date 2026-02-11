@@ -45,13 +45,13 @@ class Drilling(BTLxProcessing):
 
     PROCESSING_NAME = "Drilling"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "DepthLimited": "depth_limited",
-        "Depth": "depth",
-        "Diameter": "diameter",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "DepthLimited": ("depth_limited", bool),
+        "Depth": ("depth", float),
+        "Diameter": ("diameter", float),
     }
 
     @property

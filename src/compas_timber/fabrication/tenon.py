@@ -60,21 +60,21 @@ class Tenon(BTLxProcessing):
 
     PROCESSING_NAME = "Tenon"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Rotation": "rotation",
-        "LengthLimitedTop": "length_limited_top",
-        "LengthLimitedBottom": "length_limited_bottom",
-        "Length": "length",
-        "Width": "width",
-        "Height": "height",
-        "Shape": "shape",
-        "ShapeRadius": "shape_radius",
-        "Chamfer": "chamfer",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "Rotation": ("rotation", float),
+        "LengthLimitedTop": ("length_limited_top", bool),
+        "LengthLimitedBottom": ("length_limited_bottom", bool),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "Height": ("height", float),
+        "Shape": ("shape", str),
+        "ShapeRadius": ("shape_radius", float),
+        "Chamfer": ("chamfer", bool),
     }
 
     @property

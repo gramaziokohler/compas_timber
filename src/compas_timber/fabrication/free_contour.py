@@ -49,11 +49,11 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Contour": "contour_param_object",
+        "Contour": ("contour_param_object", Contour),  # Uses deserializer based on child element type (Contour or DualContour)
     }
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
-        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
+        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, process_id=1, **kwargs)
         self.contour_param_object = contour_param_object
         self.depth_bounded = depth_bounded
 

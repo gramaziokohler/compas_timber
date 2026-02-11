@@ -64,22 +64,22 @@ class DovetailMortise(BTLxProcessing):
 
     PROCESSING_NAME = "DovetailMortise"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Slope": "slope",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Slope": ("slope", float),
         # "Inclination": "inclination", #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        "LimitationTop": "limitation_top",
-        "LengthLimitedBottom": "length_limited_bottom",
-        "Length": "length",
-        "Width": "width",
-        "Depth": "depth",
-        "ConeAngle": "cone_angle",
-        "UseFlankAngle": "use_flank_angle",
-        "FlankAngle": "flank_angle",
-        "Shape": "shape",
-        "ShapeRadius": "shape_radius",
+        "LimitationTop": ("limitation_top", str),
+        "LengthLimitedBottom": ("length_limited_bottom", bool),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "Depth": ("depth", float),
+        "ConeAngle": ("cone_angle", float),
+        "UseFlankAngle": ("use_flank_angle", bool),
+        "FlankAngle": ("flank_angle", float),
+        "Shape": ("shape", str),
+        "ShapeRadius": ("shape_radius", float),
     }
 
     # Class-level attribute

@@ -71,20 +71,20 @@ class Pocket(BTLxProcessing):
 
     PROCESSING_NAME = "Pocket"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Slope": "slope",
-        "Length": "length",
-        "Width": "width",
-        "InternalAngle": "internal_angle",
-        "TiltRefSide": "tilt_ref_side",
-        "TiltEndSide": "tilt_end_side",
-        "TiltOppSide": "tilt_opp_side",
-        "TiltStartSide": "tilt_start_side",
-        "MachiningLimits": "machining_limits",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "Slope": ("slope", float),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "InternalAngle": ("internal_angle", float),
+        "TiltRefSide": ("tilt_ref_side", float),
+        "TiltEndSide": ("tilt_end_side", float),
+        "TiltOppSide": ("tilt_opp_side", float),
+        "TiltStartSide": ("tilt_start_side", float),
+        "MachiningLimits": ("machining_limits", MachiningLimits),
     }
 
     @property

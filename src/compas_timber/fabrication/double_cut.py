@@ -45,13 +45,13 @@ class DoubleCut(BTLxProcessing):
 
     PROCESSING_NAME = "DoubleCut"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle1": "angle_1",
-        "Inclination1": "inclination_1",
-        "Angle2": "angle_2",
-        "Inclination2": "inclination_2",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "Angle1": ("angle_1", float),
+        "Inclination1": ("inclination_1", float),
+        "Angle2": ("angle_2", float),
+        "Inclination2": ("inclination_2", float),
     }
 
     @property

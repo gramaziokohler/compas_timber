@@ -48,15 +48,15 @@ class StepJoint(BTLxProcessing):
 
     PROCESSING_NAME = "StepJoint"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StrutInclination": "strut_inclination",
-        "StepDepth": "step_depth",
-        "HeelDepth": "heel_depth",
-        "StepShape": "step_shape",
-        "Tenon": "tenon",
-        "TenonWidth": "tenon_width",
-        "TenonHeight": "tenon_height",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StrutInclination": ("strut_inclination", float),
+        "StepDepth": ("step_depth", float),
+        "HeelDepth": ("heel_depth", float),
+        "StepShape": ("step_shape", str),
+        "Tenon": ("tenon", bool),
+        "TenonWidth": ("tenon_width", float),
+        "TenonHeight": ("tenon_height", float),
     }
 
     @property

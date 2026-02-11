@@ -56,19 +56,19 @@ class StepJointNotch(BTLxProcessing):
 
     PROCESSING_NAME = "StepJointNotch"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StrutInclination": "strut_inclination",
-        "NotchLimited": "notch_limited",
-        "NotchWidth": "notch_width",
-        "StepDepth": "step_depth",
-        "HeelDepth": "heel_depth",
-        "StrutHeight": "strut_height",
-        "StepShape": "step_shape",
-        "Mortise": "mortise",
-        "MortiseWidth": "mortise_width",
-        "MortiseHeight": "mortise_height",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StrutInclination": ("strut_inclination", float),
+        "NotchLimited": ("notch_limited", bool),
+        "NotchWidth": ("notch_width", float),
+        "StepDepth": ("step_depth", float),
+        "HeelDepth": ("heel_depth", float),
+        "StrutHeight": ("strut_height", float),
+        "StepShape": ("step_shape", str),
+        "Mortise": ("mortise", bool),
+        "MortiseWidth": ("mortise_width", float),
+        "MortiseHeight": ("mortise_height", float),
     }
 
     @property

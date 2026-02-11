@@ -41,16 +41,16 @@ class Text(BTLxProcessing):
 
     PROCESSING_NAME = "Text"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle": "angle",
-        "AlignmentVertical": "alignment_vertical",
-        "AlignmentHorizontal": "alignment_horizontal",
-        "AlignmentMultiline": "alignment_multiline",
-        "StackedMarking": "stacked_marking",
-        "TextHeightAuto": "text_height_auto",
-        "TextHeight": "text_height",
-        "Text": "text",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "Angle": ("angle", float),
+        "AlignmentVertical": ("alignment_vertical", str),
+        "AlignmentHorizontal": ("alignment_horizontal", str),
+        "AlignmentMultiline": ("alignment_multiline", str),
+        "StackedMarking": ("stacked_marking", bool),
+        "TextHeightAuto": ("text_height_auto", bool),
+        "TextHeight": ("text_height", float),
+        "Text": ("text", str),
     }
     _CHARACTER_DICT = {}
 

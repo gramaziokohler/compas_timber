@@ -55,19 +55,19 @@ class Mortise(BTLxProcessing):
 
     PROCESSING_NAME = "Mortise"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Slope": "slope",
-        # "Inclination": "inclination",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        "LengthLimitedTop": "length_limited_top",
-        "LengthLimitedBottom": "length_limited_bottom",
-        "Length": "length",
-        "Width": "width",
-        "Depth": "depth",
-        "Shape": "shape",
-        "ShapeRadius": "shape_radius",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Slope": ("slope", float),
+        # "Inclination": ("inclination, float)",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LengthLimitedTop": ("length_limited_top", bool),
+        "LengthLimitedBottom": ("length_limited_bottom", bool),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "Depth": ("depth", float),
+        "Shape": ("shape", str),
+        "ShapeRadius": ("shape_radius", float),
     }
 
     @property

@@ -45,12 +45,12 @@ class FrenchRidgeLap(BTLxProcessing):
 
     PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "Angle": "angle",
-        "RefPosition": "ref_position",
-        "Drillhole": "drillhole",
-        "DrillholeDiam": "drillhole_diam",
+        "Orientation": ("orientation", str),
+        "StartX": ("start_x", float),
+        "Angle": ("angle", float),
+        "RefPosition": ("ref_position", str),
+        "Drillhole": ("drillhole", bool),
+        "DrillholeDiam": ("drillhole_diam", float),
     }
 
     @property

@@ -53,16 +53,16 @@ class LongitudinalCut(BTLxProcessing):
 
     PROCESSING_NAME = "LongitudinalCut"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Inclination": "inclination",
-        "StartLimited": "start_limited",
-        "EndLimited": "end_limited",
-        "Length": "length",
-        "DepthLimited": "depth_limited",
-        "Depth": "depth",
-        "AngleStart": "angle_start",
-        "AngleEnd": "angle_end",
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "Inclination": ("inclination", float),
+        "StartLimited": ("start_limited", bool),
+        "EndLimited": ("end_limited", bool),
+        "Length": ("length", float),
+        "DepthLimited": ("depth_limited", bool),
+        "Depth": ("depth", float),
+        "AngleStart": ("angle_start", float),
+        "AngleEnd": ("angle_end", float),
     }
 
     @property
