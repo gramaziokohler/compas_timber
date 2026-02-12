@@ -1,5 +1,3 @@
-import math
-
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
@@ -66,11 +64,12 @@ class KMiterJoint(Joint):
         data["conical_tool"] = self.conical_tool
         return data
 
-    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, conical_tool=False, **kwargs):
+    def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, force_pocket: bool = False, conical_tool=False, **kwargs):
         super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
+        self.force_pocket = force_pocket
         self.conical_tool = conical_tool
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
         self.main_beams_guids = [str(beam.guid) for beam in self.main_beams]
@@ -169,12 +168,42 @@ class KMiterJoint(Joint):
         # self.main_beams is sorted based on their dot product with the cross beam direction
         sorted_angles, sorted_dots = self._sort_main_beams()
 
-        if self.are_beams_coplanar:
-            self._add_pocket_to_cross_beam(self.main_beams[0], self.main_beams[-1])
-            # cross_beam = self.cross_beam.copy()  # cut with pocket // porvide a dummy cross beam the the T joints
+        if self.force_pocket:
+            # Merge the last and first pocket together
+            p1 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beams[0], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            p2 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            p1.length = p2.start_x + p2.length - p1.start_x
+            p1.tilt_end_side = p2.tilt_end_side
+            self.cross_beam.add_feature(p1)
+            self.features.append(p1)
+
         else:
-            pass
-            # cross_beam = self.cross_beam  # cut with T-butt joints below
+            # Merge the two laps in on lap
+            l1 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.mill_depth)
+            l2 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[-1], self.mill_depth)
+
+            assert l1 and l2
+            assert l1.start_x and l2.start_x
+            assert l1.length and l2.length
+
+            lap = None
+            if l1.orientation == "start" and l2.orientation == "start":
+                lap = l1
+                lap.length = l2.start_x + l2.length - l1.start_x
+            elif l1.orientation == "start" and l2.orientation == "end":
+                lap = l1
+                lap.length = l2.start_x - l1.start_x
+            elif l1.orientation == "end" and l2.orientation == "start":
+                lap = l2
+                lap.length = l2.start_x + l2.length - (l1.start_x - l1.length)
+                lap.start_x = l1.start_x - l1.length
+            elif l1.orientation == "end" and l2.orientation == "end":
+                lap = l2
+                lap.length = l2.start_x - (l1.start_x - l1.length)
+
+            assert lap
+            self.cross_beam.add_feature(lap)
+            self.features.append(lap)
 
         for i in range(len(self.main_beams) - 1):
             beam_1 = self.main_beams[i]
@@ -220,123 +249,6 @@ class KMiterJoint(Joint):
         angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
         return angle, dot
-
-    def _add_pocket_to_cross_beam(self, beam_1: Beam, beam_2: Beam):
-        # find intersection points between cross beam and main beams
-        P1, _ = intersection_line_line(self.cross_beam.centerline, beam_1.centerline)
-        P2, _ = intersection_line_line(self.cross_beam.centerline, beam_2.centerline)
-
-        angle_1, _ = self._compute_angle_and_dot_between_cross_beam_and_main_beam(beam_1)
-        angle_2, _ = self._compute_angle_and_dot_between_cross_beam_and_main_beam(beam_2)
-
-        tilt_start_side = angle_1
-        tilt_end_side = math.pi - angle_2
-        start_x = self._find_start_x(P1, angle_1, beam_1)
-        length = self._find_length(P2, start_x, angle_2, beam_2)
-        width = self._find_width(beam_1, beam_2)
-        start_y = self._find_start_y(width, beam_1)
-
-        # adjust tilt  angles if conicla tool is not used
-        if not self.conical_tool:
-            if tilt_end_side < math.pi / 2:
-                tilt_end_side = math.pi / 2
-            if tilt_start_side < math.pi / 2:
-                tilt_start_side = math.pi / 2
-
-        # Create pocket feature
-        machining_limits = MachiningLimits()
-        pocket = Pocket(
-            start_x=start_x,
-            start_y=start_y,
-            start_depth=self.mill_depth,
-            angle=0,
-            inclination=0,
-            slope=0.0,
-            length=length,
-            width=width,
-            internal_angle=90.0,
-            tilt_ref_side=90.0,
-            tilt_end_side=math.degrees(tilt_end_side),
-            tilt_opp_side=90.0,
-            tilt_start_side=math.degrees(tilt_start_side),
-            machining_limits=machining_limits.limits,
-            ref_side_index=self.main_beam_ref_side_index(beam_1),
-        )
-        self.cross_beam.add_feature(pocket)
-        self.features.append(pocket)
-
-    def _find_start_x(self, P: Point, angle: float, main_beam: Beam) -> float:
-        """
-        Computes the start_x BTLx parameter for the pocket in the cross beam.
-        """
-
-        beam_width, beam_height = main_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(main_beam))
-        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(main_beam))
-
-        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(main_beam)]
-        ref_side_plane = Plane.from_frame(ref_side)
-        intersection_point_projected = ref_side_plane.projected_point(P)
-
-        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
-
-        # Calculate start_x
-        start_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-        x1 = (cross_height / 2 - self.mill_depth) / math.tan(math.pi - angle)
-        x2 = (beam_height / 2) / math.sin(math.pi - angle)
-        start_x -= x1
-        start_x -= x2
-
-        return start_x
-
-    def _find_length(self, intersection_point, start_x, angle, beam):
-        """
-        Computes the length BTLx parameter for the pocket in the cross beam.
-        """
-        beam_width, beam_height = beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
-        cross_width, cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam))
-
-        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)]
-        ref_side_plane = Plane.from_frame(ref_side)
-        intersection_point_projected = ref_side_plane.projected_point(intersection_point)
-
-        air_distance = ref_side.point.distance_to_point(intersection_point_projected)
-
-        # Calculate end_x
-        end_x = math.sqrt(air_distance**2 - (beam_width / 2) ** 2)
-        x1 = (cross_height / 2 - self.mill_depth) / math.tan(angle) if self.mill_depth < cross_height / 2 else 0
-        x2 = (beam_height / 2) / math.sin(angle)
-
-        end_x += x1
-        end_x += abs(x2)
-
-        length = end_x - start_x
-
-        if self.mill_depth >= cross_height / 2:
-            x3 = (self.mill_depth - cross_height / 2) / math.tan(math.pi - angle)
-
-            if angle < math.pi / 2:
-                length -= abs(x3)
-            else:
-                length += abs(x3)
-
-        return length
-
-    def _find_start_y(self, width, beam_1: Beam) -> float:
-        """
-        Computes the start_y BTLx parameter for the pocket in the cross beam.
-        """
-        cross_beam_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_1))
-        start_y = (cross_beam_width - width) / 2
-        return start_y
-
-    def _find_width(self, beam_1: Beam, beam_2: Beam) -> float:
-        """
-        Computes the width BTLx parameter for the pocket in the cross beam.
-        """
-        beam_1_width, _ = beam_1.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_1))
-        beam_2_width, _ = beam_2.get_dimensions_relative_to_side(self.cross_beam_ref_side_index(beam_2))
-        width = max(beam_1_width, beam_2_width)
-        return width
 
     def restore_beams_from_keys(self, model):
         """After de-seriallization, restores references to the main and cross beams saved in the model."""

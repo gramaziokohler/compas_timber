@@ -1,11 +1,3 @@
-import math
-
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import angle_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_line
-
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.butt_joint import ButtJoint
@@ -13,8 +5,6 @@ from compas_timber.connections.joinery_utilities import parse_cross_beam_and_mai
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements import Beam
-from compas_timber.fabrication import MachiningLimits
-from compas_timber.fabrication import Pocket
 
 
 class KButtJoint(Joint):
@@ -183,18 +173,39 @@ class KButtJoint(Joint):
 
         if self.mill_depth:
             if self.force_pocket:
-                pocket = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                self.cross_beam.add_feature(pocket)
-                self.features.append(pocket)
-                pocket = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                self.cross_beam.add_feature(pocket)
-                self.features.append(pocket)
+                # Merge the two pockets together
+                p1 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p2 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p1.length = p2.start_x + p2.length - p1.start_x
+                p1.tilt_end_side = p2.tilt_end_side
+                self.cross_beam.add_feature(p1)
+                self.features.append(p1)
 
             else:
-                lap = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
-                self.cross_beam.add_feature(lap)
-                self.features.append(lap)
-                lap = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+                # Merge the two laps in on lap
+                l1 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
+                l2 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+
+                assert l1 and l2
+                assert l1.start_x and l2.start_x
+                assert l1.length and l2.length
+
+                lap = None
+                if l1.orientation == "start" and l2.orientation == "start":
+                    lap = l1
+                    lap.length = l2.start_x + l2.length - l1.start_x
+                elif l1.orientation == "start" and l2.orientation == "end":
+                    lap = l1
+                    lap.length = l2.start_x - l1.start_x
+                elif l1.orientation == "end" and l2.orientation == "start":
+                    lap = l2
+                    lap.length = l2.start_x + l2.length - (l1.start_x - l1.length)
+                    lap.start_x = l1.start_x - l1.length
+                elif l1.orientation == "end" and l2.orientation == "end":
+                    lap = l2
+                    lap.length = l2.start_x - (l1.start_x - l1.length)
+
+                assert lap
                 self.cross_beam.add_feature(lap)
                 self.features.append(lap)
 
