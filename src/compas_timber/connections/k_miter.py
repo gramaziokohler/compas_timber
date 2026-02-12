@@ -1,4 +1,3 @@
-from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
@@ -13,8 +12,6 @@ from compas_timber.connections.utilities import are_beams_aligned_with_cross_vec
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import MachiningLimits
-from compas_timber.fabrication import Pocket
 
 
 class KMiterJoint(Joint):
