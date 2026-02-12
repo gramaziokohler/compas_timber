@@ -1,12 +1,13 @@
 import math
 
-from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
+from compas.geometry import intersection_line_plane
+from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.connections.utilities import beam_ref_side_incidence
@@ -86,7 +87,9 @@ class LMiterJoint(Joint):
         self.cutoff = cutoff
         self.clean = clean
         self.features = []
-
+        self._back_a_index = None
+        self._back_b_index = None
+                
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
@@ -97,19 +100,21 @@ class LMiterJoint(Joint):
         pln_b = Plane(miter_plane.point, -miter_plane.normal)
         if dot_vectors(Vector.from_start_end(miter_plane.point, self.beam_a.centerline.midpoint), miter_plane.normal) > 0:
             pln_a, pln_b = pln_b, pln_a
-        return Frame.from_plane(pln_a), Frame.from_plane(pln_b)
+        return pln_a, pln_b
 
     def _get_cut_planes_from_ref_sides(self):
         # get the cutting planes from the reference sides of the beams
         assert self.beam_a and self.beam_b
 
-        ref_side_main = beam_ref_side_incidence(self.beam_a, self.beam_b)
-        back_a = Plane.from_frame(self.beam_a.ref_sides[min(ref_side_main, key=ref_side_main.get)])
-        front_a = Plane.from_frame(self.beam_a.ref_sides[max(ref_side_main, key=ref_side_main.get)])
+        ref_sides_a: dict[int,float] = beam_ref_side_incidence(self.beam_b, self.beam_a)
+        self._back_a_index = max(ref_sides_a, key=ref_sides_a.get)
+        back_a = Plane.from_frame(self.beam_a.ref_sides[self._back_a_index])
+        front_a = Plane.from_frame(self.beam_a.ref_sides[(self._back_a_index+2)%4])
 
-        ref_side_cross = beam_ref_side_incidence(self.beam_b, self.beam_a)
-        back_b = Plane.from_frame(self.beam_b.ref_sides[min(ref_side_cross, key=ref_side_cross.get)])
-        front_b = Plane.from_frame(self.beam_b.ref_sides[max(ref_side_cross, key=ref_side_cross.get)])
+        ref_sides_b = beam_ref_side_incidence(self.beam_a, self.beam_b)
+        self._back_b_index = max(ref_sides_b, key=ref_sides_b.get)
+        back_b = Plane.from_frame(self.beam_b.ref_sides[self._back_b_index])
+        front_b = Plane.from_frame(self.beam_b.ref_sides[(self._back_b_index+2)%4])
 
         inside_x = intersection_plane_plane(front_a, front_b)
         outside_x = intersection_plane_plane(back_a, back_b)
@@ -120,7 +125,7 @@ class LMiterJoint(Joint):
         assert self.beam_a and self.beam_b
         # user defined miter plane
         if self.miter_plane:
-            return self._get_cut_planes_from_miter_plane(self.miter_plane.transformed(self.beam_a.modeltransformation))
+            return self._get_cut_planes_from_miter_plane(self.miter_plane)
         # ref_side_miter = True
         elif self.ref_side_miter:
             miter_plane = self._get_cut_planes_from_ref_sides()
@@ -160,8 +165,6 @@ class LMiterJoint(Joint):
         plnA = Plane(p, v_normal)
         plnB = Plane(p, v_normal * -1.0)
 
-        plnA = Frame.from_plane(plnA)
-        plnB = Frame.from_plane(plnB)
         return plnA, plnB
 
     def _get_cutoff_plane(self):
@@ -217,12 +220,12 @@ class LMiterJoint(Joint):
             self.beam_b.remove_features(self.features)
 
         try:
-            plane_a, plane_b = self._get_cutting_planes()
+            miter_plane_a, miter_plane_b = self._get_cutting_planes()
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
 
-        cut1 = JackRafterCutProxy.from_plane_and_beam(plane_a, self.beam_a)
-        cut2 = JackRafterCutProxy.from_plane_and_beam(plane_b, self.beam_b)
+        cut1 = JackRafterCutProxy.from_plane_and_beam(miter_plane_a, self.beam_a)
+        cut2 = JackRafterCutProxy.from_plane_and_beam(miter_plane_b, self.beam_b)
         self.beam_a.add_features(cut1)
         self.beam_b.add_features(cut2)
         self.features = [cut1, cut2]
@@ -236,11 +239,34 @@ class LMiterJoint(Joint):
                 self.features.append(cutoff)
 
         if self.clean:
-            vector_a = Vector.from_start_end(self.beam_a.centerline.midpoint, self.location)
-            vector_b = Vector.from_start_end(self.beam_b.centerline.midpoint, self.location)
+            def get_valid_trim_planes(ref_side_beam, beam_to_trim, miter_plane, back_index):
+                trim_planes = []
+                vector = Vector.from_start_end(beam_to_trim.centerline.midpoint, self.location)
+                for i, frame in enumerate(ref_side_beam.ref_sides[0:4]):
+                    if i == back_index:
+                        # if self.ref_side_miter == True, one of the ref sides is used to generate the miter plane, so it isn't used for trimming. 
+                        continue
 
-            back_a = [Plane.from_frame(fr) for fr in self.beam_a.ref_sides if TOL.is_positive(dot_vectors(vector_b, fr.normal))]
-            back_b = [Plane.from_frame(fr) for fr in self.beam_b.ref_sides if TOL.is_positive(dot_vectors(vector_a, fr.normal))]
+                    test_plane = Plane.from_frame(frame)
+                    #only use the outside ref_sides ie those facing away from the beam to be trimmed.
+                    if not TOL.is_positive(dot_vectors(vector, test_plane.normal)):
+                        continue
+                    use_plane = False
+                    #parse planes that don't actually intersect beam geometry
+                    #if any edge intersection is behind another plane, then this plane will trim the geometry and should be applied
+                    for edge in beam_to_trim.ref_edges:
+                        pt = intersection_line_plane(edge, test_plane)
+                        for plane in [miter_plane] + trim_planes:
+                            if is_point_behind_plane(pt, plane):
+                                trim_planes.append(test_plane)
+                                use_plane = True
+                                break
+                        if use_plane:
+                            break
+                return trim_planes
+
+            back_a = get_valid_trim_planes(self.beam_a, self.beam_b, miter_plane_b, self._back_a_index)
+            back_b = get_valid_trim_planes(self.beam_b, self.beam_a, miter_plane_a, self._back_b_index)
 
             clean_cuts_a = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_a) for cut in back_b]
             clean_cuts_b = [JackRafterCutProxy.from_plane_and_beam(cut, self.beam_b) for cut in back_a]
