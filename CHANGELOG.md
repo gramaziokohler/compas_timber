@@ -94,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed circular import cause by typing import in `slot.py`.
 * Fixed a bug in `FreeContour.from_top_bottom_and_element` where `DualContour` is expecting a `Polyline` instead of a list of `Points`.
 * Changed `main_beam` to `beam_a` and `cross_beam` to `beam_b` in `LapJoint`, `LLapJoint`, `FrenchRidgeLapJoint`, and `XLapJoint`.
+* Changed features creation in `ButtJoint` in staticmethods.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
