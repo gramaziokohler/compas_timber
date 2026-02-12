@@ -5,8 +5,8 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
@@ -89,7 +89,7 @@ class LMiterJoint(Joint):
         self.features = []
         self._back_a_index = None
         self._back_b_index = None
-                
+
     @property
     def elements(self):
         return [self.beam_a, self.beam_b]
@@ -106,15 +106,15 @@ class LMiterJoint(Joint):
         # get the cutting planes from the reference sides of the beams
         assert self.beam_a and self.beam_b
 
-        ref_sides_a: dict[int,float] = beam_ref_side_incidence(self.beam_b, self.beam_a)
+        ref_sides_a: dict[int, float] = beam_ref_side_incidence(self.beam_b, self.beam_a)
         self._back_a_index = max(ref_sides_a, key=ref_sides_a.get)
         back_a = Plane.from_frame(self.beam_a.ref_sides[self._back_a_index])
-        front_a = Plane.from_frame(self.beam_a.ref_sides[(self._back_a_index+2)%4])
+        front_a = Plane.from_frame(self.beam_a.ref_sides[(self._back_a_index + 2) % 4])
 
         ref_sides_b = beam_ref_side_incidence(self.beam_a, self.beam_b)
         self._back_b_index = max(ref_sides_b, key=ref_sides_b.get)
         back_b = Plane.from_frame(self.beam_b.ref_sides[self._back_b_index])
-        front_b = Plane.from_frame(self.beam_b.ref_sides[(self._back_b_index+2)%4])
+        front_b = Plane.from_frame(self.beam_b.ref_sides[(self._back_b_index + 2) % 4])
 
         inside_x = intersection_plane_plane(front_a, front_b)
         outside_x = intersection_plane_plane(back_a, back_b)
@@ -239,21 +239,22 @@ class LMiterJoint(Joint):
                 self.features.append(cutoff)
 
         if self.clean:
+
             def get_valid_trim_planes(ref_side_beam, beam_to_trim, miter_plane, back_index):
                 trim_planes = []
                 vector = Vector.from_start_end(beam_to_trim.centerline.midpoint, self.location)
                 for i, frame in enumerate(ref_side_beam.ref_sides[0:4]):
                     if i == back_index:
-                        # if self.ref_side_miter == True, one of the ref sides is used to generate the miter plane, so it isn't used for trimming. 
+                        # if self.ref_side_miter == True, one of the ref sides is used to generate the miter plane, so it isn't used for trimming.
                         continue
 
                     test_plane = Plane.from_frame(frame)
-                    #only use the outside ref_sides ie those facing away from the beam to be trimmed.
+                    # only use the outside ref_sides ie those facing away from the beam to be trimmed.
                     if not TOL.is_positive(dot_vectors(vector, test_plane.normal)):
                         continue
                     use_plane = False
-                    #parse planes that don't actually intersect beam geometry
-                    #if any edge intersection is behind another plane, then this plane will trim the geometry and should be applied
+                    # parse planes that don't actually intersect beam geometry
+                    # if any edge intersection is behind another plane, then this plane will trim the geometry and should be applied
                     for edge in beam_to_trim.ref_edges:
                         pt = intersection_line_plane(edge, test_plane)
                         for plane in [miter_plane] + trim_planes:

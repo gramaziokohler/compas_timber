@@ -34,6 +34,17 @@ def beam_a():
 
 
 @pytest.fixture
+def beam_a_rotated():
+    beam_a = Beam(
+        frame=Frame(point=Point(x=0.000, y=0.000, z=0.000), xaxis=Vector(x=1.000, y=0.000, z=0.000), yaxis=Vector(x=0.000, y=1.000, z=0.500)),
+        width=30.000,
+        height=30.000,
+        length=200.000,
+    )
+    return beam_a
+
+
+@pytest.fixture
 def beam_a_big():
     beam_a_big = Beam(
         frame=Frame(point=Point(x=0.000, y=0.000, z=0.000), xaxis=Vector(x=1.000, y=0.000, z=0.000), yaxis=Vector(x=0.000, y=1.000, z=0.000)),
@@ -50,6 +61,17 @@ def perp_beam():
         frame=Frame(point=Point(x=0.000, y=0.000, z=0.000), xaxis=Vector(x=0.000, y=1.000, z=0.000), yaxis=Vector(x=-1.000, y=0.000, z=0.000)),
         width=30.000,
         height=30.000,
+        length=200.000,
+    )
+    return perp_beam
+
+
+@pytest.fixture
+def big_perp_beam():
+    perp_beam = Beam(
+        frame=Frame(point=Point(x=0.000, y=0.000, z=0.000), xaxis=Vector(x=0.000, y=1.000, z=0.000), yaxis=Vector(x=-1.000, y=0.000, z=0.000)),
+        width=60.000,
+        height=60.000,
         length=200.000,
     )
     return perp_beam
@@ -104,7 +126,7 @@ def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
     joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     joint.add_extensions()
-    assert not joint.ref_side_miter 
+    assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 200)
     assert TOL.is_close(angle_beam.blank_length, 215)
 
@@ -112,7 +134,7 @@ def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
     joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, -1, 0]))
     joint.add_extensions()
-    assert not joint.ref_side_miter 
+    assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 215)
     assert TOL.is_close(angle_beam.blank_length, 200)
 
@@ -129,9 +151,18 @@ def test_L_miter_joint_bisector_features_clean(beam_a, perp_beam):
     joint = LMiterJoint(beam_a, perp_beam, clean=True)
     joint.add_extensions()
     joint.add_features()
-    # since beams are coplanar, there should only be one cleaning cut per beam, 2 features per beam including miter cut
-    assert len(beam_a.features) == 2
-    assert len(perp_beam.features) == 2
+    # since beams are coplanar and the same size, no cleaning cuts should be generated, only 1 feature per beam including miter cut
+    assert len(beam_a.features) == 1
+    assert len(perp_beam.features) == 1
+
+
+def test_L_miter_joint_bisector_features_clean_different_sizes(beam_a, big_perp_beam):
+    joint = LMiterJoint(beam_a, big_perp_beam, clean=True)
+    joint.add_extensions()
+    joint.add_features()
+    # since beams are different sizes, the bigger beam gets an additional trim feature
+    assert len(beam_a.features) == 1
+    assert len(big_perp_beam.features) == 2
 
 
 def test_L_miter_joint_bisector_features_cutoff(beam_a, perp_beam):
@@ -149,6 +180,33 @@ def test_L_miter_joint_bisector_features_clean_non_planar(beam_a, non_planar_bea
     joint.add_features()
     # beam_a gets 2 cleaning cuts from non_planar_beam. non_planar_beam only gets one cleaning cut from beam_a
     assert len(beam_a.features) == 3
+    assert len(non_planar_beam.features) == 2
+
+
+def test_L_miter_joint_bisector_features_clean_non_planar_rotated(beam_a_rotated, non_planar_beam):
+    joint = LMiterJoint(beam_a_rotated, non_planar_beam, clean=True)
+    joint.add_extensions()
+    joint.add_features()
+    # each beam gets 2 cleaning cuts.
+    assert len(beam_a_rotated.features) == 3
+    assert len(non_planar_beam.features) == 3
+
+
+def test_L_miter_joint_ref_side_miter_features_clean_non_planar(beam_a, non_planar_beam):
+    joint = LMiterJoint(beam_a, non_planar_beam, ref_side_miter=True, clean=True)
+    joint.add_extensions()
+    joint.add_features()
+    # with ref_side_miter, only one cleaning cut is gernerated per beam, but the one on the non_planar_beam is not created since it would trim the entire lenght of the beam
+    assert len(beam_a.features) == 2
+    assert len(non_planar_beam.features) == 1
+
+
+def test_L_miter_joint_ref_side_miter_features_clean_non_planar_rotated(beam_a_rotated, non_planar_beam):
+    joint = LMiterJoint(beam_a_rotated, non_planar_beam, ref_side_miter=True, clean=True)
+    joint.add_extensions()
+    joint.add_features()
+    # with ref_side_miter, only one cleaning cut is gernerated per beam
+    assert len(beam_a_rotated.features) == 2
     assert len(non_planar_beam.features) == 2
 
 
@@ -171,8 +229,8 @@ def test_l_miter_joint_serialization(beam_a, perp_beam):
     assert len(perp_beam_copy.features) == 0
 
     model_copy.process_joinery()
-    assert len(beam_a_copy.features) == 2
-    assert len(perp_beam_copy.features) == 2
+    assert len(beam_a_copy.features) == 1
+    assert len(perp_beam_copy.features) == 1
 
 
 def test_l_miter_joint_serialization_user_plane(beam_a, angle_beam):
