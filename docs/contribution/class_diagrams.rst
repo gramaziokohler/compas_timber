@@ -331,27 +331,42 @@ The connections subsystem defines joints and their relationships. All joints inh
          +plate_b : Plate
       }
 
+      class PlateButtJoint {
+         <<abstract>>
+         +main_plate : Plate
+         +cross_plate : Plate
+      }
+
+      class PlateLButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+      }
+
+      class PlateTButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_FACE
+      }
+
+      class PlateMiterJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+      }
+
       class PanelJoint {
          <<abstract>>
          +panel_a : Panel
          +panel_b : Panel
       }
 
-      class PlateButtJoint {
-         +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+      class PanelLButtJoint {
+         +main_panel : Panel
+         +cross_panel : Panel
       }
 
-      class PlateMiterJoint {
-      }
-
-      class PanelButtJoint {
+      class PanelTButtJoint {
          +main_panel : Panel
          +cross_panel : Panel
       }
 
       class PanelMiterJoint {
-         +main_panel : Panel
-         +cross_panel : Panel
+         
       }
 
       %% Inheritance relationships
@@ -379,7 +394,6 @@ The connections subsystem defines joints and their relationships. All joints inh
       PlateButtJoint <|-- PlateLButtJoint
       PlateButtJoint <|-- PlateTButtJoint
       PlateJoint <|-- PlateMiterJoint
-      PanelJoint <|-- PlateMiterJoint
       PanelJoint <|-- PanelLButtJoint
       PanelJoint <|-- PanelTButtJoint
       PlateLButtJoint <|-- PanelLButtJoint
