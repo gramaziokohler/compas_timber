@@ -109,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Lap`, `Pocket` and `Slot` to accepte a `MachiningLimits` instance instead of a dictionary. 
 * Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
 * Added `attributes` dictionary contet to serialization of `Panel`.
-* Pulled the `timber.py` module out of the `elements` package to avoid circular dependencies between the `element` and `fabrication` packages.
+* Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
 
 
 ### Removed

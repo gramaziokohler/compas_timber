@@ -15,9 +15,9 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
+from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
-from compas_timber.timber import TimberElement
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
 

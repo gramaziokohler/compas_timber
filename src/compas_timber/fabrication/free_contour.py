@@ -13,7 +13,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
-from compas_timber.timber import TimberElement
+from compas_timber.base import TimberElement
 from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType

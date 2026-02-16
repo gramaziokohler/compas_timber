@@ -22,8 +22,8 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
+from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.timber import TimberElement
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
