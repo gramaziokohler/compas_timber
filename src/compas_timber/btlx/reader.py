@@ -4,6 +4,7 @@ from warnings import warn
 
 from compas.geometry import Frame
 from compas.geometry import Point
+from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import Tolerance
 
@@ -466,8 +467,6 @@ def xml_to_contour(element):
         The Contour object.
 
     """
-    from compas.geometry import Polyline
-
     # Parse attributes
     depth = float(element.attrib.get("Depth", 0))
     depth_bounded = element.attrib.get("DepthBounded", "no").lower() in ["yes", "true"]
@@ -529,8 +528,6 @@ def xml_to_dual_contour(element):
         The DualContour object.
 
     """
-    from compas.geometry import Polyline
-
     # Parse PrincipalContour
     principal_elem = element.find("{*}PrincipalContour")
     if principal_elem is None:
