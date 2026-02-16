@@ -140,13 +140,11 @@ class BTLxReader(object):
 
         # create element
         if element_type == "Beam":
-            # Convert BTLx ref_frame to centerline frame
-            centerline_frame = self._ref_frame_to_centerline_frame(ref_frame, width, height)
-            element = Beam(frame=centerline_frame, length=length, width=width, height=height)
+            frame = self._ref_frame_to_beam_frame(ref_frame, width, height)
+            element = Beam(frame=frame, length=length, width=width, height=height)
         elif element_type == "Plate":
-            # Convert BTLx ref_frame to centerline frame (same as beams)
-            centerline_frame = self._ref_frame_to_centerline_frame(ref_frame, width, height)
-            element = Plate(frame=centerline_frame, length=length, width=width, thickness=height)
+            frame = self._ref_frame_to_plate_frame(ref_frame, width, height)
+            element = Plate(frame=frame, length=length, width=width, thickness=height)
 
         # TODO: This method should be handling Element scaling based on the model's tolerance.
         # TODO: Awaiting for PR #656 to be merged to implement scaling in the writer and then handle it here in the reader.
@@ -178,7 +176,7 @@ class BTLxReader(object):
                 if feature:
                     # BTLx features are always in mm - no scaling applied
                     # TODO: Handle scaling when implementing tolerance parameter
-                    element.features.append(feature)
+                    element.add_feature(feature)
             except Exception as e:
                 self._errors.append("Failed to parse processing: {}".format(e))
 
@@ -232,7 +230,7 @@ class BTLxReader(object):
                     # Use type_info for conversion via _convert_value
                     kwargs[python_name] = self._convert_value(xml_text_value, type_info)
 
-                # Branch 3: Complex element with children → use deserializer (mirrors writer's else branch)
+                # Branch 3: Complex element with children → use deserializer
                 # <Element><SubElement1 /><SubElement2 /></Element>
                 else:
                     deserializer = self.DESERIALIZERS.get(child_name, None)
@@ -333,7 +331,7 @@ class BTLxReader(object):
 
         return guid, frame
 
-    def _ref_frame_to_centerline_frame(self, ref_frame, width, height):
+    def _ref_frame_to_beam_frame(self, ref_frame, width, height):
         """Convert BTLx reference frame to element centerline frame.
 
         The BTLx reference frame has its origin at the bottom-far corner of the blank,
@@ -357,18 +355,49 @@ class BTLxReader(object):
             The element centerline frame.
 
         """
-        # Convert: centerline_origin = ref_origin + width/2 * ref_zaxis + height/2 * ref_yaxis
-        # This moves from bottom-far corner to centerline start
+        # Move from bottom-far corner to centerline start
         centerline_origin = ref_frame.point + width / 2.0 * ref_frame.zaxis + height / 2.0 * ref_frame.yaxis
 
         # Axes transformation:
-        # centerline.xaxis = ref_frame.xaxis (both are grain/length direction)
-        # centerline.yaxis = -ref_frame.zaxis (width direction)
-        # centerline.zaxis = ref_frame.yaxis (height direction) - computed automatically by Frame
         centerline_xaxis = ref_frame.xaxis
-        centerline_yaxis = Vector(-ref_frame.zaxis.x, -ref_frame.zaxis.y, -ref_frame.zaxis.z)
+        centerline_yaxis = -ref_frame.zaxis
 
         return Frame(centerline_origin, centerline_xaxis, centerline_yaxis)
+
+    def _ref_frame_to_plate_frame(self, btlx_ref_frame, width, thickness):
+        """Convert BTLx reference frame to Plate frame.
+
+        The BTLx reference frame has its origin at a corner of the blank,
+        with axes: X=grain/length, Y=thickness (height), Z=width.
+
+        The Plate frame has its origin at a corner of the blank,
+        with axes: X=length, Y=width, Z=thickness.
+
+        Parameters
+        ----------
+        btlx_ref_frame : :class:`~compas.geometry.Frame`
+            The BTLx reference frame.
+        width : float
+            The width of the plate (stored as 'Width' in BTLx).
+        thickness : float
+            The thickness of the plate (stored as 'Height' in BTLx).
+
+        Returns
+        -------
+        :class:`~compas.geometry.Frame`
+            The Plate frame.
+
+        """
+        # The BTLx reference frame for a plate has its origin at one corner, but its Z-axis (width)
+        # points along the width of the plate. The Plate's internal frame, however, expects its
+        # origin to be at the corner where its Y-axis (width) points away from the plate.
+        # Therefore, we need to shift the origin along the BTLx Z-axis by the plate's width.
+        plate_origin = btlx_ref_frame.point + btlx_ref_frame.zaxis * width
+        plate_xaxis = btlx_ref_frame.xaxis
+        plate_yaxis = -btlx_ref_frame.zaxis
+        # plate_zaxis will be computed automatically by Frame = BTLx Y (thickness)
+
+        return Frame(plate_origin, plate_xaxis, plate_yaxis)
 
     def _infer_element_type(self, width, height, length, ratio_threshold=5.0):
         """Infers the element type (Beam or Plate) based on dimensional proportions.
@@ -474,16 +503,16 @@ def xml_to_contour(element):
     # Determine inclination format
     if inclination_attr is not None:
         # Single inclination for all segments
-        inclination = [float(inclination_attr)]
+        inclination = [float(inclination_attr)] * (len(points) - 1)
     elif inclinations:
         # Per-segment inclination
         inclination = inclinations
     else:
         # No inclination specified
-        inclination = [0.0]
+        inclination = [0.0] * (len(points) - 1)
 
     polyline = Polyline(points)
-    return Contour(polyline, depth, inclination, depth_bounded)
+    return Contour(polyline, depth, depth_bounded=depth_bounded, inclination=inclination)
 
 
 def xml_to_dual_contour(element):
