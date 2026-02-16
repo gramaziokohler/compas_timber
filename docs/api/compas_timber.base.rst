@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.timber
+compas_timber.base
 ********************************************************************************
 
-.. currentmodule:: compas_timber.timber
+.. currentmodule:: compas_timber.base
 
 Classes
 =======
