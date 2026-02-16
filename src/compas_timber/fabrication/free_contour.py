@@ -49,7 +49,8 @@ class FreeContour(BTLxProcessing):
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Contour": ("contour_param_object", Contour),  # Uses deserializer based on child element type (Contour or DualContour)
+        "Contour": ("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
+        "DualContour": ("contour_param_object", DualContour),  # Complex contour with principal and associated polylines
     }
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
