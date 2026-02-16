@@ -14,10 +14,9 @@ from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.timber import TimberElement
+from compas_timber.timber import reset_timber_attrs
 from compas_timber.utils import intersection_line_plane_param
-
-from .timber import TimberElement
-from .timber import reset_timber_attrs
 
 
 class Beam(TimberElement):

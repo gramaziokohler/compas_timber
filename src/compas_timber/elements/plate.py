@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
 
-if TYPE_CHECKING:
-    from compas.datastructures import Mesh  # noqa: F401
-    from compas.geometry import Brep  # noqa: F401
-    from compas.geometry import Frame  # noqa: F401
-
+from compas.datastructures import Mesh  # noqa: F401
 from compas.geometry import Box
+from compas.geometry import Brep  # noqa: F401
+from compas.geometry import Frame  # noqa: F401
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -20,11 +17,11 @@ from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
+from compas_timber.timber import TimberElement
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
-from .timber import TimberElement
 
 
 class Plate(TimberElement):

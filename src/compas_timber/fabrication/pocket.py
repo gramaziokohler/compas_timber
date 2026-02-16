@@ -23,16 +23,12 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication.free_contour import TYPE_CHECKING
+from compas_timber.timber import TimberElement
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
-
-if TYPE_CHECKING:
-    from compas_timber.elements import Beam
-    from compas_timber.elements import Plate
 
 
 class Pocket(BTLxProcessing):
@@ -303,7 +299,7 @@ class Pocket(BTLxProcessing):
     def from_volume_and_element(
         cls,
         volume: Union[Polyhedron, Brep, Mesh],
-        element: Union[Beam, Plate],
+        element: TimberElement,
         machining_limits: Optional[dict] = None,
         ref_side_index: Optional[int]=None
     ) -> Pocket:
@@ -313,7 +309,7 @@ class Pocket(BTLxProcessing):
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        element : :class:`~compas_timber.timber.TimberElement`
             The element that is cut by this instance.
         machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
@@ -511,14 +507,14 @@ class Pocket(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry: Brep, element: Union(Beam, Plate)):
+    def apply(self, geometry: Brep, element: TimberElement):
         """Apply the feature to the element geometry.
 
         Parameters
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The geometry of the elements to be processed.
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        element : :class:`compas_timber.timber.TimberElement`
             The element that is processed by this instance.
 
         Raises
@@ -555,7 +551,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume does not intersect with the element geometry." + str(e),
             )
 
-    def _bottom_frame_from_params_and_element(self, element: Union[Beam, Plate]) -> Frame:
+    def _bottom_frame_from_params_and_element(self, element: TimberElement) -> Frame:
         """Calculates the bottom frame of the pocket from the machining parameters in this instance and the given element.
 
         Parameters
@@ -597,7 +593,7 @@ class Pocket(BTLxProcessing):
         bottom_frame.rotate(math.radians(180-self.internal_angle), bottom_frame.normal, point=bottom_frame.point)
         return bottom_frame
 
-    def _planes_from_params_and_element(self, element: Union[Beam, Plate]) -> list[Plane]:
+    def _planes_from_params_and_element(self, element: TimberElement) -> list[Plane]:
         """Calculates the planes that create the pocket from the machining parameters in this instance and the given element
 
         Parameters
@@ -668,7 +664,7 @@ class Pocket(BTLxProcessing):
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
 
-    def volume_from_params_and_element(self, element: Union[Beam, Plate]) -> Polyhedron:
+    def volume_from_params_and_element(self, element: TimberElement) -> Polyhedron:
         """
         Calculates the subtracting volume from the machining parameters in this instance and the given element, ensuring correct face orientation.
 

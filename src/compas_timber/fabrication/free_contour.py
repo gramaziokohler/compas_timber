@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Optional
-
-if TYPE_CHECKING:
-    from compas.geometry import Polyline  # noqa: F401
-
-    from compas_timber.elements import Beam  # noqa: F401
-    from compas_timber.elements import Plate  # noqa: F401
-    from compas_timber.elements import TimberElement  # noqa: F401
-
 import math
+from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
@@ -21,6 +13,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
+from compas_timber.timber import TimberElement
 from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType
