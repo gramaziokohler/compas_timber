@@ -23,6 +23,10 @@ class KButtJoint(Joint):
         The two main beams to be joined. These beams connect at their ends to the cross beam.
     mill_depth : float, optional
         The depth of the pocket to be milled in the cross beam, by default 0.
+    force_pocket : bool, optional
+        If True, forces the use of a `Pocket` BTLx processing instead of a `Lap` in the cross beam. Default is False.
+    conical_tool : bool, optional
+        If True, the pocket allows overhangs that require a conical tool to be milled. Default is False.
     **kwargs : dict
         Additional keyword arguments passed to the parent :class:`~compas_timber.connections.Joint` class.
 
@@ -38,6 +42,10 @@ class KButtJoint(Joint):
         The second main beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
+    force_pocket : bool
+        If True, forces the use of a `Pocket` BTLx processing instead of a `Lap` in the cross beam. Default is False.
+    conical_tool : bool
+        If True, the pocket allows overhangs that require a conical tool to be milled. Default is False.
     cross_beam_guid : str
         The GUID of the cross beam.
     main_beams_guids : list of str

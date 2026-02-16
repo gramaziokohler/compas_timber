@@ -32,6 +32,10 @@ class KMiterJoint(Joint):
         The main beams to be joined (minimum 2). The beams connected at their ends.
     mill_depth : float, optional
         The depth of material to be milled from the cross beam at the cutting planes. Default is 0.
+    force_pocket : bool, optional
+            If True, forces the use of a `Pocket` BTLx processing instead of a `Lap` in the cross beam. Default is False.
+    conical_tool : bool, optional
+            If True, the pocket allows overhangs that require a conical tool to be milled. Default is False.
     **kwargs : dict
         Additional keyword arguments passed to the parent Joint class.
 
@@ -43,6 +47,10 @@ class KMiterJoint(Joint):
         The main beams to be joined. The beams connected at their ends.
     mill_depth : float
         The depth of material to be milled from the cross beam at the cutting planes.
+    force_pocket : bool
+        If True, forces the use of a `Pocket` BTLx processing instead of a `Lap` in the cross beam. Default is False.
+    conical_tool : bool
+        If True, the pocket allows overhangs that require a conical tool to be milled. Default is False.
     features : list of :class:`~compas_timber.fabrication.Feature`
         The features added to the beams by the joint.
 
