@@ -1231,14 +1231,14 @@ class Contour(Data):
 
     Parameters
     ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline of the contour.
     depth : float
         The depth of the contour.
     depth_bounded : bool
         If True, the depth is bounded.
     inclination : list[float]
         The inclination of the contour.
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline of the contour.
     """
 
     def __init__(self, polyline, depth, depth_bounded=True, inclination=None):
