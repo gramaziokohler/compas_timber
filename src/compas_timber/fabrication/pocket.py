@@ -322,7 +322,6 @@ class Pocket(BTLxProcessing):
             The Pocket feature.
 
         """
-        # type: (Polyhedron | Brep | Mesh, Beam | Plate, dict, int) -> Pocket
         if isinstance(volume, Mesh):
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Polyhedron):
@@ -416,7 +415,7 @@ class Pocket(BTLxProcessing):
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
         machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
             The machining limits for the cut. Default is None.
@@ -507,14 +506,14 @@ class Pocket(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry: Brep, element: TimberElement):
+    def apply(self, geometry: Brep, element: TimberElement) -> Brep:
         """Apply the feature to the element geometry.
 
         Parameters
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The geometry of the elements to be processed.
-        element : :class:`compas_timber.timber.TimberElement`
+        element : :class:`compas_timber.base.TimberElement`
             The element that is processed by this instance.
 
         Raises
@@ -528,7 +527,6 @@ class Pocket(BTLxProcessing):
             The resulting geometry after processing
 
         """
-        # type: (Brep, Beam | Plate) -> Brep
         # get the pocket volume as a polyhedron
         polyhedron_volume = self.volume_from_params_and_element(element)
         polyhedron_volume.transform(element.transformation_to_local())
@@ -556,7 +554,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        element : :class:`compas_timber.base.TimberElement`
             The element that is cut by this instance.
 
         Returns
@@ -573,7 +571,7 @@ class Pocket(BTLxProcessing):
         assert self.internal_angle is not None
 
         ref_side = element.ref_sides[self.ref_side_index]
-        ref_surface = element.side_as_surface(self.ref_side_index) # TODO: make sure `Plate` element has side_as_surface method
+        ref_surface = element.side_as_surface(self.ref_side_index)
 
         p_origin = planar_surface_point_at(ref_surface, self.start_x, self.start_y)
         p_origin.translate(-ref_side.normal * self.start_depth)
@@ -598,7 +596,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        element : :class:`compas_timber.base.TimberElement`
             The element that is cut by this instance.
 
         Returns
@@ -670,7 +668,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        element : :class:`compas_timber.base.TimberElement`
             The element that is cut by this instance.
 
         Returns
@@ -678,7 +676,6 @@ class Pocket(BTLxProcessing):
         :class:`compas.geometry.Polyhedron`
             The correctly oriented subtracting volume of the pocket.
         """
-        # type: (Beam | Plate) -> Polyhedron
         # Get cutting planes
         start_plane, end_plane, top_plane, bottom_plane, front_plane, back_plane = self._planes_from_params_and_element(element)
 
@@ -778,7 +775,7 @@ class PocketProxy(object):
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
         machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
@@ -826,9 +823,9 @@ class PocketProxy(object):
         ----------
         volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
+        machining_limits : :class:`compas_timber.fabrication.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -852,7 +849,7 @@ class PocketProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the pocket to.
-        element : :class:`~compas_timber.elements.Beam` or :class:`~compas_timber.elements.Plate`
+        element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
 
         Raises
