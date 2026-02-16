@@ -5,6 +5,8 @@ from unittest.mock import patch
 from compas.data import json_load
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Polyline
 
 import xml.etree.ElementTree as ET
 
@@ -16,6 +18,9 @@ from compas_timber.fabrication import BTLxPart
 from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import FreeContour
+from compas_timber.fabrication import Contour
+from compas_timber.fabrication import DualContour
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -598,3 +603,291 @@ def test_btlx_reader_full_file(test_model, tol):
 
         # Check that processings were created
         assert len(beam_read.features) == len(beam_original.features)
+
+
+def test_btlx_reader_free_contour_with_simple_contour_roundtrip(tol):
+    """Test that FreeContour with simple Contour parameters survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+    plate.name = "test_plate"
+
+    # Create FreeContour with simple Contour (single inclination)
+    polyline = Polyline([Point(10, 10, 0), Point(490, 10, 0), Point(490, 490, 0), Point(10, 490, 0), Point(10, 10, 0)])
+    contour = Contour(polyline=polyline, depth=15.0, depth_bounded=True, inclination=[45.0])
+    free_contour = FreeContour(contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Write to BTLx and read back
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify no parsing errors
+    assert len(reader.errors) == 0, f"Errors encountered during BTLx reading: {reader.errors}"
+
+    # Verify plate was read
+    assert len(model_read.plates) == 1
+    plate_read = model_read.plates[0]
+    assert plate_read.name == "test_plate"
+
+    # Verify features were read (plate will have outline + our added feature = 2 total)
+    # But we only added 1 feature to the original plate, so after roundtrip we expect that same feature count
+    assert len(plate_read.features) >= 1
+
+    # Find the feature we added (it should be the last one or one with matching depth)
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, Contour):
+            if TOL.is_close(f.contour_param_object.depth, 15.0):
+                feature_read = f
+                break
+
+    assert feature_read is not None, "Could not find the FreeContour with depth 15.0"
+
+    # Verify Contour parameter object
+    assert isinstance(feature_read.contour_param_object, Contour)
+    assert tol.is_close(feature_read.contour_param_object.depth, 15.0)
+    assert feature_read.contour_param_object.depth_bounded is True
+    assert len(feature_read.contour_param_object.inclination) == 4  # 4 segments in closed polyline
+    assert tol.is_close(feature_read.contour_param_object.inclination[0], 45.0)
+
+
+def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip(tol):
+    """Test that FreeContour with per-segment inclinations survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+
+    # Create FreeContour with per-segment inclinations
+    polyline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 100, 0), Point(0, 100, 0), Point(0, 0, 0)])
+    contour = Contour(polyline=polyline, depth=10.0, depth_bounded=True, inclination=[30.0, 45.0, 60.0, 90.0])
+    free_contour = FreeContour(contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    plate_read = model_read.plates[0]
+
+    # Find the feature with per-segment inclinations
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, Contour):
+            if len(f.contour_param_object.inclination) == 4:
+                # Check if inclinations match
+                incl = f.contour_param_object.inclination
+                if tol.is_close(incl[0], 30.0) and tol.is_close(incl[1], 45.0):
+                    feature_read = f
+                    break
+
+    assert feature_read is not None, "Could not find FreeContour with per-segment inclinations"
+
+    # Verify per-segment inclinations preserved
+    inclinations_read = feature_read.contour_param_object.inclination
+    assert len(inclinations_read) == 4
+    assert tol.is_close(inclinations_read[0], 30.0)
+    assert tol.is_close(inclinations_read[1], 45.0)
+    assert tol.is_close(inclinations_read[2], 60.0)
+    assert tol.is_close(inclinations_read[3], 90.0)
+
+
+def test_btlx_reader_free_contour_with_dual_contour_roundtrip(tol):
+    """Test that FreeContour with DualContour parameters survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+
+    # Create FreeContour with DualContour
+    principal = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 100, 0), Point(0, 100, 0), Point(0, 0, 0)])
+    associated = Polyline([Point(10, 10, 10), Point(90, 10, 10), Point(90, 90, 10), Point(10, 90, 10), Point(10, 10, 10)])
+    dual_contour = DualContour(principal, associated)
+    free_contour = FreeContour(dual_contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    plate_read = model_read.plates[0]
+
+    # Find the DualContour feature
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, DualContour):
+            feature_read = f
+            break
+
+    assert feature_read is not None, "Could not find FreeContour with DualContour"
+    assert isinstance(feature_read, FreeContour)
+    assert isinstance(feature_read.contour_param_object, DualContour)
+
+    # Verify both contours preserved
+    dual_read = feature_read.contour_param_object
+    assert tol.is_allclose(dual_read.principal_contour.points, principal.points)
+    assert tol.is_allclose(dual_read.associated_contour.points, associated.points)
+
+
+def test_btlx_reader_error_handling_malformed_xml():
+    """Test that malformed XML raises appropriate error."""
+    reader = BTLxReader()
+    malformed_xml = "<?xml version='1.0'?><BTLx>"  # No closing tag
+
+    with pytest.raises(ET.ParseError):
+        reader.xml_to_model(malformed_xml)
+
+
+def test_btlx_reader_error_handling_missing_project():
+    """Test that missing Project element raises ValueError."""
+    reader = BTLxReader()
+    xml_without_project = '<?xml version="1.0"?><BTLx xmlns="https://www.design2machine.com"></BTLx>'
+
+    with pytest.raises(ValueError, match="No Project element found"):
+        reader.xml_to_model(xml_without_project)
+
+
+def test_btlx_reader_error_handling_unsupported_processing():
+    """Test that unsupported processing types are logged to errors."""
+    reader = BTLxReader()
+    xml_with_unknown = """<?xml version="1.0"?>
+    <BTLx xmlns="https://www.design2machine.com">
+      <Project Name="Test">
+        <Parts>
+          <Part Length="1000.000" Width="100.000" Height="100.000" OrderNumber="1" ElementNumber="test" Annotation="test">
+            <Transformations>
+              <Transformation GUID="{12345678-1234-1234-1234-123456789ABC}">
+                <Position>
+                  <ReferencePoint X="0" Y="0" Z="0"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="1" Z="0"/>
+                </Position>
+              </Transformation>
+            </Transformations>
+            <Processings>
+              <UnknownProcessing>
+                <SomeParameter>value</SomeParameter>
+              </UnknownProcessing>
+            </Processings>
+          </Part>
+        </Parts>
+      </Project>
+    </BTLx>"""
+
+    model = reader.xml_to_model(xml_with_unknown)
+
+    # Model should be created successfully (non-fatal error)
+    assert isinstance(model, TimberModel)
+    assert len(model.beams) == 1
+
+    # But error should be logged
+    assert len(reader.errors) == 1
+    assert "Unsupported processing type: UnknownProcessing" in reader.errors[0]
+
+
+def test_btlx_reader_plate_multiple_features_roundtrip(tol):
+    """Test plate with both outline FreeContour and aperture features."""
+    model = TimberModel()
+
+    # Create a plate with outline contour
+    plate_polyline = Polyline([Point(0, 0, 0), Point(1000, 0, 0), Point(1000, 500, 0), Point(0, 500, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(plate_polyline, 20.0)
+    plate.name = "plate_with_aperture"
+
+    # Add aperture contour
+    aperture_polyline = Polyline([Point(200, 100, 0), Point(800, 100, 0), Point(800, 400, 0), Point(200, 400, 0), Point(200, 100, 0)])
+    aperture_contour = Contour(polyline=aperture_polyline, depth=10.0, depth_bounded=True, inclination=[90.0])
+    aperture_feature = FreeContour(aperture_contour, counter_sink=True)
+    plate.add_features(aperture_feature)
+
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    assert len(model_read.plates) == 1
+    plate_read = model_read.plates[0]
+
+    # Note: Plates auto-generate an outline feature from outline_a/outline_b,
+    # and the BTLx includes all features that were written (outline + aperture).
+    # So we'll have: auto-generated outline + written outline + written aperture = 3 features
+    # We just need to verify the aperture feature is present and correct
+    assert len(plate_read.features) >= 2
+
+    # All should be FreeContour instances
+    assert all(isinstance(f, FreeContour) for f in plate_read.features)
+
+    # Find the aperture (counter_sink=True)
+    aperture_read = None
+    for f in plate_read.features:
+        if f.counter_sink:
+            aperture_read = f
+            break
+
+    assert aperture_read is not None, "Could not find aperture with counter_sink=True"
+    assert aperture_read.counter_sink is True
+
+
+def test_btlx_reader_processing_instantiation_error():
+    """Test that invalid processing parameters log errors but don't crash."""
+    reader = BTLxReader()
+
+    # Create BTLx with JackRafterCut missing required parameter (should fail instantiation)
+    xml_with_bad_processing = """<?xml version="1.0"?>
+    <BTLx xmlns="https://www.design2machine.com">
+      <Project Name="Test">
+        <Parts>
+          <Part Length="1000.000" Width="100.000" Height="100.000" OrderNumber="1" ElementNumber="test" Annotation="test">
+            <Transformations>
+              <Transformation GUID="{12345678-1234-1234-1234-123456789ABC}">
+                <Position>
+                  <ReferencePoint X="0" Y="0" Z="0"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="1" Z="0"/>
+                </Position>
+              </Transformation>
+            </Transformations>
+            <Processings>
+              <JackRafterCut Orientation="start" ReferencePlaneID="1">
+                <StartX>10.000</StartX>
+                <StartY>20.000</StartY>
+                <!-- Missing required parameters like Angle, Inclination -->
+              </JackRafterCut>
+            </Processings>
+          </Part>
+        </Parts>
+      </Project>
+    </BTLx>"""
+
+    model = reader.xml_to_model(xml_with_bad_processing)
+
+    # Model should still be created (non-fatal error)
+    assert isinstance(model, TimberModel)
+    assert len(model.beams) == 1
+
+    # But error should be logged
+    assert len(reader.errors) > 0
+    # Check that error message mentions the processing type
+    error_messages = " ".join(reader.errors)
+    assert "JackRafterCut" in error_messages or "Failed to instantiate" in error_messages
