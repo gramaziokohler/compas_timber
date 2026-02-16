@@ -250,6 +250,238 @@ class TimberModel(Model):
         elements = group_element.children
         return filter(filter_, elements)
 
+    def _find_group_by_name(self, group_name):
+        # type: (str) -> TimberElement
+        """Find a group element by name.
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to find.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.TimberElement`
+            The group element.
+
+        Raises
+        ------
+        ValueError
+            If the group with the specified name is not found.
+
+        """
+        group = next((e for e in self.elements() if e.name == group_name), None)
+        if not group:
+            raise ValueError("Group with name '{}' not found in the model.".format(group_name))
+        return group
+
+    def _collect_group_contents(self, group):
+        # type: (TimberElement) -> tuple
+        """Collect all elements, joints and candidates belonging to a group and its descendants.
+
+        Parameters
+        ----------
+        group : :class:`~compas_timber.elements.TimberElement`
+            The root group element.
+
+        Returns
+        -------
+        tuple
+            A tuple of (elements, parent_map, joints, candidates) where elements is a list
+            of all elements in the group, parent_map maps children to their parents,
+            joints is a set of joints, and candidates is a set of joint candidates.
+
+        """
+        elements = [group]
+        parent_map = {}
+
+        def collect_descendants(element):
+            for child in element.children:
+                elements.append(child)
+                parent_map[child] = element
+                collect_descendants(child)
+
+        collect_descendants(group)
+        nodes = {e.graphnode for e in elements}
+
+        joints = set()
+        candidates = set()
+
+        for u, v in self._graph.edges():
+            if u in nodes and v in nodes:
+                edge_joints = self._graph.edge_attribute((u, v), "joints") or []
+                joints.update(edge_joints)
+
+                edge_cand = self._graph.edge_attribute((u, v), "candidates")
+                if edge_cand:
+                    candidates.add(edge_cand)
+
+        return elements, parent_map, joints, candidates
+
+    def copy_group_as_model(self, group_name):
+        # type: (str) -> TimberModel
+        """Copy a group of elements into a new TimberModel.
+
+        This method creates a deep copy of the specified group and its descendants
+        into a new TimberModel, preserving hierarchy. The original model is not modified.
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to copy.
+
+        Returns
+        -------
+        :class:`~compas_timber.model.TimberModel`
+            A new TimberModel containing copies of the group elements.
+
+        Raises
+        ------
+        ValueError
+            If the group with the specified name is not found.
+
+        """
+        group = self._find_group_by_name(group_name)
+        elements, parent_map, joints, candidates = self._collect_group_contents(group)
+
+        new_model = self.copy()
+
+        new_group = next((e for e in new_model.elements() if e.name == group_name), None)
+        new_elements = [new_group]
+
+        def collect_new_descendants(element):
+            for child in element.children:
+                new_elements.append(child)
+                collect_new_descendants(child)
+
+        collect_new_descendants(new_group)
+
+        elements_to_keep = set(new_elements)
+        for element in list(new_model.elements()):
+            if element not in elements_to_keep:
+                new_model.remove_element(element)
+
+        return new_model
+
+    def extract_group_as_model(self, group_name):
+        # type: (str) -> TimberModel
+        """Extract a group of elements into a new TimberModel.
+
+        This method extracts the specified group and its descendants into a new TimberModel,
+        transferring the elements structure and interactions. The extracted elements
+        are removed from the current model.
+
+        Parameters
+        ----------
+        group_name : str
+            The name of the group to extract.
+
+        Returns
+        -------
+        :class:`~compas_timber.model.TimberModel`
+            A new TimberModel containing the extracted elements.
+
+        Raises
+        ------
+        ValueError
+            If the group with the specified name is not found.
+
+        """
+        group = self._find_group_by_name(group_name)
+        elements, parent_map, joints, candidates = self._collect_group_contents(group)
+
+        new_model = TimberModel(tolerance=self.tolerance)
+
+        for joint in joints:
+            self.remove_joint(joint)
+
+        for candidate in candidates:
+            self.remove_joint_candidate(candidate)
+
+        for element in elements:
+            if self.has_element(element):
+                self.remove_element(element)
+
+        new_model.add_element(group)
+
+        for element in elements:
+            if element == group:
+                continue
+            parent = parent_map.get(element)
+            new_model.add_element(element, parent=parent)
+
+        for joint in joints:
+            new_model.add_joint(joint)
+
+        for candidate in candidates:
+            new_model.add_joint_candidate(candidate)
+
+        return new_model
+
+    def merge_model_as_group(self, other_model, parent=None):
+        # type: (TimberModel, TimberElement | None) -> None
+        """Merge another TimberModel into this model.
+
+        All elements, joints and joint candidates from the other model are transferred
+        into this model. The hierarchy of the other model is preserved. The other model
+        is left empty after this operation.
+
+        Parameters
+        ----------
+        other_model : :class:`~compas_timber.model.TimberModel`
+            The model to merge into this one.
+        parent : :class:`~compas_timber.elements.TimberElement`, optional
+            The parent element under which to add the other model's root elements.
+            If ``None``, elements are added under this model's root.
+
+        """
+        if parent is not None and not self.has_element(parent):
+            raise ValueError("Parent element '{}' not found in this model.".format(parent.name))
+
+        root_elements = [e for e in other_model.elements() if e.parent is None or e.parent not in other_model._elements.values()]
+
+        parent_map = {}
+
+        def collect_with_parents(element):
+            for child in element.children:
+                parent_map[child] = element
+                collect_with_parents(child)
+
+        all_elements = []
+        for root in root_elements:
+            all_elements.append(root)
+            collect_with_parents(root)
+            for child in parent_map:
+                if child not in all_elements:
+                    all_elements.append(child)
+
+        joints = set(other_model.joints)
+        candidates = set(other_model.joint_candidates)
+
+        for joint in list(joints):
+            other_model.remove_joint(joint)
+
+        for candidate in list(candidates):
+            other_model.remove_joint_candidate(candidate)
+
+        for element in all_elements:
+            if other_model.has_element(element):
+                other_model.remove_element(element)
+
+        for root in root_elements:
+            self.add_element(root, parent=parent)
+
+        for element in all_elements:
+            if element in root_elements:
+                continue
+            self.add_element(element, parent=parent_map.get(element))
+
+        for joint in joints:
+            self.add_joint(joint)
+
+        for candidate in candidates:
+            self.add_joint_candidate(candidate)
+
     # =============================================================================
     # Interactions
     # =============================================================================
