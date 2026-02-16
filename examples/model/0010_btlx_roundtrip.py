@@ -29,11 +29,8 @@ def main(filepath, suffix="_roundtrip"):
     print(f"Reading BTLx file: {filepath}")
 
     # Read the BTLx file
-    reader = BTLxReader(Tolerance(unit="MM", precision=3))
-    print(f"Reader unit: {reader._unit}, precision: {reader._precision}")
+    reader = BTLxReader()
     model = reader.read(filepath)
-    print(f"Reader unit after read: {reader._unit}, precision: {reader._precision}")
-    print(f"Model tolerance: {model.tolerance}")
 
     # Report any errors
     if reader.errors:
@@ -53,7 +50,6 @@ def main(filepath, suffix="_roundtrip"):
     # Write the model back to BTLx
     writer = BTLxWriter()
     writer.write(model, output_filepath)
-    print(writer._tolerance, "tolerance in writer")
 
     print("Done!")
 
