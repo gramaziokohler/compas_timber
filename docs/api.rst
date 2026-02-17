@@ -15,6 +15,5 @@ Packages
     api/compas_timber.design
     api/compas_timber.planning
     api/compas_timber.errors
-    api/compas_timber.ghpython
     api/compas_timber.rhino
     api/compas_timber.base
