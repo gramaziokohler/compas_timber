@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="TimberModel.add_joint" href="compas_timber.model.TimberModel.add_joint.html" />
+    <link rel="next" title="TimberModel.add_beam_structural_segments" href="compas_timber.model.TimberModel.add_beam_structural_segments.html" />
     <link rel="prev" title="compas_timber.model" href="../compas_timber.model.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -598,7 +598,7 @@ document.write(`
 <h1>TimberModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/93a122e/src/compas_timber/model/model.py#L29"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d31e4ad/src/compas_timber/model/model.py#L28"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Represents a timber model containing different elements such as panels, beams and joints.</p>
 <p>The timber model allows expressing the hierarchy and interactions between the different elements it contains.</p>
@@ -630,11 +630,17 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint.html#compas_timber.model.TimberModel.add_joint" title="compas_timber.model.TimberModel.add_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_beam_structural_segments.html#compas_timber.model.TimberModel.add_beam_structural_segments" title="compas_timber.model.TimberModel.add_beam_structural_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_beam_structural_segments</span></code></a></p></td>
+<td><p>Adds a structural segment to the model node corresponding to the given beam.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint.html#compas_timber.model.TimberModel.add_joint" title="compas_timber.model.TimberModel.add_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint</span></code></a></p></td>
 <td><p>Add a joint object to the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint_candidate.html#compas_timber.model.TimberModel.add_joint_candidate" title="compas_timber.model.TimberModel.add_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint_candidate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_joint_candidate.html#compas_timber.model.TimberModel.add_joint_candidate" title="compas_timber.model.TimberModel.add_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_joint_candidate</span></code></a></p></td>
 <td><p>Add a joint candidate to the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.add_structural_connector_segments.html#compas_timber.model.TimberModel.add_structural_connector_segments" title="compas_timber.model.TimberModel.add_structural_connector_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_structural_connector_segments</span></code></a></p></td>
+<td><p>Adds structural segments to the interaction (edge) between two elements.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.connect_adjacent_beams.html#compas_timber.model.TimberModel.connect_adjacent_beams" title="compas_timber.model.TimberModel.connect_adjacent_beams"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_adjacent_beams</span></code></a></p></td>
 <td><p></p></td>
@@ -645,8 +651,14 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.connect_adjacent_plates.html#compas_timber.model.TimberModel.connect_adjacent_plates" title="compas_timber.model.TimberModel.connect_adjacent_plates"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect_adjacent_plates</span></code></a></p></td>
 <td><p>Connects adjacent plates in the model.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.element_by_guid.html#compas_timber.model.TimberModel.element_by_guid" title="compas_timber.model.TimberModel.element_by_guid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_by_guid</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.create_beam_structural_segments.html#compas_timber.model.TimberModel.create_beam_structural_segments" title="compas_timber.model.TimberModel.create_beam_structural_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_beam_structural_segments</span></code></a></p></td>
+<td><p>Creates structural segments for all beams in the model based on their joints.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.element_by_guid.html#compas_timber.model.TimberModel.element_by_guid" title="compas_timber.model.TimberModel.element_by_guid"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_by_guid</span></code></a></p></td>
 <td><p>DEPRECATED Get an element by its unique identifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_beam_structural_segments.html#compas_timber.model.TimberModel.get_beam_structural_segments" title="compas_timber.model.TimberModel.get_beam_structural_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_beam_structural_segments</span></code></a></p></td>
+<td><p>Gets the structural segments assigned to the given beam.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_element.html#compas_timber.model.TimberModel.get_element" title="compas_timber.model.TimberModel.get_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_element</span></code></a></p></td>
 <td><p>Get an element by its unique identifier.</p></td>
@@ -657,11 +669,17 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_interactions_for_element.html#compas_timber.model.TimberModel.get_interactions_for_element" title="compas_timber.model.TimberModel.get_interactions_for_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_interactions_for_element</span></code></a></p></td>
 <td><p>Get all interactions for a given element.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_group.html#compas_timber.model.TimberModel.has_group" title="compas_timber.model.TimberModel.has_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_group</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_structural_connector_segments.html#compas_timber.model.TimberModel.get_structural_connector_segments" title="compas_timber.model.TimberModel.get_structural_connector_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_structural_connector_segments</span></code></a></p></td>
+<td><p>Gets the structural segments assigned to the interaction between two elements.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.has_group.html#compas_timber.model.TimberModel.has_group" title="compas_timber.model.TimberModel.has_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_group</span></code></a></p></td>
 <td><p>Check if a group with <cite>group_element</cite> exists in the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.process_joinery.html#compas_timber.model.TimberModel.process_joinery" title="compas_timber.model.TimberModel.process_joinery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_joinery</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.process_joinery.html#compas_timber.model.TimberModel.process_joinery" title="compas_timber.model.TimberModel.process_joinery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">process_joinery</span></code></a></p></td>
 <td><p>Process the joinery of the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_beam_structural_segments.html#compas_timber.model.TimberModel.remove_beam_structural_segments" title="compas_timber.model.TimberModel.remove_beam_structural_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_beam_structural_segments</span></code></a></p></td>
+<td><p>Removes all structural segments assigned to the given beam.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_interaction.html#compas_timber.model.TimberModel.remove_interaction" title="compas_timber.model.TimberModel.remove_interaction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_interaction</span></code></a></p></td>
 <td><p>Remove the interaction between two elements.</p></td>
@@ -672,10 +690,13 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_joint_candidate.html#compas_timber.model.TimberModel.remove_joint_candidate" title="compas_timber.model.TimberModel.remove_joint_candidate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_joint_candidate</span></code></a></p></td>
 <td><p>Removes this joint candidate from the model.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.set_topologies.html#compas_timber.model.TimberModel.set_topologies" title="compas_timber.model.TimberModel.set_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_topologies</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.remove_structural_connector_segments.html#compas_timber.model.TimberModel.remove_structural_connector_segments" title="compas_timber.model.TimberModel.remove_structural_connector_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_structural_connector_segments</span></code></a></p></td>
+<td><p>Removes all structural segments assigned to the interaction between two elements.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.set_topologies.html#compas_timber.model.TimberModel.set_topologies" title="compas_timber.model.TimberModel.set_topologies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_topologies</span></code></a></p></td>
 <td><p>TODO: calculate the topologies inside the model using the ConnectionSolver.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform.html#compas_timber.model.TimberModel.transform" title="compas_timber.model.TimberModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.transform.html#compas_timber.model.TimberModel.transform" title="compas_timber.model.TimberModel.transform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">transform</span></code></a></p></td>
 <td><p>Transform the model and reset all computed properties of all elements.</p></td>
 </tr>
 </tbody>
