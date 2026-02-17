@@ -1,9 +1,10 @@
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.butt_joint import ButtJoint
-from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.connections.utilities import extend_main_beam_to_cross_beam
+from compas_timber.connections.utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.elements import Beam
 
 
@@ -154,22 +155,8 @@ class KButtJoint(Joint):
             If the extension could not be calculated.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
-        self._extend_main_beam_a()
-        self._extend_main_beam_b()
-
-    def _extend_main_beam_a(self):
-        cutting_plane_A = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_a)]
-        if self.mill_depth:
-            cutting_plane_A.translate(-cutting_plane_A.normal * self.mill_depth)
-        start_main, end_main = self.main_beam_a.extension_to_plane(cutting_plane_A)
-        self.main_beam_a.add_blank_extension(start_main + 0.01, end_main + 0.01, self.guid)
-
-    def _extend_main_beam_b(self):
-        cutting_plane_B = self.cross_beam.ref_sides[self.cross_beam_ref_side_index(self.main_beam_b)]
-        if self.mill_depth:
-            cutting_plane_B.translate(-cutting_plane_B.normal * self.mill_depth)
-        start_main, end_main = self.main_beam_b.extension_to_plane(cutting_plane_B)
-        self.main_beam_b.add_blank_extension(start_main + 0.01, end_main + 0.01, self.guid)
+        extend_main_beam_to_cross_beam(self.main_beam_a, self.cross_beam, self.mill_depth)
+        extend_main_beam_to_cross_beam(self.main_beam_b, self.cross_beam, self.mill_depth)
 
     def add_features(self):
         """
@@ -182,8 +169,8 @@ class KButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 # Merge the two pockets together
-                p1 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                p2 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p1 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p2 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
                 p1.length = p2.start_x + p2.length - p1.start_x
                 p1.tilt_end_side = p2.tilt_end_side
                 self.cross_beam.add_feature(p1)
@@ -191,8 +178,8 @@ class KButtJoint(Joint):
 
             else:
                 # Merge the two laps in on lap
-                l1 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
-                l2 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+                l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
+                l2 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
 
                 assert l1 and l2
                 assert l1.start_x and l2.start_x
@@ -217,15 +204,15 @@ class KButtJoint(Joint):
                 self.cross_beam.add_feature(lap)
                 self.features.append(lap)
 
-        feature = ButtJoint.cut_main_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
         self.main_beam_a.add_feature(feature)
         self.features.append(feature)
 
-        feature = ButtJoint.cut_main_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
         self.main_beam_b.add_feature(feature)
         self.features.append(feature)
 
-        feature = ButtJoint.cut_main_beam(self.main_beam_a, self.main_beam_b, mill_depth=0)
+        feature = ButtJoint.get_cut_main_beam(self.main_beam_a, self.main_beam_b, mill_depth=0)
         self.main_beam_b.add_feature(feature)
         self.features.append(feature)
 

@@ -27,6 +27,9 @@ from .oligina import OliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
+from .utilities import extend_main_beam_to_cross_beam
+from .utilities import angle_and_dot_product_main_beam_and_cross_beam
+from .utilities import parse_cross_beam_and_main_beams_from_cluster
 from .plate_joint import PlateJoint
 from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
@@ -43,7 +46,6 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
-from .joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 
 
 __all__ = [
@@ -77,6 +79,9 @@ __all__ = [
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
+    "extend_main_beam_to_cross_beam",
+    "angle_and_dot_product_main_beam_and_cross_beam",
+    "parse_cross_beam_and_main_beams_from_cluster",
     "PlateJoint",
     "PanelJoint",
     "PlateButtJoint",
@@ -93,5 +98,4 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
-    "parse_cross_beam_and_main_beams_from_cluster",
 ]

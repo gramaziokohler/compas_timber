@@ -105,7 +105,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `element_data` dictionary in `compas_timber.planning.Stock` to now map each element GUID to a `NestedElementData` object containing its frame, a human-readable key, and length.
 * Changed the constructor of `compas_timber.planning.NestingResult` to optionally accept a `Tolerance` object, allowing each result to specify its own units and precision for reporting and summaries.
 * Changed `main_beam` to `beam_a` and `cross_beam` to `beam_b` in `LapJoint`, `LLapJoint`, `FrenchRidgeLapJoint`, and `XLapJoint`.
-* Changed features creation in `ButtJoint` in staticmethods.
+* Changed features creation in `ButtJoint` to staticmethods.
 * Changed `Panel` and `Plate` to no longer inherit from 'PlateGeometry`.
 * Implemented `compute_modeltransformation()` and `compute_modelgeometry()` in `Panel` and `Plate` to handle local geometry computation.
 * Implemented alternate constructors `from_brep`,`from_outlines` and `from_outline_thickness` in `Panel` and `Plate`.

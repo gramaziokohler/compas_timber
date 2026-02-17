@@ -144,20 +144,20 @@ The connections subsystem defines joints and their relationships. All joints inh
       }
 
       class Joint {
-         <<abstract>>
-         +topology : JointTopology
-         +location : Point
-         +elements : list[Element]
-         +generated_elements : list[Element]
-         +features : list[Feature]
-         +SUPPORTED_TOPOLOGY : JointTopology
-         +MAX_ELEMENT_COUNT : int
-         +add_features()
-         +add_extensions()
-         +check_elements_compatibility()
-         +restore_beams_from_keys(model)
-         +create(model, elements)
-      }
+	    +topology : JointTopology
+	    +location : Point
+	    +elements : list[Element]
+	    +generated_elements : list[Element]
+	    +features : list[Feature]
+	    +SUPPORTED_TOPOLOGY : JointTopology
+	    +MAX_ELEMENT_COUNT : int
+	    +add_features()
+	    +add_extensions()
+	    +check_elements_compatibility()
+	    +restore_beams_from_keys(model)
+        +get_beam_direction_towards_joint()
+	    +create(model, elements)
+    }
 
       class JointCandidate {
          +element_a : TimberElement
@@ -167,12 +167,15 @@ The connections subsystem defines joints and their relationships. All joints inh
       }
 
       class ButtJoint {
-         +main_beam : Beam
-         +cross_beam : Beam
-         +mill_depth : float
-         +modify_cross : bool
-         +butt_plane : Plane
-         +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+	    +main_beam : Beam
+	    +cross_beam : Beam
+	    +mill_depth : float
+	    +modify_cross : bool
+	    +butt_plane : Plane
+	    +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+        +get_pocket_on_cross_beam()  Pocket$
+        +get_lap_on_cross_beam()  Lap$
+        +get_cut_on_main_beam() JackRafterCutProxy$
       }
 
       class LButtJoint {
@@ -249,6 +252,28 @@ The connections subsystem defines joints and their relationships. All joints inh
          +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
       }
 
+      class KMiterJoint {
+          +beams : list[Beam]
+          +elements : list[Beam]
+          +are_beams_coplanar : bool
+          +promote_cluster()$
+          +cross_beam_ref_side_index()
+          +main_beam_red_side_index()
+          +add_extensions()
+          +add_features()
+      }
+
+      class KButtJoint {
+          +beams : list[Beam]
+          +elements : list[Beam]
+          +are_beams_coplanar : bool
+          +promote_cluster()$
+          +cross_beam_ref_side_index()
+          +main_beam_red_side_index()
+          +add_extensions()
+          +add_features()
+      }
+
 
       %% Inheritance relationships
       Interaction <|-- Joint
@@ -260,6 +285,8 @@ The connections subsystem defines joints and their relationships. All joints inh
       Joint <|-- BallNodeJoint
       Joint <|-- TenonMortiseJoint
       Joint <|-- PlateJoint
+      Joint <|-- KMiterJoint
+      Joint <|-- KButtJoint
 
       ButtJoint <|-- LButtJoint
       ButtJoint <|-- TButtJoint
@@ -267,6 +294,8 @@ The connections subsystem defines joints and their relationships. All joints inh
       LapJoint <|-- LLapJoint
       LapJoint <|-- XLapJoint
       PlateJoint <|-- PlateButtJoint
+
+
 
 Fabrication Subsystem
 ======================

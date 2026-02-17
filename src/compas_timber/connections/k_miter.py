@@ -1,15 +1,12 @@
-from compas.geometry import Point
-from compas.geometry import angle_vectors
-from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_line
-
 from compas_timber.connections import Joint
-from compas_timber.connections import JointTopology
-from compas_timber.connections.joinery_utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.connections.l_miter import LMiterJoint
+from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.t_butt import ButtJoint
+from compas_timber.connections.utilities import angle_and_dot_product_main_beam_and_cross_beam
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
+from compas_timber.connections.utilities import extend_main_beam_to_cross_beam
+from compas_timber.connections.utilities import parse_cross_beam_and_main_beams_from_cluster
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
 
@@ -121,7 +118,7 @@ class KMiterJoint(Joint):
         """
         cross_beams, main_beams = parse_cross_beam_and_main_beams_from_cluster(cluster)
         if len(cross_beams) != 1:
-            raise BeamJoiningError("K-Miter joints require exactly one cross beam.")
+            raise BeamJoiningError(cross_beams, cls, "K-Miter joints require exactly one cross beam.")
         elements = list(cross_beams) + list(main_beams)
         return cls.create(model, *elements, **kwargs)
 
@@ -148,19 +145,7 @@ class KMiterJoint(Joint):
 
         """
         for beam in self.main_beams:
-            self._extend_beam(beam)
-
-    def _extend_beam(self, beam: Beam):
-        ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
-        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cutting_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
-
-        if self.mill_depth:
-            cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
-
-        start_extension, end_extension = beam.extension_to_plane(cutting_plane)
-        extension_tolerance = 0.01
-        beam.add_blank_extension(start_extension + extension_tolerance, end_extension + extension_tolerance)
+            extend_main_beam_to_cross_beam(beam, self.cross_beam, mill_depth=self.mill_depth)
 
     def add_features(self):
         """
@@ -173,19 +158,19 @@ class KMiterJoint(Joint):
         # self.main_beams is sorted based on their dot product with the cross beam direction
         sorted_angles, sorted_dots = self._sort_main_beams()
 
-        if self.force_pocket:
+        if self.force_pocket and self.mill_depth:
             # Merge the last and first pocket together
-            p1 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beams[0], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-            p2 = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            p1 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beams[0], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            p2 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
             p1.length = p2.start_x + p2.length - p1.start_x
             p1.tilt_end_side = p2.tilt_end_side
             self.cross_beam.add_feature(p1)
             self.features.append(p1)
 
-        else:
+        elif self.mill_depth:
             # Merge the two laps in on lap
-            l1 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.mill_depth)
-            l2 = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[-1], self.mill_depth)
+            l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.mill_depth)
+            l2 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[-1], self.mill_depth)
 
             assert l1 and l2
             assert l1.start_x and l2.start_x
@@ -221,7 +206,7 @@ class KMiterJoint(Joint):
 
         # Apply Jack Rafter Cuts to the main beams
         for beam in self.main_beams:
-            feature = ButtJoint.cut_main_beam(self.cross_beam, beam, mill_depth=self.mill_depth)
+            feature = ButtJoint.get_cut_main_beam(self.cross_beam, beam, mill_depth=self.mill_depth)
             beam.add_feature(feature)
             self.features.append(feature)
 
@@ -229,7 +214,7 @@ class KMiterJoint(Joint):
         angles = []
         dots = []
         for main_beam in self.main_beams:
-            angle, dot = self._compute_angle_and_dot_between_cross_beam_and_main_beam(main_beam)
+            angle, dot = angle_and_dot_product_main_beam_and_cross_beam(main_beam, self.cross_beam, self)
             angles.append(angle)
             dots.append(dot)
         # Sort main_beams based on dots (ascending order)
@@ -239,21 +224,6 @@ class KMiterJoint(Joint):
         sorted_dots = [dots[i] for i in sorted_indices]
         self.main_beams = sorted_beams
         return sorted_angles, sorted_dots
-
-    def _compute_angle_and_dot_between_cross_beam_and_main_beam(self, main_beam: Beam):
-        p1x, _ = intersection_line_line(main_beam.centerline, self.cross_beam.centerline)
-        if p1x is None:
-            raise ValueError("Main beam and cross beam do not intersect.")
-        end, _ = main_beam.endpoint_closest_to_point(Point(*p1x))
-
-        if end == "start":
-            main_beam_direction = main_beam.centerline.vector
-        else:
-            main_beam_direction = main_beam.centerline.vector * -1
-        main_beam_direction = main_beam_direction.unitized()
-        angle = angle_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-        dot = dot_vectors(main_beam_direction, self.cross_beam.centerline.direction)
-        return angle, dot
 
     def restore_beams_from_keys(self, model):
         """After de-seriallization, restores references to the main and cross beams saved in the model."""

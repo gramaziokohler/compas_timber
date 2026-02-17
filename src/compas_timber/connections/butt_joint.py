@@ -6,14 +6,14 @@ from typing import Optional
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import Vector
-from compas.geometry import centroid_points
+from compas.geometry import distance_point_plane
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.utils import ensure_polyhedron_faces_outwards
 
 from .joint import Joint
 from .solver import JointTopology
@@ -200,6 +200,7 @@ class ButtJoint(Joint):
             self._apply_pocket_to_cross_beam()
         else:
             self._apply_lap_to_cross_beam()
+
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             if self.back_plane:
@@ -211,20 +212,22 @@ class ButtJoint(Joint):
             self.features.append(cross_refinement_feature)
 
     def _apply_cut_to_main_beam(self):
-        feature = ButtJoint.cut_main_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
-        self.main_beam.add_features(feature)
-        self.features.append(feature)
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
+        if feature:
+            self.main_beam.add_features(feature)
+            self.features.append(feature)
 
     def _apply_lap_to_cross_beam(self):
-        feature = ButtJoint.lap_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
+        feature = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
         if feature:
             self.cross_beam.add_features(feature)
             self.features.append(feature)
 
     def _apply_pocket_to_cross_beam(self):
-        pocket = ButtJoint.pocket_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane, self.conical_tool)
-        self.cross_beam.add_features(pocket)
-        self.features.append(pocket)
+        pocket = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane, self.conical_tool)
+        if pocket:
+            self.cross_beam.add_features(pocket)
+            self.features.append(pocket)
 
     def restore_beams_from_keys(self, model: TimberModel):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
@@ -232,7 +235,28 @@ class ButtJoint(Joint):
         self.cross_beam = model[self.cross_beam_guid]
 
     @staticmethod
-    def cut_main_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> JackRafterCutProxy:
+    def get_cut_main_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> JackRafterCutProxy:
+        """
+        Computes the `JackRafterCutProxy` feature to cut the main beam.
+        This method does not apply the feature to the beam, it only computes it.
+
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam creating creating the cut on the main beam.
+        main_beam : Beam
+            The main beam on which the cut will be applied.
+        mill_depth : Optional[float], optional
+            The depth of the cut to be milled in the main beam. This will be ignored if `butt_plane` is provided. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used. Default is None.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+            The feature to be applied to the main beam to cut it according to the joint design.
+        """
+
         if butt_plane:
             cutting_plane = butt_plane
         else:
@@ -252,28 +276,79 @@ class ButtJoint(Joint):
         return feature
 
     @staticmethod
-    def lap_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> Lap:
-        if mill_depth and not butt_plane:
-            ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
-            main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+    def get_lap_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> Lap:
+        """
 
-            cutting_plane = main_beam.ref_sides[main_beam_ref_side_index]
 
-            _, lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
-            ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
-            cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        Computes the `Lap` feature to be applied on the cross beam.
+        This method does not apply the feature to the beam, it only computes it.
 
-            lap_feature = Lap.from_plane_and_beam(cutting_plane, cross_beam, lap_width, mill_depth, ref_side_index=cross_beam_ref_side_index)
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam on which the lap will be applied.
+        main_beam : Beam
+            The main beam creating the lap on the cross beam.
+        mill_depth : Optional[float], optional
+            The depth of the lap to be milled in the cross beam. If not provided it is caluclated with `butt_plane`. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam and create the lap on the cross beam.
 
-            return lap_feature
-
-    @staticmethod
-    def pocket_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None, conical_tool: bool = False) -> Pocket:
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The feature to be applied to the cross beam to create the lap according to the joint design
+        """
+        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
+        main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cutting_plane = main_beam.ref_sides[main_beam_ref_side_index]
+        _, lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
         ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
-        cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
+        # calculate mill_depth with butt plane
+        if not mill_depth and butt_plane:
+            ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+            cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            cross_beam_side_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+            mill_depth = distance_point_plane(cross_beam_side_plane.point, butt_plane)
+
+        lap_feature = Lap.from_plane_and_beam(cutting_plane, cross_beam, lap_width, mill_depth, ref_side_index=cross_beam_ref_side_index)
+
+        return lap_feature
+
+    @staticmethod
+    def get_pocket_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None, conical_tool: bool = False) -> Pocket:
+        """
+        Computes the `Pocket` feature to be applied on the cross beam.
+        This method does not apply the feature to the beam, it only computes it.
+
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam on which the pocket will be applied.
+        main_beam : Beam
+            The main beam creating the pocket on the cross beam.
+        mill_depth : Optional[float], optional
+            The depth of the pocket to be milled in the cross beam. If not provided, it is calculated with `butt_plane`. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam and create the pocket on the cross beam. Default is None.
+        conical_tool : bool, optional
+            If `True`, allows smaller than 90-degree angles to be applied to the TiltSide parameters of the `Pocket` feature. Default is False.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The feature to be applied to the cross beam to create the pocket according to the joint design.
+        """
+        ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
+        if butt_plane:
+            cutting_plane = butt_plane
+        else:
+            cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+
         if mill_depth:
             cutting_plane.translate(cutting_plane.normal * mill_depth)
 
@@ -295,8 +370,9 @@ class ButtJoint(Joint):
             Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)),  # v7
         ]
         faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
-        faces = ButtJoint._ensure_faces_outward(vertices, faces)
+        # faces = ButtJoint._ensure_faces_outward(vertices, faces)
         cutout_volume = Polyhedron(vertices, faces)
+        cutout_volume = ensure_polyhedron_faces_outwards(cutout_volume)
         # return cutout_volume
         pocket = Pocket.from_volume_and_element(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
         if not conical_tool:
@@ -305,38 +381,3 @@ class ButtJoint(Joint):
             pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
             pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
         return pocket
-
-    @staticmethod
-    def _ensure_faces_outward(vertices: list[Point], faces: list[list[int]]):
-        """Reorder face indices so face normals point outward.
-        Parameters
-        ----------
-        vertices : list[Point]
-            list of Point or 3-tuples
-        faces : list[list[int]]
-            list of lists of indices
-
-        Returns
-        -------
-        list[list[int]]
-            new faces order
-        """
-        poly_centroid = Point(*centroid_points(vertices))
-        new_faces = []
-        for face in faces:
-            # vertices
-            v0 = vertices[face[0]]
-            v1 = vertices[face[1]]
-            v2 = vertices[face[2]]
-            # vectors
-            e1 = Vector.from_start_end(v0, v1)
-            e2 = Vector.from_start_end(v0, v2)
-            n = e1.cross(e2)
-            face_centroid = centroid_points([vertices[i] for i in face])
-            outward = Vector.from_start_end(poly_centroid, face_centroid)
-            # dots
-            if n.dot(outward) < 0:
-                new_faces.append(list(reversed(face)))
-            else:
-                new_faces.append(list(face))
-        return new_faces
