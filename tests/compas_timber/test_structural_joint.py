@@ -8,7 +8,7 @@ from compas.tolerance import TOL
 from compas_timber.elements import Beam
 from compas_timber.connections import Joint
 from compas_timber.model import TimberModel
-from compas_timber.structural import StructuralElementSolver
+from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
 
@@ -24,12 +24,12 @@ def test_add_joint_structural_segments_crossing_beams(mocker: pytest_mock.Mocker
     joint = mocker.MagicMock(spec=Joint)
     joint.elements = [beam1, beam2]
 
-    solver = StructuralElementSolver()
+    solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(joint, model)
 
-    model.add_interaction_structural_segments.assert_called_once()
+    model.add_structural_connector_segments.assert_called_once()
 
-    args = model.add_interaction_structural_segments.call_args
+    args = model.add_structural_connector_segments.call_args
     assert args[0][0] == beam1
     assert args[0][1] == beam2
 
@@ -57,10 +57,10 @@ def test_add_joint_structural_segments_intersecting_beams(mocker: pytest_mock.Mo
     joint = mocker.MagicMock(spec=Joint)
     joint.elements = [beam1, beam2]
 
-    solver = StructuralElementSolver()
+    solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(joint, model)
 
-    model.add_interaction_structural_segments.assert_not_called()
+    model.add_structural_connector_segments.assert_not_called()
 
 
 def test_add_joint_structural_segments_multi_beam(mocker: pytest_mock.MockerFixture):
@@ -78,12 +78,12 @@ def test_add_joint_structural_segments_multi_beam(mocker: pytest_mock.MockerFixt
     joint = mocker.MagicMock(spec=Joint)
     joint.elements = [beam1, beam2, beam3]
 
-    solver = StructuralElementSolver()
+    solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(joint, model)
 
-    assert model.add_interaction_structural_segments.call_count >= 2
+    assert model.add_structural_connector_segments.call_count >= 2
 
-    calls = model.add_interaction_structural_segments.call_args_list
+    calls = model.add_structural_connector_segments.call_args_list
     pairs = []
     for call in calls:
         args = call[0]
@@ -102,15 +102,15 @@ def test_interaction_structural_segments_direction_independence():
     model.add_interaction(beam1, beam2)
 
     segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)))
-    model.add_interaction_structural_segments(beam1, beam2, [segment])
+    model.add_structural_connector_segments(beam1, beam2, [segment])
 
     # Check forward direction
-    segments_forward = model.get_interaction_structural_segments(beam1, beam2)
+    segments_forward = model.get_structural_connector_segments(beam1, beam2)
     assert len(segments_forward) == 1
     assert segments_forward[0] == segment
 
     # Check reverse direction
-    segments_reverse = model.get_interaction_structural_segments(beam2, beam1)
+    segments_reverse = model.get_structural_connector_segments(beam2, beam1)
     assert len(segments_reverse) == 1
     assert segments_reverse[0] == segment
 
@@ -126,6 +126,6 @@ def test_interaction_structural_segments_returns_empty_if_no_interaction():
     segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)))
 
     with pytest.raises(ValueError):
-        model.add_interaction_structural_segments(beam1, beam2, [segment])
+        model.add_structural_connector_segments(beam1, beam2, [segment])
 
-    assert model.get_interaction_structural_segments(beam1, beam2) == []
+    assert model.get_structural_connector_segments(beam1, beam2) == []

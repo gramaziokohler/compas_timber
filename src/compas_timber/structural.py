@@ -33,7 +33,7 @@ class StructuralSegment(Data):
         self.segment = segment
 
 
-class StructuralElementSolver:
+class BeamStructuralElementSolver:
     """Produces structural segments for beams and joints in a timber model."""
 
     def add_structural_segments(self, beam: Beam, model: TimberModel) -> List[StructuralSegment]:
@@ -81,7 +81,7 @@ class StructuralElementSolver:
                 continue
 
             virtual_segment = Line(p1, p2)
-            model.add_interaction_structural_segments(beam_a, beam_b, [StructuralSegment(segment=virtual_segment)])
+            model.add_structural_connector_segments(beam_a, beam_b, [StructuralSegment(segment=virtual_segment)])
 
     def _create_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
         # create segments between joints
