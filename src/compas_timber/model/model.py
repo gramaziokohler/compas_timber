@@ -1,15 +1,12 @@
+from __future__ import annotations
+
 import warnings
-
-import compas
-
-if not compas.IPY:
-    from typing import Generator  # noqa: F401
-    from typing import List  # noqa: F401
-
-    from compas.tolerance import Tolerance  # noqa: F401
+from typing import List
+from typing import cast
 
 from compas.geometry import Point
 from compas.tolerance import TOL
+from compas_model.elements import Element
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
@@ -24,6 +21,8 @@ from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.structural import BeamStructuralElementSolver
+from compas_timber.structural import StructuralSegment
 
 
 class TimberModel(Model):
@@ -55,7 +54,8 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None}
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
+    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
 
     @classmethod
     def __from_data__(cls, data):
@@ -69,6 +69,7 @@ class TimberModel(Model):
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
+        self._graph.update_default_node_attributes(**self._TIMBER_GRAPH_NODE_ATTRIBUTES)
 
     def __str__(self):
         # type: () -> str
@@ -327,6 +328,114 @@ class TimberModel(Model):
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
 
+    def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
+        """Adds structural segments to the interaction (edge) between two elements.
+
+        Notes
+        -----
+        Normally, this method shouldn't be called directy. Use :meth:`create_beam_structural_segments` when possible to add structural segments.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_timber.elements.TimberElement`
+            The first element.
+        element_b : :class:`~compas_timber.elements.TimberElement`
+            The second element.
+        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
+            The structural segments to add.
+        """
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge not in self._graph.edges():
+            edge = (element_b.graphnode, element_a.graphnode)
+            if edge not in self._graph.edges():
+                raise ValueError("Interaction between elements {} and {} does not exist in the model.".format(element_a.name, element_b.name))
+
+        existing_segments = self._graph.edge_attribute(edge, "structural_segments") or []
+        existing_segments.extend(segments)
+        self._graph.edge_attribute(edge, "structural_segments", existing_segments)
+
+    def get_structural_connector_segments(self, element_a: Element, element_b: Element) -> List[StructuralSegment]:
+        """Gets the structural segments assigned to the interaction between two elements.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_timber.elements.TimberElement`
+            The first element.
+        element_b : :class:`~compas_timber.elements.TimberElement`
+            The second element.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.structural.StructuralSegment`]
+            The structural segments assigned to the interaction.
+        """
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge not in self._graph.edges():
+            edge = (element_b.graphnode, element_a.graphnode)
+            if edge not in self._graph.edges():
+                return []
+
+        return self._graph.edge_attribute(edge, "structural_segments") or []
+
+    def remove_structural_connector_segments(self, element_a: Element, element_b: Element) -> None:
+        """Removes all structural segments assigned to the interaction between two elements.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_timber.elements.TimberElement`
+            The first element.
+        element_b : :class:`~compas_timber.elements.TimberElement`
+            The second element.
+        """
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge in self._graph.edges():
+            self._graph.unset_edge_attribute(edge, "structural_segments")
+
+    def add_beam_structural_segments(self, beam: Beam, segments: List[StructuralSegment]) -> None:
+        """Adds a structural segment to the model node corresponding to the given beam.
+
+        Notes
+        -----
+        Normally, this method shouldn't be called directy. Use :meth:`create_beam_structural_segments` when possible to add structural segments.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to which the structural segments belong.
+        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
+            The structural segments to add.
+        """
+        node = beam.graphnode
+        existing_segments = cast(List[StructuralSegment], self._graph.node_attribute(node, "structural_segments")) or []
+        existing_segments.extend(segments)
+        self._graph.node_attribute(node, "structural_segments", existing_segments)
+
+    def get_beam_structural_segments(self, beam: Beam) -> List[StructuralSegment]:
+        """Gets the structural segments assigned to the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam whose structural segments to retrieve.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.structural.StructuralSegment`]
+            The structural segments assigned to the beam.
+        """
+        segments = cast(List[StructuralSegment], self._graph.node_attribute(beam.graphnode, "structural_segments"))
+        return segments or []
+
+    def remove_beam_structural_segments(self, beam: Beam) -> None:
+        """Removes all structural segments assigned to the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam whose structural segments to remove.
+        """
+        self._graph.unset_node_attribute(beam.graphnode, "structural_segments")
+
     def remove_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
         """Removes this joint candidate from the model.
@@ -458,6 +567,27 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def create_beam_structural_segments(self) -> None:
+        """Creates structural segments for all beams in the model based on their joints."""
+        if not self.joints:
+            raise ValueError("No joints in the model to create structural segments from.")
+
+        if not self.beams:
+            raise ValueError("No beams in the model to create structural segments for.")
+
+        for beam in self.beams:
+            self.remove_beam_structural_segments(beam)
+
+        for edge in self._graph.edges():
+            self._graph.unset_edge_attribute(edge, "structural_segments")
+
+        solver = BeamStructuralElementSolver()
+        for beam in self.beams:
+            solver.add_structural_segments(beam, model=self)
+
+        for joint in self.joints:
+            solver.add_joint_structural_segments(joint, model=self)
 
     def connect_adjacent_beams(self, max_distance=None):
         # Clear existing joint candidates
