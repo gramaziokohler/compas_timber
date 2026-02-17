@@ -998,16 +998,49 @@ class MachiningLimits(object):
         "FaceLimitedBottom",
     ]
 
-    def __init__(self):
-        self.face_limited_start = True
-        self.face_limited_end = True
-        self.face_limited_front = True
-        self.face_limited_back = True
-        self.face_limited_top = True
-        self.face_limited_bottom = True
+    def __init__(
+        self,
+        face_limited_start: bool = True,
+        face_limited_end: bool = True,
+        face_limited_front: bool = True,
+        face_limited_back: bool = True,
+        face_limited_top: bool = True,
+        face_limited_bottom: bool = True,
+    ):
+        self.face_limited_start = face_limited_start
+        self.face_limited_end = face_limited_end
+        self.face_limited_front = face_limited_front
+        self.face_limited_back = face_limited_back
+        self.face_limited_top = face_limited_top
+        self.face_limited_bottom = face_limited_bottom
 
     @property
     def limits(self):
+        return self.as_dict()
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        machining_limits = cls()
+        for key, value in dictionary.items():
+            if key not in cls.EXPECTED_KEYS:
+                raise ValueError("The key must be one of the following: ", [limit for limit in cls.EXPECTED_KEYS])
+            if not isinstance(value, bool):
+                raise ValueError("The values must be a boolean.")
+            if key == "FaceLimitedStart":
+                machining_limits.face_limited_start = value
+            elif key == "FaceLimitedEnd":
+                machining_limits.face_limited_end = value
+            elif key == "FaceLimitedFront":
+                machining_limits.face_limited_front = value
+            elif key == "FaceLimitedBack":
+                machining_limits.face_limited_back = value
+            elif key == "FaceLimitedTop":
+                machining_limits.face_limited_top = value
+            elif key == "FaceLimitedBottom":
+                machining_limits.face_limited_bottom = value
+        return machining_limits
+
+    def as_dict(self):
         """Dynamically generate the limits dictionary with boolean values from instance attributes."""
         return {
             "FaceLimitedStart": self.face_limited_start,
