@@ -101,7 +101,7 @@ def test_interaction_structural_segments_direction_independence():
     model.add_element(beam2)
     model.add_interaction(beam1, beam2)
 
-    segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)))
+    segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)), Frame.worldXY())
     model.add_structural_connector_segments(beam1, beam2, [segment])
 
     # Check forward direction
@@ -123,7 +123,7 @@ def test_interaction_structural_segments_returns_empty_if_no_interaction():
     model.add_element(beam2)
     # No interaction added
 
-    segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)))
+    segment = StructuralSegment(Line(Point(0, 0, 0), Point(1, 0, 0)), Frame.worldXY())
 
     with pytest.raises(ValueError):
         model.add_structural_connector_segments(beam1, beam2, [segment])

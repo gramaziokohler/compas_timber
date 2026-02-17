@@ -2,6 +2,8 @@ import pytest
 import pytest_mock
 
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.connections import Joint
@@ -199,3 +201,80 @@ def test_remove_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     model.remove_beam_structural_segments(beam)
 
     assert len(model.get_beam_structural_segments(beam)) == 0
+
+
+def test_segment_frame_origin_at_segment_start(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+
+    j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.5))
+
+    model = mocker.MagicMock()
+    model.get_interactions_for_element.return_value = [j1]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    assert len(segments) == 2
+
+    # first segment: origin should be at beam.centerline.start
+    assert segments[0].frame.point.x == pytest.approx(beam.centerline.start.x)
+    assert segments[0].frame.point.y == pytest.approx(beam.centerline.start.y)
+    assert segments[0].frame.point.z == pytest.approx(beam.centerline.start.z)
+
+    # second segment: origin should be at joint location projected on centerline (midpoint)
+    midpoint = beam.centerline.point_at(0.5)
+    assert segments[1].frame.point.x == pytest.approx(midpoint.x)
+    assert segments[1].frame.point.y == pytest.approx(midpoint.y)
+    assert segments[1].frame.point.z == pytest.approx(midpoint.z)
+
+
+def test_segment_frame_orientation_matches_beam(mocker: pytest_mock.MockerFixture):
+    beam_frame = Frame(Point(10, 20, 30), Vector(0, 1, 0), Vector(0, 0, 1))
+    beam = Beam(beam_frame, length=1000, width=100, height=100)
+
+    j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.25))
+    j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.75))
+
+    model = mocker.MagicMock()
+    model.get_interactions_for_element.return_value = [j1, j2]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    assert len(segments) == 3
+
+    for seg in segments:
+        # orientation (xaxis and yaxis) should match the beam's frame
+        assert seg.frame.xaxis.x == pytest.approx(beam.frame.xaxis.x)
+        assert seg.frame.xaxis.y == pytest.approx(beam.frame.xaxis.y)
+        assert seg.frame.xaxis.z == pytest.approx(beam.frame.xaxis.z)
+
+        assert seg.frame.yaxis.x == pytest.approx(beam.frame.yaxis.x)
+        assert seg.frame.yaxis.y == pytest.approx(beam.frame.yaxis.y)
+        assert seg.frame.yaxis.z == pytest.approx(beam.frame.yaxis.z)
+
+        # origin should match the segment's start point
+        assert seg.frame.point.x == pytest.approx(seg.segment.start.x)
+        assert seg.frame.point.y == pytest.approx(seg.segment.start.y)
+        assert seg.frame.point.z == pytest.approx(seg.segment.start.z)
+
+
+def test_segment_frame_no_joints(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=5000, width=200, height=400)
+
+    model = mocker.MagicMock()
+    model.get_interactions_for_element.return_value = []
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    assert len(segments) == 1
+
+    # single segment frame should have beam's frame origin and orientation
+    seg = segments[0]
+    assert seg.frame.point.x == pytest.approx(beam.frame.point.x)
+    assert seg.frame.point.y == pytest.approx(beam.frame.point.y)
+    assert seg.frame.point.z == pytest.approx(beam.frame.point.z)
+    assert seg.frame.xaxis.x == pytest.approx(beam.frame.xaxis.x)
+    assert seg.frame.xaxis.y == pytest.approx(beam.frame.xaxis.y)
+    assert seg.frame.xaxis.z == pytest.approx(beam.frame.xaxis.z)

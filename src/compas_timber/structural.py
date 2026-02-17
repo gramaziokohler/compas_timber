@@ -5,8 +5,10 @@ from typing import TYPE_CHECKING
 from typing import List
 
 from compas.data import Data
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_segment
@@ -22,15 +24,16 @@ if TYPE_CHECKING:
 class StructuralSegment(Data):
     @property
     def __data__(self) -> dict:
-        data = {"segment": self.segment}
+        data = {"segment": self.segment, "frame": self.frame}
         data.update(self.attributes)
         return data
 
-    def __init__(self, segment: Line, **kwargs) -> None:
+    def __init__(self, segment: Line, frame: Frame, **kwargs) -> None:
         super().__init__(**kwargs)
         self.attributes = {}
         self.attributes.update(kwargs)
         self.segment = segment
+        self.frame = frame
 
 
 class BeamStructuralElementSolver:
@@ -81,7 +84,10 @@ class BeamStructuralElementSolver:
                 continue
 
             virtual_segment = Line(p1, p2)
-            model.add_structural_connector_segments(beam_a, beam_b, [StructuralSegment(segment=virtual_segment)])
+
+            # TODO: this is a guess, not sure what the frame of a virtual segment should be. this needs updating when we find out.
+            frame = Frame(p1, Vector.Xaxis(), Vector.Yaxis())
+            model.add_structural_connector_segments(beam_a, beam_b, [StructuralSegment(segment=virtual_segment, frame=frame)])
 
     def _create_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
         # create segments between joints
@@ -106,4 +112,4 @@ class BeamStructuralElementSolver:
         for p1, p2 in pairwise([beam.centerline.start] + split_points + [beam.centerline.end]):
             split_segments.append(Line(p1, p2))
 
-        return [StructuralSegment(segment=seg) for seg in split_segments]
+        return [StructuralSegment(segment=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis)) for seg in split_segments]
