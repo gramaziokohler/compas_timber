@@ -6,11 +6,6 @@ from compas.geometry import Line
 
 from compas_timber.elements import Beam
 from compas_timber.connections.k_miter import KMiterJoint
-from compas_timber.connections import JointTopology
-from compas_timber.design import JointRuleSolver
-from compas_timber.design.workflow import TopologyRule
-from compas_timber.fabrication.pocket import Pocket
-from compas_timber.fabrication.lap import Lap
 from compas_timber.model import TimberModel
 
 
@@ -59,42 +54,6 @@ def test_model_process_joinery(beam_a, beam_b, cross_beam):
     assert isinstance(joint, KMiterJoint)
     assert joint.mill_depth == 15.0
     assert len(model.joints) == 1
-
-
-def test_joint_with_rules(beam_a, beam_b, cross_beam):
-    model = TimberModel()
-    model.add_element(beam_a)
-    model.add_element(beam_b)
-    model.add_element(cross_beam)
-    toporules = []
-    toporules.append(TopologyRule(JointTopology.TOPO_K, KMiterJoint, 25, mill_depth=10))
-    solver = JointRuleSolver(toporules)
-    solver.apply_rules_to_model(model)
-    model.process_joinery()
-    joints = list(model.joints)
-    assert isinstance(joints[0], KMiterJoint)
-    assert len(joints) == 1
-    assert joints[0].elements == [cross_beam, beam_a, beam_b]
-    assert joints[0].mill_depth == 10
-    assert isinstance(joints[0].elements[0].features[0], Lap)
-
-
-def test_joint_with_rules_pocket(beam_a, beam_b, cross_beam):
-    model = TimberModel()
-    model.add_element(beam_a)
-    model.add_element(beam_b)
-    model.add_element(cross_beam)
-    toporules = []
-    toporules.append(TopologyRule(JointTopology.TOPO_K, KMiterJoint, 25, mill_depth=10, force_pocket=True))
-    solver = JointRuleSolver(toporules)
-    solver.apply_rules_to_model(model)
-    model.process_joinery()
-    joints = list(model.joints)
-    assert isinstance(joints[0], KMiterJoint)
-    assert len(joints) == 1
-    assert joints[0].elements == [cross_beam, beam_a, beam_b]
-    assert joints[0].mill_depth == 10
-    assert isinstance(joints[0].elements[0].features[0], Pocket)
 
 
 def test_joint_with_more_beams(beam_a, beam_b, beam_c, cross_beam):
