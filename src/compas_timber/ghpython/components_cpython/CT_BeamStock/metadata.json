@@ -1,0 +1,32 @@
+{
+    "name": "BeamStock",
+    "nickname": "BeamStock",
+    "category": "COMPAS Timber",
+    "subcategory": "11 Planning",
+    "description": "Represents a raw material stock used for nesting beams.",
+    "exposure": 2,
+    "ghpython": {
+        "isAdvancedMode": true,
+        "iconDisplay": 0,
+        "inputParameters": [
+            {
+                "name": "length",
+                "description": "Length of the beam stock.",
+                "typeHintID": "float",
+                "scriptParamAccess": 1
+            },
+            {
+                "name": "cross_section",
+                "description": "List of values representing the cross-section dimensions of the beam stock.",
+                "typeHintID": "float",
+                "scriptParamAccess": 2
+            }
+        ],
+        "outputParameters": [
+            {
+                "name": "BeamStock",
+                "description": "Stock object representing the beam stock."
+            }
+        ]
+    }
+}

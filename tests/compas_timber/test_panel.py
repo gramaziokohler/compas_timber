@@ -99,6 +99,36 @@ def test_copy_panel_model(model):
         assert original.name == copy.name
 
 
+def test_panel_serialization_with_attributes_kwargs():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+
+    panel_a = Panel.from_outline_thickness(polyline_a, 1, custom_attribute="custom_value", another_attribute=42)
+
+    deserialized = json_loads(json_dumps(panel_a))
+
+    assert deserialized.thickness == 1
+    assert deserialized.length == 10
+    assert deserialized.width == 20
+    assert deserialized.attributes["custom_attribute"] == "custom_value"
+    assert deserialized.attributes["another_attribute"] == 42
+
+
+def test_panel_serialization_with_attributes():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+
+    panel_a = Panel.from_outline_thickness(polyline_a, 1)
+    panel_a.attributes["custom_attribute"] = "custom_value"
+    panel_a.attributes["another_attribute"] = 42
+
+    deserialized = json_loads(json_dumps(panel_a))
+
+    assert deserialized.thickness == 1
+    assert deserialized.length == 10
+    assert deserialized.width == 20
+    assert deserialized.attributes["custom_attribute"] == "custom_value"
+    assert deserialized.attributes["another_attribute"] == 42
+
+
 def test_from_outline_thickness():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])

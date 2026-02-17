@@ -11,3 +11,4 @@ def reset_tolerance():
     Tests that require a non-default tolerance must set it explicitly within their own scope.
     """
     TOL.reset()
+    TOL.unit = "MM"

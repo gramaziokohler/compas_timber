@@ -13,10 +13,6 @@ jobs:
     if: "!contains(github.event.pull_request.labels.*.name, 'docs-only')"
     runs-on: ubuntu-latest
 
-    status:
-      project: off
-      patch: on
-
     steps:
       - uses: actions/checkout@v5
       
