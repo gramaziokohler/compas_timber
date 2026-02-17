@@ -50,6 +50,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
 * Added alternative constructor `MachiningLimits.from_dict()`. 
+* Added `compas_timber.structural.BeamStructuralElementSolver` class to generate structural analysis segments from beams and joints.
+* Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
+* Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
+* Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
