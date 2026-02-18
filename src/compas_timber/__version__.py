@@ -3,7 +3,7 @@ from datetime import datetime
 __title__ = "compas_timber"
 __description__ = "COMPAS package for modeling, designing and fabricating timber assemblies."
 __url__ = "https://github.com/gramaziokohler/compas_timber"
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 __author__ = "Gramazio Kohler Research"
 __author_email__ = "gramaziokohler@arch.ethz.ch"
 __license__ = "MIT license"
