@@ -17,4 +17,4 @@ Classes
     FastenerTimberInterface
     BallNodeFastener
     PlateFastener
-    Slab
+    Panel
