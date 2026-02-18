@@ -387,6 +387,7 @@ class CategoryRule(JointRule):
         bool
             True if the order complies, False otherwise.
         """
+        self._warn_if_cluster_elemenst_missing_category(cluster)
         if cluster.topology == JointTopology.TOPO_T or cluster.topology == JointTopology.TOPO_EDGE_FACE:
             if cluster.joints[0].elements[0].attributes.get("category", None) != self.category_a:
                 if not raise_error:
@@ -411,7 +412,14 @@ class CategoryRule(JointRule):
         bool
             True if the categories comply, False otherwise.
         """
-        return set([e.attributes.get("category", None) for e in cluster.elements]) == {self.category_a, self.category_b}
+        self._warn_if_cluster_elemenst_missing_category(cluster)
+        return set([e.attributes.get("category") for e in cluster.elements]) == {self.category_a, self.category_b}
+
+    def _warn_if_cluster_elemenst_missing_category(self, cluster):
+        cluster_categories = [e.attributes.get("category") for e in cluster.elements]
+        if not all(cluster_categories):
+            # printing instead of `warn()`ing because warning behavior in Grasshopper is weird
+            print("CategoryRule found elements without category attribute! Have you set element.attributes['category'] on the relevant elements?")
 
     def _get_ordered_elements(self, cluster):
         """Returns the elements in the order of the rule's categories.
