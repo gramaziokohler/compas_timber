@@ -91,8 +91,8 @@ def get_leaf_subclasses(cls):
 def get_createable_joints():
     """Returns the list of creatable joint types.
 
-    TODO: this is currently hardcoded but can be done duynamically, however, a better distinction should be made first between abstract and concrete joints.
-    TOOD: a typical way of doing that would be to declare the non-creatable base classes abstract and filter those.
+    TODO: this is currently hardcoded but can be done dynamically, however, a better distinction should be made first between abstract and concrete joints.
+    TODO: a typical way of doing that would be to declare the non-creatable base classes abstract and filter those.
     """
     from compas_timber.connections import BallNodeJoint
     from compas_timber.connections import LButtJoint
@@ -114,7 +114,6 @@ def get_createable_joints():
     return [
         TButtJoint,
         LButtJoint,
-        TButtJoint,
         TStepJoint,
         TBirdsmouthJoint,
         LMiterJoint,

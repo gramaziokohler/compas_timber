@@ -83,7 +83,7 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         assert self.main_beam and self.cross_beam
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
 
-        #main_beam
+        # main_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
             main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]

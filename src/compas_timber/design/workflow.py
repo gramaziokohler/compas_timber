@@ -179,7 +179,7 @@ class JointRule(object):
                 raise BeamJoiningError(
                     beams=cluster.elements,
                     joint=self.joint_type,
-                    debug_info="The cluster topology must be: {} for {}.".format([JointTopology.get_name(supported_topology)], self.joint_type.__name__),
+                    debug_info="The cluster topology must be: {} for {}.".format(JointTopology.get_name(supported_topology), self.joint_type.__name__),
                     debug_geometries=[e.shape for e in cluster.elements],
                 )
             return False

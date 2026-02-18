@@ -24,7 +24,6 @@ def test_get_createable_joints():
     createable_joints = [
         TButtJoint,
         LButtJoint,
-        TButtJoint,
         TStepJoint,
         TBirdsmouthJoint,
         LMiterJoint,
