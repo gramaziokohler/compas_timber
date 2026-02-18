@@ -9,7 +9,6 @@ from .features import DrillFeature
 from .features import MillVolume
 from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
-from .timber import TimberElement
 from .plate_geometry import PlateGeometry
 
 __all__ = [
@@ -23,7 +22,6 @@ __all__ = [
     "BrepSubtraction",
     "BallNodeFastener",
     "PlateFastener",
-    "TimberElement",
     "Panel",
     "PlateGeometry",
 ]

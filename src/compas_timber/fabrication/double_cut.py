@@ -405,8 +405,8 @@ class DoubleCut(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of the processing by the given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
