@@ -707,8 +707,8 @@ class Pocket(BTLxProcessing):
     def scale(self, factor: float) -> None:
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters

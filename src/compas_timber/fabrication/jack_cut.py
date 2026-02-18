@@ -305,8 +305,8 @@ class JackRafterCut(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
