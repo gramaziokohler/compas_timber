@@ -498,11 +498,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.design.html">compas_timber.design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.errors.html">compas_timber.errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.base.html">compas_timber.base</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -598,7 +597,7 @@ document.write(`
 <h1>TimberModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d31e4ad/src/compas_timber/model/model.py#L28"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/696b69d/src/compas_timber/model/model.py#L28"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Represents a timber model containing different elements such as panels, beams and joints.</p>
 <p>The timber model allows expressing the hierarchy and interactions between the different elements it contains.</p>
@@ -613,7 +612,7 @@ document.write(`
 </dd>
 <dt><strong>joint_candidates</strong><span class="classifier">set[<a class="reference internal" href="compas_timber.connections.JointCandidate.html#compas_timber.connections.JointCandidate" title="compas_timber.connections.JointCandidate"><code class="xref py py-class docutils literal notranslate"><span class="pre">JointCandidate</span></code></a>]</span></dt><dd><p>A set of all joint candidates in the model.</p>
 </dd>
-<dt><strong>panels</strong><span class="classifier">Generator[<code class="xref py py-class docutils literal notranslate"><span class="pre">Panel</span></code>]</span></dt><dd><p>A Generator object of all panels assigned to this model.</p>
+<dt><strong>panels</strong><span class="classifier">Generator[<a class="reference internal" href="compas_timber.elements.Panel.html#compas_timber.elements.Panel" title="compas_timber.elements.Panel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Panel</span></code></a>]</span></dt><dd><p>A Generator object of all panels assigned to this model.</p>
 </dd>
 <dt><strong>center_of_mass</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Point.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Point</span></code></a></span></dt><dd><p>The calculated center of mass of the model.</p>
 </dd>

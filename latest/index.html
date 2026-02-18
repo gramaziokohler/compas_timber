@@ -497,11 +497,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.connections.html">compas_timber.connections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.fabrication.html">compas_timber.fabrication</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.design.html">compas_timber.design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.errors.html">compas_timber.errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.base.html">compas_timber.base</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -603,7 +602,7 @@ if the code is run in a python process, it will default to
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.elements.FastenerTimberInterface.html">FastenerTimberInterface</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.elements.BallNodeFastener.html">BallNodeFastener</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.elements.PlateFastener.html">PlateFastener</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.elements.TimberElement.html">TimberElement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.elements.Panel.html">Panel</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.connections.html">compas_timber.connections</a><ul>
@@ -691,16 +690,6 @@ if the code is run in a python process, it will default to
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.fabrication.LapProxy.html">LapProxy</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.design.html">compas_timber.design</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.CategoryRule.html">CategoryRule</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.DebugInfomation.html">DebugInfomation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.DirectRule.html">DirectRule</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.JointRule.html">JointRule</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.TopologyRule.html">TopologyRule</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.guess_joint_topology_2beams.html">guess_joint_topology_2beams</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.design.set_default_joints.html">set_default_joints</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.planning.html">compas_timber.planning</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.planning.Actor.html">Actor</a></li>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.planning.BeamNester.html">BeamNester</a></li>
@@ -725,18 +714,12 @@ if the code is run in a python process, it will default to
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.errors.BTLxProcessingError.html">BTLxProcessingError</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.ghpython.html">compas_timber.ghpython</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.clear_gh_params.html">clear_gh_params</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.add_gh_param.html">add_gh_param</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.manage_dynamic_params.html">manage_dynamic_params</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.list_input_valid.html">list_input_valid</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.item_input_valid.html">item_input_valid</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.get_leaf_subclasses.html">get_leaf_subclasses</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.ghpython.rename_gh_input.html">rename_gh_input</a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="api/compas_timber.rhino.html">compas_timber.rhino</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.rhino.find_neighboring_elements.html">find_neighboring_elements</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api/compas_timber.base.html">compas_timber.base</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api/generated/compas_timber.base.TimberElement.html">TimberElement</a></li>
 </ul>
 </li>
 </ul>

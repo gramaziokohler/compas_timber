@@ -498,11 +498,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.design.html">compas_timber.design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.errors.html">compas_timber.errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.base.html">compas_timber.base</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -603,13 +602,13 @@ document.write(`
 <h1>TimberModel.get_elements_in_group</h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel.get_elements_in_group">
-<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">get_elements_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/d31e4ad/src/compas_timber/model/model.py#L228"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<span class="sig-prename descclassname"><span class="pre">TimberModel.</span></span><span class="sig-name descname"><span class="pre">get_elements_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">group_element</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/696b69d/src/compas_timber/model/model.py#L228"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Get all elements in a group element.</p>
 <p>TODO: upstream this to compas_model</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>group_element</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a></span></dt><dd><p>The group element to query.</p>
+<dt><strong>group_element</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></span></dt><dd><p>The group element to query.</p>
 </dd>
 <dt><strong>filter_</strong><span class="classifier">callable, optional</span></dt><dd><p>A filter function to apply to the elements.</p>
 </dd>
@@ -617,7 +616,7 @@ document.write(`
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt>Generator[<a class="reference internal" href="compas_timber.elements.TimberElement.html#compas_timber.elements.TimberElement" title="compas_timber.elements.TimberElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code></a>]</dt><dd><p>A generator of elements in the group.</p>
+<dt>Generator[<code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code>]</dt><dd><p>A generator of elements in the group.</p>
 </dd>
 </dl>
 </dd>
