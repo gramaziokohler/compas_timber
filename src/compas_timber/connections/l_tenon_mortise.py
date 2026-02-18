@@ -1,13 +1,11 @@
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
-from compas_timber.fabrication import Mortise
-from compas_timber.fabrication import Tenon
 
+from .mortise_tenon import MortiseTenonJoint
 from .solver import JointTopology
-from .t_tenon_mortise import TTenonMortiseJoint
 
 
-class LTenonMortiseJoint(TTenonMortiseJoint):
+class LTenonMortiseJoint(MortiseTenonJoint):
     """
     Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.
     A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam's tenon.
@@ -130,43 +128,18 @@ class LTenonMortiseJoint(TTenonMortiseJoint):
         """
         assert self.main_beam and self.cross_beam  # should never happen
 
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+        self._clear_features()
 
         # set default values if not provided
         self._update_unset_values()
 
-        # generate  tenon features
-        main_feature = Tenon.from_plane_and_beam(
-            plane=self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
-            beam=self.main_beam,
-            start_y=self.start_y,
-            start_depth=self.start_depth,
-            rotation=self.rotation,
-            length=self.length,
-            width=self.width,
-            height=self.height,
-            shape=self.tenon_shape,
-            shape_radius=self.shape_radius,
-            ref_side_index=self.main_beam_ref_side_index,
-        )
+        main_feature = self._create_tenon_feature()
 
         self.main_beam.add_features(main_feature)
         self.features = [main_feature]
 
         # generate mortise features
-        cross_feature = Mortise.from_frame_and_beam(
-            frame=main_feature.frame_from_params_and_beam(self.main_beam),
-            beam=self.cross_beam,
-            start_depth=0.0,  # TODO: to be updated once housing is implemented
-            length=main_feature.length,
-            width=main_feature.width,
-            depth=main_feature.height,
-            shape=main_feature.shape,
-            shape_radius=main_feature.shape_radius,
-            ref_side_index=self.cross_beam_ref_side_index,
-        )
+        cross_feature = self._create_mortise_feature(main_feature)
 
         cross_features = [cross_feature]
 

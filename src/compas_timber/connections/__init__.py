@@ -18,6 +18,7 @@ from .t_lap import TLapJoint
 from .x_lap import XLapJoint
 from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
+from .mortise_tenon import MortiseTenonJoint
 from .t_tenon_mortise import TTenonMortiseJoint
 from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
@@ -65,6 +66,7 @@ __all__ = [
     "PlateConnectionSolver",
     "find_neighboring_elements",
     "TDovetailJoint",
+    "MortiseTenonJoint",
     "BallNodeJoint",
     "TTenonMortiseJoint",
     "LTenonMortiseJoint",

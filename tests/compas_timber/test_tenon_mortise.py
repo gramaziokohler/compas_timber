@@ -10,6 +10,7 @@ from compas.geometry import distance_point_point
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LTenonMortiseJoint
+from compas_timber.connections import MortiseTenonJoint
 from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Mortise
@@ -435,7 +436,7 @@ def test_l_tenon_mortise_joint_creation(cross_beam, main_beams):
     assert joint.modify_cross
 
     # Test inheritance
-    assert isinstance(joint, TTenonMortiseJoint)
+    assert isinstance(joint, MortiseTenonJoint)
 
     # Test that features are created
     model.process_joinery()
