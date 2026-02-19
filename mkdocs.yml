@@ -74,12 +74,18 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets:
       check_paths: true
-  - pymdownx.superfences
   - toc:
       permalink: "¤"
+  - pymdownx.superfences:
+        # make exceptions to highlighting of code:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid_custom
 
 plugins:
   - search
+  - mermaid2
   - mkdocstrings:
       default_handler: python
       handlers:

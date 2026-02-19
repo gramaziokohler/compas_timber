@@ -78,6 +78,7 @@ docs = [
     "mkdocs-minify-plugin >=0.8",
     "mkdocs-redirects >=1.2",
     "mkdocs-section-index >=0.3",
+    "mkdocs-mermaid2-plugin",
     "mkdocstrings[python]",
     "pydantic >=2.10",
     "tomli >=2.0; python_version < '3.11'",
