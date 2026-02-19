@@ -603,7 +603,8 @@ def polyline_from_brep_loop(loop):
         The Polyline resulting from joining the BrepLoop edges.
     """
     segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
-    return join_polyline_segments(segments, close_loop=True)
+    polylines, _ = join_polyline_segments(segments, close_loop=True)
+    return polylines[0] if polylines else None
 
 
 def polylines_from_brep_face(face):
@@ -617,6 +618,19 @@ def polylines_from_brep_face(face):
     tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
         The extracted polylines.
     """
+    # Handle case where face is a list of edges
+    if isinstance(face, list):
+        # Try to treat the list as edges and extract segments
+        segments = []
+        for edge in face:
+            if hasattr(edge, 'start_vertex') and hasattr(edge, 'end_vertex'):
+                segments.append(Line(edge.start_vertex.point, edge.end_vertex.point))
+        if segments:
+            polylines_list, _ = join_polyline_segments(segments, close_loop=True)
+            if polylines_list:
+                outer = polylines_list[0]
+                openings = polylines_list[1:] if len(polylines_list) > 1 else []
+                return outer, openings
     outer = None
     openings = []
     for loop in face.loops:
