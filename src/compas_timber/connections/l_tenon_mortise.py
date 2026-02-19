@@ -1,17 +1,18 @@
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCutProxy
 
 from .mortise_tenon import MortiseTenonJoint
 from .solver import JointTopology
 
 
-class TTenonMortiseJoint(MortiseTenonJoint):
+class LTenonMortiseJoint(MortiseTenonJoint):
     """
     Represents a TenonMortise type joint which joins two beams, one of them at its end (main) and the other one along its centerline (cross) or both of them at their ends.
     A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam's tenon.
 
-    This joint type is compatible with beams in T topology.
+    This joint type is compatible with beams in L topology.
 
-    Please use `TTenonMortiseJoint.create()` to properly create an instance of this class and associate it with a model.
+    Please use `LTenonMortiseJoint.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------
@@ -35,6 +36,8 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
+    modify_cross : bool
+        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
 
 
     Attributes
@@ -63,11 +66,23 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
+    modify_cross : bool
+        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     features : list
         List of features or machining processings applied to the elements.
     """
 
-    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
+
+    @property
+    def __data__(self):
+        data = super(LTenonMortiseJoint, self).__data__
+        data["modify_cross"] = self.modify_cross
+        return data
+
+    def __init__(self, main_beam, cross_beam, modify_cross=False, **kwargs):
+        super(LTenonMortiseJoint, self).__init__(main_beam, cross_beam, **kwargs)
+        self.modify_cross = modify_cross
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -83,11 +98,18 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         assert self.main_beam and self.cross_beam
         extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
 
+        # cross_beam
+        try:
+            cutting_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid)
         # main_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
             main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
-            offset = self.height or main_width / 2    # in case height is not set this is the default value set when adding features
+            offset = self.height or main_width / 2  # in case height is not set this is the default value set when adding features
             cutting_plane.translate(-cutting_plane.normal * offset)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
@@ -112,10 +134,20 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         self._update_unset_values()
 
         main_feature = self._create_tenon_feature()
+
+        self.main_beam.add_features(main_feature)
+        self.features = [main_feature]
+
+        # generate mortise features
         cross_feature = self._create_mortise_feature(main_feature)
 
-        # add features to beams
-        self.main_beam.add_features(main_feature)
-        self.cross_beam.add_features(cross_feature)
-        # add features to joint
-        self.features = [cross_feature, main_feature]
+        cross_features = [cross_feature]
+
+        # generate cross cut_off feature
+        if self.modify_cross:
+            cutting_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            cross_cutoff_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.cross_beam)
+            cross_features.append(cross_cutoff_feature)
+
+        self.cross_beam.add_features(cross_features)
+        self.features.extend(cross_features)

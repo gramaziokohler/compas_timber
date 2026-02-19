@@ -8,11 +8,17 @@ from compas.geometry import Frame
 from compas.geometry import Vector
 from compas.geometry import distance_point_point
 
+from compas_timber.connections import JointTopology
+from compas_timber.connections import LTenonMortiseJoint
+from compas_timber.connections import MortiseTenonJoint
+from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
+from compas_timber.model import TimberModel
+
 
 from compas.tolerance import Tolerance
 
@@ -386,3 +392,91 @@ def test_tenon_scaled():
     assert scaled.height == tenon.height * 2.0
     assert scaled.shape == tenon.shape
     assert scaled.shape_radius == tenon.shape_radius * 2.0
+
+
+# Test for refactored joint classes
+def test_t_tenon_mortise_joint_creation(cross_beam, main_beams):
+    """Test that TTenonMortiseJoint can be created and has correct properties."""
+    main_beam = main_beams[0]
+
+    model = TimberModel()
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+
+    # Create joint
+    joint = TTenonMortiseJoint.create(model, main_beam, cross_beam)
+
+    # Test basic properties
+    assert joint.main_beam == main_beam
+    assert joint.cross_beam == cross_beam
+    assert joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T
+    assert joint.elements == [main_beam, cross_beam]
+
+    # Test that features are created
+    model.process_joinery()
+    assert len(joint.features) == 2  # One tenon and one mortise
+
+
+def test_l_tenon_mortise_joint_creation(cross_beam, main_beams):
+    """Test that LTenonMortiseJoint can be created and has correct properties."""
+    main_beam = main_beams[0]
+
+    model = TimberModel()
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+
+    # Create joint with modify_cross parameter
+    joint = LTenonMortiseJoint.create(model, main_beam, cross_beam, modify_cross=True)
+
+    # Test basic properties
+    assert joint.main_beam == main_beam
+    assert joint.cross_beam == cross_beam
+    assert joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L
+    assert joint.elements == [main_beam, cross_beam]
+    assert joint.modify_cross
+
+    # Test inheritance
+    assert isinstance(joint, MortiseTenonJoint)
+
+    # Test that features are created
+    model.process_joinery()
+    assert len(joint.features) == 3  # One tenon and one mortise and one cut on cross beam
+
+
+def test_t_tenon_mortise_joint_serialization(cross_beam, main_beams):
+    """Test that TTenonMortiseJoint can be serialized and deserialized."""
+    main_beam = main_beams[0]
+
+    t_joint = TTenonMortiseJoint(main_beam, cross_beam, start_y=5, start_depth=5, rotation=10, length=40, width=20, height=30, shape=1, shape_radius=5)
+    t_data = t_joint.__data__
+
+    assert t_data["main_beam_guid"] == str(main_beam.guid)
+    assert t_data["cross_beam_guid"] == str(cross_beam.guid)
+    assert t_data["start_y"] == 5
+    assert t_data["start_depth"] == 5
+    assert t_data["rotation"] == 10
+    assert t_data["length"] == 40
+    assert t_data["width"] == 20
+    assert t_data["height"] == 30
+    assert t_data["shape"] == 1
+    assert t_data["shape_radius"] == 5
+
+
+def test_l_tenon_mortise_joint_serialization(cross_beam, main_beams):
+    """Test that both joint types can be serialized and deserialized."""
+    main_beam = main_beams[0]
+
+    l_joint = LTenonMortiseJoint(main_beam, cross_beam, start_y=10, start_depth=10, rotation=15, length=50, width=25, height=35, shape=2, shape_radius=7, modify_cross=True)
+    l_data = l_joint.__data__
+
+    assert l_data["main_beam_guid"] == str(main_beam.guid)
+    assert l_data["cross_beam_guid"] == str(cross_beam.guid)
+    assert l_data["start_y"] == 10
+    assert l_data["start_depth"] == 10
+    assert l_data["rotation"] == 15
+    assert l_data["length"] == 50
+    assert l_data["width"] == 25
+    assert l_data["height"] == 35
+    assert l_data["shape"] == 2
+    assert l_data["shape_radius"] == 7
+    assert l_data["modify_cross"] is True
