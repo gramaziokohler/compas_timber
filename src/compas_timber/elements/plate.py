@@ -482,10 +482,15 @@ class Plate(TimberElement):
                         if i >= j:
                             continue
                         dot = face_i['normal'].dot(face_j['normal'])
-                        centroid_dist = distance_point_point(face_i['centroid'], face_j['centroid'])
+                        # Measure separation along the face normal instead of using a fixed distance,
+                        # and compare against model-scale-aware tolerances.
+                        offset_vector = Vector.from_start_end(face_i['centroid'], face_j['centroid'])
+                        normal_direction = face_i['normal'].unitized()
+                        normal_separation = abs(offset_vector.dot(normal_direction))
+                        min_separation = max(TOL.absolute, TOL.relative(normal_separation))
 
                         # Prioritize same-direction normals (dot > 0.95) with good separation
-                        if dot > 0.95 and centroid_dist > 10.0:
+                        if dot > 0.95 and normal_separation > min_separation:
                             face_a_data = face_i
                             face_b_data = face_j
                             break

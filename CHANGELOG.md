@@ -54,10 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
-* Added `Plate.from_brep()` class method to automatically create plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face()` class method (renamed from `from_brep()`) for creating plates from single-face breps.
+* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
+* Added `Plate.from_face()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior; see "Changed" below for migration details).
 
 ### Changed
+* Breaking change: renamed the previous single-face `Plate.from_brep()` constructor to `Plate.from_face()`, and repurposed `Plate.from_brep()` to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face()` instead.
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.
