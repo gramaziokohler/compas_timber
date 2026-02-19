@@ -95,7 +95,7 @@ class BeamStructuralElementSolver:
         for joint in joints:
             point_on_segment = Point(*closest_point_on_segment(joint.location, beam.centerline))
             distance_from_start = distance_point_point(beam.centerline.start, point_on_segment)
-            distance_from_end = distance_point_point(beam.centerline.end, point_on_segment)
+            distance_from_end = beam.length - distance_from_start
 
             if TOL.is_zero(distance_from_start) or TOL.is_zero(distance_from_end):
                 # joints at start and end do not require splitting, as they are already segment boundaries
