@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
+* Renamed attribute `segment` to `line` in `BeamStructuralSegment` for better clarity. 
+
 ### Removed
 
 

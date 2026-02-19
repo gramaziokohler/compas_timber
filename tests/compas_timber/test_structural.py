@@ -37,7 +37,7 @@ def test_create_segments_from_beam_and_its_joints(mocker: pytest_mock.MockerFixt
     expected_lengths = [3000.0, 1500.0, 1500.0]
 
     for segment, expected_length in zip(segments, expected_lengths):
-        actual_length = segment.segment.length
+        actual_length = segment.line.length
         assert actual_length == pytest.approx(expected_length)
 
 
@@ -52,7 +52,7 @@ def test_create_segments_no_joints(mocker: pytest_mock.MockerFixture):
     model.add_beam_structural_segments.assert_called_once()
 
     assert len(segments) == 1
-    assert segments[0].segment.length == pytest.approx(6000.0)
+    assert segments[0].line.length == pytest.approx(6000.0)
 
 
 def test_create_segments_joints_at_ends_only(mocker: pytest_mock.MockerFixture):
@@ -74,7 +74,7 @@ def test_create_segments_joints_at_ends_only(mocker: pytest_mock.MockerFixture):
     model.add_beam_structural_segments.assert_called_once()
 
     assert len(segments) == 1
-    assert segments[0].segment.length == pytest.approx(6000.0)
+    assert segments[0].line.length == pytest.approx(6000.0)
 
 
 def test_create_segments_unsorted_joints(mocker: pytest_mock.MockerFixture):
@@ -96,7 +96,7 @@ def test_create_segments_unsorted_joints(mocker: pytest_mock.MockerFixture):
     # Expected: 0.0 -> 0.2 (200), 0.2 -> 0.5 (300), 0.5 -> 0.8 (300), 0.8 -> 1.0 (200)
     expected_lengths = [200.0, 300.0, 300.0, 200.0]
     for seg, exp in zip(segments, expected_lengths):
-        assert seg.segment.length == pytest.approx(exp)
+        assert seg.line.length == pytest.approx(exp)
 
 
 def test_create_segments_project_joints(mocker: pytest_mock.MockerFixture):
@@ -117,8 +117,8 @@ def test_create_segments_project_joints(mocker: pytest_mock.MockerFixture):
     model.add_beam_structural_segments.assert_called_once()
 
     assert len(segments) == 2
-    assert segments[0].segment.length == pytest.approx(500.0)
-    assert segments[1].segment.length == pytest.approx(500.0)
+    assert segments[0].line.length == pytest.approx(500.0)
+    assert segments[1].line.length == pytest.approx(500.0)
 
 
 def test_get_beam_structural_segments(mocker: pytest_mock.MockerFixture):
@@ -139,10 +139,10 @@ def test_get_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     segments2 = model.get_beam_structural_segments(beam2)
 
     assert len(segments1) == 1
-    assert segments1[0].segment.length == pytest.approx(1000)
+    assert segments1[0].line.length == pytest.approx(1000)
 
     assert len(segments2) == 1
-    assert segments2[0].segment.length == pytest.approx(2000)
+    assert segments2[0].line.length == pytest.approx(2000)
 
     # Verify no cross contamination
     assert segments1[0] not in segments2
@@ -254,9 +254,9 @@ def test_segment_frame_orientation_matches_beam(mocker: pytest_mock.MockerFixtur
         assert seg.frame.yaxis.z == pytest.approx(beam.frame.yaxis.z)
 
         # origin should match the segment's start point
-        assert seg.frame.point.x == pytest.approx(seg.segment.start.x)
-        assert seg.frame.point.y == pytest.approx(seg.segment.start.y)
-        assert seg.frame.point.z == pytest.approx(seg.segment.start.z)
+        assert seg.frame.point.x == pytest.approx(seg.line.start.x)
+        assert seg.frame.point.y == pytest.approx(seg.line.start.y)
+        assert seg.frame.point.z == pytest.approx(seg.line.start.z)
 
 
 def test_segment_frame_no_joints(mocker: pytest_mock.MockerFixture):

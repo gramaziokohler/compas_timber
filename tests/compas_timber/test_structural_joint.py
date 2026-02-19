@@ -37,8 +37,8 @@ def test_add_joint_structural_segments_crossing_beams(mocker: pytest_mock.Mocker
     assert len(segments) == 1
     segment = segments[0]
 
-    p1 = segment.segment.start
-    p2 = segment.segment.end
+    p1 = segment.line.start
+    p2 = segment.line.end
 
     assert (TOL.is_zero(p1.distance_to_point(Point(0, 0, 0))) and TOL.is_zero(p2.distance_to_point(Point(0, 0, 200)))) or (
         TOL.is_zero(p1.distance_to_point(Point(0, 0, 200))) and TOL.is_zero(p2.distance_to_point(Point(0, 0, 0)))
