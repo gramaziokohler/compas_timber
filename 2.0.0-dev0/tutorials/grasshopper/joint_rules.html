@@ -1,0 +1,1001 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <link rel="icon" href="../../_static/compas.ico" type="image/x-icon">
+    <title>Joint Rules &#8212; COMPAS Timber</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/compas.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/tabs.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/grasshopper/joint_rules';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/gramaziokohler/compas_timber/gh-pages/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.0';
+        </script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Model" href="model.html" />
+    <link rel="prev" title="Features" href="features.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/compas_icon_white.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/compas_icon_white.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">COMPAS Timber</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../tutorials.html">
+                        Grasshopper plugin
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../contribution.html">
+                        Developer Guide
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../license.html">
+                        License
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../citing.html">
+                        Citing
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://compas.dev">
+                    COMPAS Framework
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.0  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/gramaziokohler/compas_timber" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_timber/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../tutorials.html">
+                        Grasshopper plugin
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../contribution.html">
+                        Developer Guide
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../license.html">
+                        License
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../citing.html">
+                        Citing
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://compas.dev">
+                    COMPAS Framework
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.0  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/gramaziokohler/compas_timber" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_timber/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.elements.html">compas_timber.elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.connections.html">compas_timber.connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.fabrication.html">compas_timber.fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.errors.html">compas_timber.errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/compas_timber.base.html">compas_timber.base</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fabrication.html">Fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="show.html">Show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../contribution.html">Developer Guide</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../contribution/class_diagrams.html">Class Diagrams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../contribution/BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../contribution/joints_contribution_guide.html">Joints Contribution Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../citing.html">Citing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../tutorials.html" class="nav-link">Grasshopper plugin</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Joint Rules</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="joint-rules">
+<h1>Joint Rules</h1>
+<p>The Joints between <a class="reference internal" href="beams.html"><span class="doc">Beams</span></a> are defined by Joint Rules. There are four kinds of rules, where each of them overrides any lower-priority rule. The rules are listed hereafter from lowest to highest level of priority:</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Joint Topologies</strong></p>
+<p>There are three main topologies of how beams can connect to each other: <strong>L</strong>, <strong>T</strong> and <strong>X</strong>.</p>
+<a class="reference internal image-reference" href="../../_images/joint_topologies_diagramm.png"><img alt="../../_images/joint_topologies_diagramm.png" src="../../_images/joint_topologies_diagramm.png" style="width: 20%;" /></a>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="joint-rules-components">
+<h2>Joint Rules Components</h2>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p><strong>Dynamic Components</strong></p>
+<p>Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click &amp; Selection from the Drop-Down List. The Inputs might change because every Joint has its own specific settings.</p>
+<a class="reference internal image-reference" href="../../_images/joint_rules_dynamic.gif"><img alt="../../_images/joint_rules_dynamic.gif" src="../../_images/joint_rules_dynamic.gif" style="width: 55%;" /></a>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<section id="default-joint-rules">
+<h3>Default Joint Rules</h3>
+<p>This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_rules_default.png"><img alt="../../_images/gh_joint_rules_default.png" src="../../_images/gh_joint_rules_default.png" style="width: 20%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="topological-joint-rules">
+<h3>Topological Joint Rules</h3>
+<p>These Joint Rules are more specific and will overwrite the Default Joint Rules. The inputs are variable and depend on the joint type.</p>
+<ul class="simple">
+<li><p><strong>L Topological Joint Rules:</strong> This Component applies the L-Joint you select to all L-Topologies.</p></li>
+<li><p><strong>T Topological Joint Rules:</strong> This Component applies the T-Joint you select to all T-Topologies.</p></li>
+<li><p><strong>X Topological Joint Rules:</strong> This Component applies the X-Joint you select to all X-Topologies.</p></li>
+</ul>
+<a class="reference internal image-reference" href="../../_images/gh_joint_rules_topological.png"><img alt="../../_images/gh_joint_rules_topological.png" src="../../_images/gh_joint_rules_topological.png" style="width: 100%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="category-joint-rules">
+<h3>Category Joint Rules</h3>
+<p>This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input <cite>Category</cite> in the component <code class="code docutils literal notranslate"><span class="pre">Beam</span></code>. The inputs are variable and depend on the joint type.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_rules_category.png"><img alt="../../_images/gh_joint_rules_category.png" src="../../_images/gh_joint_rules_category.png" style="width: 40%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="direct-joint-rules">
+<h3>Direct Joint Rules</h3>
+<p>This Joint Rule is highly specific and will overwrite every other Joint Rule. The Component assigns a Joint type directly to specific beams. The Beams can be selected using the component <code class="code docutils literal notranslate"><span class="pre">Find</span> <span class="pre">Beam</span> <span class="pre">By</span> <span class="pre">Rhino</span> <span class="pre">GUID</span></code> See also <a class="reference internal" href="beams.html"><span class="doc">Beams</span></a>. The inputs are variable and depend on the joint type.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_rules_direct.png"><img alt="../../_images/gh_joint_rules_direct.png" src="../../_images/gh_joint_rules_direct.png" style="width: 35%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="surface-model-joint-override">
+<h3>Surface Model Joint Override</h3>
+<p>This Joint Rule is used for the Surface Model to overwrite Joints between studs, king_studs, jack_studs, edge_studs, headers or sills.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_rules_surface_override.png"><img alt="../../_images/gh_joint_rules_surface_override.png" src="../../_images/gh_joint_rules_surface_override.png" style="width: 35%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="joint-types">
+<h2>Joint Types</h2>
+<section id="l-butt">
+<h3>L-Butt</h3>
+<p>The L-Butt extends one beam and shortens the other beam with a planar cut, to create a clean corner joint.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_LButt.png"><img alt="../../_images/gh_joint_LButt.png" src="../../_images/gh_joint_LButt.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>mill_depth</cite> : Determins the depth of the pocket to be milled in the cross beam.</p></li>
+<li><p><cite>small_beam_butts</cite> : If true, the beam with a larger cross-section is considered as the cross beam.</p></li>
+<li><p><cite>modify_cross</cite> : If true, the cross beam is extended to the opposite face of the main beam and cut flush with it.</p></li>
+<li><p><cite>reject_i</cite> : If true, joint will not apply when the cross beam meets the main beam in an I topology.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="l-lap">
+<h3>L-Lap</h3>
+<p>The <em>L-Half Lap</em> topology is when two beams meet at their ends at an angle. An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_LHalfLap.png"><img alt="../../_images/gh_joint_LHalfLap.png" src="../../_images/gh_joint_LHalfLap.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>flip_lap_side</cite> : Flips the lap side.</p></li>
+<li><p><cite>cut_plane_bias</cite> : Determines the depth of lap cuts on the beams. Input is a float in range from 0.01 to 0.99.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="l-miter">
+<h3>L-Miter</h3>
+<p>The L-Miter joint extends and connects the two beams with a planar cut at a bisector of the angle between them.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_LMiter.png"><img alt="../../_images/gh_joint_LMiter.png" src="../../_images/gh_joint_LMiter.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>cutoff</cite> : #TODO</p></li>
+</ul>
+</section>
+<section id="french-ridge-lap">
+<h3>French Ridge Lap</h3>
+<p>The French ridge lap joint extends two beams and removes the upper half of the overlap on one beam and the lower half on the other. Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in the centre of the beams, the cut of the French ridge lap joint is angled to keep the beams securely in place, preventing them from shifting.</p>
+<p>The tilted cut plane is generated by sequentially connecting the following points:</p>
+<ul class="simple">
+<li><p>a point at the middle of the inner vertical edges of the overlap;</p></li>
+<li><p>a point at the bottom third of the outer vertical edge of the overlap along the lower beam;</p></li>
+<li><p>a point at the middle of the outer vertical edge of the overlap;</p></li>
+<li><p>a point at the top third of the outer vertical edge of the overlap along the upper beam.</p></li>
+</ul>
+<a class="reference internal image-reference" href="../../_images/gh_joint_LFrenchRidge.png"><img alt="../../_images/gh_joint_LFrenchRidge.png" src="../../_images/gh_joint_LFrenchRidge.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>flip_lap_side</cite> : Flips the lap side.</p></li>
+<li><p><cite>drillhole_diam</cite> : Determines the diameter of the hole for a dowel in the center of both laps.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="tenon-and-mortise">
+<h3>Tenon and Mortise</h3>
+<p>A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_LTenonMortise.png"><img alt="../../_images/gh_joint_LTenonMortise.png" src="../../_images/gh_joint_LTenonMortise.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>start_y</cite> : Start position of the tenon along the y-axis of the main beam.</p></li>
+<li><p><cite>start_depth</cite> : Depth of the tenon from the surface of the main beam.</p></li>
+<li><p><cite>rotation</cite> : Rotation of the tenon around the main beam’s axis.</p></li>
+<li><p><cite>length</cite> : Length of the tenon along the main beam.</p></li>
+<li><p><cite>width</cite> : Width of the tenon.</p></li>
+<li><p><cite>height</cite> : Height of the tenon.</p></li>
+<li><p><cite>shape</cite> : The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</p></li>
+<li><p><cite>shape_radius</cite> : The radius used to define the shape of the tenon, if applicable.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="t-butt">
+<h3>T-Butt</h3>
+<p>The T-Butt joint shortens the <em>cross beam</em> with a planar cut, to match the side of the <em>main beam</em>. The <em>main beam</em> remains unchanged.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_TButt.png"><img alt="../../_images/gh_joint_TButt.png" src="../../_images/gh_joint_TButt.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>mill_depth</cite> : Determins the depth of the pocket to be milled in the cross beam.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="t-lap">
+<h3>T-Lap</h3>
+<p>A T-Half Lap joint crates an overlap between the <em>main beam</em> and the <em>cross beam</em>. The <em>cross beam</em> is extended to the opposite face of the <em>main beam</em> and cut flush with it to create a planar surface.
+It is similar to a L-Half Lap joint: the upper half of the overlap of the cross beam is removed from the main beam and the lower half of the overlap of the main beam is removed from the cross beam.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_THalfLap.png"><img alt="../../_images/gh_joint_THalfLap.png" src="../../_images/gh_joint_THalfLap.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>flip_lap_side</cite> : Flips the lap side.</p></li>
+<li><p><cite>cut_plane_bias</cite> : Determines the depth of lap cuts on the beams. Input is a float in range from 0.01 to 0.99.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="id1">
+<h3>Tenon and Mortise</h3>
+<p>A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_TTenonMortise.png"><img alt="../../_images/gh_joint_TTenonMortise.png" src="../../_images/gh_joint_TTenonMortise.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>start_y</cite> : Start position of the tenon along the y-axis of the main beam.</p></li>
+<li><p><cite>start_depth</cite> : Depth of the tenon from the surface of the main beam.</p></li>
+<li><p><cite>rotation</cite> : Rotation of the tenon around the main beam’s axis.</p></li>
+<li><p><cite>length</cite> : Length of the tenon along the main beam.</p></li>
+<li><p><cite>width</cite> : Width of the tenon.</p></li>
+<li><p><cite>height</cite> : Height of the tenon.</p></li>
+<li><p><cite>shape</cite> : The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</p></li>
+<li><p><cite>shape_radius</cite> : The radius used to define the shape of the tenon, if applicable.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="t-step">
+<h3>T-Step</h3>
+<p>Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_TStep.png"><img alt="../../_images/gh_joint_TStep.png" src="../../_images/gh_joint_TStep.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>step_shape</cite> : Shape of the step feature. 0: step, 1: heel, 2: double.</p></li>
+<li><p><cite>step_depth</cite> : Depth of the step cut. Combined with a heel cut it generates a double step cut.</p></li>
+<li><p><cite>heel_depth</cite> : Depth of the heel cut. Combined with a step cut it generates a double step cut.</p></li>
+<li><p><cite>tapered_heel</cite> : If True, the heel cut is tapered.</p></li>
+<li><p><cite>tenon_mortise_height</cite> : Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="t-birdsmouth">
+<h3>T-Birdsmouth</h3>
+<p>A DoubleCut is created on the main beam to fit the cross beam. The position of the cross beam should allow the creation of the doblecut. If one of the sides of the cross beam is parallel to the axis of the main beam a doublecut cannot be created.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_TBirdthmouth.png"><img alt="../../_images/gh_joint_TBirdthmouth.png" src="../../_images/gh_joint_TBirdthmouth.png" style="width: 50%;" /></a>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="t-dovetail">
+<h3>T-Dovetail</h3>
+<p>A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_TDovetail.png"><img alt="../../_images/gh_joint_TDovetail.png" src="../../_images/gh_joint_TDovetail.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>start_y</cite> : Start position of the dovetail cut along the y-axis of the main beam.</p></li>
+<li><p><cite>start_depth</cite> : Depth of the dovetail cut from the surface of the main beam.</p></li>
+<li><p><cite>rotation</cite> : Rotation of the dovetail cut around the main beam’s axis.</p></li>
+<li><p><cite>length</cite> : Length of the dovetail cut along the main beam.</p></li>
+<li><p><cite>width</cite> : Width of the dovetail cut.</p></li>
+<li><p><cite>cone_angle</cite> : The angle of the dovetail cut, determining the taper of the joint.</p></li>
+<li><p><cite>dovetail_shape</cite> : The shape of the dovetail cut, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</p></li>
+<li><p><cite>tool_angle</cite> :  The angle of the tool used to create the dovetail cut.</p></li>
+<li><p><cite>tool_diameter</cite> : The diameter of the tool used to create the dovetail cut.</p></li>
+<li><p><cite>tool_height</cite> : The height of the tool used to create the dovetail cut.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+<section id="x-lap">
+<h3>X-Lap</h3>
+<p>The X-Half Lap joint removes the upper half of the overlap from one beam and the lower half from the other.</p>
+<a class="reference internal image-reference" href="../../_images/gh_joint_XHalfLap.png"><img alt="../../_images/gh_joint_XHalfLap.png" src="../../_images/gh_joint_XHalfLap.png" style="width: 50%;" /></a>
+<p>Inputs:</p>
+<ul class="simple">
+<li><p><cite>flip_lap_side</cite> : Flips the lap side.</p></li>
+<li><p><cite>cut_plane_bias</cite> : Determines the depth of lap cuts on the beams.</p></li>
+</ul>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+</section>
+</section>
+<section id="summary-table">
+<h2>Summary Table</h2>
+<p>The following table summarises the joint types that can be applied to the different joint topologies.</p>
+<table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Joint</p></th>
+<th class="head"><p>L Topology</p></th>
+<th class="head"><p>T Topology</p></th>
+<th class="head"><p>X Topology</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Butt</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Miter</p></td>
+<td><p>x</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Lap</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>French Ridge</p></td>
+<td><p>X</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Tenon and Mortise</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Step</p></td>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Birdsmouth</p></td>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Dovetail</p></td>
+<td></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-rules-components">Joint Rules Components</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#default-joint-rules">Default Joint Rules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#topological-joint-rules">Topological Joint Rules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#category-joint-rules">Category Joint Rules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#direct-joint-rules">Direct Joint Rules</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#surface-model-joint-override">Surface Model Joint Override</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#joint-types">Joint Types</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#l-butt">L-Butt</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#l-lap">L-Lap</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#l-miter">L-Miter</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#french-ridge-lap">French Ridge Lap</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tenon-and-mortise">Tenon and Mortise</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-butt">T-Butt</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-lap">T-Lap</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Tenon and Mortise</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-step">T-Step</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-birdsmouth">T-Birdsmouth</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#t-dovetail">T-Dovetail</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#x-lap">X-Lap</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary-table">Summary Table</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright COMPAS Association.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

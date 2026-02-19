@@ -1,0 +1,1872 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+    <link rel="icon" href="../_static/compas.ico" type="image/x-icon">
+    <title>Class Diagrams &#8212; COMPAS Timber</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/compas.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.4cbf315f70debaebd550c87a6162cf0f.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/clipboard.min.js"></script>
+    <script src="../_static/copybutton.js"></script>
+    <script src="../_static/tabs.js"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../_static/togglebutton.js"></script>
+    <script src="../_static/design-tabs.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'contribution/class_diagrams';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://raw.githubusercontent.com/gramaziokohler/compas_timber/gh-pages/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.0';
+        </script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="BTLx Contribution Guide" href="BTLx_contribution_guide.html" />
+    <link rel="prev" title="Developer Guide" href="../contribution.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/compas_icon_white.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/compas_icon_white.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">COMPAS Timber</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Grasshopper plugin
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../contribution.html">
+                        Developer Guide
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../license.html">
+                        License
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../citing.html">
+                        Citing
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://compas.dev">
+                    COMPAS Framework
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.0  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/gramaziokohler/compas_timber" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_timber/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <!-- <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        Introduction
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../installation.html">
+                        Installation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../api.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../tutorials.html">
+                        Grasshopper plugin
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../contribution.html">
+                        Developer Guide
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../license.html">
+                        License
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../citing.html">
+                        Citing
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://compas.dev">
+                    COMPAS Framework
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul> -->
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.0  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/gramaziokohler/compas_timber" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="http://forum.compas-framework.org/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/compas_timber/" title="PyPI" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-python"></i></span>
+            <label class="sr-only">PyPI</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.model.html">compas_timber.model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.elements.html">compas_timber.elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.connections.html">compas_timber.connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.fabrication.html">compas_timber.fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.planning.html">compas_timber.planning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.errors.html">compas_timber.errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/compas_timber.base.html">compas_timber.base</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/installation.html">Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/workflow.html">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/attributes.html">Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/beams.html">Beams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/design.html">Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/fabrication.html">Fabrication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/joint_rules.html">Joint Rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/show.html">Show</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/utils.html">Utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/grasshopper/examples.html">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../contribution.html">Developer Guide</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Class Diagrams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="BTLx_contribution_guide.html">BTLx Contribution Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="joints_contribution_guide.html">Joints Contribution Guide</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../citing.html">Citing</a></li>
+</ul>
+
+    </div>
+</nav></div>
+        <div class="sidebar-primary-item"><div class="sidebar-primary-item">
+    <a href="https://compas.dev" target="_blank">
+        COMPAS.dev <i class="fa fa-external-link" aria-hidden="true"></i>
+    </a>
+</div></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../contribution.html" class="nav-link">Developer Guide</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Class Diagrams</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="class-diagrams">
+<h1>Class Diagrams</h1>
+<p>This section provides visual representations of the class hierarchies and relationships in different subsystems of COMPAS Timber. This is to help developers better understand the codebase and to document the interface of the different classes.</p>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#timber-element-subsystem" id="id1">Timber Element Subsystem</a></p></li>
+<li><p><a class="reference internal" href="#connections-subsystem" id="id2">Connections Subsystem</a></p></li>
+<li><p><a class="reference internal" href="#fabrication-subsystem" id="id3">Fabrication Subsystem</a></p></li>
+<li><p><a class="reference internal" href="#errors-subsystem" id="id4">Errors Subsystem</a></p></li>
+</ul>
+</nav>
+<section id="timber-element-subsystem">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Timber Element Subsystem</a></h2>
+<p>The elements subsystem contains all the core timber elements that can be modeled and manipulated. These inherit from the base <code class="xref py py-class docutils literal notranslate"><span class="pre">TimberElement</span></code> class.</p>
+<pre  class="mermaid">
+        classDiagram
+
+   class TimberElement {
+      &lt;&lt;abstract&gt;&gt;
+      +frame : Frame
+      +length : float
+      +width : float
+      +height : float
+      +features : list[BTLxProcessing]
+      +attributes : dict
+      +geometry : Geometry
+      +debug_info : list
+      +is_beam() : bool
+      +is_plate() : bool
+      +is_group_element() : bool
+      +reset()
+      +add_feature(feature)
+      +add_features(features)
+      +remove_features(features=None)
+      +transformation_to_local()
+      +ref_frame()
+      +ref_sides()
+      +ref_edges()
+   }
+
+   class Beam {
+      +shape : Box
+      +blank : Box
+      +blank_length : float
+      +centerline : Line
+      +from_centerline(centerline, width, height)
+      +from_endpoints(p1, p2, width, height)
+      +compute_elementgeometry(include_features=True)
+      +compute_aabb(inflate=0.0)
+      +compute_obb(inflate=0.0)
+      +compute_collision_mesh()
+      +add_blank_extension(start, end, joint_key=None)
+      +remove_blank_extension(joint_key=None)
+   }
+
+   class Plate {
+      +plate_geometry : PlateGeometry
+      +outline_a : Polyline
+      +outline_b : Polyline
+      +openings : list[Polyline]
+      +planes : tuple[Plane]
+      +blank : Box
+      +blank_length : float
+      +compute_elementgeometry(include_features=True)
+      +compute_aabb(inflate=0.0)
+      +compute_obb(inflate=0.0)
+      +compute_collision_mesh()
+      +from_outlines(outline_a, outline_b)
+      +from_outline_thickness(outline, thickness)
+      +from_brep(brep, thickness)
+      +set_extension_plane(edge_index, plane)
+      +apply_edge_extensions()
+   }
+
+   class Panel {
+      +frame : Frame
+      +length : float
+      +width : float
+      +thickness : float
+      +plate_geometry : PlateGeometry
+      +outline_a : Polyline
+      +outline_b : Polyline
+      +openings : list[Polyline]
+      +planes : tuple[Plane]
+      +normal : Vector
+      +edge_planes : dict[int, Plane]
+      +name : str
+      +interfaces : list
+      +attributes : dict
+      +is_group_element : bool = True
+      +compute_elementgeometry(include_features=True)
+      +compute_aabb(inflate=0.0)
+      +compute_obb(inflate=0.0)
+      +compute_collision_mesh()
+      +transformation_to_local()
+      +from_outlines(outline_a, outline_b)
+      +from_outline_thickness(outline, thickness)
+      +from_brep(brep, thickness)
+      +set_extension_plane(edge_index, plane)
+      +apply_edge_extensions()
+      +remove_blank_extension(edge_index=None)
+      +reset()
+      +remove_features(features=None)
+   }
+
+
+   class Fastener {
+      +shape : Geometry
+      +frame : Frame
+      +interfaces : list[FastenerTimberInterface]
+      +is_fastener : bool = True
+      +compute_geometry()
+   }
+
+
+   class FastenerTimberInterface {
+      +outline_points : list[Point]
+      +thickness : float
+      +holes : list[dict]
+      +frame : Frame
+      +element : TimberElement
+      +shapes : list[Geometry]
+      +features : list[Feature]
+   }
+
+   %% Inheritance relationships
+   Element &lt;|-- TimberElement
+   TimberElement &lt;|-- Beam
+   TimberElement &lt;|-- Plate
+   Element &lt;|-- Panel
+   Element &lt;|-- Fastener
+
+   %% Composition relationships
+   Fastener ..&gt; FastenerTimberInterface : contains
+    </pre></section>
+<section id="connections-subsystem">
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Connections Subsystem</a></h2>
+<p>The connections subsystem defines joints and their relationships. All joints inherit from the base <a class="reference internal" href="../api/generated/compas_timber.connections.Joint.html" title="compas_timber.connections.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a> class and are categorized by topology.</p>
+<pre  class="mermaid">
+        classDiagram
+   class Interaction {
+      &lt;&lt;abstract&gt;&gt;
+      +name : str
+   }
+
+   class Joint {
+      &lt;&lt;abstract&gt;&gt;
+      +topology : JointTopology
+      +location : Point
+      +elements : list[Element]
+      +generated_elements : list[Element]
+      +features : list[Feature]
+      +SUPPORTED_TOPOLOGY : JointTopology
+      +MAX_ELEMENT_COUNT : int
+      +features : list[BTLxProcessing]
+      +create(model, *elements)
+      +add_features()
+      +add_extensions()
+      +check_elements_compatibility()
+      +restore_beams_from_keys(model)
+      +create(model, elements)
+   }
+
+   class JointCandidate {
+      +element_a : TimberElement
+      +element_b : TimberElement
+      +element_a_guid : str
+      +element_b_guid : str
+   }
+
+   class ButtJoint {
+      &lt;&lt;abstract&gt;&gt;
+      +main_beam : Beam
+      +cross_beam : Beam
+      +main_beam_guid : str
+      +cross_beam_guid : str
+      +mill_depth : float
+      +modify_cross : bool
+      +butt_plane : Plane
+   }
+
+   class LButtJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_L
+      +start_y : float
+      +strut_inclination : float
+      +small_beam_butts : bool
+      +back_plane : Plane
+      +reject_i : bool
+   }
+
+   class TButtJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_T
+      +modify_cross = False
+      +fasteners : list[Fastener]
+      +base_fastener : Fastener
+      +fasteners : list
+      +base_fastener : object
+   }
+
+   class TBirdsmouthJoint {
+      +main_beam : Beam
+      +cross_beam : Beam
+      +main_beam_guid : str
+      +cross_beam_guid : str
+      +mill_depth : float
+      +SUPPORTED_TOPOLOGY = TOPO_T
+      +cross_ref_side_indices : tuple[int]
+      +cross_ref_side_indices : list[int]
+   }
+
+   class LMiterJoint {
+      +main_beam : Beam
+      +cross_beam : Beam
+      +beam_a_guid : str
+      +beam_b_guid : str
+      +cutoff : bool
+      +SUPPORTED_TOPOLOGY = TOPO_L
+      +get_cutting_planes()
+      +get_cutoff_plane()
+   }
+
+   class LapJoint {
+      &lt;&lt;abstract&gt;&gt;
+      +main_beam : Beam
+      +cross_beam : Beam
+      +lap_length : float
+      +mill_depth : float
+      +beam_a_guid : str
+      +beam_b_guid : str
+      +flip_lap_side : bool
+      +ref_side_index_a : int
+      +ref_side_index_b : int
+      +cutting_plane_a : Plane
+      +cutting_plane_b : Plane
+   }
+
+   class TLapJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_T
+      +cut_plane_bias : float
+   }
+
+   class LLapJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_L
+      +cut_plane_bias : float
+   }
+
+   class XLapJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_X
+      +cut_plane_bias : float
+   }
+
+   class LFrenchRidgeLapJoint {
+      +drillhole_diam : float
+   }
+
+   class BallNodeJoint {
+      +beams : list[Beam]
+      +_beam_guids : list[str]
+      +ball_diameter : float
+      +fastener : BallNodeFastener
+      +SUPPORTED_TOPOLOGY = TOPO_Y
+      +MAX_ELEMENT_COUNT = None
+      +fastener_guid : str
+      +generated_elements : list
+   }
+
+   class TDovetailJoint {
+      +main_beam : Beam
+      +cross_beam : Beam
+      +main_beam_guid : str
+      +cross_beam_guid : str
+      +start_y : float
+      +start_depth : float
+      +rotation : float
+      +length : float
+      +width : float
+      +cone_angle : float
+      +tool_diameter : float
+      +tool_height : float
+   }
+
+   class TStepJoint {
+      +main_beam : Beam
+      +cross_beam : Beam
+      +main_beam_guid : str
+      +cross_beam_guid : str
+      +step_shape : int
+      +step_depth : float
+      +heel_depth : float
+      +tapered_heel : bool
+      +tenon_mortise_height : float
+   }
+
+   class TenonMortiseJoint {
+      +main_beam : Beam
+      +cross_beam : Beam
+      +tenon_length : float
+      +tenon_width : float
+      +tenon_height : float
+      +SUPPORTED_TOPOLOGY = TOPO_T
+      +main_beam_guid : str
+      +cross_beam_guid : str
+      +start_y : float
+      +start_depth : float
+      +rotation : float
+      +length : float
+      +width : float
+      +height : float
+      +shape : int
+   }
+
+   class YButtJoint {
+      +main_beam : Beam
+      +cross_beam_a : Beam
+      +cross_beam_b : Beam
+      +main_beam_guid : str
+      +cross_beam_a_guid : str
+      +cross_beam_b_guid : str
+      +mill_depth : float
+      +beams : list
+   }
+
+   class PlateJoint {
+      &lt;&lt;abstract&gt;&gt;
+      +plate_a : Plate
+      +plate_b : Plate
+   }
+
+   class PlateButtJoint {
+      &lt;&lt;abstract&gt;&gt;
+      +main_plate : Plate
+      +cross_plate : Plate
+   }
+
+   class PlateLButtJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+   }
+
+   class PlateTButtJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_EDGE_FACE
+   }
+
+   class PlateMiterJoint {
+      +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+   }
+
+   class PanelJoint {
+      &lt;&lt;abstract&gt;&gt;
+      +panel_a : Panel
+      +panel_b : Panel
+   }
+
+   class PanelLButtJoint {
+      +main_panel : Panel
+      +cross_panel : Panel
+   }
+
+   class PanelTButtJoint {
+      +main_panel : Panel
+      +cross_panel : Panel
+   }
+
+   class PanelMiterJoint {
+
+   }
+
+   %% Inheritance relationships
+   Interaction &lt;|-- Joint
+   Joint &lt;|-- JointCandidate
+   Joint &lt;|-- ButtJoint
+   Joint &lt;|-- TBirdsmouthJoint
+   Joint &lt;|-- LMiterJoint
+   Joint &lt;|-- LapJoint
+   Joint &lt;|-- BallNodeJoint
+   Joint &lt;|-- TenonMortiseJoint
+   Joint &lt;|-- TDovetailJoint
+   Joint &lt;|-- TStepJoint
+   Joint &lt;|-- YButtJoint
+   Joint &lt;|-- PlateJoint
+   PlateJoint &lt;|-- PanelJoint
+
+   ButtJoint &lt;|-- LButtJoint
+   ButtJoint &lt;|-- TButtJoint
+   LapJoint &lt;|-- TLapJoint
+   LapJoint &lt;|-- LLapJoint
+   LapJoint &lt;|-- XLapJoint
+   LapJoint &lt;|-- LFrenchRidgeLapJoint
+   PlateJoint &lt;|-- PlateButtJoint
+   PlateButtJoint &lt;|-- PlateLButtJoint
+   PlateButtJoint &lt;|-- PlateTButtJoint
+   PlateJoint &lt;|-- PlateMiterJoint
+   PanelJoint &lt;|-- PanelLButtJoint
+   PanelJoint &lt;|-- PanelTButtJoint
+   PlateLButtJoint &lt;|-- PanelLButtJoint
+   PlateTButtJoint &lt;|-- PanelTButtJoint
+   PanelJoint &lt;|-- PanelMiterJoint
+   PlateMiterJoint &lt;|-- PanelMiterJoint
+    </pre></section>
+<section id="fabrication-subsystem">
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Fabrication Subsystem</a></h2>
+<p>The fabrication subsystem handles manufacturing features and BTLx processing. All fabrication features inherit from <a class="reference internal" href="../api/generated/compas_timber.fabrication.BTLxProcessing.html" title="compas_timber.fabrication.BTLxProcessing"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxProcessing</span></code></a>.</p>
+<pre  class="mermaid">
+        classDiagram
+   class Data {
+      &lt;&lt;abstract&gt;&gt;
+      +__data__ : dict
+      +__from_data__(data)
+   }
+
+   class BTLxProcessing {
+      &lt;&lt;abstract&gt;&gt;
+      +ref_side_index : int
+      +is_joinery : bool
+      +priority : int
+      +process_id : str
+      +subprocessings : list[BTLxProcessing]
+      +PROCESSING_NAME : str
+      +add_subprocessing(subprocessing)
+      +apply(geometry, element)
+      +scale(factor)
+   }
+
+
+   class BTLxFromGeometryDefinition {
+      +processing : type[BTLxProcessing]
+      +geometries : list[Geometry]
+      +elements : list[TimberElement]
+      +kwargs : dict
+      +feature_from_element(element)
+      +transform(transformation)
+      +transformed(transformation)
+   }
+
+   class BTLxWriter {
+      +model : TimberModel
+      +errors : list[BTLxProcessingError]
+      +write_btlx_file(filepath)
+      +_create_part(element, order_num)
+      +_create_processing(feature)
+   }
+
+   class BTLxPart {
+      +element : TimberElement
+      +order_num : int
+      +length : float
+      +width : float
+      +height : float
+      +frame : Frame
+      +processings : list[BTLxProcessing]
+      +part_guid : str
+      +et_grain_direction : Element
+      +et_reference_side : Element
+      +et_transformations : Element
+      +et_shape : Element
+   }
+
+   class Contour {
+      +polyline : Polyline
+      +depth : float
+      +depth_bounded : bool
+      +inclination : list[float]
+      +to_brep()
+   }
+
+   class DualContour {
+      +principal_contour : Polyline
+      +associated_contour : Polyline
+      +depth_bounded : bool
+      +to_brep()
+   }
+   class DoubleCut {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +angle_1 : float
+      +inclination_1 : float
+      +angle_2 : float
+      +inclination_2 : float
+   }
+
+   class Lap {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +angle : float
+      +inclination : float
+      +slope : float
+      +length : float
+      +width : float
+      +depth : float
+      +lead_angle_parallel : bool
+      +lead_angle : float
+      +lead_inclination_parallel : bool
+      +lead_inclination : float
+      +machining_limits : dict
+   }
+
+   class Slot {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +inclination : float
+      +length : float
+      +depth : float
+      +thickness : float
+      +angle_ref_point : float
+      +angle_opp_point : float
+      +add_angle_opp_point : float
+      +machining_limits : dict
+   }
+
+   class Tenon {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +inclination : float
+      +rotation : float
+      +length_limited_top : bool
+      +length_limited_bottom : bool
+      +length : float
+      +width : float
+      +height : float
+      +shape : TenonShapeType
+      +shape_radius : float
+      +chamfer : bool
+   }
+
+   class Mortise {
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +slope : float
+      +inclination : float
+      +length_limited_top : bool
+      +length_limited_bottom : bool
+      +length : float
+      +width : float
+      +depth : float
+      +shape : TenonShapeType
+      +shape_radius : float
+   }
+
+   class Drilling {
+      +start_x : float
+      +start_y : float
+      +angle : float
+      +inclination : float
+      +depth_limited : bool
+      +depth : float
+      +diameter : float
+   }
+
+   class JackRafterCut {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +inclination : float
+   }
+
+   class Pocket {
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +inclination : float
+      +slope : float
+      +length : float
+      +width : float
+      +internal_angle : float
+      +tilt_ref_side : float
+      +tilt_end_side : float
+      +tilt_opp_side : float
+      +tilt_start_side : float
+      +machining_limits : dict
+   }
+
+   class StepJoint {
+      +orientation : OrientationType
+      +start_x : float
+      +strut_inclination : float
+      +step_depth : float
+      +heel_depth : float
+      +step_shape : StepShapeType
+      +tenon : bool
+      +tenon_width : float
+      +tenon_height : float
+   }
+
+   class StepJointNotch {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +strut_inclination : float
+      +notch_limited : bool
+      +notch_width : float
+      +step_depth : float
+      +heel_depth : float
+      +strut_height : float
+      +step_shape : StepShapeType
+      +mortise : bool
+      +mortise_width : float
+      +mortise_height : float
+   }
+
+   class DovetailTenon {
+      +orientation : OrientationType
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +inclination : float
+      +rotation : float
+      +length_limited_top : bool
+      +length_limited_bottom : bool
+      +length : float
+      +width : float
+      +height : float
+      +cone_angle : float
+      +use_flank_angle : bool
+      +flank_angle : float
+      +shape : TenonShapeType
+      +shape_radius : float
+   }
+
+   class DovetailMortise {
+      +start_x : float
+      +start_y : float
+      +start_depth : float
+      +angle : float
+      +slope : float
+      +inclination : float
+      +limitation_top : LimitationTopType
+      +length_limited_bottom : bool
+      +length : float
+      +width : float
+      +depth : float
+      +cone_angle : float
+      +use_flank_angle : bool
+      +flank_angle : float
+      +shape : TenonShapeType
+      +shape_radius : float
+   }
+
+   class FrenchRidgeLap {
+      +orientation : OrientationType
+      +start_x : float
+      +angle : float
+      +ref_position : EdgePositionType
+      +drillhole : bool
+      +drillhole_diam : float
+   }
+
+   class FreeContour {
+      +contour_param_object : Contour | DualContour
+      +counter_sink : bool
+      +tool_position : AlignmentType
+      +depth_bounded : bool
+   }
+
+   class Text {
+      +start_x : float
+      +start_y : float
+      +angle : float
+      +alignment_vertical : str
+      +alignment_horizontal : str
+      +alignment_multiline : str
+      +stacked_marking : bool
+      +text_height_auto : bool
+      +text_height : float
+      +text : str
+   }
+
+   class LongitudinalCut {
+      +start_x : float
+      +start_y : float
+      +inclination : float
+      +start_limited : bool
+      +end_limited : bool
+      +length : float
+      +depth_limited : bool
+      +depth : float
+      +angle_start : float
+      +angle_end : float
+      +tool_position : AlignmentType
+   }
+
+   %% Inheritance relationships (Fabrication subsystem)
+   Data &lt;|-- BTLxProcessing
+   Data &lt;|-- BTLxFromGeometryDefinition
+   Data &lt;|-- Contour
+   Data &lt;|-- DualContour
+
+   BTLxProcessing &lt;|-- DoubleCut
+   BTLxProcessing &lt;|-- Lap
+   BTLxProcessing &lt;|-- Slot
+   BTLxProcessing &lt;|-- Tenon
+   BTLxProcessing &lt;|-- Mortise
+   BTLxProcessing &lt;|-- Drilling
+   BTLxProcessing &lt;|-- JackRafterCut
+   BTLxProcessing &lt;|-- Pocket
+   BTLxProcessing &lt;|-- StepJoint
+   BTLxProcessing &lt;|-- StepJointNotch
+   BTLxProcessing &lt;|-- DovetailTenon
+   BTLxProcessing &lt;|-- DovetailMortise
+   BTLxProcessing &lt;|-- FrenchRidgeLap
+   BTLxProcessing &lt;|-- FreeContour
+   BTLxProcessing &lt;|-- Text
+   BTLxProcessing &lt;|-- LongitudinalCut
+
+   %% Composition relationships
+   BTLxWriter ..&gt; BTLxPart : creates
+   BTLxPart ..&gt; BTLxProcessing : contains
+   FreeContour ..&gt; Contour|DualContour : contains
+    </pre></section>
+<section id="errors-subsystem">
+<h2><a class="toc-backref" href="#id4" role="doc-backlink">Errors Subsystem</a></h2>
+<p>The errors subsystem provides specialized exception classes for different types of failures that can occur during timber modeling, joint creation, fabrication, and processing operations.</p>
+<pre  class="mermaid">
+        classDiagram
+   class Exception {
+      &lt;&lt;builtin&gt;&gt;
+      +message : str
+   }
+
+   class FeatureApplicationError {
+      +feature_geometry : Geometry
+      +element_geometry : Geometry
+      +message : str
+   }
+
+   class BeamJoiningError {
+      +beams : list[Beam]
+      +joint : Joint
+      +debug_info : str
+      +debug_geometries : list[Geometry]
+   }
+
+   class FastenerApplicationError {
+      +elements : list[TimberElement]
+      +fastener : Fastener
+      +message : str
+   }
+
+   class BTLxProcessingError {
+      +message : str
+      +part : BTLxPart
+      +failed_processing : BTLxProcessing
+   }
+
+   %% Inheritance relationships
+   Exception &lt;|-- FeatureApplicationError
+   Exception &lt;|-- BeamJoiningError
+   Exception &lt;|-- FastenerApplicationError
+   Exception &lt;|-- BTLxProcessingError
+    </pre></section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#timber-element-subsystem">Timber Element Subsystem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#connections-subsystem">Connections Subsystem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#fabrication-subsystem">Fabrication Subsystem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#errors-subsystem">Errors Subsystem</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright COMPAS Association.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 6.2.1.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
