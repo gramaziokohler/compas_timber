@@ -120,7 +120,7 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
         for p1, p2 in pairwise([beam.centerline.start] + split_points + [beam.centerline.end]):
             split_segments.append(Line(p1, p2))
 
-        return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis)) for seg in split_segments]
+        return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis), cross_section=(beam.width, beam.height)) for seg in split_segments]
 
 
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
