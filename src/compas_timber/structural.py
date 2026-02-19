@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from abc import ABC
 import itertools
+from abc import ABC
 from typing import TYPE_CHECKING
 from typing import List
-from typing import Tuple
 from typing import Optional
+from typing import Tuple
 
 from compas.data import Data
 from compas.geometry import Frame
