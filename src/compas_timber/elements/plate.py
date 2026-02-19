@@ -440,13 +440,18 @@ class Plate(TimberElement):
         for idx, face_data in enumerate(faces_data):
             normal = get_face_normal(face_data['outer'])
             if normal:
-                # Check if the face is planar in its original coordinates
-                outer_pts = list(face_data['outer'].points)
-                z_values = [p[2] for p in outer_pts]
-                is_planar = all(abs(z - z_values[0]) < 0.01 for z in z_values)
+                # Check if the face is planar by testing all points against its best-fit plane
+                outer_pts = list(face_data['outer'].points)[:-1]  # Exclude closing point
+                centroid = centroid_points(outer_pts)
 
-                # Calculate centroid
-                centroid = centroid_points(outer_pts[:-1])  # Exclude closing point
+                # Create a plane from the centroid and normal
+                plane = Plane(centroid, normal)
+
+                # Check if all points lie within tolerance of the plane
+                is_planar = all(
+                    abs(plane.distance_to_point(pt)) < TOL.absolute
+                    for pt in outer_pts
+                )
 
                 faces_with_normals.append({
                     **face_data,
@@ -487,7 +492,7 @@ class Plate(TimberElement):
                         offset_vector = Vector.from_start_end(face_i['centroid'], face_j['centroid'])
                         normal_direction = face_i['normal'].unitized()
                         normal_separation = abs(offset_vector.dot(normal_direction))
-                        min_separation = max(TOL.absolute, TOL.relative(normal_separation))
+                        min_separation = max(TOL.absolute, normal_separation * TOL.relative)
 
                         # Prioritize same-direction normals (dot > 0.95) with good separation
                         if dot > 0.95 and normal_separation > min_separation:
@@ -509,7 +514,6 @@ class Plate(TimberElement):
                         if i >= j:
                             continue
                         dot = face_i['normal'].dot(face_j['normal'])
-                        centroid_dist = distance_point_point(face_i['centroid'], face_j['centroid'])
 
                         # Accept opposite normals with planar faces
                         if ((dot < -0.85 and face_i['is_planar'] and face_j['is_planar']) or dot < -0.95):
@@ -524,7 +528,48 @@ class Plate(TimberElement):
         if face_a_data is None or face_b_data is None:
             raise ValueError("Could not find 2 parallel faces with matching edge counts and proper orientation")
 
+        # Align the two polylines to have matching vertex correspondence
+        def align_polylines(poly_a, poly_b):
+            """Align poly_b to best match poly_a by finding optimal rotation and direction.
+
+            Returns aligned copy of poly_b with matching start vertex and direction.
+            """
+            points_a = list(poly_a.points)[:-1]  # Remove closing point
+            points_b = list(poly_b.points)[:-1]  # Remove closing point
+
+            if len(points_a) != len(points_b):
+                return poly_b  # Can't align if different lengths
+
+            n = len(points_a)
+            best_offset = 0
+            best_reverse = False
+            min_dist = float('inf')
+
+            # Try all cyclic rotations and both directions
+            for reverse in [False, True]:
+                b_points = points_b[::-1] if reverse else points_b
+                for offset in range(n):
+                    # Calculate total distance for this configuration
+                    total_dist = 0.0
+                    for i in range(n):
+                        dist = distance_point_point(points_a[i], b_points[(i + offset) % n])
+                        total_dist += dist
+
+                    if total_dist < min_dist:
+                        min_dist = total_dist
+                        best_offset = offset
+                        best_reverse = reverse
+
+            # Build aligned polyline
+            b_points = points_b[::-1] if best_reverse else points_b
+            aligned_points = [b_points[(i + best_offset) % n] for i in range(n)]
+            aligned_points.append(aligned_points[0])  # Close the polyline
+            return Polyline(aligned_points)
+
+        # Align face_b to match face_a
+        aligned_outer_b = align_polylines(face_a_data['outer'], face_b_data['outer'])
+
         # Use inner polylines from the first face as openings
         openings = face_a_data['inner'] if face_a_data['inner'] else None
 
-        return cls.from_outlines(face_a_data['outer'], face_b_data['outer'], openings=openings, **kwargs)
+        return cls.from_outlines(face_a_data['outer'], aligned_outer_b, openings=openings, **kwargs)

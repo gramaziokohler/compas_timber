@@ -593,14 +593,20 @@ def join_polyline_segments(segments: list[Line], close_loop: bool = False):
 
 def polyline_from_brep_loop(loop):
     """Creates a Polyline from a BrepLoop. BrepLoop edges are not always aligned in the same direction, so this is necessary.
+
     Parameters
     ----------
     loop : :class:`~compas.geometry.BrepLoop`
+        The BrepLoop to convert to a polyline.
 
     Returns
     -------
-    :class:`~compas.geometry.Polyline`
-        The Polyline resulting from joining the BrepLoop edges.
+    :class:`~compas.geometry.Polyline` or None
+        The Polyline resulting from joining the BrepLoop edges, or None if the edges
+        cannot be joined into a single closed polyline. This can happen when:
+        - Loop edges are disconnected or unjoinable
+        - Multiple separate polylines result from joining (indicating a malformed loop)
+        - Some edges remain unjoined after processing
     """
     segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
     polylines, unjoined = join_polyline_segments(segments, close_loop=True)
@@ -633,13 +639,23 @@ def polylines_from_brep_face(face):
                 outer = polylines_list[0]
                 openings = polylines_list[1:] if len(polylines_list) > 1 else []
                 return outer, openings
+        # If we reach here, the list couldn't be processed into valid polylines
+        raise ValueError("Could not extract valid polylines from the provided edge list")
+
+    # Handle standard BrepFace with loops
     outer = None
     openings = []
     for loop in face.loops:
         if loop.is_outer:
             outer = polyline_from_brep_loop(loop)
         else:
-            openings.append(polyline_from_brep_loop(loop))
+            opening = polyline_from_brep_loop(loop)
+            if opening is not None:
+                openings.append(opening)
+
+    if outer is None:
+        raise ValueError("Could not extract outer boundary polyline from BRep face")
+
     return outer, openings
 
 
