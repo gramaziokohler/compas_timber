@@ -5,6 +5,11 @@
     "url": "https://gramaziokohler.github.io/compas_timber/latest/"
   },
   {
+    "name": "2.0.0-dev0",
+    "version": "2.0.0-dev0",
+    "url": "https://gramaziokohler.github.io/compas_timber/2.0.0-dev0/"
+  },
+  {
     "name": "1.0.5 (stable)",
     "version": "1.0.5",
     "url": "https://gramaziokohler.github.io/compas_timber/1.0.5/"
