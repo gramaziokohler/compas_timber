@@ -7,6 +7,7 @@ from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.connections import Joint
+from compas_timber.connections import JointCandidate
 from compas_timber.model import TimberModel
 
 
@@ -278,3 +279,82 @@ def test_segment_frame_no_joints(mocker: pytest_mock.MockerFixture):
     assert seg.frame.xaxis.x == pytest.approx(beam.frame.xaxis.x)
     assert seg.frame.xaxis.y == pytest.approx(beam.frame.xaxis.y)
     assert seg.frame.xaxis.z == pytest.approx(beam.frame.xaxis.z)
+
+
+def test_create_segments_with_only_joint_candidates(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+
+    c1 = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.point_at(0.25))
+    c2 = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.point_at(0.75))
+
+    model = mocker.MagicMock(spec=TimberModel)
+    model.get_interactions_for_element.return_value = [c1, c2]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    model.add_beam_structural_segments.assert_called_once()
+
+    assert len(segments) == 3
+    expected_lengths = [250.0, 500.0, 250.0]
+    for seg, exp in zip(segments, expected_lengths):
+        assert seg.line.length == pytest.approx(exp)
+
+
+def test_create_segments_with_only_joints(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+
+    j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.4))
+    j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.6))
+
+    model = mocker.MagicMock(spec=TimberModel)
+    model.get_interactions_for_element.return_value = [j1, j2]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    model.add_beam_structural_segments.assert_called_once()
+
+    assert len(segments) == 3
+    expected_lengths = [400.0, 200.0, 400.0]
+    for seg, exp in zip(segments, expected_lengths):
+        assert seg.line.length == pytest.approx(exp)
+
+
+def test_create_segments_with_joints_and_candidates(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+
+    j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.2))
+    c1 = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.point_at(0.5))
+    j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.8))
+
+    model = mocker.MagicMock(spec=TimberModel)
+    model.get_interactions_for_element.return_value = [j1, c1, j2]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    model.add_beam_structural_segments.assert_called_once()
+
+    # splits at 0.2, 0.5, 0.8 → 4 segments: 200, 300, 300, 200
+    assert len(segments) == 4
+    expected_lengths = [200.0, 300.0, 300.0, 200.0]
+    for seg, exp in zip(segments, expected_lengths):
+        assert seg.line.length == pytest.approx(exp)
+
+
+def test_create_segments_candidates_at_ends_only(mocker: pytest_mock.MockerFixture):
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+
+    c_start = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.start)
+    c_end = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.end)
+
+    model = mocker.MagicMock(spec=TimberModel)
+    model.get_interactions_for_element.return_value = [c_start, c_end]
+
+    solver = BeamStructuralElementSolver()
+    segments = solver.add_structural_segments(beam, model)
+
+    # candidates at ends should not split the beam
+    assert len(segments) == 1
+    assert segments[0].line.length == pytest.approx(1000.0)

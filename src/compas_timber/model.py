@@ -257,10 +257,15 @@ class TimberModel(Model):
 
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
+        interactions = []
         try:
-            return self._graph.edge_attribute(node_pair, "joints")
+            interactions.extend(self._graph.edge_attribute(node_pair, "joints"))
         except KeyError:
-            return []
+            pass
+        try:
+            interactions.append(self._graph.edge_attribute(node_pair, "candidates"))
+        except KeyError:
+            pass
 
     def get_interactions_for_element(self, element):
         # type: (Element) -> List[Interaction]
