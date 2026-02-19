@@ -266,6 +266,7 @@ class TimberModel(Model):
             interactions.append(self._graph.edge_attribute(node_pair, "candidates"))
         except KeyError:
             pass
+        return interactions
 
     def get_interactions_for_element(self, element):
         # type: (Element) -> List[Interaction]

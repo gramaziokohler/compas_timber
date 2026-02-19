@@ -358,3 +358,25 @@ def test_create_segments_candidates_at_ends_only(mocker: pytest_mock.MockerFixtu
     # candidates at ends should not split the beam
     assert len(segments) == 1
     assert segments[0].line.length == pytest.approx(1000.0)
+
+
+def test_get_interactions_for_element_returns_candidates():
+    """Test that get_interactions_for_element returns joint candidates stored on graph edges.
+
+    This exercises the real _safely_get_interactions path (no mocking) to ensure
+    it actually returns a value.
+    """
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(500, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    interactions = model.get_interactions_for_element(beam_a)
+
+    assert len(interactions) > 0
+    assert candidate in interactions
