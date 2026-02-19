@@ -168,8 +168,8 @@ class Drilling(BTLxProcessing):
     def from_line_and_element(cls, line, element, diameter):
         """Construct a drilling process from a line and diameter.
 
-        # TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
-        # TODO: make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
+        TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
+        make a from point alt. constructor that takes a point and a reference side and makes a straight drilling through.
 
         Parameters
         ----------

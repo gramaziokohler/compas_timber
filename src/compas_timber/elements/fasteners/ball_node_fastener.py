@@ -19,7 +19,7 @@ class BallNodeFastener(Fastener):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
-    #TODO: finish this docstring
+    TODO: finish this docstring
 
     Parameters
     ----------
