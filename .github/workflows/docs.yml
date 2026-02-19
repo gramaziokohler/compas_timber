@@ -1,21 +1,48 @@
 name: docs
 
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - "v*"
   pull_request:
     branches:
       - main
+  release:
+    types: [published]
+
+permissions:
+  contents: write
 
 jobs:
-  docs:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: compas-dev/compas-actions.docs@v4
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          doc_url: https://gramaziokohler.github.io/compas_timber
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          use_conda: false
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[docs,dev]"
+
+      - name: Build docs (PR check)
+        if: github.event_name == 'pull_request'
+        run: mkdocs build -c
+
+      - name: Configure Git Credentials
+        if: github.event_name == 'release'
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Get version
+        if: github.event_name == 'release'
+        run: |
+          VERSION=$(python -c "import compas_timber; print(compas_timber.__version__)")
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name == 'release'
+        run: |
+          git fetch origin gh-pages --depth=1
+          mike deploy --push --update-aliases ${{ env.VERSION }} latest
