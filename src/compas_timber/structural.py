@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 from abc import ABC
+from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
@@ -48,6 +49,7 @@ class BeamSegmentGenerator(ABC):
 
     """
 
+    @abstractmethod
     def generate_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
         """Generate structural segments for a beam.
 
@@ -74,6 +76,7 @@ class JointConnectorGenerator(ABC):
 
     """
 
+    @abstractmethod
     def generate_connectors(self, joint: Joint) -> List[Tuple[Beam, Beam, List[StructuralSegment]]]:
         """Generate connector segments for a joint.
 
