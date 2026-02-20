@@ -52,7 +52,6 @@ dev = [
     "pytest>=8.0",
     "build",
     "tomlkit",
-    "compas_viewer",
     "pytest-cov",
     "pytest-randomly",
     "pre-commit",
