@@ -13,7 +13,7 @@ The plugin is built on top of the COMPAS Timber python library and provides addi
 !!! note
 
     You can also use the COMPAS Timber python library in Grasshopper using the ghPython componenent.
-    See COMPAS Timber [API Reference](../api/index.md) for more details.
+    See COMPAS Timber [API Reference](../api/compas_timber.model.md) for more details.
 
 To get an overall idea how to use it, start with [Workflow](grasshopper/workflow.md).
 Then, the following sections explain in detail the concepts and tools:
