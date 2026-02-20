@@ -256,7 +256,9 @@ class PlateGeometry(Data):
             raise ValueError("The outline_b is not closed.")
         if len(outline_a) != len(outline_b):
             raise ValueError("The outlines must have the same number of points.")
-        if all(not TOL.is_close(p[2], 0) for p in outline_a.points):
-            raise ValueError("outline_a must be planar. Polyline: {}".format(outline_a))
-        if all(not TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
+        # Check if outline_a is planar (all z-coordinates are the same)
+        if not all(TOL.is_close(p[2], outline_a[0][2]) for p in outline_a.points):
+            raise ValueError("outline_a must be planar.")
+        # Check if outline_b is planar and parallel to outline_a
+        if not all(TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")

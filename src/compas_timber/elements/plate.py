@@ -12,6 +12,9 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import centroid_points
+from compas.geometry import distance_point_point
+from compas.geometry import normal_polygon
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
 
@@ -339,13 +342,13 @@ class Plate(TimberElement):
         return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
-        """Creates a plate from a brep.
+    def from_face(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+        """Creates a plate from a single-face brep.
 
         Parameters
         ----------
         brep : :class:`~compas.geometry.Brep`
-            The brep of the plate.
+            A single-face brep representing the plate surface.
         thickness : float
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
@@ -357,7 +360,7 @@ class Plate(TimberElement):
         Returns
         -------
         :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate with the given brep and thickness.
+            A Plate object representing the plate with the given brep face and thickness.
         """
 
         if len(brep.faces) > 1:
@@ -367,3 +370,206 @@ class Plate(TimberElement):
         if not outer_polyline:
             raise ValueError("no outer loop for brep face was found")
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+
+    @classmethod
+    def from_brep(cls, brep: Brep, **kwargs):
+        """Creates a plate from a brep by automatically detecting two parallel faces.
+
+        This method analyzes the brep to identify two parallel faces with matching edge counts
+        and uses them as the top and bottom faces of the plate. It prioritizes faces with the
+        maximum number of edges (typically the primary faces) and verifies they are planar and
+        spatially separated.
+
+        Parameters
+        ----------
+        brep : :class:`~compas.geometry.Brep`
+            The brep representing the plate geometry. Must have at least 2 parallel faces.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+            These are passed to the :class:`~compas_timber.elements.Plate` constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object created from the two parallel faces of the brep.
+
+        Raises
+        ------
+        ValueError
+            If the brep does not have at least 2 parallel faces with matching edge counts,
+            or if polylines cannot be extracted from the faces.
+        """
+        if len(brep.faces) < 2:
+            raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
+
+        # Collect all faces and their properties using direct indexing
+        faces_data = []
+        for i in range(len(brep.faces)):
+            try:
+                face = brep.faces[i]
+                outer, inner = polylines_from_brep_face(face)
+            except (AttributeError, TypeError) as e:
+                raise ValueError("Failed to extract polylines from face {}: {}".format(i, str(e)))
+
+            if outer:
+                edge_count = len(outer.points) - 1  # -1 because polyline is closed
+                faces_data.append({
+                    'outer': outer,
+                    'inner': inner,
+                    'edge_count': edge_count
+                })
+
+        if len(faces_data) < 2:
+            raise ValueError("Could not extract valid outlines from at least 2 faces")
+
+        # Find two faces with matching edge counts that are also parallel
+        def get_face_normal(polyline):
+            """Calculate normal vector from a closed polyline."""
+            if len(polyline.points) < 4:
+                return None
+            # Use first 3 non-collinear points to compute normal
+            points = list(polyline.points)[:-1]  # Remove closing point
+            normal_data = normal_polygon(points)
+            # Handle both list and Vector return types
+            if isinstance(normal_data, (list, tuple)) and len(normal_data) == 3:
+                return Vector(*normal_data)
+            return normal_data
+
+        # Compute normals for all faces
+        faces_with_normals = []
+        for idx, face_data in enumerate(faces_data):
+            normal = get_face_normal(face_data['outer'])
+            if normal:
+                # Check if the face is planar by testing all points against its best-fit plane
+                outer_pts = list(face_data['outer'].points)[:-1]  # Exclude closing point
+                centroid = centroid_points(outer_pts)
+
+                # Create a plane from the centroid and normal
+                plane = Plane(centroid, normal)
+
+                # Check if all points lie within tolerance of the plane
+                is_planar = all(
+                    abs(plane.distance_to_point(pt)) < TOL.absolute
+                    for pt in outer_pts
+                )
+
+                faces_with_normals.append({
+                    **face_data,
+                    'normal': normal,
+                    'is_planar': is_planar,
+                    'centroid': centroid,
+                    'index': idx
+                })
+
+        if len(faces_with_normals) < 2:
+            raise ValueError("Could not compute normals for at least 2 extracted faces")
+
+        # Find two faces with matching edge counts and opposite normals (parallel)
+        # Prioritize faces with the MAXIMUM number of edges (typically top/bottom faces)
+        # Also prefer faces that are planar in their original coordinates
+        face_a_data = None
+        face_b_data = None
+
+        # Find the maximum edge count
+        max_edge_count = max(f['edge_count'] for f in faces_with_normals)
+
+        # First try to find parallel faces with maximum edge count
+        # Filter to only truly planar faces first
+        planar_candidates = [f for f in faces_with_normals if f['is_planar']]
+
+        if len(planar_candidates) >= 2:
+            # Prioritize finding same-direction normals (typical for extrusions) among planar faces
+            for edge_target in [max_edge_count] + sorted(set(f['edge_count'] for f in planar_candidates), reverse=True):
+                candidates = [f for f in planar_candidates if f['edge_count'] == edge_target]
+
+                for i, face_i in enumerate(candidates):
+                    for j, face_j in enumerate(candidates):
+                        if i >= j:
+                            continue
+                        dot = face_i['normal'].dot(face_j['normal'])
+                        # Measure separation along the face normal instead of using a fixed distance,
+                        # and compare against model-scale-aware tolerances.
+                        offset_vector = Vector.from_start_end(face_i['centroid'], face_j['centroid'])
+                        normal_direction = face_i['normal'].unitized()
+                        normal_separation = abs(offset_vector.dot(normal_direction))
+                        min_separation = max(TOL.absolute, normal_separation * TOL.relative)
+
+                        # Prioritize same-direction normals (dot > 0.95) with good separation
+                        if dot > 0.95 and normal_separation > min_separation:
+                            face_a_data = face_i
+                            face_b_data = face_j
+                            break
+                    if face_a_data:
+                        break
+                if face_a_data:
+                    break
+
+        # If no same-direction parallel faces found, try opposite normals
+        if face_a_data is None:
+            for edge_target in [max_edge_count] + sorted(set(f['edge_count'] for f in faces_with_normals), reverse=True):
+                candidates = [f for f in faces_with_normals if f['edge_count'] == edge_target]
+
+                for i, face_i in enumerate(candidates):
+                    for j, face_j in enumerate(candidates):
+                        if i >= j:
+                            continue
+                        dot = face_i['normal'].dot(face_j['normal'])
+
+                        # Accept opposite normals with planar faces
+                        if ((dot < -0.85 and face_i['is_planar'] and face_j['is_planar']) or dot < -0.95):
+                            face_a_data = face_i
+                            face_b_data = face_j
+                            break
+                    if face_a_data:
+                        break
+                if face_a_data:
+                    break
+
+        if face_a_data is None or face_b_data is None:
+            raise ValueError("Could not find 2 parallel faces with matching edge counts and proper orientation")
+
+        # Align the two polylines to have matching vertex correspondence
+        def align_polylines(poly_a, poly_b):
+            """Align poly_b to best match poly_a by finding optimal rotation and direction.
+
+            Returns aligned copy of poly_b with matching start vertex and direction.
+            """
+            points_a = list(poly_a.points)[:-1]  # Remove closing point
+            points_b = list(poly_b.points)[:-1]  # Remove closing point
+
+            if len(points_a) != len(points_b):
+                return poly_b  # Can't align if different lengths
+
+            n = len(points_a)
+            best_offset = 0
+            best_reverse = False
+            min_dist = float('inf')
+
+            # Try all cyclic rotations and both directions
+            for reverse in [False, True]:
+                b_points = points_b[::-1] if reverse else points_b
+                for offset in range(n):
+                    # Calculate total distance for this configuration
+                    total_dist = 0.0
+                    for i in range(n):
+                        dist = distance_point_point(points_a[i], b_points[(i + offset) % n])
+                        total_dist += dist
+
+                    if total_dist < min_dist:
+                        min_dist = total_dist
+                        best_offset = offset
+                        best_reverse = reverse
+
+            # Build aligned polyline
+            b_points = points_b[::-1] if best_reverse else points_b
+            aligned_points = [b_points[(i + best_offset) % n] for i in range(n)]
+            aligned_points.append(aligned_points[0])  # Close the polyline
+            return Polyline(aligned_points)
+
+        # Align face_b to match face_a
+        aligned_outer_b = align_polylines(face_a_data['outer'], face_b_data['outer'])
+
+        # Use inner polylines from the first face as openings
+        openings = face_a_data['inner'] if face_a_data['inner'] else None
+
+        return cls.from_outlines(face_a_data['outer'], aligned_outer_b, openings=openings, **kwargs)
