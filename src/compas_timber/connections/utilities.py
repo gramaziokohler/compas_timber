@@ -1,9 +1,21 @@
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
+from typing import Optional
 
 from compas.geometry import Point
 from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
+
+from compas_timber.connections.solver import JointTopology
+
+if TYPE_CHECKING:
+    from compas_timber.connections.analyzers import Cluster
+    from compas_timber.connections.joint import Joint
+    from compas_timber.elements.beam import Beam
 
 
 def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
@@ -196,3 +208,94 @@ def point_centerline_towards_joint(beam_a, beam_b):
     else:
         centerline_vec = beam_a.centerline.vector
     return centerline_vec
+
+
+def extend_main_beam_to_cross_beam(main_beam: Beam, cross_beam: Beam, mill_depth: Optional[float] = None, extension_tolerance: float = 0.01):
+    """
+    Extend the `main_beam` to the `cross_beam`.
+    If a `mill_depth` is provided it ensures that the `main_beam` is extended enough to ensure enough material for the joint.
+
+    The `main_beam` is extended in place.
+
+
+    Parameter
+    ---------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam to be extended.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam to which the main beam will be extended.
+    mill_depth : float, optional
+        The depth of the mill cut for the joint. If provided, the main beam will be extended enough to ensure enough material for the joint.
+    extension_tolerance : float, optional
+        A small tolerance added to the extension length. Default is 0.01 units.
+
+
+    Retruns
+    -------
+    :class:`~compas_timber.elements.Beam`
+        The main beam extended.
+
+    """
+    ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+    cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+    cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+    if mill_depth:
+        cutting_plane.translate(-cutting_plane.normal * mill_depth)
+    start_main, end_main = main_beam.extension_to_plane(cutting_plane)
+    main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance)
+    return main_beam
+
+
+def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: Beam, joint: Joint) -> tuple[float, float]:
+    """
+    Computes the angle and dot product between the `main_beam` and the `cross_beam` relative to their joint.
+    The angle and dot products are computed with the direction of the `main_beam` goinf towards the joint.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam of the joint.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam of the joint.
+    joint : :class:`~compas_timber.connections.joint.Joint`
+        The joint connecting the main beam and the cross beam.
+
+    Returns
+    -------
+    tuple[float, float]
+        A tuple containing the angle (in radians) and the dot product between the main beam and the cross beam relative to their joint.
+
+    """
+    main_beam_direction = joint.get_beam_direction_towards_joint(main_beam)
+    angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
+    dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
+    return angle, dot
+
+
+def parse_cross_beam_and_main_beams_from_cluster(cluster: Cluster) -> tuple[list[Beam], list[Beam]]:
+    """
+    Parses cross beams and main beams from a cluster of joints.
+
+    Parameters
+    ----------
+    cluster : :class:`~compas_timber.connections.analyzers.Cluster`
+        The cluster of joints to parse.
+
+    Returns
+    -------
+    list[:class:`~compas_timber.elements.beam.Beam`], list[:class:`~compas_timber.elements.beam.Beam`]
+        Two lists containing the cross beams and main beams respectively.
+    """
+    cross_beams = []
+    main_beams = []
+    for candidate in cluster.joints:
+        if candidate.topology == JointTopology.TOPO_L:
+            main_beams.extend(candidate.elements)
+        elif candidate.topology == JointTopology.TOPO_T:
+            main_beams.append(candidate.elements[0])
+            cross_beams.append(candidate.elements[1])
+        elif candidate.topology == JointTopology.TOPO_X:
+            cross_beams.extend(candidate.elements)
+    cross_beams = list(set(cross_beams))
+    main_beams = list(set(main_beams))
+    return cross_beams, main_beams

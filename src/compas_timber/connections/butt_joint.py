@@ -6,12 +6,14 @@ from typing import Optional
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import distance_point_plane
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.utils import ensure_polyhedron_faces_outwards
 
 from .joint import Joint
 from .solver import JointTopology
@@ -191,24 +193,14 @@ class ButtJoint(Joint):
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
-        # get the cutting plane for the main beam
-        if self.butt_plane:
-            cutting_plane = self.butt_plane
-        else:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.xaxis = -cutting_plane.xaxis
-            if self.mill_depth:
-                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-        # apply the cut on the main beam
-        main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
-        self.main_beam.add_features(main_feature)
-        # store the feature
-        self.features = [main_feature]
+
+        self._apply_cut_to_main_beam()
 
         if self.force_pocket:
             self._apply_pocket_to_cross_beam()
         else:
             self._apply_lap_to_cross_beam()
+
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             if self.back_plane:
@@ -219,35 +211,154 @@ class ButtJoint(Joint):
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 
-    def _apply_lap_to_cross_beam(self):
-        # apply the lap on the cross beam
-        if self.mill_depth and not self.butt_plane:
-            cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-            lap_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
-            cross_feature = Lap.from_plane_and_beam(
-                cross_cutting_plane,
-                self.cross_beam,
-                lap_width,
-                self.mill_depth,
-                ref_side_index=self.cross_beam_ref_side_index,
-            )
-            self.cross_beam.add_features(cross_feature)
+    def _apply_cut_to_main_beam(self):
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
+        if feature:
+            self.main_beam.add_features(feature)
+            self.features.append(feature)
 
-            self.features.append(cross_feature)
+    def _apply_lap_to_cross_beam(self):
+        feature = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane)
+        if feature:
+            self.cross_beam.add_features(feature)
+            self.features.append(feature)
 
     def _apply_pocket_to_cross_beam(self):
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        if self.mill_depth:
-            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+        pocket = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam, self.mill_depth, self.butt_plane, self.conical_tool)
+        if pocket:
+            self.cross_beam.add_features(pocket)
+            self.features.append(pocket)
 
-        main_beam_ref_sides = list(self.main_beam.ref_sides)
+    def restore_beams_from_keys(self, model: TimberModel):
+        """After de-serialization, restores references to the main and cross beams saved in the model."""
+        self.main_beam = model[self.main_beam_guid]
+        self.cross_beam = model[self.cross_beam_guid]
+
+    @staticmethod
+    def get_cut_main_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> JackRafterCutProxy:
+        """
+        Computes the `JackRafterCutProxy` feature to cut the main beam.
+        This method does not apply the feature to the beam, it only computes it.
+
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam creating creating the cut on the main beam.
+        main_beam : Beam
+            The main beam on which the cut will be applied.
+        mill_depth : Optional[float], optional
+            The depth of the cut to be milled in the main beam. This will be ignored if `butt_plane` is provided. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used. Default is None.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.JackRafterCutProxy`
+            The feature to be applied to the main beam to cut it according to the joint design.
+        """
+
+        if butt_plane:
+            cutting_plane = butt_plane
+        else:
+            ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+            cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+            cutting_plane.xaxis = -cutting_plane.xaxis
+
+            if mill_depth:
+                cutting_plane.translate(cutting_plane.normal * mill_depth)
+
+        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
+        main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
+        feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, main_beam, main_beam_ref_side_index)
+
+        return feature
+
+    @staticmethod
+    def get_lap_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None) -> Lap:
+        """
+
+
+        Computes the `Lap` feature to be applied on the cross beam.
+        This method does not apply the feature to the beam, it only computes it.
+
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam on which the lap will be applied.
+        main_beam : Beam
+            The main beam creating the lap on the cross beam.
+        mill_depth : Optional[float], optional
+            The depth of the lap to be milled in the cross beam. If not provided it is caluclated with `butt_plane`. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam and create the lap on the cross beam.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+            The feature to be applied to the cross beam to create the lap according to the joint design
+        """
+        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
+        main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cutting_plane = main_beam.ref_sides[main_beam_ref_side_index]
+        _, lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
+        ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
+        # calculate mill_depth with butt plane
+        if not mill_depth and butt_plane:
+            ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+            cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            cross_beam_side_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+            mill_depth = distance_point_plane(cross_beam_side_plane.point, butt_plane)
+
+        lap_feature = Lap.from_plane_and_beam(cutting_plane, cross_beam, lap_width, mill_depth, ref_side_index=cross_beam_ref_side_index)
+
+        return lap_feature
+
+    @staticmethod
+    def get_pocket_on_cross_beam(cross_beam: Beam, main_beam: Beam, mill_depth: Optional[float] = None, butt_plane: Optional[Plane] = None, conical_tool: bool = False) -> Pocket:
+        """
+        Computes the `Pocket` feature to be applied on the cross beam.
+        This method does not apply the feature to the beam, it only computes it.
+
+        Parameters
+        ----------
+        cross_beam : Beam
+            The cross beam on which the pocket will be applied.
+        main_beam : Beam
+            The main beam creating the pocket on the cross beam.
+        mill_depth : Optional[float], optional
+            The depth of the pocket to be milled in the cross beam. If not provided, it is calculated with `butt_plane`. Default is None.
+        butt_plane : Optional[Plane], optional
+            The plane used to cut the main beam and create the pocket on the cross beam. Default is None.
+        conical_tool : bool, optional
+            If `True`, allows smaller than 90-degree angles to be applied to the TiltSide parameters of the `Pocket` feature. Default is False.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+            The feature to be applied to the cross beam to create the pocket according to the joint design.
+        """
+        ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
+        if butt_plane:
+            cutting_plane = butt_plane
+        else:
+            cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
+
+        if mill_depth:
+            cutting_plane.translate(cutting_plane.normal * mill_depth)
+
+        main_beam_ref_sides = list(main_beam.ref_sides)
         plane_0 = Plane.from_frame(main_beam_ref_sides[0])
         plane_1 = Plane.from_frame(main_beam_ref_sides[1])
         plane_2 = Plane.from_frame(main_beam_ref_sides[2])
         plane_3 = Plane.from_frame(main_beam_ref_sides[3])
         cutting_plane = Plane.from_frame(cutting_plane)
-        top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
+        top_plane = Plane.from_frame(cross_beam.ref_sides[cross_beam_ref_side_index])
         vertices = [
             Point(*intersection_plane_plane_plane(plane_2, plane_3, cutting_plane)),  # v0
             Point(*intersection_plane_plane_plane(plane_0, plane_3, cutting_plane)),  # v1
@@ -259,19 +370,14 @@ class ButtJoint(Joint):
             Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)),  # v7
         ]
         faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
+        # faces = ButtJoint._ensure_faces_outward(vertices, faces)
         cutout_volume = Polyhedron(vertices, faces)
+        cutout_volume = ensure_polyhedron_faces_outwards(cutout_volume)
         # return cutout_volume
-        pocket = Pocket.from_volume_and_element(cutout_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
-        if not self.conical_tool:
+        pocket = Pocket.from_volume_and_element(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
+        if not conical_tool:
             pocket.tilt_start_side = 90 if pocket.tilt_start_side < 90 else pocket.tilt_start_side
             pocket.tilt_end_side = 90 if pocket.tilt_end_side < 90 else pocket.tilt_end_side
             pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
             pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
-        self.cross_beam.add_features(pocket)
-        self.features.append(pocket)
-        return cutout_volume
-
-    def restore_beams_from_keys(self, model: TimberModel):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]
+        return pocket

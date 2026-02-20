@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from itertools import combinations
+from typing import TYPE_CHECKING
 
 from compas.data import Data
 from compas.geometry import Point
@@ -7,6 +10,11 @@ from compas.geometry import distance_point_line
 from compas_timber.errors import BeamJoiningError
 
 from .solver import JointTopology
+
+if TYPE_CHECKING:
+    from compas.geometry import Vector
+
+    from compas_timber.elements.beam import Beam
 
 
 class Joint(Data):
@@ -69,7 +77,7 @@ class Joint(Data):
         self._topology = value
 
     @property
-    def location(self):
+    def location(self) -> Point:
         return self._location
 
     @location.setter
@@ -168,6 +176,25 @@ class Joint(Data):
 
         """
         raise NotImplementedError
+
+    def get_beam_direction_towards_joint(self, beam: Beam) -> Vector:
+        """Returns the direction of the beam towards the joint.
+
+        This is used to determine the orientation of the beam for feature calculation.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            The direction of the beam towards the joint.
+
+        """
+        end, _ = beam.endpoint_closest_to_point(self.location)
+        if end == "start":
+            beam_direction = beam.centerline.vector
+        else:
+            beam_direction = beam.centerline.vector * -1
+        beam_direction.unitize()
+        return beam_direction
 
     @classmethod
     def create(cls, model, *elements, **kwargs):

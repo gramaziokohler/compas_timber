@@ -149,6 +149,7 @@ The connections subsystem defines joints and their relationships. All joints inh
       }
 
       class Joint {
+
          <<abstract>>
          +topology : JointTopology
          +location : Point
@@ -163,6 +164,7 @@ The connections subsystem defines joints and their relationships. All joints inh
          +add_extensions()
          +check_elements_compatibility()
          +restore_beams_from_keys(model)
+         +get_beam_direction_towards_joint()
          +create(model, elements)
       }
 
@@ -174,14 +176,15 @@ The connections subsystem defines joints and their relationships. All joints inh
       }
 
       class ButtJoint {
-         <<abstract>>
-         +main_beam : Beam
-         +cross_beam : Beam
-         +main_beam_guid : str
-         +cross_beam_guid : str
-         +mill_depth : float
-         +modify_cross : bool
-         +butt_plane : Plane
+	    +main_beam : Beam
+	    +cross_beam : Beam
+	    +mill_depth : float
+	    +modify_cross : bool
+	    +butt_plane : Plane
+	    +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+        +get_pocket_on_cross_beam()  Pocket$
+        +get_lap_on_cross_beam()  Lap$
+        +get_cut_on_main_beam() JackRafterCutProxy$
       }
 
       class LButtJoint {
@@ -337,6 +340,28 @@ The connections subsystem defines joints and their relationships. All joints inh
          +cross_plate : Plate
       }
 
+      class KMiterJoint {
+          +beams : list[Beam]
+          +elements : list[Beam]
+          +are_beams_coplanar : bool
+          +promote_cluster()$
+          +cross_beam_ref_side_index()
+          +main_beam_red_side_index()
+          +add_extensions()
+          +add_features()
+      }
+
+      class KButtJoint {
+          +beams : list[Beam]
+          +elements : list[Beam]
+          +are_beams_coplanar : bool
+          +promote_cluster()$
+          +cross_beam_ref_side_index()
+          +main_beam_red_side_index()
+          +add_extensions()
+          +add_features()
+      }
+
       class PlateLButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
       }
@@ -366,7 +391,7 @@ The connections subsystem defines joints and their relationships. All joints inh
       }
 
       class PanelMiterJoint {
-         
+
       }
 
       %% Inheritance relationships
@@ -382,6 +407,8 @@ The connections subsystem defines joints and their relationships. All joints inh
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
       Joint <|-- PlateJoint
+      Joint <|-- KMiterJoint
+      Joint <|-- KButtJoint
       PlateJoint <|-- PanelJoint
 
       ButtJoint <|-- LButtJoint
@@ -400,6 +427,8 @@ The connections subsystem defines joints and their relationships. All joints inh
       PlateTButtJoint <|-- PanelTButtJoint
       PanelJoint <|-- PanelMiterJoint
       PlateMiterJoint <|-- PanelMiterJoint
+
+
 
 Fabrication Subsystem
 ======================
