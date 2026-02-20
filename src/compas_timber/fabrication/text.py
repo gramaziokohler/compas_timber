@@ -232,9 +232,10 @@ class Text(BTLxProcessing):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
+            The resulting geometry after processing.
 
         """
+        # TODO: think about ways to display text curves from `draw_string_on_element()`
         # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 

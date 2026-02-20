@@ -231,8 +231,8 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
         The TimberModel to analyze.
     n : int
         The maximum cluster size.
-    tolerance : :class:`~compas.tolerance.Tolerance` | None
-        The tolerance to use for the analysis. If None, a default tolerance is used.
+    max_distance : float | None
+        The max distance to use for the analysis. If None, a default max distance is used.
 
     Returns
     -------

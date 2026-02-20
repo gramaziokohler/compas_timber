@@ -28,15 +28,21 @@ class PlateFastener(Fastener):
 
     Parameters
     ----------
-    shape : :class:`~compas.geometry.Geometry`
-        The shape of the fastener at the XY plane origin.
+    outline : list of :class:`~compas.geometry.Point`
+        The outline of the plate in the local XY plane.
+    thickness : float
+        Thickness of the plate.
+    interfaces : list of :class:`~compas_timber.elements.FastenerTimberInterface
+        The interfaces of the fastener. The order of the interfaces should correspond to the order of the beams in the joint.
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
         The fastener should be defined at the XY plane origin with the x-axis pointing in the direction of the main_beam.
-    holes : list of tuple, optional
-        The holes of the fastener. Structure is as follows: [(point, diameter), ...]
     angle : float, optional (default=math.pi / 2)
         The angle of the fastener. The angle between the beam elements must be the same.
+    topology : int or list of int, optional
+        The supported topology of the joint.
+    cutouts : list of :class:`~compas.geometry.Polyline`, optional
+        A list of cutouts to be subtracted from the base shape of the fastener.
 
     Attributes
     ----------

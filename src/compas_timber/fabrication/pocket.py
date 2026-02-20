@@ -417,10 +417,6 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -772,20 +768,20 @@ class PocketProxy(object):
     This slightly improves performance.
 
     Parameters
-        ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-            The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
-        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
+    ----------
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        The volume of the pocket. Must have 6 faces.
+    element : :class:`~compas_timber.base.TimberElement`
+        The element that is cut by this instance.
+    machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
+        The machining limits for the cut. Default is None.
+    ref_side_index : int, optional
+        The index of the reference side of the element. Default is 0.
 
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Pocket`
-            The Pocket feature.
+    Returns
+    -------
+    :class:`~compas_timber.fabrication.Pocket`
+        The Pocket feature.
 
     """
 
@@ -849,8 +845,6 @@ class PocketProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the pocket to.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
 
         Raises
         ------

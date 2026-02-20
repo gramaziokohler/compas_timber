@@ -24,8 +24,10 @@ class YButtJoint(Joint):
     ----------
     main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beams : list of :class:`~compas_timber.elements.Beam`
-        The cross beams to be joined.
+    cross_beam_a : :class:`~compas_timber.elements.Beam`
+        The first cross beam to be joined.
+    cross_beam_b : :class:`~compas_timber.elements.Beam`
+        The second cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beams.
 

@@ -1,7 +1,7 @@
 class FeatureApplicationError(Exception):
     """Raised when a feature cannot be applied to an element geometry.
 
-    # TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
+    TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
 
     Attributes
     ----------

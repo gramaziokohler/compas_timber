@@ -19,18 +19,23 @@ class BallNodeFastener(Fastener):
     """
     A class to represent timber fasteners (screws, dowels, brackets).
 
-    #TODO: finish this docstring
+    TODO: finish this docstring
 
     Parameters
     ----------
-    elements : list(:class:`~compas_timber.parts.Element`)
-        The elements that are connected with this fastener.
+    node_point : :class:`~compas.geometry.Point`
+        The node point of this fastener.
+    ball_diameter : float
+        The diameter of the ball representing this fastener. This is used for visualization and collision geometry
+        but does not affect the geometry of the interfaces.
+    base_interface : :class:`~compas_timber.elements.FastenerTimberInterface` | None
+        The base interface of this fastener. If None, a default interface will be used.
 
     Attributes
     ----------
     frame : :class:`~compas.geometry.Frame`
         The coordinate system (frame) of this fastener.
-    elements : list(:class:`~compas_timber.parts.Element`)
+    elements : list(:class:`~compas_model.elements.Element`)
         The elements that are connected with this fastener.
 
     """

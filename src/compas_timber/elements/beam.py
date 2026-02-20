@@ -241,8 +241,6 @@ class Beam(TimberElement):
         ----------
         centerline : :class:`~compas.geometry.Line`
             The centerline of the beam to be created.
-        length : float
-            Length of the beam.
         width : float
             Width of the cross-section.
         height : float
@@ -253,7 +251,7 @@ class Beam(TimberElement):
 
         Returns
         -------
-        :class:`~compas_timber.parts.Beam`
+        :class:`~compas_timber.elements.Beam`
 
         """
         if centerline.length < TOL.absolute:
@@ -276,7 +274,7 @@ class Beam(TimberElement):
         ----------
         point_start : :class:`~compas.geometry.Point`
             The start point of a centerline
-        end_point : :class:`~compas.geometry.Point`
+        point_end : :class:`~compas.geometry.Point`
             The end point of a centerline
         width : float
             Width of the cross-section.
@@ -288,7 +286,7 @@ class Beam(TimberElement):
 
         Returns
         -------
-        :class:`~compas_timber.parts.Beam`
+        :class:`~compas_timber.elements.Beam`
 
         """
         line = Line(point_start, point_end)

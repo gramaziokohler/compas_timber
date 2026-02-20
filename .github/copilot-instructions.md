@@ -11,7 +11,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 - `invoke lint` -- run ruff and black linters. Takes ~1 second.
 - `invoke format` -- reformat code with black. Takes ~1 second.  
 - `invoke check` -- comprehensive style and metadata checks. Takes ~2 seconds.
-- `invoke docs` -- build HTML documentation with Sphinx. May take several minutes.
+- `mkdocs build -c` -- build HTML documentation with mkdocs-material. May take several minutes.
 - `invoke test` -- run unit tests. Takes ~6 seconds.
 
 ## Validation
@@ -23,7 +23,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 ## Installation & Dependencies
 - **Python Requirements**: Python 3.9+ (supports CPython and IronPython)
 - **Core Dependencies**: compas>=2.0, compas_model==0.4.4
-- **Development Tools**: invoke, pytest, black, sphinx
+- **Development Tools**: invoke, pytest, black, mkdocs-material
 - **Development Installation**: `pip install -e .[dev]` (installs package in editable mode)
 
 ## Code Style & Documentation
@@ -36,7 +36,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 - Uses **setuptools** with `pyproject.toml`
 - **invoke** task runner for automation (replaces Make/scripts)
 - **pytest** for testing with doctest integration
-- **Sphinx** for documentation with `sphinx_compas2_theme`
+- **mkdocs-material** for documentation
 - No compiled components - pure Python package
 
 ## CI/CD Integration
