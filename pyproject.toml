@@ -46,7 +46,6 @@ dev = [
     "compas_invocations2",
     "invoke >=0.14",
     "ruff",
-    "sphinxcontrib-mermaid",
     "twine",
     "wheel",
     "pytest-mock",
