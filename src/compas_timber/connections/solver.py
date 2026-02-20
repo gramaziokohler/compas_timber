@@ -29,14 +29,14 @@ def find_neighboring_elements(elements, inflate_by=0.0):
 
     Parameters
     ----------
-    beams : list(:class:`~compas_timer.part.Beam`)
+    elements : list(:class:`~compas_timber.elements.Beam`)
         The list of beams in which neighboring beams should be identified.
     inflate_by : optional, float
         A value in design units by which the regarded bounding boxes should be inflated.
 
     Returns
     -------
-    list(set(:class:`~compas_timber.part.Beam`, :class:`~compas_timber.part.Beam`))
+    list(set(:class:`~compas_timber.elements.Beam`, :class:`~compas_timber.elements.Beam`))
 
     Notes
     -----
@@ -279,12 +279,10 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Parameters
         ----------
-        seg_a : :class:`~compas.geometry.Segment`
+        segment_a : :class:`~compas.geometry.Segment`
             The first segment.
-        seg_b : :class:`~compas.geometry.Segment`
+        segment_b : :class:`~compas.geometry.Segment`
             The second segment.
-        tol : float, optional
-            Tolerance for overlap check.
 
         Returns
         -------
