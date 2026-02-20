@@ -687,9 +687,10 @@ classDiagram
       BTLxProcessing <|-- LongitudinalCut
 
       %% Composition relationships
-      BTLxWriter ..> BTLxPart : creates
-      BTLxPart ..> BTLxProcessing : contains
-      FreeContour ..> Contour|DualContour : contains
+      BTLxWriter --* BTLxPart : creates
+      BTLxPart   --* BTLxProcessing : contains
+      FreeContour --* Contour : contains
+      FreeContour --* DualContour : contains
 ```
 
 ## Errors Subsystem
