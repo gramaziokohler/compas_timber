@@ -1,11 +1,15 @@
+import pytest
+
+from compas.data import json_dumps
+from compas.data import json_loads
+
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import Frame
 from compas.geometry import Box
 from compas.geometry import Plane
-from compas.data import json_dumps
-from compas.data import json_loads
+
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
@@ -202,3 +206,155 @@ def test_apply_and_remove_exensions_with_index():
     pg.remove_blank_extension(3)  # removing extension at index 3 revert to original
     assert all([TOL.is_allclose(planes[i].normal, list(pg.edge_planes.values())[i].normal) for i in range(len(planes))])
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
+
+
+def test_from_face_rectangular():
+    outline = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    thickness = 1.0
+    plate = Plate.from_outline_thickness(outline, thickness)
+
+    assert plate is not None
+    assert TOL.is_close(plate.thickness, thickness)
+    assert plate.outline_a is not None
+    assert plate.outline_b is not None
+    assert len(plate.outline_a.points) == 5
+    assert len(plate.outline_b.points) == 5
+
+    for pt_a, pt_b in zip(plate.outline_a.points, plate.outline_b.points):
+        assert TOL.is_close(pt_a.distance_to_point(pt_b), thickness)
+
+
+def test_from_face_with_custom_vector():
+    outline = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    thickness = 1.0
+    vector = Vector(0, 0, -1)
+    plate = Plate.from_outline_thickness(outline, thickness, vector=vector)
+
+    assert plate is not None
+    assert TOL.is_close(plate.thickness, thickness)
+    assert TOL.is_allclose(plate.normal, [0, 0, -1])
+
+
+def test_from_outline_with_openings():
+    outline = Polyline([Point(0, 0, 0), Point(20, 0, 0), Point(20, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    opening = Polyline([Point(5, 5, 0), Point(10, 5, 0), Point(10, 10, 0), Point(5, 10, 0), Point(5, 5, 0)])
+    thickness = 1.0
+    plate = Plate.from_outline_thickness(outline, thickness, openings=[opening])
+
+    assert plate is not None
+    assert TOL.is_close(plate.thickness, thickness)
+    assert len(plate.plate_geometry.openings) == 1
+
+
+def test_from_brep_rectangular_box():
+    thickness = 1.0
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 20, thickness), Point(0, 20, thickness), Point(0, 0, thickness)])
+    plate = Plate.from_outlines(outline_a, outline_b)
+
+    assert plate is not None
+    assert TOL.is_close(plate.thickness, thickness, atol=0.01)
+    assert plate.outline_a is not None
+    assert plate.outline_b is not None
+    assert len(plate.outline_a.points) == 5
+    assert len(plate.outline_b.points) == 5
+    assert TOL.is_close(plate.length, 10.0, atol=0.5)
+    assert TOL.is_close(plate.width, 20.0, atol=0.5)
+
+
+def test_from_brep_octagonal_prism():
+    import math
+    radius = 10.0
+    thickness = 2.0
+    n_sides = 8
+
+    points_bottom = []
+    for i in range(n_sides):
+        angle = 2 * math.pi * i / n_sides
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        points_bottom.append(Point(x, y, 0))
+    points_bottom.append(points_bottom[0])
+
+    points_top = []
+    for pt in points_bottom:
+        points_top.append(Point(pt.x, pt.y, thickness))
+
+    polyline_bottom = Polyline(points_bottom)
+    polyline_top = Polyline(points_top)
+    plate = Plate.from_outlines(polyline_bottom, polyline_top)
+
+    assert plate is not None
+    assert TOL.is_close(plate.thickness, thickness, atol=0.1)
+    assert len(plate.outline_a.points) == n_sides + 1
+    assert len(plate.outline_b.points) == n_sides + 1
+
+
+def test_from_brep_tilted_box():
+    import math
+    angle = math.pi / 4
+    thickness = 1.0
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    base_points = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)]
+
+    points_bottom = []
+    for pt in base_points:
+        new_x = pt.x
+        new_y = pt.y * cos_a
+        new_z = pt.y * sin_a
+        points_bottom.append(Point(new_x, new_y, new_z))
+    outline_bottom = Polyline(points_bottom)
+
+    normal = Vector(0, -sin_a, cos_a)
+    normal_scaled = normal * thickness
+
+    points_top = []
+    for pt in points_bottom:
+        points_top.append(Point(pt.x + normal_scaled.x, pt.y + normal_scaled.y, pt.z + normal_scaled.z))
+    outline_top = Polyline(points_top)
+
+    plate = Plate.from_outlines(outline_bottom, outline_top)
+
+    assert plate is not None
+    assert plate.outline_a is not None
+    assert plate.outline_b is not None
+    assert len(plate.outline_a.points) == len(plate.outline_b.points)
+
+
+def test_from_outlines_mismatched_points_raises():
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 20, 1), Point(0, 0, 1)])
+
+    with pytest.raises((ValueError, AssertionError)):
+        Plate.from_outlines(outline_a, outline_b)
+
+
+def test_from_outlines_validates_closure():
+    thickness = 1.0
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 20, thickness), Point(0, 20, thickness), Point(0, 0, thickness)])
+
+    plate = Plate.from_outlines(outline_a, outline_b)
+    assert plate is not None
+    assert TOL.is_allclose(plate.outline_a.points[0], plate.outline_a.points[-1])
+    assert TOL.is_allclose(plate.outline_b.points[0], plate.outline_b.points[-1])
+
+
+def test_from_outlines_alignment():
+    thickness = 2.0
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 15, 0), Point(0, 15, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 15, thickness), Point(0, 15, thickness), Point(0, 0, thickness)])
+    plate = Plate.from_outlines(outline_a, outline_b)
+
+    assert len(plate.outline_a.points) == len(plate.outline_b.points)
+
+    distances = []
+    for pt_a, pt_b in zip(plate.outline_a.points[:-1], plate.outline_b.points[:-1]):
+        dist = pt_a.distance_to_point(pt_b)
+        distances.append(dist)
+
+    avg_distance = sum(distances) / len(distances)
+    for dist in distances:
+        assert TOL.is_close(dist, avg_distance, atol=0.1)
+    assert TOL.is_close(avg_distance, thickness, atol=0.1)
