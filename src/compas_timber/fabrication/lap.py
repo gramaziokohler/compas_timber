@@ -21,10 +21,10 @@ from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.fabrication.btlx import MachiningLimits
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
+from .btlx import MachiningLimits
 from .btlx import OrientationType
 
 
@@ -833,8 +833,8 @@ class Lap(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
