@@ -392,11 +392,10 @@ class BTLxReader(object):
         # The BTLx reference frame for a plate has its origin at one corner, but its Z-axis (width)
         # points along the width of the plate. The Plate's internal frame, however, expects its
         # origin to be at the corner where its Y-axis (width) points away from the plate.
-        # Therefore, we need to shift the origin along the BTLx Z-axis by the plate's width.
+        # Therefore, we need to shift the origin along the Z-axis by the plate's width.
         plate_origin = btlx_ref_frame.point + btlx_ref_frame.zaxis * width
         plate_xaxis = btlx_ref_frame.xaxis
         plate_yaxis = -btlx_ref_frame.zaxis
-        # plate_zaxis will be computed automatically by Frame = BTLx Y (thickness)
 
         return Frame(plate_origin, plate_xaxis, plate_yaxis)
 
@@ -569,6 +568,32 @@ def xml_to_dual_contour(element):
     return DualContour(principal_contour, associated_contour)
 
 
+def xml_to_contour_or_dual(element):
+    """Unified deserializer for Contour and DualContour elements.
+
+    Inspects the XML element tag to determine whether to deserialize as
+    Contour or DualContour. This handles FreeContour's polymorphic
+    contour_param_object attribute.
+
+    Parameters
+    ----------
+    element : :class:`~xml.etree.ElementTree.Element`
+        The XML element representing either a Contour or DualContour.
+
+    Returns
+    -------
+    :class:`Contour` or :class:`DualContour`
+        The appropriate contour object based on the element tag.
+
+    """
+    tag_name = element.tag.split("}")[-1]  # Remove namespace
+    if tag_name == "DualContour":
+        return xml_to_dual_contour(element)
+    else:  # "Contour"
+        return xml_to_contour(element)
+
+
 # Register deserializers for complex types
-BTLxReader.register_type_deserializer("Contour", xml_to_contour)
-BTLxReader.register_type_deserializer("DualContour", xml_to_dual_contour)
+# Use unified deserializer for both Contour and DualContour to handle polymorphic FreeContour parameter
+BTLxReader.register_type_deserializer("Contour", xml_to_contour_or_dual)
+BTLxReader.register_type_deserializer("DualContour", xml_to_contour_or_dual)
