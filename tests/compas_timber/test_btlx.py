@@ -431,7 +431,7 @@ def test_rawpart_attributes():
 # =============================================================================
 
 
-def test_btlx_model_roundtrip(tol):
+def test_btlx_model_roundtrip():
     """Test that writing and reading produces equivalent model."""
     # Create simple model
     model = TimberModel()
@@ -451,13 +451,13 @@ def test_btlx_model_roundtrip(tol):
     assert len(model_read.beams) == 1
     beam_read = model_read.beams[0]
     assert beam_read.name == "test_beam"
-    assert tol.is_close(beam_read.length, 1000)
-    assert tol.is_close(beam_read.width, 100)
-    assert tol.is_close(beam_read.height, 120)
+    assert TOL.is_close(beam_read.length, 1000)
+    assert TOL.is_close(beam_read.width, 100)
+    assert TOL.is_close(beam_read.height, 120)
     assert beam_read.guid == beam.guid
 
 
-def test_btlx_transformation_roundtrip(tol):
+def test_btlx_transformation_roundtrip():
     """Test that BTLx read/write roundtrip preserves exact transformations."""
     model = TimberModel()
 
@@ -478,19 +478,19 @@ def test_btlx_transformation_roundtrip(tol):
     beam_read = model_read.beams[0]
 
     # Check dimensions
-    assert tol.is_close(beam_original.length, beam_read.length)
-    assert tol.is_close(beam_original.width, beam_read.width)
-    assert tol.is_close(beam_original.height, beam_read.height)
+    assert TOL.is_close(beam_original.length, beam_read.length)
+    assert TOL.is_close(beam_original.width, beam_read.width)
+    assert TOL.is_close(beam_original.height, beam_read.height)
 
     # Check centerline frame (origin and axes)
-    assert tol.is_allclose(beam_original.frame.point, beam_read.frame.point)
-    assert tol.is_allclose(beam_original.frame.xaxis, beam_read.frame.xaxis)
-    assert tol.is_allclose(beam_original.frame.yaxis, beam_read.frame.yaxis)
+    assert TOL.is_allclose(beam_original.frame.point, beam_read.frame.point)
+    assert TOL.is_allclose(beam_original.frame.xaxis, beam_read.frame.xaxis)
+    assert TOL.is_allclose(beam_original.frame.yaxis, beam_read.frame.yaxis)
 
     # Check ref_frame (BTLx reference frame) - this is what gets written to BTLx
     # If centerline frame is preserved, ref_frame should also match
-    assert tol.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
-    assert tol.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
+    assert TOL.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
+    assert TOL.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
 
 
 def test_btlx_reader_beam_and_plate():
@@ -575,7 +575,7 @@ def test_infer_element_type(dimensions, expected_type):
     assert element_type == expected_type
 
 
-def test_btlx_reader_full_file(test_model, tol):
+def test_btlx_reader_full_file(test_model):
     """Test that a full BTLx file is read correctly and matches a reference model."""
     btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
     reader = BTLxReader()
@@ -596,16 +596,16 @@ def test_btlx_reader_full_file(test_model, tol):
         assert beam_original is not None, f"Beam with GUID {beam_read.guid} not found in original model."
 
         # assert beam_read.name == beam_original.name
-        assert tol.is_close(beam_read.length, beam_original.blank_length)
-        assert tol.is_close(beam_read.width, beam_original.width)
-        assert tol.is_close(beam_read.height, beam_original.height)
+        assert TOL.is_close(beam_read.length, beam_original.blank_length)
+        assert TOL.is_close(beam_read.width, beam_original.width)
+        assert TOL.is_close(beam_read.height, beam_original.height)
         assert beam_read.guid == beam_original.guid
 
         # Check that processings were created
         assert len(beam_read.features) == len(beam_original.features)
 
 
-def test_btlx_reader_free_contour_with_simple_contour_roundtrip(tol):
+def test_btlx_reader_free_contour_with_simple_contour_roundtrip():
     """Test that FreeContour with simple Contour parameters survives roundtrip."""
     model = TimberModel()
 
@@ -651,13 +651,13 @@ def test_btlx_reader_free_contour_with_simple_contour_roundtrip(tol):
 
     # Verify Contour parameter object
     assert isinstance(feature_read.contour_param_object, Contour)
-    assert tol.is_close(feature_read.contour_param_object.depth, 15.0)
+    assert TOL.is_close(feature_read.contour_param_object.depth, 15.0)
     assert feature_read.contour_param_object.depth_bounded is True
     assert len(feature_read.contour_param_object.inclination) == 4  # 4 segments in closed polyline
-    assert tol.is_close(feature_read.contour_param_object.inclination[0], 45.0)
+    assert TOL.is_close(feature_read.contour_param_object.inclination[0], 45.0)
 
 
-def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip(tol):
+def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip():
     """Test that FreeContour with per-segment inclinations survives roundtrip."""
     model = TimberModel()
 
@@ -688,7 +688,7 @@ def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip(tol):
             if len(f.contour_param_object.inclination) == 4:
                 # Check if inclinations match
                 incl = f.contour_param_object.inclination
-                if tol.is_close(incl[0], 30.0) and tol.is_close(incl[1], 45.0):
+                if TOL.is_close(incl[0], 30.0) and TOL.is_close(incl[1], 45.0):
                     feature_read = f
                     break
 
@@ -697,13 +697,13 @@ def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip(tol):
     # Verify per-segment inclinations preserved
     inclinations_read = feature_read.contour_param_object.inclination
     assert len(inclinations_read) == 4
-    assert tol.is_close(inclinations_read[0], 30.0)
-    assert tol.is_close(inclinations_read[1], 45.0)
-    assert tol.is_close(inclinations_read[2], 60.0)
-    assert tol.is_close(inclinations_read[3], 90.0)
+    assert TOL.is_close(inclinations_read[0], 30.0)
+    assert TOL.is_close(inclinations_read[1], 45.0)
+    assert TOL.is_close(inclinations_read[2], 60.0)
+    assert TOL.is_close(inclinations_read[3], 90.0)
 
 
-def test_btlx_reader_free_contour_with_dual_contour_roundtrip(tol):
+def test_btlx_reader_free_contour_with_dual_contour_roundtrip():
     """Test that FreeContour with DualContour parameters survives roundtrip."""
     model = TimberModel()
 
@@ -741,8 +741,8 @@ def test_btlx_reader_free_contour_with_dual_contour_roundtrip(tol):
 
     # Verify both contours preserved
     dual_read = feature_read.contour_param_object
-    assert tol.is_allclose(dual_read.principal_contour.points, principal.points)
-    assert tol.is_allclose(dual_read.associated_contour.points, associated.points)
+    assert TOL.is_allclose(dual_read.principal_contour.points, principal.points)
+    assert TOL.is_allclose(dual_read.associated_contour.points, associated.points)
 
 
 def test_btlx_reader_error_handling_malformed_xml():
@@ -801,7 +801,7 @@ def test_btlx_reader_error_handling_unsupported_processing():
     assert "Unsupported processing type: UnknownProcessing" in reader.errors[0]
 
 
-def test_btlx_reader_plate_multiple_features_roundtrip(tol):
+def test_btlx_reader_plate_multiple_features_roundtrip():
     """Test plate with both outline FreeContour and aperture features."""
     model = TimberModel()
 
