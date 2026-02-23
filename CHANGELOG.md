@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [2.0.0-dev0] 2026-02-19
+
+### Added
 * Added `get_element()` method to `compas_timber.model.TimberModel` for optional element access by GUID.
 * Added `__getitem__` support to `TimberModel` to allow strict element access via `model[guid]`. 
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
@@ -50,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
 * Added alternative constructor `MachiningLimits.from_dict()`. 
+* Added `compas_timber.structural.BeamStructuralElementSolver` class to generate structural analysis segments from beams and joints.
+* Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
+* Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
+* Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 
 ### Changed
@@ -110,7 +123,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Lap`, `Pocket` and `Slot` to accepte a `MachiningLimits` instance instead of a dictionary. 
 * Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
 * Added `attributes` dictionary contet to serialization of `Panel`.
-* Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
+* Updated the `class_diagrams.rst` to reflect the changes in the class structure and inheritance.
+* Removed all GH components as was migrated to the `timber_design` project.
+* Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
+* Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
+* Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.* Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 
 
 ### Removed
@@ -128,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
+* Removed unused module `compas_timber.solvers`.
 * Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
 * Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
 * Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.

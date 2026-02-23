@@ -18,4 +18,4 @@ _Put an `x` in the boxes that apply. You can also fill these out after creating 
 - [ ] I ran lint on my computer and there are no errors (i.e. `invoke lint`).
 - [ ] I added new functions/classes and made them available on a second-level import, e.g. `compas_timber.datastructures.Beam`.
 - [ ] I have added tests that prove my fix is effective or that my feature works.
-- [ ] I have added necessary documentation (if appropriate)
+- [ ] I have added necessary documentation, including updating `class_diagrams.rst` (if appropriate).
