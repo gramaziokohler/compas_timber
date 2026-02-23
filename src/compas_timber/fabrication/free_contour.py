@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from compas_timber.elements import TimberElement  # noqa: F401
 
 import math
+from collections import OrderedDict
 
 from compas.geometry import Frame
 from compas.geometry import Plane
@@ -25,6 +26,7 @@ from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
+from .btlx import BTLxProcessingParams
 from .btlx import Contour
 from .btlx import DualContour
 
@@ -48,9 +50,13 @@ class FreeContour(BTLxProcessing):
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
+    # NOTE: Unusual polymorphic case - both XML element types map to the SAME Python attribute.
+    # The reader requires both entries to recognize either <Contour> or <DualContour> children.
+    # At runtime, contour_param_object holds ONE object (Contour OR DualContour, never both).
+    # During writing, custom FreeContourParams.as_dict() serializes only the appropriate type.
     ATTRIBUTE_MAP = {
         "Contour": ("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
-        "DualContour": ("contour_param_object", DualContour),  # Complex contour with principal and associated polylines
+        "DualContour": ("contour_param_object", DualContour),  # Dual contour for non-parallel segments
     }
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
@@ -112,6 +118,17 @@ class FreeContour(BTLxProcessing):
         if not isinstance(depth_bounded, bool):
             raise ValueError("depth_bounded must be a boolean value.")
         self._depth_bounded = depth_bounded
+
+    @property
+    def params(self):
+        """Returns custom BTLx processing parameters that handle polymorphic contour serialization.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.BTLxProcessingParams`
+            Custom processing parameters that choose between Contour/DualContour based on runtime type.
+        """
+        return FreeContourParams(self)
 
     ########################################################################
     # Alternative constructors
@@ -304,3 +321,46 @@ class FreeContour(BTLxProcessing):
 
         """
         self.contour_param_object.scale(factor)
+
+
+class FreeContourParams(BTLxProcessingParams):
+    """Custom processing parameters for FreeContour that handle polymorphic contour serialization.
+
+    This class dynamically chooses between serializing as 'Contour' or 'DualContour'
+    based on the runtime type of the contour_param_object attribute.
+    """
+
+    def as_dict(self):
+        """Returns the processing parameters as a dictionary for BTLx serialization.
+
+        Overrides the base implementation to only include the appropriate contour type
+        (Contour or DualContour) based on the actual instance type.
+
+        Returns
+        -------
+        OrderedDict
+            The processing parameters with only the correct contour entry.
+        """
+        result = OrderedDict()
+
+        # Determine which contour type to serialize based on runtime type
+        contour_obj = self._instance.contour_param_object
+        if isinstance(contour_obj, DualContour):
+            xml_tag_name = "DualContour"
+        else:  # Contour or any other type defaults to Contour
+            xml_tag_name = "Contour"
+
+        # Iterate over attribute_map but only include the matching contour type
+        for btlx_name, attr_spec in self.attribute_map.items():
+            python_name = attr_spec[0] if isinstance(attr_spec, tuple) else attr_spec
+            value = getattr(self._instance, python_name)
+
+            # Only serialize the entry that matches the runtime type
+            if btlx_name in ["Contour", "DualContour"]:
+                if btlx_name == xml_tag_name:
+                    result[btlx_name] = self._format_value(value)
+            else:
+                # Include all other (non-contour) attributes
+                result[btlx_name] = self._format_value(value)
+
+        return result
