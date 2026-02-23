@@ -13,8 +13,8 @@ from compas_timber.elements import Plate
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DualContour
-from compas_timber.ghpython import get_leaf_subclasses
 from compas_timber.model import TimberModel
+from compas_timber.utils import get_leaf_subclasses
 
 
 class BTLxReader(object):
