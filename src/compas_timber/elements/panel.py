@@ -292,6 +292,7 @@ class Panel(Element):
             return self.elementgeometry.transformed(self.transformation)  # type: ignore
         return super().compute_modelgeometry()  # type: ignore
 
+    
     def transformation_to_local(self):
         """Compute the transformation from model space to local element space."""
         return self.modeltransformation.inverse()
@@ -319,7 +320,7 @@ class Panel(Element):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
 
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
