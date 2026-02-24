@@ -37,7 +37,6 @@ from .longitudinal_cut import LongitudinalCutProxy
 
 __all__ = [
     "BTLxWriter",
-    "BTLxReader",
     "BTLxPart",
     "BTLxProcessing",
     "JackRafterCut",
