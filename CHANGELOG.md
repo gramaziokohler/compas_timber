@@ -8,11 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
+* Added new `compas_timber.btlx` package with `BTLxReader` class for reading BTLx XML files into a `TimberModel`.
+* Added `BTLxParsingError` to `compas_timber.errors` — a non-fatal exception with `part_id` and `processing_type` fields, collected during BTLx parsing without aborting the process.
+* Added `BTLxProcessing.HEADER_ATTRIBUTE_MAP` class attribute mapping BTLx XML header attributes (e.g. `ReferencePlaneID`, `ProcessID`, `CounterSink`) to Python parameter names with type converters, used by the reader.
+* Added `name` and `process` parameters and read-only properties to `BTLxProcessing` to capture BTLx metadata attributes that are not serialized back.
+* Added `FreeContourParams` class and overridden `FreeContour.params` property as a special case: unlike all other processings, `FreeContour` requires custom serialization logic to handle its polymorphic `Contour` / `DualContour` child element.
+* Added `get_leaf_subclasses` utility function back to `compas_timber.utils`.
 
 ### Changed
+* Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
+* `BTLxWriter` now uses a fixed `Tolerance("MM", ...)` instance instead of the global `TOL`, ensuring consistent millimeter-based output regardless of global tolerance settings.
+* `BTLxGenericPart` annotation attribute now uses `str(self.name)` only, dropping the appended GUID fragment.
+* `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
+* `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now support a tuple format `("python_attr", type)` in addition to plain strings, carrying type information for the reader.
+* `FreeContour.ATTRIBUTE_MAP` now has two entries (`Contour` and `DualContour`) both mapping to `contour_param_object`, allowing the reader to handle both XML child element types.
+* `FreeContour` now initialises `process_id` to `1`, overriding the inherited default of `0` which caused an error in the BTLx viewer.
+* `MachiningLimits.from_dict()` now accepts string values `"yes"` / `"no"` in addition to booleans, allowing the method to be used directly by `BTLxReader` when deserializing machining limit values from BTLx XML.
 
 ### Removed
-
+* Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
+* Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
+* Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.
 
 ## [2.0.0-dev0] 2026-02-19
 
@@ -63,7 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
-* Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -127,7 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed all GH components as was migrated to the `timber_design` project.
 * Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
-* Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.* Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
+* Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
 
 
 ### Removed
@@ -146,9 +162,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 * Removed unused module `compas_timber.solvers`.
-* Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
-* Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
-* Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.
 
 ## [1.0.1] 2025-10-16
 
