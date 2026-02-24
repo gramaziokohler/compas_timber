@@ -227,7 +227,7 @@ def test_get_interactions_returns_list(two_beam_model):
 
 def test_get_interactions_returns_joint_instances(two_beam_model):
     model, b1, b2 = two_beam_model
-    joint = LButtJoint.create(model, b1, b2)
+    _ = LButtJoint.create(model, b1, b2)
     interactions = model.get_interactions_for_element(b1)
     assert len(interactions) >= 1
     for item in interactions:
