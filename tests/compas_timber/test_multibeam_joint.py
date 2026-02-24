@@ -50,15 +50,12 @@ def test_y_butt_joint_no_duplication_after_deserialization():
     serialized = json_dumps(model)
     loaded_model = json_loads(serialized)
 
-    # After deserialization, there should still be exactly 1 joint
     assert len(loaded_model.joints) == 1
 
-    # The single joint should be the same object from all edges
     loaded_joint = list(loaded_model.joints)[0]
     assert isinstance(loaded_joint, YButtJoint)
     assert str(loaded_joint.guid) == str(joint.guid)
 
-    # Verify interactions resolve to the same joint instance
     for beam in loaded_model.beams:
         interactions = loaded_model.get_interactions_for_element(beam)
         for interaction_joint in interactions:
