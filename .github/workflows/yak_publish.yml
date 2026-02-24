@@ -40,12 +40,6 @@ jobs:
       run: |
         invoke build-cpython-ghuser-components
 
-    - name: Create IronPython Grasshopper user objects
-      run: |
-        choco install ironpython --version=2.7.8.1
-        invoke clean
-        invoke build-ghuser-components
-
     - name: Create Rhino8 Yak package
       shell: pwsh
       run: |
