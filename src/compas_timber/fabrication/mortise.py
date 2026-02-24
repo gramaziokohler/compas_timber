@@ -294,8 +294,6 @@ class Mortise(BTLxProcessing):
             The beam that is cut by this instance.
         start_depth : float, optional
             The start depth of the cut along the y-axis of the beam. This offset is to be used in case of housing. Default is 0.0.
-        angle : float, optional
-            The angle of the cut.
         length : float, optional
             The length of the mortise.
         width : float, optional

@@ -1267,6 +1267,7 @@ class BTLxFromGeometryDefinition(Data):
         The elements to be used as input for the processing.
 
     Attributes
+    ----------
     processing : class
         The BTLx Processing class.
     geometries : list of :class:`~compas.geometry.Geometry`

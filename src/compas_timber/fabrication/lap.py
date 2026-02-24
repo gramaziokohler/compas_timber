@@ -503,10 +503,6 @@ class Lap(BTLxProcessing):
             The volume of the Lap. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam`
             The element that is cut by this instance.
-        machining_limits : dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -960,8 +956,6 @@ class LapProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the lap to.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is lapped by this instance.
 
         Raises
         ------
