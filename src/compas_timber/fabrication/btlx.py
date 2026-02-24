@@ -825,13 +825,12 @@ class BTLxProcessing(Data):
         self.ref_side_index = ref_side_index or 0
         self.subprocessings = None
         self._is_joinery = is_joinery
+        self._name = name
+        self._process = process
         # Optional header attributes - set by subclasses if needed
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
-        # Metadata attributes from BTLx (not serialized back)
-        self._name = name
-        self._process = process
 
     @property
     def ref_side_index(self):
@@ -855,6 +854,14 @@ class BTLxProcessing(Data):
     @property
     def process_id(self):
         return self._process_id
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def process(self):
+        return self._process
 
     @property
     def tool_id(self):
