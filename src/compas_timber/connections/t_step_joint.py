@@ -59,8 +59,6 @@ class TStepJoint(Joint):
     @property
     def __data__(self):
         data = super(TStepJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["step_shape"] = self.step_shape
         data["step_depth"] = self.step_depth
         data["heel_depth"] = self.heel_depth
@@ -80,12 +78,7 @@ class TStepJoint(Joint):
         tenon_mortise_height=None,
         **kwargs
     ):
-        super(TStepJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
-
+        super(TStepJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
         self.step_shape = step_shape
         self.step_depth = step_depth
         self.heel_depth = heel_depth
@@ -95,8 +88,13 @@ class TStepJoint(Joint):
         self.features = []
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
+
 
     @property
     def cross_beam_ref_side_index(self):
@@ -156,7 +154,7 @@ class TStepJoint(Joint):
             raise BeamJoiningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
         except Exception as ex:
             raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
-        self.main_beam.add_blank_extension(start_a, end_a, self.main_beam_guid)
+        self.main_beam.add_blank_extension(start_a, end_a, self.guid)
 
     def add_features(self):
         """Adds the required trimming features to both beams.
@@ -239,8 +237,3 @@ class TStepJoint(Joint):
                 raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
 
         return True
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

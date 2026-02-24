@@ -143,8 +143,8 @@ def test_joint_create_t_lap(t_topo_beams):
     model.add_element(cross_beam)
     joint = TLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.main_beam is main_beam
-    assert joint.cross_beam is cross_beam
+    assert joint.beam_a is main_beam
+    assert joint.beam_b is cross_beam
     assert joint.elements
 
 
