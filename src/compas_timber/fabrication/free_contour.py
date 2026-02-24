@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import math
-from typing import Optional
 from collections import OrderedDict
+from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Plane
