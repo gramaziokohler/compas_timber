@@ -1,4 +1,4 @@
-# r: compas_timber>=1.0.3
+# r: compas_timber==1.0.5
 """Generates a feature from BTLx type and input geometry."""
 
 # flake8: noqa
