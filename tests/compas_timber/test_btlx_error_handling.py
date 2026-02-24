@@ -252,7 +252,9 @@ class MinimalBTLxPart(object):
 <BTLx xmlns="https://www.design2machine.com">
   <Project Name="Test">
     <Parts>
-      <Part Length="{length}" Width="{width}" Height="{height}" SingleMemberNumber="{single_member_number}" ElementNumber="test" Annotation="{annotation}" Designation="{designation}">
+      <Part Length="{length}" Width="{width}" Height="{height}"
+            SingleMemberNumber="{single_member_number}" ElementNumber="test"
+            Annotation="{annotation}" Designation="{designation}">
         <Transformations>
           <Transformation GUID="{{{guid}}}">
             <Position>
