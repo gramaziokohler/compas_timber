@@ -371,7 +371,24 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     bool
         True if the point is inside the polyline, False otherwise.
     """
-    frame = Frame.from_points(*polyline.points[:3])
+    pts = list(polyline.points)
+    a = pts[0]
+    b = None
+    c = None
+    for pt in pts[1:]:
+        if distance_point_point(a, pt) > TOL.absolute:
+            b = pt
+            break
+    if b is None:
+        return False
+    for pt in pts:
+        cross = cross_vectors(subtract_vectors(b, a), subtract_vectors(pt, a))
+        if length_vector(cross) > TOL.absolute:
+            c = pt
+            break
+    if c is None:
+        return False
+    frame = Frame.from_points(a, b, c)
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
     pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
     pt = point.transformed(xform)
@@ -591,28 +608,52 @@ def join_polyline_segments(segments: list[Line], close_loop: bool = False):
     return polylines, unjoined
 
 
-def polyline_from_brep_loop(loop):
-    """Creates a Polyline from a BrepLoop. BrepLoop edges are not always aligned in the same direction, so this is necessary.
+def polyline_from_brep_loop(loop, num_curve_samples=16):
+    """Creates a Polyline from a BrepLoop. Handles both straight and curved edges.
 
     Parameters
     ----------
     loop : :class:`~compas.geometry.BrepLoop`
         The BrepLoop to convert to a polyline.
+    num_curve_samples : int, optional
+        Number of sample points used when discretizing curved edges. Default is 16.
 
     Returns
     -------
     :class:`~compas.geometry.Polyline` or None
         The Polyline resulting from joining the BrepLoop edges, or None if the edges
-        cannot be joined into a single closed polyline. This can happen when:
-        - Loop edges are disconnected or unjoinable
-        - Multiple separate polylines result from joining (indicating a malformed loop)
-        - Some edges remain unjoined after processing
+        cannot be joined into a single closed polyline.
     """
-    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
-    polylines, unjoined = join_polyline_segments(segments, close_loop=True)
-    if len(polylines) != 1 or unjoined:
+    def _edge_points(edge):
+        start = edge.start_vertex.point
+        end = edge.end_vertex.point
+        is_degenerate = TOL.is_allclose(start, end)
+        try:
+            pts = list(edge.curve.to_polyline(num_curve_samples).points)
+            if len(pts) >= 2:
+                return pts
+        except (AttributeError, Exception):
+            pass
+        if is_degenerate:
+            return None
+        return [start, end]
+
+    all_points = []
+    for edge in loop.edges:
+        pts = _edge_points(edge)
+        if pts is None:
+            return None
+        if not all_points:
+            all_points.extend(pts[:-1])
+        else:
+            start = 1 if TOL.is_allclose(pts[0], all_points[-1]) else 0
+            all_points.extend(pts[start:-1])
+
+    if len(all_points) < 3:
         return None
-    return polylines[0]
+    if not TOL.is_allclose(all_points[0], all_points[-1]):
+        all_points.append(all_points[0])
+    return Polyline(all_points)
 
 
 def polylines_from_brep_face(face):
