@@ -1,8 +1,8 @@
 ********************************************************************************
-compas_timber.elements
+compas_timber.base
 ********************************************************************************
 
-.. currentmodule:: compas_timber.elements
+.. currentmodule:: compas_timber.base
 
 Classes
 =======
@@ -11,10 +11,4 @@ Classes
     :toctree: generated/
     :nosignatures:
 
-    Beam
-    Plate
-    Fastener
-    FastenerTimberInterface
-    BallNodeFastener
-    PlateFastener
-    Panel
+    TimberElement

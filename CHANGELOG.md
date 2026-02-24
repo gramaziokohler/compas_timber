@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [2.0.0-dev0] 2026-02-19
+
+### Added
 * Added `get_element()` method to `compas_timber.model.TimberModel` for optional element access by GUID.
 * Added `__getitem__` support to `TimberModel` to allow strict element access via `model[guid]`. 
 * Added `add_elements()` method to `compas_timber.model.TimberModel`, following its removal from the base `Model`.
@@ -50,6 +59,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_polyline_normal_vector` to compas_timber.utils.
 * Added `combine_parallel_segments` to compas_timber.utils.
 * Added alternative constructor `MachiningLimits.from_dict()`. 
+* Added `compas_timber.structural.BeamStructuralElementSolver` class to generate structural analysis segments from beams and joints.
+* Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
+* Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
+* Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
 * Added `elements` argument to `Joint.__init__`.
 * Added `element_guids` property to `Joint` which are used for deserializing joints. 
 
@@ -111,6 +124,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `Lap`, `Pocket` and `Slot` to accepte a `MachiningLimits` instance instead of a dictionary. 
 * Moved `attributes` dictionary to `TimberElement` which carries arbitrary attributes set in it or given as `kwargs` accross serialization.
 * Added `attributes` dictionary contet to serialization of `Panel`.
+* Updated the `class_diagrams.rst` to reflect the changes in the class structure and inheritance.
+* Removed all GH components as was migrated to the `timber_design` project.
+* Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
+* Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
+* Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
 
 * Implemented `get_elements_from_keys` in `Joint`.
 * Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 
@@ -131,6 +149,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GH components and component functionality.
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
+* Removed unused module `compas_timber.solvers`.
 * Removed `get_beams_from_keys` in all `Joint` subclasses.
 * Removed `get_plates_from_keys` in `PlateJoint`.
 * Removed all *guid properties, eg `main_beam_guid`, `cross_beam_guid`, `beam_a_guid`, etc. from concrete joint classes.
