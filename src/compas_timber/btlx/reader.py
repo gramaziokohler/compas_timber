@@ -10,6 +10,7 @@ from compas.tolerance import Tolerance
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
+from compas_timber.errors import BTLxParsingError
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DualContour
@@ -45,6 +46,15 @@ class BTLxReader(object):
     def errors(self):
         """Get the list of errors encountered during parsing."""
         return self._errors
+
+    def print_errors(self):
+        """Print a summary of all errors accumulated during the last read operation."""
+        if not self._errors:
+            print("No errors.")
+            return
+        print("{} error(s) encountered during parsing:".format(len(self._errors)))
+        for i, error in enumerate(self._errors, 1):
+            print("  [{}] {}".format(i, error))
 
     @classmethod
     def register_type_deserializer(cls, type_name, deserializer):
@@ -108,9 +118,19 @@ class BTLxReader(object):
             return model
         # Parse each Part element
         for part_elem in parts_elem.findall("{*}Part"):
-            element = self._parse_part(part_elem)
-            if element:
+            try:
+                element = self._parse_part(part_elem)
                 model.add_element(element)
+            except BTLxParsingError as e:
+                self._errors.append(e)
+
+        if self._errors:
+            warn(
+                "{} error(s) occurred during BTLx parsing. Call reader.print_errors() for details.".format(len(self._errors)),
+                UserWarning,
+                stacklevel=3,
+            )
+
         return model
 
     def _parse_part(self, part_element):
@@ -120,18 +140,32 @@ class BTLxReader(object):
         ----------
         part_element : :class:`~xml.etree.ElementTree.Element`
             The part element to parse.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.BTLxParsingError`
+            If a critical attribute (dimensions, transformation, element type) cannot be parsed.
         """
-        # get dimensions and metadata
-        width = float(part_element.attrib.get("Width", 0))
-        height = float(part_element.attrib.get("Height", 0))
-        length = float(part_element.attrib.get("Length", 0))
+        # get metadata first so it's available for error context
         annotation = part_element.attrib.get("Annotation", "")
         designation = part_element.attrib.get("Designation", "")
+        single_member_number = part_element.attrib.get("SingleMemberNumber", "")
+
+        # get dimensions
+        try:
+            width = float(part_element.attrib.get("Width", 0))
+            height = float(part_element.attrib.get("Height", 0))
+            length = float(part_element.attrib.get("Length", 0))
+        except ValueError as e:
+            raise BTLxParsingError("Invalid dimension value in Part: {}".format(e), part_id=single_member_number)
 
         # extract GUID and ref_frame from Transformation (BTLx reference frame)
-        guid, ref_frame = self._parse_transformation(part_element)
+        try:
+            guid, ref_frame = self._parse_transformation(part_element)
+        except ValueError as e:
+            raise BTLxParsingError("Failed to parse transformation: {}".format(e), part_id=single_member_number)
 
-        # get element type from designation or infer from dimensions
+        # get element type from designation or infer from dimensions (for BTLx files exported from COMPASTimber)
         if "Beam" in designation:
             element_type = "Beam"
         elif "Plate" in designation:
@@ -147,19 +181,15 @@ class BTLxReader(object):
             frame = self._ref_frame_to_plate_frame(ref_frame, width, height)
             element = Plate(frame=frame, length=length, width=width, thickness=height)
 
-        # TODO: This method should be handling Element scaling based on the model's tolerance.
-        # TODO: Awaiting for PR #656 to be merged to implement scaling in the writer and then handle it here in the reader.
-        # if self._tolerance.unit == "M":
-        #     element.transform(Transformation.scale(0.001))
-
-        # Set GUID
+        # Set GUID - non-fatal: element remains valid with a new auto-generated GUID if this fails
         try:
             element._guid = uuid.UUID(guid)
-        except (ValueError, AttributeError) as e:
-            self._errors.append("Failed to set GUID for element: {}".format(e))
+        except ValueError as e:
+            self._errors.append(BTLxParsingError("Invalid GUID '{}': {}".format(guid, e), part_id=single_member_number))
 
-        # Set annotation as name if not already set
+        # Set name and custom attribute for error context
         element.name = annotation
+        element.attributes["single_member_number"] = single_member_number
 
         # Parse Processings
         self._parse_processings(part_element, element)
@@ -174,12 +204,9 @@ class BTLxReader(object):
         for processing_elem in processings_elem:
             try:
                 feature = self._parse_processing(processing_elem)
-                if feature:
-                    # BTLx features are always in mm - no scaling applied
-                    # TODO: Handle scaling when implementing tolerance parameter
-                    element.add_feature(feature)
-            except Exception as e:
-                self._errors.append("Failed to parse processing: {}".format(e))
+                element.add_feature(feature)
+            except BTLxParsingError as e:
+                self._errors.append(BTLxParsingError(e.message, part_id=element.attributes.get("single_member_number"), processing_type=e.processing_type))
 
     def _parse_processing(self, processing_elem):
         """Parse a single Processing XML element into a BTLxProcessing object."""
@@ -187,8 +214,7 @@ class BTLxReader(object):
         processing_class = self._processing_types.get(processing_name)
 
         if not processing_class:
-            self._errors.append("Unsupported processing type: {}".format(processing_name))
-            return None
+            raise BTLxParsingError("Unsupported processing type: {}".format(processing_name), processing_type=processing_name)
 
         # Get the processing's ATTRIBUTE_MAP for child elements
         attribute_map = getattr(processing_class, "ATTRIBUTE_MAP", {})
@@ -201,8 +227,8 @@ class BTLxReader(object):
                 python_name, type_info = header_attribute_map[xml_attr_name]
                 kwargs[python_name] = self._convert_value(xml_attr_value, type_info)
             else:
-                # Unknown header attribute - log warning
-                self._errors.append("Unknown header attribute '{}' for processing type {}".format(xml_attr_name, processing_name))
+                # Unknown header attribute - skip and warn, processing can still be created
+                warn("BTLx: unknown header attribute '{}' for processing type '{}'.".format(xml_attr_name, processing_name), UserWarning, stacklevel=2)
 
         # Parse child elements using processing's ATTRIBUTE_MAP
         for child in processing_elem:
@@ -211,10 +237,7 @@ class BTLxReader(object):
                 attr_spec = attribute_map[child_name]
 
                 # Extract python_name and type_info from ATTRIBUTE_MAP
-                if isinstance(attr_spec, tuple):
-                    python_name, type_info = attr_spec
-                else:
-                    raise ValueError("ATTRIBUTE_MAP values must be either a string or a tuple of (python_name, type_info)")
+                python_name, type_info = attr_spec
 
                 # Branch 1: Element with attributes → dict
                 # <Element key1="value1" key2="value2" />
@@ -236,15 +259,14 @@ class BTLxReader(object):
                 else:
                     deserializer = self.DESERIALIZERS.get(child_name, None)
                     if not deserializer:
-                        raise ValueError("No deserializer found for type: {}".format(child_name))
+                        raise BTLxParsingError("No deserializer found for type: {}".format(child_name), processing_type=processing_name)
                     kwargs[python_name] = deserializer(child)
 
         # Create processing instance
         try:
             return processing_class(**kwargs)
         except Exception as e:
-            self._errors.append("Failed to instantiate {}: {}".format(processing_name, e))
-            return None
+            raise BTLxParsingError("Failed to instantiate {}: {}".format(processing_name, e), processing_type=processing_name)
 
     @staticmethod
     def _convert_value(value, type_info):
@@ -275,19 +297,7 @@ class BTLxReader(object):
         return type_info(value)
 
     def _parse_transformation(self, part_elem):
-        """Extract GUID and Frame from a Part's Transformation element.
-
-        Parameters
-        ----------
-        part_elem : :class:`~xml.etree.ElementTree.Element`
-            The Part XML element.
-
-        Returns
-        -------
-        tuple
-            A tuple of (guid, frame) where guid is a string and frame is a Frame object.
-
-        """
+        """Extract GUID and Frame from a Part's Transformation element."""
         # Find Transformation element (wildcard namespace)
         trans_elem = part_elem.find("{*}Transformations/{*}Transformation")
         if trans_elem is None:
@@ -333,66 +343,29 @@ class BTLxReader(object):
         return guid, frame
 
     def _ref_frame_to_beam_frame(self, ref_frame, width, height):
-        """Convert BTLx reference frame to element centerline frame.
+        """Convert BTLx reference frame to element centerline frame."""
 
-        The BTLx reference frame has its origin at the bottom-far corner of the blank,
-        with axes: X=grain/length, Y=height, Z=width.
+        # The BTLx reference frame has its origin at the bottom-far corner of the blank,
+        # with axes: X=grain/length, Y=height, Z=width.
 
-        The element centerline frame has its origin at the centerline start,
-        with axes: X=length, Y=width, Z=height.
+        # The element centerline frame has its origin at the centerline start,
+        # with axes: X=length, Y=width, Z=height.
 
-        Parameters
-        ----------
-        ref_frame : :class:`~compas.geometry.Frame`
-            The BTLx reference frame.
-        width : float
-            The width of the element.
-        height : float
-            The height of the element.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The element centerline frame.
-
-        """
-        # Move from bottom-far corner to centerline start
         centerline_origin = ref_frame.point + width / 2.0 * ref_frame.zaxis + height / 2.0 * ref_frame.yaxis
-
-        # Axes transformation:
         centerline_xaxis = ref_frame.xaxis
         centerline_yaxis = -ref_frame.zaxis
 
         return Frame(centerline_origin, centerline_xaxis, centerline_yaxis)
 
     def _ref_frame_to_plate_frame(self, btlx_ref_frame, width, thickness):
-        """Convert BTLx reference frame to Plate frame.
+        """Convert BTLx reference frame to Plate frame."""
 
-        The BTLx reference frame has its origin at a corner of the blank,
-        with axes: X=grain/length, Y=thickness (height), Z=width.
+        # The BTLx reference frame has its origin at a corner of the blank,
+        # with axes: X=grain/length, Y=thickness (height), Z=width.
 
-        The Plate frame has its origin at a corner of the blank,
-        with axes: X=length, Y=width, Z=thickness.
+        # The Plate frame has its origin at a corner of the blank,
+        # with axes: X=length, Y=width, Z=thickness.
 
-        Parameters
-        ----------
-        btlx_ref_frame : :class:`~compas.geometry.Frame`
-            The BTLx reference frame.
-        width : float
-            The width of the plate (stored as 'Width' in BTLx).
-        thickness : float
-            The thickness of the plate (stored as 'Height' in BTLx).
-
-        Returns
-        -------
-        :class:`~compas.geometry.Frame`
-            The Plate frame.
-
-        """
-        # The BTLx reference frame for a plate has its origin at one corner, but its Z-axis (width)
-        # points along the width of the plate. The Plate's internal frame, however, expects its
-        # origin to be at the corner where its Y-axis (width) points away from the plate.
-        # Therefore, we need to shift the origin along the Z-axis by the plate's width.
         plate_origin = btlx_ref_frame.point + btlx_ref_frame.zaxis * width
         plate_xaxis = btlx_ref_frame.xaxis
         plate_yaxis = -btlx_ref_frame.zaxis
@@ -410,22 +383,6 @@ class BTLxReader(object):
         dimensions with a relatively significant disproportion to the other two,
         which are relatively close in proportion.
 
-        Parameters
-        ----------
-        width : float
-            The width of the element.
-        height : float
-            The height of the element.
-        length : float
-            The length of the element.
-        ratio_threshold : float, optional
-            The threshold to determine if a dimension is "significantly"
-            different from another.
-
-        Returns
-        -------
-        str
-            "Beam" or "Plate".
         """
         dims = sorted([width, height, length])
         d_small, d_mid, d_large = dims
@@ -433,13 +390,11 @@ class BTLxReader(object):
         ratio_mid_to_small = d_mid / d_small
         ratio_large_to_mid = d_large / d_mid
 
-        # Plate-like: smallest dimension is thickness, significantly smaller than the other two,
-        # which are proportionally close.
+        # Plate-like: smallest dimension is thickness, significantly smaller than the other two, which are proportionally close.
         # e.g., 50x1000x2000 -> mid/small=20 > 5, large/mid=2 < 5 -> Plate
         is_plate_like = ratio_mid_to_small > ratio_threshold and ratio_large_to_mid < ratio_threshold
 
-        # Beam-like: largest dimension is length, significantly larger than the other two,
-        # which are proportionally close.
+        # Beam-like: largest dimension is length, significantly larger than the other two, which are proportionally close.
         # e.g., 100x120x5000 -> mid/small=1.2 < 5, large/mid=41.6 > 5 -> Beam
         is_beam_like = ratio_mid_to_small < ratio_threshold and ratio_large_to_mid > ratio_threshold
 
