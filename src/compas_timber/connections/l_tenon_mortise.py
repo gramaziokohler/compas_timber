@@ -105,15 +105,7 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         self.cross_beam.add_blank_extension(start_cross + extension_tolerance, end_cross + extension_tolerance, self.guid)
-        # main_beam
-        try:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
-            offset = self.height or main_width / 2  # in case height is not set this is the default value set when adding features
-            cutting_plane.translate(-cutting_plane.normal * offset)
-            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
-        except AttributeError as ae:
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
+        start_main, end_main = self.get_main_extension()
         self.main_beam.add_blank_extension(
             start_main + extension_tolerance,
             end_main + extension_tolerance,

@@ -1,3 +1,6 @@
+import abc
+
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import TenonShapeType
@@ -6,11 +9,69 @@ from .joint import Joint
 from .utilities import beam_ref_side_incidence
 
 
-class MortiseTenonJoint(Joint):
+class MortiseTenonJoint(Joint, abc.ABC):
     """Base class for mortise-tenon joints.
+
+    This is an abstract class and should not be instantiated directly.
 
     This class stores shared parameter handling, serialization, and feature creation
     helpers used by mortise-tenon joint variants.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        First beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        Second beam to be joined.
+    start_y : float
+        Start position of the tenon along the y-axis of the main beam.
+    start_depth : float
+        Depth of the tenon from the surface of the main beam.
+    rotation : float
+        Rotation of the tenon around the main beam's axis.
+    length : float
+        Length of the tenon along the main beam.
+    width : float
+        Width of the tenon.
+    height : float
+        Height of the tenon.
+    shape : int
+        The shape of the tenon, represented by an integer index:
+        0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    shape_radius : float
+        The radius used to define the shape of the tenon, if applicable.
+    **kwargs : dict, optional
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        First beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        Second beam to be joined.
+    main_beam_guid : str
+        GUID of the main beam.
+    cross_beam_guid : str
+        GUID of the cross beam.
+    start_y : float
+        Start position of the tenon along the y-axis of the main beam.
+    start_depth : float
+        Depth of the tenon from the surface of the main beam.
+    rotation : float
+        Rotation of the tenon around the main beam's axis.
+    length : float
+        Length of the tenon along the main beam.
+    width : float
+        Width of the tenon.
+    height : float
+        Height of the tenon.
+    shape : int
+        The shape of the tenon, represented by an integer index:
+        0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    shape_radius : float
+        The radius used to define the shape of the tenon, if applicable.
+    features : list
+        List of features or machining processings applied to the elements.
     """
 
     @property
@@ -138,6 +199,27 @@ class MortiseTenonJoint(Joint):
             shape_radius=main_feature.shape_radius,
             ref_side_index=self.cross_beam_ref_side_index,
         )
+
+    def get_main_extension(self):
+        """Return the start/end extension lengths for the main beam.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the extension could not be calculated.
+
+        """
+        cutting_plane = None
+        try:
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
+            offset = self.height or main_width / 2  # in case height is not set this is the default value set when adding features
+            cutting_plane.translate(-cutting_plane.normal * offset)
+            start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
+        except AttributeError as ae:
+            debug_geometries = [cutting_plane] if cutting_plane is not None else None
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=debug_geometries)
+        return start_main, end_main
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
