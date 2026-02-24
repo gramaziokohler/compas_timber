@@ -23,6 +23,7 @@ from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DualContour
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
+from compas_timber.errors import BTLxParsingError
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
@@ -194,7 +195,8 @@ def test_processing_scaled_called_for_meter_units(mocker):
     model.add_element(beam)
 
     spy = mocker.spy(processing, "scaled")
-    writer.model_to_xml(model)
+    with pytest.warns(UserWarning, match="auto-scale to mm"):
+        writer.model_to_xml(model)
     spy.assert_called_once_with(1000.0)
 
 
@@ -790,7 +792,8 @@ def test_btlx_reader_error_handling_unsupported_processing():
       </Project>
     </BTLx>"""
 
-    model = reader.xml_to_model(xml_with_unknown)
+    with pytest.warns(UserWarning, match="1 error"):
+        model = reader.xml_to_model(xml_with_unknown)
 
     # Model should be created successfully (non-fatal error)
     assert isinstance(model, TimberModel)
@@ -798,7 +801,9 @@ def test_btlx_reader_error_handling_unsupported_processing():
 
     # But error should be logged
     assert len(reader.errors) == 1
-    assert "Unsupported processing type: UnknownProcessing" in reader.errors[0]
+    assert isinstance(reader.errors[0], BTLxParsingError)
+    assert reader.errors[0].processing_type == "UnknownProcessing"
+    assert "Unsupported processing type" in reader.errors[0].message
 
 
 def test_btlx_reader_plate_multiple_features_roundtrip():
@@ -850,10 +855,10 @@ def test_btlx_reader_plate_multiple_features_roundtrip():
 
 
 def test_btlx_reader_processing_instantiation_error():
-    """Test that invalid processing parameters log errors but don't crash."""
+    """Test that out-of-range processing parameters log errors but don't crash."""
     reader = BTLxReader()
 
-    # Create BTLx with JackRafterCut missing required parameter (should fail instantiation)
+    # Angle=200.0 is out of range (must be 0.1..179.9), which triggers ValueError in the setter
     xml_with_bad_processing = """<?xml version="1.0"?>
     <BTLx xmlns="https://www.design2machine.com">
       <Project Name="Test">
@@ -872,7 +877,8 @@ def test_btlx_reader_processing_instantiation_error():
               <JackRafterCut Orientation="start" ReferencePlaneID="1">
                 <StartX>10.000</StartX>
                 <StartY>20.000</StartY>
-                <!-- Missing required parameters like Angle, Inclination -->
+                <Angle>200.000</Angle>
+                <Inclination>90.000</Inclination>
               </JackRafterCut>
             </Processings>
           </Part>
@@ -880,14 +886,14 @@ def test_btlx_reader_processing_instantiation_error():
       </Project>
     </BTLx>"""
 
-    model = reader.xml_to_model(xml_with_bad_processing)
+    with pytest.warns(UserWarning):
+        model = reader.xml_to_model(xml_with_bad_processing)
 
     # Model should still be created (non-fatal error)
     assert isinstance(model, TimberModel)
     assert len(model.beams) == 1
 
-    # But error should be logged
+    # Error should be logged
     assert len(reader.errors) > 0
-    # Check that error message mentions the processing type
-    error_messages = " ".join(reader.errors)
-    assert "JackRafterCut" in error_messages or "Failed to instantiate" in error_messages
+    # Error should reference the JackRafterCut processing type
+    assert any("JackRafterCut" in (e.processing_type or "") for e in reader.errors)
