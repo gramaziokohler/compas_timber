@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Iterable
 from typing import List
 from typing import cast
 
@@ -10,6 +11,7 @@ from compas_model.elements import Element
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PanelJoint
@@ -117,9 +119,8 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Fastener)
 
     @property
-    def joints(self):
-        # type: () -> set[Joint]
-        return set(self._joints.values())
+    def joints(self) -> Iterable[Joint]:
+        return self._joints.values()
 
     @property
     def joint_candidates(self):

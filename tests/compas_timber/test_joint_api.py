@@ -103,17 +103,9 @@ def test_create_multiple_joints(three_beam_model):
 # =============================================================================
 
 
-def test_joints_returns_set(two_beam_model):
-    model, b1, b2 = two_beam_model
-    LButtJoint.create(model, b1, b2)
-    joints = model.joints
-    assert isinstance(joints, set)
-
-
 def test_joints_empty_when_no_joints():
     model = TimberModel()
     assert len(model.joints) == 0
-    assert isinstance(model.joints, set)
 
 
 def test_joints_contains_joint_instances(two_beam_model):
