@@ -626,23 +626,14 @@ def polylines_from_brep_face(face):
     tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
         The extracted polylines.
     """
-    # Handle case where face is a list of edges
     if isinstance(face, list):
-        # Try to treat the list as edges and extract segments
-        segments = []
-        for edge in face:
-            if hasattr(edge, 'start_vertex') and hasattr(edge, 'end_vertex'):
-                segments.append(Line(edge.start_vertex.point, edge.end_vertex.point))
+        segments = [Line(e.start_vertex.point, e.end_vertex.point) for e in face if hasattr(e, 'start_vertex') and hasattr(e, 'end_vertex')]
         if segments:
             polylines_list, _ = join_polyline_segments(segments, close_loop=True)
             if polylines_list:
-                outer = polylines_list[0]
-                openings = polylines_list[1:] if len(polylines_list) > 1 else []
-                return outer, openings
-        # If we reach here, the list couldn't be processed into valid polylines
+                return polylines_list[0], polylines_list[1:]
         raise ValueError("Could not extract valid polylines from the provided edge list")
 
-    # Handle standard BrepFace with loops
     outer = None
     openings = []
     for loop in face.loops:
