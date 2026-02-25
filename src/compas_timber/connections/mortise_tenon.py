@@ -157,14 +157,22 @@ class MortiseTenonJoint(Joint, abc.ABC):
         """Updates and sets default property values if they are not provided."""
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
 
-        self.start_y = self.start_y or 0.0
-        self.start_depth = self.start_depth or 0.0
-        self.rotation = self.rotation or 0.0
-        self.length = self.length or height
-        self.width = self.width or width / 2
-        self.height = self.height or width / 2
-        self.shape = self.shape or 2  # Default shape: ROUND
-        self.shape_radius = self.shape_radius or width / 4
+        if self.start_y is None:
+            self.start_y = 0.0
+        if self.start_depth is None:
+            self.start_depth = 0.0
+        if self.rotation is None:
+            self.rotation = 0.0
+        if self.length is None:
+            self.length = height
+        if self.width is None:
+            self.width = width / 2
+        if self.height is None:
+            self.height = width / 2
+        if self.shape is None:
+            self.shape = 2  # Default shape: ROUND
+        if self.shape_radius is None:
+            self.shape_radius = width / 4
 
     def _clear_features(self):
         if self.features:
@@ -213,7 +221,7 @@ class MortiseTenonJoint(Joint, abc.ABC):
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
             main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
-            offset = self.height or main_width / 2  # in case height is not set this is the default value set when adding features
+            offset = self.height if self.height is not None else main_width / 2  # in case height is not set this is the default value set when adding features
             cutting_plane.translate(-cutting_plane.normal * offset)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:

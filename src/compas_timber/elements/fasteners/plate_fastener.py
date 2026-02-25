@@ -13,6 +13,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
+from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
@@ -118,7 +119,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if joint.SUPPORTED_TOPOLOGY == 3:  # JointTopology.TOPO_T
+        if joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),
@@ -152,9 +153,9 @@ class PlateFastener(Fastener):
                     )
                 )
             self.thickness = width_a / 20
-        elif joint.SUPPORTED_TOPOLOGY == 4:  #  JointTopology.TOPO_X
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X:
             raise NotImplementedError
-        elif joint.SUPPORTED_TOPOLOGY == 2:  # JointTopology.TOPO_L
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:
             raise NotImplementedError
 
     def place_instances(self, joint):
