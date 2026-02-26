@@ -4,7 +4,10 @@ from unittest.mock import patch
 
 from compas.data import json_load
 from compas.tolerance import Tolerance
+from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Polygon
 
 import xml.etree.ElementTree as ET
 
@@ -375,12 +378,36 @@ def test_btlx_part_unique_functionalities():
     assert isinstance(btlx_part.processings, list)
 
 
+def _box_polygons():
+    """Return 6 Polygon objects representing a 1000x100x50 box (no backend needed)."""
+    v = [
+        Point(0, 0, 0),
+        Point(1000, 0, 0),
+        Point(1000, 100, 0),
+        Point(0, 100, 0),
+        Point(0, 0, 50),
+        Point(1000, 0, 50),
+        Point(1000, 100, 50),
+        Point(0, 100, 50),
+    ]
+    return [
+        Polygon([v[0], v[3], v[2], v[1]]),  # bottom
+        Polygon([v[4], v[5], v[6], v[7]]),  # top
+        Polygon([v[0], v[1], v[5], v[4]]),  # front
+        Polygon([v[3], v[7], v[6], v[2]]),  # back
+        Polygon([v[0], v[4], v[7], v[3]]),  # left
+        Polygon([v[1], v[2], v[6], v[5]]),  # right
+    ]
+
+
 def test_btlx_part_shape_strings_format():
     """Test that shape_strings returns two non-empty strings with correct format."""
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
     btlx_part = BTLxPart(beam, order_num=1)
 
-    result = btlx_part.shape_strings
+    with patch.object(Brep, "to_polygons", return_value=_box_polygons()):
+        result = btlx_part.shape_strings
+
     assert isinstance(result, list) and len(result) == 2
 
     index_string, vertex_string = result
@@ -400,11 +427,12 @@ def test_btlx_part_shape_strings_format():
 
 
 def test_btlx_part_shape_strings_box_vertex_and_face_count():
-    """A plain rectangular beam tessellates to 8 unique vertices and 6 faces."""
+    """A plain rectangular beam produces 8 unique vertices and 6 faces."""
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
     btlx_part = BTLxPart(beam, order_num=1)
 
-    index_string, vertex_string = btlx_part.shape_strings
+    with patch.object(Brep, "to_polygons", return_value=_box_polygons()):
+        index_string, vertex_string = btlx_part.shape_strings
 
     # 8 unique vertices for a box
     coords = list(map(float, vertex_string.split()))
