@@ -597,7 +597,7 @@ document.write(`
 <h1>LMiterJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.LMiterJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LMiterJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/a911347/src/compas_timber/connections/l_miter.py#L18"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">LMiterJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e3eae2a/src/compas_timber/connections/l_miter.py#L23"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>Represents an L-Miter type joint which joins two beam in their ends, trimming them with a plane
 at the bisector angle between the beams’ centerlines.</p>
@@ -612,6 +612,14 @@ at the bisector angle between the beams’ centerlines.</p>
 </dd>
 <dt><strong>cutoff</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.</p>
 </dd>
+<dt><strong>miter_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a>, optional</span></dt><dd><p>A plane that defines the miter cut location and orientation.
+If not provided, it will be calculated automatically.
+If provided, miter_type will be automatically set to <cite>MiterType.USER_DEFINED</cite>.</p>
+</dd>
+<dt><strong>ref_side_miter</strong><span class="classifier">:bool, optional</span></dt><dd><p>If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.</p>
+</dd>
+<dt><strong>clean</strong><span class="classifier">bool, optional</span></dt><dd><p>if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Attributes<span class="colon">:</span></dt>
@@ -620,7 +628,13 @@ at the bisector angle between the beams’ centerlines.</p>
 </dd>
 <dt><strong>beam_b</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>Second beam to be joined.</p>
 </dd>
-<dt><strong>cutoff</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.</p>
+<dt><strong>cutoff</strong><span class="classifier">bool</span></dt><dd><p>If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.</p>
+</dd>
+<dt><strong>miter_plane</strong><span class="classifier"><a class="reference external" href="https://compas.dev/compas/latest/api/generated/compas.geometry.Plane.html" title="(in COMPAS vlatest)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Plane</span></code></a></span></dt><dd><p>A user-defined plane that defines the miter cut location and orientation.</p>
+</dd>
+<dt><strong>ref_side_miter</strong><span class="classifier">:bool</span></dt><dd><p>If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.</p>
+</dd>
+<dt><strong>clean</strong><span class="classifier">bool</span></dt><dd><p>if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.</p>
 </dd>
 </dl>
 </dd>
@@ -633,12 +647,6 @@ at the bisector angle between the beams’ centerlines.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.add_features.html#compas_timber.connections.LMiterJoint.add_features" title="compas_timber.connections.LMiterJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
 <td><p>Adds the required extension and trimming features to both beams.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.get_cutoff_plane.html#compas_timber.connections.LMiterJoint.get_cutoff_plane" title="compas_timber.connections.LMiterJoint.get_cutoff_plane"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cutoff_plane</span></code></a></p></td>
-<td><p>Returns a plane that is perpendicular to the miter plane at the intersection point of the two centerlines.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.get_cutting_planes.html#compas_timber.connections.LMiterJoint.get_cutting_planes" title="compas_timber.connections.LMiterJoint.get_cutting_planes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_cutting_planes</span></code></a></p></td>
-<td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.LMiterJoint.restore_beams_from_keys.html#compas_timber.connections.LMiterJoint.restore_beams_from_keys" title="compas_timber.connections.LMiterJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
