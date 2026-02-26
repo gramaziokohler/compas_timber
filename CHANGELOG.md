@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
 * Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
@@ -72,6 +73,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
+* Added `ref_side_miter`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
+* Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
+* Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.

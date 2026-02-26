@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Iterable
 from typing import List
 from typing import cast
 
@@ -58,15 +59,27 @@ class TimberModel(Model):
     _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
     _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["joints"] = self._joints
+        return data
+
     @classmethod
     def __from_data__(cls, data):
-        model = super(TimberModel, cls).__from_data__(data)
-        for joint in model.joints:  # TODO: allow for modifiers as well once they are implemented in compas_timber
-            joint.restore_beams_from_keys(model)  # type: ignore
+        model = super().__from_data__(data)
+        joints_data = data["joints"]
+        for guid_str, joint in joints_data.items():
+            model._joints[guid_str] = joint
+
+        for joint in model._joints.values():
+            joint.restore_beams_from_keys(model)
+
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
+        self._joints = {}
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
@@ -106,14 +119,8 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Fastener)
 
     @property
-    def joints(self):
-        # type: () -> set[Joint]
-        joints = set()  # some joints might apear on more than one interaction
-        for edge in self._graph.edges():
-            edge_joints = self._graph.edge_attribute(edge, "joints") or []
-            for joint in edge_joints:
-                joints.add(joint)
-        return joints
+    def joints(self) -> Iterable[Joint]:
+        return self._joints.values()
 
     @property
     def joint_candidates(self):
@@ -257,10 +264,21 @@ class TimberModel(Model):
     # =============================================================================
 
     def _safely_get_edge_attribute(self, node_pair, attribute):
+        results = []
+        node_a, node_b = node_pair
         try:
-            return self._graph.edge_attribute(node_pair, attribute)
+            attr_value = self._graph.edge_attribute((node_a, node_b), attribute)
+            if attr_value:
+                results.append(attr_value)
         except KeyError:
-            return None
+            pass
+        try:
+            attr_value = self._graph.edge_attribute((node_b, node_a), attribute)
+            if attr_value:
+                results.append(attr_value)
+        except KeyError:
+            pass
+        return results
 
     def get_joints_for_element(self, element) -> List[Joint]:
         """Get all joints for a given element.
@@ -278,8 +296,8 @@ class TimberModel(Model):
         neighbors = self._graph.neighbors(element.graphnode)
         result = []
         for nbr in neighbors:
-            result.extend(self._safely_get_edge_attribute((element.graphnode, nbr), "joints") or [])
-            result.extend(self._safely_get_edge_attribute((nbr, element.graphnode), "joints") or [])
+            joint_guids = self._safely_get_edge_attribute((element.graphnode, nbr), "joints")
+            result.extend([self._joints[guid] for guid in joint_guids if guid in self._joints])
         return result
 
     def get_candidates_for_element(self, element) -> List[JointCandidate]:
@@ -298,12 +316,8 @@ class TimberModel(Model):
         neighbors = self._graph.neighbors(element.graphnode)
         result = []
         for nbr in neighbors:
-            candidate = self._safely_get_edge_attribute((element.graphnode, nbr), "candidates")
-            if candidate is not None:
-                result.append(candidate)
-            candidate = self._safely_get_edge_attribute((nbr, element.graphnode), "candidates")
-            if candidate is not None:
-                result.append(candidate)
+            candidates = self._safely_get_edge_attribute((element.graphnode, nbr), "candidates")
+            result.extend(candidates)
         return result
 
     def get_interactions_for_element(self, element):
@@ -333,15 +347,13 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
-        # TODO: should we be removing the joint candidate(s) edge attributes when adding an actual joint?
+        joint_guid = str(joint.guid)
+        self._joints[joint_guid] = joint
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
-            joints.append(joint)
-            self._graph.edge_attribute(edge, "joints", value=joints)  # SET
-            # TODO: should we create a bidirectional interaction here?
+            self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
@@ -360,9 +372,6 @@ class TimberModel(Model):
             edge = (element_a.graphnode, element_b.graphnode)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
-
-                # HACK: calls to `model.joints` expect there to be a "joints" on any edges
-                self._graph.edge_attribute(edge, "joints", [])
 
             # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
             # (``joints`` vs. ``candidates``)
@@ -496,7 +505,7 @@ class TimberModel(Model):
 
             if not self._is_remaining_attrs_on_edge(edge):
                 # if there's no other timber related attributes on that edge, then remove the edge as well
-                super(TimberModel, self).remove_interaction(element_a, element_b)
+                super().remove_interaction(element_a, element_b)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -508,6 +517,7 @@ class TimberModel(Model):
             The joint to remove.
 
         """
+        self._joints.pop(str(joint.guid), None)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             self.remove_interaction(element_a, element_b)
@@ -533,12 +543,11 @@ class TimberModel(Model):
         if edge not in self._graph.edges():
             return
 
-        edge_interactions = self._graph.edge_attribute(edge, "joints")
-        edge_interactions.clear()  # type: ignore
+        self._graph.unset_edge_attribute(edge, "joints")
 
         if not self._is_remaining_attrs_on_edge(edge):
             # if there's no other timber related attributes on that edge, then remove the edge as well
-            super(TimberModel, self).remove_interaction(a, b)
+            super().remove_interaction(a, b)
 
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
