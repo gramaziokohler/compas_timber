@@ -255,22 +255,59 @@ class TimberModel(Model):
     # Interactions
     # =============================================================================
 
-    def _safely_get_interactions(self, node_pair):
-        # type: (tuple) -> List[Interaction]
-        interactions = []
+    def _safely_get_edge_attribute(self, node_pair, attribute):
         try:
-            interactions.extend(self._graph.edge_attribute(node_pair, "joints"))
+            return self._graph.edge_attribute(node_pair, attribute)
         except KeyError:
-            pass
-        try:
-            interactions.append(self._graph.edge_attribute(node_pair, "candidates"))
-        except KeyError:
-            pass
-        return interactions
+            return None
+
+    def get_joints_for_element(self, element) -> List[Joint]:
+        """Get all joints for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.connections.Joint`]
+            A list of joints for the given element.
+        """
+        neighbors = self._graph.neighbors(element.graphnode)
+        result = []
+        for nbr in neighbors:
+            result.extend(self._safely_get_edge_attribute((element.graphnode, nbr), "joints") or [])
+            result.extend(self._safely_get_edge_attribute((nbr, element.graphnode), "joints") or [])
+        return result
+
+    def get_candidates_for_element(self, element) -> List[JointCandidate]:
+        """Get all joint candidates for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.connections.JointCandidate`]
+            A list of joint candidates for the given element.
+        """
+        neighbors = self._graph.neighbors(element.graphnode)
+        result = []
+        for nbr in neighbors:
+            candidate = self._safely_get_edge_attribute((element.graphnode, nbr), "candidates")
+            if candidate is not None:
+                result.append(candidate)
+            candidate = self._safely_get_edge_attribute((nbr, element.graphnode), "candidates")
+            if candidate is not None:
+                result.append(candidate)
+        return result
 
     def get_interactions_for_element(self, element):
         # type: (Element) -> List[Interaction]
-        """Get all interactions for a given element.
+        """Get all interactions (joints and candidates) for a given element.
 
         Parameters
         ----------
@@ -282,12 +319,8 @@ class TimberModel(Model):
         list[:class:`~compas_model.interactions.Interaction`]
             A list of interactions for the given element.
         """
-
-        neighbors = self._graph.neighbors(element.graphnode)
-        result = []
-        for nbr in neighbors:
-            result.extend(self._safely_get_interactions((element.graphnode, nbr)))
-            result.extend(self._safely_get_interactions((nbr, element.graphnode)))
+        result = self.get_joints_for_element(element)
+        result.extend(self.get_candidates_for_element(element))
         return result
 
     def add_joint(self, joint):
