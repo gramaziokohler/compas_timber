@@ -410,7 +410,8 @@ def test_btlx_part_shape_strings_format():
     mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
 
     with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
-        result = btlx_part.shape_strings
+        with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
+            result = btlx_part.shape_strings
 
     assert isinstance(result, list) and len(result) == 2
 
@@ -436,7 +437,8 @@ def test_btlx_part_shape_strings_box_vertex_and_face_count():
     mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
 
     with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
-        index_string, vertex_string = btlx_part.shape_strings
+        with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
+            index_string, vertex_string = btlx_part.shape_strings
 
     coords = list(map(float, vertex_string.split()))
     assert len(coords) == 8 * 3
