@@ -687,17 +687,21 @@ class BTLxPart(BTLxGenericPart):
             poly_vertices_string = ""
             xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
             for point in poly_vertex_points:
-                point.transform(xform)
+                # work on a transformed copy to avoid mutating shared geometry
+                point_local = point.transformed(xform)
+                x = point_local.x
+                y = point_local.y
+                z = point_local.z
                 # clamp floating point noise to zero; warn if significantly negative (geometry outside blank)
-                point.x = 0.0 if point.x < 0.0 and abs(point.x) <= TOL.absolute else point.x
-                point.y = 0.0 if point.y < 0.0 and abs(point.y) <= TOL.absolute else point.y
-                point.z = 0.0 if point.z < 0.0 and abs(point.z) <= TOL.absolute else point.z
-                if point.x < -TOL.absolute or point.y < -TOL.absolute or point.z < -TOL.absolute:
+                x = 0.0 if x < 0.0 and abs(x) <= TOL.absolute else x
+                y = 0.0 if y < 0.0 and abs(y) <= TOL.absolute else y
+                z = 0.0 if z < 0.0 and abs(z) <= TOL.absolute else z
+                if x < -TOL.absolute or y < -TOL.absolute or z < -TOL.absolute:
                     warn(
                         "BTLxPart shape_strings: vertex ({:.3f}, {:.3f}, {:.3f}) has negative local coordinates after frame transform for element {}."
-                        " This may indicate the joinery geometry extends outside the blank.".format(point.x, point.y, point.z, self.element.guid)
+                        " This may indicate the joinery geometry extends outside the blank.".format(x, y, z, self.element.guid)
                     )
-                poly_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
+                poly_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(x, y, z, prec=3)
 
             self._shape_strings = [poly_indices_string, poly_vertices_string]
         return self._shape_strings
