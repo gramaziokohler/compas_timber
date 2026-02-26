@@ -418,10 +418,13 @@ class Plate(TimberElement):
             if len(polyline.points) < 4:
                 return None
             pts = list(polyline.points)[:-1]
-            normal_data = normal_polygon(pts)
-            if isinstance(normal_data, (list, tuple)) and len(normal_data) == 3:
-                return Vector(*normal_data)
-            return normal_data
+            try:
+                normal_data = normal_polygon(pts)
+                if isinstance(normal_data, (list, tuple)) and len(normal_data) == 3:
+                    return Vector(*normal_data)
+                return normal_data if isinstance(normal_data, Vector) else None
+            except Exception:
+                return None
 
         faces_with_normals = []
         for face_data in faces_data:
@@ -446,9 +449,11 @@ class Plate(TimberElement):
                 for i, face_i in enumerate(candidates):
                     for face_j in candidates[i + 1:]:
                         dot = face_i['normal'].dot(face_j['normal'])
+                        abs_dot = abs(dot)
                         offset_vector = Vector.from_start_end(face_i['centroid'], face_j['centroid'])
                         normal_separation = abs(offset_vector.dot(face_i['normal'].unitized()))
-                        if dot > 0.95 and normal_separation > max(TOL.absolute, normal_separation * TOL.relative):
+
+                        if abs_dot > 0.95 and normal_separation > max(TOL.absolute, normal_separation * TOL.relative):
                             face_a_data = face_i
                             face_b_data = face_j
                             break
@@ -463,7 +468,8 @@ class Plate(TimberElement):
                 for i, face_i in enumerate(candidates):
                     for face_j in candidates[i + 1:]:
                         dot = face_i['normal'].dot(face_j['normal'])
-                        if (dot < -0.85 and face_i['is_planar'] and face_j['is_planar']) or dot < -0.95:
+                        abs_dot = abs(dot)
+                        if abs_dot > 0.85:
                             face_a_data = face_i
                             face_b_data = face_j
                             break
@@ -473,7 +479,20 @@ class Plate(TimberElement):
                     break
 
         if face_a_data is None or face_b_data is None:
-            raise ValueError("Could not find 2 parallel faces with matching edge counts and proper orientation")
+            error_parts = ["Could not find 2 parallel faces with matching edge counts"]
+            if faces_with_normals:
+                edge_counts = sorted(set(f['edge_count'] for f in faces_with_normals))
+                error_parts.append("Found {} faces with edge counts: {}".format(len(faces_with_normals), edge_counts))
+                if len(faces_with_normals) >= 2:
+                    dot_products = []
+                    for i, f1 in enumerate(faces_with_normals):
+                        for f2 in faces_with_normals[i+1:]:
+                            dot = f1['normal'].dot(f2['normal'])
+                            dot_products.append((abs(dot), f1['edge_count'], f2['edge_count']))
+                    if dot_products:
+                        best_dot, ec1, ec2 = max(dot_products)
+                        error_parts.append("Best face pair has |dot|={:.3f} with edge counts {}/{}".format(best_dot, ec1, ec2))
+            raise ValueError(". ".join(error_parts))
 
         def _align_polylines(poly_a, poly_b):
             points_a = list(poly_a.points)[:-1]

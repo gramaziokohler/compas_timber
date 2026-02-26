@@ -628,26 +628,35 @@ def polyline_from_brep_loop(loop, num_curve_samples=16):
         start = edge.start_vertex.point
         end = edge.end_vertex.point
         is_degenerate = TOL.is_allclose(start, end)
+
         try:
-            pts = list(edge.curve.to_polyline(num_curve_samples).points)
-            if len(pts) >= 2:
-                return pts
-        except (AttributeError, Exception):
+            curve_polyline = edge.curve.to_polyline(num_curve_samples)
+            if curve_polyline and hasattr(curve_polyline, 'points'):
+                pts = list(curve_polyline.points)
+                if len(pts) >= 2 and not all(TOL.is_allclose(pts[0], p) for p in pts):
+                    return pts
+        except (AttributeError, TypeError, Exception):
             pass
+
         if is_degenerate:
-            return None
+            return []
         return [start, end]
 
     all_points = []
     for edge in loop.edges:
         pts = _edge_points(edge)
         if pts is None:
-            return None
+            continue
+        if not pts:
+            continue
+
         if not all_points:
             all_points.extend(pts[:-1])
         else:
-            start = 1 if TOL.is_allclose(pts[0], all_points[-1]) else 0
-            all_points.extend(pts[start:-1])
+            if TOL.is_allclose(pts[0], all_points[-1]):
+                all_points.extend(pts[1:-1])
+            else:
+                all_points.extend(pts[:-1])
 
     if len(all_points) < 3:
         return None

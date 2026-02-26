@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
+* Added `Plate.from_face()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior; see "Changed" below for migration details).
 
 ### Changed
 
@@ -67,8 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
 * Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
-* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior; see "Changed" below for migration details).
 
 ### Changed
 * Breaking change: renamed the previous single-face `Plate.from_brep()` constructor to `Plate.from_face()`, and repurposed `Plate.from_brep()` to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face()` instead.
