@@ -607,11 +607,16 @@ class TimberModel(Model):
                     raise bje
         return errors
 
-    def create_beam_structural_segments(self) -> None:
-        """Creates structural segments for all beams in the model based on their joints."""
-        if not self.joints:
-            raise ValueError("No joints in the model to create structural segments from.")
+    def create_beam_structural_segments(self, solver=None) -> None:
+        """Creates structural segments for all beams in the model based on their joints.
 
+        Parameters
+        ----------
+        solver : :class:`~compas_timber.structural.BeamStructuralElementSolver`, optional
+            The solver to use for creating structural segments.
+            If not provided, a default solver is created.
+
+        """
         if not self.beams:
             raise ValueError("No beams in the model to create structural segments for.")
 
@@ -621,7 +626,7 @@ class TimberModel(Model):
         for edge in self._graph.edges():
             self._graph.unset_edge_attribute(edge, "structural_segments")
 
-        solver = BeamStructuralElementSolver()
+        solver = solver or BeamStructuralElementSolver()
         for beam in self.beams:
             solver.add_structural_segments(beam, model=self)
 
