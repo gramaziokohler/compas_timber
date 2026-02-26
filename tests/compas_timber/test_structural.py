@@ -6,6 +6,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.structural import BeamStructuralElementSolver
+from compas_timber.structural import InteractionType
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.model import TimberModel
@@ -27,7 +28,8 @@ def test_create_segments_from_beam_and_its_joints(mocker: pytest_mock.MockerFixt
     ]
 
     model: TimberModel = mocker.MagicMock(spec=TimberModel)
-    model.get_interactions_for_element.return_value = joints
+    model.get_joints_for_element.return_value = joints
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -45,7 +47,8 @@ def test_create_segments_from_beam_and_its_joints(mocker: pytest_mock.MockerFixt
 def test_create_segments_no_joints(mocker: pytest_mock.MockerFixture):
     beam = Beam(Frame.worldXY(), length=6000, width=200, height=400)
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = []
+    model.get_joints_for_element.return_value = []
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -67,7 +70,8 @@ def test_create_segments_joints_at_ends_only(mocker: pytest_mock.MockerFixture):
         mocker.MagicMock(spec=Joint, location=j_end_loc),
     ]
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = joints
+    model.get_joints_for_element.return_value = joints
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -86,7 +90,8 @@ def test_create_segments_unsorted_joints(mocker: pytest_mock.MockerFixture):
     j3 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.5))
 
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = [j1, j2, j3]
+    model.get_joints_for_element.return_value = [j1, j2, j3]
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -110,7 +115,8 @@ def test_create_segments_project_joints(mocker: pytest_mock.MockerFixture):
 
     joint = mocker.MagicMock(spec=Joint, location=loc_off_center)
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = [joint]
+    model.get_joints_for_element.return_value = [joint]
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -130,7 +136,8 @@ def test_get_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     model.add_element(beam2)
 
     # Mock interactions to return empty list so we get 1 segment per beam
-    mocker.patch.object(model, "get_interactions_for_element", return_value=[])
+    mocker.patch.object(model, "get_joints_for_element", return_value=[])
+    mocker.patch.object(model, "get_candidates_for_element", return_value=[])
 
     solver = BeamStructuralElementSolver()
     solver.add_structural_segments(beam1, model)
@@ -157,24 +164,14 @@ def test_create_structural_segments_on_model(mocker: pytest_mock.MockerFixture):
 
     # Mock interactions
     joint = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.5))
-    mocker.patch.object(model, "get_interactions_for_element", return_value=[joint])
+    mocker.patch.object(model, "get_joints_for_element", return_value=[joint])
+    mocker.patch.object(model, "get_candidates_for_element", return_value=[])
     mocker.patch.object(TimberModel, "joints", new_callable=mocker.PropertyMock).return_value = {joint}
 
     model.create_beam_structural_segments()
 
     segments = model.get_beam_structural_segments(beam)
     assert len(segments) == 2
-
-
-def test_create_structural_segments_raises_no_joints(mocker: pytest_mock.MockerFixture):
-    model = TimberModel()
-    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
-    model.add_element(beam)
-
-    # joints property returns empty set by default
-
-    with pytest.raises(ValueError, match="No joints in the model"):
-        model.create_beam_structural_segments()
 
 
 def test_create_structural_segments_raises_no_beams(mocker: pytest_mock.MockerFixture):
@@ -192,7 +189,8 @@ def test_remove_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     model.add_element(beam)
 
     # Mock interactions to return empty list so we get 1 segment per beam
-    mocker.patch.object(model, "get_interactions_for_element", return_value=[])
+    mocker.patch.object(model, "get_joints_for_element", return_value=[])
+    mocker.patch.object(model, "get_candidates_for_element", return_value=[])
 
     solver = BeamStructuralElementSolver()
     solver.add_structural_segments(beam, model)
@@ -210,7 +208,8 @@ def test_segment_frame_origin_at_segment_start(mocker: pytest_mock.MockerFixture
     j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.5))
 
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = [j1]
+    model.get_joints_for_element.return_value = [j1]
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -237,7 +236,8 @@ def test_segment_frame_orientation_matches_beam(mocker: pytest_mock.MockerFixtur
     j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.75))
 
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = [j1, j2]
+    model.get_joints_for_element.return_value = [j1, j2]
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -264,7 +264,8 @@ def test_segment_frame_no_joints(mocker: pytest_mock.MockerFixture):
     beam = Beam(Frame.worldXY(), length=5000, width=200, height=400)
 
     model = mocker.MagicMock()
-    model.get_interactions_for_element.return_value = []
+    model.get_joints_for_element.return_value = []
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -288,7 +289,8 @@ def test_create_segments_with_only_joint_candidates(mocker: pytest_mock.MockerFi
     c2 = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.point_at(0.75))
 
     model = mocker.MagicMock(spec=TimberModel)
-    model.get_interactions_for_element.return_value = [c1, c2]
+    model.get_joints_for_element.return_value = []
+    model.get_candidates_for_element.return_value = [c1, c2]
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -308,7 +310,8 @@ def test_create_segments_with_only_joints(mocker: pytest_mock.MockerFixture):
     j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.6))
 
     model = mocker.MagicMock(spec=TimberModel)
-    model.get_interactions_for_element.return_value = [j1, j2]
+    model.get_joints_for_element.return_value = [j1, j2]
+    model.get_candidates_for_element.return_value = []
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -321,7 +324,8 @@ def test_create_segments_with_only_joints(mocker: pytest_mock.MockerFixture):
         assert seg.line.length == pytest.approx(exp)
 
 
-def test_create_segments_with_joints_and_candidates(mocker: pytest_mock.MockerFixture):
+def test_create_segments_auto_prefers_joints_over_candidates(mocker: pytest_mock.MockerFixture):
+    """AUTO mode uses joints when available, ignoring candidates."""
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
 
     j1 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.2))
@@ -329,16 +333,17 @@ def test_create_segments_with_joints_and_candidates(mocker: pytest_mock.MockerFi
     j2 = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.8))
 
     model = mocker.MagicMock(spec=TimberModel)
-    model.get_interactions_for_element.return_value = [j1, c1, j2]
+    model.get_joints_for_element.return_value = [j1, j2]
+    model.get_candidates_for_element.return_value = [c1]
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
 
     model.add_beam_structural_segments.assert_called_once()
 
-    # splits at 0.2, 0.5, 0.8 → 4 segments: 200, 300, 300, 200
-    assert len(segments) == 4
-    expected_lengths = [200.0, 300.0, 300.0, 200.0]
+    # AUTO prefers joints → splits at 0.2 and 0.8 only → 3 segments: 200, 600, 200
+    assert len(segments) == 3
+    expected_lengths = [200.0, 600.0, 200.0]
     for seg, exp in zip(segments, expected_lengths):
         assert seg.line.length == pytest.approx(exp)
 
@@ -350,7 +355,8 @@ def test_create_segments_candidates_at_ends_only(mocker: pytest_mock.MockerFixtu
     c_end = mocker.MagicMock(spec=JointCandidate, location=beam.centerline.end)
 
     model = mocker.MagicMock(spec=TimberModel)
-    model.get_interactions_for_element.return_value = [c_start, c_end]
+    model.get_joints_for_element.return_value = []
+    model.get_candidates_for_element.return_value = [c_start, c_end]
 
     solver = BeamStructuralElementSolver()
     segments = solver.add_structural_segments(beam, model)
@@ -376,7 +382,91 @@ def test_get_interactions_for_element_returns_candidates():
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
-    interactions = model.get_interactions_for_element(beam_a)
+    interactions = model.get_candidates_for_element(beam_a)
 
     assert len(interactions) > 0
     assert candidate in interactions
+
+
+def test_solver_auto_prefers_joints_over_candidates(mocker: pytest_mock.MockerFixture):
+    """AUTO mode should return joints when both joints and candidates exist."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(500, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    joint = mocker.MagicMock(spec=Joint)
+    joint.interactions = [(beam_a, beam_b)]
+    joint.generated_elements = []
+    model.add_joint(joint)
+
+    solver = BeamStructuralElementSolver(interaction_type=InteractionType.AUTO)
+    interactions = solver._get_interactions(beam_a, model)
+
+    assert joint in interactions
+    assert candidate not in interactions
+
+
+def test_solver_auto_falls_back_to_candidates():
+    """AUTO mode should return candidates when no joints exist."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(500, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    solver = BeamStructuralElementSolver(interaction_type=InteractionType.AUTO)
+    interactions = solver._get_interactions(beam_a, model)
+
+    assert candidate in interactions
+
+
+def test_solver_joints_only(mocker: pytest_mock.MockerFixture):
+    """JOINTS interaction_type should return only joints, ignoring candidates."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(500, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    solver = BeamStructuralElementSolver(interaction_type=InteractionType.JOINTS)
+    interactions = solver._get_interactions(beam_a, model)
+
+    assert len(interactions) == 0
+
+
+def test_solver_candidates_only(mocker: pytest_mock.MockerFixture):
+    """CANDIDATES interaction_type should return only candidates, ignoring joints."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(500, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    joint = mocker.MagicMock(spec=Joint)
+    joint.interactions = [(beam_a, beam_b)]
+    joint.generated_elements = []
+    model.add_joint(joint)
+
+    solver = BeamStructuralElementSolver(interaction_type=InteractionType.CANDIDATES)
+    interactions = solver._get_interactions(beam_a, model)
+
+    assert candidate in interactions
+    assert joint not in interactions

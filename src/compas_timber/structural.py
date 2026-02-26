@@ -6,6 +6,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 
 from compas.data import Data
@@ -19,10 +20,31 @@ from compas.geometry import intersection_segment_segment
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
+from compas_timber.utils import StrEnum
+
 if TYPE_CHECKING:
     from compas_timber.connections import Joint
     from compas_timber.elements import Beam
     from compas_timber.model import TimberModel
+
+
+class InteractionType(StrEnum):
+    """Defines which interaction types to consider when creating structural segments.
+
+    Attributes
+    ----------
+    AUTO : int
+        Per connection: use joints if available, fall back to candidates.
+    JOINTS : int
+        Only use joints, ignore candidates.
+    CANDIDATES : int
+        Only use candidates, ignore joints.
+
+    """
+
+    AUTO = "AUTO"
+    JOINTS = "JOINTS"
+    CANDIDATES = "CANDIDATES"
 
 
 class StructuralSegment(Data):
@@ -50,7 +72,7 @@ class BeamSegmentGenerator(ABC):
     """
 
     @abstractmethod
-    def generate_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
+    def generate_segments(self, beam: Beam, joints: Sequence[Joint]) -> List[StructuralSegment]:
         """Generate structural segments for a beam.
 
         Parameters
@@ -98,7 +120,7 @@ class JointConnectorGenerator(ABC):
 class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
     """Generates structural segments by splitting the beam centerline at joint locations."""
 
-    def generate_segments(self, beam: Beam, joints: List[Joint]) -> List[StructuralSegment]:
+    def generate_segments(self, beam: Beam, joints: Sequence[Joint]) -> List[StructuralSegment]:
         split_points_with_distances = []
         for joint in joints:
             point_on_segment = Point(*closest_point_on_segment(joint.location, beam.centerline))
@@ -159,12 +181,35 @@ class BeamStructuralElementSolver:
     joint_connector_generator : :class:`JointConnectorGenerator`, optional
         Generator used to produce connector segments for joints.
         Defaults to :class:`SimpleJointConnectorGenerator`.
+    interaction_type : :class:`InteractionSource`, optional
+        Which interaction types to consider when creating structural segments.
+        Defaults to ``InteractionSource.AUTO``.
 
     """
 
-    def __init__(self, beam_segment_generator: Optional[BeamSegmentGenerator] = None, joint_connector_generator: Optional[JointConnectorGenerator] = None) -> None:
+    def __init__(
+        self,
+        beam_segment_generator: Optional[BeamSegmentGenerator] = None,
+        joint_connector_generator: Optional[JointConnectorGenerator] = None,
+        interaction_type: Optional[InteractionType] = None,
+    ) -> None:
         self.beam_segment_generator = beam_segment_generator or SimpleBeamSegmentGenerator()
         self.joint_connector_generator = joint_connector_generator or SimpleJointConnectorGenerator()
+        self._interaction_type = interaction_type
+
+    def _get_interactions(self, beam: Beam, model: TimberModel) -> list:
+        interaction_type = self._interaction_type or InteractionType.AUTO
+        if interaction_type == InteractionType.JOINTS:
+            return model.get_joints_for_element(beam)
+        elif interaction_type == InteractionType.CANDIDATES:
+            return model.get_candidates_for_element(beam)
+
+        # AUTO: prefer joints, fall back to candidates
+        joints = model.get_joints_for_element(beam)
+        candidates = model.get_candidates_for_element(beam)
+        if joints:
+            return joints
+        return candidates
 
     def add_structural_segments(self, beam: Beam, model: TimberModel) -> List[StructuralSegment]:
         """Creates and adds structural segments for a given beam to the timber model.
@@ -179,7 +224,7 @@ class BeamStructuralElementSolver:
             The timber model containing the beams and joints.
 
         """
-        joints_for_beam = model.get_interactions_for_element(beam)
+        joints_for_beam = self._get_interactions(beam, model)
         segments = self.beam_segment_generator.generate_segments(beam, joints_for_beam)
         model.add_beam_structural_segments(beam, segments)
         return segments
