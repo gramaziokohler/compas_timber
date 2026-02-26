@@ -375,6 +375,46 @@ def test_btlx_part_unique_functionalities():
     assert isinstance(btlx_part.processings, list)
 
 
+def test_btlx_part_shape_strings_format():
+    """Test that shape_strings returns two non-empty strings with correct format."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
+    btlx_part = BTLxPart(beam, order_num=1)
+
+    result = btlx_part.shape_strings
+    assert isinstance(result, list) and len(result) == 2
+
+    index_string, vertex_string = result
+    assert isinstance(index_string, str) and len(index_string) > 0
+    assert isinstance(vertex_string, str) and len(vertex_string) > 0
+
+    # each face group must be terminated by -1
+    indices = list(map(int, index_string.split()))
+    assert -1 in indices
+
+    # all vertex coordinates must be non-negative for a plain (uncut) beam
+    coords = list(map(float, vertex_string.split()))
+    assert all(c >= 0.0 for c in coords)
+
+    # result must be cached
+    assert btlx_part.shape_strings is result
+
+
+def test_btlx_part_shape_strings_box_vertex_and_face_count():
+    """A plain rectangular beam tessellates to 8 unique vertices and 6 faces."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
+    btlx_part = BTLxPart(beam, order_num=1)
+
+    index_string, vertex_string = btlx_part.shape_strings
+
+    # 8 unique vertices for a box
+    coords = list(map(float, vertex_string.split()))
+    assert len(coords) == 8 * 3  # 8 vertices * 3 coordinates each
+
+    # 6 faces, each terminated by -1
+    indices = list(map(int, index_string.split()))
+    assert indices.count(-1) == 6
+
+
 def test_btlx_rawpart_unique_functionalities():
     """Test BTLxRawpart unique functionalities for raw material parts."""
     stock = BeamStock(length=2000, cross_section=(100, 100))
