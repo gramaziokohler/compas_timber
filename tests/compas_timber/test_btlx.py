@@ -1,10 +1,11 @@
 import os
 import pytest
+from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 from compas.data import json_load
 from compas.tolerance import Tolerance
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polygon
@@ -405,7 +406,10 @@ def test_btlx_part_shape_strings_format():
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
     btlx_part = BTLxPart(beam, order_num=1)
 
-    with patch.object(Brep, "to_polygons", return_value=_box_polygons()):
+    mock_geometry = MagicMock()
+    mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
+
+    with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
         result = btlx_part.shape_strings
 
     assert isinstance(result, list) and len(result) == 2
@@ -414,15 +418,12 @@ def test_btlx_part_shape_strings_format():
     assert isinstance(index_string, str) and len(index_string) > 0
     assert isinstance(vertex_string, str) and len(vertex_string) > 0
 
-    # each face group must be terminated by -1
     indices = list(map(int, index_string.split()))
     assert -1 in indices
 
-    # all vertex coordinates must be non-negative for a plain (uncut) beam
     coords = list(map(float, vertex_string.split()))
     assert all(c >= 0.0 for c in coords)
 
-    # result must be cached
     assert btlx_part.shape_strings is result
 
 
@@ -431,14 +432,15 @@ def test_btlx_part_shape_strings_box_vertex_and_face_count():
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
     btlx_part = BTLxPart(beam, order_num=1)
 
-    with patch.object(Brep, "to_polygons", return_value=_box_polygons()):
+    mock_geometry = MagicMock()
+    mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
+
+    with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
         index_string, vertex_string = btlx_part.shape_strings
 
-    # 8 unique vertices for a box
     coords = list(map(float, vertex_string.split()))
-    assert len(coords) == 8 * 3  # 8 vertices * 3 coordinates each
+    assert len(coords) == 8 * 3
 
-    # 6 faces, each terminated by -1
     indices = list(map(int, index_string.split()))
     assert indices.count(-1) == 6
 
