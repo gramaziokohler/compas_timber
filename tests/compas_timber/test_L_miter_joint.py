@@ -14,7 +14,7 @@ from compas.data import json_loads
 import pytest
 
 
-def test_L_butt_joint_create():
+def test_L_miter_joint_create():
     beam_a = Beam(frame=Frame([0, 0, 0], [1, 0, 0], [0, 1, 0]), width=100, height=200, length=100)
     beam_b = Beam(frame=Frame([0, 0, 0], [0, 1, 0], [1, 0, 0]), width=100, height=200, length=100)
     joint = LMiterJoint(beam_a, beam_b)
