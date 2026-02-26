@@ -18,6 +18,7 @@ from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
@@ -66,7 +67,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
-        self._tolerance = TOL
+        self._tolerance = Tolerance("MM", absolute=1e-3, relative=1e-3)
         self._errors = []
 
     @property
@@ -265,16 +266,12 @@ class BTLxWriter(object):
         if element.features:
             processings_element = ET.Element("Processings")
             for feature in element.features:
-                # TODO: This is a temporary hack to skip features from the old system that don't generate a processing, until they are removed or updated.
-                if hasattr(feature, "PROCESSING_NAME"):
-                    try:
-                        processing_element = self._create_processing(feature)
-                    except ValueError as ex:
-                        self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
-                    else:
-                        processings_element.append(processing_element)
+                try:
+                    processing_element = self._create_processing(feature)
+                except ValueError as ex:
+                    self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
                 else:
-                    warn("Unsupported feature will be skipped: {}".format(feature))
+                    processings_element.append(processing_element)
             part_element.append(processings_element)
         if element.is_beam and element._geometry:
             # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
@@ -438,7 +435,7 @@ class BTLxGenericPart(object):
             "AssemblyNumber": "",
             "OrderNumber": str(self.order_num),
             "Designation": "",
-            "Annotation": str(self.name) + "-" + str(self.part_guid)[:4],
+            "Annotation": str(self.name),
             "Storey": "",
             "Group": "",
             "Package": "",
@@ -602,7 +599,12 @@ class BTLxPart(BTLxGenericPart):
     @property
     def attr(self):
         """Return the attributes dictionary for the part XML element."""
-        return self.base_attr
+        attr = self.base_attr.copy()
+        if self.element.is_beam:
+            attr["Designation"] = "Beam"
+        elif self.element.is_plate:
+            attr["Designation"] = "Plate"
+        return attr
 
     def ref_side_from_face(self, element_face):
         """Finds the one-based index of the reference side with normal that matches the normal of the given element face.
@@ -782,18 +784,40 @@ class BTLxProcessing(Data):
         The priority of the process.
     process_id : int
         The process ID.
+    tool_id : int, optional
+        The tool ID for the processing. Only used by specific processing types.
+    counter_sink : bool, optional
+        If True, the processing creates a counter sink. Only used by specific processing types.
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
     PROCESSING_NAME : str
         The name of the process.
+    ATTRIBUTE_MAP : dict
+        Mapping of BTLx XML attribute names to Python attribute names.
+    HEADER_ATTRIBUTE_MAP : dict
+        Mapping of BTLx XML header attribute names (in XML attributes) to Python parameter names with converters.
     is_joinery : bool
         If True, the process is a result of joinery process.
 
     """
 
+    # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
+    HEADER_ATTRIBUTE_MAP = {
+        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
+        "Priority": ("priority", int),
+        "ProcessID": ("process_id", int),
+        "ToolID": ("tool_id", int),
+        "CounterSink": ("counter_sink", bool),
+        "ToolPosition": ("tool_position", str),
+        "Name": ("name", str),
+        "Process": ("process", bool),
+    }
+
     @property
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0, is_joinery=True):
+    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
         super(BTLxProcessing, self).__init__()
         self._ref_side_index = None
         self._priority = priority
@@ -801,6 +825,12 @@ class BTLxProcessing(Data):
         self.ref_side_index = ref_side_index or 0
         self.subprocessings = None
         self._is_joinery = is_joinery
+        self._name = name
+        self._process = process
+        # Optional header attributes - set by subclasses if needed
+        self._tool_id = tool_id
+        self._counter_sink = counter_sink
+        self._tool_position = tool_position
 
     @property
     def ref_side_index(self):
@@ -826,8 +856,43 @@ class BTLxProcessing(Data):
         return self._process_id
 
     @property
+    def name(self):
+        return self._name
+
+    @property
+    def process(self):
+        return self._process
+
+    @property
+    def tool_id(self):
+        return self._tool_id
+
+    @property
+    def counter_sink(self):
+        return self._counter_sink
+
+    @property
+    def tool_position(self):
+        return self._tool_position
+
+    @property
     def PROCESSING_NAME(self):
         raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
+
+    @property
+    def ATTRIBUTE_MAP(self):
+        raise NotImplementedError("ATTRIBUTE_MAP must be implemented as class attribute in subclasses!")
+
+    @property
+    def params(self):
+        """Returns the BTLx processing parameters for serialization.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.BTLxProcessingParams`
+            The processing parameters instance.
+        """
+        return BTLxProcessingParams(self)
 
     def add_subprocessing(self, subprocessing):
         """Add a nested subprocessing."""
@@ -870,23 +935,89 @@ class BTLxProcessingParams(object):
 
     @property
     def header_attributes(self):
+        """Returns the header attributes for BTLx serialization.
+
+        Returns
+        -------
+        OrderedDict
+            Dictionary of header attributes for the XML element.
+        """
         result = OrderedDict()
         result["Name"] = self._instance.PROCESSING_NAME
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
         result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+
+        # Add optional header attributes if set
+        if self._instance.tool_id is not None:
+            result["ToolID"] = str(self._instance.tool_id)
+        if self._instance.counter_sink is not None:
+            result["CounterSink"] = "yes" if self._instance.counter_sink else "no"
+        if self._instance.tool_position is not None:
+            result["ToolPosition"] = str(self._instance.tool_position)
+
         return result
 
-    def as_dict(self):
-        """Returns the processing parameters as a dictionary.
+    @property
+    def attribute_map(self):
+        """Returns mapping of BTLx XML child element tag names to Python attribute names.
+
+        Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
 
         Returns
         -------
         dict
+            Dictionary mapping BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        """
+        return self._instance.ATTRIBUTE_MAP
+
+    def as_dict(self):
+        """Returns the processing parameters as a dictionary for BTLx serialization.
+
+        Uses ATTRIBUTE_MAP to convert Python attributes to BTLx XML format.
+        Can be overridden in subclasses for custom serialization logic.
+
+        Returns
+        -------
+        OrderedDict
             The processing parameters as a dictionary.
         """
-        raise NotImplementedError("as_dict must be implemented in subclasses!")
+        result = OrderedDict()
+        for btlx_name, attr_spec in self.attribute_map.items():
+            # Handle both formats: "attr_name" or ("attr_name", type)
+            python_name = attr_spec[0] if isinstance(attr_spec, tuple) else attr_spec
+            value = getattr(self._instance, python_name)
+            result[btlx_name] = self._format_value(value)
+        return result
+
+    @staticmethod
+    def _format_value(value):
+        """Formats a value for BTLx serialization.
+
+        Parameters
+        ----------
+        value : object
+            The value to format.
+
+        Returns
+        -------
+        str or dict
+            The formatted value as a string, or a dictionary with formatted values.
+        """
+        # Check if the value is a registered complex type (e.g., Contour, DualContour)
+        if type(value).__name__ in BTLxWriter.SERIALIZERS:
+            return value  # Pass through unchanged for complex serialization
+        elif isinstance(value, bool):
+            return "yes" if value else "no"
+        elif isinstance(value, (int, float)):
+            return "{:.{prec}f}".format(value, prec=3)
+        elif isinstance(value, str):
+            return value
+        elif isinstance(value, MachiningLimits):
+            return {key: "yes" if val else "no" for key, val in value.as_dict().items()}
+        else:
+            raise ValueError("Unsupported value type for BTLx serialization: {}".format(type(value)))
 
 
 class OrientationType(object):
@@ -1024,8 +1155,18 @@ class MachiningLimits(object):
         for key, value in dictionary.items():
             if key not in cls.EXPECTED_KEYS:
                 raise ValueError("The key must be one of the following: ", [limit for limit in cls.EXPECTED_KEYS])
-            if not isinstance(value, bool):
-                raise ValueError("The values must be a boolean.")
+
+            # Convert string values to boolean
+            if isinstance(value, str):
+                if value.lower() == "yes":
+                    value = True
+                elif value.lower() == "no":
+                    value = False
+                else:
+                    raise ValueError("String values must be 'yes' or 'no', got: {}".format(value))
+            elif not isinstance(value, bool):
+                raise ValueError("The values must be a boolean or 'yes'/'no' string.")
+
             if key == "FaceLimitedStart":
                 machining_limits.face_limited_start = value
             elif key == "FaceLimitedEnd":
@@ -1097,14 +1238,14 @@ class Contour(Data):
 
     Parameters
     ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline of the contour.
     depth : float
         The depth of the contour.
     depth_bounded : bool
         If True, the depth is bounded.
     inclination : list[float]
         The inclination of the contour.
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline of the contour.
     """
 
     def __init__(self, polyline, depth, depth_bounded=True, inclination=None):

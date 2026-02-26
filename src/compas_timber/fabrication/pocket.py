@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from collections import OrderedDict
 from typing import Optional
 from typing import Union
 
@@ -27,7 +26,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 
 
@@ -68,6 +66,22 @@ class Pocket(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Pocket"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": ("start_x", float),
+        "StartY": ("start_y", float),
+        "StartDepth": ("start_depth", float),
+        "Angle": ("angle", float),
+        "Inclination": ("inclination", float),
+        "Slope": ("slope", float),
+        "Length": ("length", float),
+        "Width": ("width", float),
+        "InternalAngle": ("internal_angle", float),
+        "TiltRefSide": ("tilt_ref_side", float),
+        "TiltEndSide": ("tilt_end_side", float),
+        "TiltOppSide": ("tilt_opp_side", float),
+        "TiltStartSide": ("tilt_start_side", float),
+        "MachiningLimits": ("machining_limits", MachiningLimits),
+    }
 
     @property
     def __data__(self):
@@ -141,10 +155,6 @@ class Pocket(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self) -> PocketParams:
-        return PocketParams(self)
 
     @property
     def start_x(self) -> float:
@@ -722,46 +732,6 @@ class Pocket(BTLxProcessing):
         self.start_depth *= factor
         self.length *= factor
         self.width *= factor
-
-
-class PocketParams(BTLxProcessingParams):
-    """A class to store the parameters of a Pocket feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Pocket`
-        The instance of the Pocket feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Pocket) -> None
-        super(PocketParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Pocket feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Pocket feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["InternalAngle"] = "{:.{prec}f}".format(float(self._instance.internal_angle), prec=TOL.precision)
-        result["TiltRefSide"] = "{:.{prec}f}".format(float(self._instance.tilt_ref_side), prec=TOL.precision)
-        result["TiltEndSide"] = "{:.{prec}f}".format(float(self._instance.tilt_end_side), prec=TOL.precision)
-        result["TiltOppSide"] = "{:.{prec}f}".format(float(self._instance.tilt_opp_side), prec=TOL.precision)
-        result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
 
 
 class PocketProxy(object):

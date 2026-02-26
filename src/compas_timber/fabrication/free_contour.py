@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from collections import OrderedDict
 from typing import Optional
 
 from compas.geometry import Frame
@@ -30,22 +31,31 @@ class FreeContour(BTLxProcessing):
     ----------
     contour_param_object : :class:`compas_timber.fabrication.btlx.Contour` or :class:`compas_timber.fabrication.btlx.DualContour`
         The contour parameter object.
+    tool_id : int, optional
+        The tool ID for the processing. Default is 0.
     counter_sink : bool, optional
         If True, the contour is a counter sink. Default is False.
-    tool_position : str, optional
-        The position of the tool. Default is "left".
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'.
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
 
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
+    # NOTE: Unusual polymorphic case - both XML element types map to the SAME Python attribute.
+    # The reader requires both entries to recognize either <Contour> or <DualContour> children.
+    # At runtime, contour_param_object holds ONE object (Contour OR DualContour, never both).
+    # During writing, custom FreeContourParams.as_dict() serializes only the appropriate type.
+    ATTRIBUTE_MAP = {
+        "Contour": ("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
+        "DualContour": ("contour_param_object", DualContour),  # Dual contour for non-parallel segments
+    }
 
-    def __init__(self, contour_param_object, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
-        super(FreeContour, self).__init__(**kwargs)
+    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
+        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
+        self._process_id = 1  # FreeContour always uses process_id=1
         self.contour_param_object = contour_param_object
-        self.counter_sink = counter_sink
-        self.tool_position = tool_position
         self.depth_bounded = depth_bounded
 
     ########################################################################
@@ -56,14 +66,62 @@ class FreeContour(BTLxProcessing):
     def __data__(self):
         data = super(FreeContour, self).__data__
         data["contour_param_object"] = self.contour_param_object
+        data["tool_id"] = self.tool_id
         data["counter_sink"] = self.counter_sink
         data["tool_position"] = self.tool_position
         data["depth_bounded"] = self.depth_bounded
         return data
 
     @property
+    def tool_id(self):
+        return self._tool_id
+
+    @tool_id.setter
+    def tool_id(self, tool_id):
+        if not isinstance(tool_id, int):
+            raise ValueError("tool_id must be an integer value.")
+        self._tool_id = tool_id
+
+    @property
+    def counter_sink(self):
+        return self._counter_sink
+
+    @counter_sink.setter
+    def counter_sink(self, counter_sink):
+        if not isinstance(counter_sink, bool):
+            raise ValueError("counter_sink must be a boolean value.")
+        self._counter_sink = counter_sink
+
+    @property
+    def tool_position(self):
+        return self._tool_position
+
+    @tool_position.setter
+    def tool_position(self, tool_position):
+        if tool_position not in [AlignmentType.LEFT, AlignmentType.CENTER, AlignmentType.RIGHT]:
+            raise ValueError("tool_position must be one of 'left', 'center', or 'right'.")
+        self._tool_position = tool_position
+
+    @property
+    def depth_bounded(self):
+        return self._depth_bounded
+
+    @depth_bounded.setter
+    def depth_bounded(self, depth_bounded):
+        if not isinstance(depth_bounded, bool):
+            raise ValueError("depth_bounded must be a boolean value.")
+        self._depth_bounded = depth_bounded
+
+    @property
     def params(self):
-        return FreeCountourParams(self)
+        """Returns custom BTLx processing parameters that handle polymorphic contour serialization.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.BTLxProcessingParams`
+            Custom processing parameters that choose between Contour/DualContour based on runtime type.
+        """
+        return FreeContourParams(self)
 
     ########################################################################
     # Alternative constructors
@@ -258,22 +316,44 @@ class FreeContour(BTLxProcessing):
         self.contour_param_object.scale(factor)
 
 
-class FreeCountourParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        # type: (FreeContour) -> None
-        super(FreeCountourParams, self).__init__(instance)
+class FreeContourParams(BTLxProcessingParams):
+    """Custom processing parameters for FreeContour that handle polymorphic contour serialization.
+
+    This class dynamically chooses between serializing as 'Contour' or 'DualContour'
+    based on the runtime type of the contour_param_object attribute.
+    """
 
     def as_dict(self):
-        return {"Contour": self._instance.contour_param_object}
+        """Returns the processing parameters as a dictionary for BTLx serialization.
 
-    @property
-    def header_attributes(self):
-        """Return the attributes to be included in the XML element."""
-        return {
-            "Name": self._instance.PROCESSING_NAME,
-            "CounterSink": "yes" if self._instance.counter_sink else "no",
-            "ToolID": "0",
-            "Process": "yes",
-            "ToolPosition": self._instance.tool_position,
-            "ReferencePlaneID": str(self._instance.ref_side_index + 1),
-        }
+        Overrides the base implementation to only include the appropriate contour type
+        (Contour or DualContour) based on the actual instance type.
+
+        Returns
+        -------
+        OrderedDict
+            The processing parameters with only the correct contour entry.
+        """
+        result = OrderedDict()
+
+        # Determine which contour type to serialize based on runtime type
+        contour_obj = self._instance.contour_param_object
+        if isinstance(contour_obj, DualContour):
+            xml_tag_name = "DualContour"
+        else:  # Contour or any other type defaults to Contour
+            xml_tag_name = "Contour"
+
+        # Iterate over attribute_map but only include the matching contour type
+        for btlx_name, attr_spec in self.attribute_map.items():
+            python_name = attr_spec[0] if isinstance(attr_spec, tuple) else attr_spec
+            value = getattr(self._instance, python_name)
+
+            # Only serialize the entry that matches the runtime type
+            if btlx_name in ["Contour", "DualContour"]:
+                if btlx_name == xml_tag_name:
+                    result[btlx_name] = self._format_value(value)
+            else:
+                # Include all other (non-contour) attributes
+                result[btlx_name] = self._format_value(value)
+
+        return result
