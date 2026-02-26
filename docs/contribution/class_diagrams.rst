@@ -219,6 +219,9 @@ The connections subsystem defines joints and their relationships. All joints inh
          +beam_a_guid : str
          +beam_b_guid : str
          +cutoff : bool
+         +miter_plane : Plane
+         +ref_side_miter : bool
+         +clean : bool
          +SUPPORTED_TOPOLOGY = TOPO_L
          +get_cutting_planes()
          +get_cutoff_plane()
