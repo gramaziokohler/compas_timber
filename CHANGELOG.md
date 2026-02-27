@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed multi-beam joints get de-serialized multiple times.
 * `TStepJoint.step_shape` now accepts `StepShapeType` string constants instead of integers.
+* `TStepJoint` default attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
+* `TStepJoint` depth attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization without requiring a call to `add_features()`.
 
 ### Removed
 

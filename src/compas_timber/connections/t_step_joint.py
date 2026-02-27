@@ -95,6 +95,9 @@ class TStepJoint(Joint):
 
         self.features = []
 
+        if self.main_beam and self.cross_beam:
+            self._set_unset_attributes()
+
     @property
     def elements(self):
         return [self.main_beam, self.cross_beam]
@@ -122,6 +125,9 @@ class TStepJoint(Joint):
 
     def _check_depths(self):
         """Warns if a depth relevant to the chosen shape is zero or negative; default will be used instead."""
+        if self.step_shape not in (StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL, StepShapeType.DOUBLE):
+            raise ValueError("step_shape must be one of StepShapeType: STEP, HEEL, TAPERED_HEEL, DOUBLE. Got: {}".format(self.step_shape))
+
         has_step = self.step_shape in (StepShapeType.STEP, StepShapeType.DOUBLE)
         has_heel = self.step_shape in (StepShapeType.HEEL, StepShapeType.TAPERED_HEEL, StepShapeType.DOUBLE)
 
@@ -194,8 +200,6 @@ class TStepJoint(Joint):
         main_width, main_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
         cross_width, _ = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)
 
-        self._set_unset_attributes()
-
         # generate step joint features
         main_feature = StepJoint.from_plane_and_beam(
             self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
@@ -264,3 +268,5 @@ class TStepJoint(Joint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model[self.main_beam_guid]
         self.cross_beam = model[self.cross_beam_guid]
+        # ensure that attributes that depend on beam geometry are properly set after restoration
+        self._set_unset_attributes()
