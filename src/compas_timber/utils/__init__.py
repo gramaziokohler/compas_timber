@@ -375,18 +375,23 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     a = pts[0]
     b = None
     c = None
+    # find b: the first point that is not coincident with a, so that a-b defines a valid direction
     for pt in pts[1:]:
-        if distance_point_point(a, pt) > TOL.absolute:
+        if not TOL.is_allclose(pt, a):
             b = pt
             break
     if b is None:
+        # all points are coincident / cannot define a plane
         return False
+    # find c: the first point that is not collinear with a and b,
+    # so that a, b, c define a valid plane (non-zero cross product)
     for pt in pts:
         cross = cross_vectors(subtract_vectors(b, a), subtract_vectors(pt, a))
-        if length_vector(cross) > TOL.absolute:
+        if not TOL.is_allclose(cross, [0, 0, 0]):
             c = pt
             break
     if c is None:
+        # all points are collinear / cannot define a plane
         return False
     frame = Frame.from_points(a, b, c)
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
@@ -580,6 +585,11 @@ def join_polyline_segments(segments: list[Line], close_loop: bool = False):
     if not segments:
         return [], []
 
+    # filter out degenerate segments (start == end) before joining
+    segments = [seg for seg in segments if not TOL.is_allclose(seg.start, seg.end)]
+    if not segments:
+        return [], []
+
     remaining = segments[:]  # copy so we don't mutate caller's list
     polylines: list[Polyline] = []
     unjoined: list[Line] = []
@@ -608,15 +618,21 @@ def join_polyline_segments(segments: list[Line], close_loop: bool = False):
     return polylines, unjoined
 
 
-def polyline_from_brep_loop(loop, num_curve_samples=16):
-    """Creates a Polyline from a BrepLoop. Handles both straight and curved edges.
+def polyline_from_brep_loop(loop):
+    """Creates a Polyline from a BrepLoop.
+
+    Only straight (linear) edges are supported. Curved edges are treated as straight
+    lines between their start and end vertices. If your brep contains curved faces,
+    tessellate them to polygon faces before passing them to this function.
+
+    Uses :func:`join_polyline_segments` internally to handle edges whose start/end
+    points may be in any order or orientation, as can occur in polyhedron-style breps.
+    Degenerate edges (start == end) are automatically filtered by :func:`join_polyline_segments`.
 
     Parameters
     ----------
     loop : :class:`~compas.geometry.BrepLoop`
         The BrepLoop to convert to a polyline.
-    num_curve_samples : int, optional
-        Number of sample points used when discretizing curved edges. Default is 16.
 
     Returns
     -------
@@ -624,45 +640,18 @@ def polyline_from_brep_loop(loop, num_curve_samples=16):
         The Polyline resulting from joining the BrepLoop edges, or None if the edges
         cannot be joined into a single closed polyline.
     """
-    def _edge_points(edge):
-        start = edge.start_vertex.point
-        end = edge.end_vertex.point
-        is_degenerate = TOL.is_allclose(start, end)
+    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
 
-        try:
-            curve_polyline = edge.curve.to_polyline(num_curve_samples)
-            if curve_polyline and hasattr(curve_polyline, 'points'):
-                pts = list(curve_polyline.points)
-                if len(pts) >= 2 and not all(TOL.is_allclose(pts[0], p) for p in pts):
-                    return pts
-        except (AttributeError, TypeError, Exception):
-            pass
+    # join_polyline_segments handles any edge order / orientation, and filters degenerate segments
+    polylines, _ = join_polyline_segments(segments, close_loop=True)
 
-        if is_degenerate:
-            return []
-        return [start, end]
-
-    all_points = []
-    for edge in loop.edges:
-        pts = _edge_points(edge)
-        if pts is None:
-            continue
-        if not pts:
-            continue
-
-        if not all_points:
-            all_points.extend(pts[:-1])
-        else:
-            if TOL.is_allclose(pts[0], all_points[-1]):
-                all_points.extend(pts[1:-1])
-            else:
-                all_points.extend(pts[:-1])
-
-    if len(all_points) < 3:
+    if not polylines:
         return None
-    if not TOL.is_allclose(all_points[0], all_points[-1]):
-        all_points.append(all_points[0])
-    return Polyline(all_points)
+    # a valid closed polyline needs at least 4 points (3 unique vertices + 1 closing point);
+    # 3 points would yield only 2 overlapping line segments
+    if len(polylines[0].points) < 4:
+        return None
+    return polylines[0]
 
 
 def polylines_from_brep_face(face):
@@ -676,14 +665,6 @@ def polylines_from_brep_face(face):
     tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
         The extracted polylines.
     """
-    if isinstance(face, list):
-        segments = [Line(e.start_vertex.point, e.end_vertex.point) for e in face if hasattr(e, 'start_vertex') and hasattr(e, 'end_vertex')]
-        if segments:
-            polylines_list, _ = join_polyline_segments(segments, close_loop=True)
-            if polylines_list:
-                return polylines_list[0], polylines_list[1:]
-        raise ValueError("Could not extract valid polylines from the provided edge list")
-
     outer = None
     openings = []
     for loop in face.loops:
@@ -698,6 +679,127 @@ def polylines_from_brep_face(face):
         raise ValueError("Could not extract outer boundary polyline from BRep face")
 
     return outer, openings
+
+
+def get_plate_geometry_outlines_from_brep(brep):
+    """Extract the two parallel face outlines from a plate-like brep.
+
+    Uses the Brep topology to identify the two main (top/bottom) faces:
+    in a valid plate brep, all side faces have exactly 4 edges and each connects
+    one edge of ``outline_a`` to one edge of ``outline_b``.  The main faces are
+    identified first by edge count — they have more than 4 edges for non-rectangular
+    plates — with a lightweight geometric tiebreaker (normal dot-product) used only
+    for the rectangular (4-sided outline) case.
+    Vertex correspondence between the two outlines is resolved by traversing the
+    vertical edges of the side faces, which directly map each vertex of ``outline_a``
+    to the matching vertex of ``outline_b`` without any brute-force search.
+
+    Parameters
+    ----------
+    brep : :class:`~compas.geometry.Brep`
+        A brep representing a plate geometry.  Must contain at least 2 faces.
+
+    Returns
+    -------
+    tuple(:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`, list[:class:`~compas.geometry.Polyline`] or None)
+        ``outline_a``, ``outline_b``, and any inner opening polylines extracted
+        from the primary face (or ``None`` if there are no openings).
+
+    Raises
+    ------
+    ValueError
+        If the brep has fewer than 2 faces or the two main faces cannot be identified.
+    """
+    if len(brep.faces) < 2:
+        raise ValueError("Brep must have at least 2 faces, got {}.".format(len(brep.faces)))
+
+    def pt_key(p):
+        """Round point coordinates to 6 d.p. to handle floating-point imprecision."""
+        return tuple(round(c, 6) for c in p)
+
+    def face_edge_key(edge):
+        """Represent an edge as a frozenset of its two vertex keys (order-independent)."""
+        return frozenset([pt_key(edge.start_vertex.point), pt_key(edge.end_vertex.point)])
+
+    # extract all faces with their outer polyline and edge-key sets
+    faces = []
+    for face in brep.faces:
+        outer, inner = polylines_from_brep_face(face)
+        outer_loop = next((loop for loop in face.loops if loop.is_outer), None)
+        edge_set = frozenset(face_edge_key(e) for e in outer_loop.edges) if outer_loop else frozenset()
+        faces.append({"outer": outer, "inner": inner, "edge_set": edge_set, "edge_count": len(outer.points) - 1})
+
+    # --- Primary: identify main faces by edge count ---
+    # side faces always have exactly 4 edges; main faces have N edges (outline vertex count).
+    # for non-rectangular plates (N != 4) the main faces are unambiguously the only
+    # ones with N > 4 edges.
+    max_edge_count = max(f["edge_count"] for f in faces)
+    main_candidates = [f for f in faces if f["edge_count"] == max_edge_count]
+    if len(main_candidates) == 2 and max_edge_count != 4:
+        face_a_data, face_b_data = main_candidates
+    else:
+        # rectangular (4-sided outline) or otherwise ambiguous:
+        # collect all non-adjacent face pairs (share 0 edges), then pick the
+        # most parallel one using a lightweight normal estimate.
+        non_adjacent = [
+            (i, j)
+            for i in range(len(faces))
+            for j in range(i + 1, len(faces))
+            if not faces[i]["edge_set"] & faces[j]["edge_set"]
+        ]
+        if not non_adjacent:
+            raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
+
+        def _face_normal(polyline):
+            """Estimate face normal from the first triangle of the polygon."""
+            pts = list(polyline.points)
+            v1 = subtract_vectors(pts[1], pts[0])
+            v2 = subtract_vectors(pts[2], pts[0])
+            n = cross_vectors(v1, v2)
+            length = length_vector(n)
+            return normalize_vector(n) if length > TOL.absolute else None
+
+        best_pair = max(
+            non_adjacent,
+            key=lambda ij: abs(dot_vectors(
+                _face_normal(faces[ij[0]]["outer"]) or [0, 0, 0],
+                _face_normal(faces[ij[1]]["outer"]) or [0, 0, 0],
+            )),
+        )
+        face_a_data, face_b_data = faces[best_pair[0]], faces[best_pair[1]]
+
+    # --- Align outline_b vertices with outline_a using vertical side-face edges ---
+    # each side face has "vertical" edges — one endpoint in face_a, one in face_b —
+    # giving the full vertex correspondence directly from topology, in O(E).
+    pts_a = list(face_a_data["outer"].points)[:-1]
+    pts_b = list(face_b_data["outer"].points)[:-1]
+    outline_b = face_b_data["outer"]  # fallback if alignment fails
+    if len(pts_a) == len(pts_b):
+        a_pt_index = {pt_key(p): i for i, p in enumerate(pts_a)}
+        b_pt_index = {pt_key(p): i for i, p in enumerate(pts_b)}
+        b_to_a = {}  # b_vertex_index -> a_vertex_index
+        for face in brep.faces:
+            for loop in face.loops:
+                if not loop.is_outer:
+                    continue
+                for edge in loop.edges:
+                    s_key = pt_key(edge.start_vertex.point)
+                    e_key = pt_key(edge.end_vertex.point)
+                    if s_key in a_pt_index and e_key in b_pt_index:
+                        b_to_a[b_pt_index[e_key]] = a_pt_index[s_key]
+                    elif s_key in b_pt_index and e_key in a_pt_index:
+                        b_to_a[b_pt_index[s_key]] = a_pt_index[e_key]
+
+        if len(b_to_a) == len(pts_a):
+            aligned = [None] * len(pts_a)
+            for b_idx, a_idx in b_to_a.items():
+                aligned[a_idx] = pts_b[b_idx]
+            if all(p is not None for p in aligned):
+                aligned.append(aligned[0])
+                outline_b = Polyline(aligned)
+
+    openings = face_a_data["inner"] if face_a_data["inner"] else None
+    return face_a_data["outer"], outline_b, openings
 
 
 def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
@@ -749,6 +851,7 @@ __all__ = [
     "join_polyline_segments",
     "polyline_from_brep_loop",
     "polylines_from_brep_face",
+    "get_plate_geometry_outlines_from_brep",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
 ]

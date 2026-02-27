@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior; see "Changed" below for migration details).
+* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
+* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
+* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
+* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using topology-based face identification (edge counts and adjacency).
 
 ### Changed
+* `Plate.from_brep()` now delegates all brep parsing logic to `get_plate_geometry_outlines_from_brep`, replacing the previous geometry-heavy approach (planarity checks, centroid-based normals, arbitrary dot-product thresholds) with topology-based face identification.
+* Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
+* Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
 
 ### Removed
 
@@ -65,8 +71,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
-* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior; see "Changed" below for migration details).
 * Added `ref_side_miter`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
 * Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
