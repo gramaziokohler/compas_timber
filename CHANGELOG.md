@@ -12,8 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed multi-beam joints get de-serialized multiple times.
+* `TStepJoint.step_shape` now accepts `StepShapeType` string constants instead of integers.
 
 ### Removed
+
+* Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
 
 
 ## [2.0.0-dev0] 2026-02-19

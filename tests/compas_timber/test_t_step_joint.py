@@ -4,6 +4,7 @@ from compas.geometry import Point
 
 from compas_timber.connections import TStepJoint
 from compas_timber.elements import Beam
+from compas_timber.fabrication import StepShapeType
 from compas_timber.model import TimberModel
 
 
@@ -24,11 +25,11 @@ def beams():
 def test_t_step_joint_creation_with_beams(beams):
     """Test that TStepJoint can be created with valid beam arguments."""
     main_beam, cross_beam = beams
-    joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=0, step_depth=25.0, heel_depth=0.0)
+    joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.STEP, step_depth=25.0, heel_depth=0.0)
 
     assert joint.main_beam == main_beam
     assert joint.cross_beam == cross_beam
-    assert joint.step_shape == 0
+    assert joint.step_shape == StepShapeType.STEP
     assert joint.step_depth == 25.0
     assert joint.heel_depth == 0.0
 
@@ -40,11 +41,11 @@ def test_t_step_joint_creation_with_beams_and_model(beams):
     model.add_elements(beams)
 
     # This tests the fix for the deserialization issue
-    joint = TStepJoint.create(model, main_beam=main_beam, cross_beam=cross_beam, step_shape=1, step_depth=0.0, heel_depth=25.0)
+    joint = TStepJoint.create(model, main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.HEEL, step_depth=0.0, heel_depth=25.0)
 
     assert joint.main_beam == main_beam
     assert joint.cross_beam == cross_beam
-    assert joint.step_shape == 1
+    assert joint.step_shape == StepShapeType.HEEL
     assert joint.step_depth == 0.0
     assert joint.heel_depth == 25.0
 
@@ -54,7 +55,7 @@ def test_t_step_joint_serialization_deserialization(beams):
     main_beam, cross_beam = beams
 
     # Create joint with beams
-    original_joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=2, step_depth=30.0, heel_depth=20.0, tapered_heel=True, tenon_mortise_height=40.0)
+    original_joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.TAPERED_HEEL, step_depth=0.0, heel_depth=20.0, tenon_mortise_height=40.0)
 
     # Serialize to data
     data = original_joint.__data__
@@ -63,10 +64,9 @@ def test_t_step_joint_serialization_deserialization(beams):
     deserialized_joint = TStepJoint.__from_data__(data)
 
     # Check that deserialized joint has correct properties
-    assert deserialized_joint.step_shape == 2
-    assert deserialized_joint.step_depth == 30.0
+    assert deserialized_joint.step_shape == StepShapeType.TAPERED_HEEL
+    assert deserialized_joint.step_depth == 0.0
     assert deserialized_joint.heel_depth == 20.0
-    assert deserialized_joint.tapered_heel is True
     assert deserialized_joint.tenon_mortise_height == 40.0
     assert deserialized_joint.main_beam_guid == str(main_beam.guid)
     assert deserialized_joint.cross_beam_guid == str(cross_beam.guid)
@@ -83,7 +83,7 @@ def test_t_step_joint_beam_restoration_from_keys(beams):
     model.add_elements(beams)
 
     # Create joint and serialize
-    original_joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=0)
+    original_joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.STEP)
     data = original_joint.__data__
 
     # Deserialize
@@ -101,20 +101,26 @@ def test_step_depths_calculation(beams):
     """Test that step depths are calculated correctly based on step_shape."""
     main_beam, cross_beam = beams
 
-    # Test step shape 0 (step only)
-    joint_step = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=0)
-    joint_step.set_step_depths()
+    # Test STEP shape
+    joint_step = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.STEP)
+    joint_step._set_unset_attributes()
     assert joint_step.step_depth > 0
     assert joint_step.heel_depth == 0.0
 
-    # Test step shape 1 (heel only)
-    joint_heel = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=1)
-    joint_heel.set_step_depths()
+    # Test HEEL shape
+    joint_heel = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.HEEL)
+    joint_heel._set_unset_attributes()
     assert joint_heel.step_depth == 0.0
     assert joint_heel.heel_depth > 0
 
-    # Test step shape 2 (double)
-    joint_double = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=2)
-    joint_double.set_step_depths()
+    # Test TAPERED_HEEL shape
+    joint_tapered = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.TAPERED_HEEL)
+    joint_tapered._set_unset_attributes()
+    assert joint_tapered.step_depth == 0.0
+    assert joint_tapered.heel_depth > 0
+
+    # Test DOUBLE shape
+    joint_double = TStepJoint(main_beam=main_beam, cross_beam=cross_beam, step_shape=StepShapeType.DOUBLE)
+    joint_double._set_unset_attributes()
     assert joint_double.step_depth > 0
     assert joint_double.heel_depth > 0
