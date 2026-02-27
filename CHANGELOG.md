@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
 * Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
 
+* Fixed multi-beam joints get de-serialized multiple times.
+
 ### Removed
 
 

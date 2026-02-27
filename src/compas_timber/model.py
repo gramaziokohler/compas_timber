@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Iterable
 from typing import List
 from typing import cast
 
@@ -10,6 +11,7 @@ from compas_model.elements import Element
 from compas_model.models import Model
 
 from compas_timber.connections import ConnectionSolver
+from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PanelJoint
@@ -57,15 +59,27 @@ class TimberModel(Model):
     _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
     _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["joints"] = self._joints
+        return data
+
     @classmethod
     def __from_data__(cls, data):
-        model = super(TimberModel, cls).__from_data__(data)
-        for joint in model.joints:  # TODO: allow for modifiers as well once they are implemented in compas_timber
-            joint.restore_beams_from_keys(model)  # type: ignore
+        model = super().__from_data__(data)
+        joints_data = data["joints"]
+        for guid_str, joint in joints_data.items():
+            model._joints[guid_str] = joint
+
+        for joint in model._joints.values():
+            joint.restore_beams_from_keys(model)
+
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
+        self._joints = {}
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
@@ -105,14 +119,8 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Fastener)
 
     @property
-    def joints(self):
-        # type: () -> set[Joint]
-        joints = set()  # some joints might apear on more than one interaction
-        for edge in self._graph.edges():
-            edge_joints = self._graph.edge_attribute(edge, "joints") or []
-            for joint in edge_joints:
-                joints.add(joint)
-        return joints
+    def joints(self) -> Iterable[Joint]:
+        return self._joints.values()
 
     @property
     def joint_candidates(self):
@@ -258,7 +266,8 @@ class TimberModel(Model):
     def _safely_get_interactions(self, node_pair):
         # type: (tuple) -> List[Interaction]
         try:
-            return self._graph.edge_attribute(node_pair, "joints")
+            joint_guids = self._graph.edge_attribute(node_pair, "joints") or []
+            return [self._joints[guid] for guid in joint_guids if guid in self._joints]
         except KeyError:
             return []
 
@@ -293,14 +302,15 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
-        # TODO: should we be removing the joint candidate(s) edge attributes when adding an actual joint?
+        joint_guid = str(joint.guid)
+        self._joints[joint_guid] = joint
         self.add_elements(joint.generated_elements)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
-            joints.append(joint)
-            self._graph.edge_attribute(edge, "joints", value=joints)  # SET
+            joint_guids = self._graph.edge_attribute(edge, "joints") or []  # GET
+            joint_guids.append(joint_guid)
+            self._graph.edge_attribute(edge, "joints", value=joint_guids)  # SET
             # TODO: should we create a bidirectional interaction here?
 
     def add_joint_candidate(self, candidate):
@@ -468,6 +478,7 @@ class TimberModel(Model):
             The joint to remove.
 
         """
+        self._joints.pop(str(joint.guid), None)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             self.remove_interaction(element_a, element_b)
