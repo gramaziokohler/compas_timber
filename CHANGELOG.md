@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed multi-beam joints get de-serialized multiple times.
 * `TStepJoint.step_shape` now accepts `StepShapeType` string constants instead of integers.
-* `TStepJoint` default attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
-* `TStepJoint` depth attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization without requiring a call to `add_features()`.
+* `TenonMortiseJoint.tenon_shape` now accepts `TenonShapeType` string constants instead of integers.
+* `TStepJoint` unset attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
+* `TStepJoint` unset attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization.
+* `TenonMortiseJoint` unset attributes are now resolved at instantiation time and inside `restore_beams_from_keys()`, ensuring consistent state before and after deserialization.
 
 ### Removed
 
 * Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
+* Removed `tenon_shape` property from `TenonMortiseJoint`; use `shape` with `TenonShapeType` string constants directly.
 
 
 ## [2.0.0-dev0] 2026-02-19
