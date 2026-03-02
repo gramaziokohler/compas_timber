@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import itertools
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -211,25 +211,35 @@ class BeamStructuralElementSolver:
             return joints
         return candidates
 
-    def add_structural_segments(self, beam: Beam, model: TimberModel) -> List[StructuralSegment]:
+    def add_structural_segments(self, model: TimberModel) -> Tuple[List[StructuralSegment], Iterable[Joint]]:
         """Creates and adds structural segments for a given beam to the timber model.
 
         These are essentially segments of the beam's centerline split at the locations of the joints.
 
         Parameters
         ----------
-        beam : :class:`compas_timber.elements.Beam`
-            The beam for which to create structural segments.
         model : :class:`compas_timber.model.TimberModel`
             The timber model containing the beams and joints.
 
-        """
-        joints_for_beam = self._get_interactions(beam, model)
-        segments = self.beam_segment_generator.generate_segments(beam, joints_for_beam)
-        model.add_beam_structural_segments(beam, segments)
-        return segments
+        Returns
+        -------
+        list of :class:`StructuralSegment`
+            The structural segments that were created and added to the model.
+        set of :class:`compas_timber.connections.Joint`
+            The joints that were traversed when creating the structural segments. This is the definitive set of joints traversed when creating the beam segments,
+            and should be used when creating joint connector segments to avoid duplicates.
 
-    def add_joint_structural_segments(self, joint: Joint, model: TimberModel) -> None:
+        """
+        joints_traversed = set()
+        segments = []
+        for beam in model.beams:
+            joints_for_beam = self._get_interactions(beam, model)
+            segments = self.beam_segment_generator.generate_segments(beam, joints_for_beam)
+            model.add_beam_structural_segments(beam, segments)
+            joints_traversed.update(joints_for_beam)
+        return segments, joints_traversed
+
+    def add_joint_structural_segments(self, model: TimberModel, joints: Iterable[Joint]) -> Iterable[StructuralSegment]:
         """Creates and adds structural segments for a given joint to the timber model.
 
         For joints connecting non-intersecting beams (e.g. crossing beams), this creates
@@ -237,12 +247,21 @@ class BeamStructuralElementSolver:
 
         Parameters
         ----------
-        joint : :class:`compas_timber.connections.Joint`
-            The joint for which to create structural segments.
         model : :class:`compas_timber.model.TimberModel`
             The timber model containing the beams and joints.
+        joints : iterable of :class:`compas_timber.connections.Joint`
+            The joints for which to create structural segments.
+
+        Returns
+        -------
+        list of :class:`StructuralSegment`
+            The structural segments that were created and added to the model.
 
         """
-        connectors = self.joint_connector_generator.generate_connectors(joint)
-        for beam_a, beam_b, segments in connectors:
-            model.add_structural_connector_segments(beam_a, beam_b, segments)
+        results = []
+        for joint in joints:
+            connectors = self.joint_connector_generator.generate_connectors(joint)
+            for beam_a, beam_b, segments in connectors:
+                model.add_structural_connector_segments(beam_a, beam_b, segments)
+                results.extend(segments)
+        return results

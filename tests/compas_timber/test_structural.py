@@ -30,9 +30,10 @@ def test_create_segments_from_beam_and_its_joints(mocker: pytest_mock.MockerFixt
     model: TimberModel = mocker.MagicMock(spec=TimberModel)
     model.get_joints_for_element.return_value = joints
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -49,9 +50,10 @@ def test_create_segments_no_joints(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = []
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -72,9 +74,10 @@ def test_create_segments_joints_at_ends_only(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = joints
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -92,9 +95,10 @@ def test_create_segments_unsorted_joints(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = [j1, j2, j3]
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -117,9 +121,10 @@ def test_create_segments_project_joints(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = [joint]
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -140,8 +145,7 @@ def test_get_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     mocker.patch.object(model, "get_candidates_for_element", return_value=[])
 
     solver = BeamStructuralElementSolver()
-    solver.add_structural_segments(beam1, model)
-    solver.add_structural_segments(beam2, model)
+    solver.add_structural_segments(model)
 
     segments1 = model.get_beam_structural_segments(beam1)
     segments2 = model.get_beam_structural_segments(beam2)
@@ -193,7 +197,7 @@ def test_remove_beam_structural_segments(mocker: pytest_mock.MockerFixture):
     mocker.patch.object(model, "get_candidates_for_element", return_value=[])
 
     solver = BeamStructuralElementSolver()
-    solver.add_structural_segments(beam, model)
+    solver.add_structural_segments(model)
 
     assert len(model.get_beam_structural_segments(beam)) == 1
 
@@ -210,9 +214,10 @@ def test_segment_frame_origin_at_segment_start(mocker: pytest_mock.MockerFixture
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = [j1]
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     assert len(segments) == 2
 
@@ -238,9 +243,10 @@ def test_segment_frame_orientation_matches_beam(mocker: pytest_mock.MockerFixtur
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = [j1, j2]
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     assert len(segments) == 3
 
@@ -266,9 +272,10 @@ def test_segment_frame_no_joints(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock()
     model.get_joints_for_element.return_value = []
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     assert len(segments) == 1
 
@@ -291,9 +298,10 @@ def test_create_segments_with_only_joint_candidates(mocker: pytest_mock.MockerFi
     model = mocker.MagicMock(spec=TimberModel)
     model.get_joints_for_element.return_value = []
     model.get_candidates_for_element.return_value = [c1, c2]
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -312,9 +320,10 @@ def test_create_segments_with_only_joints(mocker: pytest_mock.MockerFixture):
     model = mocker.MagicMock(spec=TimberModel)
     model.get_joints_for_element.return_value = [j1, j2]
     model.get_candidates_for_element.return_value = []
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -335,9 +344,10 @@ def test_create_segments_auto_prefers_joints_over_candidates(mocker: pytest_mock
     model = mocker.MagicMock(spec=TimberModel)
     model.get_joints_for_element.return_value = [j1, j2]
     model.get_candidates_for_element.return_value = [c1]
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     model.add_beam_structural_segments.assert_called_once()
 
@@ -357,9 +367,10 @@ def test_create_segments_candidates_at_ends_only(mocker: pytest_mock.MockerFixtu
     model = mocker.MagicMock(spec=TimberModel)
     model.get_joints_for_element.return_value = []
     model.get_candidates_for_element.return_value = [c_start, c_end]
+    model.beams = [beam]
 
     solver = BeamStructuralElementSolver()
-    segments = solver.add_structural_segments(beam, model)
+    segments, _ = solver.add_structural_segments(model)
 
     # candidates at ends should not split the beam
     assert len(segments) == 1

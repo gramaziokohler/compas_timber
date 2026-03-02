@@ -637,11 +637,8 @@ class TimberModel(Model):
             self._graph.unset_edge_attribute(edge, "structural_segments")
 
         solver = solver or BeamStructuralElementSolver()
-        for beam in self.beams:
-            solver.add_structural_segments(beam, model=self)
-
-        for joint in self.joints:
-            solver.add_joint_structural_segments(joint, model=self)
+        _, joints_traversed = solver.add_structural_segments(model=self)
+        solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
     def connect_adjacent_beams(self, max_distance=None):
         # Clear existing joint candidates
