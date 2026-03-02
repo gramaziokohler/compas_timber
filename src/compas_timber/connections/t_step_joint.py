@@ -147,6 +147,7 @@ class TStepJoint(Joint):
 
         Shape type takes priority: depths not applicable to the chosen shape are forced to zero.
         """
+        assert self.cross_beam and self.main_beam
         self._check_depths()
 
         if self.step_shape == StepShapeType.STEP:
@@ -268,5 +269,4 @@ class TStepJoint(Joint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model[self.main_beam_guid]
         self.cross_beam = model[self.cross_beam_guid]
-        # ensure that attributes that depend on beam geometry are properly set after restoration
         self._set_unset_attributes()

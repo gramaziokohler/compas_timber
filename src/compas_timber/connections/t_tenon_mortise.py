@@ -142,6 +142,7 @@ class TenonMortiseJoint(Joint):
 
     def _set_unset_attributes(self):
         """Updates and sets default property values if they are not provided."""
+        assert self.cross_beam and self.main_beam
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
 
         self.start_y = self.start_y or 0.0

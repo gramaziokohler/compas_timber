@@ -171,6 +171,7 @@ class TDovetailJoint(Joint):
 
     def _set_unset_attributes(self):
         """Sets attributes derived from tool parameters that are required for feature generation."""
+        assert self.cross_beam and self.main_beam
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
 
         # Default values if not provided
