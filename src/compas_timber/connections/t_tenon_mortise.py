@@ -227,7 +227,7 @@ class TenonMortiseJoint(Joint):
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
-            shape=main_feature.tenon_shape,
+            shape=main_feature.shape,
             shape_radius=main_feature.shape_radius,
             ref_side_index=self.cross_beam_ref_side_index,
         )
