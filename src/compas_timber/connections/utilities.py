@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
-from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Point
@@ -209,7 +208,6 @@ def point_centerline_towards_joint(beam_a, beam_b):
     else:
         centerline_vec = beam_a.centerline.vector
     return centerline_vec
-
 
 
 def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
