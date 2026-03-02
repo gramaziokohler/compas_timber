@@ -143,7 +143,9 @@ class TDovetailJoint(Joint):
         self._shape_radius = None
 
         self.features = []
-        self._set_unset_attributes()
+
+        if self.main_beam and self.cross_beam:
+            self._set_unset_attributes()
 
     @property
     def elements(self):

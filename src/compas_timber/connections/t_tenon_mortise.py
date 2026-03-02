@@ -120,6 +120,7 @@ class TenonMortiseJoint(Joint):
         self.shape_radius = shape_radius
 
         self.features = []
+
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()
 
