@@ -35,7 +35,7 @@ class TenonMortiseJoint(Joint):
         Width of the tenon.
     height : float
         Height of the tenon.
-    shape : str
+    tenon_shape : str
         Shape of the tenon. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
         Defaults to ``TenonShapeType.ROUND``.
     shape_radius : float
@@ -227,7 +227,7 @@ class TenonMortiseJoint(Joint):
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
-            shape=main_feature.tenon_shape,
+            shape=main_feature.shape,
             shape_radius=main_feature.shape_radius,
             ref_side_index=self.cross_beam_ref_side_index,
         )
