@@ -28,9 +28,8 @@ class TStepJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     step_shape : str
-        One of :class:`~compas_timber.fabrication.StepShapeType`: STEP, HEEL, TAPERED_HEEL, or DOUBLE.
-        The shape type takes priority: depths irrelevant to the chosen shape are ignored and forced to zero.
-        Defaults to ``StepShapeType.STEP``.
+        The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP, HEEL, TAPERED_HEEL, or DOUBLE.
+        The shape type takes priority: depths irrelevant to the chosen shape are ignored and forced to zero. Defaults to ``StepShapeType.STEP``.
     step_depth : float, optional
         Depth of the step cut. Applicable only to shape types with a step component (STEP, DOUBLE).
         Defaults to a value proportional to the cross beam's cross-section.
@@ -47,7 +46,7 @@ class TStepJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     step_shape : str
-        One of :class:`~compas_timber.fabrication.StepShapeType`: STEP, HEEL, TAPERED_HEEL, or DOUBLE.
+        The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP, HEEL, TAPERED_HEEL, or DOUBLE.
     step_depth : float
         Depth of the step cut. Applicable only to shape types with a step component (STEP, DOUBLE). Zero otherwise.
     heel_depth : float
@@ -88,6 +87,7 @@ class TStepJoint(Joint):
         self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
 
         self.step_shape = step_shape or StepShapeType.STEP
+        self._tapered_heel = self.step_shape == StepShapeType.TAPERED_HEEL
 
         self.step_depth = step_depth
         self.heel_depth = heel_depth
@@ -204,10 +204,10 @@ class TStepJoint(Joint):
         main_feature = StepJoint.from_plane_and_beam(
             self.cross_beam.ref_sides[self.cross_beam_ref_side_index],
             self.main_beam,
-            self.step_depth,
-            self.heel_depth,
-            self.step_shape == StepShapeType.TAPERED_HEEL,
-            self.main_beam_ref_side_index,
+            step_depth=self.step_depth,
+            heel_depth=self.heel_depth,
+            tapered_heel=self._tapered_heel,
+            ref_side_index=self.main_beam_ref_side_index,
         )
 
         # generate step joint notch features
@@ -219,7 +219,7 @@ class TStepJoint(Joint):
             step_depth=self.step_depth,
             heel_depth=self.heel_depth,
             strut_height=main_height,
-            tapered_heel=self.step_shape == StepShapeType.TAPERED_HEEL,
+            tapered_heel=self._tapered_heel,
             ref_side_index=self.cross_beam_ref_side_index,
         )
 
