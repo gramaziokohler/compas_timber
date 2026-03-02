@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TStepJoint` unset attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
 * `TStepJoint` unset attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization.
 * `TenonMortiseJoint` unset attributes are now resolved at instantiation time and inside `restore_beams_from_keys()`, ensuring consistent state before and after deserialization.
+* `TenonMortiseJoint.__init__` now accepts `main_beam=None` and `cross_beam=None` as defaults, consistent with other joint classes and required for correct deserialization via `__from_data__`.
 * `TDovetailJoint.dovetail_shape` now accepts `TenonShapeType` string constants instead of integers.
 * `TDovetailJoint` unset attributes are now resolved inside `_set_unset_attributes()`, with dimensional defaults proportional to the main beam's cross-section.
 

@@ -92,8 +92,8 @@ class TenonMortiseJoint(Joint):
     # fmt: off
     def __init__(
         self,
-        main_beam,
-        cross_beam,
+        main_beam=None,
+        cross_beam=None,
         start_y=None,
         start_depth=None,
         rotation=None,
