@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import patch
+
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Line
@@ -136,7 +138,7 @@ def test_t_step_joint_defaults_resolved_at_init(beams):
     # _set_unset_attributes() must have been called in __init__
     assert joint.step_depth is not None
     assert joint.heel_depth is not None
-    assert joint.step_depth > 0   # STEP shape: cross_beam.height / 4
+    assert joint.step_depth > 0  # STEP shape: cross_beam.height / 4
     assert joint.heel_depth == 0.0  # STEP shape has no heel component
 
 
@@ -160,3 +162,21 @@ def test_t_step_joint_model_roundtrip_preserves_state(beams):
     # Attributes must be resolved immediately after deserialization — no add_features() call
     assert restored_joint.step_depth == step_depth_before
     assert restored_joint.heel_depth == heel_depth_before
+
+
+def test_t_step_joint_restore_beams_resolves_attributes(beams):
+    """Test that restore_beams_from_keys() calls _set_unset_attributes(), but __from_data__ alone does not."""
+    main_beam, cross_beam = beams
+    model = TimberModel()
+    model.add_elements(beams)
+
+    original_joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam)
+    data = original_joint.__data__
+    deserialized_joint = TStepJoint.__from_data__(data)
+
+    with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
+        assert spy.call_count == 0  # not called yet — beams are absent
+
+        deserialized_joint.restore_beams_from_keys(model)
+
+        assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()

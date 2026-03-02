@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import patch
+
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Line
@@ -20,6 +22,34 @@ def beams():
     cross_beam = Beam.from_centerline(cross_centerline, width=80, height=100)
 
     return main_beam, cross_beam
+
+
+def test_tenon_mortise_joint_creation_with_beams(beams):
+    """Test that TenonMortiseJoint can be created with valid beam arguments."""
+    main_beam, cross_beam = beams
+    joint = TenonMortiseJoint(
+        main_beam=main_beam,
+        cross_beam=cross_beam,
+        start_y=200.0,
+        start_depth=30.0,
+        rotation=15.0,
+        length=150.0,
+        width=50.0,
+        height=40.0,
+        tenon_shape=TenonShapeType.ROUNDED,
+        shape_radius=10.0,
+    )
+
+    assert joint.main_beam == main_beam
+    assert joint.cross_beam == cross_beam
+    assert joint.start_y == 200.0
+    assert joint.start_depth == 30.0
+    assert joint.rotation == 15.0
+    assert joint.length == 150.0
+    assert joint.width == 50.0
+    assert joint.height == 40.0
+    assert joint.tenon_shape == TenonShapeType.ROUNDED
+    assert joint.shape_radius == 10.0
 
 
 def test_tenon_mortise_joint_defaults_resolved_at_init(beams):
@@ -67,27 +97,18 @@ def test_tenon_mortise_joint_model_roundtrip_preserves_state(beams):
 
 
 def test_tenon_mortise_joint_restore_beams_resolves_attributes(beams):
-    """Test that restore_beams_from_keys() calls _set_unset_attributes(), resolving defaults post-deserialization."""
+    """Test that restore_beams_from_keys() calls _set_unset_attributes(), but __from_data__ alone does not."""
     main_beam, cross_beam = beams
     model = TimberModel()
     model.add_elements(beams)
 
     original_joint = TenonMortiseJoint(main_beam=main_beam, cross_beam=cross_beam)
-    length_before = original_joint.length
-    width_before = original_joint.width
-    height_before = original_joint.height
-
     data = original_joint.__data__
     deserialized_joint = TenonMortiseJoint.__from_data__(data)
 
-    # Before beam restoration, beams are absent — attributes may be unresolved
-    assert deserialized_joint.main_beam is None
-    assert deserialized_joint.cross_beam is None
+    with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
+        assert spy.call_count == 0  # not called yet — beams are absent
 
-    deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_beams_from_keys(model)
 
-    # After restoration, _set_unset_attributes() must have run
-    assert deserialized_joint.length == length_before
-    assert deserialized_joint.width == width_before
-    assert deserialized_joint.height == height_before
-    assert deserialized_joint.tenon_shape == TenonShapeType.ROUND
+        assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()

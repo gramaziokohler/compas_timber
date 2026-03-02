@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import patch
+
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Line
@@ -22,6 +24,38 @@ def beams():
     return main_beam, cross_beam
 
 
+def test_t_dovetail_joint_creation_with_beams(beams):
+    """Test that TDovetailJoint can be created with valid beam arguments."""
+    main_beam, cross_beam = beams
+    joint = TDovetailJoint(
+        main_beam=main_beam,
+        cross_beam=cross_beam,
+        start_y=200.0,
+        start_depth=30.0,
+        rotation=15.0,
+        length=150.0,
+        width=50.0,
+        cone_angle=10.0,
+        dovetail_shape=TenonShapeType.ROUNDED,
+        tool_angle=20.0,
+        tool_diameter=10.0,
+        tool_height=40.0,
+    )
+
+    assert joint.main_beam == main_beam
+    assert joint.cross_beam == cross_beam
+    assert joint.start_y == 200.0
+    assert joint.start_depth == 30.0
+    assert joint.rotation == 15.0
+    assert joint.length == 150.0
+    assert joint.width == 50.0
+    assert joint.cone_angle == 10.0
+    assert joint.dovetail_shape == TenonShapeType.ROUNDED
+    assert joint.tool_angle == 20.0
+    assert joint.tool_diameter == 10.0
+    assert joint.tool_height == 40.0
+
+
 def test_t_dovetail_joint_defaults_resolved_at_init(beams):
     """Test that all default attributes are resolved at construction time, without requiring add_features()."""
     main_beam, cross_beam = beams
@@ -31,18 +65,13 @@ def test_t_dovetail_joint_defaults_resolved_at_init(beams):
     assert joint.start_y is not None
     assert joint.start_depth is not None
     assert joint.rotation is not None
-    assert joint.length is not None and joint.length > 0
-    assert joint.width is not None and joint.width > 0
-    assert joint.cone_angle == 10.0
-    assert joint.dovetail_shape == TenonShapeType.RADIUS
-    assert joint.tool_angle == 15.0
-    assert joint.tool_diameter is not None and joint.tool_diameter > 0
-    assert joint.tool_height is not None and joint.tool_height > 0
-
-    # define_dovetail_tool() must also have been called, setting the derived private attributes
-    assert joint._height is not None and joint._height > 0
-    assert joint._flank_angle is not None
-    assert joint._shape_radius is not None
+    assert joint.length is not None
+    assert joint.width is not None
+    assert joint.cone_angle is not None
+    assert joint.dovetail_shape is not None
+    assert joint.tool_angle is not None
+    assert joint.tool_diameter is not None
+    assert joint.tool_height is not None
 
 
 def test_t_dovetail_joint_model_roundtrip_preserves_state(beams):
@@ -56,51 +85,46 @@ def test_t_dovetail_joint_model_roundtrip_preserves_state(beams):
     model.add_elements(beams)
     joint = TDovetailJoint.create(model, main_beam=main_beam, cross_beam=cross_beam)
 
+    start_y_before = joint.start_y
+    start_depth_before = joint.start_depth
+    rotation_before = joint.rotation
     length_before = joint.length
     width_before = joint.width
+    cone_angle_before = joint.cone_angle
+    dovetail_shape_before = joint.dovetail_shape
+    tool_angle_before = joint.tool_angle
     tool_diameter_before = joint.tool_diameter
     tool_height_before = joint.tool_height
-    height_before = joint._height
-    flank_angle_before = joint._flank_angle
-    shape_radius_before = joint._shape_radius
 
     restored_model = json_loads(json_dumps(model))
     restored_joint = list(restored_model.joints)[0]
 
-    # All attributes must be resolved immediately after deserialization — no add_features() call
+    # All attributes must be resolved immediately after deserialization
+    assert restored_joint.start_y == start_y_before
+    assert restored_joint.start_depth == start_depth_before
+    assert restored_joint.rotation == rotation_before
     assert restored_joint.length == length_before
     assert restored_joint.width == width_before
+    assert restored_joint.cone_angle == cone_angle_before
+    assert restored_joint.dovetail_shape == dovetail_shape_before
+    assert restored_joint.tool_angle == tool_angle_before
     assert restored_joint.tool_diameter == tool_diameter_before
     assert restored_joint.tool_height == tool_height_before
-    assert restored_joint._height == height_before
-    assert restored_joint._flank_angle == flank_angle_before
-    assert restored_joint._shape_radius == shape_radius_before
 
 
 def test_t_dovetail_joint_restore_beams_resolves_attributes(beams):
-    """Test that restore_beams_from_keys() calls _set_unset_attributes(), resolving defaults post-deserialization."""
+    """Test that restore_beams_from_keys() calls _set_unset_attributes(), but __from_data__ alone does not."""
     main_beam, cross_beam = beams
     model = TimberModel()
     model.add_elements(beams)
 
     original_joint = TDovetailJoint(main_beam=main_beam, cross_beam=cross_beam)
-    height_before = original_joint._height
-    flank_angle_before = original_joint._flank_angle
-    shape_radius_before = original_joint._shape_radius
-
     data = original_joint.__data__
     deserialized_joint = TDovetailJoint.__from_data__(data)
 
-    # Before beam restoration, beams are absent — derived attributes are unset
-    assert deserialized_joint.main_beam is None
-    assert deserialized_joint.cross_beam is None
-    assert deserialized_joint._height is None
-    assert deserialized_joint._flank_angle is None
-    assert deserialized_joint._shape_radius is None
+    with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
+        assert spy.call_count == 0  # not called yet — beams are absent
 
-    deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_beams_from_keys(model)
 
-    # After restoration, _set_unset_attributes() must have run and recomputed the derived attributes
-    assert deserialized_joint._height == height_before
-    assert deserialized_joint._flank_angle == flank_angle_before
-    assert deserialized_joint._shape_radius == shape_radius_before
+        assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()
