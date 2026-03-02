@@ -211,6 +211,23 @@ def point_centerline_towards_joint(beam_a, beam_b):
 
 
 def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
+    """
+    Extend a beam parametrically until it reaches a specified plane.
+    The beam is modified in place.
+
+    Parameters
+    ----------
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam to extend.
+    plane : :class:`~compas.geometry.Plane`
+        The target plane to which the beam is extended.
+
+    Returns
+    -------
+    :class:`~compas_timber.elements.Beam`
+        The extended beam.
+
+    """
     start_beam, end_beam = beam.extension_to_plane(plane)
     beam.add_blank_extension(start_beam, end_beam)
     return beam

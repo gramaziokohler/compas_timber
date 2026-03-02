@@ -71,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ref_side_miter`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
 * Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
-* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam.
+* Added `extend_beam_to_plane`, `angle_and_dot_product_main_beam_and_cross_beam`, `parse_cross_beams_and_main_beams_from_cluster` functions in `compas_timber.connections.utilites`.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
