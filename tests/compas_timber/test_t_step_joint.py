@@ -1,4 +1,6 @@
 import pytest
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
 
@@ -124,3 +126,37 @@ def test_step_depths_calculation(beams):
     joint_double._set_unset_attributes()
     assert joint_double.step_depth > 0
     assert joint_double.heel_depth > 0
+
+
+def test_t_step_joint_defaults_resolved_at_init(beams):
+    """Test that default depths are resolved at construction time, without requiring add_features()."""
+    main_beam, cross_beam = beams
+    joint = TStepJoint(main_beam=main_beam, cross_beam=cross_beam)  # no explicit depths
+
+    # _set_unset_attributes() must have been called in __init__
+    assert joint.step_depth is not None
+    assert joint.heel_depth is not None
+    assert joint.step_depth > 0   # STEP shape: cross_beam.height / 4
+    assert joint.heel_depth == 0.0  # STEP shape has no heel component
+
+
+def test_t_step_joint_model_roundtrip_preserves_state(beams):
+    """Test that calculated attributes are identical before and after a model serialize/deserialize round-trip.
+
+    This proves the fix: restore_beams_from_keys() must call _set_unset_attributes() so that
+    joint state is fully consistent without requiring a subsequent call to add_features().
+    """
+    main_beam, cross_beam = beams
+    model = TimberModel()
+    model.add_elements(beams)
+    joint = TStepJoint.create(model, main_beam=main_beam, cross_beam=cross_beam)
+
+    step_depth_before = joint.step_depth
+    heel_depth_before = joint.heel_depth
+
+    restored_model = json_loads(json_dumps(model))
+    restored_joint = list(restored_model.joints)[0]
+
+    # Attributes must be resolved immediately after deserialization — no add_features() call
+    assert restored_joint.step_depth == step_depth_before
+    assert restored_joint.heel_depth == heel_depth_before
