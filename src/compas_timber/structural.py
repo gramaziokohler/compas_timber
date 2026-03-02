@@ -150,7 +150,7 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
 
     def generate_connectors(self, joint: Joint) -> List[Tuple[Beam, Beam, List[StructuralSegment]]]:
         results = []
-        for beam_a, beam_b in itertools.combinations(joint.elements, 2):
+        for beam_a, beam_b in joint.interactions:
             p1, p2 = intersection_segment_segment(beam_a.centerline, beam_b.centerline)
 
             # NOTE: based on the documentation if the segments do not intersect, p1 and p2 are None
