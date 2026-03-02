@@ -75,12 +75,6 @@ class TDovetailJoint(Joint):
         The diameter of the tool used to create the dovetail cut.
     tool_height : float
         The height of the tool used to create the dovetail cut.
-    height : float, optional
-        The height of the joint. This is not set during initialization but can be defined later.
-    flank_angle : float, optional
-        The angle of the flanks of the dovetail joint, if applicable.
-    shape_radius : float, optional
-        The radius used to define the shape of the joint, if applicable.
     features : list
         List of features or machining processings applied to the joint.
     """
