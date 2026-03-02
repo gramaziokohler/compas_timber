@@ -1,3 +1,6 @@
+from compas.geometry import Point
+from compas.geometry import intersection_line_line
+
 from compas_timber.connections import Joint
 from compas_timber.connections.l_miter import LMiterJoint
 from compas_timber.connections.solver import JointTopology
@@ -5,8 +8,8 @@ from compas_timber.connections.t_butt import ButtJoint
 from compas_timber.connections.utilities import angle_and_dot_product_main_beam_and_cross_beam
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import extend_main_beam_to_cross_beam
-from compas_timber.connections.utilities import parse_cross_beam_and_main_beams_from_cluster
+from compas_timber.connections.utilities import extend_beam_to_plane
+from compas_timber.connections.utilities import parse_cross_beams_and_main_beams_from_cluster
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
 
@@ -63,11 +66,16 @@ class KMiterJoint(Joint):
         data["cross_beam_guid"] = self.cross_beam_guid
         data["main_beams_guids"] = self.main_beams_guids
         data["mill_depth"] = self.mill_depth
+        data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
 
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, force_pocket: bool = False, conical_tool=False, **kwargs):
-        super().__init__(main_beams=list(main_beams), cross_beam=cross_beam, **kwargs)
+        super().__init__(
+            main_beams=list(main_beams),
+            cross_beam=cross_beam,
+            **kwargs,
+        )
         self.cross_beam = cross_beam
         self.main_beams = list(main_beams)
         self.mill_depth = mill_depth
@@ -95,6 +103,10 @@ class KMiterJoint(Joint):
             return True
         return False
 
+    @property
+    def location(self):
+        return Point(*(intersection_line_line(self.main_beams[-1].centerline, self.main_beams[0].centerline)[0]))
+
     @classmethod
     def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
         """Create an instance of this joint form a cluster of elements.
@@ -116,7 +128,7 @@ class KMiterJoint(Joint):
         :class:`~compas_timber.connections.KMiterJoint`
             The created joint instance.
         """
-        cross_beams, main_beams = parse_cross_beam_and_main_beams_from_cluster(cluster)
+        cross_beams, main_beams = parse_cross_beams_and_main_beams_from_cluster(cluster)
         if len(cross_beams) != 1:
             raise BeamJoiningError(cross_beams, cls, "K-Miter joints require exactly one cross beam.")
         elements = list(cross_beams) + list(main_beams)
@@ -144,8 +156,15 @@ class KMiterJoint(Joint):
             If the extension could not be calculated.
 
         """
+
         for beam in self.main_beams:
-            extend_main_beam_to_cross_beam(beam, self.cross_beam, mill_depth=self.mill_depth)
+            ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
+            cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            cutting_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
+            if self.mill_depth:
+                cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+            extend_beam_to_plane(beam, cutting_plane)
+            # extend_main_beam_to_cross_beam(beam, self.cross_beam, mill_depth=self.mill_depth)
 
     def add_features(self):
         """
@@ -198,11 +217,13 @@ class KMiterJoint(Joint):
         for i in range(len(self.main_beams) - 1):
             beam_1 = self.main_beams[i]
             beam_2 = self.main_beams[i + 1]
-
             # NOTE: LMiter currently going under refactor
             # TODO: FixMe after LMiter refactoring
-            L_joint = LMiterJoint(beam_1, beam_2)
+            L_joint = LMiterJoint(beam_1, beam_2, location=self.location)
+            L_joint.add_extensions()
             L_joint.add_features()
+
+        print("oh", self.location)
 
         # Apply Jack Rafter Cuts to the main beams
         for beam in self.main_beams:

@@ -3,8 +3,8 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections.butt_joint import ButtJoint
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import extend_main_beam_to_cross_beam
-from compas_timber.connections.utilities import parse_cross_beam_and_main_beams_from_cluster
+from compas_timber.connections.utilities import extend_beam_to_plane
+from compas_timber.connections.utilities import parse_cross_beams_and_main_beams_from_cluster
 from compas_timber.elements import Beam
 
 
@@ -128,7 +128,7 @@ class KButtJoint(Joint):
         :class:`~compas_timber.connections.KButtJoint`
             The created joint instance.
         """
-        cross_beams, main_beams = parse_cross_beam_and_main_beams_from_cluster(cluster)
+        cross_beams, main_beams = parse_cross_beams_and_main_beams_from_cluster(cluster)
         elements = list(cross_beams) + list(main_beams)
         return cls.create(model, *elements, **kwargs)
 
@@ -155,8 +155,16 @@ class KButtJoint(Joint):
             If the extension could not be calculated.
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
-        extend_main_beam_to_cross_beam(self.main_beam_a, self.cross_beam, self.mill_depth)
-        extend_main_beam_to_cross_beam(self.main_beam_b, self.cross_beam, self.mill_depth)
+        self._extend_main_beam_to_cross_beam(self.main_beam_a)
+        self._extend_main_beam_to_cross_beam(self.main_beam_b)
+
+    def _extend_main_beam_to_cross_beam(self, main_beam):
+        ref_side_dict = beam_ref_side_incidence(main_beam, self.cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cutting_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
+        if self.mill_depth:
+            cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+        extend_beam_to_plane(main_beam, cutting_plane)
 
     def add_features(self):
         """
@@ -168,14 +176,18 @@ class KButtJoint(Joint):
 
         if self.mill_depth:
             if self.force_pocket:
+                sorted_beams = sorted(self.main_beams, key=lambda b: beam_ref_side_incidence(self.cross_beam, b, ignore_ends=True)[self.cross_beam_ref_side_index(b)])
+
                 # Merge the two pockets together
-                p1 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam_a, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                p2 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beam_b, mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p1 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, sorted_beams[1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                p2 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, sorted_beams[0], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                print(p1.start_x)
+                print(p2.start_x)
                 p1.length = p2.start_x + p2.length - p1.start_x
                 p1.tilt_end_side = p2.tilt_end_side
                 self.cross_beam.add_feature(p1)
                 self.features.append(p1)
-
+                print(p1)
             else:
                 # Merge the two laps in on lap
                 l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)

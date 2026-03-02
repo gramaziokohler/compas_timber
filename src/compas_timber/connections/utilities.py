@@ -4,6 +4,7 @@ import math
 from typing import TYPE_CHECKING
 from typing import Optional
 
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
@@ -210,40 +211,11 @@ def point_centerline_towards_joint(beam_a, beam_b):
     return centerline_vec
 
 
-def extend_main_beam_to_cross_beam(main_beam: Beam, cross_beam: Beam, mill_depth: Optional[float] = None, extension_tolerance: float = 0.01):
-    """
-    Extend the `main_beam` to the `cross_beam`.
-    If a `mill_depth` is provided it ensures that the `main_beam` is extended enough to ensure enough material for the joint.
 
-    The `main_beam` is extended in place.
-
-
-    Parameter
-    ---------
-    main_beam : :class:`~compas_timber.elements.Beam`
-        The main beam to be extended.
-    cross_beam : :class:`~compas_timber.elements.Beam`
-        The cross beam to which the main beam will be extended.
-    mill_depth : float, optional
-        The depth of the mill cut for the joint. If provided, the main beam will be extended enough to ensure enough material for the joint.
-    extension_tolerance : float, optional
-        A small tolerance added to the extension length. Default is 0.01 units.
-
-
-    Retruns
-    -------
-    :class:`~compas_timber.elements.Beam`
-        The main beam extended.
-
-    """
-    ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
-    cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-    cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
-    if mill_depth:
-        cutting_plane.translate(-cutting_plane.normal * mill_depth)
-    start_main, end_main = main_beam.extension_to_plane(cutting_plane)
-    main_beam.add_blank_extension(start_main + extension_tolerance, end_main + extension_tolerance)
-    return main_beam
+def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
+    start_beam, end_beam = beam.extension_to_plane(plane)
+    beam.add_blank_extension(start_beam, end_beam)
+    return beam
 
 
 def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: Beam, joint: Joint) -> tuple[float, float]:
@@ -272,7 +244,7 @@ def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: 
     return angle, dot
 
 
-def parse_cross_beam_and_main_beams_from_cluster(cluster: Cluster) -> tuple[list[Beam], list[Beam]]:
+def parse_cross_beams_and_main_beams_from_cluster(cluster: Cluster) -> tuple[list[Beam], list[Beam]]:
     """
     Parses cross beams and main beams from a cluster of joints.
 

@@ -350,7 +350,7 @@ class ButtJoint(Joint):
             cutting_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
 
         if mill_depth:
-            cutting_plane.translate(cutting_plane.normal * mill_depth)
+            cutting_plane.translate(-cutting_plane.normal * mill_depth)
 
         main_beam_ref_sides = list(main_beam.ref_sides)
         plane_0 = Plane.from_frame(main_beam_ref_sides[0])
