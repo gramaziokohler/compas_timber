@@ -32,7 +32,7 @@ def test_abc_prevents_instantiation_without_processing_name():
     class MissingProcessingName(BTLxProcessing):
         ATTRIBUTE_MAP = {}
 
-    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingProcessingName with abstract method PROCESSING_NAME"):
+    with pytest.raises(TypeError, match=r"Can't instantiate abstract class MissingProcessingName.*abstract method.*PROCESSING_NAME"):
         MissingProcessingName()
 
 
@@ -42,7 +42,7 @@ def test_abc_prevents_instantiation_without_attribute_map():
     class MissingAttributeMap(BTLxProcessing):
         PROCESSING_NAME = "MissingAttributeMap"
 
-    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingAttributeMap with abstract method ATTRIBUTE_MAP"):
+    with pytest.raises(TypeError, match=r"Can't instantiate abstract class MissingAttributeMap.*abstract method.*ATTRIBUTE_MAP"):
         MissingAttributeMap()
 
 
@@ -52,7 +52,7 @@ def test_abc_prevents_instantiation_without_both_abstract_properties():
     class MissingBoth(BTLxProcessing):
         pass
 
-    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingBoth with abstract methods ATTRIBUTE_MAP, PROCESSING_NAME"):
+    with pytest.raises(TypeError, match=r"Can't instantiate abstract class MissingBoth.*abstract methods.*ATTRIBUTE_MAP.*PROCESSING_NAME"):
         MissingBoth()
 
 
