@@ -3,16 +3,19 @@ import pytest
 from compas.data import json_dumps
 from compas.data import json_loads
 
-from compas.geometry import Point
-from compas.geometry import Vector
-from compas.geometry import Polyline
-from compas.geometry import Frame
 from compas.geometry import Box
+from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import Vector
 
 from compas.tolerance import TOL
 
 from compas_timber.elements import Plate
+
+from brep_mocks import make_plate_brep
+from brep_mocks import make_single_face_brep
 
 
 def test_flat_plate_creation():
@@ -208,10 +211,11 @@ def test_apply_and_remove_exensions_with_index():
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
 
 
-def test_from_face_rectangular():
-    outline = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+def test_from_face_thickness_rectangular():
+    pts = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    brep = make_single_face_brep(pts)
     thickness = 1.0
-    plate = Plate.from_outline_thickness(outline, thickness)
+    plate = Plate.from_face_thickness(brep, thickness)
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness)
@@ -224,15 +228,25 @@ def test_from_face_rectangular():
         assert TOL.is_close(pt_a.distance_to_point(pt_b), thickness)
 
 
-def test_from_face_with_custom_vector():
-    outline = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
+def test_from_face_thickness_with_custom_vector():
+    pts = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    brep = make_single_face_brep(pts)
     thickness = 1.0
     vector = Vector(0, 0, -1)
-    plate = Plate.from_outline_thickness(outline, thickness, vector=vector)
+    plate = Plate.from_face_thickness(brep, thickness, vector=vector)
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness)
     assert TOL.is_allclose(plate.normal, [0, 0, -1])
+
+
+def test_from_face_thickness_raises_on_multi_face_brep():
+    pts_a = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    pts_b = [Point(0, 0, 1), Point(10, 0, 1), Point(10, 20, 1), Point(0, 20, 1)]
+    multi_face_brep = make_plate_brep(pts_a, pts_b)
+
+    with pytest.raises(ValueError):
+        Plate.from_face_thickness(multi_face_brep, 1.0)
 
 
 def test_from_outline_with_openings():
@@ -248,9 +262,11 @@ def test_from_outline_with_openings():
 
 def test_from_brep_rectangular_box():
     thickness = 1.0
-    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
-    outline_b = Polyline([Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 20, thickness), Point(0, 20, thickness), Point(0, 0, thickness)])
-    plate = Plate.from_outlines(outline_a, outline_b)
+    pts_a = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    pts_b = [Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 20, thickness), Point(0, 20, thickness)]
+    brep = make_plate_brep(pts_a, pts_b)
+
+    plate = Plate.from_brep(brep)
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness, atol=0.01)
@@ -264,25 +280,16 @@ def test_from_brep_rectangular_box():
 
 def test_from_brep_octagonal_prism():
     import math
+
     radius = 10.0
     thickness = 2.0
     n_sides = 8
 
-    points_bottom = []
-    for i in range(n_sides):
-        angle = 2 * math.pi * i / n_sides
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
-        points_bottom.append(Point(x, y, 0))
-    points_bottom.append(points_bottom[0])
+    pts_a = [Point(radius * math.cos(2 * math.pi * i / n_sides), radius * math.sin(2 * math.pi * i / n_sides), 0) for i in range(n_sides)]
+    pts_b = [Point(pt.x, pt.y, thickness) for pt in pts_a]
+    brep = make_plate_brep(pts_a, pts_b)
 
-    points_top = []
-    for pt in points_bottom:
-        points_top.append(Point(pt.x, pt.y, thickness))
-
-    polyline_bottom = Polyline(points_bottom)
-    polyline_top = Polyline(points_top)
-    plate = Plate.from_outlines(polyline_bottom, polyline_top)
+    plate = Plate.from_brep(brep)
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness, atol=0.1)
@@ -292,29 +299,19 @@ def test_from_brep_octagonal_prism():
 
 def test_from_brep_tilted_box():
     import math
+
     angle = math.pi / 4
     thickness = 1.0
     cos_a = math.cos(angle)
     sin_a = math.sin(angle)
-    base_points = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)]
+    base = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
 
-    points_bottom = []
-    for pt in base_points:
-        new_x = pt.x
-        new_y = pt.y * cos_a
-        new_z = pt.y * sin_a
-        points_bottom.append(Point(new_x, new_y, new_z))
-    outline_bottom = Polyline(points_bottom)
+    pts_a = [Point(pt.x, pt.y * cos_a, pt.y * sin_a) for pt in base]
+    normal_scaled = Vector(0, -sin_a, cos_a) * thickness
+    pts_b = [Point(pt.x + normal_scaled.x, pt.y + normal_scaled.y, pt.z + normal_scaled.z) for pt in pts_a]
+    brep = make_plate_brep(pts_a, pts_b)
 
-    normal = Vector(0, -sin_a, cos_a)
-    normal_scaled = normal * thickness
-
-    points_top = []
-    for pt in points_bottom:
-        points_top.append(Point(pt.x + normal_scaled.x, pt.y + normal_scaled.y, pt.z + normal_scaled.z))
-    outline_top = Polyline(points_top)
-
-    plate = Plate.from_outlines(outline_bottom, outline_top)
+    plate = Plate.from_brep(brep)
 
     assert plate is not None
     assert plate.outline_a is not None

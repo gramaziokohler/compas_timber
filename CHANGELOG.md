@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
 
 ### Changed
+* Breaking change: the previous single-face `Plate.from_brep()` constructor behavior has been replaced, and `Plate.from_brep()` is now used exclusively to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face_thickness()` for plates, or `Panel.from_face_thickness()` for panels, instead.
 * `Plate.from_brep()` now delegates all brep parsing logic to `get_plate_geometry_outlines_from_brep`, which uses `mesh_from_brep` to convert the brep into a `Mesh` datastructure. Face identification and vertex correspondence are resolved through mesh topology instead of directly iterating the brep API.
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
 * Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
@@ -79,7 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 
 ### Changed
-* Breaking change: renamed the previous single-face `Plate.from_brep()` constructor to `Plate.from_face()`, and repurposed `Plate.from_brep()` to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face()` instead.
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
 * Updated `compas_model` version pinning from `0.4.4` to `0.9.1` to align with the latest development.
 * Changed `compas_timber.connections.Joint` to inherit from `Data` instead of the deprecated `Interaction`.

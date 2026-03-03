@@ -745,10 +745,21 @@ def get_plate_geometry_outlines_from_brep(brep):
         length = length_vector(n)
         return normalize_vector(n) if length > TOL.absolute else None
 
+    def _face_centroid(fkey):
+        pts = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
+        n = len(pts)
+        return [sum(p[i] for p in pts) / n for i in range(3)]
+
+    def _separation(fkey_a, fkey_b):
+        """Distance between face centroids projected onto face_a's normal."""
+        normal = _face_normal(fkey_a) or [0, 0, 0]
+        return abs(dot_vectors(normal, subtract_vectors(_face_centroid(fkey_b), _face_centroid(fkey_a))))
+
     if len(main_candidates) == 2 and max_count != 4:
         face_a_key, face_b_key = main_candidates
     else:
-        # rectangular or ambiguous: pick the most parallel non-adjacent pair
+        # rectangular or ambiguous: pick the most parallel non-adjacent pair,
+        # breaking ties by smallest separation (thinnest direction of the plate).
         non_adjacent = [
             (face_keys[i], face_keys[j])
             for i in range(len(face_keys))
@@ -759,10 +770,13 @@ def get_plate_geometry_outlines_from_brep(brep):
             raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
         best_pair = max(
             non_adjacent,
-            key=lambda ij: abs(dot_vectors(
-                _face_normal(ij[0]) or [0, 0, 0],
-                _face_normal(ij[1]) or [0, 0, 0],
-            )),
+            key=lambda ij: (
+                abs(dot_vectors(
+                    _face_normal(ij[0]) or [0, 0, 0],
+                    _face_normal(ij[1]) or [0, 0, 0],
+                )),
+                -_separation(ij[0], ij[1]),
+            ),
         )
         face_a_key, face_b_key = best_pair
 
@@ -859,7 +873,7 @@ def _brep_loop_vertex_indices(loop, brep):
             for idx in (edge.start_vertex.native_vertex.VertexIndex, edge.end_vertex.native_vertex.VertexIndex):
                 if idx not in face_vertex_indices:
                     face_vertex_indices.append(idx)
-        except Exception:
+        except (AttributeError, TypeError):
             for i, v in enumerate(brep.vertices):
                 if TOL.is_allclose(edge.start_vertex.point, v.point) and i not in face_vertex_indices:
                     face_vertex_indices.append(i)
