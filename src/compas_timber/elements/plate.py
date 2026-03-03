@@ -278,7 +278,7 @@ class Plate(TimberElement):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
 
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
