@@ -26,6 +26,36 @@ class _ValidProcessing(BTLxProcessing):
         return self._start_y
 
 
+def test_abc_prevents_instantiation_without_processing_name():
+    """ABC should prevent instantiation if PROCESSING_NAME is not implemented."""
+
+    class MissingProcessingName(BTLxProcessing):
+        ATTRIBUTE_MAP = {}
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingProcessingName with abstract method PROCESSING_NAME"):
+        MissingProcessingName()
+
+
+def test_abc_prevents_instantiation_without_attribute_map():
+    """ABC should prevent instantiation if ATTRIBUTE_MAP is not implemented."""
+
+    class MissingAttributeMap(BTLxProcessing):
+        PROCESSING_NAME = "MissingAttributeMap"
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingAttributeMap with abstract method ATTRIBUTE_MAP"):
+        MissingAttributeMap()
+
+
+def test_abc_prevents_instantiation_without_both_abstract_properties():
+    """ABC should prevent instantiation if neither abstract property is implemented."""
+
+    class MissingBoth(BTLxProcessing):
+        pass
+
+    with pytest.raises(TypeError, match="Can't instantiate abstract class MissingBoth with abstract methods ATTRIBUTE_MAP, PROCESSING_NAME"):
+        MissingBoth()
+
+
 def test_valid_attribute_map_does_not_raise():
     # _ValidProcessing is defined at module level without error, confirming no raise at definition time
     processing = _ValidProcessing()
@@ -77,6 +107,7 @@ def test_subclass_without_attribute_map_does_not_raise():
 
     class IntermediateProcessing(BTLxProcessing):
         PROCESSING_NAME = "IntermediateProcessing"
+        ATTRIBUTE_MAP = {}  # Required by ABC to allow instantiation
 
     processing = IntermediateProcessing()
     assert processing is not None

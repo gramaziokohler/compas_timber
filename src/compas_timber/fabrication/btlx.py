@@ -3,6 +3,8 @@ import os
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
+from abc import ABC
+from abc import abstractmethod
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
@@ -767,8 +769,8 @@ def dual_contour_to_xml(contour):
     return root
 
 
-class BTLxProcessing(Data):
-    """Base class for BTLx Processing.
+class BTLxProcessing(Data, ABC):
+    """Abstract base class for BTLx Processing.
 
     Attributes
     ----------
@@ -856,12 +858,16 @@ class BTLxProcessing(Data):
         return self._tool_position
 
     @property
+    @abstractmethod
     def PROCESSING_NAME(self):
-        raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
+        """The name of the processing for BTLx serialization."""
+        pass
 
     @property
+    @abstractmethod
     def ATTRIBUTE_MAP(self):
-        raise NotImplementedError("ATTRIBUTE_MAP must be implemented as class attribute in subclasses!")
+        """Mapping of BTLx XML attribute names to Python attribute names."""
+        pass
 
     @property
     def params(self):
