@@ -790,6 +790,8 @@ class BTLxProcessing(Data):
         Mapping of BTLx XML attribute names to Python attribute names.
     is_joinery : bool
         If True, the process is a result of joinery process.
+    params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
+        The BTLx processing parameters for serialization.
 
     """
 
@@ -855,13 +857,6 @@ class BTLxProcessing(Data):
 
     @property
     def params(self):
-        """Returns the BTLx processing parameters for serialization.
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.BTLxProcessingParams`
-            The processing parameters instance.
-        """
         return BTLxProcessingParams(self)
 
     def add_subprocessing(self, subprocessing):
@@ -898,6 +893,14 @@ class BTLxProcessingParams(object):
     instance : :class:`BTLxProcessing`
         The instance of the processing to create parameters for.
 
+    Attributes
+    ----------
+    header_attributes : OrderedDict
+        The header attributes for BTLx serialization.
+    attribute_map : dict
+        Mapping of BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
+
     """
 
     def __init__(self, instance):
@@ -905,13 +908,6 @@ class BTLxProcessingParams(object):
 
     @property
     def header_attributes(self):
-        """Returns the header attributes for BTLx serialization.
-
-        Returns
-        -------
-        OrderedDict
-            Dictionary of header attributes for the XML element.
-        """
         result = OrderedDict()
         result["Name"] = self._instance.PROCESSING_NAME
         result["Process"] = "yes"
@@ -931,15 +927,6 @@ class BTLxProcessingParams(object):
 
     @property
     def attribute_map(self):
-        """Returns mapping of BTLx XML child element tag names to Python attribute names.
-
-        Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
-
-        Returns
-        -------
-        dict
-            Dictionary mapping BTLx XML child element tag names (keys) to Python instance attribute names (values).
-        """
         return self._instance.ATTRIBUTE_MAP
 
     def as_dict(self):
