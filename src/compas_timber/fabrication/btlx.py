@@ -812,6 +812,14 @@ class BTLxProcessing(Data):
         self._counter_sink = counter_sink
         self._tool_position = tool_position
 
+    def __init_subclass__(cls, **kwargs):
+        super(BTLxProcessing, cls).__init_subclass__(**kwargs)
+        attribute_map = cls.__dict__.get("ATTRIBUTE_MAP", None)
+        if attribute_map is not None:
+            missing = [python_name for python_name in attribute_map.values() if not hasattr(cls, python_name)]
+            if missing:
+                raise AttributeError("ATTRIBUTE_MAP in '{}' references attributes not found on the class: {}".format(cls.__name__, missing))
+
     @property
     def ref_side_index(self):
         return self._ref_side_index
