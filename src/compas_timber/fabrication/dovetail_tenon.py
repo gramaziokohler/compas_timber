@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -13,13 +12,11 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import TenonShapeType
 
@@ -67,6 +64,25 @@ class DovetailTenon(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DovetailTenon"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "Rotation": "rotation",
+        "LengthLimitedTop": "length_limited_top",
+        "LengthLimitedBottom": "length_limited_bottom",
+        "Length": "length",
+        "Width": "width",
+        "Height": "height",
+        "ConeAngle": "cone_angle",
+        "UseFlankAngle": "use_flank_angle",
+        "FlankAngle": "flank_angle",
+        "Shape": "shape",
+        "ShapeRadius": "shape_radius",
+    }
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -155,10 +171,6 @@ class DovetailTenon(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DovetailTenonParams(self)
 
     @property
     def orientation(self):
@@ -855,46 +867,3 @@ class DovetailTenon(BTLxProcessing):
         self.width *= factor
         self.height *= factor
         self.shape_radius *= factor
-
-
-class DovetailTenonParams(BTLxProcessingParams):
-    """A class to store the parameters of a Dovetail Tenon feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DovetailTenon`
-        The instance of the Dovetail Tenon feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DovetailTenon) -> None
-        super(DovetailTenonParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Dovetail Tenon feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Dovetail Tenon as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Rotation"] = "{:.{prec}f}".format(float(self._instance.rotation), prec=TOL.precision)
-        result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
-        result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Height"] = "{:.{prec}f}".format(float(self._instance.height), prec=TOL.precision)
-        result["ConeAngle"] = "{:.{prec}f}".format(float(self._instance.cone_angle), prec=TOL.precision)
-        result["UseFlankAngle"] = "yes" if self._instance.use_flank_angle else "no"
-        result["FlankAngle"] = "{:.{prec}f}".format(float(self._instance.flank_angle), prec=TOL.precision)
-        result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
-        return result

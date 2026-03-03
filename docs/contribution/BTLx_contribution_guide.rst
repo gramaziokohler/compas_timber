@@ -28,15 +28,10 @@ Create a new module in ``src/compas_timber/fabrication/`` that inherits from ``B
 The following methods and attributes are the absolute minimum required to implement a processing:
 
 - ``PROCESSING_NAME`` : Class attribute matching BTLx specification
+- ``ATTRIBUTE_MAP`` : Class attribute dictionary mapping BTLx XML parameter names to Python attribute names
 - ``__init__()`` : Method with meaningful defaults set by the BTLx specification
 - ``__data__`` : Property returning a dictionary of processing data for serialization
-- ``params`` : Property returning a parameters instance for BTLx serialization
 - ``scale()`` : Method for scaling parameters when units are not set in mm
-
-Additionally, within the same module you need to implement the equivalent parameters class that inherits from ``BTLxProcessingParams``.
-The following method is required:
-
-- ``as_dict()`` : This method converts your processing instance into ``OrderedDict`` with BTLx parameter names and values as keys and values and is later used by the ``BTLxWriter`` to serialize the processing to XML.
 
 
 Example:
@@ -46,6 +41,12 @@ Example:
 
     class NewProcessing(BTLxProcessing):
         PROCESSING_NAME = "HypotheticalProcessing"  # need to match the name in the BTLx specification
+
+        # Map BTLx XML parameter names to Python attribute names
+        ATTRIBUTE_MAP = {
+            "ArgA": "arg_a",  # BTLx name : Python attribute name
+            "ArgB": "arg_b",
+        }
 
         @property
         def __data__(self):
@@ -59,22 +60,12 @@ Example:
             self.arg_a = arg_a
             self.arg_b = arg_b
 
-        @property
-        def params(self):
-            return NewProcessingParams(self)
-
         def scale(self, factor):
             self.arg_a *= factor
             self.arg_b *= factor
 
-
-    class NewProcessingParams(BTLxProcessingParams):
-        def as_dict(self):
-            # ordered, string representation which corresponds with the BTLx specification
-            result = OrderedDict()
-            result["ArgA"] = "{:.{prec}f}".format(float(self._instance.arg_a), prec=TOL.precision)
-            result["ArgB"] = "{:.{prec}f}".format(float(self._instance.arg_b), prec=TOL.precision)
-            return result
+.. note::
+    The ``params`` property is automatically inherited from ``BTLxProcessing`` and uses the ``ATTRIBUTE_MAP`` to serialize the processing parameters. The ``BTLxProcessingParams`` class handles the conversion of Python attribute values to BTLx-compliant string formats.
 
 .. seealso::
     :class:`JackRafterCut <compas_timber.fabrication.JackRafterCut>`
