@@ -1,6 +1,8 @@
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.butt_joint import ButtJoint
+from compas_timber.connections.k_miter import KMiterJoint
+from compas_timber.connections.utilities import angle_and_dot_product_main_beam_and_cross_beam
 from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
 from compas_timber.connections.utilities import beam_ref_side_incidence
 from compas_timber.connections.utilities import extend_beam_to_plane
@@ -166,6 +168,17 @@ class KButtJoint(Joint):
             cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
         extend_beam_to_plane(main_beam, cutting_plane)
 
+    def _main_beams_sorted(self):
+        dots = []
+        for main_beam in self.main_beams:
+            _, dot = angle_and_dot_product_main_beam_and_cross_beam(main_beam, self.cross_beam, self)
+            dots.append(dot)
+        # Sort main_beams based on dots (ascending order)
+        sorted_indices = sorted(range(len(dots)), key=lambda i: dots[i])
+        sorted_beams = [self.main_beams[i] for i in sorted_indices]
+
+        return sorted_beams
+
     def add_features(self):
         """
         Adds the required extension and trimming features to the three beams.
@@ -176,18 +189,11 @@ class KButtJoint(Joint):
 
         if self.mill_depth:
             if self.force_pocket:
-                sorted_beams = sorted(self.main_beams, key=lambda b: beam_ref_side_incidence(self.cross_beam, b, ignore_ends=True)[self.cross_beam_ref_side_index(b)])
+                sorted_beams = self._main_beams_sorted()
+                pocket = KMiterJoint.pocket_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
 
-                # Merge the two pockets together
-                p1 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, sorted_beams[1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                p2 = ButtJoint.get_pocket_on_cross_beam(self.cross_beam, sorted_beams[0], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
-                print(p1.start_x)
-                print(p2.start_x)
-                p1.length = p2.start_x + p2.length - p1.start_x
-                p1.tilt_end_side = p2.tilt_end_side
-                self.cross_beam.add_feature(p1)
-                self.features.append(p1)
-                print(p1)
+                self.cross_beam.add_feature(pocket)
+                self.features.append(pocket)
             else:
                 # Merge the two laps in on lap
                 l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)

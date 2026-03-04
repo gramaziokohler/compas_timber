@@ -302,7 +302,7 @@ class ButtJoint(Joint):
         ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
         main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         cutting_plane = main_beam.ref_sides[main_beam_ref_side_index]
-        _, lap_width = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
+        _, lap_length = main_beam.get_dimensions_relative_to_side(main_beam_ref_side_index)
         ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
 
@@ -313,7 +313,7 @@ class ButtJoint(Joint):
             cross_beam_side_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
             mill_depth = distance_point_plane(cross_beam_side_plane.point, butt_plane)
 
-        lap_feature = Lap.from_plane_and_beam(cutting_plane, cross_beam, lap_width, mill_depth, ref_side_index=cross_beam_ref_side_index)
+        lap_feature = Lap.from_plane_and_beam(cutting_plane, cross_beam, lap_length, mill_depth, ref_side_index=cross_beam_ref_side_index)
 
         return lap_feature
 
