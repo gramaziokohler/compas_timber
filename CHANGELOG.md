@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
 * Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
 * Renamed attribute `segment` to `line` in `StructuralSegment` for better clarity.
-* New `NBeamKDTreeAnalyzer` for the same `TimberModel` instance use a shared KDTree for efficient spatial queries. 
+* New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
 
 ### Removed
 

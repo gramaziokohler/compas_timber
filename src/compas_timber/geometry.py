@@ -3,7 +3,7 @@ import math
 from scipy.spatial import KDTree as _ScipyKDTree
 
 
-# TODO: perhapps this should be the canonical implementation of KDTree in core, scipy is already a dependency anyways.
+# TODO: perhaps this should be the canonical implementation of KDTree in core, scipy is already a dependency anyways.
 class KDTree:
     """Wrapper around :class:`scipy.spatial.KDTree` that mimics the :class:`compas.geometry.KDTree` interface.
 
