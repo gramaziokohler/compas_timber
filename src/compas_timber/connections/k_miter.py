@@ -4,6 +4,7 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_line_line
+from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.connections import Joint
@@ -17,6 +18,7 @@ from compas_timber.connections.utilities import extend_beam_to_plane
 from compas_timber.connections.utilities import parse_cross_beams_and_main_beams_from_cluster
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication.lap import Lap
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.utils import ensure_polyhedron_faces_outwards
 
@@ -171,7 +173,6 @@ class KMiterJoint(Joint):
             if self.mill_depth:
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
             extend_beam_to_plane(beam, cutting_plane)
-            # extend_main_beam_to_cross_beam(beam, self.cross_beam, mill_depth=self.mill_depth)
 
     def add_features(self):
         """
@@ -190,30 +191,7 @@ class KMiterJoint(Joint):
             self.features.append(pocket)
 
         elif self.mill_depth:
-            # Merge the two laps in on lap
-            l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.mill_depth)
-            l2 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[-1], self.mill_depth)
-
-            assert l1 and l2
-            assert l1.start_x and l2.start_x
-            assert l1.length and l2.length
-
-            lap = None
-            if l1.orientation == "start" and l2.orientation == "start":
-                lap = l1
-                lap.length = l2.start_x + l2.length - l1.start_x
-            elif l1.orientation == "start" and l2.orientation == "end":
-                lap = l1
-                lap.length = l2.start_x - l1.start_x
-            elif l1.orientation == "end" and l2.orientation == "start":
-                lap = l2
-                lap.length = l2.start_x + l2.length - (l1.start_x - l1.length)
-                lap.start_x = l1.start_x - l1.length
-            elif l1.orientation == "end" and l2.orientation == "end":
-                lap = l2
-                lap.length = l2.start_x - (l1.start_x - l1.length)
-
-            assert lap
+            lap = KMiterJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth)
             self.cross_beam.add_feature(lap)
             self.features.append(lap)
 
@@ -266,12 +244,12 @@ class KMiterJoint(Joint):
 
         # first_plane
         ref_side_dict = beam_ref_side_incidence(cross_beam, first_main_beam, ignore_ends=True)
-        first_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
         first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
 
         # last_plane
         ref_side_dict = beam_ref_side_incidence(cross_beam, last_main_beam)
-        last_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
+        last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
 
         # adjust mill depth
@@ -307,5 +285,63 @@ class KMiterJoint(Joint):
 
     @staticmethod
     def lap_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: Optional[float]):
-        ref_side_dict = bema_ref_side_incidence(cross_beam, first_main_beam, ignore_ends=True)
-        main_beam_ref_side_index = min(ref_side_dict, l)
+        # first beam and last beam have to be on the same side of the cross beam
+        ref_side_dict = beam_ref_side_incidence(first_main_beam, cross_beam, ignore_ends=True)
+        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        cross_frame = cross_beam.ref_sides[cross_beam_ref_side_index]
+        cross_plane = Plane.from_frame(cross_frame)
+        cross_plane_next = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
+        cross_plane_prev = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
+
+        # adjust mill depth
+        if mill_depth:
+            cutting_plane = Plane.from_frame(cross_frame.translated(-cross_frame.normal * mill_depth))
+        else:
+            cutting_plane = Plane.from_frame(cross_frame)
+
+        # first_plane
+        ref_side_dict = beam_ref_side_incidence(cross_beam, first_main_beam, ignore_ends=True)
+        first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
+        first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
+        exterior_first_plane = first_plane.copy()
+        exterior_first_plane.point = Point(*intersection_plane_plane(cross_plane, first_plane)[0])
+        exterior_first_plane.normal = cross_beam.centerline.direction
+        interior_first_plane = first_plane.copy()
+        interior_first_plane.point = Point(*intersection_plane_plane(cutting_plane, first_plane)[0])
+        interior_first_plane.normal = cross_beam.centerline.direction
+
+        # last_plane
+        ref_side_dict = beam_ref_side_incidence(cross_beam, last_main_beam)
+        last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
+        exterior_last_plane = last_plane.copy()
+        exterior_last_plane.point = Point(*intersection_plane_plane(cross_plane, last_plane)[0])
+        exterior_last_plane.normal = cross_beam.centerline.direction
+        interior_last_plane = last_plane.copy()
+        interior_last_plane.point = Point(*intersection_plane_plane(cutting_plane, last_plane)[0])
+        interior_last_plane.normal = cross_beam.centerline.direction
+
+        planes = [exterior_first_plane, interior_first_plane, exterior_last_plane, interior_last_plane]
+        planes = sorted(planes, key=lambda plane: plane.point.distance_to_point(cross_beam.centerline.start))
+
+        print(planes)
+
+        first_plane = planes[0]
+        last_plane = planes[-1]
+
+        vertices = [
+            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, first_plane)),
+            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, last_plane)),
+            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, last_plane)),
+            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, first_plane)),
+            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, first_plane)),
+            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, last_plane)),
+            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, last_plane)),
+            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, first_plane)),
+        ]
+        faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
+        cutout_volume = Polyhedron(vertices=vertices, faces=faces)
+        cutout_volume = ensure_polyhedron_faces_outwards(cutout_volume)
+
+        lap = Lap.from_volume_and_beam(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
+        return lap

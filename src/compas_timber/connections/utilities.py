@@ -254,8 +254,10 @@ def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: 
 
     """
     main_beam_direction = joint.get_beam_direction_towards_joint(main_beam)
+    print(main_beam_direction)
     angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
     dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
+    print(dot)
     return angle, dot
 
 

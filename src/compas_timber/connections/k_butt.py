@@ -1,3 +1,6 @@
+from compas.geometry import Point
+from compas.geometry import intersection_line_line
+
 from compas_timber.connections import Joint
 from compas_timber.connections import JointTopology
 from compas_timber.connections.butt_joint import ButtJoint
@@ -109,6 +112,10 @@ class KButtJoint(Joint):
     def main_beam_b(self):
         return self.main_beams[1]
 
+    @property
+    def location(self):
+        return Point(*(intersection_line_line(self.main_beam_a.centerline, self.main_beam_b.centerline)[0]))
+
     @classmethod
     def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
         """Create an instance of this joint from a cluster of elements.
@@ -175,8 +182,8 @@ class KButtJoint(Joint):
             dots.append(dot)
         # Sort main_beams based on dots (ascending order)
         sorted_indices = sorted(range(len(dots)), key=lambda i: dots[i])
+        print(sorted_indices)
         sorted_beams = [self.main_beams[i] for i in sorted_indices]
-
         return sorted_beams
 
     def add_features(self):
@@ -187,51 +194,28 @@ class KButtJoint(Joint):
         """
         assert self.main_beam_a and self.main_beam_b and self.cross_beam
 
+        sorted_beams = self._main_beams_sorted()
         if self.mill_depth:
             if self.force_pocket:
-                sorted_beams = self._main_beams_sorted()
                 pocket = KMiterJoint.pocket_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
 
                 self.cross_beam.add_feature(pocket)
                 self.features.append(pocket)
             else:
-                # Merge the two laps in on lap
-                l1 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
-                l2 = ButtJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
-
-                assert l1 and l2
-                assert l1.start_x and l2.start_x
-                assert l1.length and l2.length
-
-                lap = None
-                if l1.orientation == "start" and l2.orientation == "start":
-                    lap = l1
-                    lap.length = l2.start_x + l2.length - l1.start_x
-                elif l1.orientation == "start" and l2.orientation == "end":
-                    lap = l1
-                    lap.length = l2.start_x - l1.start_x
-                elif l1.orientation == "end" and l2.orientation == "start":
-                    lap = l2
-                    lap.length = l2.start_x + l2.length - (l1.start_x - l1.length)
-                    lap.start_x = l1.start_x - l1.length
-                elif l1.orientation == "end" and l2.orientation == "end":
-                    lap = l2
-                    lap.length = l2.start_x - (l1.start_x - l1.length)
-
-                assert lap
+                lap = KMiterJoint.lap_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth)
                 self.cross_beam.add_feature(lap)
                 self.features.append(lap)
 
-        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam_a, self.mill_depth)
-        self.main_beam_a.add_feature(feature)
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, sorted_beams[0], self.mill_depth)
+        sorted_beams[0].add_feature(feature)
         self.features.append(feature)
 
-        feature = ButtJoint.get_cut_main_beam(self.cross_beam, self.main_beam_b, self.mill_depth)
-        self.main_beam_b.add_feature(feature)
+        feature = ButtJoint.get_cut_main_beam(self.cross_beam, sorted_beams[-1], self.mill_depth)
+        sorted_beams[-1].add_feature(feature)
         self.features.append(feature)
 
-        feature = ButtJoint.get_cut_main_beam(self.main_beam_a, self.main_beam_b, mill_depth=0)
-        self.main_beam_b.add_feature(feature)
+        feature = ButtJoint.get_cut_main_beam(sorted_beams[0], sorted_beams[-1], mill_depth=0)
+        sorted_beams[-1].add_feature(feature)
         self.features.append(feature)
 
     def restore_beams_from_keys(self, model):
