@@ -197,12 +197,12 @@ class KButtJoint(Joint):
         sorted_beams = self._main_beams_sorted()
         if self.mill_depth:
             if self.force_pocket:
-                pocket = KMiterJoint.pocket_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+                pocket = KMiterJoint.get_pocket_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
 
                 self.cross_beam.add_feature(pocket)
                 self.features.append(pocket)
             else:
-                lap = KMiterJoint.lap_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth)
+                lap = KMiterJoint.get_lap_on_cross_beam(self.cross_beam, sorted_beams[0], sorted_beams[-1], mill_depth=self.mill_depth)
                 self.cross_beam.add_feature(lap)
                 self.features.append(lap)
 

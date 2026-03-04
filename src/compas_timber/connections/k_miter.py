@@ -186,12 +186,12 @@ class KMiterJoint(Joint):
         sorted_angles, sorted_dots = self._sort_main_beams()
 
         if self.force_pocket and self.mill_depth:
-            pocket = KMiterJoint.pocket_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            pocket = KMiterJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
             self.cross_beam.add_feature(pocket)
             self.features.append(pocket)
 
         elif self.mill_depth:
-            lap = KMiterJoint.lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth)
+            lap = KMiterJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth)
             self.cross_beam.add_feature(lap)
             self.features.append(lap)
 
@@ -233,7 +233,29 @@ class KMiterJoint(Joint):
         self.main_beams = [model.element_by_guid(guid) for guid in self.main_beams_guids]
 
     @staticmethod
-    def pocket_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: Optional[float] = None, conical_tool: bool = False):
+    def get_pocket_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: float, conical_tool: bool = False):
+        """
+        Creates a `Pocket` feature on the `cross_beam` for the K-Miter joint, based on the geometry of two beams, if more than two beams, the last and the first of the list.
+        It does not apply the features to the beams, it only creates it.
+
+        Parameters
+        ----------
+        cross_beam : :class:`~compas_timber.elements.Beam`
+            The cross beam on which to create the porcessing.
+        first_main_beam : :class:`~compas_timber.elements.Beam`
+            The first beam of the sorted list of main beams in the joint.
+        last_main_beam : :class:`~compas_timber.elements.Beam`
+            The last beam of the sorted list of main beams in the joint.
+        mill_depth : float
+            The depth of material to be milled from the cross beam at the cutting planes.
+        conical_tool : bool, optional
+            If True, the pocket allows overhangs that require a conical tool to be milled.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Pocket`
+             The computed `Pocket` feature for the cross beam.
+        """
 
         # first beam and last beam have to be on the same side of the cross beam
         ref_side_dict = beam_ref_side_incidence(first_main_beam, cross_beam, ignore_ends=True)
@@ -284,7 +306,29 @@ class KMiterJoint(Joint):
         return pocket
 
     @staticmethod
-    def lap_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: Optional[float]):
+    def get_lap_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: Optional[float]):
+        """
+        Creates a `Lap` feature on the `cross_beam` for the K-Miter joint, based on the geometry of two beams, if more than two beams, the last and the first of the list.
+        It does not add the `Lap` feature to the cross_beam, it only computes it.
+
+        Parameters
+        ----------
+           cross_beam : :class:`~compas_timber.elements.Beam`
+               The cross beam on which to create the porcessing.
+           first_main_beam : :class:`~compas_timber.elements.Beam`
+               The first beam of the sorted list of main beams in the joint.
+           last_main_beam : :class:`~compas_timber.elements.Beam`
+               The last beam of the sorted list of main beams in the joint.
+           mill_depth : float, optional
+               The depth of material to be milled from the cross beam at the cutting planes.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.Lap`
+             The computed `Lap` feature for the cross beam.
+
+        """
+
         # first beam and last beam have to be on the same side of the cross beam
         ref_side_dict = beam_ref_side_incidence(first_main_beam, cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
