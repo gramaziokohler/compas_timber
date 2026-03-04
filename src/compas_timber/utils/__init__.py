@@ -372,35 +372,16 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     bool
         True if the point is inside the polyline, False otherwise.
     """
-    pts = list(polyline.points)
-    a = pts[0]
-    b = None
-    c = None
-    # find b: the first point that is not coincident with a, so that a-b defines a valid direction
-    for pt in pts[1:]:
-        if not TOL.is_allclose(pt, a):
-            b = pt
-            break
-    if b is None:
-        # all points are coincident / cannot define a plane
-        return False
-    # find c: the first point that is not collinear with a and b,
-    # so that a, b, c define a valid plane (non-zero cross product)
-    for pt in pts:
-        cross = cross_vectors(subtract_vectors(b, a), subtract_vectors(pt, a))
-        if not TOL.is_allclose(cross, [0, 0, 0]):
-            c = pt
-            break
-    if c is None:
-        # all points are collinear / cannot define a plane
-        return False
-    frame = Frame.from_points(a, b, c)
+    pgon = Polygon(polyline.points[:-1])
+    normal = pgon.normal
+    if tol.is_zero(length_vector(normal)):
+        return False  # degenerate: collinear or coincident vertices
+    frame = Frame.from_plane(Plane(pgon.centroid, normal))
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-    pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
     pt = point.transformed(xform)
     if in_plane and not tol.is_zero(pt[2]):
         return False
-    return is_point_in_polygon_xy(pt, pgon)
+    return is_point_in_polygon_xy(pt, pgon.transformed(xform))
 
 
 def do_segments_overlap(segment_a, segment_b):
@@ -686,146 +667,90 @@ def get_plate_geometry_outlines_from_brep(brep):
     """Extract the two parallel face outlines from a plate-like brep.
 
     Converts the brep to a :class:`~compas.datastructures.Mesh` via
-    :func:`mesh_from_brep`. The two main faces are identified by polygon
-    vertex count with a normal dot-product tiebreaker for the rectangular case.
-    Vertex correspondence is resolved via shared edges on side faces.
-    Openings are retrieved from the matching brep face.
+    :func:`mesh_from_brep_simple`. Mesh face keys are sequential integers
+    corresponding directly to the index of each face in ``brep.faces``.
+    Main faces are identified by highest vertex count; for rectangular plates
+    the most-parallel non-adjacent pair with smallest centroid separation wins.
+    Vertex correspondence between outlines is resolved via shared side-face edges.
 
     Parameters
     ----------
     brep : :class:`~compas.geometry.Brep`
-        A brep representing a plate geometry.  Must contain at least 2 faces.
+        A plate-like brep. Must have at least 2 faces.
 
     Returns
     -------
     tuple(:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`, list[:class:`~compas.geometry.Polyline`] or None)
-        ``outline_a``, ``outline_b``, and any inner opening polylines extracted
-        from the primary face (or ``None`` if there are no openings).
+        ``outline_a``, ``outline_b``, and inner opening polylines from the
+        primary face, or ``None`` if there are none.
 
     Raises
     ------
     ValueError
-        If the brep has fewer than 2 faces or the two main faces cannot be identified.
+        If the brep has fewer than 2 faces or the main faces cannot be identified.
     """
     if len(brep.faces) < 2:
         raise ValueError("Brep must have at least 2 faces, got {}.".format(len(brep.faces)))
 
-    def pt_key(coords):
-        return tuple(round(c, 6) for c in coords)
-
-    mesh = mesh_from_brep(brep)
+    mesh = mesh_from_brep_simple(brep)
     face_keys = list(mesh.faces())
 
-    # edge → list of adjacent face keys
-    edge_to_faces = {}
-    for f in face_keys:
-        verts = mesh.face_vertices(f)
-        n = len(verts)
-        for i in range(n):
-            e = frozenset([verts[i], verts[(i + 1) % n]])
-            edge_to_faces.setdefault(e, []).append(f)
-
-    face_neighbors = {f: set() for f in face_keys}
-    for shared_faces in edge_to_faces.values():
-        if len(shared_faces) == 2:
-            a, b = shared_faces
-            face_neighbors[a].add(b)
-            face_neighbors[b].add(a)
-
-    # main faces have the highest vertex count; side faces always have 4
+    # main (plate) faces carry the most vertices; side faces are always quads
     face_vcount = {f: len(mesh.face_vertices(f)) for f in face_keys}
     max_count = max(face_vcount.values())
     main_candidates = [f for f in face_keys if face_vcount[f] == max_count]
 
-    def _face_normal(fkey):
-        pts = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
-        v1 = subtract_vectors(pts[1], pts[0])
-        v2 = subtract_vectors(pts[2], pts[0])
-        n = cross_vectors(v1, v2)
-        length = length_vector(n)
-        return normalize_vector(n) if length > TOL.absolute else None
-
-    def _face_centroid(fkey):
-        pts = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
-        n = len(pts)
-        return [sum(p[i] for p in pts) / n for i in range(3)]
-
-    def _separation(fkey_a, fkey_b):
-        """Distance between face centroids projected onto face_a's normal."""
-        normal = _face_normal(fkey_a) or [0, 0, 0]
-        return abs(dot_vectors(normal, subtract_vectors(_face_centroid(fkey_b), _face_centroid(fkey_a))))
-
     if len(main_candidates) == 2 and max_count != 4:
         face_a_key, face_b_key = main_candidates
     else:
-        # rectangular or ambiguous: pick the most parallel non-adjacent pair,
-        # breaking ties by smallest separation (thinnest direction of the plate).
-        non_adjacent = [
-            (face_keys[i], face_keys[j])
-            for i in range(len(face_keys))
-            for j in range(i + 1, len(face_keys))
-            if face_keys[j] not in face_neighbors[face_keys[i]]
-        ]
-        if not non_adjacent:
+        # rectangular / ambiguous: most-parallel non-adjacent pair, min separation as tiebreaker.
+        non_adj = [(i, j) for i in face_keys for j in face_keys if j > i and j not in mesh.face_neighbors(i)]
+        if not non_adj:
             raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
-        best_pair = max(
-            non_adjacent,
+
+        def _centroid(fkey):
+            pts = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
+            return [sum(p[k] for p in pts) / len(pts) for k in range(3)]
+
+        face_a_key, face_b_key = max(
+            non_adj,
             key=lambda ij: (
-                abs(dot_vectors(
-                    _face_normal(ij[0]) or [0, 0, 0],
-                    _face_normal(ij[1]) or [0, 0, 0],
-                )),
-                -_separation(ij[0], ij[1]),
+                abs(dot_vectors(mesh.face_normal(ij[0]), mesh.face_normal(ij[1]))),
+                -abs(dot_vectors(mesh.face_normal(ij[0]), subtract_vectors(_centroid(ij[1]), _centroid(ij[0])))),
             ),
         )
-        face_a_key, face_b_key = best_pair
 
     verts_a = mesh.face_vertices(face_a_key)
     verts_b = mesh.face_vertices(face_b_key)
-    pts_a = [Point(*mesh.vertex_coordinates(v)) for v in verts_a]
-    pts_b = [Point(*mesh.vertex_coordinates(v)) for v in verts_b]
-    outline_a = Polyline(pts_a + [pts_a[0]])
-    outline_b = Polyline(pts_b + [pts_b[0]])  # fallback
+    set_a, set_b = set(verts_a), set(verts_b)
 
-    # align outline_b to outline_a using shared edges on side faces
-    set_a = set(verts_a)
-    set_b = set(verts_b)
+    # map each vertex of face_a to the corresponding vertex of face_b via side-face edges
     a_pos = {v: i for i, v in enumerate(verts_a)}
-    b_at_a_pos = {}
-
+    b_at_a = {}
     for f in face_keys:
         if f in (face_a_key, face_b_key):
             continue
         fv = mesh.face_vertices(f)
-        n = len(fv)
-        for k in range(n):
-            u, v = fv[k], fv[(k + 1) % n]
+        for k in range(len(fv)):
+            u, v = fv[k], fv[(k + 1) % len(fv)]
             if u in set_a and v in set_b:
-                b_at_a_pos[a_pos[u]] = v
+                b_at_a[a_pos[u]] = v
             elif u in set_b and v in set_a:
-                b_at_a_pos[a_pos[v]] = u
+                b_at_a[a_pos[v]] = u
 
-    if len(b_at_a_pos) == len(verts_a):
-        aligned_pts = [Point(*mesh.vertex_coordinates(b_at_a_pos[i])) for i in range(len(verts_a))]
-        aligned_pts.append(aligned_pts[0])
-        outline_b = Polyline(aligned_pts)
+    pts_a = [Point(*mesh.vertex_coordinates(v)) for v in verts_a]
+    outline_a = Polyline(pts_a + [pts_a[0]])
 
-    # retrieve openings from the matching brep face
-    pts_a_key_set = set(pt_key(mesh.vertex_coordinates(v)) for v in verts_a)
-    openings = None
-    for brep_face in brep.faces:
-        outer_loop = next((loop for loop in brep_face.loops if loop.is_outer), None)
-        if outer_loop is None:
-            continue
-        brep_face_pts = set()
-        for edge in outer_loop.edges:
-            brep_face_pts.add(pt_key(edge.start_vertex.point))
-            brep_face_pts.add(pt_key(edge.end_vertex.point))
-        if brep_face_pts == pts_a_key_set:
-            opening_polylines = [polyline_from_brep_loop(loop) for loop in brep_face.loops if not loop.is_outer]
-            opening_polylines = [o for o in opening_polylines if o is not None]
-            openings = opening_polylines if opening_polylines else None
-            break
+    if len(b_at_a) == len(verts_a):
+        pts_b = [Point(*mesh.vertex_coordinates(b_at_a[i])) for i in range(len(verts_a))]
+    else:
+        pts_b = [Point(*mesh.vertex_coordinates(v)) for v in verts_b]
+    outline_b = Polyline(pts_b + [pts_b[0]])
+
+    # openings: inner loops of the primary brep face (face key == brep.faces index)
+    inner_loops = [loop for loop in brep.faces[face_a_key].loops if not loop.is_outer]
+    opening_polylines = [o for o in (polyline_from_brep_loop(loop) for loop in inner_loops) if o is not None]
+    openings = opening_polylines or None
 
     return outline_a, outline_b, openings
 
@@ -861,32 +786,50 @@ def combine_parallel_segments(polyline, tol=TOL):
             polyline.points.pop(i)
 
 
-def _brep_loop_vertex_indices(loop, brep):
-    """Return ordered vertex indices of a brep loop's outer boundary.
+def get_brep_loop_vertex_indices(loop, brep):
+    """Get the vertex indices of a BrepLoop.
 
-    Tries ``native_vertex.VertexIndex`` (Rhino) first; falls back to
-    ``TOL.is_allclose`` point comparison against ``brep.vertices``.
+    Tries to use ``native_vertex.VertexIndex`` of the BrepLoop edges if
+    available (Rhino), otherwise falls back to comparing vertex positions
+    with a tolerance.
+
+    Parameters
+    ----------
+    loop : :class:`~compas.geometry.BrepLoop`
+        The BrepLoop to get the vertex indices from.
+    brep : :class:`~compas.geometry.Brep`
+        The Brep to get the vertex indices from.
+
+    Returns
+    -------
+    list of int
+        The vertex indices of the BrepLoop (closed: first index repeated at end).
     """
     face_vertex_indices = []
     for edge in loop.edges:
         try:
-            for idx in (edge.start_vertex.native_vertex.VertexIndex, edge.end_vertex.native_vertex.VertexIndex):
-                if idx not in face_vertex_indices:
-                    face_vertex_indices.append(idx)
-        except (AttributeError, TypeError):
+            if edge.start_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
+            if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
+        except AttributeError:
             for i, v in enumerate(brep.vertices):
-                if TOL.is_allclose(edge.start_vertex.point, v.point) and i not in face_vertex_indices:
-                    face_vertex_indices.append(i)
-                if TOL.is_allclose(edge.end_vertex.point, v.point) and i not in face_vertex_indices:
-                    face_vertex_indices.append(i)
+                if TOL.is_allclose(edge.start_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+                if TOL.is_allclose(edge.end_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+    face_vertex_indices.append(face_vertex_indices[0])
     return face_vertex_indices
 
 
-def mesh_from_brep(brep):
+def mesh_from_brep_simple(brep):
     """Build a :class:`~compas.datastructures.Mesh` from a Brep's face structure.
 
-    Each Brep face becomes one non-triangulated mesh face (outer loop only).
-    Curved edges are treated as straight lines between their endpoints.
+    Creates a one-to-one relationship between Brep and Mesh vertices and faces.
+    Each Brep face becomes one non-triangulated mesh face (outer loop only);
+    inner loops (holes) are ignored. Brep faces must be planar.
 
     Parameters
     ----------
@@ -897,40 +840,18 @@ def mesh_from_brep(brep):
     -------
     :class:`~compas.datastructures.Mesh`
     """
-    faces = []
+    faces_indices = []
     for face in brep.faces:
-        outer_loop = next((loop for loop in face.loops if loop.is_outer), None)
-        if outer_loop is None:
-            continue
-        indices = _brep_loop_vertex_indices(outer_loop, brep)
-        if len(indices) >= 3:
-            faces.append(indices)
-
-    return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces)
-
-
-def get_mesh_shape_values(mesh):
-    """Return flat XYZ coordinates and face-index list (``-1`` sentinel per face) from a mesh.
-
-    Parameters
-    ----------
-    mesh : :class:`~compas.datastructures.Mesh`
-
-    Returns
-    -------
-    tuple(list[float], list[int])
-        Flat ``[x, y, z, ...]`` point list and ``[i, j, k, -1, ...]`` face list.
-    """
-    points = []
-    for v in mesh.vertices():
-        points.extend(mesh.vertex_attributes(v, "xyz"))
-
-    face_indices = []
-    for f in mesh.faces():
-        face_indices.extend(mesh.face_vertices(f))
-        face_indices.append(-1)
-
-    return points, face_indices
+        outer_loop = None
+        try:
+            for loop in face.loops:
+                if loop.is_outer:
+                    outer_loop = loop # only RhinoBrep has this attribute
+                    break
+        except AttributeError:
+            outer_loop = face.loops[0]  # OCC brep
+        faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
+    return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
 
 __all__ = [
@@ -954,6 +875,6 @@ __all__ = [
     "get_plate_geometry_outlines_from_brep",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
-    "mesh_from_brep",
-    "get_mesh_shape_values",
+    "get_brep_loop_vertex_indices",
+    "mesh_from_brep_simple",
 ]

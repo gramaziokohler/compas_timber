@@ -1,6 +1,6 @@
 """Minimal duck-typed Brep stubs for unit tests.
 
-These objects implement only the interface that ``mesh_from_brep``,
+These objects implement only the interface that ``mesh_from_brep_simple``,
 ``get_plate_geometry_outlines_from_brep``, and ``polylines_from_brep_face``
 actually traverse:
 
@@ -45,7 +45,7 @@ class MockFace:
 
 
 class MockBrep:
-    """Minimal Brep stub compatible with ``mesh_from_brep`` and related utils."""
+    """Minimal Brep stub compatible with ``mesh_from_brep_simple`` and related utils."""
 
     def __init__(self, faces, all_vertices):
         self.faces = faces

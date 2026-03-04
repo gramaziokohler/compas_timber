@@ -368,8 +368,8 @@ class Panel(Element):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate geometry with the given outline and thickness.
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel geometry with the given outline and thickness.
         """
         # this ensure the plate geometry can always be computed
         if TOL.is_zero(thickness):
