@@ -21,6 +21,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import mesh_from_brep_simple
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
@@ -644,8 +645,7 @@ class BTLxPart(BTLxGenericPart):
 
         if not self._shape_strings:
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
-            mesh, _ = scaled_geometry.to_viewmesh()
-
+            mesh = mesh_from_brep_simple(scaled_geometry)
             vertices = list(mesh.vertices())
             if not vertices:
                 warn("BTLxPart shape_strings: to_viewmesh() returned no vertices for element {}.".format(self.element.guid))
