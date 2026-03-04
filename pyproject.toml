@@ -38,6 +38,7 @@ dependencies = [
     "rtree",
     "compas >=2.0, <3.0",
     "compas_model == 0.9.1", # pin until first release
+    "scipy >= 1.1"
 ]
 
 [project.optional-dependencies]
