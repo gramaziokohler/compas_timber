@@ -719,10 +719,13 @@ def mesh_from_brep_simple(brep):
     faces_indices = []
     for face in brep.faces:
         outer_loop = None
-        for loop in face.loops:
-            if loop.is_outer:
-                outer_loop = loop
-                break
+        try:
+            for loop in face.loops:
+                if loop.is_outer: #only RhinoBrep has this attribute
+                    outer_loop = loop
+                    break
+        except AttributeError:
+            loop = face.loops[0] #occ
         faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
