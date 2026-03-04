@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
+* Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
 
 ### Changed
 
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
 * Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
 * Renamed attribute `segment` to `line` in `StructuralSegment` for better clarity.
+* New `NBeamKDTreeAnalyzer` for the same `TimberModel` instance use a shared KDTree for efficient spatial queries. 
 
 ### Removed
 

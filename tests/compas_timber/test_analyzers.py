@@ -276,3 +276,39 @@ def test_empty_cluster_topology():
     """Test topology behavior with empty cluster."""
     cluster = Cluster([])
     assert cluster.topology == JointTopology.TOPO_UNKNOWN
+
+
+def test_kdtree_cache_reuses_same_instance(two_triplets_beams):
+    """Two analyzers built from the same model must share the identical KDTree object."""
+    model = TimberModel()
+    model.add_elements(two_triplets_beams)
+    model.connect_adjacent_beams()
+
+    analyzer_a = NBeamKDTreeAnalyzer(model, n=2)
+    analyzer_b = NBeamKDTreeAnalyzer(model, n=3)
+
+    assert analyzer_a._kdtree is analyzer_b._kdtree
+
+
+def test_kdtree_cache_rebuilds_after_model_change(two_triplets_beams):
+    """After joints are added to the model, a new KDTree must be built."""
+    model = TimberModel()
+    model.add_elements(two_triplets_beams)
+    model.connect_adjacent_beams()
+
+    analyzer_before = NBeamKDTreeAnalyzer(model, n=2)
+    tree_before = analyzer_before._kdtree
+
+    # Add a new beam so that connect_adjacent_beams produces new joint candidates
+    extra_beam = Beam.from_centerline(
+        centerline=Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=50.0, y=-300.0, z=0.0)),
+        height=12,
+        width=6,
+    )
+    model.add_element(extra_beam)
+    model.connect_adjacent_beams()
+
+    analyzer_after = NBeamKDTreeAnalyzer(model, n=2)
+    tree_after = analyzer_after._kdtree
+
+    assert tree_after is not tree_before
