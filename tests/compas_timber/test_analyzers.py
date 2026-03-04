@@ -1,4 +1,5 @@
 import pytest
+from unittest import mock
 from unittest.mock import Mock
 
 from compas.geometry import Point
@@ -312,3 +313,23 @@ def test_kdtree_cache_rebuilds_after_model_change(two_triplets_beams):
     tree_after = analyzer_after._kdtree
 
     assert tree_after is not tree_before
+
+
+def test_kdtree_ordering_consistency(two_triplets_beams):
+    model = TimberModel()
+    model.add_elements(two_triplets_beams)
+    model.connect_adjacent_beams()
+
+    analyzer_a = NBeamKDTreeAnalyzer(model, n=3)
+    clusters_a = analyzer_a.find()
+    expected = sorted([frozenset(id(e) for e in cluster.elements) for cluster in clusters_a])
+
+    # Simulate a subsequent call to model.joint_candidates returning the same joints reversed.
+    reversed_joints = list(reversed(analyzer_a._joints))
+    with mock.patch.object(type(model), "joint_candidates", new_callable=mock.PropertyMock, return_value=reversed_joints):
+        analyzer_b = NBeamKDTreeAnalyzer(model, n=3)
+        assert analyzer_b._kdtree is analyzer_a._kdtree
+        clusters_b = analyzer_b.find()
+
+    actual = sorted([frozenset(id(e) for e in cluster.elements) for cluster in clusters_b])
+    assert expected == actual
