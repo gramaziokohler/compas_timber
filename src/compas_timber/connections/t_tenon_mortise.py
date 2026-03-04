@@ -19,9 +19,9 @@ class TenonMortiseJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     start_y : float
         Start position of the tenon along the y-axis of the main beam.
@@ -43,9 +43,9 @@ class TenonMortiseJoint(Joint):
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     main_beam_guid : str
         GUID of the main beam.
@@ -256,5 +256,5 @@ class TenonMortiseJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beam = model[self.main_beam_guid]
+        self.cross_beam = model[self.cross_beam_guid]

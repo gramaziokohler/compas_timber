@@ -1,3 +1,4 @@
+import math
 import os
 import uuid
 import xml.dom.minidom as MD
@@ -10,15 +11,18 @@ from warnings import warn
 
 import compas
 from compas.data import Data
+from compas.geometry import Brep
 from compas.geometry import Frame
+from compas.geometry import NurbsCurve
+from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import move_polyline_segment_to_plane
 
 
 class BTLxWriter(object):
@@ -62,7 +66,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
-        self._tolerance = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+        self._tolerance = TOL
         self._errors = []
 
     @property
@@ -195,7 +199,7 @@ class BTLxWriter(object):
         # create part elements for each beam
         elements = chain(model.beams, model.plates)
         for i, element in enumerate(elements):
-            part_element = self._create_part(element, i)
+            part_element = self._create_part(element, order_num=i)
             parts_element.append(part_element)
         return project_element
 
@@ -224,7 +228,8 @@ class BTLxWriter(object):
 
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
-            for beam_guid, position_frame in stock.element_data.items():
+            for beam_guid, data in stock.element_data.items():
+                position_frame = data.frame
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
@@ -364,15 +369,18 @@ class BTLxGenericPart(object):
         The width of the part.
     height : float
         The height of the part.
+    name : str, optional
+        The name of the part. Defaults to an empty string.
     scale_factor : float, optional
         The scale factor to apply to the part's dimensions. Defaults to 1.0.
     """
 
-    def __init__(self, order_num, length, width, height, scale_factor=1.0):
+    def __init__(self, order_num, length, width, height, name="", scale_factor=1.0):
         self.order_num = order_num
         self.length = length * scale_factor
         self.width = width * scale_factor
         self.height = height * scale_factor
+        self.name = name
         self._scale_factor = scale_factor
 
     @property
@@ -430,7 +438,7 @@ class BTLxGenericPart(object):
             "AssemblyNumber": "",
             "OrderNumber": str(self.order_num),
             "Designation": "",
-            "Annotation": "",
+            "Annotation": str(self.name) + "-" + str(self.part_guid)[:4],
             "Storey": "",
             "Group": "",
             "Package": "",
@@ -444,7 +452,7 @@ class BTLxGenericPart(object):
             "Weight": "0",
             "ProcessingQuality": "automatic",
             "StoreyType": "",
-            "ElementNumber": "00",
+            "ElementNumber": str(self.part_guid)[:4],
             "Layer": "0",
             "ModuleNumber": "",
         }
@@ -486,6 +494,7 @@ class BTLxRawpart(BTLxGenericPart):
             stock.length,
             stock.width,
             stock.height,
+            stock.name,
             scale_factor,
         )
         self.stock = stock
@@ -576,7 +585,7 @@ class BTLxPart(BTLxGenericPart):
     """
 
     def __init__(self, element, order_num, scale_factor=1.0):
-        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, scale_factor)
+        super(BTLxPart, self).__init__(order_num, element.blank_length, element.width, element.height, element.name, scale_factor)
         self.element = element
         self.processings = []
         self._shape_strings = None
@@ -989,16 +998,49 @@ class MachiningLimits(object):
         "FaceLimitedBottom",
     ]
 
-    def __init__(self):
-        self.face_limited_start = True
-        self.face_limited_end = True
-        self.face_limited_front = True
-        self.face_limited_back = True
-        self.face_limited_top = True
-        self.face_limited_bottom = True
+    def __init__(
+        self,
+        face_limited_start: bool = True,
+        face_limited_end: bool = True,
+        face_limited_front: bool = True,
+        face_limited_back: bool = True,
+        face_limited_top: bool = True,
+        face_limited_bottom: bool = True,
+    ):
+        self.face_limited_start = face_limited_start
+        self.face_limited_end = face_limited_end
+        self.face_limited_front = face_limited_front
+        self.face_limited_back = face_limited_back
+        self.face_limited_top = face_limited_top
+        self.face_limited_bottom = face_limited_bottom
 
     @property
     def limits(self):
+        return self.as_dict()
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        machining_limits = cls()
+        for key, value in dictionary.items():
+            if key not in cls.EXPECTED_KEYS:
+                raise ValueError("The key must be one of the following: ", [limit for limit in cls.EXPECTED_KEYS])
+            if not isinstance(value, bool):
+                raise ValueError("The values must be a boolean.")
+            if key == "FaceLimitedStart":
+                machining_limits.face_limited_start = value
+            elif key == "FaceLimitedEnd":
+                machining_limits.face_limited_end = value
+            elif key == "FaceLimitedFront":
+                machining_limits.face_limited_front = value
+            elif key == "FaceLimitedBack":
+                machining_limits.face_limited_back = value
+            elif key == "FaceLimitedTop":
+                machining_limits.face_limited_top = value
+            elif key == "FaceLimitedBottom":
+                machining_limits.face_limited_bottom = value
+        return machining_limits
+
+    def as_dict(self):
         """Dynamically generate the limits dictionary with boolean values from instance attributes."""
         return {
             "FaceLimitedStart": self.face_limited_start,
@@ -1059,18 +1101,18 @@ class Contour(Data):
         The depth of the contour.
     depth_bounded : bool
         If True, the depth is bounded.
-    inclination : float
+    inclination : list[float]
         The inclination of the contour.
     polyline : :class:`compas.geometry.Polyline`
         The polyline of the contour.
     """
 
-    def __init__(self, polyline, depth=None, depth_bounded=True, inclination=None):
+    def __init__(self, polyline, depth, depth_bounded=True, inclination=None):
         super(Contour, self).__init__()
         self.polyline = polyline
         self.depth = depth
         self.depth_bounded = depth_bounded
-        self.inclination = inclination
+        self.inclination = inclination or [0]
 
     @property
     def __data__(self):
@@ -1107,6 +1149,33 @@ class Contour(Data):
         new_instance = self.copy()
         new_instance.scale(factor)
         return new_instance
+
+    def to_brep(self):
+        """Convert the contour to a COMPAS Brep object.
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The brep representation of the contour.
+        """
+        pline_a = self.polyline.copy()
+        pline_b = pline_a.translated([0, 0, -self.depth])
+        if any([i != 0 for i in self.inclination]):
+            if len(self.inclination) == 1:
+                inclinations = [self.inclination[0] for _ in range(len(pline_a) - 1)]
+            else:
+                inclinations = [i for i in self.inclination]
+            for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
+                plane = Plane.from_points([seg.start, seg.end, seg.start + [0, 0, -1]])
+                plane.rotate(math.radians(inclination), seg.direction, seg.start)
+                move_polyline_segment_to_plane(pline_b, i, plane)
+        pline_a.translate([0, 0, 0.001])
+        pline_b.translate([0, 0, -0.001])
+
+        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
+        vol.cap_planar_holes()
+        if vol.volume < 0:
+            vol.flip()
+        return vol
 
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
@@ -1169,6 +1238,16 @@ class DualContour(Data):
         new_instance = self.copy()
         new_instance.scale(factor)
         return new_instance
+
+    def to_brep(self):
+        pline_a = self.principal_contour.translated([0, 0, 0.001])
+        pline_b = self.associated_contour.translated([0, 0, -0.001])
+
+        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
+        vol.cap_planar_holes()
+        if vol.volume < 0:
+            vol.flip()
+        return vol
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)

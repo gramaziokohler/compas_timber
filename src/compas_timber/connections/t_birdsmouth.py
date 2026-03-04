@@ -16,18 +16,18 @@ class TBirdsmouthJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     mill_depth : float
         The depth of the pockets to be milled on the cross beam.
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         First beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
     mill_depth : float
         The depth of the pockets to be milled on the cross beam.
@@ -148,5 +148,5 @@ class TBirdsmouthJoint(Joint):
 
     def restore_beams_from_keys(self, model):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        self.main_beam = model[self.main_beam_guid]
+        self.cross_beam = model[self.cross_beam_guid]

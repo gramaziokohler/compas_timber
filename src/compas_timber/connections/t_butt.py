@@ -12,22 +12,22 @@ class TButtJoint(ButtJoint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    fastener : :class:`~compas_timber.parts.Fastener`, optional
+    fastener : :class:`~compas_timber.elements.Fastener`, optional
         The fastener to be used in the joint.
 
     Attributes
     ----------
-    main_beam : :class:`~compas_timber.parts.Beam`
+    main_beam : :class:`~compas_timber.elements.Beam`
         The main beam to be joined.
-    cross_beam : :class:`~compas_timber.parts.Beam`
+    cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.

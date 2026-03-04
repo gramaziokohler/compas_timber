@@ -12,6 +12,7 @@ from .nesting import NestingResult
 from .nesting import Stock
 from .nesting import BeamStock
 from .nesting import PlateStock
+from .nesting import NestedElementData
 
 __all__ = [
     "Actor",
@@ -28,4 +29,5 @@ __all__ = [
     "BeamStock",
     "PlateStock",
     "NestingResult",
+    "NestedElementData",
 ]

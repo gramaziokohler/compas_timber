@@ -131,8 +131,8 @@ def test_joint_create_x_lap(x_topo_beams):
     model.add_element(cross_beam)
     joint = XLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.main_beam is main_beam
-    assert joint.cross_beam is cross_beam
+    assert joint.beam_a is main_beam
+    assert joint.beam_b is cross_beam
     assert joint.elements
 
 
@@ -155,8 +155,8 @@ def test_joint_create_l_lap(l_topo_beams):
     model.add_element(cross_beam)
     joint = LLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.main_beam is main_beam
-    assert joint.cross_beam is cross_beam
+    assert joint.beam_a is main_beam
+    assert joint.beam_b is cross_beam
     assert joint.elements
 
 

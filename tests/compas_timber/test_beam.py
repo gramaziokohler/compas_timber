@@ -111,6 +111,27 @@ def test_deepcopy(beam):
     assert B2.width is B1.width
 
 
+def test_serialization_beam_with_attributes(beam):
+    beam.attributes["custom_attr"] = "test_value"
+    beam.attributes["numeric_attr"] = 42
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert deserialized.attributes["custom_attr"] == "test_value"
+    assert deserialized.attributes["numeric_attr"] == 42
+
+
+def test_serialization_beam_with_attributes_sent_as_kwargs(beam):
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=60.0, custom_attr="test_value", numeric_attr=42)
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert deserialized.attributes["custom_attr"] == "test_value"
+    assert deserialized.attributes["numeric_attr"] == 42
+
+
 def test_serialization_beam_with_joinery_processings(beam):
     cut = JackRafterCut()
 

@@ -20,10 +20,10 @@ class LapJoint(Joint):
 
     Parameters
     ----------
-    main_beam : :class:`~compas_timber.elements.Beam`
-        The main beam to be joined.
-    cross_beam : :class:`~compas_timber.elements.Beam`
-        The cross beam to be joined.
+    beam_a : :class:`~compas_timber.elements.Beam`
+        The first beam to be joined.
+    beam_b : :class:`~compas_timber.elements.Beam`
+        The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
 
@@ -31,10 +31,10 @@ class LapJoint(Joint):
     ----------
     elements : list of :class:`~compas_timber.elements.Beam`
         The beams to be joined.
-    main_beam : :class:`~compas_timber.elements.Beam`
-        The main beam to be joined.
-    cross_beam : :class:`~compas_timber.elements.Beam`
-        The cross beam to be joined.
+    beam_a : :class:`~compas_timber.elements.Beam`
+        The first beam to be joined.
+    beam_b : :class:`~compas_timber.elements.Beam`
+        The second beam to be joined.
     flip_lap_side : bool
         If True, the lap is flipped to the other side of the beams.
 
@@ -43,57 +43,57 @@ class LapJoint(Joint):
     @property
     def __data__(self):
         data = super(LapJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
+        data["beam_a_guid"] = self.beam_a_guid
+        data["beam_b_guid"] = self.beam_b_guid
         data["flip_lap_side"] = self.flip_lap_side
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, flip_lap_side=False, **kwargs):  # TODO this joint does not have main, cross beam roles
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, **kwargs):
         super(LapJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        self.beam_a = beam_a
+        self.beam_b = beam_b
+        self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
+        self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
 
         self.flip_lap_side = flip_lap_side
         self.features = []
 
-        self._main_ref_side_index = None
-        self._cross_ref_side_index = None
-        self._main_cutting_plane = None
-        self._cross_cutting_plane = None
+        self._ref_side_index_a = None
+        self._ref_side_index_b = None
+        self._cutting_plane_a = None
+        self._cutting_plane_b = None
 
     @property
     def elements(self):
-        return [self.main_beam, self.cross_beam]
+        return [self.beam_a, self.beam_b]
 
     @property
-    def main_ref_side_index(self):
-        """The reference side index of the main beam."""
-        if self._main_ref_side_index is None:
-            self._main_ref_side_index = self._get_beam_ref_side_index(self.main_beam, self.cross_beam, self.flip_lap_side)
-        return self._main_ref_side_index
+    def ref_side_index_a(self):
+        """The reference side index of the beam_a."""
+        if self._ref_side_index_a is None:
+            self._ref_side_index_a = self._get_beam_ref_side_index(self.beam_a, self.beam_b, self.flip_lap_side)
+        return self._ref_side_index_a
 
     @property
-    def cross_ref_side_index(self):
-        """The reference side index of the cross beam."""
-        if self._cross_ref_side_index is None:
-            self._cross_ref_side_index = self._get_beam_ref_side_index(self.cross_beam, self.main_beam, self.flip_lap_side)
-        return self._cross_ref_side_index
+    def ref_side_index_b(self):
+        """The reference side index of the beam_b."""
+        if self._ref_side_index_b is None:
+            self._ref_side_index_b = self._get_beam_ref_side_index(self.beam_b, self.beam_a, self.flip_lap_side)
+        return self._ref_side_index_b
 
     @property
-    def main_cutting_plane(self):
-        """The face of the cross beam that cuts the main beam as a plane."""
-        if self._main_cutting_plane is None:
-            self._main_cutting_plane = self._get_cutting_plane(self.cross_beam, self.main_beam)
-        return self._main_cutting_plane
+    def cutting_plane_a(self):
+        """The face of the beam_b that cuts the beam_a, as a plane."""
+        if self._cutting_plane_a is None:
+            self._cutting_plane_a = self._get_cutting_plane(self.beam_b, self.beam_a)
+        return self._cutting_plane_a
 
     @property
-    def cross_cutting_plane(self):
-        """The face of the main beam that cuts the cross beam as a plane."""
-        if self._cross_cutting_plane is None:
-            self._cross_cutting_plane = self._get_cutting_plane(self.main_beam, self.cross_beam)
-        return self._cross_cutting_plane
+    def cutting_plane_b(self):
+        """The face of the beam_a that cuts the beam_b, as a plane."""
+        if self._cutting_plane_b is None:
+            self._cutting_plane_b = self._get_cutting_plane(self.beam_a, self.beam_b)
+        return self._cutting_plane_b
 
     @staticmethod
     def _get_beam_ref_side_index(beam_a, beam_b, flip):
@@ -164,21 +164,21 @@ class LapJoint(Joint):
 
     def _create_negative_volumes(self, cut_plane_bias):
         assert self.elements
-        main_beam, cross_beam = self.elements
+        beam_a, beam_b = self.elements
 
         # Get Cut Plane
-        plane_cut_vector = main_beam.centerline.vector.cross(cross_beam.centerline.vector)
+        plane_cut_vector = beam_a.centerline.vector.cross(beam_b.centerline.vector)
         # flip the plane normal if the cross_vector is pointing in the opposite direction of the offset_vector
-        offset_vector = Vector.from_start_end(*intersection_line_line(main_beam.centerline, cross_beam.centerline))
+        offset_vector = Vector.from_start_end(*intersection_line_line(beam_a.centerline, beam_b.centerline))
         if plane_cut_vector.dot(offset_vector) >= 0:
             plane_cut_vector = -plane_cut_vector
 
         # Get Beam Faces (Planes) in right order
-        planes_main = self._sort_beam_planes(main_beam, plane_cut_vector)
-        plane_a0, plane_a1, plane_a2, plane_a3 = planes_main
+        planes_a = self._sort_beam_planes(beam_a, plane_cut_vector)
+        plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
 
-        planes_cross = self._sort_beam_planes(cross_beam, -plane_cut_vector)
-        plane_b0, plane_b1, plane_b2, plane_b3 = planes_cross
+        planes_b = self._sort_beam_planes(beam_b, -plane_cut_vector)
+        plane_b0, plane_b1, plane_b2, plane_b3 = planes_b
 
         # Lines as Frame Intersections
         lines = []
@@ -199,14 +199,14 @@ class LapJoint(Joint):
         lines.append(Line(pt_a, pt_b))
 
         # Create Polyhedrons
-        negative_polyhedron_main_beam = self._create_polyhedron(plane_b0, lines, cut_plane_bias)
-        negative_polyhedron_cross_beam = self._create_polyhedron(plane_a0, lines, cut_plane_bias)
+        negative_polyhedron_beam_a = self._create_polyhedron(plane_b0, lines, cut_plane_bias)
+        negative_polyhedron_beam_b = self._create_polyhedron(plane_a0, lines, cut_plane_bias)
 
         if self.flip_lap_side:
-            return negative_polyhedron_cross_beam, negative_polyhedron_main_beam
-        return negative_polyhedron_main_beam, negative_polyhedron_cross_beam
+            return negative_polyhedron_beam_b, negative_polyhedron_beam_a
+        return negative_polyhedron_beam_a, negative_polyhedron_beam_b
 
     def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
+        """After de-serialization, restores references to the beam_a and beam_b saved in the model."""
+        self.beam_a = model[self.beam_a_guid]
+        self.beam_b = model[self.beam_b_guid]

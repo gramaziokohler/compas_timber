@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python: ['3.10']
+        python: ['3.12']
 
     steps:
       - uses: compas-dev/compas-actions.build@v4
@@ -31,4 +31,4 @@ jobs:
           publish_to_pypi: true
           pypi_token: ${{ secrets.PYPI }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          python: '3.10'
+          python: '3.12'

@@ -17,8 +17,4 @@ Classes
     FastenerTimberInterface
     BallNodeFastener
     PlateFastener
-    TimberElement
-    Opening
-    OpeningType
-    Slab
-    Wall
+    Panel
