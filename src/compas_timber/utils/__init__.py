@@ -662,6 +662,8 @@ def combine_parallel_segments(polyline, tol=TOL):
 
 def get_brep_loop_vertex_indices(loop, brep):
     """Get the vertex indices of a BrepLoop. This is used to generate a Mesh representation of a Brep.
+    Tries to use the native_vertex.VertexIndex of the BrepLoop edges if available, otherwise falls back to comparing vertex positions with a tolerance.
+
     Parameters
     ----------
     loop : :class:`~compas.geometry.BrepLoop`
@@ -684,7 +686,7 @@ def get_brep_loop_vertex_indices(loop, brep):
                 face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
             if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
                 face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
-        except:
+        except AttributeError:
             for i, v in enumerate(brep.vertices):
                 if TOL.is_allclose(edge.start_vertex.point, v.point):
                     if i not in face_vertex_indices:
