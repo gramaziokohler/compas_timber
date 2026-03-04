@@ -597,7 +597,7 @@ document.write(`
 <h1>TimberModel</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.model.TimberModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/e83f162/src/compas_timber/model.py#L30"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.model.</span></span><span class="sig-name descname"><span class="pre">TimberModel</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/c7a9840/src/compas_timber/model.py#L30"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code></p>
 <p>Represents a timber model containing different elements such as panels, beams and joints.</p>
 <p>The timber model allows expressing the hierarchy and interactions between the different elements it contains.</p>
@@ -659,14 +659,20 @@ See <a class="reference internal" href="compas_timber.connections.JointTopology.
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_beam_structural_segments.html#compas_timber.model.TimberModel.get_beam_structural_segments" title="compas_timber.model.TimberModel.get_beam_structural_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_beam_structural_segments</span></code></a></p></td>
 <td><p>Gets the structural segments assigned to the given beam.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_element.html#compas_timber.model.TimberModel.get_element" title="compas_timber.model.TimberModel.get_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_element</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_candidates_for_element.html#compas_timber.model.TimberModel.get_candidates_for_element" title="compas_timber.model.TimberModel.get_candidates_for_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_candidates_for_element</span></code></a></p></td>
+<td><p>Get all joint candidates for a given element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_element.html#compas_timber.model.TimberModel.get_element" title="compas_timber.model.TimberModel.get_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_element</span></code></a></p></td>
 <td><p>Get an element by its unique identifier.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_elements_in_group.html#compas_timber.model.TimberModel.get_elements_in_group" title="compas_timber.model.TimberModel.get_elements_in_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_elements_in_group</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_elements_in_group.html#compas_timber.model.TimberModel.get_elements_in_group" title="compas_timber.model.TimberModel.get_elements_in_group"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_elements_in_group</span></code></a></p></td>
 <td><p>Get all elements in a group element.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_interactions_for_element.html#compas_timber.model.TimberModel.get_interactions_for_element" title="compas_timber.model.TimberModel.get_interactions_for_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_interactions_for_element</span></code></a></p></td>
-<td><p>Get all interactions for a given element.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_interactions_for_element.html#compas_timber.model.TimberModel.get_interactions_for_element" title="compas_timber.model.TimberModel.get_interactions_for_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_interactions_for_element</span></code></a></p></td>
+<td><p>Get all interactions (joints and candidates) for a given element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_joints_for_element.html#compas_timber.model.TimberModel.get_joints_for_element" title="compas_timber.model.TimberModel.get_joints_for_element"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_joints_for_element</span></code></a></p></td>
+<td><p>Get all joints for a given element.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.model.TimberModel.get_structural_connector_segments.html#compas_timber.model.TimberModel.get_structural_connector_segments" title="compas_timber.model.TimberModel.get_structural_connector_segments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_structural_connector_segments</span></code></a></p></td>
 <td><p>Gets the structural segments assigned to the interaction between two elements.</p></td>
