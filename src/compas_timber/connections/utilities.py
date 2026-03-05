@@ -1,9 +1,21 @@
-import math
+from __future__ import annotations
 
+import math
+from typing import TYPE_CHECKING
+
+from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
+
+from compas_timber.connections.solver import JointTopology
+
+if TYPE_CHECKING:
+    from compas_timber.connections.analyzers import Cluster
+    from compas_timber.connections.joint import Joint
+    from compas_timber.elements.beam import Beam
 
 
 def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
@@ -196,3 +208,83 @@ def point_centerline_towards_joint(beam_a, beam_b):
     else:
         centerline_vec = beam_a.centerline.vector
     return centerline_vec
+
+
+def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
+    """
+    Extend a beam parametrically until it reaches a specified plane.
+    The beam is modified in place.
+
+    Parameters
+    ----------
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam to extend.
+    plane : :class:`~compas.geometry.Plane`
+        The target plane to which the beam is extended.
+
+    Returns
+    -------
+    :class:`~compas_timber.elements.Beam`
+        The extended beam.
+
+    """
+    start_beam, end_beam = beam.extension_to_plane(plane)
+    beam.add_blank_extension(start_beam, end_beam)
+    return beam
+
+
+def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: Beam, joint: Joint) -> tuple[float, float]:
+    """
+    Computes the angle and dot product between the `main_beam` and the `cross_beam` relative to their joint.
+    The angle and dot products are computed with the direction of the `main_beam` goinf towards the joint.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam of the joint.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam of the joint.
+    joint : :class:`~compas_timber.connections.joint.Joint`
+        The joint connecting the main beam and the cross beam.
+
+    Returns
+    -------
+    tuple[float, float]
+        A tuple containing the angle (in radians) and the dot product between the main beam and the cross beam relative to their joint.
+
+    """
+    main_beam_direction = joint.get_beam_direction_towards_joint(main_beam)
+    print(main_beam_direction)
+    angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
+    dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
+    print(dot)
+    return angle, dot
+
+
+def parse_cross_beams_and_main_beams_from_cluster(cluster: Cluster) -> tuple[list[Beam], list[Beam]]:
+    """
+    Parses cross beams and main beams from a cluster of joints.
+
+    Parameters
+    ----------
+    cluster : :class:`~compas_timber.connections.analyzers.Cluster`
+        The cluster of joints to parse.
+
+    Returns
+    -------
+    list[:class:`~compas_timber.elements.beam.Beam`], list[:class:`~compas_timber.elements.beam.Beam`]
+        Two lists containing the cross beams and main beams respectively.
+    """
+    cross_beams = []
+    main_beams = []
+    for candidate in cluster.joints:
+        if candidate.topology == JointTopology.TOPO_L:
+            main_beams.extend(candidate.elements)
+        elif candidate.topology == JointTopology.TOPO_T:
+            main_beams.append(candidate.elements[0])
+            cross_beams.append(candidate.elements[1])
+        elif candidate.topology == JointTopology.TOPO_X:
+            cross_beams.extend(candidate.elements)
+    cross_beams = list(set(cross_beams))
+    main_beams = list(set(main_beams))
+    return cross_beams, main_beams
