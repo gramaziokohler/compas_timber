@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
 
 ### Changed
+* Refactored `BTLxPart.shape_strings` to use `Brep.to_polygons()` instead of raw Brep face edge traversal for more robust and accurate shape geometry generation.
 
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.

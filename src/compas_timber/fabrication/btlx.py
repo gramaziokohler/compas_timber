@@ -21,7 +21,6 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
@@ -644,50 +643,47 @@ class BTLxPart(BTLxGenericPart):
         """
 
         if not self._shape_strings:
-            brep_vertex_points = []
-            brep_indices = []
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
-            for face in scaled_geometry.faces:
-                pts = []
-                frame = face.surface.frame_at(0.5, 0.5)
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
-                overflow = len(edges)
-                while edges and overflow > 0:
-                    for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
-                            edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
-                    overflow -= 1
-                pts = correct_polyline_direction(pts, frame.normal)
+            mesh, _ = scaled_geometry.to_viewmesh()
 
-                if len(pts) != len(face.edges):
-                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
+            vertices = list(mesh.vertices())
+            if not vertices:
+                warn("BTLxPart shape_strings: to_viewmesh() returned no vertices for element {}.".format(self.element.guid))
 
-                if len(pts) > 2:
-                    for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
-                        else:
-                            brep_indices.append(len(brep_vertex_points))
-                            brep_vertex_points.append(pt)
-                    brep_indices.append(-1)
+            # build a sequential index map: vertex key -> 0-based position
+            vertex_index = {vkey: i for i, vkey in enumerate(vertices)}
 
-            brep_indices_string = ""
-            for index in brep_indices:
-                brep_indices_string += str(index) + " "
+            # build face index string
+            poly_indices_string = ""
+            for face in mesh.faces():
+                for vkey in mesh.face_vertices(face):
+                    poly_indices_string += str(vertex_index[vkey]) + " "
+                poly_indices_string += "-1 "
 
-            brep_vertices_string = ""
-            for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
-                point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
-                brep_vertices_string = brep_vertices_string.replace("-", "")
+            if not poly_indices_string:
+                warn("BTLxPart shape_strings: no faces produced for element {}.".format(self.element.guid))
 
-            self._shape_strings = [brep_indices_string, brep_vertices_string]
+            # build vertex string
+            poly_vertices_string = ""
+            xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
+            for vkey in vertices:
+                # work on a transformed copy to avoid mutating shared geometry
+                point_local = mesh.vertex_point(vkey).transformed(xform)
+                x = point_local.x
+                y = point_local.y
+                z = point_local.z
+                # clamp floating point noise to zero; warn if significantly negative (geometry outside blank)
+                x = 0.0 if x < 0.0 and abs(x) <= TOL.absolute else x
+                y = 0.0 if y < 0.0 and abs(y) <= TOL.absolute else y
+                z = 0.0 if z < 0.0 and abs(z) <= TOL.absolute else z
+                if x < -TOL.absolute or y < -TOL.absolute or z < -TOL.absolute:
+                    warn(
+                        "BTLxPart shape_strings: vertex ({:.3f}, {:.3f}, {:.3f}) has negative local coordinates after frame transform for element {}."
+                        " This may indicate the joinery geometry extends outside the blank.".format(x, y, z, self.element.guid)
+                    )
+                poly_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(x, y, z, prec=3)
+
+            self._shape_strings = [poly_indices_string, poly_vertices_string]
         return self._shape_strings
 
 
