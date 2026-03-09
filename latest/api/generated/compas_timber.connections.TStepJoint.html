@@ -597,7 +597,7 @@ document.write(`
 <h1>TStepJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.TStepJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TStepJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/4540250/src/compas_timber/connections/t_step_joint.py#L13"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TStepJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/409e6b7/src/compas_timber/connections/t_step_joint.py#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.connections.Joint.html#compas_timber.connections.Joint" title="compas_timber.connections.joint.Joint"><code class="xref py py-class docutils literal notranslate"><span class="pre">Joint</span></code></a></p>
 <p>Represents an T-Step type joint which joins two beams, one of them at it’s end (main) and the other one along it’s centerline (cross).
 Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.</p>
@@ -610,15 +610,16 @@ Two or more cuts are is made on the main beam and a notch is made on the cross b
 </dd>
 <dt><strong>cross_beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>Second beam to be joined.</p>
 </dd>
-<dt><strong>step_shape</strong><span class="classifier">int</span></dt><dd><p>Shape of the step feature. 0: step, 1: heel, 2: double.</p>
+<dt><strong>step_shape</strong><span class="classifier">str</span></dt><dd><p>The shape of the step cut. One of <a class="reference internal" href="compas_timber.fabrication.StepShapeType.html#compas_timber.fabrication.StepShapeType" title="compas_timber.fabrication.StepShapeType"><code class="xref py py-class docutils literal notranslate"><span class="pre">StepShapeType</span></code></a>: STEP, HEEL, TAPERED_HEEL, or DOUBLE.
+The shape type takes priority: depths irrelevant to the chosen shape are ignored and forced to zero. Defaults to <code class="docutils literal notranslate"><span class="pre">StepShapeType.STEP</span></code>.</p>
 </dd>
-<dt><strong>step_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the step cut. Combined with a heel cut it generates a double step cut.</p>
+<dt><strong>step_depth</strong><span class="classifier">float, optional</span></dt><dd><p>Depth of the step cut. Applicable only to shape types with a step component (STEP, DOUBLE).
+Defaults to a value proportional to the cross beam’s cross-section.</p>
 </dd>
-<dt><strong>heel_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the heel cut. Combined with a step cut it generates a double step cut.</p>
+<dt><strong>heel_depth</strong><span class="classifier">float, optional</span></dt><dd><p>Depth of the heel cut. Applicable only to shape types with a heel component (HEEL, TAPERED_HEEL, DOUBLE).
+Defaults to a value proportional to the cross beam’s cross-section.</p>
 </dd>
-<dt><strong>tapered_heel</strong><span class="classifier">bool</span></dt><dd><p>If True, the heel cut is tapered.</p>
-</dd>
-<dt><strong>tenon_mortise_height</strong><span class="classifier">float</span></dt><dd><p>Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.</p>
+<dt><strong>tenon_mortise_height</strong><span class="classifier">float, optional</span></dt><dd><p>Height of the tenon/mortise feature. If None, no tenon or mortise is created.</p>
 </dd>
 </dl>
 </dd>
@@ -628,15 +629,13 @@ Two or more cuts are is made on the main beam and a notch is made on the cross b
 </dd>
 <dt><strong>cross_beam</strong><span class="classifier"><a class="reference internal" href="compas_timber.elements.Beam.html#compas_timber.elements.Beam" title="compas_timber.elements.Beam"><code class="xref py py-class docutils literal notranslate"><span class="pre">Beam</span></code></a></span></dt><dd><p>Second beam to be joined.</p>
 </dd>
-<dt><strong>step_shape</strong><span class="classifier">int</span></dt><dd><p>Shape of the step feature. 0: step, 1: heel, 2: double.</p>
+<dt><strong>step_shape</strong><span class="classifier">str</span></dt><dd><p>The shape of the step cut. One of <a class="reference internal" href="compas_timber.fabrication.StepShapeType.html#compas_timber.fabrication.StepShapeType" title="compas_timber.fabrication.StepShapeType"><code class="xref py py-class docutils literal notranslate"><span class="pre">StepShapeType</span></code></a>: STEP, HEEL, TAPERED_HEEL, or DOUBLE.</p>
 </dd>
-<dt><strong>step_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the step cut. Combined with a heel cut it generates a double step cut.</p>
+<dt><strong>step_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the step cut. Applicable only to shape types with a step component (STEP, DOUBLE). Zero otherwise.</p>
 </dd>
-<dt><strong>heel_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the heel cut. Combined with a step cut it generates a double step cut.</p>
+<dt><strong>heel_depth</strong><span class="classifier">float</span></dt><dd><p>Depth of the heel cut. Applicable only to shape types with a heel component (HEEL, TAPERED_HEEL, DOUBLE). Zero otherwise.</p>
 </dd>
-<dt><strong>tapered_heel</strong><span class="classifier">bool</span></dt><dd><p>If True, the heel cut is tapered.</p>
-</dd>
-<dt><strong>tenon_mortise_height</strong><span class="classifier">float</span></dt><dd><p>Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.</p>
+<dt><strong>tenon_mortise_height</strong><span class="classifier">float</span></dt><dd><p>Height of the tenon/mortise feature. None if not created.</p>
 </dd>
 </dl>
 </dd>
@@ -655,9 +654,6 @@ Two or more cuts are is made on the main beam and a notch is made on the cross b
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TStepJoint.restore_beams_from_keys.html#compas_timber.connections.TStepJoint.restore_beams_from_keys" title="compas_timber.connections.TStepJoint.restore_beams_from_keys"><code class="xref py py-obj docutils literal notranslate"><span class="pre">restore_beams_from_keys</span></code></a></p></td>
 <td><p>After de-serialization, restores references to the main and cross beams saved in the model.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TStepJoint.set_step_depths.html#compas_timber.connections.TStepJoint.set_step_depths" title="compas_timber.connections.TStepJoint.set_step_depths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_step_depths</span></code></a></p></td>
-<td><p>Sets the default step and heel depths based on the joint type if they are not provided.</p></td>
 </tr>
 </tbody>
 </table>
