@@ -12,8 +12,8 @@ class JointFastener(Data, ABC):
         super().__init__(**kwargs)
         self.base_fastener = base_fastener
         self._fasteners = []
-
-        self.place_fasteners_instances()
+        if all(self.beams):
+            self.place_fasteners_instances()
 
     @property
     def generated_elements(self):
@@ -34,7 +34,8 @@ class JointFastener(Data, ABC):
             fasteners.extend(fastener.find_all_nested_sub_fasteners())
         return fasteners
 
-    def compute_fasteners_interactions(self) -> list[tuple]:
+    @property
+    def fasteners_interactions(self) -> list[tuple]:
         """
         Computes the interactions between fasteners and beams and fastener and sub-fastnert participating to the joint.
         """

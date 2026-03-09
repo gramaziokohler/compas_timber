@@ -17,7 +17,7 @@ from compas.geometry import Vector
 from compas.geometry import centroid_points
 from compas.tolerance import Tolerance
 
-from compas_timber.elements.timber import TimberElement
+from compas_timber.base import TimberElement
 from compas_timber.fabrication.drilling import Drilling
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.fasteners.fastener import Fastener
@@ -75,26 +75,38 @@ class PlateFastener(Fastener):
 
     @property
     def __data__(self):
-        data = {
-            "frame": self.frame.__data__,
-            "outline": self.outline.__data__,
-            "thickness": self.thickness,
-            "holes": [hole.__data__ for hole in self.holes],
-            "recess": self.recess,
-            "recess_offset": self.recess_offset,
-        }
+        data = super().__data__
+        data.update(
+            {
+                "frame": self.frame.__data__,
+                "outline": self.outline.__data__,
+                "thickness": self.thickness,
+                "holes": [hole.__data__ for hole in self.holes],
+                "recess": self.recess,
+                "recess_offset": self.recess_offset,
+            }
+        )
         return data
 
     @classmethod
     def __from_data__(cls, data):
+        outline = Polyline.__from_data__(data["outline"])
+        holes = [PlateFastenerHole.__from_data__(hole_data) for hole_data in data["holes"]]
+        recess = data.get("recess", None)
+        recess_offset = data.get("recess_offset", None)
+        frame = Frame.__from_data__(data["frame"])
+        target_frame = Frame.__from_data__(data["target_frame"])
         fastener = cls(
-            frame=Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"]),
-            outline=Polyline.__from_data__(data["outline"]),  # type: ignore
+            frame=frame,
+            outline=outline,
             thickness=data["thickness"],
-            holes=[PlateFastenerHole.__from_data__(hole) for hole in data["holes"]],
-            recess=data["recess"],
-            recess_offset=data["recess_offset"],
+            holes=holes,
+            recess=recess,
+            recess_offset=recess_offset,
+            data=data.get("attributes", {}),
+            target_frame=target_frame,
         )
+        fastener.target_frame = target_frame
         return fastener
 
     @property

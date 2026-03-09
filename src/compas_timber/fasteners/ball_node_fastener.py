@@ -29,12 +29,33 @@ class Rod:
     beam: Beam
     plate_thickness: int = 3
 
+    @property
+    def __data__(self):
+        return {"frame": self.frame.__data__, "length": self.length, "beam_guid": str(self.beam.guid), "plate_thickness": self.plate_thickness}
+
+    @classmethod
+    def __from_data__(cls, data):
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        length = data["length"]
+        # beam is not stored in the data, we will need to retrieve it from the model using the guid
+        beam_guid = data["beam_guid"]
+        plate_thickness = data.get("plate_thickness", 3)
+        return cls(frame=frame, length=length, beam=beam_guid, plate_thickness=plate_thickness)
+
 
 class BallNodeFastener(Fastener):
     def __init__(self, frame: Frame, ball_diameter: float, rods: list[Rod], **kwargs):
         super().__init__(frame=frame, **kwargs)
         self.ball_diameter = ball_diameter
         self.rods = rods
+
+    @property
+    def __data__(self):
+        data = super(BallNodeFastener, self).__data__
+        data["ball_diameter"] = self.ball_diameter
+        data["rods"] = [{"frame": rod.frame.__data__, "length": rod.length, "beam_guid": str(rod.beam.guid), "plate_thickness": rod.plate_thickness} for rod in self.rods]
+        return data
 
     @classmethod
     def from_joint(cls, joint: BallNodeJoint, ball_diameter: float, rods_length: float) -> BallNodeFastener:

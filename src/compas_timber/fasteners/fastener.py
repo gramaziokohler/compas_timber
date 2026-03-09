@@ -11,7 +11,7 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 
 if TYPE_CHECKING:
-    from compas.datstructure import Mesh
+    from compas.datastructures import Mesh
     from compas.geometry import Brep
     from compas.geometry import Transformation
 
@@ -52,7 +52,7 @@ class Fastener(Element, ABC):
 
     """
 
-    def __init__(self, frame: Frame, **kwargs):
+    def __init__(self, frame: Frame, target_frame: Frame = None, **kwargs):
         # super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
         super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
         self._frame = frame
@@ -71,21 +71,6 @@ class Fastener(Element, ABC):
             "target_frame": self.target_frame.__data__,
             "sub_fasteners": [sub_fastener.__data__ for sub_fastener in self._sub_fasteners],
         }
-
-    @classmethod
-    def __from_data__(cls, data: dict) -> Fastener:
-        frame_data = data["frame"]
-        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
-        target_frame_data = data["target_frame"]
-        target_frame = Frame(target_frame_data["point"], target_frame_data["xaxis"], target_frame_data["yaxis"])
-        sub_fasteners = [Fastener.__from_data__(data) for data in data["sub_fasteners"]]
-        fastener = cls(frame=frame)
-        fastener.transformation = data["transformation"]
-        fastener.target_frame = target_frame
-        fastener.attributes = data["attributes"]
-        for sub_fastener in sub_fasteners:
-            fastener.add_sub_fastener(sub_fastener)
-        return fastener
 
     def __repr__(self) -> str:
         return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)

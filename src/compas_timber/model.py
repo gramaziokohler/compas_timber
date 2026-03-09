@@ -355,12 +355,14 @@ class TimberModel(Model):
             edge = self.add_interaction(element_a, element_b)
             self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
-        for interaction in joint.compute_fasteners_interactions():
+        for interaction in joint.fasteners_interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            joints = self._graph.edge_attribute(edge, "joints") or []  # GET
-            joints.append(joint)
-            self._graph.edge_attribute(edge, "joints", value=joints)
+            joint_guids = self._graph.edge_attribute(edge, "joints") or []  # GET
+            if not isinstance(joint_guids, list):
+                joint_guids = [joint_guids]
+            joint_guids.append(joint_guid)
+            self._graph.edge_attribute(edge, "joints", value=joint_guids)
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None

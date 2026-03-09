@@ -30,3 +30,12 @@ ns.configure(
         "base_folder": os.path.dirname(__file__),
     }
 )
+
+
+
+        for interaction in joint.fasteners_interactions:
+            element_a, element_b = interaction
+            edge = self.add_interaction(element_a, element_b)
+            joint_guids = self._graph.edge_attribute(edge, "joints") or []  # GET
+            joint_guids.append(joint_guid)
+            self._graph.edge_attribute(edge, "joints", value=joint_guids)

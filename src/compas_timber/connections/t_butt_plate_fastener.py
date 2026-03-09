@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from turtle import Pen
 from typing import TYPE_CHECKING
 from typing import Optional
 
@@ -10,6 +11,7 @@ from compas.geometry import cross_vectors
 from compas_timber.connections.joint_fastener import JointFastener
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
+from compas_timber.fasteners import PlateFastener
 from compas_timber.utils import intersection_line_line_param
 
 if TYPE_CHECKING:
@@ -27,6 +29,26 @@ class TButtJointPlateFastener(JointFastener, TButtJoint):
             **kwargs,
         )
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["base_fastener"] = self.base_fastener.__data__ if self.base_fastener else None
+        return data
+
+    @classmethod
+    def __from_data__(cls, data):
+        base_fastener_data = data.get("base_fastener", None)
+        base_fastener = PlateFastener.__from_data__(base_fastener_data) if base_fastener_data else None
+        return cls(
+            main_beam=None,  # We will need to set the beams after creating the instance, as they are not stored in the data
+            cross_beam=None,
+            mill_depth=data.get("mill_depth", None),
+            butt_plane=data.get("butt_plane", None),
+            base_fastener=base_fastener,
+            main_beam_guid=data.get("main_beam_guid", None),
+            cross_beam_guid=data.get("cross_beam_guid", None),
+        )
+
     def add_features(self) -> None:
         super().add_features()
         if self.fasteners:
@@ -40,6 +62,7 @@ class TButtJointPlateFastener(JointFastener, TButtJoint):
         if not self.base_fastener:
             return
         for frame in self.compute_fastener_target_frames():
+            print("placing_fastener")
             fastener_instance = self.base_fastener.compute_joint_instance(frame)
             self._fasteners.append(fastener_instance)
 
@@ -69,3 +92,7 @@ class TButtJointPlateFastener(JointFastener, TButtJoint):
         back_point = Plane.from_frame(back_face).closest_point(intersection_point)
         back_frame = Frame(point=back_point, xaxis=-self.cross_beam.centerline.direction, yaxis=-back_face.yaxis)
         return [front_frame, back_frame]
+
+    def restore_beams_from_keys(self, model):
+        super().restore_beams_from_keys(model)
+        self.place_fasteners_instances()

@@ -8,7 +8,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.tolerance import Tolerance
 
-from compas_timber.elements import TimberElement
+from compas_timber.base import TimberElement
 from compas_timber.fabrication import Drilling
 from compas_timber.fasteners.fastener import Fastener
 
@@ -27,17 +27,26 @@ class Dowel(Fastener):
 
     @property
     def __data__(self):
-        return {"frame": self.frame.__data__, "height": self.height, "diameter": self.diameter, "head_bias": self.head_bias, "processings": self.processings}
+        data = super(Dowel, self).__data__
+        data["frame"] = self.frame.__data__
+        data["height"] = self.height
+        data["diameter"] = self.diameter
+        data["head_bias"] = self.head_bias
+        data["processings"] = self.processings
+        return data
 
     @classmethod
     def __from_data__(cls, data):
-        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
         height = data["height"]
         diameter = data["diameter"]
-        head_bias = data["head_bias"]
-        processings = data["processings"]
-
-        return cls(frame, height, diameter, head_bias=head_bias, processings=processings)
+        head_bias = data.get("head_bias", None)
+        processings = data.get("processings", False)
+        target_frame = Frame.__from_data__(data["target_frame"])
+        fastener = cls(frame=frame, height=height, diameter=diameter, head_bias=head_bias, processings=processings)
+        fastener.target_frame = target_frame
+        return fastener
 
     def compute_elementgeometry(self, include_interfaces=True) -> Brep:
         self.frame.transform(self.to_joint_transformation)

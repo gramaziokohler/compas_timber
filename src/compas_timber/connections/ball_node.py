@@ -44,7 +44,7 @@ class BallNodeJoint(JointFastener, Joint):
         data = super(BallNodeJoint, self).__data__
         data["beam_guids"] = self._beam_guids
         data["fastener_guid"] = self._fastener_guid
-        data["base_interface"] = self.fastener.base_interface
+
         return data
 
     def __init__(self, beams: list[Beam], ball_diameter: float = 10, rods_length: float = 30, **kwargs):
@@ -86,6 +86,7 @@ class BallNodeJoint(JointFastener, Joint):
 
         """
         joint = cls(elements, **kwargs)
+        print(joint)
         model.add_joint(joint)
         return joint
 
