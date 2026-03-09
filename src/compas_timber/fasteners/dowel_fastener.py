@@ -16,7 +16,7 @@ TOL = Tolerance()
 
 
 class Dowel(Fastener):
-    """Class description"""
+    """ """
 
     def __init__(self, frame: Frame, height: float, diameter: float, head_bias: Optional[float] = None, processings: bool = False, **kwargs):
         super().__init__(frame=frame, **kwargs)

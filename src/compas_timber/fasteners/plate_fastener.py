@@ -50,6 +50,48 @@ class PlateFastenerHole(Data):
 
 
 class PlateFastener(Fastener):
+    """
+    Describe a plate fastener.
+    It can have holes and recesses, which are then translated into drillings and pockets on the connected elements.
+    It can contain sub-fasteners.
+
+
+    Parameters
+    ----------
+
+    frame : :class:`~compas.geometry.Frame`
+        The frame of regference in wich the fastener is defined.
+    outline : :class:`~compas.geometry.Polyline`
+        The outline of the shape of the fasteners. To create the geometry it is extruded in alogn the z-axis fo the parameter `frame`.
+    thickness : float
+        The thickness of the plate, i.e. the length of the extrusion.
+    holes : list[:class:`PlateFastenerHole`], optional
+        A list of holes to be applied to the plate. Each hole is defined by a point (in the local coordinates of the plate), a diameter and a depth.
+    recess : float, optional
+        The depth of the recess to be applied to the plate.
+    recess_offset : float, optional
+        The offset of the recess, i.e. how much the recess is larger than the plate outline. This is used to create a recess that is larger than the plate itself.
+
+    Attributes
+    ----------
+    frame : :class:`~compas.geometry.Frame`
+        The frame of regference in wich the fastener is defined.
+    outline : :class:`~compas.geometry.Polyline`
+        The outline of the shape of the fasteners. To create the geometry it is extruded in alogn the z-axis fo the parameter `frame`.
+    thickness : float
+        The thickness of the plate, i.e. the length of the extrusion.
+    holes : list[:class:`PlateFastenerHole`], optional
+        A list of holes to be applied to the plate. Each hole is defined by a point (in the local coordinates of the plate), a diameter and a depth.
+    recess : float, optional
+        The depth of the recess to be applied to the plate.
+    recess_offset : float, optional
+        The offset of the recess, i.e. how much the recess is larger than the plate outline. This is used to create a recess that is larger than the plate itself.
+    to_joint_transformation : :class:`~compas.geometry.Transformation`
+        The transformation from the fastener's local frame to the target frame in the joint.
+    recess_volume : :class:`~compas.geometry.Polyhedron`
+        The volume of the recess to be applied to the connected elements.
+    """
+
     def __init__(
         self,
         frame: Frame,
@@ -207,6 +249,16 @@ class PlateFastener(Fastener):
         return geometry
 
     def apply_processings(self, joint):
+        """
+        Appplies features to the elements of the joint according to the holes and recesses defined on the plate fastener.
+        This is automatically called by `Joint.add_features()`
+
+        Parameters
+        ----------
+        joint : :class:`compas_timber.connections.Joint`
+                The joint to which the fastener is applied.
+
+        """
         for element in joint.elements:
             if not isinstance(element, TimberElement):
                 continue
@@ -241,6 +293,9 @@ class PlateFastener(Fastener):
 
     @property
     def recess_volume(self):
+        """
+        Computes the volume of the recess to be applied to the connected elements. This is used to create a pocket feature on the elements.
+        """
         moved_outline = self.outline.translated(self.frame.zaxis * self.recess)
         vertices = moved_outline.points[:-1] + self.outline.points[:-1]
         hlen = int(len(vertices) / 2)
