@@ -22,10 +22,10 @@ def test_add_joint_structural_segments_crossing_beams(mocker: pytest_mock.Mocker
     model = mocker.MagicMock(spec=TimberModel)
 
     joint = mocker.MagicMock(spec=Joint)
-    joint.elements = [beam1, beam2]
+    joint.interactions = [(beam1, beam2)]
 
     solver = BeamStructuralElementSolver()
-    solver.add_joint_structural_segments(joint, model)
+    solver.add_joint_structural_segments(model, [joint])
 
     model.add_structural_connector_segments.assert_called_once()
 
@@ -37,8 +37,8 @@ def test_add_joint_structural_segments_crossing_beams(mocker: pytest_mock.Mocker
     assert len(segments) == 1
     segment = segments[0]
 
-    p1 = segment.segment.start
-    p2 = segment.segment.end
+    p1 = segment.line.start
+    p2 = segment.line.end
 
     assert (TOL.is_zero(p1.distance_to_point(Point(0, 0, 0))) and TOL.is_zero(p2.distance_to_point(Point(0, 0, 200)))) or (
         TOL.is_zero(p1.distance_to_point(Point(0, 0, 200))) and TOL.is_zero(p2.distance_to_point(Point(0, 0, 0)))
@@ -55,10 +55,10 @@ def test_add_joint_structural_segments_intersecting_beams(mocker: pytest_mock.Mo
     model = mocker.MagicMock(spec=TimberModel)
 
     joint = mocker.MagicMock(spec=Joint)
-    joint.elements = [beam1, beam2]
+    joint.interactions = [(beam1, beam2)]
 
     solver = BeamStructuralElementSolver()
-    solver.add_joint_structural_segments(joint, model)
+    solver.add_joint_structural_segments(model, [joint])
 
     model.add_structural_connector_segments.assert_not_called()
 
@@ -76,10 +76,10 @@ def test_add_joint_structural_segments_multi_beam(mocker: pytest_mock.MockerFixt
     model = mocker.MagicMock(spec=TimberModel)
 
     joint = mocker.MagicMock(spec=Joint)
-    joint.elements = [beam1, beam2, beam3]
+    joint.interactions = [(beam1, beam2), (beam1, beam3)]
 
     solver = BeamStructuralElementSolver()
-    solver.add_joint_structural_segments(joint, model)
+    solver.add_joint_structural_segments(model, [joint])
 
     assert model.add_structural_connector_segments.call_count >= 2
 
