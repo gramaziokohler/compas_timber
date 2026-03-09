@@ -73,6 +73,16 @@ class FreeContour(BTLxProcessing):
         return data
 
     @property
+    def contour_param_object(self):
+        return self._contour_param_object
+
+    @contour_param_object.setter
+    def contour_param_object(self, value):
+        if not isinstance(value, (Contour, DualContour)):
+            raise ValueError("contour_param_object must be an instance of Contour or DualContour.")
+        self._contour_param_object = value
+
+    @property
     def tool_id(self):
         return self._tool_id
 

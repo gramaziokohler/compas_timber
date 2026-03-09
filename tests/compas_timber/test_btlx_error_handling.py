@@ -57,7 +57,11 @@ class MockProcessingWithUnsupportedType(BTLxProcessing):
 
     def __init__(self):
         super(MockProcessingWithUnsupportedType, self).__init__()
-        self.unsupported_param = _UnsupportedType()
+        self._unsupported_param = _UnsupportedType()
+
+    @property
+    def unsupported_param(self):
+        return self._unsupported_param
 
     @property
     def __data__(self):
@@ -74,7 +78,11 @@ class MockProcessingSuccess(BTLxProcessing):
 
     def __init__(self):
         super(MockProcessingSuccess, self).__init__()
-        self.test_param = "test_value"
+        self._test_param = "test_value"
+
+    @property
+    def test_param(self):
+        return self._test_param
 
     @property
     def __data__(self):

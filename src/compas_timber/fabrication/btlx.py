@@ -3,6 +3,8 @@ import os
 import uuid
 import xml.dom.minidom as MD
 import xml.etree.ElementTree as ET
+from abc import ABC
+from abc import abstractmethod
 from collections import OrderedDict
 from datetime import date
 from datetime import datetime
@@ -773,8 +775,8 @@ def dual_contour_to_xml(contour):
     return root
 
 
-class BTLxProcessing(Data):
-    """Base class for BTLx Processing.
+class BTLxProcessing(Data, ABC):
+    """Abstract base class for BTLx Processing.
 
     Attributes
     ----------
@@ -798,6 +800,8 @@ class BTLxProcessing(Data):
         Mapping of BTLx XML header attribute names (in XML attributes) to Python parameter names with converters.
     is_joinery : bool
         If True, the process is a result of joinery process.
+    params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
+        The BTLx processing parameters for serialization.
 
     """
 
@@ -831,6 +835,14 @@ class BTLxProcessing(Data):
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
+
+    def __init_subclass__(cls, **kwargs):
+        super(BTLxProcessing, cls).__init_subclass__(**kwargs)
+        attribute_map = cls.__dict__.get("ATTRIBUTE_MAP", None)
+        if attribute_map is not None:
+            missing = [python_name for python_name in attribute_map.values() if not hasattr(cls, python_name)]
+            if missing:
+                raise AttributeError("ATTRIBUTE_MAP in '{}' references attributes not found on the class: {}".format(cls.__name__, missing))
 
     @property
     def ref_side_index(self):
@@ -876,22 +888,19 @@ class BTLxProcessing(Data):
         return self._tool_position
 
     @property
+    @abstractmethod
     def PROCESSING_NAME(self):
-        raise NotImplementedError("PROCESSING_NAME must be implemented as class attribute in subclasses!")
+        """The name of the processing for BTLx serialization."""
+        pass
 
     @property
+    @abstractmethod
     def ATTRIBUTE_MAP(self):
-        raise NotImplementedError("ATTRIBUTE_MAP must be implemented as class attribute in subclasses!")
+        """Mapping of BTLx XML attribute names to Python attribute names."""
+        pass
 
     @property
     def params(self):
-        """Returns the BTLx processing parameters for serialization.
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.BTLxProcessingParams`
-            The processing parameters instance.
-        """
         return BTLxProcessingParams(self)
 
     def add_subprocessing(self, subprocessing):
@@ -928,6 +937,14 @@ class BTLxProcessingParams(object):
     instance : :class:`BTLxProcessing`
         The instance of the processing to create parameters for.
 
+    Attributes
+    ----------
+    header_attributes : OrderedDict
+        The header attributes for BTLx serialization.
+    attribute_map : dict
+        Mapping of BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
+
     """
 
     def __init__(self, instance):
@@ -935,13 +952,6 @@ class BTLxProcessingParams(object):
 
     @property
     def header_attributes(self):
-        """Returns the header attributes for BTLx serialization.
-
-        Returns
-        -------
-        OrderedDict
-            Dictionary of header attributes for the XML element.
-        """
         result = OrderedDict()
         result["Name"] = self._instance.PROCESSING_NAME
         result["Process"] = "yes"
@@ -961,15 +971,6 @@ class BTLxProcessingParams(object):
 
     @property
     def attribute_map(self):
-        """Returns mapping of BTLx XML child element tag names to Python attribute names.
-
-        Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
-
-        Returns
-        -------
-        dict
-            Dictionary mapping BTLx XML child element tag names (keys) to Python instance attribute names (values).
-        """
         return self._instance.ATTRIBUTE_MAP
 
     def as_dict(self):

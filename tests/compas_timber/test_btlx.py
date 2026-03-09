@@ -195,7 +195,7 @@ def test_processing_scaled_called_for_meter_units(mocker):
     model.add_element(beam)
 
     spy = mocker.spy(processing, "scaled")
-    with pytest.warns(UserWarning, match="auto-scale to mm"):
+    with pytest.warns(UserWarning, match="Model units are set to M and will auto-scale to mm for BTLx"):
         writer.model_to_xml(model)
     spy.assert_called_once_with(1000.0)
 
