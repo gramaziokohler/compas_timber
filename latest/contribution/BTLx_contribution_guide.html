@@ -615,20 +615,21 @@ document.write(`
 The following methods and attributes are the absolute minimum required to implement a processing:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">PROCESSING_NAME</span></code> : Class attribute matching BTLx specification</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ATTRIBUTE_MAP</span></code> : Class attribute dictionary mapping BTLx XML parameter names to Python attribute names</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">__init__()</span></code> : Method with meaningful defaults set by the BTLx specification</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">__data__</span></code> : Property returning a dictionary of processing data for serialization</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code> : Property returning a parameters instance for BTLx serialization</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">scale()</span></code> : Method for scaling parameters when units are not set in mm</p></li>
-</ul>
-<p>Additionally, within the same module you need to implement the equivalent parameters class that inherits from <code class="docutils literal notranslate"><span class="pre">BTLxProcessingParams</span></code>.
-The following method is required:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">as_dict()</span></code> : This method converts your processing instance into <code class="docutils literal notranslate"><span class="pre">OrderedDict</span></code> with BTLx parameter names and values as keys and values and is later used by the <code class="docutils literal notranslate"><span class="pre">BTLxWriter</span></code> to serialize the processing to XML.</p></li>
 </ul>
 <section id="example">
 <h4>Example:</h4>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NewProcessing</span><span class="p">(</span><span class="n">BTLxProcessing</span><span class="p">):</span>
     <span class="n">PROCESSING_NAME</span> <span class="o">=</span> <span class="s2">&quot;HypotheticalProcessing&quot;</span>  <span class="c1"># need to match the name in the BTLx specification</span>
+
+    <span class="c1"># Map BTLx XML parameter names to Python attribute names</span>
+    <span class="n">ATTRIBUTE_MAP</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;ArgA&quot;</span><span class="p">:</span> <span class="s2">&quot;arg_a&quot;</span><span class="p">,</span>  <span class="c1"># BTLx name : Python attribute name</span>
+        <span class="s2">&quot;ArgB&quot;</span><span class="p">:</span> <span class="s2">&quot;arg_b&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">__data__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -642,23 +643,14 @@ The following method is required:</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_a</span> <span class="o">=</span> <span class="n">arg_a</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_b</span> <span class="o">=</span> <span class="n">arg_b</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">NewProcessingParams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">factor</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_a</span> <span class="o">*=</span> <span class="n">factor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">arg_b</span> <span class="o">*=</span> <span class="n">factor</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">NewProcessingParams</span><span class="p">(</span><span class="n">BTLxProcessingParams</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># ordered, string representation which corresponds with the BTLx specification</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;ArgA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;{:.</span><span class="si">{prec}</span><span class="s2">f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="o">.</span><span class="n">arg_a</span><span class="p">),</span> <span class="n">prec</span><span class="o">=</span><span class="n">TOL</span><span class="o">.</span><span class="n">precision</span><span class="p">)</span>
-        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;ArgB&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;{:.</span><span class="si">{prec}</span><span class="s2">f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_instance</span><span class="o">.</span><span class="n">arg_b</span><span class="p">),</span> <span class="n">prec</span><span class="o">=</span><span class="n">TOL</span><span class="o">.</span><span class="n">precision</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span>
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">params</span></code> property is automatically inherited from <code class="docutils literal notranslate"><span class="pre">BTLxProcessing</span></code> and uses the <code class="docutils literal notranslate"><span class="pre">ATTRIBUTE_MAP</span></code> to serialize the processing parameters. The <code class="docutils literal notranslate"><span class="pre">BTLxProcessingParams</span></code> class handles the conversion of Python attribute values to BTLx-compliant string formats.</p>
 </div>
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>

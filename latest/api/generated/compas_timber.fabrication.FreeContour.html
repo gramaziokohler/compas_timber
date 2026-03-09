@@ -597,7 +597,7 @@ document.write(`
 <h1>FreeContour</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.fabrication.FreeContour">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">FreeContour</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/409e6b7/src/compas_timber/fabrication/free_contour.py#L26"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.fabrication.</span></span><span class="sig-name descname"><span class="pre">FreeContour</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/3a4842b/src/compas_timber/fabrication/free_contour.py#L25"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
 <dd><p>Bases: <a class="reference internal" href="compas_timber.fabrication.BTLxProcessing.html#compas_timber.fabrication.BTLxProcessing" title="compas_timber.fabrication.btlx.BTLxProcessing"><code class="xref py py-class docutils literal notranslate"><span class="pre">BTLxProcessing</span></code></a></p>
 <p>Represents a free contour processing.</p>
 <dl class="field-list">
@@ -605,9 +605,11 @@ document.write(`
 <dd class="field-odd"><dl>
 <dt><strong>contour_param_object</strong><span class="classifier"><a class="reference internal" href="compas_timber.fabrication.Contour.html#compas_timber.fabrication.Contour" title="compas_timber.fabrication.btlx.Contour"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.fabrication.btlx.Contour</span></code></a> or <a class="reference internal" href="compas_timber.fabrication.DualContour.html#compas_timber.fabrication.DualContour" title="compas_timber.fabrication.btlx.DualContour"><code class="xref py py-class docutils literal notranslate"><span class="pre">compas_timber.fabrication.btlx.DualContour</span></code></a></span></dt><dd><p>The contour parameter object.</p>
 </dd>
+<dt><strong>tool_id</strong><span class="classifier">int, optional</span></dt><dd><p>The tool ID for the processing. Default is 0.</p>
+</dd>
 <dt><strong>counter_sink</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the contour is a counter sink. Default is False.</p>
 </dd>
-<dt><strong>tool_position</strong><span class="classifier">str, optional</span></dt><dd><p>The position of the tool. Default is “left”.</p>
+<dt><strong>tool_position</strong><span class="classifier"><a class="reference internal" href="compas_timber.fabrication.AlignmentType.html#compas_timber.fabrication.AlignmentType" title="compas_timber.fabrication.AlignmentType"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlignmentType</span></code></a></span></dt><dd><p>The position of the tool relative to the beam. Can be ‘left’, ‘center’, or ‘right’.</p>
 </dd>
 <dt><strong>depth_bounded</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.</p>
 </dd>
