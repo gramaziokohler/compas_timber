@@ -104,9 +104,6 @@ ENV/
 # compas_timber
 # ==============================================================================
 
-src/compas_timber/ghpython/components/ghuser/*.ghuser
-src/compas_timber/ghpython/components_cpython/ghuser/*.ghuser
-
 *.3dmbak
 *.rhl
 *.rui_bak

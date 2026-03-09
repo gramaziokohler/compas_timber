@@ -50,11 +50,6 @@ def namespaces():
     return {"d2m": "https://www.design2machine.com"}
 
 
-@pytest.fixture
-def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
-
-
 def test_btlx_file_history(resulting_btlx, namespaces):
     # Validate the FileHistory element
     file_history = resulting_btlx.find("d2m:FileHistory", namespaces)
@@ -194,8 +189,11 @@ def test_float_formatting_of_param_dicts():
 
 
 def test_processing_scaled_called_for_meter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "M"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="M", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     processing = JackRafterCut(OrientationType.END, 0.01, 0.02, 0.005, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
@@ -207,13 +205,15 @@ def test_processing_scaled_called_for_meter_units(mocker):
 
 
 def test_processing_scaled_not_called_for_millimeter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "MM"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)
     processing = JackRafterCut(OrientationType.END, 10.0, 20.0, 5.0, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
     model.add_element(beam)
-
     spy = mocker.spy(processing, "scaled")
     writer.model_to_xml(model)
     spy.assert_not_called()
