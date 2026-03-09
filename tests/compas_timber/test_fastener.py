@@ -1,6 +1,3 @@
-from compas_timber.fasteners import Fastener
-
-
 def test_fastener_initialization():
     assert True
     # fastener = Fastener()

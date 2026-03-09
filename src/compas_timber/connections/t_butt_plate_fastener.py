@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from turtle import Pen
 from typing import TYPE_CHECKING
 from typing import Optional
 
