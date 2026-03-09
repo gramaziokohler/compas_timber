@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
+* Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
+* Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
@@ -16,11 +19,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Fixed multi-beam joints get de-serialized multiple times.
+* Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
+* Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
+* Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
+* Renamed attribute `segment` to `line` in `StructuralSegment` for better clarity.
+* `TStepJoint.step_shape` now accepts `StepShapeType` string constants instead of integers.
+* `TenonMortiseJoint.tenon_shape` now accepts `TenonShapeType` string constants instead of integers.
+* `TStepJoint` unset attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
+* `TStepJoint` unset attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization.
+* `TenonMortiseJoint` unset attributes are now resolved at instantiation time and inside `restore_beams_from_keys()`, ensuring consistent state before and after deserialization.
+* `TenonMortiseJoint.__init__` now accepts `main_beam=None` and `cross_beam=None` as defaults, consistent with other joint classes and required for correct deserialization via `__from_data__`.
+* `TDovetailJoint.dovetail_shape` now accepts `TenonShapeType` string constants instead of integers.
+* `TDovetailJoint` unset attributes are now resolved inside `_set_unset_attributes()`, with dimensional defaults proportional to the main beam's cross-section.
+* `DovetailTenon.apply()` now trims the dovetail volume against the beam's reference sides when the volume exceeds the beam geometry, failing silently when trimming is not possible.
 * Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
 
 ### Removed
 
+* Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
+* Removed `tenon_shape` property from `TenonMortiseJoint`; use `shape` with `TenonShapeType` string constants directly.
+* Removed the `shape` property from `TDovetailJoint`; `dovetail_shape` now stores the `TenonShapeType` value directly.
 * Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
 * Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
 * Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.
