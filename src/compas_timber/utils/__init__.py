@@ -714,8 +714,6 @@ def mesh_from_brep_simple(brep):
         :class:`~compas.datastructures.Mesh`
             The generated Mesh.
     """
-    print(f"brep_face_count: {len(brep.faces)}")
-
     faces_indices = []
     for face in brep.faces:
         outer_loop = None
