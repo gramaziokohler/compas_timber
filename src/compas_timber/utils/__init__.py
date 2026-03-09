@@ -1,6 +1,8 @@
 from math import fabs
 from typing import Optional
 
+from compas.datastructures import Mesh
+
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -658,6 +660,74 @@ def combine_parallel_segments(polyline, tol=TOL):
             polyline.points.pop(i)
 
 
+def get_brep_loop_vertex_indices(loop, brep):
+    """Get the vertex indices of a BrepLoop. This is used to generate a Mesh representation of a Brep.
+    Tries to use the native_vertex.VertexIndex of the BrepLoop edges if available, otherwise falls back to comparing vertex positions with a tolerance.
+
+    Parameters
+    ----------
+    loop : :class:`~compas.geometry.BrepLoop`
+        The BrepLoop to get the vertex indices from.
+    brep : :class:`~compas.geometry.Brep`
+        The Brep to get the vertex indices from.
+
+    Returns
+    -------
+    list of int
+        The vertex indices of the BrepLoop.
+
+    """
+
+    edge = loop.edges[0]
+    face_vertex_indices = []
+    for edge in loop.edges:
+        try:
+            if edge.start_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
+            if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
+        except AttributeError:
+            for i, v in enumerate(brep.vertices):
+                if TOL.is_allclose(edge.start_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+                if TOL.is_allclose(edge.end_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+
+    face_vertex_indices.append(face_vertex_indices[0])
+    return face_vertex_indices
+
+
+def mesh_from_brep_simple(brep):
+    """This generates a Mesh datastructure from a Brep. This function creates a one-to-one relationship between the Brep and Mesh Vertices and Faces.
+    No further subdivision of the Brep faces is undertaken, so each face of the Brep corresponds to one face in the Mesh. This means that the Brep faces should be planar.
+    Furthermore, the function does not accomodate inner loops so any holes in faces will be ignored.
+
+    Parameters
+    ----------
+    brep : :class:`~compas.geometry.Brep`
+        The Brep to generate the Mesh from.
+
+    Returns
+    -------
+        :class:`~compas.datastructures.Mesh`
+            The generated Mesh.
+    """
+    faces_indices = []
+    for face in brep.faces:
+        outer_loop = None
+        try:
+            for loop in face.loops:
+                if loop.is_outer: #only RhinoBrep has this attribute
+                    outer_loop = loop
+                    break
+        except AttributeError:
+            loop = face.loops[0] #occ
+        faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
+    return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -678,4 +748,6 @@ __all__ = [
     "polylines_from_brep_face",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
+    "get_brep_loop_vertex_indices",
+    "mesh_from_brep_simple",
 ]
