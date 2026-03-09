@@ -35,8 +35,9 @@ class TenonMortiseJoint(Joint):
         Width of the tenon.
     height : float
         Height of the tenon.
-    shape : int
-        The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    tenon_shape : str
+        Shape of the tenon. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
+        Defaults to ``TenonShapeType.ROUND``.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
 
@@ -63,8 +64,8 @@ class TenonMortiseJoint(Joint):
         Width of the tenon.
     height : float
         Height of the tenon.
-    shape : int
-        The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    tenon_shape : str
+        Shape of the tenon. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
     features : list
@@ -84,22 +85,22 @@ class TenonMortiseJoint(Joint):
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
-        data["shape"] = self.shape
+        data["tenon_shape"] = self.tenon_shape
         data["shape_radius"] = self.shape_radius
         return data
 
     # fmt: off
     def __init__(
         self,
-        main_beam,
-        cross_beam,
+        main_beam=None,
+        cross_beam=None,
         start_y=None,
         start_depth=None,
         rotation=None,
         length=None,
         width=None,
         height=None,
-        shape=None,
+        tenon_shape=None,
         shape_radius=None,
         **kwargs
     ):
@@ -115,10 +116,13 @@ class TenonMortiseJoint(Joint):
         self.length = length
         self.width = width
         self.height = height
-        self.shape = shape
+        self.tenon_shape = tenon_shape
         self.shape_radius = shape_radius
 
         self.features = []
+
+        if self.main_beam and self.cross_beam:
+            self._set_unset_attributes()
 
     @property
     def elements(self):
@@ -136,24 +140,9 @@ class TenonMortiseJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
-    @property
-    def tenon_shape(self):
-        if self.shape == 0:
-            shape_type = TenonShapeType.AUTOMATIC
-        elif self.shape == 1:
-            shape_type = TenonShapeType.SQUARE
-        elif self.shape == 2:
-            shape_type = TenonShapeType.ROUND
-        elif self.shape == 3:
-            shape_type = TenonShapeType.ROUNDED
-        elif self.shape == 4:
-            shape_type = TenonShapeType.RADIUS
-        else:
-            raise ValueError("Invalid tenon shape index. Please provide a valid index between 0 and 4.")
-        return shape_type
-
-    def _update_unset_values(self):
+    def _set_unset_attributes(self):
         """Updates and sets default property values if they are not provided."""
+        assert self.cross_beam and self.main_beam
         width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
 
         self.start_y = self.start_y or 0.0
@@ -162,7 +151,7 @@ class TenonMortiseJoint(Joint):
         self.length = self.length or height
         self.width = self.width or width / 2
         self.height = self.height or width / 2
-        self.shape = self.shape or 2  # Default shape: ROUND
+        self.tenon_shape = self.tenon_shape or TenonShapeType.ROUND
         self.shape_radius = self.shape_radius or width / 4
 
     def add_extensions(self):
@@ -193,9 +182,7 @@ class TenonMortiseJoint(Joint):
         #main_beam
         try:
             cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            main_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[0]
-            offset = self.height or main_width / 2    # in case height is not set this is the default value set when adding features
-            cutting_plane.translate(-cutting_plane.normal * offset)
+            cutting_plane.translate(-cutting_plane.normal * self.height)
             start_main, end_main = self.main_beam.extension_to_plane(cutting_plane)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
@@ -216,9 +203,6 @@ class TenonMortiseJoint(Joint):
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
-
-        # set default values if not provided
-        self._update_unset_values()
 
         # generate  tenon features
         main_feature = Tenon.from_plane_and_beam(
@@ -258,3 +242,4 @@ class TenonMortiseJoint(Joint):
         """After de-serialization, restores references to the main and cross beams saved in the model."""
         self.main_beam = model[self.main_beam_guid]
         self.cross_beam = model[self.cross_beam_guid]
+        self._set_unset_attributes()
