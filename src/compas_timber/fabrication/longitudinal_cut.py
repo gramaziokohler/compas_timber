@@ -18,6 +18,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 
 
@@ -53,16 +54,16 @@ class LongitudinalCut(BTLxProcessing):
 
     PROCESSING_NAME = "LongitudinalCut"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "Inclination": ("inclination", float),
-        "StartLimited": ("start_limited", bool),
-        "EndLimited": ("end_limited", bool),
-        "Length": ("length", float),
-        "DepthLimited": ("depth_limited", bool),
-        "Depth": ("depth", float),
-        "AngleStart": ("angle_start", float),
-        "AngleEnd": ("angle_end", float),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "StartLimited": AttributeSpec("start_limited", bool),
+        "EndLimited": AttributeSpec("end_limited", bool),
+        "Length": AttributeSpec("length", float),
+        "DepthLimited": AttributeSpec("depth_limited", bool),
+        "Depth": AttributeSpec("depth", float),
+        "AngleStart": AttributeSpec("angle_start", float),
+        "AngleEnd": AttributeSpec("angle_end", float),
     }
 
     @property

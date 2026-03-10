@@ -19,6 +19,7 @@ from compas.geometry import project_point_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 
 
@@ -45,13 +46,13 @@ class Drilling(BTLxProcessing):
 
     PROCESSING_NAME = "Drilling"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "Angle": ("angle", float),
-        "Inclination": ("inclination", float),
-        "DepthLimited": ("depth_limited", bool),
-        "Depth": ("depth", float),
-        "Diameter": ("diameter", float),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "DepthLimited": AttributeSpec("depth_limited", bool),
+        "Depth": AttributeSpec("depth", float),
+        "Diameter": AttributeSpec("diameter", float),
     }
 
     @property

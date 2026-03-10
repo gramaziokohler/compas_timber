@@ -23,6 +23,7 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import MachiningLimits
 from .btlx import OrientationType
@@ -66,20 +67,20 @@ class Lap(BTLxProcessing):
 
     PROCESSING_NAME = "Lap"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": ("orientation", str),
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "Angle": ("angle", float),
-        "Inclination": ("inclination", float),
-        "Slope": ("slope", float),
-        "Length": ("length", float),
-        "Width": ("width", float),
-        "Depth": ("depth", float),
-        "LeadAngleParallel": ("lead_angle_parallel", bool),
-        "LeadAngle": ("lead_angle", float),
-        "LeadInclinationParallel": ("lead_inclination_parallel", bool),
-        "LeadInclination": ("lead_inclination", float),
-        "MachiningLimits": ("machining_limits", MachiningLimits),
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "LeadAngleParallel": AttributeSpec("lead_angle_parallel", bool),
+        "LeadAngle": AttributeSpec("lead_angle", float),
+        "LeadInclinationParallel": AttributeSpec("lead_inclination_parallel", bool),
+        "LeadInclination": AttributeSpec("lead_inclination", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
     }
 
     @property

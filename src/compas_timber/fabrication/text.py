@@ -8,6 +8,7 @@ from compas.geometry import Transformation
 from compas_timber import DATA
 
 from .btlx import AlignmentType
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 
 
@@ -41,16 +42,16 @@ class Text(BTLxProcessing):
 
     PROCESSING_NAME = "Text"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "Angle": ("angle", float),
-        "AlignmentVertical": ("alignment_vertical", str),
-        "AlignmentHorizontal": ("alignment_horizontal", str),
-        "AlignmentMultiline": ("alignment_multiline", str),
-        "StackedMarking": ("stacked_marking", bool),
-        "TextHeightAuto": ("text_height_auto", bool),
-        "TextHeight": ("text_height", float),
-        "Text": ("text", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "AlignmentVertical": AttributeSpec("alignment_vertical", str),
+        "AlignmentHorizontal": AttributeSpec("alignment_horizontal", str),
+        "AlignmentMultiline": AttributeSpec("alignment_multiline", str),
+        "StackedMarking": AttributeSpec("stacked_marking", bool),
+        "TextHeightAuto": AttributeSpec("text_height_auto", bool),
+        "TextHeight": AttributeSpec("text_height", float),
+        "Text": AttributeSpec("text", str),
     }
     _CHARACTER_DICT = {}
 

@@ -18,6 +18,7 @@ from compas_timber.base import TimberElement
 from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import Contour
@@ -48,8 +49,8 @@ class FreeContour(BTLxProcessing):
     # At runtime, contour_param_object holds ONE object (Contour OR DualContour, never both).
     # During writing, custom FreeContourParams.as_dict() serializes only the appropriate type.
     ATTRIBUTE_MAP = {
-        "Contour": ("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
-        "DualContour": ("contour_param_object", DualContour),  # Dual contour for non-parallel segments
+        "Contour": AttributeSpec("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
+        "DualContour": AttributeSpec("contour_param_object", DualContour),  # Dual contour for non-parallel segments
     }
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
@@ -354,9 +355,8 @@ class FreeContourParams(BTLxProcessingParams):
             xml_tag_name = "Contour"
 
         # Iterate over attribute_map but only include the matching contour type
-        for btlx_name, attr_spec in self.attribute_map.items():
-            python_name = attr_spec[0] if isinstance(attr_spec, tuple) else attr_spec
-            value = getattr(self._instance, python_name)
+        for btlx_name, spec in self.attribute_map.items():
+            value = getattr(self._instance, spec.python_name)
 
             # Only serialize the entry that matches the runtime type
             if btlx_name in ["Contour", "DualContour"]:

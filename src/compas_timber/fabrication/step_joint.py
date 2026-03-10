@@ -15,6 +15,7 @@ from compas.geometry import is_point_behind_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 from .btlx import StepShapeType
@@ -48,15 +49,15 @@ class StepJoint(BTLxProcessing):
 
     PROCESSING_NAME = "StepJoint"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": ("orientation", str),
-        "StartX": ("start_x", float),
-        "StrutInclination": ("strut_inclination", float),
-        "StepDepth": ("step_depth", float),
-        "HeelDepth": ("heel_depth", float),
-        "StepShape": ("step_shape", str),
-        "Tenon": ("tenon", bool),
-        "TenonWidth": ("tenon_width", float),
-        "TenonHeight": ("tenon_height", float),
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StrutInclination": AttributeSpec("strut_inclination", float),
+        "StepDepth": AttributeSpec("step_depth", float),
+        "HeelDepth": AttributeSpec("heel_depth", float),
+        "StepShape": AttributeSpec("step_shape", str),
+        "Tenon": AttributeSpec("tenon", bool),
+        "TenonWidth": AttributeSpec("tenon_width", float),
+        "TenonHeight": AttributeSpec("tenon_height", float),
     }
 
     @property

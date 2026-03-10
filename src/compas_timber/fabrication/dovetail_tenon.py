@@ -16,6 +16,7 @@ from compas.geometry import is_point_behind_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 from .btlx import TenonShapeType
@@ -65,23 +66,23 @@ class DovetailTenon(BTLxProcessing):
 
     PROCESSING_NAME = "DovetailTenon"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": ("orientation", str),
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "StartDepth": ("start_depth", float),
-        "Angle": ("angle", float),
-        "Inclination": ("inclination", float),
-        "Rotation": ("rotation", float),
-        "LengthLimitedTop": ("length_limited_top", bool),
-        "LengthLimitedBottom": ("length_limited_bottom", bool),
-        "Length": ("length", float),
-        "Width": ("width", float),
-        "Height": ("height", float),
-        "ConeAngle": ("cone_angle", float),
-        "UseFlankAngle": ("use_flank_angle", bool),
-        "FlankAngle": ("flank_angle", float),
-        "Shape": ("shape", str),
-        "ShapeRadius": ("shape_radius", float),
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Rotation": AttributeSpec("rotation", float),
+        "LengthLimitedTop": AttributeSpec("length_limited_top", bool),
+        "LengthLimitedBottom": AttributeSpec("length_limited_bottom", bool),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Height": AttributeSpec("height", float),
+        "ConeAngle": AttributeSpec("cone_angle", float),
+        "UseFlankAngle": AttributeSpec("use_flank_angle", bool),
+        "FlankAngle": AttributeSpec("flank_angle", float),
+        "Shape": AttributeSpec("shape", str),
+        "ShapeRadius": AttributeSpec("shape_radius", float),
     }
 
     # Class-level attribute

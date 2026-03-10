@@ -16,6 +16,7 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import LimitationTopType
 from .btlx import OrientationType
@@ -64,22 +65,22 @@ class DovetailMortise(BTLxProcessing):
 
     PROCESSING_NAME = "DovetailMortise"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "StartDepth": ("start_depth", float),
-        "Angle": ("angle", float),
-        "Slope": ("slope", float),
-        # "Inclination": "inclination", #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        "LimitationTop": ("limitation_top", str),
-        "LengthLimitedBottom": ("length_limited_bottom", bool),
-        "Length": ("length", float),
-        "Width": ("width", float),
-        "Depth": ("depth", float),
-        "ConeAngle": ("cone_angle", float),
-        "UseFlankAngle": ("use_flank_angle", bool),
-        "FlankAngle": ("flank_angle", float),
-        "Shape": ("shape", str),
-        "ShapeRadius": ("shape_radius", float),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Slope": AttributeSpec("slope", float),
+        # "Inclination": AttributeSpec("inclination", float),  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LimitationTop": AttributeSpec("limitation_top", str),
+        "LengthLimitedBottom": AttributeSpec("length_limited_bottom", bool),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "ConeAngle": AttributeSpec("cone_angle", float),
+        "UseFlankAngle": AttributeSpec("use_flank_angle", bool),
+        "FlankAngle": AttributeSpec("flank_angle", float),
+        "Shape": AttributeSpec("shape", str),
+        "ShapeRadius": AttributeSpec("shape_radius", float),
     }
 
     # Class-level attribute

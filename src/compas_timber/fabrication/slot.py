@@ -20,6 +20,7 @@ from compas.geometry import intersection_segment_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import MachiningLimits
 from .btlx import OrientationType
@@ -31,19 +32,19 @@ if typing.TYPE_CHECKING:
 class Slot(BTLxProcessing):
     PROCESSING_NAME = "Slot"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": ("orientation", str),
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "StartDepth": ("start_depth", float),
-        "Angle": ("angle", float),
-        "Inclination": ("inclination", float),
-        "Length": ("length", float),
-        "Depth": ("depth", float),
-        "Thickness": ("thickness", float),
-        "AngleRefPoint": ("angle_ref_point", float),
-        "AngleOppPoint": ("angle_opp_point", float),
-        "AddAngleOppPoint": ("add_angle_opp_point", bool),
-        "MachiningLimits": ("machining_limits", MachiningLimits),
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Length": AttributeSpec("length", float),
+        "Depth": AttributeSpec("depth", float),
+        "Thickness": AttributeSpec("thickness", float),
+        "AngleRefPoint": AttributeSpec("angle_ref_point", float),
+        "AngleOppPoint": AttributeSpec("angle_opp_point", float),
+        "AddAngleOppPoint": AttributeSpec("add_angle_opp_point", bool),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
     }
 
     @property

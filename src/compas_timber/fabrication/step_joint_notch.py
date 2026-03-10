@@ -15,6 +15,7 @@ from compas.geometry import is_point_behind_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 from .btlx import StepShapeType
@@ -56,19 +57,19 @@ class StepJointNotch(BTLxProcessing):
 
     PROCESSING_NAME = "StepJointNotch"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": ("orientation", str),
-        "StartX": ("start_x", float),
-        "StartY": ("start_y", float),
-        "StrutInclination": ("strut_inclination", float),
-        "NotchLimited": ("notch_limited", bool),
-        "NotchWidth": ("notch_width", float),
-        "StepDepth": ("step_depth", float),
-        "HeelDepth": ("heel_depth", float),
-        "StrutHeight": ("strut_height", float),
-        "StepShape": ("step_shape", str),
-        "Mortise": ("mortise", bool),
-        "MortiseWidth": ("mortise_width", float),
-        "MortiseHeight": ("mortise_height", float),
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StrutInclination": AttributeSpec("strut_inclination", float),
+        "NotchLimited": AttributeSpec("notch_limited", bool),
+        "NotchWidth": AttributeSpec("notch_width", float),
+        "StepDepth": AttributeSpec("step_depth", float),
+        "HeelDepth": AttributeSpec("heel_depth", float),
+        "StrutHeight": AttributeSpec("strut_height", float),
+        "StepShape": AttributeSpec("step_shape", str),
+        "Mortise": AttributeSpec("mortise", bool),
+        "MortiseWidth": AttributeSpec("mortise_width", float),
+        "MortiseHeight": AttributeSpec("mortise_height", float),
     }
 
     @property
