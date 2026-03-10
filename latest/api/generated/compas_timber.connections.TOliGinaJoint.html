@@ -59,7 +59,7 @@
         </script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="TOliGinaJoint.add_features" href="compas_timber.connections.TOliGinaJoint.add_features.html" />
+    <link rel="next" title="TOliGinaJoint.add_extensions" href="compas_timber.connections.TOliGinaJoint.add_extensions.html" />
     <link rel="prev" title="YButtJoint.validate_data" href="compas_timber.connections.YButtJoint.validate_data.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -498,11 +498,10 @@ document.write(`
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.elements.html">compas_timber.elements</a></li>
 <li class="toctree-l2 current active"><a class="reference internal" href="../compas_timber.connections.html">compas_timber.connections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.fabrication.html">compas_timber.fabrication</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.design.html">compas_timber.design</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.planning.html">compas_timber.planning</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.errors.html">compas_timber.errors</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../compas_timber.ghpython.html">compas_timber.ghpython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../compas_timber.rhino.html">compas_timber.rhino</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../compas_timber.base.html">compas_timber.base</a></li>
 </ul>
 </li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../tutorials.html">Grasshopper plugin</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
@@ -598,13 +597,16 @@ document.write(`
 <h1>TOliGinaJoint</h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="compas_timber.connections.TOliGinaJoint">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TOliGinaJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/4232701/src/compas_timber/connections/oligina.py#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
-<dd><p>Bases: <a class="reference internal" href="compas_timber.connections.TenonMortiseJoint.html#compas_timber.connections.TenonMortiseJoint" title="compas_timber.connections.t_tenon_mortise.TenonMortiseJoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">TenonMortiseJoint</span></code></a></p>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">compas_timber.connections.</span></span><span class="sig-name descname"><span class="pre">TOliGinaJoint</span></span><a class="reference external" href="https://github.com/gramaziokohler/compas_timber/blob/88ca3fe/src/compas_timber/connections/oligina.py#L16"><span class="viewcode-link"><span class="pre">[source]</span></span></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MortiseTenonJoint</span></code></p>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.add_features.html#compas_timber.connections.TOliGinaJoint.add_features" title="compas_timber.connections.TOliGinaJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
-<td><p>Adds the required trimming features to both beams.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.add_extensions.html#compas_timber.connections.TOliGinaJoint.add_extensions" title="compas_timber.connections.TOliGinaJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
+<td><p>Calculates and adds the necessary extensions to the beams.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.add_features.html#compas_timber.connections.TOliGinaJoint.add_features" title="compas_timber.connections.TOliGinaJoint.add_features"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_features</span></code></a></p></td>
+<td><p>Adds the features defined by this joint to affected beam(s).</p></td>
 </tr>
 </tbody>
 </table>
@@ -614,26 +616,26 @@ document.write(`
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.ToString.html#compas_timber.connections.TOliGinaJoint.ToString" title="compas_timber.connections.TOliGinaJoint.ToString"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ToString</span></code></a></p></td>
 <td><p>Converts the instance to a string.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.add_extensions.html#compas_timber.connections.TOliGinaJoint.add_extensions" title="compas_timber.connections.TOliGinaJoint.add_extensions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_extensions</span></code></a></p></td>
-<td><p>Calculates and adds the necessary extensions to the beams.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.check_elements_compatibility.html#compas_timber.connections.TOliGinaJoint.check_elements_compatibility" title="compas_timber.connections.TOliGinaJoint.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.check_elements_compatibility.html#compas_timber.connections.TOliGinaJoint.check_elements_compatibility" title="compas_timber.connections.TOliGinaJoint.check_elements_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_elements_compatibility</span></code></a></p></td>
 <td><p>Checks if the cluster of beams complies with the requirements for the Joint.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.copy.html#compas_timber.connections.TOliGinaJoint.copy" title="compas_timber.connections.TOliGinaJoint.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.copy.html#compas_timber.connections.TOliGinaJoint.copy" title="compas_timber.connections.TOliGinaJoint.copy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code></a></p></td>
 <td><p>Make an independent copy of the data object.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.create.html#compas_timber.connections.TOliGinaJoint.create" title="compas_timber.connections.TOliGinaJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.create.html#compas_timber.connections.TOliGinaJoint.create" title="compas_timber.connections.TOliGinaJoint.create"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create</span></code></a></p></td>
 <td><p>Creates an instance of this joint and creates the new connection in <cite>model</cite>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.element_count_complies.html#compas_timber.connections.TOliGinaJoint.element_count_complies" title="compas_timber.connections.TOliGinaJoint.element_count_complies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_count_complies</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.element_count_complies.html#compas_timber.connections.TOliGinaJoint.element_count_complies" title="compas_timber.connections.TOliGinaJoint.element_count_complies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">element_count_complies</span></code></a></p></td>
 <td><p>Checks if the number of elements complies with the joint's requirements.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.from_json.html#compas_timber.connections.TOliGinaJoint.from_json" title="compas_timber.connections.TOliGinaJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.from_json.html#compas_timber.connections.TOliGinaJoint.from_json" title="compas_timber.connections.TOliGinaJoint.from_json"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_json</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON file.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.from_jsonstring.html#compas_timber.connections.TOliGinaJoint.from_jsonstring" title="compas_timber.connections.TOliGinaJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.from_jsonstring.html#compas_timber.connections.TOliGinaJoint.from_jsonstring" title="compas_timber.connections.TOliGinaJoint.from_jsonstring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_jsonstring</span></code></a></p></td>
 <td><p>Construct an object of this type from a JSON string.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.get_main_extension.html#compas_timber.connections.TOliGinaJoint.get_main_extension" title="compas_timber.connections.TOliGinaJoint.get_main_extension"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_main_extension</span></code></a></p></td>
+<td><p>Return the start/end extension lengths for the main beam.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="compas_timber.connections.TOliGinaJoint.promote_cluster.html#compas_timber.connections.TOliGinaJoint.promote_cluster" title="compas_timber.connections.TOliGinaJoint.promote_cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">promote_cluster</span></code></a></p></td>
 <td><p>Creates an instance of this joint from a cluster of elements.</p></td>
