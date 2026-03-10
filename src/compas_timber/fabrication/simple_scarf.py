@@ -6,6 +6,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
+from compas.geometry import Cylinder
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import Point
@@ -15,6 +16,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import distance_segment_segment_points
+from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
@@ -178,21 +180,13 @@ class SimpleScarf(BTLxProcessing):
         ref_side_index=0,
     ):
         # type: (Beam, Beam, float, float, float, int, float, float, int) -> SimpleScarf
+        print("FROM BEAMS CONSTRUCTOR")
         if num_drill_hole not in [0, 1, 2]:
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
 
-        # Check that both beams have the same cross section
-        # if abs(beam.width - other_beam.width) > TOL.absolute or abs(beam.height - other_beam.height) > TOL.absolute:
-        #     raise ValueError("Both beams must have the same cross section (width and height) to create a SimpleScarf joint.")
-
-        if depth_ref_side is None:
-            depth_ref_side = beam.height / 4.0
-        if depth_opp_side is None:
-            depth_opp_side = beam.height / 4.0
-
-        if length is None:
-            # length = min(beam.height, beam.width) * 2.0
-            length = beam.height * 3.0
+        depth_ref_side = beam.height / 3.0 if depth_ref_side is None else depth_ref_side
+        depth_opp_side = beam.height / 3.0 if depth_opp_side is None else depth_opp_side
+        length = beam.height * 3.0 if length is None else length
 
         orientation = cls._calculate_orientation(beam, other_beam)
 
@@ -208,6 +202,90 @@ class SimpleScarf(BTLxProcessing):
                    drill_hole_diam_2,
                    ref_side_index=ref_side_index)
 
+    @classmethod
+    def from_plane_and_beam(cls, beam, plane):
+        print("FROM PLANE AND BEAM CONSTRUCTOR")
+        # type: (Beam, Plane) -> SimpleScarf
+    
+        # Check that the plane is parallel to the beam centerline
+        # if abs(plane.normal.dot(beam.centerline.direction)) < 1.0 - TOL.cosine:
+        #     raise ValueError("The plane must be parallel to the beam centerline to create a SimpleScarf joint.")
+
+        # Check that the plane intersects with the beam centerline
+        # if not plane.intersect_line(beam.centerline):
+        #     raise ValueError("The plane must intersect with the beam centerline to create a SimpleScarf joint.")
+
+        if isinstance(plane, Frame):
+            plane = Plane.from_frame(plane)
+
+        # Check that the plane intersects with the beam centerline at an endpoint
+        # intersection = plane.intersect_line(beam.centerline)
+        # if not (intersection.is_close(beam.centerline.start) or intersection.is_close(beam.centerline.end)):
+        #     raise ValueError("The plane must intersect with the beam centerline at an endpoint to create a SimpleScarf joint.")
+        
+        orientation = cls._calculate_orientation_with_plane(plane, beam)
+
+        dot = plane.normal.dot(beam.centerline.direction)
+        if TOL.is_close(dot, -1.0) or TOL.is_close(dot, 1.0) or TOL.is_close(dot, 0.0):
+            ref_side_dict = beam_ref_side_incidence_with_vector(beam, Vector.Zaxis(), ignore_ends=True)
+            ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            height_side_index = (ref_side_index + 1) % 4
+            vertical_height = beam.ref_edges[ref_side_index].start.distance_to_point(beam.ref_edges[height_side_index].start)
+            depth_ref_side = vertical_height / 3.0
+            depth_opp_side = vertical_height / 3.0
+            length = vertical_height * 3.0
+            num_drill_hole = 0
+            drill_hole_diam_1 = 20.0
+            drill_hole_diam_2 = 20.0
+
+            return cls(orientation,
+                       cls._calculate_start_x(beam, orientation, length),
+                       length,
+                       depth_ref_side,
+                       depth_opp_side,
+                       num_drill_hole,
+                       drill_hole_diam_1,
+                       drill_hole_diam_2,
+                       ref_side_index=ref_side_index)
+
+        else:
+            if dot < 0 and orientation == OrientationType.START or dot > 0 and orientation == OrientationType.END:
+                plane.normal = plane.normal * -1
+            
+            ref_side_dict = beam_ref_side_incidence_with_vector(beam, plane.normal, ignore_ends=True)
+            ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            ref_side_angle = min(ref_side_dict.values())
+            plane_inclination_angle = abs(ref_side_angle)
+            height_side_index = (ref_side_index + 1) % 4
+            vertical_height = beam.ref_edges[ref_side_index].start.distance_to_point(beam.ref_edges[height_side_index].start)
+            depth_ref_side = vertical_height / 4.0
+            depth_opp_side = vertical_height / 4.0
+            length = (vertical_height - (depth_ref_side + depth_opp_side)) / math.tan(plane_inclination_angle)
+            num_drill_hole = 0
+            drill_hole_diam_1 = 20.0
+            drill_hole_diam_2 = 20.0
+        
+            return cls(orientation,
+                       cls._calculate_start_x(beam, orientation, length),
+                       length,
+                       depth_ref_side,
+                       depth_opp_side,
+                       num_drill_hole,
+                       drill_hole_diam_1,
+                       drill_hole_diam_2,
+                       ref_side_index=ref_side_index)
+    
+    @classmethod
+    def _calculate_orientation_with_plane(cls, plane, beam):
+        intersection = plane.intersection_with_line(beam.centerline)
+        dis = intersection.distance_to_point(beam.centerline.start)
+        die = intersection.distance_to_point(beam.centerline.end)
+        if TOL.is_close(dis, 0.0):
+            return OrientationType.START
+        elif TOL.is_close(die, 0.0):
+            return OrientationType.END
+        else:
+            raise ValueError("The plane must intersect with the beam centerline at an endpoint to create a SimpleScarf joint.")
 
     @classmethod
     def _calculate_orientation(cls, beam, other_beam):
@@ -261,9 +339,12 @@ class SimpleScarf(BTLxProcessing):
         # type: (Brep, Beam) -> Brep
         scarf_volume = self.volume_from_params_and_beam(beam) 
         scarf_volume.transform(beam.transformation_to_local())
+        drill_volumes = self.drill_hole_volumes_from_params_and_beam(beam)
+        drill_volumes = [dv.transformed(beam.transformation_to_local()) for dv in drill_volumes]
 
         try:
             scarf_volume = Brep.from_mesh(scarf_volume)
+            drill_volumes = [Brep.from_mesh(dv) for dv in drill_volumes]
             json_dump(scarf_volume, "C:/Users/paulj/Downloads/scarf_volume.json")
         except Exception:
             raise FeatureApplicationError(
@@ -276,6 +357,8 @@ class SimpleScarf(BTLxProcessing):
         try:
             json_dump(geometry, "C:/Users/paulj/Downloads/sub_geometry.json")
             sub_brep = Brep.from_boolean_difference(geometry, scarf_volume)
+            for dv in drill_volumes:
+                sub_brep = Brep.from_boolean_difference(sub_brep, dv)
             for b in sub_brep:
                 if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
                     return b
@@ -315,6 +398,8 @@ class SimpleScarf(BTLxProcessing):
         top_frame = ref_surface.frame
         if self.orientation == OrientationType.END:
             top_frame.translate(top_frame.xaxis * (beam.length + self.length/2))
+        # else:
+        #     top_frame.translate(top_frame.xaxis * (self.length/2))
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
 
         angle_sf = -90 if self.orientation == OrientationType.START else 90
@@ -367,7 +452,7 @@ class SimpleScarf(BTLxProcessing):
             Point(*intersection_plane_plane_plane(bottom_plane, end_plane, back_plane)),            #v10
             Point(*intersection_plane_plane_plane(bottom_plane, blank_plane, back_plane)),          #v11
         ]
-        
+
         faces = [
             [0,1,4,5],          # Front face 1
             [1,2,3,4],          # Front face 2
@@ -384,6 +469,42 @@ class SimpleScarf(BTLxProcessing):
         if self.orientation == OrientationType.END:
             faces = [face[::-1] for face in faces]
         return Polyhedron(vertices, faces)
+    
+    def drill_hole_volumes_from_params_and_beam(self, beam):
+
+        assert self.orientation is not None
+        assert self.num_drill_hole is not None
+        assert self.drill_hole_diam_1 is not None
+        assert self.drill_hole_diam_2 is not None
+        assert self.ref_side_index is not None
+
+        ref_surface = beam.side_as_surface(self.ref_side_index)
+        ref_frame = ref_surface.frame
+
+        if self.num_drill_hole == 0:
+            return []
+        
+        elif self.num_drill_hole == 1:
+            c_radius = self.drill_hole_diam_1 / 2.0
+            c_height = max(beam.width, beam.height)
+            if self.orientation == OrientationType.START:
+                c_frame = Frame(beam.centerline.start, ref_frame.xaxis, ref_frame.yaxis)
+            else:
+                c_frame = Frame(beam.centerline.end, ref_frame.xaxis, ref_frame.yaxis)
+            return [Cylinder(c_radius, c_height, c_frame)]
+        
+        elif self.num_drill_hole == 2:
+            c1_radius = self.drill_hole_diam_1 / 2.0
+            c1_height = max(beam.width, beam.height)
+            c2_radius = self.drill_hole_diam_2 / 2.0
+            c2_height = max(beam.width, beam.height)
+            if self.orientation == OrientationType.START:
+                c1_frame = Frame(beam.centerline.start.translated(beam.centerline.direction * self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
+                c2_frame = Frame(beam.centerline.start.translated(beam.centerline.direction * -self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
+            else:
+                c1_frame = Frame(beam.centerline.end.translated(beam.centerline.direction * self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
+                c2_frame = Frame(beam.centerline.end.translated(beam.centerline.direction * -self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
+            return [Cylinder(c1_radius, c1_height, c1_frame), Cylinder(c2_radius, c2_height, c2_frame)]
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
