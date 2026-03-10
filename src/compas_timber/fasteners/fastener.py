@@ -172,7 +172,7 @@ class Fastener(Element, ABC):
 
     def find_all_nested_sub_fasteners(self) -> list[Fastener]:
         """
-        Returna a list of all sub_fastener and nested sub_fasteners of this fastener.\
+        Returna a list of all sub_fastener and nested sub_fasteners of this fastener.
 
         Returns
         -------

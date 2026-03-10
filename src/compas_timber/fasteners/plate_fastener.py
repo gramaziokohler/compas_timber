@@ -322,6 +322,8 @@ class PlateFastener(Fastener):
         self._ensure_faces_outward(vertices, faces)
         polyhedron = Polyhedron(vertices, faces)
 
+        print(polyhedron)
+
         if self.recess_offset:
             polyhedron = self._offset_recess(polyhedron)
 

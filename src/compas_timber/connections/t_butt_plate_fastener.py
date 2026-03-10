@@ -64,7 +64,6 @@ class TButtJointPlateFastener(JointFastener, TButtJoint):
         if not self.base_fastener:
             return
         for frame in self.compute_fastener_target_frames():
-            print("placing_fastener")
             fastener_instance = self.base_fastener.compute_joint_instance(frame)
             self._fasteners.append(fastener_instance)
 
