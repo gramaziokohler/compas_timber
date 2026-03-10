@@ -27,8 +27,8 @@ Study the processing definition to understand:
 Create a new module in ``src/compas_timber/fabrication/`` that inherits from ``BTLxProcessing``.
 The following methods and attributes are the absolute minimum required to implement a processing:
 
-- ``PROCESSING_NAME`` : Class attribute matching BTLx specification
-- ``ATTRIBUTE_MAP`` : Class attribute dictionary mapping BTLx XML parameter names to Python attribute names
+- ``PROCESSING_NAME`` : Abstract property returning a string matching the BTLx specification name
+- ``ATTRIBUTE_MAP`` : Abstract property returning a dictionary mapping BTLx XML parameter names to ``AttributeSpec`` instances
 - ``__init__()`` : Method with meaningful defaults set by the BTLx specification
 - ``__data__`` : Property returning a dictionary of processing data for serialization
 - ``scale()`` : Method for scaling parameters when units are not set in mm
@@ -39,13 +39,18 @@ Example:
 
 .. code-block:: python
 
-    class NewProcessing(BTLxProcessing):
-        PROCESSING_NAME = "HypotheticalProcessing"  # need to match the name in the BTLx specification
+    from compas_timber.fabrication import BTLxProcessing
+    from compas_timber.fabrication.btlx import AttributeSpec
 
-        # Map BTLx XML parameter names to Python attribute names
+    class NewProcessing(BTLxProcessing):
+        PROCESSING_NAME = "HypotheticalProcessing"  # must match the name in the BTLx specification
+
+        # Map BTLx XML parameter names to AttributeSpec instances.
+        # Each AttributeSpec takes the Python attribute name and its type.
+        # The type is used for deserialization when reading BTLx files.
         ATTRIBUTE_MAP = {
-            "ArgA": "arg_a",  # BTLx name : Python attribute name
-            "ArgB": "arg_b",
+            "ArgA": AttributeSpec("arg_a", float),
+            "ArgB": AttributeSpec("arg_b", float),
         }
 
         @property
@@ -66,6 +71,9 @@ Example:
 
 .. note::
     The ``params`` property is automatically inherited from ``BTLxProcessing`` and uses the ``ATTRIBUTE_MAP`` to serialize the processing parameters. The ``BTLxProcessingParams`` class handles the conversion of Python attribute values to BTLx-compliant string formats.
+
+.. important::
+    Every value in ``ATTRIBUTE_MAP`` **must** be an ``AttributeSpec`` instance. ``BTLxProcessing.__init_subclass__`` validates this at class definition time and raises ``TypeError`` for any non-``AttributeSpec`` value, or ``AttributeError`` if a referenced Python attribute does not exist on the class. This means mistakes in the map are caught immediately when the module is imported, not at serialization time.
 
 .. seealso::
     :class:`JackRafterCut <compas_timber.fabrication.JackRafterCut>`
