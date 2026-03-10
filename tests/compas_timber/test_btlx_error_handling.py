@@ -3,6 +3,7 @@ import warnings
 from compas.geometry import Frame
 from compas.tolerance import Tolerance
 from compas_timber.btlx import BTLxReader
+from compas_timber.fabrication.btlx import AttributeSpec
 from compas_timber.fabrication import BTLxWriter
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.errors import BTLxProcessingError
@@ -25,7 +26,7 @@ class MockProcessingWithBadAttribute(BTLxProcessing):
     """
 
     PROCESSING_NAME = "MockProcessingWithBadAttribute"
-    ATTRIBUTE_MAP = {"BadParam": "bad_param"}
+    ATTRIBUTE_MAP = {"BadParam": AttributeSpec("bad_param")}
 
     def __init__(self, error_message="Test error"):
         super(MockProcessingWithBadAttribute, self).__init__()
@@ -53,7 +54,7 @@ class MockProcessingWithUnsupportedType(BTLxProcessing):
     """
 
     PROCESSING_NAME = "MockProcessingWithUnsupportedType"
-    ATTRIBUTE_MAP = {"UnsupportedParam": "unsupported_param"}
+    ATTRIBUTE_MAP = {"UnsupportedParam": AttributeSpec("unsupported_param")}
 
     def __init__(self):
         super(MockProcessingWithUnsupportedType, self).__init__()
@@ -74,7 +75,7 @@ class MockProcessingSuccess(BTLxProcessing):
     """Mock processing that serializes successfully."""
 
     PROCESSING_NAME = "MockProcessingSuccess"
-    ATTRIBUTE_MAP = {"TestParam": "test_param"}
+    ATTRIBUTE_MAP = {"TestParam": AttributeSpec("test_param")}
 
     def __init__(self):
         super(MockProcessingSuccess, self).__init__()
