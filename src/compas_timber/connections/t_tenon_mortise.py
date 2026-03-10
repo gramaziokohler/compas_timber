@@ -99,9 +99,6 @@ class TTenonMortiseJoint(MortiseTenonJoint):
 
         self._clear_features()
 
-        # set default values if not provided
-        self._update_unset_values()
-
         main_feature = self._create_tenon_feature()
         cross_feature = self._create_mortise_feature(main_feature)
 
