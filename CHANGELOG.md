@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `name` and `process` parameters and read-only properties to `BTLxProcessing` to capture BTLx metadata attributes that are not serialized back.
 * Added `FreeContourParams` class and overridden `FreeContour.params` property as a special case: unlike all other processings, `FreeContour` requires custom serialization logic to handle its polymorphic `Contour` / `DualContour` child element.
 * Added `get_leaf_subclasses` utility function back to `compas_timber.utils`.
+* Added `AttributeSpec` dataclass in `compas_timber.fabrication.btlx` to declare `ATTRIBUTE_MAP` entries with a `python_name` and a `type` for deserialization.
 
 ### Changed
 
@@ -43,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `BTLxWriter` now uses a fixed `Tolerance("MM", ...)` instance instead of the global `TOL`, ensuring consistent millimeter-based output regardless of global tolerance settings.
 * `BTLxGenericPart` annotation attribute now uses `str(self.name)` only, dropping the appended GUID fragment.
 * `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
-* `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now support a tuple format `("python_attr", type)` in addition to plain strings, carrying type information for the reader.
+* `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now use `AttributeSpec` dataclass instances, carrying both the Python attribute name and the deserialisation type.
 * `FreeContour.ATTRIBUTE_MAP` now has two entries (`Contour` and `DualContour`) both mapping to `contour_param_object`, allowing the reader to handle both XML child element types.
 * `FreeContour` now initialises `process_id` to `1`, overriding the inherited default of `0` which caused an error in the BTLx viewer.
 * `MachiningLimits.from_dict()` now accepts string values `"yes"` / `"no"` in addition to booleans, allowing the method to be used directly by `BTLxReader` when deserializing machining limit values from BTLx XML.
