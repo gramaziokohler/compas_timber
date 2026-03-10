@@ -235,9 +235,9 @@ class BTLxReader(object):
             child_name = child.tag.split("}")[-1]  # Remove namespace
             if child_name in attribute_map:
                 attr_spec = attribute_map[child_name]
-
-                # Extract python_name and type_info from ATTRIBUTE_MAP
-                python_name, type_info = attr_spec
+                # Extract python_name and type_info from AttributeSpec
+                python_name = attr_spec.python_name
+                type_info = attr_spec.type
 
                 # Branch 1: Element with attributes → dict
                 # <Element key1="value1" key2="value2" />

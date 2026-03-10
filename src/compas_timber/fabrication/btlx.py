@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC
 from abc import abstractmethod
 from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import date
 from datetime import datetime
 from itertools import chain
@@ -775,6 +776,32 @@ def dual_contour_to_xml(contour):
     return root
 
 
+@dataclass
+class AttributeSpec(object):
+    """Specifies the mapping between a BTLx XML attribute name and a Python attribute.
+
+    Parameters
+    ----------
+    python_name : str
+        The name of the Python attribute on the processing class.
+    type : type
+        The type used for deserialization (e.g. ``float``, ``bool``, ``str``).
+        Defaults to ``str``.
+
+    Examples
+    --------
+    >>> spec = AttributeSpec("start_x", float)
+    >>> spec.python_name
+    'start_x'
+    >>> spec.type
+    <class 'float'>
+
+    """
+
+    python_name: str
+    type: type = str  # type: ignore
+
+
 class BTLxProcessing(Data, ABC):
     """Abstract base class for BTLx Processing.
 
@@ -840,7 +867,10 @@ class BTLxProcessing(Data, ABC):
         super(BTLxProcessing, cls).__init_subclass__(**kwargs)
         attribute_map = cls.__dict__.get("ATTRIBUTE_MAP", None)
         if attribute_map is not None:
-            missing = [python_name for python_name in attribute_map.values() if not hasattr(cls, python_name)]
+            invalid = [key for key, spec in attribute_map.items() if not isinstance(spec, AttributeSpec)]
+            if invalid:
+                raise TypeError("ATTRIBUTE_MAP in '{}' has non-AttributeSpec values for keys: {}".format(cls.__name__, invalid))
+            missing = [spec.python_name for spec in attribute_map.values() if not hasattr(cls, spec.python_name)]
             if missing:
                 raise AttributeError("ATTRIBUTE_MAP in '{}' references attributes not found on the class: {}".format(cls.__name__, missing))
 
@@ -986,9 +1016,7 @@ class BTLxProcessingParams(object):
         """
         result = OrderedDict()
         for btlx_name, attr_spec in self.attribute_map.items():
-            # Handle both formats: "attr_name" or ("attr_name", type)
-            python_name = attr_spec[0] if isinstance(attr_spec, tuple) else attr_spec
-            value = getattr(self._instance, python_name)
+            value = getattr(self._instance, attr_spec.python_name)
             result[btlx_name] = self._format_value(value)
         return result
 
