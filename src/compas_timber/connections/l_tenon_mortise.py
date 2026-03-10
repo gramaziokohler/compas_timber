@@ -32,8 +32,9 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         Width of the tenon.
     height : float
         Height of the tenon.
-    shape : int
-        The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    tenon_shape : :class:`~compas_timber.fabrication.TenonShapeType`
+        Shape of the tenon. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
+        Defaults to ``TenonShapeType.ROUND``.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
     modify_cross : bool
@@ -62,8 +63,8 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         Width of the tenon.
     height : float
         Height of the tenon.
-    shape : int
-        The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    tenon_shape : :class:`~compas_timber.fabrication.TenonShapeType`
+        Shape of the tenon. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
     shape_radius : float
         The radius used to define the shape of the tenon, if applicable.
     modify_cross : bool
@@ -80,7 +81,7 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         data["modify_cross"] = self.modify_cross
         return data
 
-    def __init__(self, main_beam, cross_beam, modify_cross=False, **kwargs):
+    def __init__(self, main_beam=None, cross_beam=None, modify_cross=False, **kwargs):
         super(LTenonMortiseJoint, self).__init__(main_beam, cross_beam, **kwargs)
         self.modify_cross = modify_cross
 
@@ -121,9 +122,6 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         assert self.main_beam and self.cross_beam  # should never happen
 
         self._clear_features()
-
-        # set default values if not provided
-        self._update_unset_values()
 
         main_feature = self._create_tenon_feature()
 
