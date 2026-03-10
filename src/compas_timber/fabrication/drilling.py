@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -16,13 +15,11 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class Drilling(BTLxProcessing):
@@ -47,6 +44,15 @@ class Drilling(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Drilling"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "Inclination": "inclination",
+        "DepthLimited": "depth_limited",
+        "Depth": "depth",
+        "Diameter": "diameter",
+    }
 
     @property
     def __data__(self):
@@ -81,10 +87,6 @@ class Drilling(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return DrillingParams(self)
 
     @property
     def start_x(self):
@@ -408,22 +410,6 @@ class Drilling(BTLxProcessing):
         self._start_y *= factor
         self._depth *= factor
         self._diameter *= factor
-
-
-class DrillingParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        super(DrillingParams, self).__init__(instance)
-
-    def as_dict(self):
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["Diameter"] = "{:.{prec}f}".format(float(self._instance.diameter), prec=TOL.precision)
-        return result
 
 
 class DrillingProxy(object):
