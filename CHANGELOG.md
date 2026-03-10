@@ -101,6 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
 * Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
+* Added Shape String implementation to `Plate` for representation in `BTLxPart`.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -165,6 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed package `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
 * Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
+* Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
+* Fixed `Plate.elementgeometry` to return the geometry in local coordinates.
+* Changed `PlateGeometry` geometry creation to use `Brep.from_polygons` instead of `Brep.from_loft` to ensure every face is correctly generated.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
