@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
+* Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
+* Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
 
 ### Changed
 
@@ -41,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TimberModel.add_joints()` now adds a graph edge between the fastener and the elements participatign in a joint as well as a edges between fastener and sub-fasteners.
 * Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
+* Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
+* Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
 
 ### Removed
 
@@ -167,7 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `attributes` dictionary contet to serialization of `Panel`.
 * Updated the `class_diagrams.rst` to reflect the changes in the class structure and inheritance.
 * Removed all GH components as was migrated to the `timber_design` project.
-* Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
+* Removed package `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
 * Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
 * Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
