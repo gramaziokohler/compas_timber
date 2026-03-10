@@ -29,6 +29,20 @@ TOL = Tolerance()
 
 
 class PlateFastenerHole(Data):
+    """
+    Describes the position, diameter and depth for `PlateFastener` object.
+
+    Parameters
+    ----------
+    point : :class:`~compas.geometry.Point`
+        The point in the local coordinates of the plate where the hole is located.
+    diameter : float
+        The diameter of the hole.
+    depth : float
+        The depth of the hole.
+
+    """
+
     def __init__(self, point: Point, diameter: float, depth: float):
         self.point = point
         self.diameter = diameter

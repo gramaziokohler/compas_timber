@@ -16,7 +16,39 @@ TOL = Tolerance()
 
 
 class Dowel(Fastener):
-    """ """
+    """
+    Describes a dowel fastener, which is a cylindrical fastener.
+    The dowel is defined by its height, diameter, and an optional head bias that can be used to adjust the position of the dowel head.
+    The dowel can also have an optional flag to indicate whether it should apply processings to the timber elements it interacts with.
+
+    Parameters
+    ----------
+
+    frame : :class:`compas.geometry.Frame`
+        The local frame of the dowel, defining its position and orientation.
+    height : float
+        The height of the dowel.
+    diameter : float
+        The diameter of the dowel.
+    head_bias : Optional[float], optional
+        An optional bias to adjust the position of the dowel head. If provided, it will shift the dowel along its local z-axis by the specified amount. Default is None.
+    processings : bool, optional
+        A flag indicating whether the dowel should apply processings to the timber elements it interacts with. If True, the dowel will create drilling features on the
+        timber elements it interacts with. Default is False.
+
+    Attributes
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The local frame of the dowel, defining its position and orientation.
+    height : float
+        The height of the dowel.
+    diameter : float
+        The diameter of the dowel.
+    head_bias : Optional[float]
+        An optional bias to adjust the position of the dowel head. If provided, it will shift the dowel along its local z-axis by the specified amount.
+    processings : bool
+        A flag indicating whether the dowel should apply processings to the timber elements it interacts with
+    """
 
     def __init__(self, frame: Frame, height: float, diameter: float, head_bias: Optional[float] = None, processings: bool = False, **kwargs):
         super().__init__(frame=frame, **kwargs)
@@ -62,6 +94,11 @@ class Dowel(Fastener):
         return geometry
 
     def apply_processings(self, joint) -> Optional[Brep]:
+        """
+        Applies processings to the timber elements in the joint that interact with this dowel. If the `processings` flag is set to True, this method will create
+        drilling features on the timber elements that interact with the dowel.
+        This method is automatically called by the `Joint.add?features()' method.
+        """
         if not self.processings:
             return
         for element in joint.elements:

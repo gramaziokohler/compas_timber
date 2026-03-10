@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 class Fastener(Element, ABC):
     """
-    A class to represent timber fasteners (screws, dowels, brackets).
+    An abstract class to represent timber fasteners (screws, dowels, brackets).
 
-    This is an abstract class.
+    This is an abstract class and should not be instantiated directly. Instead, specific types of fasteners should be implemented as subclasses of this class.
 
     Parameters
     ----------

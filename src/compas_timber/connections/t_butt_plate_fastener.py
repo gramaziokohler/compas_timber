@@ -49,6 +49,9 @@ class TButtJointPlateFastener(JointFastener, TButtJoint):
         )
 
     def add_features(self) -> None:
+        """
+        Adds the features of the `TButtJoint'  and the oned for the fastener.
+        """
         super().add_features()
         if self.fasteners:
             for fastener in self.fasteners:
