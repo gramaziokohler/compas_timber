@@ -5,7 +5,7 @@ import pytest
 from compas.geometry import Polyline
 from compas.geometry import Frame
 from compas.geometry import Point
-from compas.geometry import Polyhedron
+
 
 from compas_timber.fasteners import PlateFastener
 from compas_timber.fasteners import PlateFastenerHole
