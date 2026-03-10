@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
+* Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
+* Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
 * Added new `compas_timber.btlx` package with `BTLxReader` class for reading BTLx XML files into a `TimberModel`.
 * Added `BTLxParsingError` to `compas_timber.errors` — a non-fatal exception with `part_id` and `processing_type` fields, collected during BTLx parsing without aborting the process.
 * Added `BTLxProcessing.HEADER_ATTRIBUTE_MAP` class attribute mapping BTLx XML header attributes (e.g. `ReferencePlaneID`, `ProcessID`, `CounterSink`) to Python parameter names with type converters, used by the reader.
@@ -41,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `DovetailTenon.apply()` now trims the dovetail volume against the beam's reference sides when the volume exceeds the beam geometry, failing silently when trimming is not possible.
 * Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
+* Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
+* Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
 * `BTLxWriter` now uses a fixed `Tolerance("MM", ...)` instance instead of the global `TOL`, ensuring consistent millimeter-based output regardless of global tolerance settings.
 * `BTLxGenericPart` annotation attribute now uses `str(self.name)` only, dropping the appended GUID fragment.
 * `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
@@ -107,7 +111,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
->>>>>>>>> Temporary merge branch 2
+* Added `ref_side_miter`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
+* Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
+* Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
+* Added Shape String implementation to `Plate` for representation in `BTLxPart`.
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -169,10 +177,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `attributes` dictionary contet to serialization of `Panel`.
 * Updated the `class_diagrams.rst` to reflect the changes in the class structure and inheritance.
 * Removed all GH components as was migrated to the `timber_design` project.
-* Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
+* Removed package `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
 * Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
->>>>>>>>> Temporary merge branch 2
+* Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
+* Fixed `Plate.elementgeometry` to return the geometry in local coordinates.
+* Changed `PlateGeometry` geometry creation to use `Brep.from_polygons` instead of `Brep.from_loft` to ensure every face is correctly generated.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.

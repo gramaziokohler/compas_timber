@@ -171,8 +171,8 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polyline, element)
         ref_side = element.ref_sides[ref_side_index]
         tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
-        # get_dimensions_relative_to_side [0] returns element dimension normal to ref_side
-        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[0]
+        # get_dimensions_relative_to_side [1] returns element dimension normal to ref_side
+        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[1]
         transformed_polyline = polyline.transformed(Transformation.from_frame(ref_side).inverse())
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
