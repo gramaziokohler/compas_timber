@@ -294,6 +294,32 @@ class Beam(TimberElement):
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
 
+    @classmethod
+    def from_box(cls, box):
+        """Define the beam from a box.
+
+        Parameters
+        ----------
+        box : :class:`~compas.geometry.Box`
+            A box whose dimensions and orientation define the beam.
+            The box's x-axis is taken as the beam's centerline direction (length),
+            y-axis as the width direction, and z-axis as the height direction.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Beam`
+
+        """
+        if box.xsize < TOL.absolute:
+            raise ValueError("The given box has zero length along its x-axis. Check the box dimensions.")
+        if box.ysize < TOL.absolute:
+            raise ValueError("The given box has zero width along its y-axis. Check the box dimensions.")
+        if box.zsize < TOL.absolute:
+            raise ValueError("The given box has zero height along its z-axis. Check the box dimensions.")
+        origin = box.frame.point + box.frame.xaxis * (-box.xsize / 2.0)
+        frame = Frame(origin, box.frame.xaxis, box.frame.yaxis)
+        return cls(frame, box.xsize, box.ysize, box.zsize)
+
     # ==========================================================================
     # Extensions and Modifications
     # ==========================================================================
