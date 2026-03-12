@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
 * Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
 * Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
+* Added `Beam.from_box()` alternative constructor to create a beam from a `compas.geometry.Box`, handling the frame offset between the box center and the beam's centerline start point.
+* Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
 
 ### Changed
 * Breaking change: the previous single-face `Plate.from_brep()` constructor behavior has been replaced, and `Plate.from_brep()` is now used exclusively to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face_thickness()` for plates, or `Panel.from_face_thickness()` for panels, instead.
@@ -47,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
 * Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
+* New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
 
 ### Removed
 
