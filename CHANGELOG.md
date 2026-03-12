@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
 * Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
 * Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
+* Added `Beam.from_box()` alternative constructor to create a beam from a `compas.geometry.Box`, handling the frame offset between the box center and the beam's centerline start point.
 * Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
 
 ### Changed
