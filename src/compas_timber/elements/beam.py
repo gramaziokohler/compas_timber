@@ -310,11 +310,11 @@ class Beam(TimberElement):
         :class:`~compas_timber.elements.Beam`
 
         """
-        if box.xsize < TOL.absolute:
+        if TOL.is_zero(box.xsize):
             raise ValueError("The given box has zero length along its x-axis. Check the box dimensions.")
-        if box.ysize < TOL.absolute:
+        if TOL.is_zero(box.ysize):
             raise ValueError("The given box has zero width along its y-axis. Check the box dimensions.")
-        if box.zsize < TOL.absolute:
+        if TOL.is_zero(box.zsize):
             raise ValueError("The given box has zero height along its z-axis. Check the box dimensions.")
         origin = box.frame.point + box.frame.xaxis * (-box.xsize / 2.0)
         frame = Frame(origin, box.frame.xaxis, box.frame.yaxis)
