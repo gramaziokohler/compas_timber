@@ -37,7 +37,10 @@ class FreeContour(BTLxProcessing):
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'.
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
-
+    process_id : int, optional
+        The process identifier used in the BTLx file. Must be non-zero for FreeContour processings, as required by the
+        BTLx format. Defaults to 1, overriding the base class default of 0.
+        
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
