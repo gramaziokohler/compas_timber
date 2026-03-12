@@ -45,8 +45,8 @@ class FreeContour(BTLxProcessing):
         "Contour": "contour_param_object",
     }
 
-    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
-        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
+    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, process_id=1, **kwargs):
+        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, process_id=process_id, **kwargs)
         self.contour_param_object = contour_param_object
         self.depth_bounded = depth_bounded
 
