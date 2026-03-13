@@ -9,10 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
+* Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
+* Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
+* Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
+* Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
+* Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
+* Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
+* Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
+* Added `Beam.from_box()` alternative constructor to create a beam from a `compas.geometry.Box`, handling the frame offset between the box center and the beam's centerline start point.
+* Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
+
 ### Changed
+
+* Fixed multi-beam joints get de-serialized multiple times.
+* Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
+* Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
+* Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
+* Renamed attribute `segment` to `line` in `StructuralSegment` for better clarity.
+* `TStepJoint.step_shape` now accepts `StepShapeType` string constants instead of integers.
+* `TenonMortiseJoint.tenon_shape` now accepts `TenonShapeType` string constants instead of integers.
+* `TStepJoint` unset attributes are now resolved at instantiation time when beams are provided, rather than deferred to `add_features()`.
+* `TStepJoint` unset attributes are now also resolved inside `restore_beams_from_keys()`, ensuring joint state is fully consistent immediately after deserialization.
+* `TenonMortiseJoint` unset attributes are now resolved at instantiation time and inside `restore_beams_from_keys()`, ensuring consistent state before and after deserialization.
+* `TenonMortiseJoint.__init__` now accepts `main_beam=None` and `cross_beam=None` as defaults, consistent with other joint classes and required for correct deserialization via `__from_data__`.
+* `TDovetailJoint.dovetail_shape` now accepts `TenonShapeType` string constants instead of integers.
+* `TDovetailJoint` unset attributes are now resolved inside `_set_unset_attributes()`, with dimensional defaults proportional to the main beam's cross-section.
+* `DovetailTenon.apply()` now trims the dovetail volume against the beam's reference sides when the volume exceeds the beam geometry, failing silently when trimming is not possible.
+* Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
+* Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
+* Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
+* Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
+* New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
 
 ### Removed
 
+* Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
+* Removed `tenon_shape` property from `TenonMortiseJoint`; use `shape` with `TenonShapeType` string constants directly.
+* Removed the `shape` property from `TDovetailJoint`; `dovetail_shape` now stores the `TenonShapeType` value directly.
+* Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
+* Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
+* Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.
 
 ## [2.0.0-dev0] 2026-02-19
 
@@ -63,6 +100,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `add_beam_structural_segments`, `get_beam_structural_segments`, and `remove_beam_structural_segments` to `TimberModel` to manage structural analysis segments for beams.
 * Added `add_structural_connector_segments`, `get_structural_connector_segments`, and `remove_structural_connector_segments` to `TimberModel` to manage structural analysis segments for joints.
 * Added `create_beam_structural_segments` to `TimberModel` to generate structural segments for all beams and joints.
+* Added `ref_side_miter`, `miter_plane`, and `clean` arguments to `LMiterJoint.__init__`.
+* Added `ref_side_miter` miter plane to `LMiterJoint` that finds the miter plane from the intersections of the beams' ref_sides.
+* Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
+* Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
+* Added Shape String implementation to `Plate` for representation in `BTLxPart`.
 * Added `elements` argument to `Joint.__init__`.
 * Added `element_guids` property to `Joint` which are used for deserializing joints. 
 
@@ -126,9 +168,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `attributes` dictionary contet to serialization of `Panel`.
 * Updated the `class_diagrams.rst` to reflect the changes in the class structure and inheritance.
 * Removed all GH components as was migrated to the `timber_design` project.
-* Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
+* Removed package `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
 * Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
+* Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
+* Fixed `Plate.elementgeometry` to return the geometry in local coordinates.
+* Changed `PlateGeometry` geometry creation to use `Brep.from_polygons` instead of `Brep.from_loft` to ensure every face is correctly generated.
 
 * Implemented `get_elements_from_keys` in `Joint`.
 * Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 

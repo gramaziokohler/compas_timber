@@ -1,17 +1,14 @@
 import os
-from collections import OrderedDict
 
 from compas.data import json_loadz
 from compas.geometry import Frame
 from compas.geometry import Scale
 from compas.geometry import Transformation
-from compas.tolerance import TOL
 
 from compas_timber import DATA
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class Text(BTLxProcessing):
@@ -43,6 +40,18 @@ class Text(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Text"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Angle": "angle",
+        "AlignmentVertical": "alignment_vertical",
+        "AlignmentHorizontal": "alignment_horizontal",
+        "AlignmentMultiline": "alignment_multiline",
+        "StackedMarking": "stacked_marking",
+        "TextHeightAuto": "text_height_auto",
+        "TextHeight": "text_height",
+        "Text": "text",
+    }
     _CHARACTER_DICT = {}
 
     @property
@@ -109,10 +118,6 @@ class Text(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return TextParams(self)
 
     @property
     def start_x(self):
@@ -310,22 +315,3 @@ class Text(BTLxProcessing):
         self.start_x *= factor
         self.start_y *= factor
         self.text_height *= factor
-
-
-class TextParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        super(TextParams, self).__init__(instance)
-
-    def as_dict(self):
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["AlignmentVertical"] = self._instance.alignment_vertical
-        result["AlignmentHorizontal"] = self._instance.alignment_horizontal
-        result["AlignmentMultiline"] = self._instance.alignment_multiline
-        result["StackedMarking"] = "yes" if self._instance.stacked_marking else "no"
-        result["TextHeightAuto"] = "yes" if self._instance.text_height_auto else "no"
-        result["TextHeight"] = "{:.{prec}f}".format(float(self._instance.text_height), prec=TOL.precision)
-        result["Text"] = self._instance.text
-        return result
