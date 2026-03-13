@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -20,7 +19,6 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import EdgePositionType
 from .btlx import OrientationType
 
@@ -46,6 +44,14 @@ class FrenchRidgeLap(BTLxProcessing):
     """
 
     PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "Angle": "angle",
+        "RefPosition": "ref_position",
+        "Drillhole": "drillhole",
+        "DrillholeDiam": "drillhole_diam",
+    }
 
     @property
     def __data__(self):
@@ -77,10 +83,6 @@ class FrenchRidgeLap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return FrenchRidgeLapParams(self)
 
     @property
     def orientation(self):
@@ -448,35 +450,3 @@ class FrenchRidgeLap(BTLxProcessing):
         # type: (float) -> None
         self.start_x *= factor
         self.drillhole_diam *= factor
-
-
-class FrenchRidgeLapParams(BTLxProcessingParams):
-    """A class to store the parameters of a French Ridge Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.FrenchRidgeLap`
-        The instance of the French Ridge Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (FrenchRidgeLap) -> None
-        super(FrenchRidgeLapParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the French Ridge Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the French Ridge Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["RefPosition"] = self._instance.ref_position
-        result["Drillhole"] = "yes" if self._instance.drillhole else "no"
-        result["DrillholeDiam"] = "{:.{prec}f}".format(float(self._instance.drillhole_diam), prec=TOL.precision)
-        return result

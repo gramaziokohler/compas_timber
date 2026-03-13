@@ -1,14 +1,13 @@
 import math
+from weakref import WeakKeyDictionary
 
-import compas.geometry
-import compas.tolerance  # noqa: F401
-import compas_model.elements  # noqa: F401
-from compas.geometry import KDTree
+from compas.geometry import Point
 from compas.tolerance import TOL
+from compas_model.elements import Element
 
-import compas_timber.connections  # noqa: F401
-import compas_timber.elements  # noqa: F401
 from compas_timber.connections import JointTopology
+from compas_timber.geometry import KDTree
+from compas_timber.model import TimberModel
 
 
 class Cluster(object):
@@ -40,8 +39,7 @@ class Cluster(object):
         return len(self.elements)
 
     @property
-    def elements(self):
-        # type: () -> set[compas_model.elements.Element]
+    def elements(self) -> set[Element]:
         if not self._elements:
             self._elements = set()
             for joint in self.joints:
@@ -49,8 +47,7 @@ class Cluster(object):
         return self._elements
 
     @property
-    def location(self):
-        # type: () -> compas.geometry.Point
+    def location(self) -> Point:
         return self.joints[0].location
 
     @property
@@ -81,6 +78,57 @@ class BeamGroupAnalyzer(object):
         raise NotImplementedError
 
 
+class _CacheEntry(object):
+    def __init__(self, fingerprint: frozenset, joints: list, tree: KDTree) -> None:
+        self.fingerprint = fingerprint
+        self.joints = joints
+        self.tree = tree
+
+
+class _KDTreeCache(object):
+    """Caches a :class:`KDTree` per model instance, rebuilding it when the joint set changes.
+
+    The cache is keyed by model identity (via a :class:`~weakref.WeakKeyDictionary`) so the
+    tree is automatically released when the model is garbage-collected.  A fingerprint of
+    the current joint-candidate identities detects structural changes: if joints have been
+    added or removed since the tree was built, the tree is transparently rebuilt.
+
+    Crucially, the cache also stores the *canonical ordering* of joints used when the tree
+    was first built.  Every caller receives that same list so that KDTree indices are always
+    consistent with ``self._joints``, regardless of the iteration order of the underlying set.
+    """
+
+    _store = WeakKeyDictionary()  # type: WeakKeyDictionary  # model -> _CacheEntry
+
+    @classmethod
+    def get(cls, model: TimberModel, joints: list) -> tuple[list, KDTree]:
+        """Return the canonical joints list and :class:`KDTree` for *model*.
+
+        If the joint set has changed since the last call (joints added or removed),
+        a new tree is built and the canonical list is updated.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model whose joint candidates the tree covers.
+        joints : list
+            The current joint candidates used only to compute the fingerprint and,
+            on a cache miss, to build the new tree.
+
+        Returns
+        -------
+        tuple[list, :class:`KDTree`]
+            ``(canonical_joints, tree)`` – the ordering and tree that all callers
+            for this model generation must share.
+        """
+        fingerprint = frozenset(id(j) for j in joints)
+        cached = cls._store.get(model)
+        if cached is None or cached.fingerprint != fingerprint:
+            cls._store[model] = _CacheEntry(fingerprint, joints, KDTree([j.location for j in joints]))
+        entry = cls._store[model]
+        return entry.joints, entry.tree
+
+
 class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
     """Finds clusters of N beams connected pairwise at the same point within a given max_distance.
 
@@ -96,14 +144,13 @@ class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
 
     def __init__(self, model, n=2, max_distance=None):
         super(NBeamKDTreeAnalyzer, self).__init__()
-        self._joints = list(model.joint_candidates)
-        if not self._joints:
+        joints = list(model.joint_candidates)
+        if not joints:
             raise ValueError("The model has no joint candidates to analyze. Forgot to call `model.connect_adjacent_beams()`?")
 
-        self._kdtree = KDTree([joint.location for joint in self._joints])
+        self._joints, self._kdtree = _KDTreeCache.get(model, joints)
         self._n = n
         self.max_distance = max_distance or TOL.absolute
-
         # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
 
     def find(self, exclude=None):
@@ -239,6 +286,6 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
     CompositeAnalyzer
         An instance of CompositeAnalyzer that finds clusters of size n down to 2.
     """
-    analyzers_cls = [lambda m, t, k=k: NBeamKDTreeAnalyzer(m, n=k, max_distance=t) for k in range(n, 1, -1)]
-    # Use lambdas to capture k at each step
-    return CompositeAnalyzer([cls(model, max_distance) for cls in analyzers_cls])
+    # All analyzers share the same KDTree automatically via the class-level cache keyed on model
+    max_cluster_size = max(n, 2)
+    return CompositeAnalyzer([NBeamKDTreeAnalyzer(model, n=k, max_distance=max_distance) for k in range(max_cluster_size, 1, -1)])
