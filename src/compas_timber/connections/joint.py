@@ -183,7 +183,21 @@ class Joint(Data):
 
         """
         self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        self._set_unset_attributes()
+
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
+
+    def _set_unset_attributes(self):
+        """Sets attributes that are not set during initialization but are required for the joint to function properly.
+
+        This is necessary because during de-serialization, the constructor is not called and therefore these attributes
+        are not set. This method is called by `restore_elements_from_keys()` after the elements have been restored.
+
+        This method should be implemented by the concrete implementation of `Joint` if there are any such attributes.
+
+        """
+        pass
+
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
