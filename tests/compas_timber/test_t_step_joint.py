@@ -177,6 +177,6 @@ def test_t_step_joint_restore_beams_resolves_attributes(beams):
     with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
         assert spy.call_count == 0  # not called yet — beams are absent
 
-        deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()

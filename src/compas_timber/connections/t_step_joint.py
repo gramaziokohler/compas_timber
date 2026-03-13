@@ -87,6 +87,8 @@ class TStepJoint(Joint):
         self.tenon_mortise_height = tenon_mortise_height
 
         self.features = []
+        if self.main_beam and self.cross_beam:
+            self._set_unset_attributes()  # resolve defaults at init if beams are provided
 
     @property
     def main_beam(self):
