@@ -4,13 +4,12 @@ from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polygon
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import closest_point_on_plane
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
@@ -157,19 +156,30 @@ class PlateGeometry(Data):
             The shape of the element.
 
         """
+
+        def brep_from_outlines(outline_a, outline_b):
+            polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
+            for i in range(len(outline_a) - 1):
+                polygons.append(Polygon([outline_a[i], outline_a[i + 1], outline_b[i + 1], outline_b[i]]))
+            brep = Brep.from_polygons(polygons)
+            if len(brep) > 1:
+                # NOTE: compas Brep.from_polygons says it returns a brep, but Rhino's implementation returns a list of breps
+                raise ValueError("Not all plate faces were joined.")
+            return Brep.from_polygons(polygons)[0]
+
         self.apply_edge_extensions()
-        outline_a = correct_polyline_direction(self._mutable_outlines[0], Vector(0, 0, 1), clockwise=True)
-        outline_b = correct_polyline_direction(self._mutable_outlines[1], Vector(0, 0, 1), clockwise=True)
-        plate_geo = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (outline_a, outline_b)])
-        plate_geo.cap_planar_holes()
+        outline_a = correct_polyline_direction(self.outline_a, Vector(0, 0, 1), clockwise=True)
+        outline_b = correct_polyline_direction(self.outline_b, Vector(0, 0, 1), clockwise=True)
+        plate_geo = brep_from_outlines(outline_a, outline_b)
+
         for opening in self.openings:
             if not TOL.is_allclose(opening[0], opening[-1]):
                 raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
             polyline_a = correct_polyline_direction(opening, Vector(0, 0, 1), clockwise=True)
-            polyline_b = [closest_point_on_plane(pt, self.planes[1]) for pt in polyline_a.points]
-            brep = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (polyline_a, polyline_b)])
-            brep.cap_planar_holes()
-            plate_geo -= brep
+            # z-value of opening_b should be the same as outline_b to make sure the opening goes through the whole plate
+            polyline_b = Polyline([Point(pt[0], pt[1], self.outline_b[0][2]) for pt in polyline_a.points])
+            opening_brep = brep_from_outlines(polyline_a, polyline_b)
+            plate_geo -= opening_brep
         return plate_geo
 
     # ==========================================================================
