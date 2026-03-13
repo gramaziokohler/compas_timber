@@ -183,7 +183,6 @@ class Joint(Data):
 
         """
         self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
-        print(self._elements)
         self._set_unset_attributes()
 
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?

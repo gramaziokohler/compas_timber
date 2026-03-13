@@ -162,7 +162,7 @@ class LapJoint(Joint):
         )
 
     def _create_negative_volumes(self, cut_plane_bias):
-        assert len(self.elements) > 1, "LapJoint requires two elements."
+        assert len(self.elements) == 2, "LapJoint requires two elements."
         beam_a, beam_b = self.elements
 
         # Get Cut Plane

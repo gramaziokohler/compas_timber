@@ -49,14 +49,6 @@ class TOliGinaJoint(MortiseTenonJoint):
         )
 
 
-    @property
-    def main_beam(self):
-        return self.element_a
-
-    @property
-    def cross_beam(self):
-        return self.element_b
-
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 
