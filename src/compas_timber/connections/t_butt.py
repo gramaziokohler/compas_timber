@@ -20,6 +20,10 @@ class TButtJoint(ButtJoint):
         The depth of the pocket to be milled in the cross beam.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
     fastener : :class:`~compas_timber.elements.Fastener`, optional
         The fastener to be used in the joint.
 
@@ -31,14 +35,25 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-
+    butt_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the main beam. Returns the explicitly set plane if provided,
+        otherwise derived from the nearest face of the cross beam offset by `mill_depth`.
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
+    fastener : :class:`~compas_timber.elements.Fastener`, optional
+        The fastener to be used in the joint.
+    features : list of :class:`~compas_timber.fabrication.Feature`
+        The fabrication features associated with this joint.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, fastener=None, **kwargs):
-        super(TButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, butt_plane=butt_plane, **kwargs)
-        self.modify_cross = False
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, force_pocket=False, conical_tool=False, fastener=None, **kwargs):
+        super(TButtJoint, self).__init__(
+            main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, butt_plane=butt_plane, force_pocket=force_pocket, conical_tool=conical_tool, **kwargs
+        )
         self.fasteners = []
         if fastener:
             if fastener.outline is None:

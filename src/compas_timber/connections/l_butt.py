@@ -29,7 +29,10 @@ class LButtJoint(ButtJoint):
         The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
-
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
 
     Attributes
     ----------
@@ -43,12 +46,20 @@ class LButtJoint(ButtJoint):
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.
+    butt_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the main beam. Returns the explicitly set plane if provided,
+        otherwise derived from the nearest face of the cross beam offset by `mill_depth`.
+    back_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the cross beam. Returns the explicitly set plane if provided,
+        otherwise derived from the opposite face of the main beam.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
+    features : list of :class:`~compas_timber.fabrication.Feature`
+        The fabrication features associated with this joint.
 
     """
 
@@ -58,12 +69,33 @@ class LButtJoint(ButtJoint):
     def __data__(self):
         data = super(LButtJoint, self).__data__
         data["small_beam_butts"] = self.small_beam_butts
-        data["back_plane"] = self.back_plane
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
-        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
+    def __init__(
+        self,
+        main_beam=None,
+        cross_beam=None,
+        mill_depth=None,
+        small_beam_butts=False,
+        modify_cross=True,
+        reject_i=False,
+        butt_plane=None,
+        back_plane=None,
+        force_pocket=False,
+        conical_tool=False,
+        **kwargs,
+    ):
+        super(LButtJoint, self).__init__(
+            main_beam=main_beam,
+            cross_beam=cross_beam,
+            mill_depth=mill_depth,
+            modify_cross=modify_cross,
+            butt_plane=butt_plane,
+            force_pocket=force_pocket,
+            conical_tool=conical_tool,
+            **kwargs,
+        )
         self.small_beam_butts = small_beam_butts
         self.reject_i = reject_i
         self.back_plane = back_plane
