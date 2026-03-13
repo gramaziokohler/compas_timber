@@ -280,5 +280,3 @@ class LMiterJoint(Joint):
             self.beam_b.add_features(clean_cuts_b)
             self.features.extend(clean_cuts_a)
             self.features.extend(clean_cuts_b)
-
-

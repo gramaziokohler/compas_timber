@@ -119,7 +119,7 @@ class MortiseTenonJoint(Joint, abc.ABC):
     @property
     def main_beam(self):
         return self.element_a
-    
+
     @property
     def cross_beam(self):
         return self.element_b
@@ -201,4 +201,3 @@ class MortiseTenonJoint(Joint, abc.ABC):
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         return start_main, end_main
-

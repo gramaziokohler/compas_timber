@@ -198,7 +198,6 @@ class Joint(Data):
         """
         pass
 
-
     @classmethod
     def create(cls, model, *elements, **kwargs):
         """Creates an instance of this joint and creates the new connection in `model`.
