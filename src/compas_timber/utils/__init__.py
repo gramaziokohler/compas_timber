@@ -6,7 +6,11 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import Polygon
+from compas.geometry import Polyhedron
 from compas.geometry import Line
+from compas.geometry import Frame
+from compas.geometry import Transformation
+from compas.geometry import centroid_points
 from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import is_point_in_polygon_xy
@@ -19,9 +23,8 @@ from compas.geometry import length_vector
 from compas.geometry import normalize_vector
 from compas.geometry import scale_vector
 from compas.geometry import subtract_vectors
-from compas.geometry import Frame
-from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
+from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
@@ -658,6 +661,88 @@ def combine_parallel_segments(polyline, tol=TOL):
             polyline.points.pop(i)
 
 
+def ensure_polyhedron_faces_outwards(polyhedron: Polyhedron) -> Polyhedron:
+    """
+    Ensure that the normals of the polyhedron's faces are oriented outwards.
+    This is achieved by reordering the indices that define the faces, ensuring consistent outward-facing normals.
+
+    Parameters
+    ----------
+    polyhedron : :class:`~compas.geometry.Polyhedron`
+        The polyhedron whose face orientations are to be checked and corrected if necessary.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Polyhedron`
+        The same polyhedron with its faces reordered to ensure outward-facing normals.
+
+    """
+    vertices = [Point(*vertex) for vertex in polyhedron.vertices]
+    faces = polyhedron.faces
+
+    if not vertices or not faces:
+        raise ValueError("The polyhedron must have vertices and faces to ensure outward-facing normals.")
+
+    poly_centroid = Point(*centroid_points(vertices))
+    new_faces = []
+    for face in faces:
+        face_centroid = centroid_points([vertices[i] for i in face])
+        outward = Vector.from_start_end(poly_centroid, face_centroid)
+
+        polyline = Polyline([vertices[i] for i in face])
+        clockwise = is_polyline_clockwise(polyline, outward)
+
+        if not clockwise:
+            new_faces.append(list(face))
+        else:
+            new_faces.append(list(reversed(face)))
+
+    polyhedron.faces = new_faces
+    return polyhedron
+
+
+def polyhedron_from_box_planes(top_plane, bottom_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane):
+    """Create a hexahedral :class:`~compas.geometry.Polyhedron` defined by 6 bounding planes.
+
+    The geometry is equivalent to the intersection of three pairs of half-spaces.
+    Vertices are computed as all 8 triple-plane intersections from the two top/bottom
+    planes, two side planes, and two end planes.
+
+    Parameters
+    ----------
+    top_plane : :class:`~compas.geometry.Plane`
+        The plane forming the top face of the hexahedron.
+    bottom_plane : :class:`~compas.geometry.Plane`
+        The plane forming the bottom face of the hexahedron.
+    side_a_plane : :class:`~compas.geometry.Plane`
+        The plane forming one lateral side of the hexahedron.
+    side_b_plane : :class:`~compas.geometry.Plane`
+        The plane forming the opposite lateral side of the hexahedron.
+    end_a_plane : :class:`~compas.geometry.Plane`
+        The plane forming one end face of the hexahedron.
+    end_b_plane : :class:`~compas.geometry.Plane`
+        The plane forming the opposite end face of the hexahedron.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Polyhedron`
+        A hexahedral polyhedron with 8 vertices and 6 faces.
+
+    """
+    vertices = [
+        Point(*intersection_plane_plane_plane(top_plane, side_a_plane, end_a_plane)),
+        Point(*intersection_plane_plane_plane(top_plane, side_a_plane, end_b_plane)),
+        Point(*intersection_plane_plane_plane(top_plane, side_b_plane, end_b_plane)),
+        Point(*intersection_plane_plane_plane(top_plane, side_b_plane, end_a_plane)),
+        Point(*intersection_plane_plane_plane(bottom_plane, side_a_plane, end_a_plane)),
+        Point(*intersection_plane_plane_plane(bottom_plane, side_a_plane, end_b_plane)),
+        Point(*intersection_plane_plane_plane(bottom_plane, side_b_plane, end_b_plane)),
+        Point(*intersection_plane_plane_plane(bottom_plane, side_b_plane, end_a_plane)),
+    ]
+    faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
+    return ensure_polyhedron_faces_outwards(Polyhedron(vertices=vertices, faces=faces))
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -678,4 +763,6 @@ __all__ = [
     "polylines_from_brep_face",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
+    "ensure_polyhedron_faces_outwards",
+    "polyhedron_from_box_planes",
 ]
