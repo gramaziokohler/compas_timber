@@ -37,10 +37,7 @@ class FreeContour(BTLxProcessing):
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'.
     depth_bounded : bool, optional
         If True, the depth is bounded. Default is False, meaning the machining will cut all the way through the element.
-    process_id : int, optional
-        The process identifier used in the BTLx file. Must be non-zero for FreeContour processings, as required by the
-        BTLx format. Defaults to 1, overriding the base class default of 0.
-        
+
     """
 
     PROCESSING_NAME = "FreeContour"  # type: ignore
@@ -48,8 +45,9 @@ class FreeContour(BTLxProcessing):
         "Contour": "contour_param_object",
     }
 
-    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, process_id=1, **kwargs):
-        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, process_id=process_id, **kwargs)
+    def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
+        super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
+        self._process_id = 1
         self.contour_param_object = contour_param_object
         self.depth_bounded = depth_bounded
 
