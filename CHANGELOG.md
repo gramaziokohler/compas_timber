@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
+* Added module `compas_timber.fasteners`
+* Added abstract class `Fastener` with child classes `PlateFastener`, `Dowel`, `BallNodeFastener`. 
+* Added `PlateFastenerHole` to support `PlateFastener`.
+* Added dataclass `Rod` to support `BallNodeFastener`.
+* Added abstract class `JointFastener` as parent for all joints with fasteners. 
+* Added class `TButtJointPlateFastener` class inheriting from `JointFastener` and `ButtJoint`.
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
@@ -36,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TDovetailJoint.dovetail_shape` now accepts `TenonShapeType` string constants instead of integers.
 * `TDovetailJoint` unset attributes are now resolved inside `_set_unset_attributes()`, with dimensional defaults proportional to the main beam's cross-section.
 * `DovetailTenon.apply()` now trims the dovetail volume against the beam's reference sides when the volume exceeds the beam geometry, failing silently when trimming is not possible.
+* `TimberModel.add_joints()` now adds a graph edge between the fastener and the elements participatign in a joint as well as a edges between fastener and sub-fasteners.
 * Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
@@ -47,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
 * Removed `tenon_shape` property from `TenonMortiseJoint`; use `shape` with `TenonShapeType` string constants directly.
 * Removed the `shape` property from `TDovetailJoint`; `dovetail_shape` now stores the `TenonShapeType` value directly.
+* Removed `FastenerTimberInterface` class.
 * Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
 * Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
 * Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.

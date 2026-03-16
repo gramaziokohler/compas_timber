@@ -1,21 +1,38 @@
+import pytest
+
+from compas.geometry import Line
 from compas.geometry import Point
-from compas.geometry import Vector
 
-from compas_timber.connections import BallNodeJoint
-from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
+from compas_timber.elements import Beam
+from compas_timber.connections import BallNodeJoint
+from compas_timber.fasteners import BallNodeFastener
 
 
-def test_create():
-    B1 = Beam.from_endpoints(Point(0, 100, 0), Point(0, 0, 0), z_vector=Vector(0, 0, 1), width=10, height=20)
-    B2 = Beam.from_endpoints(Point(-100, 100, 0), Point(0, 0, 0), z_vector=Vector(0, 0, 1), width=10, height=20)
-    B3 = Beam.from_endpoints(Point(-100, -100, 0), Point(0, 0, 0), z_vector=Vector(0, 0, 1), width=10, height=20)
-    A = TimberModel()
-    A.add_element(B1)
-    A.add_element(B2)
-    A.add_element(B3)
-    instance = BallNodeJoint.create(A, *[B1, B2, B3])
+@pytest.fixture
+def beams():
+    line1 = Line(Point(0, 0, 0), Point(10, 10, 10))
+    line2 = Line(Point(0, 0, 0), Point(10, 0, 10))
+    line3 = Line(Point(0, 0, 0), Point(-10, 10, -10))
+    line4 = Line(Point(0, 0, 0), Point(-10, 10, -10))
+    lines = [line1, line2, line3, line4]
+    beams = [Beam.from_centerline(line, width=5, height=15) for line in lines]
+    return beams
 
-    assert len(instance.elements) == 4
-    assert isinstance(instance, BallNodeJoint)
-    assert len(list(A.copy().elements())) == 4
+
+def test_ball_node_joint(beams):
+    model = TimberModel()
+    model.add_elements(beams)
+
+    joint = BallNodeJoint.create(model, *beams)
+
+    model.process_joinery()
+
+    assert isinstance(joint, BallNodeJoint)
+    assert len(list(model.joints)) == 1
+    assert isinstance(list(model.joints)[0], BallNodeJoint)
+    assert len(joint.fasteners) == 1
+    assert isinstance(joint.fasteners[0], BallNodeFastener)
+    assert joint.fasteners[0].ball_diameter == 10
+    assert joint.fasteners[0].rods[0].length == 30
+    assert len(joint.fasteners[0].rods) == 4

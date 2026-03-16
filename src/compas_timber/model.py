@@ -19,10 +19,10 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
@@ -354,6 +354,15 @@ class TimberModel(Model):
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
             self._graph.edge_attribute(edge, "joints", value=joint_guid)
+
+        for interaction in joint.fasteners_interactions:
+            element_a, element_b = interaction
+            edge = self.add_interaction(element_a, element_b)
+            joint_guids = self._graph.edge_attribute(edge, "joints") or []  # GET
+            if not isinstance(joint_guids, list):
+                joint_guids = [joint_guids]
+            joint_guids.append(joint_guid)
+            self._graph.edge_attribute(edge, "joints", value=joint_guids)
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
