@@ -46,14 +46,22 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, elements=(), topology=None, location=None, name=None, **kwargs):
+    def __init__(self, elements=None, topology=None, location=None, name=None, element_guids=None, **kwargs):
         super().__init__(name=name)
-        # TODO do we allow elements to contain Nones? how to deal?
-        if not elements or not all([e for e in elements]):
-            self.element_guids = tuple(g for g in kwargs.get("element_guids", ()))
-        else:
+        # filter out Nones — subclasses pass e.g. elements=(None, None) during deserialization
+        elements = tuple(e for e in (elements or ()) if e is not None)
+
+        if elements:
+            # Normal creation: elements are live objects, derive guids from them
+            self._elements = elements
             self.element_guids = tuple(str(e.guid) for e in elements)
-        self._elements = tuple(e for e in elements if e)
+        elif element_guids:
+            # Deserialization: only guids available, elements are restored later
+            # by TimberModel.__from_data__() via restore_elements_from_keys()
+            self._elements = ()
+            self.element_guids = tuple(element_guids)
+        else:
+            raise ValueError("Joint requires either elements or element_guids.")
 
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location or Point(0, 0, 0)
