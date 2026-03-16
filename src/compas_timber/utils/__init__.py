@@ -669,85 +669,106 @@ def get_plate_geometry_outlines_from_brep(brep):
     Converts the brep to a :class:`~compas.datastructures.Mesh` via
     :func:`mesh_from_brep_simple`. Mesh face keys are sequential integers
     corresponding directly to the index of each face in ``brep.faces``.
-    Main faces are identified by highest vertex count; for rectangular plates
-    the most-parallel non-adjacent pair with smallest centroid separation wins.
-    Vertex correspondence between outlines is resolved via shared side-face edges.
+    Main faces are identified as the two non-quad faces (top and bottom of the plate);
+    if all faces are quads (rectangular plate), the most-parallel non-adjacent pair
+    with smallest centroid separation wins.
+    Vertex correspondence between outlines is resolved via the shared side face of the
+    first edge of face_a.
 
     Parameters
     ----------
     brep : :class:`~compas.geometry.Brep`
-        A plate-like brep. Must have at least 2 faces.
+        A plate-like brep. Must have at least 5 faces.
 
     Returns
     -------
     tuple(:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`, list[:class:`~compas.geometry.Polyline`] or None)
         ``outline_a``, ``outline_b``, and inner opening polylines from the
         primary face, or ``None`` if there are none.
-
-    Raises
-    ------
-    ValueError
-        If the brep has fewer than 2 faces or the main faces cannot be identified.
     """
-    if len(brep.faces) < 2:
-        raise ValueError("Brep must have at least 2 faces, got {}.".format(len(brep.faces)))
+    if len(brep.faces) < 5:
+        raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate), got {}.".format(len(brep.faces)))
 
+    # mesh face key N corresponds 1:1 to brep.faces[N]
     mesh = mesh_from_brep_simple(brep)
     face_keys = list(mesh.faces())
 
-    # main (plate) faces carry the most vertices; side faces are always quads
+    # non-quad faces are top/bottom candidates, quads are side faces.
     face_vcount = {f: len(mesh.face_vertices(f)) for f in face_keys}
-    max_count = max(face_vcount.values())
-    main_candidates = [f for f in face_keys if face_vcount[f] == max_count]
+    non_quad_faces = [f for f in face_keys if face_vcount[f] != 4]
 
-    if len(main_candidates) == 2 and max_count != 4:
-        face_a_key, face_b_key = main_candidates
+    if len(non_quad_faces) == 2:
+        if face_vcount[non_quad_faces[0]] != face_vcount[non_quad_faces[1]]:
+            raise ValueError("The two non-quad faces must have the same number of edges, got {} and {}.".format(face_vcount[non_quad_faces[0]], face_vcount[non_quad_faces[1]]))
+        face_a_key, face_b_key = non_quad_faces
+    elif len(non_quad_faces) != 0:
+        raise ValueError("Expected exactly 2 non-quad faces (top and bottom of plate), got {}.".format(len(non_quad_faces)))
     else:
-        # rectangular / ambiguous: most-parallel non-adjacent pair, min separation as tiebreaker.
-        non_adj = [(i, j) for i in face_keys for j in face_keys if j > i and j not in mesh.face_neighbors(i)]
-        if not non_adj:
+        # rectangular plate (all quads): choose the most-parallel non-adjacent pair,
+        # then use centroid separation as tiebreaker.
+        face_normals = {f: mesh.face_normal(f) for f in face_keys}
+        face_centroids = {
+            f: [
+                sum(pt[i] for pt in (mesh.vertex_coordinates(v) for v in mesh.face_vertices(f))) / len(mesh.face_vertices(f))
+                for i in range(3)
+            ]
+            for f in face_keys
+        }
+        non_adjacent_pairs = [
+            (i, j)
+            for i in face_keys
+            for j in face_keys
+            if j > i and j not in mesh.face_neighbors(i)
+        ]
+        if not non_adjacent_pairs:
             raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
 
-        def _centroid(fkey):
-            pts = [mesh.vertex_coordinates(v) for v in mesh.face_vertices(fkey)]
-            return [sum(p[k] for p in pts) / len(pts) for k in range(3)]
-
         face_a_key, face_b_key = max(
-            non_adj,
+            non_adjacent_pairs,
             key=lambda ij: (
-                abs(dot_vectors(mesh.face_normal(ij[0]), mesh.face_normal(ij[1]))),
-                -abs(dot_vectors(mesh.face_normal(ij[0]), subtract_vectors(_centroid(ij[1]), _centroid(ij[0])))),
+                abs(dot_vectors(face_normals[ij[0]], face_normals[ij[1]])),
+                -abs(dot_vectors(face_normals[ij[0]], subtract_vectors(face_centroids[ij[1]], face_centroids[ij[0]]))),
             ),
         )
 
-    verts_a = mesh.face_vertices(face_a_key)
-    verts_b = mesh.face_vertices(face_b_key)
-    set_a, set_b = set(verts_a), set(verts_b)
+    verts_a = mesh.face_vertices(face_a_key)  # winding order from mesh
+    verts_b = mesh.face_vertices(face_b_key)  # winding order from mesh
+    lookup_b = set(verts_b)  # membership checks only; ordering stays in verts_b
 
-    # map each vertex of face_a to the corresponding vertex of face_b via side-face edges
-    a_pos = {v: i for i, v in enumerate(verts_a)}
-    b_at_a = {}
-    for f in face_keys:
-        if f in (face_a_key, face_b_key):
+    # find anchors on face_b corresponding to first edge of face_a.
+    a0, a1 = verts_a[0], verts_a[1]
+    b0, b1 = None, None
+    for side_face in face_keys:
+        if side_face in (face_a_key, face_b_key):
             continue
-        fv = mesh.face_vertices(f)
-        for k in range(len(fv)):
-            u, v = fv[k], fv[(k + 1) % len(fv)]
-            if u in set_a and v in set_b:
-                b_at_a[a_pos[u]] = v
-            elif u in set_b and v in set_a:
-                b_at_a[a_pos[v]] = u
+        side_verts = mesh.face_vertices(side_face)
+        if a0 not in side_verts or a1 not in side_verts:
+            continue
+        for k, v in enumerate(side_verts):
+            if v not in lookup_b:
+                continue
+            prev_v = side_verts[(k - 1) % len(side_verts)]
+            next_v = side_verts[(k + 1) % len(side_verts)]
+            if prev_v == a0 or next_v == a0:
+                b0 = v
+            if prev_v == a1 or next_v == a1:
+                b1 = v
+        break  # only one side face shares edge (a0, a1)
 
     pts_a = [Point(*mesh.vertex_coordinates(v)) for v in verts_a]
     outline_a = Polyline(pts_a + [pts_a[0]])
 
-    if len(b_at_a) == len(verts_a):
-        pts_b = [Point(*mesh.vertex_coordinates(b_at_a[i])) for i in range(len(verts_a))]
+    if b0 is not None and b1 is not None:
+        # reorder verts_b to align its first edge with face_a orientation.
+        n = len(verts_b)
+        start = verts_b.index(b0)
+        step = 1 if verts_b[(start + 1) % n] == b1 else -1
+        pts_b = [Point(*mesh.vertex_coordinates(verts_b[(start + step * i) % n])) for i in range(n)]
     else:
         pts_b = [Point(*mesh.vertex_coordinates(v)) for v in verts_b]
     outline_b = Polyline(pts_b + [pts_b[0]])
 
-    # openings: inner loops of the primary brep face (face key == brep.faces index)
+    # openings from inner loops of the primary brep face
     inner_loops = [loop for loop in brep.faces[face_a_key].loops if not loop.is_outer]
     opening_polylines = [o for o in (polyline_from_brep_loop(loop) for loop in inner_loops) if o is not None]
     openings = opening_polylines or None

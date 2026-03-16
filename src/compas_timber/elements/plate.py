@@ -377,7 +377,7 @@ class Plate(TimberElement):
         Parameters
         ----------
         brep : :class:`~compas.geometry.Brep`
-            The brep representing the plate geometry. Must have at least 2 parallel faces.
+            The brep representing the plate geometry. Must have at least 5 faces.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Plate` constructor.
@@ -387,7 +387,7 @@ class Plate(TimberElement):
         :class:`~compas_timber.elements.Plate`
             A Plate object created from the two parallel faces of the brep.
         """
-        if len(brep.faces) < 2:
-            raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
+        if len(brep.faces) < 5:
+            raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate). This brep has {}".format(len(brep.faces)))
         outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
         return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
