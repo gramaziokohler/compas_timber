@@ -1,0 +1,92 @@
+[
+  {
+    "name": "Latest",
+    "version": "latest",
+    "url": "https://gramaziokohler.github.io/compas_timber/latest/"
+  },
+  {
+    "name": "2.0.0-dev0",
+    "version": "2.0.0-dev0",
+    "url": "https://gramaziokohler.github.io/compas_timber/2.0.0-dev0/"
+  },
+  {
+    "name": "1.0.5 (stable)",
+    "version": "1.0.5",
+    "url": "https://gramaziokohler.github.io/compas_timber/1.0.5/"
+  },
+  {
+    "name": "0.16.2",
+    "version": "0.16.2",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.16.2/"
+  },
+  {
+    "name": "0.15.3",
+    "version": "0.15.3",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.15.3/"
+  },
+  {
+    "name": "0.14.2",
+    "version": "0.14.2",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.14.2/"
+  },
+  {
+    "name": "0.13.0",
+    "version": "0.13.0",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.13.0/"
+  },
+  {
+    "name": "0.12.0",
+    "version": "0.12.0",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.12.0/"
+  },
+  {
+    "name": "0.11.0",
+    "version": "0.11.0",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.11.0/"
+  },
+  {
+    "name": "0.10.1",
+    "version": "0.10.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.10.1/"
+  },
+  {
+    "name": "0.9.1",
+    "version": "0.9.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.9.1/"
+  },
+  {
+    "name": "0.8.1",
+    "version": "0.8.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.8.1/"
+  },
+  {
+    "name": "0.7.0",
+    "version": "0.7.0",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.7.0/"
+  },
+  {
+    "name": "0.6.1",
+    "version": "0.6.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.6.1/"
+  },
+  {
+    "name": "0.5.1",
+    "version": "0.5.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.5.1/"
+  },
+  {
+    "name": "0.4.0",
+    "version": "0.4.0",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.4.0/"
+  },
+  {
+    "name": "0.3.1",
+    "version": "0.3.1",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.3.1/"
+  },
+  {
+    "name": "0.2.16",
+    "version": "0.2.16",
+    "url": "https://gramaziokohler.github.io/compas_timber/0.2.16/"
+  }
+]
