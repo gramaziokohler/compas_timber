@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.

@@ -56,7 +56,7 @@ class Joint(Data):
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name}
+        return {"name": self.name, "topology": self.topology, "location": self._location}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)

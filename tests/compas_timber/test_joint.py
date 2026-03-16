@@ -3,6 +3,8 @@ import os
 import compas
 import pytest
 from compas.data import json_load
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
@@ -373,3 +375,23 @@ def test_joint_location_setter_rejects_non_point():
     joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
     with pytest.raises(TypeError, match="Location must be a Point"):
         joint.location = [1, 2, 3]
+
+
+def test_joint_location_and_topology_survive_serialization():
+    """Location and topology are preserved through a JSON round-trip of the model."""
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+
+    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=Point(1, 0, 0))
+    original_location = joint.location
+    original_topology = joint.topology
+
+    restored = json_loads(json_dumps(model))
+
+    restored_joint = list(restored.joints)[0]
+    assert isinstance(restored_joint, JointCandidate)
+    assert TOL.is_allclose(restored_joint.location, original_location)
+    assert restored_joint.topology == original_topology
