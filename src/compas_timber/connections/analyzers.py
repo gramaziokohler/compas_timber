@@ -1,5 +1,7 @@
 import math
 from weakref import WeakKeyDictionary
+from collections import defaultdict
+
 
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -289,3 +291,72 @@ def MaxNCompositeAnalyzer(model, n, max_distance=None):
     # All analyzers share the same KDTree automatically via the class-level cache keyed on model
     max_cluster_size = max(n, 2)
     return CompositeAnalyzer([NBeamKDTreeAnalyzer(model, n=k, max_distance=max_distance) for k in range(max_cluster_size, 1, -1)])
+
+
+def find_all_clusters(joints, max_distance=None, exclude=None):
+    """Cluster joints by location using scipy KDTree.
+
+    Parameters
+    ----------
+    joints : list[Joint]
+        All joints to consider.
+    max_distance : float
+        Maximum distance between joints to be considered co-located.
+    exclude : set[Joint] | None
+        Joints to exclude from clustering.
+
+    Returns
+    -------
+    list[Cluster]
+        Clusters sorted largest-first.
+    """
+
+    max_distance = max_distance or TOL.absolute
+    exclude = exclude or set()
+    active_joints = [joint for joint in joints if joint not in exclude]
+
+    if not active_joints:
+        return []
+
+    kd_tree = KDTree([j.location for j in active_joints])
+
+    # Get all pairs of joints whose distance is within max_distance.
+    # TODO: upstream to compas.geometry.KDTree and kd_tree.query_pairs(max_distance) 
+    joint_pairs = kd_tree.query_pairs(max_distance)
+
+    # Each joint starts as its own cluster, represented by its own index as root.
+    cluster_root = list(range(len(active_joints)))
+
+    def get_root(joint_index):
+        """Walk up the parent chain to find the root representative of this joint's cluster.
+        Path compression flattens the chain on the way back, keeping future lookups fast."""
+        while cluster_root[joint_index] != joint_index:
+            # Path compression: skip one level up to flatten the tree
+            cluster_root[joint_index] = cluster_root[cluster_root[joint_index]]
+            joint_index = cluster_root[joint_index]
+        return joint_index
+
+    def merge_clusters(joint_index_a, joint_index_b):
+        """Merge the clusters of two joints by pointing one root at the other."""
+        root_a = get_root(joint_index_a)
+        root_b = get_root(joint_index_b)
+        if root_a != root_b:
+            # Attach root_a's cluster under root_b
+            cluster_root[root_a] = root_b
+
+    # For every close pair found by the KDTree, merge their clusters.
+    # After this loop, all transitively connected joints share the same root.
+    for joint_index_a, joint_index_b in joint_pairs:
+        merge_clusters(joint_index_a, joint_index_b)
+
+
+    # Group joints by their root index.
+    # Joints sharing the same root belong to the same cluster.
+    joints_by_cluster_root = defaultdict(list)
+    for joint_index, joint in enumerate(active_joints):
+        joints_by_cluster_root[get_root(joint_index)].append(joint)
+
+    # Sort largest clusters first to match the existing CompositeAnalyzer priority ordering
+    grouped_joints = sorted(joints_by_cluster_root.values(), key=len, reverse=True)
+
+    return [Cluster(joint_group) for joint_group in grouped_joints]

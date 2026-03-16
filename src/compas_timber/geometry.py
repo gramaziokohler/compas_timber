@@ -60,3 +60,7 @@ class KDTree:
             results.append((None, None, math.inf))
 
         return results
+
+    def query_pairs(self, max_distance) -> list[tuple[int,int]]:
+        """returns a list of pairs of indices of points in the tree that are within *max_distance* of each other."""
+        return self._tree.query_pairs(max_distance)
