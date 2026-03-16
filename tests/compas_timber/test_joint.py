@@ -307,3 +307,69 @@ def test_joint_candidate_create_still_works():
     assert joint in model.joints  # Should be in actual joints
     assert len(model.joints) == 1
     assert len(model.joint_candidates) == 0  # Should not be in candidates
+
+
+def test_joint_location_explicitly_set():
+    """Location returns the explicitly set value without computing from elements."""
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(1, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+
+    loc = Point(0.5, 0.0, 0.0)
+    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=loc)
+
+    assert TOL.is_allclose(joint.location, loc)
+
+
+def test_joint_location_computed_from_intersecting_beams():
+    """When centerlines intersect (distance ≈ 0), location is the intersection point."""
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+
+    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    assert TOL.is_allclose(joint.location, Point(1, 0, 0))
+
+
+def test_joint_location_computed_from_skew_beams():
+    """When centerlines don't intersect, location is the midpoint between closest points."""
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 1), Point(1, 1, 1)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+
+    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    # closest points are (1,0,0) and (1,0,1), midpoint is (1,0,0.5)
+    assert TOL.is_allclose(joint.location, Point(1, 0, 0.5))
+
+
+def test_joint_location_raises_before_elements_available():
+    """Accessing location before elements are restored (e.g. during deserialization) raises ValueError."""
+    candidate = JointCandidate.__from_data__(
+        {
+            "element_a_guid": "00000000-0000-0000-0000-000000000001",
+            "element_b_guid": "00000000-0000-0000-0000-000000000002",
+            "name": "JointCandidate",
+        }
+    )
+    # elements are None at this point (not yet restored from model)
+    with pytest.raises(ValueError, match="Location of the joint could not be determined"):
+        _ = candidate.location
+
+
+def test_joint_location_setter_rejects_non_point():
+    """Setting location to a non-Point value raises TypeError."""
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(1, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+
+    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    with pytest.raises(TypeError, match="Location must be a Point"):
+        joint.location = [1, 2, 3]

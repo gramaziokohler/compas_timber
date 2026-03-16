@@ -3,8 +3,10 @@ from itertools import combinations
 from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
+from compas_timber.utils import distance_segment_segment_points
 
 from .solver import JointTopology
 
@@ -49,7 +51,7 @@ class Joint(Data):
     def __init__(self, topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
-        self._location = location or Point(0, 0, 0)
+        self._location = location
 
     @property
     def __data__(self):
@@ -70,6 +72,18 @@ class Joint(Data):
 
     @property
     def location(self):
+        if self._location is None and all(self.elements):
+            element_a, element_b = self.elements
+            distance, point_a, point_b = distance_segment_segment_points(element_a.centerline, element_b.centerline)
+            point_a, point_b = Point(*point_a), Point(*point_b)
+            if not TOL.is_zero(distance):
+                self._location = (point_a + point_b) / 2.0
+            else:
+                self._location = point_a
+
+        if self._location is None:
+            raise ValueError("Location of the joint could not be determined. Please set it manually.")
+
         return self._location
 
     @location.setter
