@@ -11,6 +11,35 @@ from compas_timber.utils import distance_segment_segment_points
 from .solver import JointTopology
 
 
+def location_from_centerlines(beams):
+    """Compute the approximate joint location from two beam centerlines.
+
+    Returns the closest point between the two centerlines, or the midpoint
+    between them when the beams are skew (non-intersecting).
+
+    Parameters
+    ----------
+    beams : list(:class:`~compas_timber.elements.Beam`)
+        A list of two beams for which to calculate the joint location.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Point`
+
+    """
+    if len(beams) != 2:
+        raise ValueError(
+            "Automatic location calculation only works for joints connecting 2 elements. "
+            "Please set the location manually or implement a custom location calculation for your joint type."
+        )
+    beam_a, beam_b = beams
+    distance, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+    point_a, point_b = Point(*point_a), Point(*point_b)
+    if not TOL.is_zero(distance):
+        return (point_a + point_b) / 2.0
+    return point_a
+
+
 class Joint(Data):
     """Base class for a joint connecting two beams.
 
@@ -73,13 +102,7 @@ class Joint(Data):
     @property
     def location(self):
         if self._location is None and all(self.elements):
-            element_a, element_b = self.elements
-            distance, point_a, point_b = distance_segment_segment_points(element_a.centerline, element_b.centerline)
-            point_a, point_b = Point(*point_a), Point(*point_b)
-            if not TOL.is_zero(distance):
-                self._location = (point_a + point_b) / 2.0
-            else:
-                self._location = point_a
+            self._location = location_from_centerlines(self.elements)
 
         if self._location is None:
             raise ValueError("Location of the joint could not be determined. Please set it manually.")
