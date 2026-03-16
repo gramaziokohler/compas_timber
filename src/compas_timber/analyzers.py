@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import typing
 from weakref import WeakKeyDictionary
 
 from compas.geometry import Point
@@ -10,9 +9,7 @@ from compas_model.elements import Element
 
 from compas_timber.connections import JointTopology
 from compas_timber.geometry import KDTree
-
-if typing.TYPE_CHECKING:
-    from compas_timber.model import TimberModel
+from compas_timber.model import TimberModel
 
 
 class Cluster(object):
