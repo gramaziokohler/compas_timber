@@ -91,6 +91,36 @@ classDiagram
          +features : list[Feature]
       }
 
+      class Panel {
+         +frame : Frame
+         +length : float
+         +width : float
+         +thickness : float
+         +type : str
+         +outlines : tuple[Polyline]
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +planes : tuple[Plane]
+         +normal : Vector
+         +edge_planes : dict[int, Plane]
+         +features : list[PanelFeature]
+         +interfaces : list[PanelConnectionInterface]
+         +is_group_element : bool = True
+         +attributes : dict
+         +from_outlines(outline_a, outline_b, openings)
+         +from_outline_thickness(outline, thickness, vector)
+         +from_brep(brep, thickness, vector)
+         +compute_elementgeometry(include_features=True)
+         +compute_aabb(inflate=0.0)
+         +compute_obb(inflate=0.0)
+         +compute_collision_mesh()
+         +set_extension_plane(edge_index, plane)
+         +apply_edge_extensions()
+         +remove_blank_extension(edge_index=None)
+         +reset()
+         +remove_features(features=None)
+      }
+
       %% Inheritance relationships
       Element <|-- TimberElement
       TimberElement <|-- Beam
