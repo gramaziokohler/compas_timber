@@ -1,0 +1,2203 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://gramaziokohler.github.io/compas_timber/2.1.1-dev0/tutorials/grasshopper/joint_rules/">
+      
+      
+        <link rel="prev" href="../features/">
+      
+      
+        <link rel="next" href="../model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../public/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Joint Rules - COMPAS Timber</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/custom.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#joint-rules" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://gramaziokohler.github.io/compas_timber/" title="COMPAS Timber" class="md-header__button md-logo" aria-label="COMPAS Timber" data-md-component="logo">
+      
+  <img src="../../../_logo/compas_logo_white_transparent.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            COMPAS Timber
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Joint Rules
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/gramaziokohler/compas_timber/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gramaziokohler
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://gramaziokohler.github.io/compas_timber/" title="COMPAS Timber" class="md-nav__button md-logo" aria-label="COMPAS Timber" data-md-component="logo">
+      
+  <img src="../../../_logo/compas_logo_white_transparent.png" alt="logo">
+
+    </a>
+    COMPAS Timber
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/gramaziokohler/compas_timber/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    gramaziokohler
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.elements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    elements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.connections/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    connections
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.fabrication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fabrication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.planning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    planning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    errors
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.rhino/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    rhino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.structural/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    structural
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/compas_timber.panel_features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    panel_features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribution/class_diagrams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Class Diagrams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribution/BTLx_contribution_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BTLx Contribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribution/joints_contribution_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Joints Contribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grasshopper Plugin
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Grasshopper Plugin
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../beams/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Beams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fabrication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fabrication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Joint Rules
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Joint Rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#joint-rules-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Joint Rules Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Joint Rules Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topological-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topological Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#surface-model-joint-override" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface Model Joint Override
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#joint-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Joint Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Joint Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#l-butt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Butt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l-miter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Miter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#french-ridge-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        French Ridge Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenon-and-mortise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tenon and Mortise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-butt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Butt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenon-and-mortise_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tenon and Mortise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-birdsmouth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Birdsmouth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-dovetail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Dovetail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#x-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        X-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary Table
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../show/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Show
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../citing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Citing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../license/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#joint-rules-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Joint Rules Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Joint Rules Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#default-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#topological-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Topological Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#direct-joint-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Direct Joint Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#surface-model-joint-override" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Surface Model Joint Override
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#joint-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Joint Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Joint Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#l-butt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Butt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#l-miter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        L-Miter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#french-ridge-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        French Ridge Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenon-and-mortise" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tenon and Mortise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-butt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Butt
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenon-and-mortise_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tenon and Mortise
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-birdsmouth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Birdsmouth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#t-dovetail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        T-Dovetail
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#x-lap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        X-Lap
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary Table
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="joint-rules">Joint Rules<a class="headerlink" href="#joint-rules" title="Permanent link">¤</a></h1>
+<p>The Joints between <a href="../beams/">beams</a> are defined by Joint Rules. There are four kinds of rules, where each of them overrides any lower-priority rule. The rules are listed hereafter from lowest to highest level of priority:</p>
+<div class="admonition note">
+<p class="admonition-title">Joint Topologies</p>
+<p>There are three main topologies of how beams can connect to each other: <strong>L</strong>, <strong>T</strong> and <strong>X</strong>.</p>
+<p><img alt="Joint Topologies" src="../../images/joint_topologies_diagramm.png" width="20%" /></p>
+</div>
+<h2 id="joint-rules-components">Joint Rules Components<a class="headerlink" href="#joint-rules-components" title="Permanent link">¤</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Important: Dynamic Components</p>
+<p>Joint Rules Components are dynamic: First place them on the Grasshopper Canvas. Now you can define the Joint they should apply by Right-Click &amp; Selection from the Drop-Down List. The Inputs might change because every Joint has its own specific settings.</p>
+<p><img alt="Dynamic Components" src="../../images/joint_rules_dynamic.gif" width="55%" /></p>
+</div>
+<h3 id="default-joint-rules">Default Joint Rules<a class="headerlink" href="#default-joint-rules" title="Permanent link">¤</a></h3>
+<p>This Component applies a L-Miter to all L-Topologies, a T-Butt to all T-Topologies and a X-HalfLap to all X-Topologies.</p>
+<p><img alt="Default Joint Rules" src="../../images/gh_joint_rules_default.png" width="20%" /></p>
+<h3 id="topological-joint-rules">Topological Joint Rules<a class="headerlink" href="#topological-joint-rules" title="Permanent link">¤</a></h3>
+<p>These Joint Rules are more specific and will overwrite the Default Joint Rules. The inputs are variable and depend on the joint type.</p>
+<ul>
+<li><strong>L Topological Joint Rules:</strong> This Component applies the L-Joint you select to all L-Topologies.</li>
+<li><strong>T Topological Joint Rules:</strong> This Component applies the T-Joint you select to all T-Topologies.</li>
+<li><strong>X Topological Joint Rules:</strong> This Component applies the X-Joint you select to all X-Topologies.</li>
+</ul>
+<p><img alt="Topological Joint Rules" src="../../images/gh_joint_rules_topological.png" width="100%" /></p>
+<h3 id="category-joint-rules">Category Joint Rules<a class="headerlink" href="#category-joint-rules" title="Permanent link">¤</a></h3>
+<p>This Joint Rule will overwrite all Topological Joint Rules. The Component defines a Joint type for all Joints between two beam Categories. The Categories are assigned through the string-input <code>Category</code> in the component <code>Beam</code>. The inputs are variable and depend on the joint type.</p>
+<p><img alt="Category Joint Rules" src="../../images/gh_joint_rules_category.png" width="40%" /></p>
+<h3 id="direct-joint-rules">Direct Joint Rules<a class="headerlink" href="#direct-joint-rules" title="Permanent link">¤</a></h3>
+<p>This Joint Rule is highly specific and will overwrite every other Joint Rule. The Component assigns a Joint type directly to specific beams. The Beams can be selected using the component <code>Find Beam By Rhino GUID</code> See also <a href="../beams/">beams</a>. The inputs are variable and depend on the joint type.</p>
+<p><img alt="Direct Joint Rules" src="../../images/gh_joint_rules_direct.png" width="35%" /></p>
+<h3 id="surface-model-joint-override">Surface Model Joint Override<a class="headerlink" href="#surface-model-joint-override" title="Permanent link">¤</a></h3>
+<p>This Joint Rule is used for the Surface Model to overwrite Joints between studs, king_studs, jack_studs, edge_studs, headers or sills.</p>
+<p><img alt="Surface Model Joint Override" src="../../images/gh_joint_rules_surface_override.png" width="35%" /></p>
+<h2 id="joint-types">Joint Types<a class="headerlink" href="#joint-types" title="Permanent link">¤</a></h2>
+<h3 id="l-butt">L-Butt<a class="headerlink" href="#l-butt" title="Permanent link">¤</a></h3>
+<p>The L-Butt extends one beam and shortens the other beam with a planar cut, to create a clean corner joint.</p>
+<p><img alt="L-Butt" src="../../images/gh_joint_LButt.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>mill_depth</code> : Determins the depth of the pocket to be milled in the cross beam.</li>
+<li><code>small_beam_butts</code> : If true, the beam with a larger cross-section is considered as the cross beam.</li>
+<li><code>modify_cross</code> : If true, the cross beam is extended to the opposite face of the main beam and cut flush with it.</li>
+<li><code>reject_i</code> : If true, joint will not apply when the cross beam meets the main beam in an I topology.</li>
+</ul>
+<h3 id="l-lap">L-Lap<a class="headerlink" href="#l-lap" title="Permanent link">¤</a></h3>
+<p>The <em>L-Half Lap</em> topology is when two beams meet at their ends at an angle. An L-Half Lap joint extends the two beams while removing the upper half of the overlap of one beam and the lower half of the overlaps the other to create a clean corner joint.</p>
+<p><img alt="L-Lap" src="../../images/gh_joint_LHalfLap.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>flip_lap_side</code> : Flips the lap side.</li>
+<li><code>cut_plane_bias</code> : Determines the depth of lap cuts on the beams. Input is a float in range from 0.01 to 0.99.</li>
+</ul>
+<h3 id="l-miter">L-Miter<a class="headerlink" href="#l-miter" title="Permanent link">¤</a></h3>
+<p>The L-Miter joint extends and connects the two beams with a planar cut at a bisector of the angle between them.</p>
+<p><img alt="L-Miter" src="../../images/gh_joint_LMiter.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>cutoff</code> : #TODO</li>
+</ul>
+<h3 id="french-ridge-lap">French Ridge Lap<a class="headerlink" href="#french-ridge-lap" title="Permanent link">¤</a></h3>
+<p>The French ridge lap joint extends two beams and removes the upper half of the overlap on one beam and the lower half on the other. Unlike the L-Half Lap (presented above) joint, where the cut is made parallel in the centre of the beams, the cut of the French ridge lap joint is angled to keep the beams securely in place, preventing them from shifting.</p>
+<p>The tilted cut plane is generated by sequentially connecting the following points:</p>
+<ul>
+<li>a point at the middle of the inner vertical edges of the overlap;</li>
+<li>a point at the bottom third of the outer vertical edge of the overlap along the lower beam;</li>
+<li>a point at the middle of the outer vertical edge of the overlap;</li>
+<li>a point at the top third of the outer vertical edge of the overlap along the upper beam.</li>
+</ul>
+<p><img alt="French Ridge Lap" src="../../images/gh_joint_LFrenchRidge.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>flip_lap_side</code> : Flips the lap side.</li>
+<li><code>drillhole_diam</code> : Determines the diameter of the hole for a dowel in the center of both laps.</li>
+</ul>
+<h3 id="tenon-and-mortise">Tenon and Mortise<a class="headerlink" href="#tenon-and-mortise" title="Permanent link">¤</a></h3>
+<p>A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.</p>
+<p><img alt="Tenon and Mortise" src="../../images/gh_joint_LTenonMortise.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>start_y</code> : Start position of the tenon along the y-axis of the main beam.</li>
+<li><code>start_depth</code> : Depth of the tenon from the surface of the main beam.</li>
+<li><code>rotation</code> : Rotation of the tenon around the main beam’s axis.</li>
+<li><code>length</code> : Length of the tenon along the main beam.</li>
+<li><code>width</code> : Width of the tenon.</li>
+<li><code>height</code> : Height of the tenon.</li>
+<li><code>shape</code> : The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</li>
+<li><code>shape_radius</code> : The radius used to define the shape of the tenon, if applicable.</li>
+</ul>
+<h3 id="t-butt">T-Butt<a class="headerlink" href="#t-butt" title="Permanent link">¤</a></h3>
+<p>The T-Butt joint shortens the <em>cross beam</em> with a planar cut, to match the side of the <em>main beam</em>. The <em>main beam</em> remains unchanged.</p>
+<p><img alt="T-Butt" src="../../images/gh_joint_TButt.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>mill_depth</code> : Determins the depth of the pocket to be milled in the cross beam.</li>
+</ul>
+<h3 id="t-lap">T-Lap<a class="headerlink" href="#t-lap" title="Permanent link">¤</a></h3>
+<p>A T-Half Lap joint crates an overlap between the <em>main beam</em> and the <em>cross beam</em>. The <em>cross beam</em> is extended to the opposite face of the <em>main beam</em> and cut flush with it to create a planar surface.
+It is similar to a L-Half Lap joint: the upper half of the overlap of the cross beam is removed from the main beam and the lower half of the overlap of the main beam is removed from the cross beam.</p>
+<p><img alt="T-Lap" src="../../images/gh_joint_THalfLap.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>flip_lap_side</code> : Flips the lap side.</li>
+<li><code>cut_plane_bias</code> : Determines the depth of lap cuts on the beams. Input is a float in range from 0.01 to 0.99.</li>
+</ul>
+<h3 id="tenon-and-mortise_1">Tenon and Mortise<a class="headerlink" href="#tenon-and-mortise_1" title="Permanent link">¤</a></h3>
+<p>A tenon is added on the main beam, and a corresponding mortise is made on the cross beam to fit the main beam’s tenon.</p>
+<p><img alt="Tenon and Mortise" src="../../images/gh_joint_TTenonMortise.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>start_y</code> : Start position of the tenon along the y-axis of the main beam.</li>
+<li><code>start_depth</code> : Depth of the tenon from the surface of the main beam.</li>
+<li><code>rotation</code> : Rotation of the tenon around the main beam’s axis.</li>
+<li><code>length</code> : Length of the tenon along the main beam.</li>
+<li><code>width</code> : Width of the tenon.</li>
+<li><code>height</code> : Height of the tenon.</li>
+<li><code>shape</code> : The shape of the tenon, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</li>
+<li><code>shape_radius</code> : The radius used to define the shape of the tenon, if applicable.</li>
+</ul>
+<h3 id="t-step">T-Step<a class="headerlink" href="#t-step" title="Permanent link">¤</a></h3>
+<p>Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.</p>
+<p><img alt="T-Step" src="../../images/gh_joint_TStep.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>step_shape</code> : Shape of the step feature. 0: step, 1: heel, 2: double.</li>
+<li><code>step_depth</code> : Depth of the step cut. Combined with a heel cut it generates a double step cut.</li>
+<li><code>heel_depth</code> : Depth of the heel cut. Combined with a step cut it generates a double step cut.</li>
+<li><code>tapered_heel</code> : If True, the heel cut is tapered.</li>
+<li><code>tenon_mortise_height</code> : Height of the tenon (main beam) mortise (cross beam) of the Step Joint. If None, the tenon and mortise featrue is not created.</li>
+</ul>
+<h3 id="t-birdsmouth">T-Birdsmouth<a class="headerlink" href="#t-birdsmouth" title="Permanent link">¤</a></h3>
+<p>A DoubleCut is created on the main beam to fit the cross beam. The position of the cross beam should allow the creation of the doblecut. If one of the sides of the cross beam is parallel to the axis of the main beam a doublecut cannot be created.</p>
+<p><img alt="T-Birdsmouth" src="../../images/gh_joint_TBirdthmouth.png" width="50%" /></p>
+<h3 id="t-dovetail">T-Dovetail<a class="headerlink" href="#t-dovetail" title="Permanent link">¤</a></h3>
+<p>A dovetail cut is made on the main beam, and a corresponding notch is made on the cross beam to fit the main beam.</p>
+<p><img alt="T-Dovetail" src="../../images/gh_joint_TDovetail.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>start_y</code> : Start position of the dovetail cut along the y-axis of the main beam.</li>
+<li><code>start_depth</code> : Depth of the dovetail cut from the surface of the main beam.</li>
+<li><code>rotation</code> : Rotation of the dovetail cut around the main beam’s axis.</li>
+<li><code>length</code> : Length of the dovetail cut along the main beam.</li>
+<li><code>width</code> : Width of the dovetail cut.</li>
+<li><code>cone_angle</code> : The angle of the dovetail cut, determining the taper of the joint.</li>
+<li><code>dovetail_shape</code> : The shape of the dovetail cut, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.</li>
+<li><code>tool_angle</code> :  The angle of the tool used to create the dovetail cut.</li>
+<li><code>tool_diameter</code> : The diameter of the tool used to create the dovetail cut.</li>
+<li><code>tool_height</code> : The height of the tool used to create the dovetail cut.</li>
+</ul>
+<h3 id="x-lap">X-Lap<a class="headerlink" href="#x-lap" title="Permanent link">¤</a></h3>
+<p>The X-Half Lap joint removes the upper half of the overlap from one beam and the lower half from the other.</p>
+<p><img alt="X-Lap" src="../../images/gh_joint_XHalfLap.png" width="50%" /></p>
+<p><strong>Inputs:</strong></p>
+<ul>
+<li><code>flip_lap_side</code> : Flips the lap side.</li>
+<li><code>cut_plane_bias</code> : Determines the depth of lap cuts on the beams.</li>
+</ul>
+<h2 id="summary-table">Summary Table<a class="headerlink" href="#summary-table" title="Permanent link">¤</a></h2>
+<p>The following table summarises the joint types that can be applied to the different joint topologies.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Joint</th>
+<th style="text-align: left;">L Topology</th>
+<th style="text-align: left;">T Topology</th>
+<th style="text-align: left;">X Topology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Butt</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Miter</td>
+<td style="text-align: left;">x</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Lap</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;">X</td>
+</tr>
+<tr>
+<td style="text-align: left;">French Ridge</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Tenon and Mortise</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Step</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Birdsmouth</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr>
+<td style="text-align: left;">Dovetail</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">X</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../features/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Features">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Features
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../model/" class="md-footer__link md-footer__link--next" aria-label="Next: Model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026, ETH Zurich - Gramazio Kohler Research
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.code.copy", "content.footnote.tooltips", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
