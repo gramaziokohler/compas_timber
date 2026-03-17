@@ -45,7 +45,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "bump-my-version",
-    "compas_invocations2[mkdocs] @ git+https://github.com/compas-dev/compas_invocations2.git@mkdocs",
+    "compas_invocations2[mkdocs]>=1.0.2",
     "invoke >=0.14",
     "ruff",
     "twine",
