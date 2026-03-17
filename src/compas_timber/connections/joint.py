@@ -79,8 +79,11 @@ class Joint(Data):
 
     def __init__(self, topology=None, location=None, name=None, **kwargs):
         super().__init__(name=name)
-        self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
-        self._location = location
+        self._topology = None
+        self._location = None
+        self.topology = topology
+        if location:
+            self.location = location
 
     @property
     def __data__(self):
@@ -96,8 +99,7 @@ class Joint(Data):
 
     @topology.setter
     def topology(self, value):
-        """Set the topology of the joint."""
-        self._topology = value
+        self._topology = value or JointTopology.TOPO_UNKNOWN
 
     @property
     def location(self):
