@@ -46,6 +46,13 @@ class Joint(Interaction):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["topology"] = self.topology
+        data["location"] = self.location
+        return data
+
     def __init__(self, topology=None, location=None, **kwargs):
         super(Joint, self).__init__(name=self.__class__.__name__)
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
