@@ -21,7 +21,6 @@ from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
@@ -70,7 +69,7 @@ class BTLxWriter(object):
         self.file_name = file_name
         self.comment = comment
         self._project_name = project_name or "COMPAS Timber Project"
-        self._tolerance = Tolerance("MM", absolute=1e-3, relative=1e-3)
+        self._tolerance = TOL
         self._errors = []
 
     @property
