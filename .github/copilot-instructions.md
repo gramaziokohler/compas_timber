@@ -11,7 +11,7 @@ COMPAS Timber is an open-source software toolkit to streamline the design of tim
 - `invoke lint` -- run ruff and black linters. Takes ~1 second.
 - `invoke format` -- reformat code with black. Takes ~1 second.  
 - `invoke check` -- comprehensive style and metadata checks. Takes ~2 seconds.
-- `mkdocs build -c` -- build HTML documentation with mkdocs-material. May take several minutes.
+- `invoke docs` -- build HTML documentation with mkdocs-material. May take several minutes.
 - `invoke test` -- run unit tests. Takes ~6 seconds.
 
 ## Validation
