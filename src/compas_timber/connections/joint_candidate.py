@@ -1,5 +1,3 @@
-from compas.geometry import Point
-
 from .joint import Joint
 from .plate_joint import PlateJoint
 
@@ -92,16 +90,6 @@ class PlateJointCandidate(PlateJoint, JointCandidate):
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
-
-    @property
-    def location(self):
-        if self._location is None:
-            self._location = Point(0, 0, 0)
-        return self._location
-
-    @location.setter
-    def location(self, value):
-        self._location = value
 
     def _set_edge_planes(self):
         pass
