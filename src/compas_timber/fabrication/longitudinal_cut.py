@@ -647,8 +647,6 @@ class LongitudinalCutProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to be cut.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
 
         Raises
         ------

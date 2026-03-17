@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Removed
+
+
+## [2.1.0-dev0] 2026-03-16
+
+### Added
+
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
@@ -41,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
 * Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
 * New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
+* Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
 * Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
 
 ### Removed
