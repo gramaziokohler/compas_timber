@@ -31,27 +31,27 @@ class JointCandidate(Joint):
 
     @property
     def __data__(self):
-        data_dict = {
-            "element_a_guid": self.element_a_guid,
-            "element_b_guid": self.element_b_guid,
-        }
-        data_dict.update(super(JointCandidate, self).__data__)
+        data_dict = super().__data__
+        data_dict.update(
+            {
+                "element_a_guid": self.element_a_guid,
+                "element_b_guid": self.element_b_guid,
+                "distance": self.distance,
+            }
+        )
         return data_dict
-
-    @classmethod
-    def __from_data__(cls, value):
-        instance = cls(**value)
-        instance.element_a_guid = value["main_beam_key"]
-        instance.element_b_guid = value["cross_beam_key"]
-        return instance
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
         super(JointCandidate, self).__init__(**kwargs)
         self.element_a = element_a
         self.element_b = element_b
-        self.element_a_guid = str(element_a.guid) if element_a else None
-        self.element_b_guid = str(element_b.guid) if element_b else None
-        self.distance = distance if distance is not None else None
+        self.distance = distance
+        self.element_a_guid = kwargs.get("element_a_guid") or str(element_a.guid)
+        self.element_b_guid = kwargs.get("element_b_guid") or str(element_b.guid)
+
+    @classmethod
+    def create(cls, model, *elements, **kwargs):
+        raise NotImplementedError("JointCandidate cannot be created directly as a joint. Use `model.add_joint_candidate()` instead.")
 
     @property
     def elements(self):
@@ -89,4 +89,4 @@ class PlateJointCandidate(PlateJoint, JointCandidate):
     """
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
-        super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+        super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, element_a=plate_a, element_b=plate_b, **kwargs)
