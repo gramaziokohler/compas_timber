@@ -62,7 +62,7 @@ def test_plate_contour():
     expected = {
         "header_attributes": {
             "Priority": "0",
-            "ProcessID": "0",
+            "ProcessID": "1",
             "ToolID": "0",
             "Name": "FreeContour",
             "ToolPosition": "right",
