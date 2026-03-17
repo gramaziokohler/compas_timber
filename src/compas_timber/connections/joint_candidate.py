@@ -32,13 +32,9 @@ class JointCandidate(Joint):
     @property
     def __data__(self):
         data_dict = super().__data__
-        data_dict.update(
-            {
-                "element_a_guid": self.element_a_guid,
-                "element_b_guid": self.element_b_guid,
-                "distance": self.distance,
-            }
-        )
+        data_dict["element_a_guid"] = self.element_a_guid
+        data_dict["element_b_guid"] = self.element_b_guid
+        data_dict["distance"] = self.distance
         return data_dict
 
     def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
