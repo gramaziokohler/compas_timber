@@ -33,6 +33,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [2.1.1-dev0] 2026-03-17
+
+### Added
+
+### Changed
+
+### Removed
+
+
 ## [2.1.0-dev0] 2026-03-16
 
 ### Added
