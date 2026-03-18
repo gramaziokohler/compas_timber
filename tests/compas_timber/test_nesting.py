@@ -1,17 +1,22 @@
 import pytest
+import random
 import warnings
 
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Polyline
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.elements import Slab
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import BeamNester
 from compas_timber.planning import NestingResult
+from compas_timber.planning import PlateNester
+from compas_timber.planning import PlateStock
 
 # ============================================================================
 # BeamStock Tests
@@ -571,6 +576,218 @@ def test_nest_per_group_multiple_sections():
 
 
 # ============================================================================
+# PlateNester Tests
+# ============================================================================
+
+
+def _placed_rect_xy(stock, plate):
+    """Return axis-aligned rectangle as (min_x, min_y, max_x, max_y) in stock XY."""
+    frame = stock.placement_data[str(plate.guid)]
+    xaxis = frame.xaxis
+
+    # Axis-aligned 90-degree placement only.
+    if abs(xaxis.x) >= abs(xaxis.y):
+        min_x = frame.point.x
+        min_y = frame.point.y
+        width = plate.blank.xsize
+        height = plate.blank.ysize
+    else:
+        # In rotated placements, origin is at top-right corner of the footprint along X.
+        width = plate.blank.ysize
+        height = plate.blank.xsize
+        min_x = frame.point.x - width
+        min_y = frame.point.y
+
+    return min_x, min_y, min_x + width, min_y + height
+
+
+def _rect_gap(rect_a, rect_b):
+    """Return Euclidean gap between rectangles (0.0 if touching/overlapping)."""
+    ax0, ay0, ax1, ay1 = rect_a
+    bx0, by0, bx1, by1 = rect_b
+    dx = max(bx0 - ax1, ax0 - bx1, 0.0)
+    dy = max(by0 - ay1, ay0 - by1, 0.0)
+    return (dx**2 + dy**2) ** 0.5
+
+
+def _build_plate_nesting_model():
+    model = TimberModel()
+    plates = [
+        Plate(Frame.worldXY(), 1200, 600, 18),
+        Plate(Frame.worldXY(), 1000, 500, 18),
+        Plate(Frame.worldXY(), 700, 700, 18),
+        Plate(Frame.worldXY(), 500, 400, 18),
+        Plate(Frame.worldXY(), 300, 900, 18),
+    ]
+    for plate in plates:
+        model.add_element(plate)
+    return model, plates
+
+
+def test_plate_nest_fast_assigns_all_and_inside_sheet():
+    """Fast skyline nesting should place all plates inside sheet bounds."""
+    model, plates = _build_plate_nesting_model()
+    stock_catalog = PlateStock((2400, 1200), 18)
+    result = PlateNester(model, stock_catalog, spacing=0.0).nest(fast=True)
+
+    assert isinstance(result, NestingResult)
+    assert len(result.stocks) >= 1
+
+    nested_guids = set()
+    for stock in result.stocks:
+        for plate in plates:
+            guid = str(plate.guid)
+            if guid not in stock.placement_data:
+                continue
+            nested_guids.add(guid)
+            x0, y0, x1, y1 = _placed_rect_xy(stock, plate)
+            assert x0 >= -TOL.absolute
+            assert y0 >= -TOL.absolute
+            assert x1 <= stock.dimensions[0] + TOL.absolute
+            assert y1 <= stock.dimensions[1] + TOL.absolute
+
+    assert nested_guids == {str(p.guid) for p in plates}
+
+
+def test_plate_nest_fast_has_no_overlaps_per_stock():
+    """Fast skyline nesting should not overlap placed plate footprints."""
+    model, plates = _build_plate_nesting_model()
+    stock_catalog = PlateStock((2400, 1200), 18)
+    result = PlateNester(model, stock_catalog, spacing=0.0).nest(fast=True)
+
+    for stock in result.stocks:
+        placed = [plate for plate in plates if str(plate.guid) in stock.placement_data]
+        rects = {str(plate.guid): _placed_rect_xy(stock, plate) for plate in placed}
+        for i, plate_a in enumerate(placed):
+            for plate_b in placed[i + 1 :]:
+                ax0, ay0, ax1, ay1 = rects[str(plate_a.guid)]
+                bx0, by0, bx1, by1 = rects[str(plate_b.guid)]
+                overlap_x = min(ax1, bx1) - max(ax0, bx0)
+                overlap_y = min(ay1, by1) - max(ay0, by0)
+                assert overlap_x <= TOL.absolute or overlap_y <= TOL.absolute
+
+
+def test_plate_nest_spacing_respected_between_footprints():
+    """Configured spacing should be preserved between nested plate rectangles."""
+    model, plates = _build_plate_nesting_model()
+    spacing = 10.0
+    stock_catalog = PlateStock((2600, 1300), 18)
+    result = PlateNester(model, stock_catalog, spacing=spacing).nest(fast=True)
+
+    for stock in result.stocks:
+        placed = [plate for plate in plates if str(plate.guid) in stock.placement_data]
+        rects = [_placed_rect_xy(stock, plate) for plate in placed]
+        for i, rect_a in enumerate(rects):
+            for rect_b in rects[i + 1 :]:
+                assert _rect_gap(rect_a, rect_b) + TOL.absolute >= spacing
+
+
+def test_plate_nest_is_deterministic_for_same_input():
+    """Two runs with identical inputs should produce identical placements."""
+    model, plates = _build_plate_nesting_model()
+    stock_catalog = PlateStock((2400, 1200), 18)
+    nester = PlateNester(model, stock_catalog, spacing=5.0)
+
+    result_a = nester.nest(fast=True)
+    result_b = nester.nest(fast=True)
+
+    positions_a = {}
+    positions_b = {}
+
+    for stock_index, stock in enumerate(result_a.stocks):
+        for plate in plates:
+            guid = str(plate.guid)
+            if guid in stock.placement_data:
+                frame = stock.placement_data[guid]
+                positions_a[guid] = (stock_index, frame.point.x, frame.point.y, frame.xaxis.x, frame.xaxis.y)
+
+    for stock_index, stock in enumerate(result_b.stocks):
+        for plate in plates:
+            guid = str(plate.guid)
+            if guid in stock.placement_data:
+                frame = stock.placement_data[guid]
+                positions_b[guid] = (stock_index, frame.point.x, frame.point.y, frame.xaxis.x, frame.xaxis.y)
+
+    assert positions_a == positions_b
+
+
+def test_plate_nest_fast_and_bottomleft_place_same_set_of_parts():
+    """Fast and bottom-left modes should both nest the same part set when feasible."""
+    model, plates = _build_plate_nesting_model()
+    stock_catalog = PlateStock((2400, 1200), 18)
+
+    result_fast = PlateNester(model, stock_catalog, spacing=0.0).nest(fast=True)
+    result_slow = PlateNester(model, stock_catalog, spacing=0.0).nest(fast=False)
+
+    fast_guids = set()
+    slow_guids = set()
+
+    for stock in result_fast.stocks:
+        fast_guids.update(stock.placement_data.keys())
+
+    for stock in result_slow.stocks:
+        slow_guids.update(stock.placement_data.keys())
+
+    expected = {str(plate.guid) for plate in plates}
+    assert fast_guids == expected
+    assert slow_guids == expected
+
+
+def test_plate_nest_spacing_zero_does_not_fail():
+    """Zero spacing should remain a valid input and still place all feasible parts."""
+    model, plates = _build_plate_nesting_model()
+    stock_catalog = PlateStock((2400, 1200), 18)
+
+    result = PlateNester(model, stock_catalog, spacing=0.0).nest(fast=True)
+
+    nested_guids = set()
+    for stock in result.stocks:
+        nested_guids.update(stock.placement_data.keys())
+
+    assert nested_guids == {str(plate.guid) for plate in plates}
+
+
+def test_plate_nest_reports_unplaced_and_seed():
+    """Nesting result should expose seed and unplaced part GUIDs."""
+    model = TimberModel()
+    small = Plate(Frame.worldXY(), 800, 400, 18)
+    too_large = Plate(Frame.worldXY(), 2600, 1300, 18)
+    model.add_element(small)
+    model.add_element(too_large)
+
+    with pytest.warns(UserWarning, match="Plate 2600.0x1300.0mm cannot fit in stock 2400x1200mm"):
+        result = PlateNester(model, PlateStock((2400, 1200), 18), spacing=0.0, seed=42).nest(fast=True)
+
+    assert result.seed == 42
+    assert str(too_large.guid) in result.unplaced_elements
+    assert str(small.guid) not in result.unplaced_elements
+    assert result.unplaced_count == 1
+    assert result.unplaced_reasons[str(too_large.guid)] == "no_skyline_candidate"
+    assert result.effective_spacing > 0.0
+
+    report = result.report_data
+    assert report["seed"] == 42
+    assert report["unplaced_count"] == 1
+    assert report["unplaced_reasons"][str(too_large.guid)] == "no_skyline_candidate"
+    assert report["effective_spacing"] == result.effective_spacing
+
+
+def test_plate_nest_seed_produces_reproducible_order_variants():
+    """Seeded ordering should be reproducible and provide different variants."""
+    _, plates = _build_plate_nesting_model()
+    rng_a1 = random.Random(7)
+    rng_a2 = random.Random(7)
+    rng_b = random.Random(19)
+
+    order_a1 = [str(plate.guid) for plate in PlateNester._ordered_plates(plates, rng=rng_a1)]
+    order_a2 = [str(plate.guid) for plate in PlateNester._ordered_plates(plates, rng=rng_a2)]
+    order_b = [str(plate.guid) for plate in PlateNester._ordered_plates(plates, rng=rng_b)]
+
+    assert order_a1 == order_a2
+    assert order_a1 != order_b
+
+
+# ============================================================================
 # NestingResult Tests
 # ============================================================================
 
@@ -605,6 +822,18 @@ def test_nesting_result_basic_properties():
     assert "120x60x6000mm" in stock_pieces["BeamStock"]
     assert stock_pieces["BeamStock"]["120x60x6000mm"] == 2  # 2 pieces of this dimension
 
+    utilization = result.stock_utilization
+    assert len(utilization) == 2
+    assert utilization[0]["stock_type"] == "BeamStock"
+    assert utilization[0]["element_count"] == 1
+    assert utilization[0]["utilization_percent"] == pytest.approx(50.0, rel=1e-6)
+    assert utilization[1]["utilization_percent"] == pytest.approx((2000.0 / 6000.0) * 100.0, rel=1e-6)
+
+    report = result.report_data
+    assert "stock_utilization" in report
+    assert "unplaced_count" in report
+    assert report["unplaced_count"] == 0
+
 
 def test_nesting_result_serialization():
     """Test NestingResult serialization functionality."""
@@ -618,6 +847,10 @@ def test_nesting_result_serialization():
     # Test serialization
     data = result.__data__
     assert len(data["stocks"]) == 1
+    assert data["unplaced_elements"] == []
+    assert data["seed"] is None
+    assert data["unplaced_reasons"] == {}
+    assert data["effective_spacing"] is None
 
     # Test deserialization
     restored_result = NestingResult.__from_data__(data)
@@ -631,3 +864,18 @@ def test_nesting_result_serialization():
     # Test that properties match between original and restored
     assert restored_result.total_material_volume == result.total_material_volume
     assert restored_result.total_stock_pieces == result.total_stock_pieces
+
+
+def test_nesting_result_plate_utilization():
+    """Test plate stock utilization report metrics."""
+    stock = PlateStock((1000, 1000), 18)
+    plate = Plate(Frame.worldXY(), 500, 500, 18)
+    stock.add_element(plate)
+
+    result = NestingResult([stock])
+    utilization = result.stock_utilization
+
+    assert len(utilization) == 1
+    assert utilization[0]["stock_type"] == "PlateStock"
+    assert utilization[0]["element_count"] == 1
+    assert utilization[0]["utilization_percent"] == pytest.approx(25.0, rel=1e-6)

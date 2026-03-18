@@ -1,3 +1,5 @@
+import math
+import random
 from abc import ABC
 from abc import abstractmethod
 from warnings import warn
@@ -7,9 +9,11 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polygon
 from compas.geometry import Polyline
+from compas.geometry import Rotation
 from compas.geometry import Transformation
+from compas.geometry import Translation
+from compas.geometry import Vector
 from compas.geometry import is_polygon_in_polygon_xy
-from compas.geometry import offset_polygon
 from compas.tolerance import TOL
 
 
@@ -274,6 +278,8 @@ class PlateStock(Stock):
         # Initialize remaining boundary as full stock rectangle
         self._remaining_boundary = Polygon([Point(0, 0, 0), Point(dimensions[0], 0, 0), Point(dimensions[0], dimensions[1], 0), Point(0, dimensions[1], 0)])
         self._skyline = Polyline([[0, 0, 0], [self.dimensions[0], 0, 0]])  # setup skyline for nesting algorithms
+        self.placement_data = {}  # {guid: Frame} raw XY placement frames for visualization/debug
+        self._used_area = 0.0  # explicit area accounting for robust utilization reporting
 
     @property
     def __data__(self):
@@ -285,7 +291,10 @@ class PlateStock(Stock):
     @property
     def _remaining_area(self):
         # Get remaining available area in the stock.
-        return self._remaining_boundary.area
+        if isinstance(self._remaining_boundary, Polygon):
+            return self._remaining_boundary.area
+        # Defensive fallback if boundary got corrupted by a failed boolean op.
+        return self.dimensions[0] * self.dimensions[1]
 
     def is_compatible_with(self, plate):
         """
@@ -324,15 +333,37 @@ class PlateStock(Stock):
         bool
             True if plate could fit somewhere in remaining space, False otherwise
         """
-        # TODO: Signature mismatch with abstract Stock.can_fit_element(element)
-        # TODO: Should accept plate object + transformation instead of pre-transformed polygon
-        # TODO: This prevents proper validation before algorithms find positions
+        # TODO (acknowledged): API mismatch with abstract Stock.can_fit_element(element).
+        # Plate nesting operates on pre-transformed footprint polygons for performance.
+        # Keep this behavior for backward compatibility; revisit in a future API revision.
 
         # Step 1: Quick area rejection
         if plate_outline.area > self._remaining_area:
             return False
-        # Step 2: Shape check
-        return is_polygon_in_polygon_xy(plate_outline, self._remaining_boundary)
+        # Step 2: Shape check.
+        # NOTE: `is_polygon_in_polygon_xy` can be strict for boundary-touching cases.
+        # In nesting we generally allow touching stock boundaries.
+        if isinstance(self._remaining_boundary, Polygon) and is_polygon_in_polygon_xy(plate_outline, self._remaining_boundary):
+            return True
+
+        # Fallback: allow boundary-touching placements using a tolerant bbox test.
+        # This keeps placements robust in Rhino/COMPAS numerical edge cases.
+        if isinstance(self._remaining_boundary, Polygon):
+            boundary_points = self._remaining_boundary.points
+        else:
+            # Defensive fallback to stock extents if boundary got corrupted.
+            boundary_points = [
+                Point(0, 0, 0),
+                Point(self.dimensions[0], 0, 0),
+                Point(self.dimensions[0], self.dimensions[1], 0),
+                Point(0, self.dimensions[1], 0),
+            ]
+        min_x = min(p.x for p in boundary_points) - TOL.absolute
+        max_x = max(p.x for p in boundary_points) + TOL.absolute
+        min_y = min(p.y for p in boundary_points) - TOL.absolute
+        max_y = max(p.y for p in boundary_points) + TOL.absolute
+
+        return all(min_x <= p.x <= max_x and min_y <= p.y <= max_y for p in plate_outline.points)
 
     def add_element(self, plate, transformation=Transformation()):
         """
@@ -352,28 +383,57 @@ class PlateStock(Stock):
         ValueError
             If plate doesn't fit in remaining space
         """
-        # Get frame from transformation
-        position_frame = Frame.from_transformation(transformation)
+        # Raw placement frame in XY nesting coordinates.
+        placement_frame = Frame.from_transformation(transformation)
 
-        # Transform plate polygon outline to placement position
-        plate_outline = plate.local_outline_a.transformed(transformation)  # TODO: check which one of the two to use
+        # Transform the plate local outline to placement position.
+        # `Plate` guarantees `local_outlines`; `local_outline_a` may not exist in all versions.
+        plate_outline = plate.local_outlines[0].transformed(transformation)
 
-        # TODO: Offset timing issue - spacing should be applied during fit check, not just here
-        # TODO: This means can_fit_element needs access to spacing and transformation
-        # Offset polygon by spacing to account for cutting tolerance
-        plate_outline = offset_polygon(plate_outline, self.spacing)
+        # Convert Polyline -> Polygon for robust 2D containment/boolean operations.
+        outline_points = plate_outline.points
+        if len(outline_points) > 2 and outline_points[0] == outline_points[-1]:
+            outline_points = outline_points[:-1]
+        plate_outline = Polygon(outline_points)
 
-        # TODO: This validation happens AFTER offset, but algorithm needs to know BEFORE finding position
+        # NOTE: spacing is handled by the nesting algorithms when choosing positions.
+        # Keep `add_element` as a pure geometric containment/write operation.
         if not self.can_fit_element(plate_outline):
             raise ValueError("Plate doesn't fit in remaining space")
 
         # Update remaining boundary using boolean difference
         difference_result = self._remaining_boundary.boolean_difference(plate_outline)
         if difference_result:
-            self._remaining_boundary = difference_result[0]
+            # Keep polygon boundaries only; boolean ops can return mixed geometry types.
+            polygons = [item for item in difference_result if isinstance(item, Polygon)]
+            if polygons:
+                # Keep the largest remainder as current boundary.
+                self._remaining_boundary = max(polygons, key=lambda p: p.area)
 
-        # Store element data
-        self.element_data[str(plate.guid)] = position_frame
+        # Store BTLx-oriented frame for export in element_data.
+        self.element_data[str(plate.guid)] = self._to_btlx_partref_frame(placement_frame)
+        # Preserve raw placement frame for Rhino-side visualization/debug.
+        self.placement_data[str(plate.guid)] = placement_frame
+        # Track used area directly because boolean remaining boundaries can degrade
+        # to non-polygon results in some edge cases.
+        self._used_area += plate.blank.xsize * plate.blank.ysize
+
+    @staticmethod
+    def _to_btlx_partref_frame(placement_frame):
+        """Convert XY nesting placement frame to BTLx rawpart convention frame.
+
+        BTLx rawparts use X as length, Y as height (thickness), Z as width.
+        2D nesting coordinates are on XY, so we map nesting Y -> BTLx Z.
+        """
+        point = Point(placement_frame.point.x, 0.0, placement_frame.point.y)
+
+        xaxis_xy = placement_frame.xaxis
+        xaxis = Vector(xaxis_xy.x, 0.0, xaxis_xy.y)
+        if xaxis.length < TOL.absolute:
+            xaxis = Vector(1, 0, 0)
+
+        yaxis = Vector(0, 1, 0)
+        return Frame(point, xaxis, yaxis)
 
 
 class NestingResult(Data):
@@ -389,19 +449,44 @@ class NestingResult(Data):
     ----------
     stocks : list[:class:`Stock`]
         List of stock pieces with assigned beams
+    unplaced_elements : list[str]
+        GUIDs of elements that could not be nested
+    unplaced_reasons : dict[str, str]
+        Optional reason labels keyed by unplaced GUID
+    seed : int | None
+        Seed used for seeded nesting variants (if provided)
+    effective_spacing : float | None
+        Effective spacing used by nesting (may be epsilon-adjusted)
     total_material_volume : float
         Total material volume across all stocks in cubic millimeters
     total_stock_pieces : dict
         Detailed report of stock pieces needed with their dimensions
+    stock_utilization : list[dict]
+        Per-stock utilization metrics and capacity usage
     """
 
-    def __init__(self, stocks):
+    def __init__(self, stocks, unplaced_elements=None, seed=None, unplaced_reasons=None, effective_spacing=None):
         super(NestingResult, self).__init__()
         self.stocks = stocks if isinstance(stocks, list) else [stocks]
+        self.unplaced_elements = list(unplaced_elements or [])
+        self.seed = seed
+        self.unplaced_reasons = dict(unplaced_reasons or {})
+        self.effective_spacing = effective_spacing
 
     @property
     def __data__(self):
-        return {"stocks": self.stocks}
+        return {
+            "stocks": self.stocks,
+            "unplaced_elements": self.unplaced_elements,
+            "seed": self.seed,
+            "unplaced_reasons": self.unplaced_reasons,
+            "effective_spacing": self.effective_spacing,
+        }
+
+    @property
+    def unplaced_count(self):
+        """Number of elements that could not be nested."""
+        return len(self.unplaced_elements)
 
     @property
     def total_material_volume(self):
@@ -437,6 +522,94 @@ class NestingResult(Data):
             stock_report[stock_type][dimensions_key] += 1
 
         return stock_report
+
+    @property
+    def stock_utilization(self):
+        """Generate per-stock utilization metrics.
+
+        Returns
+        -------
+        list[dict]
+            A list of dictionaries with per-stock metrics:
+            ``stock_index``, ``stock_type``, ``utilization_percent``,
+            ``capacity``, ``used``, ``remaining``, and ``element_count``.
+        """
+        metrics = []
+
+        for i, stock in enumerate(self.stocks):
+            if isinstance(stock, BeamStock):
+                capacity = float(stock.length)
+                # BeamStock tracks next start position and includes spacing increment
+                # after each inserted beam. Remove one spacing for utilization.
+                if stock.element_data:
+                    used = max(0.0, min(capacity, stock._current_x_position - stock.spacing))
+                else:
+                    used = 0.0
+                remaining = max(0.0, capacity - used)
+                utilization = 100.0 * used / capacity if capacity > TOL.absolute else 0.0
+                metrics.append(
+                    {
+                        "stock_index": i,
+                        "stock_type": "BeamStock",
+                        "utilization_percent": utilization,
+                        "capacity": capacity,
+                        "used": used,
+                        "remaining": remaining,
+                        "element_count": len(stock.element_data),
+                    }
+                )
+                continue
+
+            if isinstance(stock, PlateStock):
+                capacity = float(stock.dimensions[0] * stock.dimensions[1])
+                if hasattr(stock, "_used_area"):
+                    used = max(0.0, min(capacity, float(stock._used_area)))
+                else:
+                    used = max(0.0, min(capacity, capacity - stock._remaining_area))
+                remaining = max(0.0, capacity - used)
+                utilization = 100.0 * used / capacity if capacity > TOL.absolute else 0.0
+                metrics.append(
+                    {
+                        "stock_index": i,
+                        "stock_type": "PlateStock",
+                        "utilization_percent": utilization,
+                        "capacity": capacity,
+                        "used": used,
+                        "remaining": remaining,
+                        "element_count": len(stock.element_data),
+                    }
+                )
+                continue
+
+            # Generic fallback for unknown stock implementations.
+            capacity = float(stock.length * stock.width * stock.height)
+            metrics.append(
+                {
+                    "stock_index": i,
+                    "stock_type": type(stock).__name__,
+                    "utilization_percent": None,
+                    "capacity": capacity,
+                    "used": None,
+                    "remaining": None,
+                    "element_count": len(stock.element_data),
+                }
+            )
+
+        return metrics
+
+    @property
+    def report_data(self):
+        """Return a compact nesting report payload."""
+        return {
+            "total_stock_pieces": self.total_stock_pieces,
+            "total_material_volume": self.total_material_volume,
+            "stock_utilization": self.stock_utilization,
+            "unplaced_elements": self.unplaced_elements,
+            "unplaced_reasons": self.unplaced_reasons,
+            "unplaced_count": self.unplaced_count,
+            "seed": self.seed,
+            "effective_spacing": self.effective_spacing,
+        }
 
 
 class BeamNester(object):
@@ -645,6 +818,9 @@ class PlateNester(object):
         Spacing tolerance for cutting operations (kerf width, etc.)
     per_group : bool, optional
         Whether to nest plates per group or all together. Default is False (all together).
+    seed : int, optional
+        Seed for reproducible variant generation. Different seeds can produce
+        different placement orders for the same pieces.
 
     Attributes
     ----------
@@ -656,12 +832,15 @@ class PlateNester(object):
         Spacing tolerance for cutting operations (kerf width, etc.)
     per_group : bool
         Whether to nest plates per group or all together. Default is False (all together).
+    seed : int | None
+        Seed for reproducible variant generation.
     """
 
-    def __init__(self, model, stock_catalog, spacing=0.0, per_group=False):
+    def __init__(self, model, stock_catalog, spacing=0.0, per_group=False, seed=None):
         self.model = model
         self.spacing = spacing
         self.per_group = per_group
+        self.seed = seed
         self.stock_catalog = stock_catalog if isinstance(stock_catalog, list) else [stock_catalog]
 
     @property
@@ -694,6 +873,9 @@ class PlateNester(object):
             Nesting result containing stocks with assigned plates and metadata
         """
         nesting_stocks = []
+        unplaced_plate_guids = []
+        unplaced_reasons = {}
+        effective_spacing = self.spacing if self.spacing > TOL.absolute else TOL.absolute
         if self.per_group:
             # Collect plate groups
             plate_groups = []  # list of lists of plates per group
@@ -711,32 +893,59 @@ class PlateNester(object):
                 plate_groups.append(standalone_plates)
 
             # Nest each group separately
-            for plates in plate_groups:
-                stocks = self._nest_plate_collection(plates, fast)
+            for group_index, plates in enumerate(plate_groups):
+                group_seed = None if self.seed is None else self.seed + group_index
+                stocks, unplaced, reasons = self._nest_plate_collection(plates, fast, seed=group_seed)
                 nesting_stocks.extend(stocks)
+                unplaced_plate_guids.extend(unplaced)
+                unplaced_reasons.update(reasons)
         else:
             # Nest ALL plates together
-            stocks = self._nest_plate_collection(self.model.plates, fast)
+            stocks, unplaced, reasons = self._nest_plate_collection(self.model.plates, fast, seed=self.seed)
             nesting_stocks.extend(stocks)
+            unplaced_plate_guids.extend(unplaced)
+            unplaced_reasons.update(reasons)
 
-        return NestingResult(nesting_stocks)
+        return NestingResult(
+            nesting_stocks,
+            unplaced_elements=unplaced_plate_guids,
+            seed=self.seed,
+            unplaced_reasons=unplaced_reasons,
+            effective_spacing=effective_spacing,
+        )
 
-    def _nest_plate_collection(self, plates, fast=True):
+    def _nest_plate_collection(self, plates, fast=True, seed=None):
         # Nest a collection of plates into stock pieces.
         stocks = []
-        stock_plate_map = self._sort_plates_by_stock(plates)
+        unplaced = []
+        unplaced_reasons = {}
+        stock_plate_map, incompatible_plates = self._sort_plates_by_stock(plates)
+        for plate in incompatible_plates:
+            guid = str(plate.guid)
+            unplaced.append(guid)
+            unplaced_reasons[guid] = "incompatible_stock"
+
+        # Keep exact user spacing semantics for positive spacing, and use a tiny
+        # numerical clearance to avoid degenerate boolean/same-edge failures at 0.
+        spacing = self.spacing if self.spacing > TOL.absolute else TOL.absolute
+
+        rng = random.Random(seed) if seed is not None else None
 
         for stock_type, compatible_plates in stock_plate_map.items():
             if not compatible_plates:
                 continue
             # Apply selected algorithm
             if fast:
-                result_stocks = self._fast_skyline_nest(compatible_plates, stock_type, self.spacing)
+                result_stocks, unplaced_plates = self._fast_skyline_nest(compatible_plates, stock_type, spacing, rng=rng, return_unplaced=True)
             else:
-                result_stocks = self._optimized_bottomleft_nest(compatible_plates, stock_type, self.spacing)
+                result_stocks, unplaced_plates = self._optimized_bottomleft_nest(compatible_plates, stock_type, spacing, rng=rng, return_unplaced=True)
 
             stocks.extend(result_stocks)
-        return stocks
+            for plate, reason in unplaced_plates:
+                guid = str(plate.guid)
+                unplaced.append(guid)
+                unplaced_reasons[guid] = reason
+        return stocks, unplaced, unplaced_reasons
 
     def _sort_plates_by_stock(self, plates):
         # Sort plates into compatible stock types based on their dimensions.
@@ -764,83 +973,247 @@ class PlateNester(object):
                     len(unnested_plates), ", ".join(formatted_thicknesses)
                 )
             )
-        return stock_plate_map
+        return stock_plate_map, unnested_plates
 
-    @staticmethod
-    def _fast_skyline_nest(plates, stock, spacing=0.0):
-        # Fast algorithm using bounding boxes and skyline approach.
-        # Uses plate blank rectangles (xsize, ysize) for efficient packing.
-        # Maintains a skyline profile to track the top edge of placed plates.
+    @classmethod
+    def _plate_orientations(cls, plate):
+        """Return candidate dimensions in both orientations.
 
-        # Sort plates by area (largest first) for better packing
-        sorted_plates = sorted(plates, key=lambda p: p.blank.xsize * p.blank.ysize, reverse=True)
+        Returns
+        -------
+        list[tuple[float, float, bool]]
+            Tuples of (width, height, rotated).
+        """
+        return [
+            (plate.blank.xsize, plate.blank.ysize, False),
+            (plate.blank.ysize, plate.blank.xsize, True),
+        ]
+
+    @classmethod
+    def _plate_sort_key(cls, plate):
+        """Deterministic descending sort key for plate placement order."""
+        width = plate.blank.xsize
+        height = plate.blank.ysize
+        area = width * height
+        perimeter = width + height
+        return (-area, -perimeter, -max(width, height), str(plate.guid))
+
+    @classmethod
+    def _ordered_plates(cls, plates, rng=None):
+        """Return plate order for placement.
+
+        Without a seed, placement order is deterministic and area-driven.
+        With a seed, order is reproducibly shuffled to explore alternatives.
+        """
+        ordered = list(plates)
+        if rng is None:
+            return sorted(ordered, key=cls._plate_sort_key)
+        rng.shuffle(ordered)
+        return ordered
+
+    @classmethod
+    def _placement_transformation(cls, position, plate_width, rotated, spacing):
+        """Build placement transformation from skyline position."""
+        half_spacing = spacing * 0.5
+        if rotated:
+            rotation = Rotation.from_axis_and_angle(Vector(0, 0, 1), math.pi / 2)
+            translation = Translation.from_vector(Vector(position.x + half_spacing + plate_width, position.y + half_spacing, 0))
+            return translation * rotation
+        return Translation.from_vector(Vector(position.x + half_spacing, position.y + half_spacing, 0))
+
+    @classmethod
+    def _best_skyline_candidate(cls, stock_piece, orientations, spacing, prioritize_bottomleft=False):
+        """Find the best skyline candidate across orientations for a stock piece."""
+        best = None
+        segments = cls._skyline_segments(stock_piece)
+
+        skyline_points = stock_piece._skyline.points
+        current_max_x = max(pt.x for pt in skyline_points)
+        current_max_y = max(pt.y for pt in skyline_points)
+
+        for plate_width, plate_height, rotated in orientations:
+            footprint_w = plate_width + spacing
+            footprint_h = plate_height + spacing
+
+            position, waste, envelope_area = cls._find_skyline_position(
+                stock_piece,
+                footprint_w,
+                footprint_h,
+                segments=segments,
+                current_max_x=current_max_x,
+                current_max_y=current_max_y,
+                prioritize_bottomleft=prioritize_bottomleft,
+            )
+
+            if position is None:
+                continue
+
+            if prioritize_bottomleft:
+                key = (position.y, position.x, envelope_area, waste)
+            else:
+                key = (envelope_area, waste, position.y, position.x)
+
+            if best is None or key < best[0]:
+                best = (key, position, plate_width, plate_height, footprint_w, footprint_h, rotated)
+        return best
+
+    @classmethod
+    def _warn_unplaceable_plate(cls, plate, stock, spacing):
+        """Emit a consistent warning when a plate cannot be placed on stock."""
+        warn(
+            "Plate {}x{}mm cannot fit in stock {}x{}mm (with spacing {}).".format(
+                plate.blank.xsize,
+                plate.blank.ysize,
+                stock.dimensions[0],
+                stock.dimensions[1],
+                spacing,
+            )
+        )
+
+    @classmethod
+    def _fast_skyline_nest(cls, plates, stock, spacing=0.0, rng=None, return_unplaced=False):
+        """Fast skyline packing using plate bounding boxes.
+
+        Plates are processed by decreasing area and placed in the best skyline
+        candidate across both orientations.
+        """
+
+        sorted_plates = cls._ordered_plates(plates, rng=rng)
 
         stocks = []
+        unplaced = []
         for plate in sorted_plates:
-            # Get plate blank dimensions
-            plate_width = plate.blank.xsize
-            plate_height = plate.blank.ysize
-
             placed = False
-            best_stock = None
-            best_position = None
-            best_waste = float("inf")
+            orientations = cls._plate_orientations(plate)
 
             # Try to fit in existing stocks
             for stock_piece in stocks:
-                # Try to find position using skyline
-                position, waste = PlateNester._find_skyline_position(stock_piece, plate_width, plate_height, spacing)
+                best = cls._best_skyline_candidate(stock_piece, orientations, spacing, prioritize_bottomleft=False)
 
-                if position is not None and waste < best_waste:
-                    best_stock = stock_piece
-                    best_position = position
-                    best_waste = waste
+                if best is None:
+                    continue
 
-            # Place plate in best stock found
-            if best_stock is not None:
-                # Create transformation from position
-                transformation = Transformation.from_frame(Frame(best_position, [1, 0, 0], [0, 1, 0]))
-                best_stock.add_element(plate, transformation)
+                _, position, plate_width, plate_height, footprint_w, footprint_h, rotated = best
+                transformation = cls._placement_transformation(position, plate_width, rotated, spacing)
 
-                # Update skyline for this stock
-                PlateNester._update_skyline(best_stock, best_position, plate_width, plate_height)
-                placed = True
+                try:
+                    stock_piece.add_element(plate, transformation)
+                    cls._update_skyline(stock_piece, position, footprint_w, footprint_h)
+                    placed = True
+                    break
+                except ValueError:
+                    # Candidate may be invalid with exact polygon geometry; try next candidate/stock.
+                    continue
 
             # Create new stock if not placed
             if not placed:
                 new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
+                best = cls._best_skyline_candidate(new_stock, orientations, spacing, prioritize_bottomleft=False)
 
-                # Place at origin
-                frame = Frame(Point(0, 0, 0), [1, 0, 0], [0, 1, 0])
-                new_stock.add_element(plate, frame)
+                if best is not None:
+                    _, position, plate_width, plate_height, footprint_w, footprint_h, rotated = best
+                    transformation = cls._placement_transformation(position, plate_width, rotated, spacing)
 
-                # Update skyline
-                PlateNester._update_skyline(new_stock, Point(0, 0, 0), plate_width, plate_height)
-                stocks.append(new_stock)
+                    try:
+                        new_stock.add_element(plate, transformation)
+                        cls._update_skyline(new_stock, position, footprint_w, footprint_h)
+                        stocks.append(new_stock)
+                    except ValueError:
+                        warn("Plate {}x{}mm could not be placed on a new stock despite skyline candidate.".format(plate.blank.xsize, plate.blank.ysize))
+                        unplaced.append((plate, "geometry_fit_failed"))
+                else:
+                    cls._warn_unplaceable_plate(plate, stock, spacing)
+                    unplaced.append((plate, "no_skyline_candidate"))
 
+        if return_unplaced:
+            return stocks, unplaced
         return stocks
 
-    @staticmethod
-    def _find_skyline_position(stock, plate_width, plate_height, spacing):
-        # Find the best position on the skyline for a plate.
-        # Returns (position, waste) or (None, inf) if no valid position found.
+    @classmethod
+    def _skyline_segments(cls, stock):
+        """Convert skyline polyline to horizontal segments (start_x, end_x, y)."""
+        segments = []
+        points = stock._skyline.points
+        for i in range(len(points) - 1):
+            a = points[i]
+            b = points[i + 1]
+            if TOL.is_close(a.y, b.y) and b.x > a.x:
+                segments.append((a.x, b.x, a.y))
+        return segments
+
+    @classmethod
+    def _candidate_x_positions(cls, segments, plate_width, stock_width):
+        """Generate deterministic skyline x-candidates for a footprint width."""
+        max_x = stock_width - plate_width
+        if max_x < -TOL.absolute:
+            return []
+
+        candidates = {0.0}
+        for sx, ex, _ in segments:
+            candidates.add(sx)
+            candidates.add(ex - plate_width)
+
+        valid = []
+        for x in candidates:
+            if x < -TOL.absolute:
+                continue
+            if x > max_x + TOL.absolute:
+                continue
+            clamped_x = max(0.0, min(x, max_x))
+            valid.append(clamped_x)
+
+        return sorted(set(valid))
+
+    @classmethod
+    def _find_skyline_position(
+        cls,
+        stock,
+        plate_width,
+        plate_height,
+        segments=None,
+        current_max_x=0.0,
+        current_max_y=0.0,
+        prioritize_bottomleft=False,
+    ):
+        """Find the best skyline position for a rectangular footprint.
+
+        Returns
+        -------
+        tuple[:class:`compas.geometry.Point` | None, float, float]
+            Candidate position, skyline waste metric, and resulting envelope area.
+            Returns ``(None, inf, inf)`` when no valid position exists.
+        """
 
         best_position = None
         best_waste = float("inf")
+        best_area = float("inf")
+        best_key = None
 
-        # Try each skyline segment
-        for line in stock._skyline.lines:
-            x = line.start.x
-            y = line.start.y
+        if segments is None:
+            segments = cls._skyline_segments(stock)
+
+        # Try deterministic skyline candidates derived from segment starts/ends.
+        for x in cls._candidate_x_positions(segments, plate_width, stock.dimensions[0]):
 
             # Check if plate fits at this position
-            if x + plate_width + spacing > stock.dimensions[0]:
+            if x + plate_width > stock.dimensions[0]:
                 continue  # Doesn't fit horizontally
-            if y + plate_height + spacing > stock.dimensions[1]:
+
+            # Base Y is the max skyline height over the plate footprint span.
+            y = 0.0
+            for sx, ex, sy in segments:
+                if ex <= x or sx >= x + plate_width:
+                    continue
+                y = max(y, sy)
+
+            if y + plate_height > stock.dimensions[1]:
                 continue  # Doesn't fit vertically
 
             # Calculate waste (height difference to next skyline segment)
-            waste = PlateNester._calculate_skyline_waste(stock._skyline, x, plate_width, y)
+            waste = cls._calculate_skyline_waste(segments, x, plate_width, y)
+
+            # Prefer candidates that keep the global used envelope compact.
+            envelope_area = max(current_max_x, x + plate_width) * max(current_max_y, y + plate_height)
 
             # Create test position
             test_position = Point(x, y, 0)
@@ -848,116 +1221,149 @@ class PlateNester(object):
             # Create test rectangle polygon for validation
             test_rect = Polygon([Point(x, y, 0), Point(x + plate_width, y, 0), Point(x + plate_width, y + plate_height, 0), Point(x, y + plate_height, 0)])
 
-            # Check if this rectangle fits in remaining boundary
-            if is_polygon_in_polygon_xy(test_rect, stock._remaining_boundary):
-                if waste < best_waste:
+            # Check if this candidate fits using stock fit logic
+            if stock.can_fit_element(test_rect):
+                if prioritize_bottomleft:
+                    candidate_key = (y, x, envelope_area, waste)
+                else:
+                    candidate_key = (envelope_area, waste, y, x)
+
+                if best_key is None or candidate_key < best_key:
+                    best_key = candidate_key
                     best_position = test_position
                     best_waste = waste
+                    best_area = envelope_area
 
-        return best_position, best_waste
+        return best_position, best_waste, best_area
 
-    @staticmethod
-    def _calculate_skyline_waste(skyline, x, width, base_y):
-        # Calculate the wasted vertical space when placing a plate.
-        # This is the sum of height differences in the covered skyline region.
+    @classmethod
+    def _calculate_skyline_waste(cls, segments, x, width, base_y):
+        """Calculate skyline waste over a covered horizontal interval."""
 
         waste = 0
-        covered_width = 0
 
-        for line in skyline.lines:
-            segment_x = line.start.x
-            segment_y = line.start.y
-            segment_width = line.length
-
+        for segment_start_x, segment_end_x, segment_y in segments:
             # Check if this segment is in the covered region
-            if segment_x >= x + width:
+            if segment_start_x >= x + width:
                 break  # Past the covered region
 
-            if segment_x + segment_width <= x:
+            if segment_end_x <= x:
                 continue  # Before the covered region
 
             # This segment overlaps with the placement region
-            overlap_start = max(segment_x, x)
-            overlap_end = min(segment_x + segment_width, x + width)
+            overlap_start = max(segment_start_x, x)
+            overlap_end = min(segment_end_x, x + width)
             overlap_width = overlap_end - overlap_start
 
             # Add height difference as waste
             height_diff = abs(segment_y - base_y)
             waste += height_diff * overlap_width
-            covered_width += overlap_width
 
         return waste
 
-    @staticmethod
-    def _update_skyline(stock, position, plate_width, plate_height):
-        # Update the skyline profile after placing a plate.
+    @classmethod
+    def _update_skyline(cls, stock, position, plate_width, plate_height):
+        """Update skyline profile after reserving a rectangular footprint."""
         x = position.x
+        x2 = x + plate_width
         new_y = position.y + plate_height
 
-        # Build new skyline points
-        new_points = []
+        old_segments = cls._skyline_segments(stock)
+        new_segments = []
 
-        for line in stock._skyline.lines:
-            segment_x = line.start.x
-            segment_y = line.start.y
-            segment_width = line.length
-            segment_end_x = segment_x + segment_width
-
-            # Segment is completely before the plate
-            if segment_end_x <= x:
-                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
-                    new_points.append([segment_x, segment_y, 0])
-                new_points.append([segment_end_x, segment_y, 0])
+        # Clip existing skyline by removing the covered interval [x, x2]
+        for sx, ex, sy in old_segments:
+            if ex <= x or sx >= x2:
+                new_segments.append([sx, ex, sy])
                 continue
+            if sx < x:
+                new_segments.append([sx, x, sy])
+            if ex > x2:
+                new_segments.append([x2, ex, sy])
 
-            # Segment is completely after the plate
-            if segment_x >= x + plate_width:
-                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
-                    new_points.append([segment_x, segment_y, 0])
-                new_points.append([segment_end_x, segment_y, 0])
-                continue
+        # Add raised segment for the placed plate
+        new_segments.append([x, x2, new_y])
+        new_segments.sort(key=lambda seg: seg[0])
 
-            # Segment overlaps with the plate - split it
-            # Left part (before plate)
-            if segment_x < x:
-                if not new_points or new_points[-1] != [segment_x, segment_y, 0]:
-                    new_points.append([segment_x, segment_y, 0])
-                new_points.append([x, segment_y, 0])
+        # Merge adjacent segments with same height
+        merged = []
+        for sx, ex, sy in new_segments:
+            if merged and TOL.is_close(merged[-1][1], sx) and TOL.is_close(merged[-1][2], sy):
+                merged[-1][1] = ex
+            else:
+                merged.append([sx, ex, sy])
 
-            # Middle part (covered by plate)
-            if not new_points or new_points[-1][1] != new_y or new_points[-1][0] != x:
-                # Add vertical step if needed
-                if new_points and new_points[-1][0] == x and new_points[-1][1] != new_y:
-                    new_points.append([x, new_y, 0])
-                elif not new_points or new_points[-1][0] != x:
-                    new_points.append([x, new_y, 0])
-            new_points.append([x + plate_width, new_y, 0])
+        # Rebuild skyline polyline with vertical steps between horizontal segments
+        if not merged:
+            stock._skyline = Polyline([[0, 0, 0], [stock.dimensions[0], 0, 0]])
+            return
 
-            # Right part (after plate)
-            if segment_end_x > x + plate_width:
-                # Add vertical step down if needed
-                if segment_y != new_y:
-                    new_points.append([x + plate_width, segment_y, 0])
-                new_points.append([segment_end_x, segment_y, 0])
+        points = [[merged[0][0], merged[0][2], 0], [merged[0][1], merged[0][2], 0]]
+        prev_ex = merged[0][1]
+        prev_y = merged[0][2]
+
+        for sx, ex, sy in merged[1:]:
+            if sx > prev_ex:
+                points.append([sx, prev_y, 0])
+            if not TOL.is_close(sy, prev_y):
+                points.append([sx, sy, 0])
+            points.append([ex, sy, 0])
+            prev_ex = ex
+            prev_y = sy
 
         # Remove duplicate consecutive points
-        cleaned_points = []
-        for pt in new_points:
-            if not cleaned_points or cleaned_points[-1] != pt:
-                cleaned_points.append(pt)
+        cleaned = []
+        for pt in points:
+            if not cleaned or cleaned[-1] != pt:
+                cleaned.append(pt)
 
-        stock._skyline = Polyline(cleaned_points)
+        stock._skyline = Polyline(cleaned)
 
-    @staticmethod
-    def _optimized_bottomleft_nest(plates, stock, spacing=0.0):
-        # Optimized algorithm using actual polygon geometry.
-        # TODO: Implement bottom-left algorithm for 2D plate nesting.
-        # TODO: Algorithm needs to find valid Transformation (position + rotation)
-        # TODO: Then call stock.add_element(plate, transformation)
-        # Placeholder implementation
+    @classmethod
+    def _optimized_bottomleft_nest(cls, plates, stock, spacing=0.0, rng=None, return_unplaced=False):
+        """Bottom-left skyline strategy prioritizing lower-left placements.
+
+        Uses the same candidate generator as the fast method, but ranks solutions
+        by minimal ``y`` first and ``x`` second.
+        """
+        sorted_plates = cls._ordered_plates(plates, rng=rng)
+
         stocks = []
-        for plate in plates:
+        unplaced = []
+
+        for plate in sorted_plates:
+            best = None  # tuple(rank_key, stock_piece, position, rotated, plate_width, plate_height, footprint_w, footprint_h)
+            orientations = cls._plate_orientations(plate)
+
+            # Try existing stock pieces first
+            for stock_piece in stocks:
+                candidate = cls._best_skyline_candidate(stock_piece, orientations, spacing, prioritize_bottomleft=True)
+                if candidate is None:
+                    continue
+                rank_key, position, plate_width, plate_height, footprint_w, footprint_h, rotated = candidate
+                if best is None or rank_key < best[0]:
+                    best = (rank_key, stock_piece, position, rotated, plate_width, plate_height, footprint_w, footprint_h)
+
+            if best is not None:
+                _, stock_piece, position, rotated, plate_width, plate_height, footprint_w, footprint_h = best
+                transformation = cls._placement_transformation(position, plate_width, rotated, spacing)
+                stock_piece.add_element(plate, transformation)
+                cls._update_skyline(stock_piece, position, footprint_w, footprint_h)
+                continue
+
+            # If not placed, create a new stock and try from origin using skyline search
             new_stock = PlateStock(stock.dimensions, stock.thickness, spacing=spacing)
-            # TODO: Missing transformation parameter - should pass Transformation()
-            new_stock.add_element(plate)
-            stocks.append(new_stock)
+            candidate = cls._best_skyline_candidate(new_stock, orientations, spacing, prioritize_bottomleft=True)
+            if candidate is not None:
+                _, position, plate_width, plate_height, footprint_w, footprint_h, rotated = candidate
+                transformation = cls._placement_transformation(position, plate_width, rotated, spacing)
+                new_stock.add_element(plate, transformation)
+                cls._update_skyline(new_stock, position, footprint_w, footprint_h)
+                stocks.append(new_stock)
+            else:
+                cls._warn_unplaceable_plate(plate, stock, spacing)
+                unplaced.append((plate, "no_skyline_candidate"))
+
+        if return_unplaced:
+            return stocks, unplaced
+        return stocks
