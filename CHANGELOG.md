@@ -129,10 +129,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed pacakge `compas_timber.design` as it was migrated to the `timber_design` project.
 * Removed package `compas_timber.ghpython` as it was migrated to the `timber_design` project.
 * Moved `timber.py` module out of the `elements` package and renamed to `base.py`. This is to avoid circular dependencies between the `element` and `fabrication` packages.
-
-* Implemented `get_elements_from_keys` in `Joint`.
+* Implemented `restore_elements_from_keys` in `Joint`.
 * Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 
-* Changed `LButtJoint.update_beam_roles` to a static method to avoid changing `Joint.elements`.
+* Moved the `small_beam_butts` parameter to the `create()` alternate constructor of `LButtJoint`.
+* Moved the `cut_plane_bias` parameter to the `LapJoint` parent class.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -150,9 +150,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 * Removed unused module `compas_timber.solvers`.
-* Removed `get_beams_from_keys` in all `Joint` subclasses.
-* Removed `get_plates_from_keys` in `PlateJoint`.
+* Removed `restore_beams_from_keys` in all `Joint` subclasses.
+* Removed `restore_plates_from_keys` in `PlateJoint`.
 * Removed all *guid properties, eg `main_beam_guid`, `cross_beam_guid`, `beam_a_guid`, etc. from concrete joint classes.
+* Removed `LButtJoint.update_beam_roles` as the `small_beam_butts` parameter is used in an alternate `create` constructor now.
 
 ## [1.0.1] 2025-10-16
 

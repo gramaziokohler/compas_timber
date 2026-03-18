@@ -21,33 +21,33 @@ class XNotchJoint(Joint):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.elements.Beam`
+    notch_beam : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    beam_b : :class:`~compas_timber.elements.Beam`
+    solid_beam : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     Attributes
     ----------
-    beam_a : :class:`~compas_timber.elements.Beam`
+    notch_beam : :class:`~compas_timber.elements.Beam`
         The first beam to be joined. This beam will have a notch applied to it.
-    beam_b : :class:`~compas_timber.elements.Beam`
+    solid_beam : :class:`~compas_timber.elements.Beam`
         The second beam to be joined. No features are applied to this beam.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_X
 
-    def __init__(self, beam_a=None, beam_b=None, **kwargs):
-        super(XNotchJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
+    def __init__(self, notch_beam=None, solid_beam=None, **kwargs):
+        super(XNotchJoint, self).__init__(elements=(notch_beam, solid_beam), **kwargs)
         self.features = []
         self._main_ref_side_index = None
 
     @property
-    def beam_a(self):
+    def notch_beam(self):
         return self.element_a
 
     @property
-    def beam_b(self):
+    def solid_beam(self):
         return self.element_b
 
     @property
