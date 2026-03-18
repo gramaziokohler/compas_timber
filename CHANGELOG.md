@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## [2.1.1-dev0] 2026-03-17
+
+### Added
+
+### Changed
+
+### Removed
+
+
 ## [2.1.0-dev0] 2026-03-16
 
 ### Added
@@ -40,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
 * Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
 
+* `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
