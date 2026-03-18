@@ -95,7 +95,7 @@ class Joint(Data):
             raise ValueError("Joint requires either elements or element_guids.")
 
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
-        self._location = location or Point(0, 0, 0)
+        self._location = location 
 
     @property
     def __data__(self):
@@ -127,7 +127,7 @@ class Joint(Data):
 
     @property
     def location(self):
-        if self._location is None and all(self.elements):
+        if self._location is None and all(self.elements) and len(self.elements)==2: # all(()) == True, so we need to check len as well to avoid calculating location for joints without elements
             self._location = location_from_centerlines(self.elements)
 
         if self._location is None:
