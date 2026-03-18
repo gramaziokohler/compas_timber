@@ -142,6 +142,13 @@ class Panel(Element):
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     @property
+    def geometry(self):
+        """The geometry of the element in the model's global coordinates."""
+        if self._geometry is None:
+            self._geometry = self.compute_modelgeometry()
+        return self._geometry
+
+    @property
     def outlines(self):
         return (self.outline_a, self.outline_b)
 
