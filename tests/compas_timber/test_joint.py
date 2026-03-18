@@ -146,8 +146,8 @@ def test_joint_create_t_lap(t_topo_beams):
     model.add_element(cross_beam)
     joint = TLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.main_beam is main_beam
-    assert joint.cross_beam is cross_beam
+    assert joint.beam_a is main_beam
+    assert joint.beam_b is cross_beam
     assert joint.elements
 
 
@@ -355,8 +355,7 @@ def test_joint_location_raises_before_elements_available():
     """Accessing location before elements are restored (e.g. during deserialization) raises ValueError."""
     candidate = JointCandidate.__from_data__(
         {
-            "element_a_guid": "00000000-0000-0000-0000-000000000001",
-            "element_b_guid": "00000000-0000-0000-0000-000000000002",
+            "element_guids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"],
             "name": "JointCandidate",
         }
     )

@@ -126,6 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
 * Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 * Added Shape String implementation to `Plate` for representation in `BTLxPart`.
+* Added `elements` argument to `Joint.__init__`.
+* Added `element_guids` property to `Joint` which are used for deserializing joints. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -193,6 +195,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
 * Fixed `Plate.elementgeometry` to return the geometry in local coordinates.
 * Changed `PlateGeometry` geometry creation to use `Brep.from_polygons` instead of `Brep.from_loft` to ensure every face is correctly generated.
+* Implemented `get_elements_from_keys` in `Joint`.
+* Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 
+* Moved the `small_beam_butts` parameter to the `create()` alternate constructor of `LButtJoint`.
+* Moved the `cut_plane_bias` parameter to the `LapJoint` parent class.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -210,6 +216,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 * Removed unused module `compas_timber.solvers`.
+* Removed `restore_beams_from_keys` in all `Joint` subclasses.
+* Removed `restore_plates_from_keys` in `PlateJoint`.
+* Removed all *guid properties, eg `main_beam_guid`, `cross_beam_guid`, `beam_a_guid`, etc. from concrete joint classes.
+* Removed `LButtJoint.update_beam_roles` as the `small_beam_butts` parameter is used in an alternate `create` constructor now.
 
 ## [1.0.1] 2025-10-16
 
