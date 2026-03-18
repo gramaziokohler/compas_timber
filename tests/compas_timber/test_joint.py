@@ -355,8 +355,7 @@ def test_joint_location_raises_before_elements_available():
     """Accessing location before elements are restored (e.g. during deserialization) raises ValueError."""
     candidate = JointCandidate.__from_data__(
         {
-            "element_guids": ["00000000-0000-0000-0000-000000000001",
-             "00000000-0000-0000-0000-000000000002"],
+            "element_guids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"],
             "name": "JointCandidate",
         }
     )
