@@ -43,6 +43,7 @@ from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
 from .analyzers import BeamGroupAnalyzer
 from .analyzers import MaxNCompositeAnalyzer
+from .k_butt import KButtJoint
 
 __all__ = [
     "Joint",
@@ -91,4 +92,5 @@ __all__ = [
     "Cluster",
     "BeamGroupAnalyzer",
     "MaxNCompositeAnalyzer",
+    "KButtJoint",
 ]
