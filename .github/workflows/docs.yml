@@ -5,7 +5,7 @@ on:
     branches:
       - main
     tags:
-      - "v*"
+      - 'v*'
   pull_request:
     branches:
       - main
@@ -14,8 +14,8 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: compas-dev/compas-actions.docs@v4
+      - uses: compas-dev/compas-actions.docs@v5
         with:
-          doc_url: https://gramaziokohler.github.io/compas_timber
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          use_conda: false
+          generator: mkdocs
+          extras: dev,mkdocs

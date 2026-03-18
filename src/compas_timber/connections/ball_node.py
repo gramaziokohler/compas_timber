@@ -17,7 +17,7 @@ class BallNodeJoint(Joint):
 
     Parameters
     ----------
-    beams :  list(:class:`~compas_timber.parts.Beam`)
+    beams :  list(:class:`~compas_timber.elements.Beam`)
         The beams to be joined.
     base_interface : :class:`~compas_timber.connections.FastenerTimberInterface`
         Describes the interface between the fastener and each of the timber elements.
@@ -46,7 +46,7 @@ class BallNodeJoint(Joint):
         return data
 
     def __init__(self, beams=None, base_interface=None, ball_diameter=None, **kwargs):
-        super(BallNodeJoint, self).__init__(**kwargs)
+        super(BallNodeJoint, self).__init__(elements=tuple(b for b in beams), **kwargs)
         self._beam_guids = []
         self.beams = beams or []
         if ball_diameter:
@@ -67,10 +67,6 @@ class BallNodeJoint(Joint):
     @property
     def generated_elements(self):
         return [self.fastener]
-
-    @property
-    def elements(self):
-        return list(self.beams) + self.generated_elements
 
     @property
     def interactions(self):
@@ -95,7 +91,7 @@ class BallNodeJoint(Joint):
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the beams and this joing belong.
-        elements : list(:class:`~compas_timber.parts.Beam`)
+        elements : list(:class:`~compas_timber.elements.Beam`)
             A list containing beams that whould be joined together
 
         Returns
@@ -136,7 +132,3 @@ class BallNodeJoint(Joint):
             interface.frame = Frame(pt, Vector.from_start_end(pt, beam.centerline.midpoint), beam.frame.zaxis)
             self.fastener.interfaces.append(interface)
             beam.add_features(interface.get_features(beam))
-
-    def restore_beams_from_keys(self, model):
-        self.beams = [model.element_by_guid(guid) for guid in self._beam_guids]
-        self.fastener = model.element_by_guid(self._fastener_guid)

@@ -10,10 +10,11 @@ from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
-from compas_timber.elements import Slab
+from compas_timber.elements import Panel
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import BeamNester
+from compas_timber.planning import NestedElementData
 from compas_timber.planning import NestingResult
 from compas_timber.planning import PlateNester
 from compas_timber.planning import PlateStock
@@ -79,10 +80,14 @@ def test_beam_addition_and_capacity_tracking():
 
     expected_x_position1 = beam1.blank_length + stock.spacing
     expected_frame1 = Frame.worldXY()
+    element_info = stock.element_data[str(beam1.guid)]
 
     assert len(stock.element_data) == 1
     assert str(beam1.guid) in stock.element_data
-    assert stock.element_data[str(beam1.guid)] == expected_frame1
+    assert isinstance(element_info, NestedElementData)
+    assert element_info.frame == expected_frame1
+    assert element_info.key == beam1.name + "-" + str(beam1.guid)[:4]
+    assert element_info.length == beam1.blank_length
     assert stock._current_x_position == expected_x_position1
 
     # Add second beam
@@ -92,10 +97,14 @@ def test_beam_addition_and_capacity_tracking():
     expected_frame2 = Frame.worldXY()
     expected_frame2.point.x = expected_x_position1
     expected_x_position2 = expected_x_position1 + beam2.blank_length + stock.spacing
+    element_info = stock.element_data[str(beam2.guid)]
 
     assert len(stock.element_data) == 2
     assert str(beam2.guid) in stock.element_data
-    assert stock.element_data[str(beam2.guid)] == expected_frame2
+    assert isinstance(element_info, NestedElementData)
+    assert element_info.frame == expected_frame2
+    assert element_info.key == beam2.name + "-" + str(beam2.guid)[:4]
+    assert element_info.length == beam2.blank_length
     assert stock._current_x_position == expected_x_position2
 
 
@@ -146,8 +155,31 @@ def test_serialization():
     assert len(restored_data.element_data) == len(stock.element_data)
     assert str(beam1.guid) in restored_data.element_data
     assert str(beam2.guid) in restored_data.element_data
-    assert isinstance(restored_data.element_data[str(beam1.guid)], Frame)
-    assert isinstance(restored_data.element_data[str(beam2.guid)], Frame)
+    element_data1 = restored_data.element_data[str(beam1.guid)]
+    element_data2 = restored_data.element_data[str(beam2.guid)]
+    assert isinstance(element_data1.frame, Frame)
+    assert element_data1.key == beam1.name + "-" + str(beam1.guid)[:4]
+    assert element_data1.length == beam1.blank_length
+    assert isinstance(element_data2.frame, Frame)
+    assert element_data2.key == beam2.name + "-" + str(beam2.guid)[:4]
+    assert element_data2.length == beam2.blank_length
+
+
+def test_beam_stock_compatibility():
+    """Test BeamStock.is_compatible_with with tolerance."""
+    stock = BeamStock(6000, (120.0, 60.0))
+    # Test almost identical float dimensions
+    beam_float = Beam(frame=Frame.worldXY(), length=2000, width=120.0000001, height=59.9999999)
+    assert stock.is_compatible_with(beam_float)
+
+    # Test with a significant difference
+    beam_diff = Beam(frame=Frame.worldXY(), length=2000, width=120.1, height=60)
+    assert not stock.is_compatible_with(beam_diff)
+
+    # Test with tolerance on square sections
+    square_stock = BeamStock(6000, (100, 100))
+    beam_square_float = Beam(frame=Frame.worldXY(), length=2000, width=100.0000001, height=99.9999999)
+    assert square_stock.is_compatible_with(beam_square_float)
 
 
 # ============================================================================
@@ -199,7 +231,7 @@ def test_sort_beams_by_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Test sorting with warning capture
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100MM"):
         stock_beam_map = nester._sort_beams_by_stock(model.beams)
 
     # Check that compatible beams were sorted correctly
@@ -277,7 +309,7 @@ def test_nest_beams_no_compatible_stock():
     nester = BeamNester(model, stock_catalog)
 
     # Should warn about incompatible beam cross-section
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100MM"):
         nesting_result = nester.nest()
 
     # Should return empty list since no compatible stock
@@ -314,8 +346,8 @@ def test_nest_beams_multiple_incompatible_cross_sections():
         warning_message = str(w[0].message)
         assert "Found 3 beam(s) incompatible with available stock catalog" in warning_message
         # Should contain both unique cross-sections
-        assert "200x100mm" in warning_message
-        assert "150x80mm" in warning_message
+        assert "200x100MM" in warning_message
+        assert "150x80MM" in warning_message
 
 
 def test_nest_beams_empty_model():
@@ -411,7 +443,7 @@ def test_nest_method_with_incompatible_beams():
     nester = BeamNester(model, stock_catalog)
 
     # Should warn about incompatible beam
-    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100mm"):
+    with pytest.warns(UserWarning, match="Found 1 beam\\(s\\) incompatible.*200x100M"):
         nesting_result = nester.nest()
 
     # Should have one stock with only the compatible beam
@@ -426,7 +458,7 @@ def test_nest_per_group_basic():
     model = TimberModel()
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with 2 beams
-    group_a = Slab(outline=polyline, thickness=0)
+    group_a = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_a)
@@ -434,7 +466,7 @@ def test_nest_per_group_basic():
     model.add_element(beam_a2, parent=group_a)
 
     # Create Group B with 2 beams
-    group_b = Slab(outline=polyline, thickness=0)
+    group_b = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_b1 = Beam(frame=Frame.worldXY(), length=800, width=120, height=60)
     beam_b2 = Beam(frame=Frame.worldXY(), length=1200, width=120, height=60)
     model.add_element(group_b)
@@ -480,7 +512,7 @@ def test_nest_per_group_with_standalone_beams():
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create a group with 2 beams
-    group = Slab(outline=polyline, thickness=0)
+    group = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_g1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_g2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group)
@@ -518,11 +550,11 @@ def test_nest_per_group_empty_groups():
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
 
     # Create an empty group
-    empty_group = Slab(outline=polyline, thickness=0)
+    empty_group = Panel.from_outline_thickness(outline=polyline, thickness=0)
     model.add_element(empty_group)
 
     # Add a group with beams
-    group_with_beams = Slab(outline=polyline, thickness=0)
+    group_with_beams = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam2 = Beam(frame=Frame.worldXY(), length=1500, width=120, height=60)
     model.add_element(group_with_beams)
@@ -548,7 +580,7 @@ def test_nest_per_group_multiple_sections():
     model = TimberModel()
     polyline = Polyline([(0, 0, 0), (1000, 0, 0), (1000, 1000, 0), (0, 1000, 0), (0, 0, 0)])
     # Create Group A with beams of multiple cross-sections
-    group_a = Slab(outline=polyline, thickness=0)
+    group_a = Panel.from_outline_thickness(outline=polyline, thickness=0)
     beam_a1 = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
     beam_a2 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
     model.add_element(group_a)
@@ -819,20 +851,8 @@ def test_nesting_result_basic_properties():
     stock_pieces = result.total_stock_pieces
     assert isinstance(stock_pieces, dict)
     assert "BeamStock" in stock_pieces
-    assert "120x60x6000mm" in stock_pieces["BeamStock"]
-    assert stock_pieces["BeamStock"]["120x60x6000mm"] == 2  # 2 pieces of this dimension
-
-    utilization = result.stock_utilization
-    assert len(utilization) == 2
-    assert utilization[0]["stock_type"] == "BeamStock"
-    assert utilization[0]["element_count"] == 1
-    assert utilization[0]["utilization_percent"] == pytest.approx(50.0, rel=1e-6)
-    assert utilization[1]["utilization_percent"] == pytest.approx((2000.0 / 6000.0) * 100.0, rel=1e-6)
-
-    report = result.report_data
-    assert "stock_utilization" in report
-    assert "unplaced_count" in report
-    assert report["unplaced_count"] == 0
+    assert "Dimensions(MM): 120.000x60.000x6000.000" in stock_pieces["BeamStock"]
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2  # 2 pieces of this dimension
 
 
 def test_nesting_result_serialization():
@@ -864,6 +884,50 @@ def test_nesting_result_serialization():
     # Test that properties match between original and restored
     assert restored_result.total_material_volume == result.total_material_volume
     assert restored_result.total_stock_pieces == result.total_stock_pieces
+
+
+def test_nesting_result_summary_output():
+    """Test the output format of the NestingResult summary property."""
+    stock = BeamStock(6000, (120, 60), spacing=5.0)
+    beam = Beam(frame=Frame.worldXY(), length=2000, width=120, height=60)
+    beam.name = "B1"
+    stock.add_element(beam)
+
+    result = NestingResult(stock)
+    summary = result.summary
+
+    assert "BeamStock_0:" in summary
+    assert "Dimensions(MM): 120.000x60.000x6000.000" in summary
+    assert "BeamKeys: ['B1-{}']".format(str(beam.guid)[:4]) in summary
+    assert "BeamLengths(MM): [2000.000]" in summary
+    assert "Waste(MM): 4000.000" in summary
+    assert "Spacing(MM): 5.000" in summary
+
+
+def test_nesting_result_properties():
+    """Test NestingResult summary properties."""
+    stock1 = BeamStock(6000, (120.000, 60.000))
+    stock2 = BeamStock(5000, (80.00, 40.00))
+    stock3 = BeamStock(6000, (120, 60))  # Duplicate stock type
+
+    beam1 = Beam(frame=Frame.worldXY(), length=3000, width=120, height=60)
+    beam2 = Beam(frame=Frame.worldXY(), length=2000, width=80, height=40)
+    beam3 = Beam(frame=Frame.worldXY(), length=1500, width=80, height=40)
+
+    stock1.add_element(beam1)
+    stock2.add_element(beam2)
+    stock2.add_element(beam3)
+
+    result = NestingResult([stock1, stock2, stock3])
+
+    # Test total_material_volume
+    expected_volume = (6000 * 120 * 60) + (5000 * 80 * 40) + (6000 * 120 * 60)
+    assert result.total_material_volume == expected_volume
+
+    # Test total_stock_pieces
+    stock_pieces = result.total_stock_pieces
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 120.000x60.000x6000.000"] == 2
+    assert stock_pieces["BeamStock"]["Dimensions(MM): 80.000x40.000x5000.000"] == 1
 
 
 def test_nesting_result_plate_utilization():

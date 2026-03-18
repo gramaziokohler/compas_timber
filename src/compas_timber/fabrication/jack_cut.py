@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
@@ -8,16 +7,14 @@ from compas.geometry import Plane
 from compas.geometry import Rotation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
-from compas.geometry import distance_point_point
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
-from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
@@ -42,6 +39,14 @@ class JackRafterCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "JackRafterCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "StartDepth": "start_depth",
+        "Angle": "angle",
+        "Inclination": "inclination",
+    }
 
     @property
     def __data__(self):
@@ -73,10 +78,6 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return JackRafterCutParams(self)
 
     @property
     def orientation(self):
@@ -167,12 +168,12 @@ class JackRafterCut(BTLxProcessing):
         start_depth = 0.0
         ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
-        orientation = cls._calculate_orientation(ref_side, plane)
+        orientation = cls._calculate_orientation(beam, plane)
         point_start_x = intersection_line_plane(ref_edge, plane)
         if point_start_x is None:
             raise ValueError("Plane does not intersect with beam.")
 
-        start_x = distance_point_point(ref_edge.point, point_start_x)
+        start_x = dot_vectors(Vector.from_start_end(ref_edge.point, point_start_x), ref_side.xaxis)
         angle = cls._calculate_angle(ref_side, plane, orientation)
         inclination = cls._calculate_inclination(ref_side, plane, orientation)
         return cls(orientation, start_x, start_y, start_depth, angle, inclination, ref_side_index=ref_side_index, **kwargs)
@@ -199,10 +200,13 @@ class JackRafterCut(BTLxProcessing):
         return cls.from_plane_and_beam(plane, element, **kwargs)
 
     @staticmethod
-    def _calculate_orientation(ref_side, cutting_plane):
+    def _calculate_orientation(beam, cutting_plane):
         # orientation is START if cutting plane normal points towards the start of the beam and END otherwise
         # essentially if the start is being cut or the end
-        if is_point_behind_plane(ref_side.point, cutting_plane):
+        dot = dot_vectors(beam.frame.xaxis, cutting_plane.normal)
+        if TOL.is_zero(dot):
+            raise ValueError("Plane is parallel to beam, no orientation could be identified.")
+        if dot > 0:
             return OrientationType.END
         else:
             return OrientationType.START
@@ -303,8 +307,8 @@ class JackRafterCut(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
@@ -316,38 +320,6 @@ class JackRafterCut(BTLxProcessing):
         self._start_x *= factor
         self._start_y *= factor
         self._start_depth *= factor
-
-
-class JackRafterCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Jack Rafter Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.JackRafterCut`
-        The instance of the Jack Rafter Cut feature.
-    """
-
-    def __init__(self, instance):
-        # type: (JackRafterCut) -> None
-        super(JackRafterCutParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Jack Rafter Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Jack Rafter Cut feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        return result
 
 
 class JackRafterCutProxy(object):
@@ -435,7 +407,6 @@ class JackRafterCutProxy(object):
 
         """
         # type: (Brep, Beam) -> Brep
-
         try:
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:

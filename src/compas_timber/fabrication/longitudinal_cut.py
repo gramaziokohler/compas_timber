@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Brep
 from compas.geometry import BrepTrimmingError
@@ -20,7 +19,6 @@ from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class LongitudinalCut(BTLxProcessing):
@@ -54,6 +52,18 @@ class LongitudinalCut(BTLxProcessing):
     """
 
     PROCESSING_NAME = "LongitudinalCut"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": "start_x",
+        "StartY": "start_y",
+        "Inclination": "inclination",
+        "StartLimited": "start_limited",
+        "EndLimited": "end_limited",
+        "Length": "length",
+        "DepthLimited": "depth_limited",
+        "Depth": "depth",
+        "AngleStart": "angle_start",
+        "AngleEnd": "angle_end",
+    }
 
     @property
     def __data__(self):
@@ -87,7 +97,7 @@ class LongitudinalCut(BTLxProcessing):
         tool_position=AlignmentType.LEFT,
         **kwargs
     ):
-        super(LongitudinalCut, self).__init__(**kwargs)
+        super(LongitudinalCut, self).__init__(tool_position=tool_position, **kwargs)
         self._start_x = None
         self._start_y = None
         self._inclination = None
@@ -98,7 +108,6 @@ class LongitudinalCut(BTLxProcessing):
         self._depth = None
         self._angle_start = None
         self._angle_end = None
-        self._tool_position = None
 
         self.start_x = start_x
         self.start_y = start_y
@@ -110,15 +119,10 @@ class LongitudinalCut(BTLxProcessing):
         self.depth = depth
         self.angle_start = angle_start
         self.angle_end = angle_end
-        self.tool_position = tool_position
 
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LongitudinalCutParams(self)
 
     @property
     def start_x(self):
@@ -303,8 +307,16 @@ class LongitudinalCut(BTLxProcessing):
             max_depth = start_y * math.tan(math.radians(inclination))
         else:
             max_depth = abs((width - start_y) * math.tan(math.radians(inclination)))
-        depth = max_depth if depth is None else depth
-        depth_limited = depth < max_depth
+
+
+        depth_limited = depth <= max_depth if depth is not None else False
+        depth = 0.0 if depth is None else depth
+
+        # calculate tool_position
+        if TOL.is_negative(plane.normal.dot(ref_side.yaxis)):
+            tool_position = AlignmentType.RIGHT
+        else:
+            tool_position = AlignmentType.LEFT
 
         return cls(
             start_x,
@@ -317,7 +329,7 @@ class LongitudinalCut(BTLxProcessing):
             depth,
             angle_start,
             angle_end,
-            tool_position=tool_position,
+            tool_position,
             ref_side_index=ref_side_index,
             **kwargs,
         )
@@ -502,50 +514,19 @@ class LongitudinalCut(BTLxProcessing):
             neg_vol.flip()
         return neg_vol
 
+    def scale(self, factor):
+        """Scale the machining parameters of the Longitudinal Cut feature.
 
-class LongitudinalCutParams(BTLxProcessingParams):
-    """A class to store the parameters of a Longitudinal Cut feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.LongitudinalCut`
-        The instance of the Longitudinal Cut feature.
-
-    """
-
-    def __init__(self, instance):
-        # type: (LongitudinalCut) -> None
-        super(LongitudinalCutParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Longitudinal Cut feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Longitudinal Cut feature as a dictionary.
+        Parameters
+        ----------
+        factor : float
+            The scale factor.
 
         """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["StartLimited"] = "yes" if self._instance.start_limited else "no"
-        result["EndLimited"] = "yes" if self._instance.end_limited else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["DepthLimited"] = "yes" if self._instance.depth_limited else "no"
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["AngleStart"] = "{:.{prec}f}".format(float(self._instance.angle_start), prec=TOL.precision)
-        result["AngleEnd"] = "{:.{prec}f}".format(float(self._instance.angle_end), prec=TOL.precision)
-        return result
-
-    @property
-    def header_attributes(self):
-        # Returns the header attributes for the Longitudinal Cut feature
-        attrs = super().header_attributes.copy()
-        attrs["ToolPosition"] = self._instance.tool_position
-        return attrs
+        self.start_x *= factor
+        self.start_y *= factor
+        self.length *= factor
+        self.depth *= factor
 
 
 class LongitudinalCutProxy(object):
@@ -584,7 +565,7 @@ class LongitudinalCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None):
+    def __init__(self, plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None, **kwargs):
         self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.start_x = start_x
@@ -595,6 +576,7 @@ class LongitudinalCutProxy(object):
         self.tool_position = tool_position
         self.ref_side_index = ref_side_index
         self._processing = None
+        self.kwargs = kwargs
 
     def unproxified(self):
         """Returns the unproxified processing instance.
@@ -617,6 +599,7 @@ class LongitudinalCutProxy(object):
                 self.angle_end,
                 self.tool_position,
                 self.ref_side_index,
+                **self.kwargs,
             )
         return self._processing
 
@@ -654,7 +637,7 @@ class LongitudinalCutProxy(object):
         """
         if isinstance(plane, Frame):
             plane = Plane.from_frame(plane)
-        return cls(plane, beam, start_x, length, depth, angle_start, angle_end, tool_position, ref_side_index)
+        return cls(plane, beam, start_x, length, depth, angle_start, angle_end, tool_position, ref_side_index, **kwargs)
 
     def apply(self, geometry, _):
         """Apply the feature to the beam geometry.
@@ -664,8 +647,6 @@ class LongitudinalCutProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to be cut.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is cut by this instance.
 
         Raises
         ------

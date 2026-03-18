@@ -41,7 +41,7 @@ def test_longitudinal_cut_from_plane_with_ref_side_index(tol):
     assert instance.end_limited is False
     assert tol.is_close(instance.length, 998.293)
     assert instance.depth_limited is False
-    assert tol.is_close(instance.depth, 55.601)
+    assert tol.is_close(instance.depth, 0.0)
     assert tol.is_close(instance.angle_start, 90.0)
     assert tol.is_close(instance.angle_end, 90.0)
     assert tol.is_close(instance.ref_side_index, 2)
@@ -70,7 +70,7 @@ def test_longitudinal_cut_from_plane_without_ref_side_index(tol):
     assert instance.end_limited is True
     assert tol.is_close(instance.length, 300.0)
     assert instance.depth_limited is False
-    assert tol.is_close(instance.depth, 41.349)
+    assert tol.is_close(instance.depth, 0.0)
     assert tol.is_close(instance.angle_start, 90.0)
     assert tol.is_close(instance.angle_end, 90.0)
     assert tol.is_close(instance.ref_side_index, 1)
@@ -99,7 +99,7 @@ def test_jack_rafter_cut_from_frame(tol):
     assert instance.end_limited is True
     assert tol.is_close(instance.length, 300.0)
     assert instance.depth_limited is False
-    assert tol.is_close(instance.depth, 41.349)
+    assert tol.is_close(instance.depth, 0.0)
     assert tol.is_close(instance.angle_start, 90.0)
     assert tol.is_close(instance.angle_end, 90.0)
     assert tol.is_close(instance.ref_side_index, 1)

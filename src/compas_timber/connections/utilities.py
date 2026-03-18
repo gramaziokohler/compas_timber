@@ -11,22 +11,14 @@ def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
 
     This is used to find a cutting plane when joining the two beams.
 
-    Compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new implementation system
-
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_b` are considered. Otherwise all ref_sides are considered.
-
-    Examples
-    --------
-    >>> ref_side_angles = Joint.beam_side_incidence(beam_a, beam_b)
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
-    >>> cutting_plane = beam_b.ref_sides[closest_ref_side_index]
 
     Returns
     -------
@@ -64,13 +56,11 @@ def beam_ref_side_incidence_cross(beam_a, beam_b, ignore_ends=True):
 
     This is used to find a cutting plane when joining the two beams.
 
-    Compared to beam_side_incidence, this function considers the ref_sides and not faces and forms part of the transition to the new implementation system
-
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
@@ -116,19 +106,12 @@ def beam_ref_side_incidence_with_vector(beam_a, vector, ignore_ends=True):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam for which ref_side angles will be calculated.
     vector : :class:`~compas.geometry.Vector`
         The vector to compare against the ref_sides' normals.
     ignore_ends : bool, optional
         If True, only the first four ref_sides of `beam_a` are considered. Otherwise all ref_sides are considered.
-
-    Examples
-    --------
-    >>> vector = Vector(1, 0, 0)
-    >>> ref_side_angles = Joint.ref_side_incidence_with_vector(beam_a, vector)
-    >>> closest_ref_side_index = min(ref_side_angles, key=ref_side_angles.get)
-    >>> cutting_plane = beam_a.ref_sides[closest_ref_side_index]
 
     Returns
     -------
@@ -154,9 +137,9 @@ def are_beams_aligned_with_cross_vector(beam_a, beam_b, tol=TOL):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam.
     tol : :class:`compas.tolerance.Tolerance`, optional
         The tolerance for the dot product comparison.
@@ -191,9 +174,9 @@ def point_centerline_towards_joint(beam_a, beam_b):
 
     Parameters
     ----------
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The beam that attaches with one of its ends to the side of beam_b.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The other beam.
 
     Returns

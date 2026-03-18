@@ -29,14 +29,14 @@ def find_neighboring_elements(elements, inflate_by=0.0):
 
     Parameters
     ----------
-    beams : list(:class:`~compas_timer.part.Beam`)
+    elements : list(:class:`~compas_timber.elements.Beam`)
         The list of beams in which neighboring beams should be identified.
     inflate_by : optional, float
         A value in design units by which the regarded bounding boxes should be inflated.
 
     Returns
     -------
-    list(set(:class:`~compas_timber.part.Beam`, :class:`~compas_timber.part.Beam`))
+    list(set(:class:`~compas_timber.elements.Beam`, :class:`~compas_timber.elements.Beam`))
 
     Notes
     -----
@@ -109,7 +109,7 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beams : list(:class:`~compas_timber.parts.Beam`)
+        beams : list(:class:`~compas_timber.elements.Beam`)
             A list of beam objects.
         rtree : bool
             When set to True R-tree will be used to search for neighboring beams.
@@ -119,7 +119,7 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
+        list(set(:class:`~compas_timber.elements.Beam`, :class:`~compas_timber.elements.Beam`))
             List containing sets or neightboring pairs beams.
 
         """
@@ -134,9 +134,9 @@ class ConnectionSolver(object):
 
         Parameters
         ----------
-        beam_a : :class:`~compas_timber.parts.Beam`
+        beam_a : :class:`~compas_timber.elements.Beam`
             First beam from intersecting pair.
-        beam_b : :class:`~compas_timber.parts.Beam`
+        beam_b : :class:`~compas_timber.elements.Beam`
             Second beam from intersecting pair.
         max_distance : float, optional
             Maximum distance, in design units, at which two beams are considered intersecting.
@@ -185,30 +185,6 @@ class ConnectionSolver(object):
         if b_end:
             return BeamSolverResult(JointTopology.TOPO_T, beam_b, beam_a, dist, location)
         return BeamSolverResult(JointTopology.TOPO_X, beam_a, beam_b, dist, location)
-
-    def find_wall_wall_topology(self, wall_a, wall_b, tol=TOLERANCE, max_distance=None):
-        """Calculates the topology of the intersection between two walls.
-
-        TODO: Passes-through to the beam topology calculation. This should be reworked.
-
-        Parameters
-        ----------
-        wall_a : :class:`~compas_timber.elements.Wall`
-            First potential intersecting wall.
-        wall_b : :class:`~compas_timber.elements.Wall`
-            Second potential intersecting wall.
-        tol : float
-            General tolerance to use for mathematical computations.
-        max_distance : float, optional
-            Maximum distance, in desigen units, at which two fs are considered intersecting.
-
-        Returns
-        -------
-        tuple(:class:`~compas_timber.connections.JointTopology`, :class:`~compas_timber.element.Wall`, :class:`~compas_timber.element.Wall`)
-
-        """
-        # TODO: make find topology more generic. break down to find_line_line_topo etc.
-        return self.find_topology(wall_a, wall_b, tol, max_distance)
 
 
 class PlateConnectionSolver(ConnectionSolver):
@@ -303,12 +279,10 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Parameters
         ----------
-        seg_a : :class:`~compas.geometry.Segment`
+        segment_a : :class:`~compas.geometry.Segment`
             The first segment.
-        seg_b : :class:`~compas.geometry.Segment`
+        segment_b : :class:`~compas.geometry.Segment`
             The second segment.
-        tol : float, optional
-            Tolerance for overlap check.
 
         Returns
         -------
@@ -357,9 +331,9 @@ class BeamSolverResult(Data):
     ----------
     topology : :class:`~compas_timber.connections.JointTopology`
         The topology of the intersection.
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam involved in the intersection.
     distance : float
         The distance between the closest points of the two beams.
@@ -370,9 +344,9 @@ class BeamSolverResult(Data):
     ----------
     topology : :class:`~compas_timber.connections.JointTopology`
         The topology of the intersection.
-    beam_a : :class:`~compas_timber.parts.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.parts.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The second beam involved in the intersection.
     distance : float
         The distance between the closest points of the two beams.

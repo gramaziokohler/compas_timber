@@ -16,7 +16,6 @@ from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
-from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
@@ -50,11 +49,6 @@ def namespaces():
     return {"d2m": "https://www.design2machine.com"}
 
 
-@pytest.fixture
-def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
-
-
 def test_btlx_file_history(resulting_btlx, namespaces):
     # Validate the FileHistory element
     file_history = resulting_btlx.find("d2m:FileHistory", namespaces)
@@ -86,10 +80,13 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
     assert len(part_elements) == len(test_model.beams)
 
     # Validate each Part element
-    for part, beam in zip(part_elements, test_model.beams):
+    for i, (part, beam) in enumerate(zip(part_elements, test_model.beams)):
         assert part.get("Length") == "{:.3f}".format(beam.blank_length)
         assert part.get("Height") == "{:.3f}".format(beam.height)
         assert part.get("Width") == "{:.3f}".format(beam.width)
+        assert part.get("OrderNumber") == str(i)
+        assert part.get("ElementNumber") == str(beam.guid)[:4]
+        assert part.get("Annotation") == f"{beam.name}-{str(beam.guid)[:4]}"
 
 
 def test_btlx_processings(resulting_btlx, test_model, namespaces):
@@ -164,19 +161,6 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
             assert resulting_processings == expected_processings
 
 
-def test_btlx_should_skip_feature():
-    writer = BTLxWriter()
-    model = TimberModel()
-    beam = Beam(Frame.worldXY(), 1000, 100, 100)
-    beam.add_features(CutFeature(Frame.worldXY()))
-    model.add_element(beam)
-
-    with pytest.warns():
-        result = writer.model_to_xml(model)
-
-    assert result is not None
-
-
 def test_float_formatting_of_param_dicts():
     test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
     params_dict = test_processing.params.as_dict()
@@ -191,26 +175,32 @@ def test_float_formatting_of_param_dicts():
 
 
 def test_processing_scaled_called_for_meter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "M"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="M", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     processing = JackRafterCut(OrientationType.END, 0.01, 0.02, 0.005, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
     model.add_element(beam)
 
     spy = mocker.spy(processing, "scaled")
-    writer.model_to_xml(model)
+    with pytest.warns(UserWarning, match="Model units are set to M and will auto-scale to mm for BTLx"):
+        writer.model_to_xml(model)
     spy.assert_called_once_with(1000.0)
 
 
 def test_processing_scaled_not_called_for_millimeter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "MM"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)
     processing = JackRafterCut(OrientationType.END, 10.0, 20.0, 5.0, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
     model.add_element(beam)
-
     spy = mocker.spy(processing, "scaled")
     writer.model_to_xml(model)
     spy.assert_not_called()
@@ -403,3 +393,27 @@ def test_btlx_rawpart_unique_functionalities():
     assert len(btlx_rawpart.part_refs) == 1
     assert btlx_rawpart.part_refs[0]["guid"] == test_guid
     assert btlx_rawpart.part_refs[0]["frame"] == test_frame
+
+
+def test_rawpart_attributes():
+    """Test that BTLxRawpart has correct attributes and GUID handling."""
+    stock = BeamStock(length=2000, cross_section=(100, 100))
+    # Assign a specific name to the stock for testing
+    stock.name = "TestStock"
+    rawpart = BTLxRawpart(stock, order_number=7)
+
+    # Check basic attributes
+    assert rawpart.length == 2000
+    assert rawpart.width == 100
+    assert rawpart.height == 100
+    assert rawpart.order_num == 7
+
+    # Check GUID generation and format
+    assert hasattr(rawpart, "part_guid")
+    assert isinstance(rawpart.part_guid, str)
+
+    # Check ElementNumber and Annotation
+    base_attr = rawpart.base_attr
+    assert base_attr["OrderNumber"] == "7"
+    assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
+    assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])
