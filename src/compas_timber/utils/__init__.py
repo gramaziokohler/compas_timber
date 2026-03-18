@@ -658,6 +658,15 @@ def combine_parallel_segments(polyline, tol=TOL):
             polyline.points.pop(i)
 
 
+def get_leaf_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_leaf_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_leaf_subclasses(subclass))
+    return subclasses
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -678,4 +687,5 @@ __all__ = [
     "polylines_from_brep_face",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
+    "get_leaf_subclasses",
 ]

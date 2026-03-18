@@ -5,20 +5,29 @@ from unittest.mock import patch
 from compas.data import json_load
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
+from compas.geometry import Point
+from compas.geometry import Polyline
 
 import xml.etree.ElementTree as ET
 
 import compas
 import compas_timber
+from compas_timber.btlx import BTLxReader
 from compas_timber.fabrication import BTLxWriter
 from compas_timber.fabrication import BTLxPart
 from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
+from compas_timber.fabrication import FreeContour
+from compas_timber.fabrication import Contour
+from compas_timber.fabrication import DualContour
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
+from compas_timber.errors import BTLxParsingError
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
+from compas.tolerance import TOL
 
 
 @pytest.fixture(scope="module")
@@ -86,7 +95,7 @@ def test_btlx_parts(resulting_btlx, test_model, namespaces):
         assert part.get("Width") == "{:.3f}".format(beam.width)
         assert part.get("OrderNumber") == str(i)
         assert part.get("ElementNumber") == str(beam.guid)[:4]
-        assert part.get("Annotation") == f"{beam.name}-{str(beam.guid)[:4]}"
+        assert part.get("Annotation") == f"{beam.name}"
 
 
 def test_btlx_processings(resulting_btlx, test_model, namespaces):
@@ -416,4 +425,475 @@ def test_rawpart_attributes():
     base_attr = rawpart.base_attr
     assert base_attr["OrderNumber"] == "7"
     assert base_attr["ElementNumber"] == rawpart.part_guid[:4]
-    assert base_attr["Annotation"] == "TestStock-{}".format(rawpart.part_guid[:4])
+    assert base_attr["Annotation"] == stock.name
+
+
+# =============================================================================
+# BTLxReader Tests
+# =============================================================================
+
+
+def test_btlx_model_roundtrip():
+    """Test that writing and reading produces equivalent model."""
+    # Create simple model
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    beam.name = "test_beam"
+    model.add_element(beam)
+
+    # Write to XML string
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    # Read back
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+    assert beam_read.name == "test_beam"
+    assert TOL.is_close(beam_read.length, 1000)
+    assert TOL.is_close(beam_read.width, 100)
+    assert TOL.is_close(beam_read.height, 120)
+    assert beam_read.guid == beam.guid
+
+
+def test_btlx_transformation_roundtrip():
+    """Test that BTLx read/write roundtrip preserves exact transformations."""
+    model = TimberModel()
+
+    # Create a beam with non-trivial orientation
+    beam_original = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam_original.name = "test_beam"
+    model.add_element(beam_original)
+
+    # Write to BTLx and read back
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify beam was read
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+
+    # Check dimensions
+    assert TOL.is_close(beam_original.length, beam_read.length)
+    assert TOL.is_close(beam_original.width, beam_read.width)
+    assert TOL.is_close(beam_original.height, beam_read.height)
+
+    # Check centerline frame (origin and axes)
+    assert TOL.is_allclose(beam_original.frame.point, beam_read.frame.point)
+    assert TOL.is_allclose(beam_original.frame.xaxis, beam_read.frame.xaxis)
+    assert TOL.is_allclose(beam_original.frame.yaxis, beam_read.frame.yaxis)
+
+    # Check ref_frame (BTLx reference frame) - this is what gets written to BTLx
+    # If centerline frame is preserved, ref_frame should also match
+    assert TOL.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
+    assert TOL.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
+
+
+def test_btlx_reader_beam_and_plate():
+    """Test that both Beam and Plate elements are correctly read."""
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    plate = Plate(Frame.worldXY(), length=2000, width=500, thickness=20)
+    beam.name = "my_beam"
+    plate.name = "my_plate"
+    model.add_element(beam)
+    model.add_element(plate)
+
+    # Roundtrip
+    xml_string = BTLxWriter().model_to_xml(model)
+    model_read = BTLxReader().xml_to_model(xml_string)
+
+    # Verify counts and types
+    assert len(model_read.beams) == 1
+    assert len(model_read.plates) == 1
+    assert model_read.beams[0].name == "my_beam"
+    assert model_read.plates[0].name == "my_plate"
+
+
+def test_btlx_reader_with_processings():
+    """Test that a BTLx file with processings is read correctly."""
+    # 1. Create a model with a beam and a feature
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    beam.name = "beam_with_cut"
+
+    original_feature = JackRafterCut(orientation=OrientationType.END, start_x=50.0, start_y=10.0, start_depth=20.0, angle=45.0, inclination=30.0)
+    beam.features.append(original_feature)
+    model.add_element(beam)
+
+    # 2. Write to XML string
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    # 3. Read back
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # 4. Assertions
+    assert len(model_read.beams) == 1
+    beam_read = model_read.beams[0]
+    assert beam_read.name == "beam_with_cut"
+
+    assert len(beam_read.features) == 1
+    feature_read = beam_read.features[0]
+
+    assert isinstance(feature_read, JackRafterCut)
+
+    # Workaround for comparing float values with tolerance
+    assert feature_read.orientation == original_feature.orientation
+    assert TOL.is_close(feature_read.start_x, original_feature.start_x)
+    assert TOL.is_close(feature_read.start_y, original_feature.start_y)
+    assert TOL.is_close(feature_read.start_depth, original_feature.start_depth)
+    assert TOL.is_close(feature_read.angle, original_feature.angle)
+    assert TOL.is_close(feature_read.inclination, original_feature.inclination)
+
+
+@pytest.mark.parametrize(
+    "dimensions, expected_type",
+    [
+        ((100, 100, 5000), "Beam"),  # Classic beam
+        ((5000, 100, 100), "Beam"),  # Classic beam, different order
+        ((100, 5000, 100), "Beam"),  # Classic beam, different order
+        ((2000, 1000, 50), "Plate"),  # Classic plate
+        ((50, 2000, 1000), "Plate"),  # Classic plate, different order
+        ((1000, 50, 2000), "Plate"),  # Classic plate, different order
+        ((1000, 800, 600), "Beam"),  # Chunky beam, fails plate criteria
+        ((300, 300, 300), "Beam"),  # A cube, defaults to beam
+        ((3000, 650, 200), "Beam"),  # Closer ratio, but still a beam (3000/650 < 5)
+        ((3000, 700, 100), "Plate"),  # d1/d2 < 5 and d2/d3 > 5
+    ],
+)
+def test_infer_element_type(dimensions, expected_type):
+    """Test the logic for inferring element type from dimensions."""
+    reader = BTLxReader()
+    width, height, length = dimensions
+    element_type = reader._infer_element_type(width, height, length)
+    assert element_type == expected_type
+
+
+def test_btlx_reader_full_file(test_model):
+    """Test that a full BTLx file is read correctly and matches a reference model."""
+    btlx_path = os.path.join(compas_timber.DATA, "model_test.btlx")
+    reader = BTLxReader()
+    model_read = reader.read(btlx_path)
+
+    assert isinstance(model_read, TimberModel)
+    assert len(model_read.beams) == len(test_model.beams)
+
+    # Create a dictionary for the original beams for easy lookup
+    original_beams_map = {str(beam.guid): beam for beam in test_model.beams}
+
+    # Check for parsing errors
+    assert reader.errors == [], f"Errors encountered during BTLx reading: {reader.errors}"
+
+    # Check properties of each read beam against its original counterpart
+    for beam_read in model_read.beams:
+        beam_original = original_beams_map.get(str(beam_read.guid))
+        assert beam_original is not None, f"Beam with GUID {beam_read.guid} not found in original model."
+
+        # assert beam_read.name == beam_original.name
+        assert TOL.is_close(beam_read.length, beam_original.blank_length)
+        assert TOL.is_close(beam_read.width, beam_original.width)
+        assert TOL.is_close(beam_read.height, beam_original.height)
+        assert beam_read.guid == beam_original.guid
+
+        # Check that processings were created
+        assert len(beam_read.features) == len(beam_original.features)
+
+
+def test_btlx_reader_free_contour_with_simple_contour_roundtrip():
+    """Test that FreeContour with simple Contour parameters survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+    plate.name = "test_plate"
+
+    # Create FreeContour with simple Contour (single inclination)
+    polyline = Polyline([Point(10, 10, 0), Point(490, 10, 0), Point(490, 490, 0), Point(10, 490, 0), Point(10, 10, 0)])
+    contour = Contour(polyline=polyline, depth=15.0, depth_bounded=True, inclination=[45.0])
+    free_contour = FreeContour(contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Write to BTLx and read back
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify no parsing errors
+    assert len(reader.errors) == 0, f"Errors encountered during BTLx reading: {reader.errors}"
+
+    # Verify plate was read
+    assert len(model_read.plates) == 1
+    plate_read = model_read.plates[0]
+    assert plate_read.name == "test_plate"
+
+    # Verify features were read (plate will have outline + our added feature = 2 total)
+    # But we only added 1 feature to the original plate, so after roundtrip we expect that same feature count
+    assert len(plate_read.features) >= 1
+
+    # Find the feature we added (it should be the last one or one with matching depth)
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, Contour):
+            if TOL.is_close(f.contour_param_object.depth, 15.0):
+                feature_read = f
+                break
+
+    assert feature_read is not None, "Could not find the FreeContour with depth 15.0"
+
+    # Verify Contour parameter object
+    assert isinstance(feature_read.contour_param_object, Contour)
+    assert TOL.is_close(feature_read.contour_param_object.depth, 15.0)
+    assert feature_read.contour_param_object.depth_bounded is True
+    assert len(feature_read.contour_param_object.inclination) == 4  # 4 segments in closed polyline
+    assert TOL.is_close(feature_read.contour_param_object.inclination[0], 45.0)
+
+
+def test_btlx_reader_free_contour_with_multiple_inclinations_roundtrip():
+    """Test that FreeContour with per-segment inclinations survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+
+    # Create FreeContour with per-segment inclinations
+    polyline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 100, 0), Point(0, 100, 0), Point(0, 0, 0)])
+    contour = Contour(polyline=polyline, depth=10.0, depth_bounded=True, inclination=[30.0, 45.0, 60.0, 90.0])
+    free_contour = FreeContour(contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    plate_read = model_read.plates[0]
+
+    # Find the feature with per-segment inclinations
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, Contour):
+            if len(f.contour_param_object.inclination) == 4:
+                # Check if inclinations match
+                incl = f.contour_param_object.inclination
+                if TOL.is_close(incl[0], 30.0) and TOL.is_close(incl[1], 45.0):
+                    feature_read = f
+                    break
+
+    assert feature_read is not None, "Could not find FreeContour with per-segment inclinations"
+
+    # Verify per-segment inclinations preserved
+    inclinations_read = feature_read.contour_param_object.inclination
+    assert len(inclinations_read) == 4
+    assert TOL.is_close(inclinations_read[0], 30.0)
+    assert TOL.is_close(inclinations_read[1], 45.0)
+    assert TOL.is_close(inclinations_read[2], 60.0)
+    assert TOL.is_close(inclinations_read[3], 90.0)
+
+
+def test_btlx_reader_free_contour_with_dual_contour_roundtrip():
+    """Test that FreeContour with DualContour parameters survives roundtrip."""
+    model = TimberModel()
+
+    # Create a plate
+    plate = Plate(Frame.worldXY(), length=1000, width=500, thickness=20)
+
+    # Create FreeContour with DualContour
+    principal = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 100, 0), Point(0, 100, 0), Point(0, 0, 0)])
+    associated = Polyline([Point(10, 10, 10), Point(90, 10, 10), Point(90, 90, 10), Point(10, 90, 10), Point(10, 10, 10)])
+    dual_contour = DualContour(principal, associated)
+    free_contour = FreeContour(dual_contour)
+    plate.add_features(free_contour)
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    plate_read = model_read.plates[0]
+
+    # Find the DualContour feature
+    feature_read = None
+    for f in plate_read.features:
+        if isinstance(f, FreeContour) and isinstance(f.contour_param_object, DualContour):
+            feature_read = f
+            break
+
+    assert feature_read is not None, "Could not find FreeContour with DualContour"
+    assert isinstance(feature_read, FreeContour)
+    assert isinstance(feature_read.contour_param_object, DualContour)
+
+    # Verify both contours preserved
+    dual_read = feature_read.contour_param_object
+    assert TOL.is_allclose(dual_read.principal_contour.points, principal.points)
+    assert TOL.is_allclose(dual_read.associated_contour.points, associated.points)
+
+
+def test_btlx_reader_error_handling_malformed_xml():
+    """Test that malformed XML raises appropriate error."""
+    reader = BTLxReader()
+    malformed_xml = "<?xml version='1.0'?><BTLx>"  # No closing tag
+
+    with pytest.raises(ET.ParseError):
+        reader.xml_to_model(malformed_xml)
+
+
+def test_btlx_reader_error_handling_missing_project():
+    """Test that missing Project element raises ValueError."""
+    reader = BTLxReader()
+    xml_without_project = '<?xml version="1.0"?><BTLx xmlns="https://www.design2machine.com"></BTLx>'
+
+    with pytest.raises(ValueError, match="No Project element found"):
+        reader.xml_to_model(xml_without_project)
+
+
+def test_btlx_reader_error_handling_unsupported_processing():
+    """Test that unsupported processing types are logged to errors."""
+    reader = BTLxReader()
+    xml_with_unknown = """<?xml version="1.0"?>
+    <BTLx xmlns="https://www.design2machine.com">
+      <Project Name="Test">
+        <Parts>
+          <Part Length="1000.000" Width="100.000" Height="100.000" OrderNumber="1" ElementNumber="test" Annotation="test">
+            <Transformations>
+              <Transformation GUID="{12345678-1234-1234-1234-123456789ABC}">
+                <Position>
+                  <ReferencePoint X="0" Y="0" Z="0"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="1" Z="0"/>
+                </Position>
+              </Transformation>
+            </Transformations>
+            <Processings>
+              <UnknownProcessing>
+                <SomeParameter>value</SomeParameter>
+              </UnknownProcessing>
+            </Processings>
+          </Part>
+        </Parts>
+      </Project>
+    </BTLx>"""
+
+    with pytest.warns(UserWarning, match="1 error"):
+        model = reader.xml_to_model(xml_with_unknown)
+
+    # Model should be created successfully (non-fatal error)
+    assert isinstance(model, TimberModel)
+    assert len(model.beams) == 1
+
+    # But error should be logged
+    assert len(reader.errors) == 1
+    assert isinstance(reader.errors[0], BTLxParsingError)
+    assert reader.errors[0].processing_type == "UnknownProcessing"
+    assert "Unsupported processing type" in reader.errors[0].message
+
+
+def test_btlx_reader_plate_multiple_features_roundtrip():
+    """Test plate with both outline FreeContour and aperture features."""
+    model = TimberModel()
+
+    # Create a plate with outline contour
+    plate_polyline = Polyline([Point(0, 0, 0), Point(1000, 0, 0), Point(1000, 500, 0), Point(0, 500, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(plate_polyline, 20.0)
+    plate.name = "plate_with_aperture"
+
+    # Add aperture contour
+    aperture_polyline = Polyline([Point(200, 100, 0), Point(800, 100, 0), Point(800, 400, 0), Point(200, 400, 0), Point(200, 100, 0)])
+    aperture_contour = Contour(polyline=aperture_polyline, depth=10.0, depth_bounded=True, inclination=[90.0])
+    aperture_feature = FreeContour(aperture_contour, counter_sink=True)
+    plate.add_features(aperture_feature)
+
+    model.add_element(plate)
+
+    # Roundtrip
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    # Verify
+    assert len(reader.errors) == 0
+    assert len(model_read.plates) == 1
+    plate_read = model_read.plates[0]
+
+    # Note: Plates auto-generate an outline feature from outline_a/outline_b,
+    # and the BTLx includes all features that were written (outline + aperture).
+    # So we'll have: auto-generated outline + written outline + written aperture = 3 features
+    # We just need to verify the aperture feature is present and correct
+    assert len(plate_read.features) >= 2
+
+    # All should be FreeContour instances
+    assert all(isinstance(f, FreeContour) for f in plate_read.features)
+
+    # Find the aperture (counter_sink=True)
+    aperture_read = None
+    for f in plate_read.features:
+        if f.counter_sink:
+            aperture_read = f
+            break
+
+    assert aperture_read is not None, "Could not find aperture with counter_sink=True"
+    assert aperture_read.counter_sink is True
+
+
+def test_btlx_reader_processing_instantiation_error():
+    """Test that out-of-range processing parameters log errors but don't crash."""
+    reader = BTLxReader()
+
+    # Angle=200.0 is out of range (must be 0.1..179.9), which triggers ValueError in the setter
+    xml_with_bad_processing = """<?xml version="1.0"?>
+    <BTLx xmlns="https://www.design2machine.com">
+      <Project Name="Test">
+        <Parts>
+          <Part Length="1000.000" Width="100.000" Height="100.000" OrderNumber="1" ElementNumber="test" Annotation="test">
+            <Transformations>
+              <Transformation GUID="{12345678-1234-1234-1234-123456789ABC}">
+                <Position>
+                  <ReferencePoint X="0" Y="0" Z="0"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="1" Z="0"/>
+                </Position>
+              </Transformation>
+            </Transformations>
+            <Processings>
+              <JackRafterCut Orientation="start" ReferencePlaneID="1">
+                <StartX>10.000</StartX>
+                <StartY>20.000</StartY>
+                <Angle>200.000</Angle>
+                <Inclination>90.000</Inclination>
+              </JackRafterCut>
+            </Processings>
+          </Part>
+        </Parts>
+      </Project>
+    </BTLx>"""
+
+    with pytest.warns(UserWarning):
+        model = reader.xml_to_model(xml_with_bad_processing)
+
+    # Model should still be created (non-fatal error)
+    assert isinstance(model, TimberModel)
+    assert len(model.beams) == 1
+
+    # Error should be logged
+    assert len(reader.errors) > 0
+    # Error should reference the JackRafterCut processing type
+    assert any("JackRafterCut" in (e.processing_type or "") for e in reader.errors)
