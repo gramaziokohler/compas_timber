@@ -329,6 +329,8 @@ class PlateStock(Stock):
         self._skyline = Polyline([[0, 0, 0], [self.dimensions[0], 0, 0]])  # setup skyline for nesting algorithms
         self.placement_data = {}  # {guid: Frame} raw XY placement frames for visualization/debug
         self._used_area = 0.0  # explicit area accounting for robust utilization reporting
+        self._used_max_x = 0.0  # tracked used envelope extent along X for skyline scoring
+        self._used_max_y = 0.0  # tracked used envelope extent along Y for skyline scoring
 
     @property
     def __data__(self):
@@ -435,9 +437,8 @@ class PlateStock(Stock):
         # Raw placement frame in XY nesting coordinates.
         placement_frame = Frame.from_transformation(transformation)
 
-        # Transform the plate local outline to placement position.
-        # `Plate` guarantees `local_outlines`; `local_outline_a` may not exist in all versions.
-        plate_outline = plate.local_outlines[0].transformed(transformation)
+        # Transform current local outline to placement position.
+        plate_outline = plate.plate_geometry.outline_a.transformed(transformation)
 
         # Convert Polyline -> Polygon for robust 2D containment/boolean operations.
         outline_points = plate_outline.points
@@ -460,7 +461,10 @@ class PlateStock(Stock):
                 self._remaining_boundary = max(polygons, key=lambda p: p.area)
 
         # Store BTLx-oriented frame for export in element_data.
-        self.element_data[str(plate.guid)] = self._to_btlx_partref_frame(placement_frame)
+        self.element_data[str(plate.guid)] = NestedElementData(
+            frame=self._to_btlx_partref_frame(placement_frame),
+            key=plate.name + "-" + str(plate.guid)[:4],
+        )
         # Preserve raw placement frame for Rhino-side visualization/debug.
         self.placement_data[str(plate.guid)] = placement_frame
         # Track used area directly because boolean remaining boundaries can degrade
@@ -1122,9 +1126,9 @@ class PlateNester(object):
         best = None
         segments = cls._skyline_segments(stock_piece)
 
-        skyline_points = stock_piece._skyline.points
-        current_max_x = max(pt.x for pt in skyline_points)
-        current_max_y = max(pt.y for pt in skyline_points)
+        # lightweight state tracking for fast fit scoring.
+        current_max_x = getattr(stock_piece, "_used_max_x", 0.0)
+        current_max_y = getattr(stock_piece, "_used_max_y", 0.0)
 
         for plate_width, plate_height, rotated in orientations:
             footprint_w = plate_width + spacing
@@ -1362,6 +1366,10 @@ class PlateNester(object):
         x = position.x
         x2 = x + plate_width
         new_y = position.y + plate_height
+
+        # Keep compact used-envelope state for candidate scoring.
+        stock._used_max_x = max(getattr(stock, "_used_max_x", 0.0), x2)
+        stock._used_max_y = max(getattr(stock, "_used_max_y", 0.0), new_y)
 
         old_segments = cls._skyline_segments(stock)
         new_segments = []
