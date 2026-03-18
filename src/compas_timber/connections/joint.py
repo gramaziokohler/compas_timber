@@ -3,10 +3,41 @@ from itertools import combinations
 from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
+from compas_timber.utils import distance_segment_segment_points
 
 from .solver import JointTopology
+
+
+def location_from_centerlines(beams):
+    """Compute the approximate joint location from two beam centerlines.
+
+    Returns the closest point between the two centerlines, or the midpoint
+    between them when the beams are skew (non-intersecting).
+
+    Parameters
+    ----------
+    beams : list(:class:`~compas_timber.elements.Beam`)
+        A list of two beams for which to calculate the joint location.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Point`
+
+    """
+    if len(beams) != 2:
+        raise ValueError(
+            "Automatic location calculation only works for joints connecting 2 elements. "
+            "Please set the location manually or implement a custom location calculation for your joint type."
+        )
+    beam_a, beam_b = beams
+    distance, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+    point_a, point_b = Point(*point_a), Point(*point_b)
+    if not TOL.is_zero(distance):
+        return (point_a + point_b) / 2.0
+    return point_a
 
 
 class Joint(Data):
@@ -69,7 +100,7 @@ class Joint(Data):
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name, "element_guids": self.element_guids}
+        return {"name": self.name, "topology": self._topology, "location": self._location, "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -92,11 +123,16 @@ class Joint(Data):
 
     @topology.setter
     def topology(self, value):
-        """Set the topology of the joint."""
-        self._topology = value
+        self._topology = value or JointTopology.TOPO_UNKNOWN
 
     @property
     def location(self):
+        if self._location is None and all(self.elements):
+            self._location = location_from_centerlines(self.elements)
+
+        if self._location is None:
+            raise ValueError("Location of the joint could not be determined. Please set it manually.")
+
         return self._location
 
     @location.setter

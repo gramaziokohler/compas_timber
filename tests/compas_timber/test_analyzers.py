@@ -5,13 +5,13 @@ from unittest.mock import Mock
 from compas.geometry import Point
 from compas.geometry import Line
 
-from compas_timber.connections import NBeamKDTreeAnalyzer
-from compas_timber.connections import CompositeAnalyzer
-from compas_timber.connections import QuadAnalyzer
-from compas_timber.connections import TripletAnalyzer
+from compas_timber.analyzers import NBeamKDTreeAnalyzer
+from compas_timber.analyzers import CompositeAnalyzer
+from compas_timber.analyzers import QuadAnalyzer
+from compas_timber.analyzers import TripletAnalyzer
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
-from compas_timber.connections.analyzers import Cluster
+from compas_timber.analyzers import Cluster
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 

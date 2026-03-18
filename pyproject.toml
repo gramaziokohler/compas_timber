@@ -45,18 +45,15 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "bump-my-version",
-    "compas_invocations2",
+    "compas_invocations2[mkdocs]>=1.0.2",
     "invoke >=0.14",
     "ruff",
-    "sphinx_compas2_theme",
-    "sphinxcontrib-mermaid",
     "twine",
     "wheel",
     "pytest-mock",
     "pytest>=8.0",
     "build",
     "tomlkit",
-    "compas_viewer",
     "pytest-cov",
     "pytest-randomly",
     "pre-commit",
@@ -99,7 +96,7 @@ where = ["src"]
 # ============================================================================
 
 [tool.bumpversion]
-current_version = "2.0.0-dev0"
+current_version = "2.1.1-dev0"
 message = "Bump version to {new_version}"
 commit = true
 tag = true

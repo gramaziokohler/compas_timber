@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 
+from compas.geometry import Point
 from compas.geometry import dot_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -26,6 +27,8 @@ class PlateJoint(Joint, ABC):
         The index of the segment in plate_a's outline where the plates are connected.
     b_segment_index : int
         The index of the segment in plate_b's outline where the plates are connected.
+    location : :class:`compas.geometry.Point`, optional
+        The location of the joint. If not provided, defaults to the origin.
     **kwargs : dict, optional
         Additional keyword arguments to pass to the parent class.
 
@@ -98,6 +101,16 @@ class PlateJoint(Joint, ABC):
         if self._reverse_b_planes:
             return (self.plate_b.outlines[1], self.plate_b.outlines[0])
         return (self.plate_b.outlines[0], self.plate_b.outlines[1])
+
+    @property
+    def location(self):
+        if self._location is None:
+            self._location = Point(0, 0, 0)
+        return self._location
+
+    @location.setter
+    def location(self, value):
+        self._location = value
 
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""

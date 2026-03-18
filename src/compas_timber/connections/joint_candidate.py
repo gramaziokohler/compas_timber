@@ -5,7 +5,7 @@ from .plate_joint import PlateJoint
 class JointCandidate(Joint):
     """A JointCandidate is an information-only joint, which does not add any features to the elements it connects.
 
-    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
+    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.analyzers.BeamGroupAnalyzer`.
 
     Please use `JointCandidate.create()` to properly create an instance of this class and associate it with an model.
 
@@ -42,7 +42,7 @@ class JointCandidate(Joint):
 class PlateJointCandidate(PlateJoint):
     """A PlateJointCandidate is an information-only joint for plate connections.
 
-    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.connections.analyzers.BeamGroupAnalyzer`.
+    It is used to create a first-pass joinery information which can be later used to perform analysis using :class:`~compas_timber.analyzers.BeamGroupAnalyzer`.
 
     Parameters
     ----------
