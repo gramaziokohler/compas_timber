@@ -34,13 +34,9 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
-from .analyzers import NBeamKDTreeAnalyzer
-from .analyzers import TripletAnalyzer
-from .analyzers import QuadAnalyzer
-from .analyzers import CompositeAnalyzer
 from .analyzers import Cluster
-from .analyzers import BeamGroupAnalyzer
-from .analyzers import MaxNCompositeAnalyzer
+from .analyzers import get_clusters_from_model
+
 
 __all__ = [
     "Joint",
@@ -80,11 +76,6 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
-    "NBeamKDTreeAnalyzer",
-    "TripletAnalyzer",
-    "QuadAnalyzer",
-    "CompositeAnalyzer",
     "Cluster",
-    "BeamGroupAnalyzer",
-    "MaxNCompositeAnalyzer",
+    "get_clusters_from_model",
 ]

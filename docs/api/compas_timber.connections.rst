@@ -56,12 +56,6 @@ Solvers
     ConnectionSolver
     JointTopology
     Cluster
-    BeamGroupAnalyzer
-    NBeamKDTreeAnalyzer
-    TripletAnalyzer
-    QuadAnalyzer
-    CompositeAnalyzer
-    MaxNCompositeAnalyzer
 
 Functions
 =========

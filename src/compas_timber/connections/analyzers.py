@@ -1,7 +1,5 @@
-import math
-from weakref import WeakKeyDictionary
 from collections import defaultdict
-
+from weakref import WeakKeyDictionary
 
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -13,7 +11,7 @@ from compas_timber.model import TimberModel
 
 
 class Cluster(object):
-    """One result of an analyzer, groups together the clustered joints and offers access to the beams
+    """Groups together the clustered joints and offers access to the beams
 
     Parameters
     ----------
@@ -72,14 +70,6 @@ class Cluster(object):
         return JointTopology.TOPO_Y
 
 
-class BeamGroupAnalyzer(object):
-    """Interface for a beam group analyzer."""
-
-    def find(self, exclude=None):
-        """Finds clusters of beams connected pairwise at the same point within a given max_distance."""
-        raise NotImplementedError
-
-
 class _CacheEntry(object):
     def __init__(self, fingerprint: frozenset, joints: list, tree: KDTree) -> None:
         self.fingerprint = fingerprint
@@ -131,175 +121,14 @@ class _KDTreeCache(object):
         return entry.joints, entry.tree
 
 
-class NBeamKDTreeAnalyzer(BeamGroupAnalyzer):
-    """Finds clusters of N beams connected pairwise at the same point within a given max_distance.
+def get_clusters_from_model(model, max_distance=None, exclude=None):
+    """Gets a sorted list of Cluster objects from a model's JointCandidates
+    run model.connect_adjacent_beams() first to populate the model's joint_candidates
 
     Parameters
     ----------
     model : :class:`~compas_timber.model.TimberModel`
-        The TimberModel to analyze.
-    n : int
-        The desired cluster size, i.e. the number of beams in a cluster.
-    max_distance : float | None
-        The max distance to use for the analysis. If None, a default max distance is used.
-    """
-
-    def __init__(self, model, n=2, max_distance=None):
-        super(NBeamKDTreeAnalyzer, self).__init__()
-        joints = list(model.joint_candidates)
-        if not joints:
-            raise ValueError("The model has no joint candidates to analyze. Forgot to call `model.connect_adjacent_beams()`?")
-
-        self._joints, self._kdtree = _KDTreeCache.get(model, joints)
-        self._n = n
-        self.max_distance = max_distance or TOL.absolute
-        # TODO: add parameter to specify groupwise clustering, i.e only look at joints of elements within the same group
-
-    def find(self, exclude=None):
-        """Finds clusters of N beams connected pairwise at the same point within a given tolerance.
-
-        Parameters
-        ----------
-        exclude : set[:class:`~compas_timber.connections.Joint`] | None
-            A set of joints to exclude from the analysis. Defaults to None.
-
-        Returns
-        -------
-        clusters : list[:class:`Cluster`]
-            A list of clusters found in the model. Each cluster contains joints that are connected pairwise at the same point.
-        """
-        # type: (set[compas_timber.connections.Joint] | None) -> list[Cluster]
-        exclude = exclude or set()  # TODO: uuid clusters so that they can be excluded
-        visited = set()
-        neighbors_count = math.comb(self._n, 2) + 1  # +1 for the joint itself
-        clusters = []
-
-        for index, joint in enumerate(self._joints):
-            if index in visited or joint in exclude:
-                continue
-
-            result = []
-            result.append(joint)
-            visited.add(index)
-
-            neighbors = self._kdtree.nearest_neighbors(joint.location, neighbors_count, distance_sort=True)
-            for _, idx, distance in neighbors:
-                if idx is None or idx in visited or distance > self.max_distance or idx == index:
-                    continue
-
-                n_joint = self._joints[idx]
-
-                result.append(n_joint)
-                visited.add(idx)
-
-            # TODO: should we take triplets from e.g. quads as well? AKA clusters.append(result[:self._n])
-            if len(result) == neighbors_count - 1:
-                clusters.append(Cluster(result))
-
-        return clusters
-
-
-def TripletAnalyzer(model, max_distance=None):
-    """Finds clusters of 3 beams connected pairwise at the same point within a given max_distance."""
-    # type: (compas_timber.model.TimberModel, float | None) -> BeamGroupAnalyzer
-    return NBeamKDTreeAnalyzer(model, n=3, max_distance=max_distance)
-
-
-def QuadAnalyzer(model, max_distance=None):
-    """Finds clusters of 4 beams connected pairwise at the same point within a given max_distance."""
-    # type: (compas_timber.model.TimberModel, float | None) -> BeamGroupAnalyzer
-    return NBeamKDTreeAnalyzer(model, n=4, max_distance=max_distance)
-
-
-class CompositeAnalyzer:
-    """CompositeAnalyzer combines multiple analyzers to find clusters of beams.
-
-    Parameters
-    ----------
-    analyzers : list[BeamGroupAnalyzer]
-        A list of analyzers to use for finding clusters.
-
-    Notes
-    -----
-    Prefer using :meth:`CompositeAnalyzer.from_model` to create an instance, to avoid error-prone manual instantiation.
-    Element pairs handled by a previous analyzer will be excluded from subsequent analyzers.
-
-    """
-
-    def __init__(self, analyzers):
-        self._analyzers = analyzers
-
-    def find(self, exclude=None):
-        """Finds clusters of beams using all analyzers in the composite.
-
-        Parameters
-        ----------
-        exclude : set[:class:`~compas_timber.connections.Joint`] | None
-            A set of joints to exclude from the analysis. Defaults to None.
-        """
-        exclude = exclude or set()
-        results = []
-
-        for analyzer in self._analyzers:
-            clusters = analyzer.find(exclude=exclude)
-            for cluster in clusters:
-                exclude.update(cluster.joints)
-            results.extend(clusters)
-
-        return results
-
-    @classmethod
-    def from_model(cls, model, analyzers_cls, max_distance=None):
-        """Create a CompositeAnalyzer from a TimberModel and a list of analyzers.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The TimberModel to analyze.
-        analyzers_cls : list[type[BeamGroupAnalyzer]] | type[BeamGroupAnalyzer]
-            A list of analyzer classes to use for finding clusters.
-        max_distance : float | None
-            The max distance to use for the analysis. If None, a default max distance is used.
-
-        Returns
-        -------
-        CompositeAnalyzer
-            An instance of CompositeAnalyzer with the specified analyzers.
-        """
-        if not isinstance(analyzers_cls, list):
-            analyzers_cls = [analyzers_cls]
-        return cls([analyzer(model, max_distance=max_distance) for analyzer in analyzers_cls])
-
-
-def MaxNCompositeAnalyzer(model, n, max_distance=None):
-    """Finds clusters of up to n beams (minimum 2), preferring larger clusters first.
-
-    Parameters
-    ----------
-    model : :class:`~compas_timber.model.TimberModel`
-        The TimberModel to analyze.
-    n : int
-        The maximum cluster size.
-    tolerance : :class:`~compas.tolerance.Tolerance` | None
-        The tolerance to use for the analysis. If None, a default tolerance is used.
-
-    Returns
-    -------
-    CompositeAnalyzer
-        An instance of CompositeAnalyzer that finds clusters of size n down to 2.
-    """
-    # All analyzers share the same KDTree automatically via the class-level cache keyed on model
-    max_cluster_size = max(n, 2)
-    return CompositeAnalyzer([NBeamKDTreeAnalyzer(model, n=k, max_distance=max_distance) for k in range(max_cluster_size, 1, -1)])
-
-
-def find_all_clusters(joints, max_distance=None, exclude=None):
-    """Cluster joints by location using scipy KDTree.
-
-    Parameters
-    ----------
-    joints : list[Joint]
-        All joints to consider.
+        TimberModel whose joint_candidates should be clustered.
     max_distance : float
         Maximum distance between joints to be considered co-located.
     exclude : set[Joint] | None
@@ -313,50 +142,43 @@ def find_all_clusters(joints, max_distance=None, exclude=None):
 
     max_distance = max_distance or TOL.absolute
     exclude = exclude or set()
-    active_joints = [joint for joint in joints if joint not in exclude]
-
+    active_joints = [joint for joint in model.joint_candidates if joint not in exclude]
+    active_joints.sort(key=lambda j: j.location[0])  # ensure a deterministic order for caching and testing)
     if not active_joints:
         return []
 
     kd_tree = KDTree([j.location for j in active_joints])
 
     # Get all pairs of joints whose distance is within max_distance.
-    # TODO: upstream to compas.geometry.KDTree and kd_tree.query_pairs(max_distance) 
-    joint_pairs = kd_tree.query_pairs(max_distance)
+    # TODO: upstream to compas.geometry.KDTree and kd_tree.query_pairs(max_distance)
 
     # Each joint starts as its own cluster, represented by its own index as root.
-    cluster_root = list(range(len(active_joints)))
+    cluster_index_per_joint = list(range(len(active_joints)))
 
-    def get_root(joint_index):
-        """Walk up the parent chain to find the root representative of this joint's cluster.
-        Path compression flattens the chain on the way back, keeping future lookups fast."""
-        while cluster_root[joint_index] != joint_index:
-            # Path compression: skip one level up to flatten the tree
-            cluster_root[joint_index] = cluster_root[cluster_root[joint_index]]
-            joint_index = cluster_root[joint_index]
+    def get_cluster_index(joint_index):
+
+        while cluster_index_per_joint[joint_index] != joint_index:
+            # set this joint's cluster index to the cluster it points to.
+            cluster_index_per_joint[joint_index] = cluster_index_per_joint[cluster_index_per_joint[joint_index]]
+            joint_index = cluster_index_per_joint[joint_index]
         return joint_index
 
     def merge_clusters(joint_index_a, joint_index_b):
-        """Merge the clusters of two joints by pointing one root at the other."""
-        root_a = get_root(joint_index_a)
-        root_b = get_root(joint_index_b)
-        if root_a != root_b:
-            # Attach root_a's cluster under root_b
-            cluster_root[root_a] = root_b
+        cluster_index_a = get_cluster_index(joint_index_a)
+        cluster_index_b = get_cluster_index(joint_index_b)
 
-    # For every close pair found by the KDTree, merge their clusters.
-    # After this loop, all transitively connected joints share the same root.
+        if cluster_index_a != cluster_index_b:
+            cluster_index_per_joint[cluster_index_b] = cluster_index_a
+
+    joint_pairs = kd_tree.query_pairs(max_distance)
     for joint_index_a, joint_index_b in joint_pairs:
         merge_clusters(joint_index_a, joint_index_b)
 
-
-    # Group joints by their root index.
-    # Joints sharing the same root belong to the same cluster.
-    joints_by_cluster_root = defaultdict(list)
+    joints_by_cluster_index = defaultdict(list)
     for joint_index, joint in enumerate(active_joints):
-        joints_by_cluster_root[get_root(joint_index)].append(joint)
+        joints_by_cluster_index[get_cluster_index(joint_index)].append(joint)
 
-    # Sort largest clusters first to match the existing CompositeAnalyzer priority ordering
-    grouped_joints = sorted(joints_by_cluster_root.values(), key=len, reverse=True)
+    grouped_joints = sorted(joints_by_cluster_index.values(), key=len, reverse=True)
+    clusters = [Cluster(joint_group) for joint_group in grouped_joints]
 
-    return [Cluster(joint_group) for joint_group in grouped_joints]
+    return clusters
