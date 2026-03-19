@@ -310,7 +310,7 @@ class Pocket(BTLxProcessing):
         cls,
         volume: Union[Polyhedron, Brep, Mesh],
         element: TimberElement,
-        allow_undercut: bool = False,
+        allow_undercut: bool = True,
         machining_limits: Optional[dict] = None,
         ref_side_index: Optional[int] = None,
     ) -> Pocket:
@@ -797,7 +797,7 @@ class PocketProxy(object):
         """
         if not self._processing:
             volume = self.volume.transformed(self.element.modeltransformation)
-            self._processing = Pocket.from_volume_and_element(volume, self.element, self.machining_limits, self.ref_side_index)
+            self._processing = Pocket.from_volume_and_element(volume, self.element, machining_limits=self.machining_limits, ref_side_index=self.ref_side_index)
         return self._processing
 
     @classmethod
