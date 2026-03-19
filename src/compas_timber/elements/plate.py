@@ -38,9 +38,9 @@ class Plate(TimberElement):
         Width of the plate.
     thickness : float
         Thickness of the plate.
-    outline_a : :class:`~compas.geometry.Polyline`, optional
+    local_outline_a : :class:`~compas.geometry.Polyline`, optional
         A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.Polyline`, optional
+    local_outline_b : :class:`~compas.geometry.Polyline`, optional
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
     openings : list[:class:`~compas.geometry.Polyline`], optional
         A list of Polyline objects representing openings in this plate.
@@ -277,7 +277,7 @@ class Plate(TimberElement):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
 
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):

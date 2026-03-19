@@ -6,7 +6,7 @@ from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
 
-from compas_timber.connections import TenonMortiseJoint
+from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.elements import Beam
 from compas_timber.fabrication import TenonShapeType
 from compas_timber.model import TimberModel
@@ -27,7 +27,7 @@ def beams():
 def test_tenon_mortise_joint_creation_with_beams(beams):
     """Test that TenonMortiseJoint can be created with valid beam arguments."""
     main_beam, cross_beam = beams
-    joint = TenonMortiseJoint(
+    joint = TTenonMortiseJoint(
         main_beam=main_beam,
         cross_beam=cross_beam,
         start_y=200.0,
@@ -55,7 +55,7 @@ def test_tenon_mortise_joint_creation_with_beams(beams):
 def test_tenon_mortise_joint_defaults_resolved_at_init(beams):
     """Test that all default attributes are resolved at construction time, without requiring add_features()."""
     main_beam, cross_beam = beams
-    joint = TenonMortiseJoint(main_beam=main_beam, cross_beam=cross_beam)  # no explicit values
+    joint = TTenonMortiseJoint(main_beam=main_beam, cross_beam=cross_beam)  # no explicit values
 
     # _set_unset_attributes() must have been called in __init__
     assert joint.start_y is not None
@@ -77,7 +77,7 @@ def test_tenon_mortise_joint_model_roundtrip_preserves_state(beams):
     main_beam, cross_beam = beams
     model = TimberModel()
     model.add_elements(beams)
-    joint = TenonMortiseJoint.create(model, main_beam=main_beam, cross_beam=cross_beam)
+    joint = TTenonMortiseJoint.create(model, main_beam=main_beam, cross_beam=cross_beam)
 
     length_before = joint.length
     width_before = joint.width
@@ -102,13 +102,13 @@ def test_tenon_mortise_joint_restore_beams_resolves_attributes(beams):
     model = TimberModel()
     model.add_elements(beams)
 
-    original_joint = TenonMortiseJoint(main_beam=main_beam, cross_beam=cross_beam)
+    original_joint = TTenonMortiseJoint(main_beam=main_beam, cross_beam=cross_beam)
     data = original_joint.__data__
-    deserialized_joint = TenonMortiseJoint.__from_data__(data)
+    deserialized_joint = TTenonMortiseJoint.__from_data__(data)
 
     with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
         assert spy.call_count == 0  # not called yet — beams are absent
 
-        deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()

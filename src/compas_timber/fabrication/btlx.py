@@ -274,8 +274,7 @@ class BTLxWriter(object):
                 else:
                     processings_element.append(processing_element)
             part_element.append(processings_element)
-        if element.is_beam and element._geometry:
-            # TODO: implement this for plates as well. Brep.from_extrusion seems to have incorrect number of faces regardless of input curve.
+        if element._geometry:
             part_element.append(part.et_shape)
         return part_element
 
@@ -1367,6 +1366,7 @@ class BTLxFromGeometryDefinition(Data):
         The elements to be used as input for the processing.
 
     Attributes
+    ----------
     processing : class
         The BTLx Processing class.
     geometries : list of :class:`~compas.geometry.Geometry`

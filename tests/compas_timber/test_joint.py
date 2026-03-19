@@ -21,6 +21,7 @@ from compas_timber.connections import TButtJoint
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.connections import find_neighboring_elements
+from compas_timber.connections.joint import location_from_centerlines
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -145,8 +146,8 @@ def test_joint_create_t_lap(t_topo_beams):
     model.add_element(cross_beam)
     joint = TLapJoint.create(model, main_beam, cross_beam)
 
-    assert joint.main_beam is main_beam
-    assert joint.cross_beam is cross_beam
+    assert joint.beam_a is main_beam
+    assert joint.beam_b is cross_beam
     assert joint.elements
 
 
@@ -354,8 +355,7 @@ def test_joint_location_raises_before_elements_available():
     """Accessing location before elements are restored (e.g. during deserialization) raises ValueError."""
     candidate = JointCandidate.__from_data__(
         {
-            "element_a_guid": "00000000-0000-0000-0000-000000000001",
-            "element_b_guid": "00000000-0000-0000-0000-000000000002",
+            "element_guids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"],
             "name": "JointCandidate",
         }
     )
@@ -395,3 +395,36 @@ def test_joint_location_and_topology_survive_serialization():
     assert isinstance(restored_joint, JointCandidate)
     assert TOL.is_allclose(restored_joint.location, original_location)
     assert restored_joint.topology == original_topology
+
+
+def test_location_from_centerlines_intersecting():
+    """Returns the intersection point when centerlines cross."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
+    loc = location_from_centerlines([b1, b2])
+    assert TOL.is_allclose(loc, Point(1, 0, 0))
+
+
+def test_location_from_centerlines_skew():
+    """Returns the midpoint between closest points when centerlines are skew."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 2), Point(1, 1, 2)), 0.1, 0.1)
+    loc = location_from_centerlines([b1, b2])
+    assert TOL.is_allclose(loc, Point(1, 0, 1))
+
+
+def test_location_from_centerlines_parallel():
+    """Returns the midpoint between closest points for parallel non-touching beams."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(0, 1, 0), Point(2, 1, 0)), 0.1, 0.1)
+    loc = location_from_centerlines([b1, b2])
+    # parallel beams 1 unit apart, closest-point midpoint has y=0.5
+    assert TOL.is_close(loc.y, 0.5)
+
+
+def test_location_from_centerlines_touching_at_endpoint():
+    """Returns the shared endpoint when beams meet at a corner (L-topology)."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(1, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, 0, 0), Point(1, 1, 0)), 0.1, 0.1)
+    loc = location_from_centerlines([b1, b2])
+    assert TOL.is_allclose(loc, Point(1, 0, 0))

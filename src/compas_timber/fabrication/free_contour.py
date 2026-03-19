@@ -47,6 +47,7 @@ class FreeContour(BTLxProcessing):
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=False, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
         super(FreeContour, self).__init__(tool_id=tool_id, counter_sink=counter_sink, tool_position=tool_position, **kwargs)
+        self._process_id = 1
         self.contour_param_object = contour_param_object
         self.depth_bounded = depth_bounded
 
@@ -151,8 +152,8 @@ class FreeContour(BTLxProcessing):
             ref_side_index = cls.get_ref_face_index(polyline, element)
         ref_side = element.ref_sides[ref_side_index]
         tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
-        # get_dimensions_relative_to_side [0] returns element dimension normal to ref_side
-        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[0]
+        # get_dimensions_relative_to_side [1] returns element dimension normal to ref_side
+        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[1]
         transformed_polyline = polyline.transformed(Transformation.from_frame(ref_side).inverse())
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
@@ -164,8 +165,10 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        polylines : list of list of :class:`compas.geometry.Point`
-            The top and bottome polylines of the contour.
+        top_polyline : list of list of :class:`compas.geometry.Point`
+            The top and bottom polylines of the contour.
+        bottom_polyline : list of list of :class:`compas.geometry.Point`
+            The bottom polyline of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
         interior : bool, optional
@@ -208,8 +211,8 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        shapes : list of :class:`compas.geometry.Shape`
-            The shapes of the contour.
+        polyline : list of :class:`compas.geometry.Point`
+            The polyline of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
         depth : float, optional

@@ -18,7 +18,8 @@ authors = [
     { name = "Joseph Kenny", email = "jk6372@princeton.edu" },
     { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" },
     { name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch" },
-    { name = "Rodrigo Arca Zimmermann", email = "rodrigo.arca@gmail.com" }
+    { name = "Rodrigo Arca Zimmermann", email = "rodrigo.arca@gmail.com" },
+    { name = "Nicolas Benjamin Boscoboinik", email = "boscoboinik@arch.ethz.ch" }
 ]
 license = "MIT"
 readme = "README.md"
@@ -38,23 +39,21 @@ dependencies = [
     "rtree",
     "compas >=2.0, <3.0",
     "compas_model == 0.9.1", # pin until first release
+    "scipy >= 1.1"
 ]
 
 [project.optional-dependencies]
 dev = [
     "bump-my-version",
-    "compas_invocations2",
+    "compas_invocations2[mkdocs]>=1.0.2",
     "invoke >=0.14",
     "ruff",
-    "sphinx_compas2_theme",
-    "sphinxcontrib-mermaid",
     "twine",
     "wheel",
     "pytest-mock",
     "pytest>=8.0",
     "build",
     "tomlkit",
-    "compas_viewer",
     "pytest-cov",
     "pytest-randomly",
     "pre-commit",
@@ -97,7 +96,7 @@ where = ["src"]
 # ============================================================================
 
 [tool.bumpversion]
-current_version = "2.0.0-dev0"
+current_version = "2.1.1-dev0"
 message = "Bump version to {new_version}"
 commit = true
 tag = true

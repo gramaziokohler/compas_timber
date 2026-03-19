@@ -15,7 +15,6 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.tolerance import TOL
 from compas_model.elements import Element
@@ -73,8 +72,6 @@ class Panel(Element):
         A polyline representing the associated outline of this panel.
     openings : list[:class:`~compas.geometry.Polyline`], optional
         A list of Polyline objects representing openings in this panel.
-    name : str, optional
-        Name of the panel. Defaults to "Panel".
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -96,12 +93,6 @@ class Panel(Element):
         The normal vector of the panel.
     edge_planes : dict[int, :class:`~compas.geometry.Plane`]
         The edge planes of the panel by edge index.
-    name : str
-        Name of the panel.
-    interfaces : list
-        List of interfaces associated with this panel.
-    attributes : dict
-        Dictionary of additional attributes.
     is_group_element : bool
         Always True for panels as they can contain other elements.
 
@@ -212,12 +203,12 @@ class Panel(Element):
 
     @reset_computed
     def remove_features(self, features: Optional[Union[PanelFeature, list[PanelFeature]]] = None) -> None:
-        """Removes interfaces from the element.
+        """Removes features from the element.
 
         Parameters
         ----------
-        interfaces : :class:`~compas_timber.panel_features.PanelConnectionInterface` | list[:class:`~compas_timber.panel_features.PanelConnectionInterface`], optional
-            The interfaces to be removed. If None, all interfaces will be removed.
+        features : :class:`~compas_timber.panel_features.PanelFeature` | list[:class:`~compas_timber.panel_features.PanelFeature`], optional
+            The features to be removed. If None, all features will be removed.
 
         """
         if features is None:
@@ -319,7 +310,7 @@ class Panel(Element):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
 
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
