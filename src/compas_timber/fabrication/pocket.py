@@ -310,8 +310,9 @@ class Pocket(BTLxProcessing):
         cls,
         volume: Union[Polyhedron, Brep, Mesh],
         element: TimberElement,
+        allow_undercut: bool = False,
         machining_limits: Optional[dict] = None,
-        ref_side_index: Optional[int]=None
+        ref_side_index: Optional[int] = None,
     ) -> Pocket:
         """Construct a Pocket feature from a volume and a TimberElement.
 
@@ -321,6 +322,10 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
+        allow_undercut : bool, optional
+            If ``True``, the geometrically derived tilt angles are preserved even when smaller than
+            90 degrees, producing undercuts that require a conical tool. If ``False`` (default),
+            tilt angles are clamped to 90 degrees for compatibility with flat-bottom tools.
         machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
@@ -396,6 +401,13 @@ class Pocket(BTLxProcessing):
         tilt_opp_side = cls._calculate_tilt_angle(bottom_plane, back_plane)
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
 
+        # clamp tilt angles to 90 degrees for non-conical (flat-bottom) tools
+        if not allow_undercut:
+            tilt_ref_side = max(tilt_ref_side, 90.0)
+            tilt_end_side = max(tilt_end_side, 90.0)
+            tilt_opp_side = max(tilt_opp_side, 90.0)
+            tilt_start_side = max(tilt_start_side, 90.0)
+
         # define machining limits
         if not machining_limits:
             machining_limits = cls._define_machining_limits(planes, element, ref_side_index)
@@ -427,6 +439,9 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
+        allow_undercut : bool, optional
+            If ``True``, the geometrically derived tilt angles are preserved even when smaller than
+            90 degrees. If ``False`` (default), tilt angles are clamped to 90 degrees.
         machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional

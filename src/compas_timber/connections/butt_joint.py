@@ -45,7 +45,8 @@ class ButtJoint(Joint):
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
-        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
+        If `True`, the pocket tilt angles may be smaller than 90 degrees (undercuts), requiring a conical tool.
+        If `False` (default), tilt angles are clamped to 90 degrees for compatibility with flat-bottom tools.
 
     Attributes
     ----------
@@ -66,7 +67,8 @@ class ButtJoint(Joint):
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
-        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
+        If `True`, the pocket tilt angles may be smaller than 90 degrees (undercuts), requiring a conical tool.
+        If `False` (default), tilt angles are clamped to 90 degrees for compatibility with flat-bottom tools.
     features: list[BTLxProcessing]
         List of features to be applied to the cross beam and main beam.
 
@@ -212,9 +214,12 @@ class ButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 milling_volume = self._get_milling_volume_for_pocket()
-                cross_feature = Pocket.from_volume_and_element(milling_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
-                if not self.conical_tool:
-                    self._limit_pocket_tilt_angles(cross_feature)
+                cross_feature = Pocket.from_volume_and_element(
+                    milling_volume,
+                    self.cross_beam,
+                    allow_undercut=self.conical_tool,
+                    ref_side_index=self.cross_beam_ref_side_index,
+                )
             else:
                 cross_cutting_plane = self.main_beam.ref_sides[self.main_beam_ref_side_index]
                 lap_width = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
@@ -248,11 +253,3 @@ class ButtJoint(Joint):
         end_b_plane = Plane.from_frame(self.main_beam.back_side(self.main_beam_ref_side_index))
 
         return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
-
-    @staticmethod
-    def _limit_pocket_tilt_angles(pocket: Pocket) -> None:
-        # limits the tilt angles of the pocket to 90 degrees to be compatible with non-conical tools
-        pocket.tilt_start_side = 90 if pocket.tilt_start_side < 90 else pocket.tilt_start_side
-        pocket.tilt_end_side = 90 if pocket.tilt_end_side < 90 else pocket.tilt_end_side
-        pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
-        pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
