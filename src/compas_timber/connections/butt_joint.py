@@ -97,14 +97,14 @@ class ButtJoint(Joint):
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
-        self.mill_depth: float = mill_depth or 0.0
-        self.modify_cross: bool = modify_cross
-        self.force_pocket: bool = force_pocket
-        self.conical_tool: bool = conical_tool
-        self.features: list[BTLxProcessing] = []
+        self.mill_depth = mill_depth or 0.0
+        self.modify_cross = modify_cross
+        self.force_pocket = force_pocket
+        self.conical_tool = conical_tool
+        self.features = []
 
-        self._butt_plane: Optional[Plane] = butt_plane
-        self._back_plane: Optional[Plane] = back_plane
+        self._butt_plane = butt_plane
+        self._back_plane = back_plane
 
     @property
     def main_beam(self):
