@@ -5,7 +5,7 @@ from time import time
 from compas.geometry import Line
 from compas.geometry import Point
 
-from compas_timber.connections import MaxNCompositeAnalyzer
+from compas_timber.analyzers import MaxNCompositeAnalyzer
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 

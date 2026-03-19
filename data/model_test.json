@@ -2298,9 +2298,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                                "element_b_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
+                                    "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "800ae5c3-ed80-4bb7-a063-7c351f8ca7a8"
@@ -2313,9 +2315,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                                "element_b_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
+                                    "c7430c17-66e8-4a98-8e90-4de33124a068"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "2a5b1df2-5e25-44d0-8549-8560a52647bf"
@@ -2330,9 +2334,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                                "element_b_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
+                                    "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "1c5e8726-4737-49b7-848b-1f9e5b39ec75"
@@ -2345,9 +2351,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                                "element_b_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
+                                    "c7430c17-66e8-4a98-8e90-4de33124a068"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "28a02075-1405-4701-ba97-e67fc9ac70d8"
@@ -2362,9 +2370,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "b9bc7a47-56f5-4aa0-a44c-6aeb1c082d6c"
@@ -2377,9 +2387,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "fb765e5f-8a25-4c1a-8722-1c3d70a9cffa"
@@ -2394,9 +2406,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "c7430c17-66e8-4a98-8e90-4de33124a068",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "16f8373d-91b2-4d44-9fc0-5c2e26f376f5"
@@ -2409,9 +2423,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "c7430c17-66e8-4a98-8e90-4de33124a068",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "d7039744-8d24-4215-86b1-e3025a383361"
@@ -2424,9 +2440,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                                "element_b_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "c7430c17-66e8-4a98-8e90-4de33124a068",
+                                    "2d62599b-526d-4c9c-8180-861c3014fbba"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "32fb7a09-273b-48e2-88f6-36546b177fc9"
@@ -2441,9 +2459,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                                "element_b_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                                    "875ea7a9-1e03-40ab-9e74-d9ce1220863b"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "79f766df-7c80-4a4a-8533-200bb9cea132"
@@ -2456,9 +2476,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "bbbe0da9-a9a5-45f7-a4cf-23728614100b"
@@ -2471,9 +2493,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                                "element_b_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                                    "8e2279cc-baee-4927-b1b8-e15dfe340512"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "9d2a3a78-e463-4c05-b620-b7f320d1e6ae"
@@ -2488,9 +2512,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
-                                "element_b_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
+                                    "875ea7a9-1e03-40ab-9e74-d9ce1220863b"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "5cba2647-1c51-4666-98b1-aa2908c6dba8"
@@ -2503,9 +2529,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "d2358e42-d685-4e36-9bba-e5e6f3bb1b1e"
@@ -2520,9 +2548,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
-                                "element_b_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
+                                    "439084d4-347c-43c3-a1cf-d29b3dd8d7b4"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "fa1b916d-40ca-4cba-ba21-94223faefbd3"
@@ -2535,9 +2565,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "138a4507-d655-4800-81cd-2daf1220e458"
@@ -2552,9 +2584,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
-                                "element_b_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
+                                    "439084d4-347c-43c3-a1cf-d29b3dd8d7b4"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "961d8227-eb52-4622-bd79-ebf0700ccf83"
@@ -2567,9 +2601,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "2d2e1455-c56d-4a6f-baa6-ed092fa5e5dc"
@@ -2585,9 +2621,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "8b57f13f-a4ed-4edb-9438-4fa6b3e96a99"
@@ -2602,9 +2640,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "element_b_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca",
+                                    "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "17be8e57-49e5-4b34-bc8a-37aef61128bb"
@@ -2619,9 +2659,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                                "element_b_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "6843bf9e-0947-4bbf-8941-0f796809679d",
+                                    "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "3d768028-a550-4a07-9603-55ff24377fd4"
@@ -2634,9 +2676,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                                "element_b_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "6843bf9e-0947-4bbf-8941-0f796809679d",
+                                    "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "a863a2e4-ba45-4127-a60c-6267b9f3e0a9"
@@ -2649,9 +2693,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "6843bf9e-0947-4bbf-8941-0f796809679d",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "ed22e830-93cc-4c11-ad11-379eede853bc"
@@ -2664,9 +2710,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "6843bf9e-0947-4bbf-8941-0f796809679d",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "9f0dc15b-d962-4e59-99ae-04f7703df2f0"
@@ -2681,9 +2729,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "46956696-6884-4749-bcf8-ac81ab2e9045",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "7a1ec9cb-9266-43df-b2cd-cc6b93a54937"
@@ -2696,9 +2746,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                                "element_b_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "46956696-6884-4749-bcf8-ac81ab2e9045",
+                                    "2730c2b1-694f-4117-a2f7-dd59421b3999"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "6d8f8ebd-64c0-478e-83ca-117493eb17cc"
@@ -2713,9 +2765,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "element_b_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "03ba60b4-9c71-4109-a956-dcafec169896",
+                                    "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "ec1024fd-49e6-43cb-b50e-8f14e627ad2f"
@@ -2730,9 +2784,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "560e57f8-786d-46de-a74c-5722f444728e",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "75347d3a-58b7-4aea-be7d-8b4bd771abc1"
@@ -2745,9 +2801,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "560e57f8-786d-46de-a74c-5722f444728e",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "6b53bd80-3c61-4f5a-9ab6-aedbb7940590"
@@ -2762,9 +2820,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "179769cf-7412-4f2f-adae-dac6232a1b3f"
@@ -2777,9 +2837,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                                "element_b_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                                    "560e57f8-786d-46de-a74c-5722f444728e"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "717f8775-f80d-4e15-92bb-3aa432621b16"
@@ -2792,9 +2854,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                                "element_b_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                                    "2730c2b1-694f-4117-a2f7-dd59421b3999"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "6c8ac442-6832-46ea-88b8-76d17439bc19"
@@ -2809,9 +2873,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
-                                "element_b_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "2730c2b1-694f-4117-a2f7-dd59421b3999",
+                                    "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e48708da-53e3-4cf3-bd90-513dd513c9bb"
@@ -2826,9 +2892,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "583d96a3-61a0-4215-b1dc-39b4a0d7f000"
@@ -2841,9 +2909,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                                "element_b_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                                    "560e57f8-786d-46de-a74c-5722f444728e"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "192ce2e9-ee71-48a4-9359-9d6fc608256c"
@@ -2856,9 +2926,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "6ff9e90d-d156-4a13-aba0-e174aceb83b6"
@@ -2874,9 +2946,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "2d62599b-526d-4c9c-8180-861c3014fbba",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "70f53c5b-7de0-4f59-8131-99483c01c427"
@@ -2889,9 +2963,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "2d62599b-526d-4c9c-8180-861c3014fbba",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "fd23ce62-bdb4-4ec0-9141-4d24861b72f8"
@@ -2906,9 +2982,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                                "element_b_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                                    "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "ee7e693f-6fbb-4a25-a944-15ba710ecc4a"
@@ -2921,9 +2999,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "86937a01-bfa9-4db9-8cb9-5de60da9b7a9"
@@ -2936,9 +3016,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "6e34d626-9083-4bdd-97f9-7bcec5b2a5a9"
@@ -2953,9 +3035,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8e2279cc-baee-4927-b1b8-e15dfe340512",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "912af358-4793-40d8-9e53-16d879bdd611"
@@ -2968,9 +3052,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "8e2279cc-baee-4927-b1b8-e15dfe340512",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e3586131-9a35-4a90-8aa3-3dbb31eac770"
@@ -2985,9 +3071,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                                "element_b_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                                    "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e8b328c9-1972-4126-9b76-c03d540ac667"
@@ -3000,9 +3088,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e46504f8-ef9d-4855-bcbd-8f34dd545a8e"
@@ -3015,9 +3105,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "938ceda7-376c-4e3b-aa00-ab3db1e7bd03"
@@ -3032,9 +3124,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "270848c8-4764-4f64-a9e7-60ca755c02d9",
-                                "element_b_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "270848c8-4764-4f64-a9e7-60ca755c02d9",
+                                    "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "2384795b-ff51-4b38-95d5-0f4ff2bd82f1"
@@ -3047,9 +3141,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "270848c8-4764-4f64-a9e7-60ca755c02d9",
-                                "element_b_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "270848c8-4764-4f64-a9e7-60ca755c02d9",
+                                    "46956696-6884-4749-bcf8-ac81ab2e9045"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "7d7b77a8-6527-4f2d-9e87-7c4987ca64cb"
@@ -3064,9 +3160,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "5385c591-c621-4bfa-b6e4-6835bb972f16"
@@ -3079,9 +3177,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                                "element_b_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                                    "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "0726e487-c603-4a60-99d0-c69e9c5bcf74"
@@ -3094,9 +3194,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                                "element_b_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                                    "7739df8e-b273-449f-8ced-e6c951a9232c"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "09f26490-7a1a-4c70-a708-4033bf61efed"
@@ -3111,9 +3213,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "78fcbdfc-9408-4c91-a39b-c99b93bca083",
-                                "element_b_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "78fcbdfc-9408-4c91-a39b-c99b93bca083",
+                                    "46956696-6884-4749-bcf8-ac81ab2e9045"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "2fad1341-dc3c-445e-8c6a-f3c07c64d7f1"
@@ -3126,9 +3230,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "78fcbdfc-9408-4c91-a39b-c99b93bca083",
-                                "element_b_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "78fcbdfc-9408-4c91-a39b-c99b93bca083",
+                                    "aa699c73-993d-4f7c-b404-c016a70f1b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "64a41ab2-4672-4475-bef9-b591c3ad51eb"
@@ -3143,9 +3249,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
-                                "element_b_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
+                                    "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "8f8a1e71-c593-4018-9110-5aeebb248cad"
@@ -3158,9 +3266,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
-                                "element_b_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
+                                    "6843bf9e-0947-4bbf-8941-0f796809679d"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "66aa0aab-08d0-4b3f-97ab-c2dc11ee4ea7"
@@ -3175,9 +3285,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
-                                "element_b_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "30617a92-687b-4077-83a2-41781e7a9b88",
+                                    "560e57f8-786d-46de-a74c-5722f444728e"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e4420544-db99-4a92-b0ca-75a8a049b9a8"
@@ -3190,9 +3302,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
-                                "element_b_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "30617a92-687b-4077-83a2-41781e7a9b88",
+                                    "aa699c73-993d-4f7c-b404-c016a70f1b96"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "aee0e575-891b-4206-8e40-e38ee923d9f9"
@@ -3207,9 +3321,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
-                                "element_b_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
+                                    "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "c519fd51-8a10-4d0d-82d1-ed9203679346"
@@ -3222,9 +3338,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
-                                "element_b_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
+                                    "b263f91c-9f27-4d10-aa6e-5f03ebdcc397"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "e0ef24af-0436-40ac-85dc-543a1f8acfe6"
@@ -3239,9 +3357,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "114da464-1aff-4093-84e6-d8ade1befc98",
-                                "element_b_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "114da464-1aff-4093-84e6-d8ade1befc98",
+                                    "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "73d4fb0d-0e58-4f99-ba56-e4e8f1f9b4a3"
@@ -3254,9 +3374,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "114da464-1aff-4093-84e6-d8ade1befc98",
-                                "element_b_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "114da464-1aff-4093-84e6-d8ade1befc98",
+                                    "30617a92-687b-4077-83a2-41781e7a9b88"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "4958d822-76df-42dc-98bb-479146570d23"
@@ -3271,9 +3393,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
-                                "element_b_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "7739df8e-b273-449f-8ced-e6c951a9232c",
+                                    "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "85746d5b-5ecb-47c5-8268-8a072eb8b98a"
@@ -3286,9 +3410,11 @@
                         "candidates": {
                             "dtype": "compas_timber.connections/JointCandidate",
                             "data": {
-                                "element_a_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
-                                "element_b_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                                "name": "JointCandidate"
+                                "name": "JointCandidate",
+                                "element_guids": [
+                                    "7739df8e-b273-449f-8ced-e6c951a9232c",
+                                    "03ba60b4-9c71-4109-a956-dcafec169896"
+                                ]
                             },
                             "name": "JointCandidate",
                             "guid": "011f31f1-1d4b-4e9f-bfad-1ef14002d92b"
@@ -3306,13 +3432,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                    "cross_beam_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
+                        "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "2365c10d-d0d0-4720-9c39-47c4f51d350d"
@@ -3321,13 +3449,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
-                    "cross_beam_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
+                        "c7430c17-66e8-4a98-8e90-4de33124a068"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "9ed84035-c7dc-4fa3-9c48-0b823de0cbbb"
@@ -3336,13 +3466,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                    "cross_beam_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
+                        "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "61964949-9dcb-4203-b424-e0b86b217e6b"
@@ -3351,13 +3483,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
-                    "cross_beam_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
+                        "c7430c17-66e8-4a98-8e90-4de33124a068"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "98cebe86-43a8-47cc-8fd3-5e56f1bf3db3"
@@ -3366,13 +3500,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "c4c3a208-5270-42b1-9e9b-7104d6004ac1"
@@ -3381,13 +3517,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "e7f55536-5f35-4e68-ae52-65e0fc1d00ab"
@@ -3396,13 +3534,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "c7430c17-66e8-4a98-8e90-4de33124a068",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "bd62c893-65ee-41b9-8895-2883166113b6"
@@ -3411,13 +3551,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "c7430c17-66e8-4a98-8e90-4de33124a068",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "8fb7e2d2-118e-4105-a4e4-92e6ec03ca8d"
@@ -3426,8 +3568,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "c7430c17-66e8-4a98-8e90-4de33124a068",
-                    "cross_beam_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3435,7 +3575,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "c7430c17-66e8-4a98-8e90-4de33124a068",
+                        "2d62599b-526d-4c9c-8180-861c3014fbba"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "32a14c20-8b1a-4b6f-8be2-9005db9f0120"
@@ -3444,13 +3588,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                    "cross_beam_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                        "875ea7a9-1e03-40ab-9e74-d9ce1220863b"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "73be8b42-93aa-4ce2-aed6-931d7e57b64f"
@@ -3459,13 +3605,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "c5da8569-3418-4138-8c26-f0bff4b8df9e"
@@ -3474,8 +3622,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
-                    "cross_beam_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3483,7 +3629,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "0b8ec4e0-5ecd-4bd0-a521-0e18ed59f018",
+                        "8e2279cc-baee-4927-b1b8-e15dfe340512"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "ba9cecb3-7550-4c1e-874d-31196bee04d9"
@@ -3492,13 +3642,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
-                    "cross_beam_guid": "875ea7a9-1e03-40ab-9e74-d9ce1220863b",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
+                        "875ea7a9-1e03-40ab-9e74-d9ce1220863b"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "fb199230-2197-4e5d-a328-30fada2c41fe"
@@ -3507,13 +3659,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "2ceea597-07b3-420f-8848-be1b07815c61"
@@ -3522,13 +3676,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
-                    "cross_beam_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
+                        "439084d4-347c-43c3-a1cf-d29b3dd8d7b4"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "d39b644f-99c8-40f0-a080-82facc59b243"
@@ -3537,13 +3693,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "8ce164ff-715b-4af3-9cf9-a56a6bc2cb29",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "f812a796-0a57-4ca9-8fd1-d599227fa75f"
@@ -3552,13 +3710,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
-                    "cross_beam_guid": "439084d4-347c-43c3-a1cf-d29b3dd8d7b4",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
+                        "439084d4-347c-43c3-a1cf-d29b3dd8d7b4"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "ddb752fa-6eb8-432d-a7dc-466dd8f179d5"
@@ -3567,13 +3727,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "b74af527-5d90-41e9-9dc4-9c3df5d45ea3",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "e65f8af9-0766-452a-8f86-d0a4d6518168"
@@ -3582,8 +3744,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3591,7 +3751,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "c156576c-095f-47f4-8bf7-f0ac09e475d2"
@@ -3600,8 +3764,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
-                    "cross_beam_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3609,7 +3771,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca",
+                        "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "f1b6530b-7a86-4026-9434-69bcae472ae9"
@@ -3618,8 +3784,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                    "cross_beam_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3627,7 +3791,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "6843bf9e-0947-4bbf-8941-0f796809679d",
+                        "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "097af500-8690-4ef6-92cf-bca88beed739"
@@ -3636,8 +3804,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                    "cross_beam_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3645,7 +3811,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "6843bf9e-0947-4bbf-8941-0f796809679d",
+                        "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "a62ba116-8571-4065-873d-1333f7429dab"
@@ -3654,8 +3824,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3663,7 +3831,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "6843bf9e-0947-4bbf-8941-0f796809679d",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "f6181263-cd33-424e-86a7-035e9dfe9c7c"
@@ -3672,8 +3844,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3681,7 +3851,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "6843bf9e-0947-4bbf-8941-0f796809679d",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "691c3caf-aa29-46c4-968a-bb9306092d73"
@@ -3690,13 +3864,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "46956696-6884-4749-bcf8-ac81ab2e9045",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "86e8f641-e839-4ab1-ade9-d0770680c588"
@@ -3705,13 +3881,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
-                    "cross_beam_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "46956696-6884-4749-bcf8-ac81ab2e9045",
+                        "2730c2b1-694f-4117-a2f7-dd59421b3999"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "31deda37-9560-4523-9141-f99fe1343a76"
@@ -3720,8 +3898,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
-                    "cross_beam_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3729,7 +3905,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "03ba60b4-9c71-4109-a956-dcafec169896",
+                        "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "057a1cce-052b-4751-adf1-d13472aacc2c"
@@ -3738,8 +3918,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3747,7 +3925,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "560e57f8-786d-46de-a74c-5722f444728e",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "8ee7a269-650f-4b98-998e-22eea5038401"
@@ -3756,8 +3938,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "560e57f8-786d-46de-a74c-5722f444728e",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3765,7 +3945,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "560e57f8-786d-46de-a74c-5722f444728e",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "d538757a-940c-4bd7-9800-ed8e5ea03fb2"
@@ -3774,8 +3958,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3783,7 +3965,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "aac9f265-eb66-41e8-aaae-33b8916c2a43"
@@ -3792,8 +3978,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                    "cross_beam_guid": "560e57f8-786d-46de-a74c-5722f444728e",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3801,7 +3985,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                        "560e57f8-786d-46de-a74c-5722f444728e"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "15e4820b-091d-48ca-acfe-ac90a5c23b42"
@@ -3810,8 +3998,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
-                    "cross_beam_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3819,7 +4005,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "aa699c73-993d-4f7c-b404-c016a70f1b96",
+                        "2730c2b1-694f-4117-a2f7-dd59421b3999"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "9b1be20f-ecec-48d6-baf7-7bdbeed263a7"
@@ -3828,8 +4018,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "2730c2b1-694f-4117-a2f7-dd59421b3999",
-                    "cross_beam_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3837,7 +4025,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "2730c2b1-694f-4117-a2f7-dd59421b3999",
+                        "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "b13a8df7-5cd4-494a-8279-3c8615a64695"
@@ -3846,8 +4038,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3855,7 +4045,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "c1cc4176-6de1-4f68-9898-5555dd2e3050"
@@ -3864,8 +4058,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                    "cross_beam_guid": "560e57f8-786d-46de-a74c-5722f444728e",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3873,7 +4065,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                        "560e57f8-786d-46de-a74c-5722f444728e"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "5f8c3d30-ddaa-4951-a83f-2ec710764595"
@@ -3882,8 +4078,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3891,7 +4085,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "240725ad-256e-407c-86bb-8b17b042fe5d"
@@ -3900,13 +4098,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "2d62599b-526d-4c9c-8180-861c3014fbba",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "04e48a4a-a265-4058-b131-66ae8f318655"
@@ -3915,13 +4115,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "2d62599b-526d-4c9c-8180-861c3014fbba",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "2d62599b-526d-4c9c-8180-861c3014fbba",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "d455b47c-84d2-4a3f-9a31-49c93e22b9ef"
@@ -3930,8 +4132,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                    "cross_beam_guid": "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -3939,7 +4139,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                        "fbe6f2e3-0ac5-4fd1-8c74-c7a0c85f6e4f"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "4cced3e6-1c41-412f-a960-2196e6138a57"
@@ -3948,13 +4152,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "c7ede88f-0a7f-43f1-acb8-ab52f0f3d120"
@@ -3963,13 +4169,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "030352e2-45d3-49ae-b98d-8f528b8eb08e",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "030352e2-45d3-49ae-b98d-8f528b8eb08e",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "3135eae4-706b-4494-80ba-fa1435b75928"
@@ -3978,13 +4186,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "8e2279cc-baee-4927-b1b8-e15dfe340512",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "eca84eb4-9d35-40ed-b92e-1bd49e3fc4bc"
@@ -3993,13 +4203,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "8e2279cc-baee-4927-b1b8-e15dfe340512",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "8e2279cc-baee-4927-b1b8-e15dfe340512",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "3492b7b6-5af7-4246-a322-7dc0d4c0926b"
@@ -4008,8 +4220,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                    "cross_beam_guid": "4dda4a6c-5987-44b2-8acb-f44d9a1898cc",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -4017,7 +4227,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                        "4dda4a6c-5987-44b2-8acb-f44d9a1898cc"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "bc7d2181-5707-4005-88ea-d7c825653649"
@@ -4026,13 +4240,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "be5d408d-7cbc-4d43-8f6b-d188727ae39b"
@@ -4041,13 +4257,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "dfeea6cc-3041-4a87-91d6-910e39e3b77b",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "b8b501ff-4d8b-4f6c-ae85-332fca390cca"
@@ -4056,13 +4274,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "270848c8-4764-4f64-a9e7-60ca755c02d9",
-                    "cross_beam_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "270848c8-4764-4f64-a9e7-60ca755c02d9",
+                        "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "2a219d07-7e33-4320-a1b3-acc36acfae97"
@@ -4071,13 +4291,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "270848c8-4764-4f64-a9e7-60ca755c02d9",
-                    "cross_beam_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "270848c8-4764-4f64-a9e7-60ca755c02d9",
+                        "46956696-6884-4749-bcf8-ac81ab2e9045"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "f958a535-6e02-44ac-9009-6651321bdfb4"
@@ -4086,13 +4308,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "03b4af5d-985d-45a6-9f4c-25abf5c9bfee"
@@ -4101,13 +4325,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                    "cross_beam_guid": "e750f21c-05ca-483f-87e7-eb083cd13b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                        "e750f21c-05ca-483f-87e7-eb083cd13b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "0983aeeb-a8b8-4e15-95f2-b8dae76061b2"
@@ -4116,8 +4342,6 @@
                 "dtype": "compas_timber.connections/LButtJoint",
                 "data": {
                     "name": "LButtJoint",
-                    "main_beam_guid": "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
-                    "cross_beam_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
                     "mill_depth": 0.0,
                     "modify_cross": true,
                     "butt_plane": null,
@@ -4125,7 +4349,11 @@
                     "conical_tool": false,
                     "small_beam_butts": false,
                     "back_plane": null,
-                    "reject_i": false
+                    "reject_i": false,
+                    "element_guids": [
+                        "4090a70e-b9e8-42bd-97f2-9b6e59a05664",
+                        "7739df8e-b273-449f-8ced-e6c951a9232c"
+                    ]
                 },
                 "name": "LButtJoint",
                 "guid": "5aca5ac6-4986-43f7-a8f6-fd340a27ae99"
@@ -4134,13 +4362,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "78fcbdfc-9408-4c91-a39b-c99b93bca083",
-                    "cross_beam_guid": "46956696-6884-4749-bcf8-ac81ab2e9045",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "78fcbdfc-9408-4c91-a39b-c99b93bca083",
+                        "46956696-6884-4749-bcf8-ac81ab2e9045"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "1eda747a-173a-4dc2-b2e1-8bc14f10d45b"
@@ -4149,13 +4379,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "78fcbdfc-9408-4c91-a39b-c99b93bca083",
-                    "cross_beam_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "78fcbdfc-9408-4c91-a39b-c99b93bca083",
+                        "aa699c73-993d-4f7c-b404-c016a70f1b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "463626f0-3eba-4440-b978-f899af818914"
@@ -4164,13 +4396,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
-                    "cross_beam_guid": "e0feac3f-ebec-4ee6-990f-35d0ee0ed926",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
+                        "e0feac3f-ebec-4ee6-990f-35d0ee0ed926"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "4bb36ff1-043d-4e21-8e4f-0c9d6e7da4c1"
@@ -4179,13 +4413,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
-                    "cross_beam_guid": "6843bf9e-0947-4bbf-8941-0f796809679d",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
+                        "6843bf9e-0947-4bbf-8941-0f796809679d"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "1d143ae2-be1b-4140-af85-b199f598faa4"
@@ -4194,13 +4430,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
-                    "cross_beam_guid": "560e57f8-786d-46de-a74c-5722f444728e",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "30617a92-687b-4077-83a2-41781e7a9b88",
+                        "560e57f8-786d-46de-a74c-5722f444728e"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "f3951d92-0f42-4749-9e14-6a1b3a558647"
@@ -4209,13 +4447,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
-                    "cross_beam_guid": "aa699c73-993d-4f7c-b404-c016a70f1b96",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "30617a92-687b-4077-83a2-41781e7a9b88",
+                        "aa699c73-993d-4f7c-b404-c016a70f1b96"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "d48b4356-2c94-4122-bad0-4a4bd09cf1c0"
@@ -4224,13 +4464,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
-                    "cross_beam_guid": "b1584c77-0ba0-416f-b1c1-cdb88b1dc353",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
+                        "b1584c77-0ba0-416f-b1c1-cdb88b1dc353"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "f0d5184c-853b-4777-b7e4-b9400de34bcb"
@@ -4239,13 +4481,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
-                    "cross_beam_guid": "b263f91c-9f27-4d10-aa6e-5f03ebdcc397",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "fd312dc5-b9aa-4082-84aa-cd3e2a2ecac0",
+                        "b263f91c-9f27-4d10-aa6e-5f03ebdcc397"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "2ef6b5f6-c743-4442-932d-842c0e11edd2"
@@ -4254,13 +4498,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "114da464-1aff-4093-84e6-d8ade1befc98",
-                    "cross_beam_guid": "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "114da464-1aff-4093-84e6-d8ade1befc98",
+                        "8e7004ce-f33f-43de-8035-4a5d0cf6b1ee"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "94dd52b8-916f-4f34-967f-3cdadf5b8ba2"
@@ -4269,13 +4515,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "114da464-1aff-4093-84e6-d8ade1befc98",
-                    "cross_beam_guid": "30617a92-687b-4077-83a2-41781e7a9b88",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "114da464-1aff-4093-84e6-d8ade1befc98",
+                        "30617a92-687b-4077-83a2-41781e7a9b88"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "353eb7d8-fc0a-4360-9eec-bc54e758c4cd"
@@ -4284,13 +4532,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
-                    "cross_beam_guid": "208afd2e-0dbe-49f4-b030-9119ec9210ca",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "7739df8e-b273-449f-8ced-e6c951a9232c",
+                        "208afd2e-0dbe-49f4-b030-9119ec9210ca"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "5936efcc-60cc-4b3b-9ddd-aadf75132c21"
@@ -4299,13 +4549,15 @@
                 "dtype": "compas_timber.connections/TButtJoint",
                 "data": {
                     "name": "TButtJoint",
-                    "main_beam_guid": "7739df8e-b273-449f-8ced-e6c951a9232c",
-                    "cross_beam_guid": "03ba60b4-9c71-4109-a956-dcafec169896",
                     "mill_depth": 0.0,
                     "modify_cross": false,
                     "butt_plane": null,
                     "force_pocket": false,
-                    "conical_tool": false
+                    "conical_tool": false,
+                    "element_guids": [
+                        "7739df8e-b273-449f-8ced-e6c951a9232c",
+                        "03ba60b4-9c71-4109-a956-dcafec169896"
+                    ]
                 },
                 "name": "TButtJoint",
                 "guid": "23a0a0fe-a021-45e6-bea2-4c59f3345d3b"
