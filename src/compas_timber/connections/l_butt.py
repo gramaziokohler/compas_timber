@@ -66,7 +66,6 @@ class LButtJoint(ButtJoint):
     @property
     def __data__(self):
         data = super(LButtJoint, self).__data__
-        data["back_plane"] = self.back_plane
         data["reject_i"] = self.reject_i
         return data
 
@@ -89,12 +88,12 @@ class LButtJoint(ButtJoint):
             mill_depth=mill_depth,
             modify_cross=modify_cross,
             butt_plane=butt_plane,
+            back_plane=back_plane,
             force_pocket=force_pocket,
             conical_tool=conical_tool,
             **kwargs,
         )
         self.reject_i = reject_i
-        self.back_plane = back_plane
 
     @property
     def main_beam_ref_side_index(self):

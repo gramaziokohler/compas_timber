@@ -17,7 +17,6 @@ from .utilities import beam_ref_side_incidence
 
 if TYPE_CHECKING:
     from compas_timber.elements import Beam
-    from compas_timber.fabrication import BTLxProcessing
 
 
 class ButtJoint(Joint):
