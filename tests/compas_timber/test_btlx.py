@@ -1,8 +1,11 @@
 import os
 import pytest
+from unittest.mock import MagicMock
+from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 from compas.data import json_load
+from compas.datastructures import Mesh
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
 
@@ -360,6 +363,75 @@ def test_btlx_part_unique_functionalities():
     # Test processings list for fabrication operations
     assert hasattr(btlx_part, "processings")
     assert isinstance(btlx_part.processings, list)
+
+
+def _box_mesh():
+    """Return a Mesh representing a 1000x100x50 box (no backend needed)."""
+    vertices = [
+        [0, 0, 0],
+        [1000, 0, 0],
+        [1000, 100, 0],
+        [0, 100, 0],
+        [0, 0, 50],
+        [1000, 0, 50],
+        [1000, 100, 50],
+        [0, 100, 50],
+    ]
+    faces = [
+        [0, 3, 2, 1],  # bottom
+        [4, 5, 6, 7],  # top
+        [0, 1, 5, 4],  # front
+        [3, 7, 6, 2],  # back
+        [0, 4, 7, 3],  # left
+        [1, 2, 6, 5],  # right
+    ]
+    return Mesh.from_vertices_and_faces(vertices, faces)
+
+
+def test_btlx_part_shape_strings_format():
+    """Test that shape_strings returns two non-empty strings with correct format."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
+    btlx_part = BTLxPart(beam, order_num=1)
+
+    mock_geometry = MagicMock()
+    mock_geometry.scaled.return_value.to_viewmesh.return_value = (_box_mesh(), [])
+
+    with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
+        with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
+            result = btlx_part.shape_strings
+
+    assert isinstance(result, list) and len(result) == 2
+
+    index_string, vertex_string = result
+    assert isinstance(index_string, str) and len(index_string) > 0
+    assert isinstance(vertex_string, str) and len(vertex_string) > 0
+
+    indices = list(map(int, index_string.split()))
+    assert -1 in indices
+
+    coords = list(map(float, vertex_string.split()))
+    assert all(c >= 0.0 for c in coords)
+
+    assert btlx_part.shape_strings is result
+
+
+def test_btlx_part_shape_strings_box_vertex_and_face_count():
+    """A plain rectangular beam produces 8 unique vertices and 6 faces."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=50)
+    btlx_part = BTLxPart(beam, order_num=1)
+
+    mock_geometry = MagicMock()
+    mock_geometry.scaled.return_value.to_viewmesh.return_value = (_box_mesh(), [])
+
+    with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
+        with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
+            index_string, vertex_string = btlx_part.shape_strings
+
+    coords = list(map(float, vertex_string.split()))
+    assert len(coords) == 8 * 3
+
+    indices = list(map(int, index_string.split()))
+    assert indices.count(-1) == 6
 
 
 def test_btlx_rawpart_unique_functionalities():
