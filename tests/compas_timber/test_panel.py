@@ -185,3 +185,23 @@ def test_apply_and_remove_exensions_with_index():
     pg.remove_blank_extension(3)  # removing extension at index 3 revert to original
     assert all([TOL.is_allclose(planes[i].normal, list(pg.edge_planes.values())[i].normal) for i in range(len(planes))])
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
+
+
+def test_panel_geometry_triggers_model_geometry_calculation(mocker):
+    panel = Panel(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=10, length=20, thickness=1)
+
+    mock_geometry = mocker.MagicMock()
+    mock_compute = mocker.MagicMock(return_value=mock_geometry)
+    mocker.patch("compas_timber.elements.Panel.compute_modelgeometry", side_effect=mock_compute)
+
+    geometry = panel.geometry
+
+    mock_compute.assert_called_once()
+    assert geometry is mock_geometry
+
+
+def test_panel_geometry_cannot_be_manually_set(mocker):
+    panel = Panel(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=10, length=20, thickness=1)
+
+    with pytest.raises(AttributeError):
+        panel.geometry = mocker.MagicMock()
