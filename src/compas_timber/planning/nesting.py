@@ -460,34 +460,28 @@ class PlateStock(Stock):
                 # Keep the largest remainder as current boundary.
                 self._remaining_boundary = max(polygons, key=lambda p: p.area)
 
-        # Store BTLx-oriented frame for export in element_data.
+        # Inline conversion from nesting XY placement to BTLx rawpart frame convention.
+        btlx_point = Point(placement_frame.point.x, 0.0, placement_frame.point.y)
+        xaxis_xy = placement_frame.xaxis
+        yaxis_xy = placement_frame.yaxis
+        btlx_xaxis = Vector(xaxis_xy.x, 0.0, xaxis_xy.y)
+        btlx_zaxis = Vector(yaxis_xy.x, 0.0, yaxis_xy.y)
+        if btlx_xaxis.length < TOL.absolute:
+            btlx_xaxis = Vector(1, 0, 0)
+        if btlx_zaxis.length < TOL.absolute:
+            btlx_zaxis = Vector(-btlx_xaxis.z, 0.0, btlx_xaxis.x)
+
+        btlx_point += btlx_zaxis * plate.blank.ysize
+
+        btlx_frame = Frame(btlx_point, btlx_xaxis, Vector(0, -1, 0))
+
+        # Store BTLx-oriented frame for export.
         self.element_data[str(plate.guid)] = NestedElementData(
-            frame=self._to_btlx_partref_frame(placement_frame),
+            frame=btlx_frame,
             key=plate.name + "-" + str(plate.guid)[:4],
         )
-        # Preserve raw placement frame for Rhino-side visualization/debug.
         self.placement_data[str(plate.guid)] = placement_frame
-        # Track used area directly because boolean remaining boundaries can degrade
-        # to non-polygon results in some edge cases.
         self._used_area += plate.blank.xsize * plate.blank.ysize
-
-    @staticmethod
-    def _to_btlx_partref_frame(placement_frame):
-        """Convert XY nesting placement frame to BTLx rawpart convention frame.
-
-        BTLx rawparts use X as length, Y as height (thickness), Z as width.
-        2D nesting coordinates are on XY, so we map nesting Y -> BTLx Z.
-        """
-        point = Point(placement_frame.point.x, 0.0, placement_frame.point.y)
-
-        xaxis_xy = placement_frame.xaxis
-        xaxis = Vector(xaxis_xy.x, 0.0, xaxis_xy.y)
-        if xaxis.length < TOL.absolute:
-            xaxis = Vector(1, 0, 0)
-
-        yaxis = Vector(0, 1, 0)
-        return Frame(point, xaxis, yaxis)
-
 
 class NestingResult(Data):
     """

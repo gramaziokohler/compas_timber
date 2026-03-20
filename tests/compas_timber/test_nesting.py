@@ -5,7 +5,10 @@ import warnings
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
+from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
@@ -654,6 +657,46 @@ def _build_plate_nesting_model():
     for plate in plates:
         model.add_element(plate)
     return model, plates
+
+
+def test_plate_stock_add_element_stores_btlx_partref_frame_mapping():
+    """PartRef mapping should match the expected XY->BTLx conversion used in PlateStock."""
+    plate = Plate(Frame.worldXY(), 1000, 500, 18)
+    stock = PlateStock((5000, 1250), 18)
+
+    target = Frame(Point(750, 250, 0), Vector(0, 1, 0), Vector(-1, 0, 0))
+    transformation = Transformation.from_frame_to_frame(Frame.worldXY(), target)
+
+    plate_outline = plate.plate_geometry.outline_a.transformed(transformation)
+    print("Transformed plate outline points:", [p for p in plate_outline.points])
+    print("Stock boundary points:", [p for p in stock._remaining_boundary.points])
+
+    stock.add_element(plate, transformation)
+
+    placement_frame = stock.placement_data[str(plate.guid)]
+    partref_frame = stock.element_data[str(plate.guid)].frame
+
+    btlx_xaxis = Vector(placement_frame.xaxis.x, 0.0, placement_frame.xaxis.y)
+    if btlx_xaxis.length < TOL.absolute:
+        btlx_xaxis = Vector(1, 0, 0)
+
+    btlx_zaxis = Vector(placement_frame.yaxis.x, 0.0, placement_frame.yaxis.y)
+    if btlx_zaxis.length < TOL.absolute:
+        btlx_zaxis = Vector(-btlx_xaxis.z, 0.0, btlx_xaxis.x)
+
+    expected_point = Point(placement_frame.point.x, 0.0, placement_frame.point.y) + btlx_zaxis * plate.blank.ysize
+
+    assert TOL.is_close(partref_frame.point.x, expected_point.x)
+    assert TOL.is_close(partref_frame.point.y, expected_point.y)
+    assert TOL.is_close(partref_frame.point.z, expected_point.z)
+
+    assert TOL.is_close(partref_frame.xaxis.x, btlx_xaxis.x)
+    assert TOL.is_close(partref_frame.xaxis.y, btlx_xaxis.y)
+    assert TOL.is_close(partref_frame.xaxis.z, btlx_xaxis.z)
+
+    assert TOL.is_close(partref_frame.yaxis.x, 0.0)
+    assert TOL.is_close(partref_frame.yaxis.y, -1.0)
+    assert TOL.is_close(partref_frame.yaxis.z, 0.0)
 
 
 def test_plate_nest_fast_assigns_all_and_inside_sheet():
