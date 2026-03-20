@@ -815,6 +815,8 @@ class BTLxProcessing(Data, ABC):
         If True, the processing creates a counter sink. Only used by specific processing types.
     tool_position : :class:`~compas_timber.fabrication.AlignmentType`
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    user_plane_id : int, optional
+        The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
     PROCESSING_NAME : str
         The name of the process.
     ATTRIBUTE_MAP : dict
@@ -828,9 +830,9 @@ class BTLxProcessing(Data, ABC):
 
     @property
     def __data__(self):
-        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id, "user_plane_id": self.user_plane_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, is_joinery=True):
+    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, is_joinery=True, user_plane_id=None, tool_position=None):
         super(BTLxProcessing, self).__init__()
         self._ref_side_index = None
         self._priority = priority
@@ -842,6 +844,7 @@ class BTLxProcessing(Data, ABC):
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
+        self._user_plane_id = user_plane_id
 
     def __init_subclass__(cls, **kwargs):
         super(BTLxProcessing, cls).__init_subclass__(**kwargs)
@@ -885,6 +888,10 @@ class BTLxProcessing(Data, ABC):
     @property
     def tool_position(self):
         return self._tool_position
+
+    @property
+    def user_plane_id(self):
+        return self._user_plane_id
 
     @property
     @abstractmethod
@@ -956,7 +963,10 @@ class BTLxProcessingParams(object):
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        if self._instance.user_plane_id is not None:
+            result["ReferencePlaneID"] = str(self._instance.user_plane_id)
+        else:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
 
         # Add optional header attributes if set
         if self._instance.tool_id is not None:
