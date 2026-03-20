@@ -134,7 +134,7 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        polyline : list of :class:`compas.geometry.Point`
+        polyline : :class:`compas.geometry.Polyline`
             The polyline of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
@@ -142,7 +142,7 @@ class FreeContour(BTLxProcessing):
             The depth of the contour. Default is the thickness of the element.
         interior : bool, optional
             If True, the contour is an interior contour. Default is False.
-        tool_position : BTLx.AlignmentType, optional
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
             The position of the tool. Default is "left".
         ref_side_index : int, optional
             The reference side index. If none is given, the function will try to find the reference side index based on the polyline and element.
@@ -157,6 +157,42 @@ class FreeContour(BTLxProcessing):
         transformed_polyline = polyline.transformed(Transformation.from_frame(ref_side).inverse())
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
+
+    @classmethod
+    def from_polyline_plane_and_beam(
+        cls,
+        polyline: Polyline,
+        element: TimberElement,
+        ref_frame: Frame,
+        depth: Optional[float] = 0.0,
+        interior: Optional[bool] = False,
+        tool_position: Optional[AlignmentType] = AlignmentType.LEFT,
+        **kwargs,
+    ):
+        """Construct a FreeContour processing from a polyline, a custom reference plane and an element.
+
+        The reference plane is registered on the element as a user reference plane and referenced
+        in the BTLx output via ``ReferencePlaneID``.
+
+        Parameters
+        ----------
+        polyline : :class:`compas.geometry.Polyline`
+            The polyline of the contour.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element.
+        ref_frame : :class:`compas.geometry.Frame`
+            The custom reference plane in model (world) coordinates.
+        depth : float, optional
+            The depth of the contour. Default is 0.0.
+        interior : bool, optional
+            If True, the contour is an interior contour. Default is False.
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+            The position of the tool. Default is derived from the polyline winding direction.
+        """
+        user_plane_id = element.add_user_ref_plane(ref_frame)
+        transformed_polyline = polyline.transformed(Transformation.from_frame(ref_frame).inverse())
+        contour = Contour(transformed_polyline, depth=depth)
+        return cls(contour, tool_position=tool_position, counter_sink=interior, user_plane_id=user_plane_id, **kwargs)
 
     @classmethod
     def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None, **kwargs):
@@ -286,8 +322,12 @@ class FreeContour(BTLxProcessing):
         """
 
         vol = self.contour_param_object.to_brep()
+        if self.user_plane_id is not None:
+            ref_frame = element.get_user_ref_plane(self.user_plane_id)
+        else:
+            ref_frame = element.ref_sides[self.ref_side_index]
         # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
-        transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
+        transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(ref_frame)
         vol.transform(transformation_ref_side_to_local)
         if self.counter_sink:  # contour should remove material inside of the contour
             return geometry - vol
