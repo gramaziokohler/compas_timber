@@ -483,6 +483,7 @@ class PlateStock(Stock):
         self.placement_data[str(plate.guid)] = placement_frame
         self._used_area += plate.blank.xsize * plate.blank.ysize
 
+
 class NestingResult(Data):
     """
     A wrapper class for nesting results that provides serialization capabilities.
@@ -1287,7 +1288,6 @@ class PlateNester(object):
 
         # Try deterministic skyline candidates derived from segment starts/ends.
         for x in cls._candidate_x_positions(segments, plate_width, stock.dimensions[0]):
-
             # Check if plate fits at this position
             if x + plate_width > stock.dimensions[0]:
                 continue  # Doesn't fit horizontally
