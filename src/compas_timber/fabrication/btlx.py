@@ -264,7 +264,7 @@ class BTLxWriter(object):
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # add user reference planes if there are any on the element.
-        if element.reference_planes:
+        if element.user_ref_planes:
             part_element.append(part.et_user_reference_planes)
         # create processings element for the part if there are any
         if element.features:
@@ -643,7 +643,7 @@ class BTLxPart(BTLxGenericPart):
         """
         user_ref_planes = ET.Element("UserReferencePlanes")
         T = Transformation.from_frame(self.element.ref_frame).inverted()
-        for plane in self.element.reference_planes:
+        for plane in self.element.user_ref_planes:
             local_frame = plane.frame.transformed(T)
             local_frame.point.scale(self._scale_factor)
             plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(plane.ID))
@@ -832,12 +832,11 @@ class BTLxProcessing(Data, ABC):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id, "user_plane_id": self.user_plane_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, is_joinery=True, user_plane_id=None, tool_position=None):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, is_joinery=True, user_plane_id=None, tool_position=None):
         super(BTLxProcessing, self).__init__()
-        self._ref_side_index = None
         self._priority = priority
         self._process_id = process_id
-        self.ref_side_index = ref_side_index or 0
+        self.ref_side_index = ref_side_index
         self.subprocessings = None
         self._is_joinery = is_joinery
         # Optional header attributes - set by subclasses if needed
@@ -1211,7 +1210,7 @@ class UserReferencePlane(Data):
 
     ``UserReferencePlane`` objects are registered on a
     :class:`~compas_timber.base.TimberElement` via
-    :meth:`~compas_timber.base.TimberElement.add_reference_plane`.
+    :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
 
     Parameters
     ----------
