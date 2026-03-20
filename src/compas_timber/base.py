@@ -9,6 +9,8 @@ from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
+from compas_timber.fabrication.btlx import UserReferencePlane  # TODO: this is temporary. Should by any cost avoid circular import.
+
 
 def reset_timber_attrs(f):
     """Decorator to reset cached timber-specific attributes."""
@@ -368,3 +370,80 @@ class TimberElement(Element, abc.ABC):
         if ref_side_index in [1, 3]:
             return self.height, self.width
         return self.width, self.height
+
+    ########################################################################
+    # User Reference Planes
+    ########################################################################
+
+    @property
+    def reference_planes(self) -> list[UserReferencePlane]:
+        """Reference planes attached to this element.
+
+        These correspond to the BTLx ``UserReferencePlane`` concept.  The BTLx
+        integer ``ID`` is the zero-based insertion index of the plane plus 100,
+        so the first plane gets ID 100, second 101, and so on.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.fabrication.UserReferencePlane`]
+        """
+        return self.attributes.get("reference_planes", [])
+
+    def add_reference_plane(self, frame: Frame, ID: int = None) -> int:
+        """Add a named reference plane to this element.
+
+        The BTLx ``ID`` is assigned as the current number of registered planes
+        plus 100 (first plane → 100, second → 101, …).
+
+        Parameters
+        ----------
+        frame : :class:`compas.geometry.Frame`
+            The plane expressed in model (world) coordinates.
+        ID : int, optional
+            The BTLx integer ID to assign to this plane. This should be a unique integer >= 100.
+            If None, the ID will be assigned as the current number of registered planes plus 100 (first plane → 100, second → 101, …).
+
+        Returns
+        -------
+        int
+            The BTLx integer ID assigned to this plane (>= 100).
+
+        """
+        if ID is not None:
+            if any(ID == p.ID for p in self.attributes.get("reference_planes", [])):
+                raise ValueError("A reference plane with ID {} already exists. Call remove_reference_plane first.".format(ID))
+        else:
+            ID = len(self.attributes.get("reference_planes", [])) + 100
+
+        self.attributes.setdefault("reference_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
+        return ID
+
+    def get_reference_plane(self, ID: int) -> Frame | None:
+        """Return the :class:`~compas.geometry.Frame` stored under ``ID``, or ``None``.
+
+        Parameters
+        ----------
+        ID : int
+            The BTLx integer ID of the reference plane to retrieve.
+
+        Returns
+        -------
+        :class:`compas.geometry.Frame` or None
+            The frame of the reference plane with the given ID, or None if no such plane exists.
+        """
+        planes = self.attributes.get("reference_planes", [])
+        for plane in planes:
+            if plane.ID == ID:
+                return plane.frame
+        return None
+
+    def remove_reference_plane(self, ID: int):
+        """Remove the reference plane stored under ``ID``.
+
+        Parameters
+        ----------
+        ID : int
+            The BTLx integer ID of the reference plane to remove.
+        """
+        planes = self.attributes.get("reference_planes", [])
+        self.attributes["reference_planes"] = [p for p in planes if p.ID != ID]
