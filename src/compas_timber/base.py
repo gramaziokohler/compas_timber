@@ -9,8 +9,6 @@ from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
-from compas_timber.fabrication.btlx import UserReferencePlane  # TODO: this is temporary. Should by any cost avoid circular import.
-
 
 def reset_timber_attrs(f):
     """Decorator to reset cached timber-specific attributes."""
@@ -376,7 +374,7 @@ class TimberElement(Element, abc.ABC):
     ########################################################################
 
     @property
-    def user_ref_planes(self) -> list[UserReferencePlane]:
+    def user_ref_planes(self):
         """User reference planes attached to this element.
 
         These correspond to the BTLx ``UserReferencePlane`` concept.  The BTLx
@@ -409,13 +407,15 @@ class TimberElement(Element, abc.ABC):
             The BTLx integer ID assigned to this plane (>= 100).
 
         """
-        if ID is not None:
-            if any(ID == p.ID for p in self.attributes.get("reference_planes", [])):
-                raise ValueError("A reference plane with ID {} already exists. Call remove_reference_plane first.".format(ID))
-        else:
-            ID = len(self.attributes.get("reference_planes", [])) + 100
+        from compas_timber.fabrication.btlx import UserReferencePlane  # TODO: this is temporary. Should by any cost avoid circular import.
 
-        self.attributes.setdefault("reference_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
+        if ID is not None:
+            if any(ID == p.ID for p in self.attributes.get("user_ref_planes", [])):
+                raise ValueError("A reference plane with ID {} already exists. Call remove_user_ref_plane first.".format(ID))
+        else:
+            ID = len(self.attributes.get("user_ref_planes", [])) + 100
+
+        self.attributes.setdefault("user_ref_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
         return ID
 
     def get_user_ref_plane(self, ID: int) -> Frame | None:
@@ -431,7 +431,7 @@ class TimberElement(Element, abc.ABC):
         :class:`compas.geometry.Frame` or None
             The frame of the reference plane with the given ID, or None if no such plane exists.
         """
-        planes = self.attributes.get("reference_planes", [])
+        planes = self.attributes.get("user_ref_planes", [])
         for plane in planes:
             if plane.ID == ID:
                 return plane.frame
@@ -445,5 +445,5 @@ class TimberElement(Element, abc.ABC):
         ID : int
             The BTLx integer ID of the reference plane to remove.
         """
-        planes = self.attributes.get("reference_planes", [])
-        self.attributes["reference_planes"] = [p for p in planes if p.ID != ID]
+        planes = self.attributes.get("user_ref_planes", [])
+        self.attributes["user_ref_planes"] = [p for p in planes if p.ID != ID]
