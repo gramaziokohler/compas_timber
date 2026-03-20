@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
+
 ### Changed
 
-* Refined `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
 * Improved `PlateStock`/`NestingResult` reporting integration for plate nesting, including robust unplaced-element handling and per-stock utilization/report payload consistency.
 
 ### Removed
