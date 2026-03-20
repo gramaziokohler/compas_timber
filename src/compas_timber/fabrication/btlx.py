@@ -263,6 +263,9 @@ class BTLxWriter(object):
 
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
+        # add user reference planes if there are any on the element.
+        if element.reference_planes:
+            part_element.append(part.et_user_reference_planes)
         # create processings element for the part if there are any
         if element.features:
             processings_element = ET.Element("Processings")
@@ -622,6 +625,33 @@ class BTLxPart(BTLxGenericPart):
             if TOL.is_zero(angle):
                 return index + 1  # in BTLx face indices are one-based
         raise ValueError("Given element face does not match any of the reference surfaces.")
+
+    @property
+    def et_user_reference_planes(self):
+        """Create the UserReferencePlanes XML element from planes stored on the element.
+
+        Each plane is transformed from model (world) coordinates into the part's
+        local ref_frame coordinate system before being written, scaled by the
+        writer's unit scale factor.
+
+        The ``ID`` attribute is taken directly from each plane's ``ID`` field,
+        which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
+
+        Returns
+        -------
+        :class:`xml.etree.ElementTree.Element`
+        """
+        user_ref_planes = ET.Element("UserReferencePlanes")
+        T = Transformation.from_frame(self.element.ref_frame).inverted()
+        for plane in self.element.reference_planes:
+            local_frame = plane.frame.transformed(T)
+            local_frame.point.scale(self._scale_factor)
+            plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(plane.ID))
+            position = ET.SubElement(plane_el, "Position")
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(local_frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(local_frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(local_frame.yaxis)))
+        return user_ref_planes
 
     @property
     def et_shape(self):
@@ -1164,6 +1194,46 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
+
+
+class UserReferencePlane(Data):
+    """A reference plane attached to a timber element for use in BTLx processings.
+
+    ``UserReferencePlane`` objects are registered on a
+    :class:`~compas_timber.base.TimberElement` via
+    :meth:`~compas_timber.base.TimberElement.add_reference_plane`.
+
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane expressed in model (world) coordinates.
+    ID : int
+        The BTLx integer ID for this plane. Must be an integer >= 100.
+
+    Attributes
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane in model coordinates.
+    ID : int
+        The BTLx integer ID of this plane.
+
+    """
+
+    def __init__(self, frame: Frame, ID: int):
+        super(UserReferencePlane, self).__init__()
+        if type(ID) is not int:
+            raise TypeError("BTLx reference plane IDs must be integers.")
+        if ID < 100:
+            raise ValueError("BTLx reference plane IDs must be >= 100.")
+        self.frame = frame
+        self.ID = ID
+
+    def __repr__(self):
+        return "UserReferencePlane(ID={!r}, frame={!r})".format(self.ID, self.frame)
+
+    @property
+    def __data__(self):
+        return {"frame": self.frame, "ID": self.ID}
 
 
 class AlignmentType(object):
