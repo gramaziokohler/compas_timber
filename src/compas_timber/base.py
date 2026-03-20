@@ -376,8 +376,8 @@ class TimberElement(Element, abc.ABC):
     ########################################################################
 
     @property
-    def reference_planes(self) -> list[UserReferencePlane]:
-        """Reference planes attached to this element.
+    def user_ref_planes(self) -> list[UserReferencePlane]:
+        """User reference planes attached to this element.
 
         These correspond to the BTLx ``UserReferencePlane`` concept.  The BTLx
         integer ``ID`` is the zero-based insertion index of the plane plus 100,
@@ -387,9 +387,9 @@ class TimberElement(Element, abc.ABC):
         -------
         list[:class:`~compas_timber.fabrication.UserReferencePlane`]
         """
-        return self.attributes.get("reference_planes", [])
+        return self.attributes.get("user_ref_planes", [])
 
-    def add_reference_plane(self, frame: Frame, ID: int = None) -> int:
+    def add_user_ref_plane(self, frame: Frame, ID: int = None) -> int:
         """Add a named reference plane to this element.
 
         The BTLx ``ID`` is assigned as the current number of registered planes
@@ -418,7 +418,7 @@ class TimberElement(Element, abc.ABC):
         self.attributes.setdefault("reference_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
         return ID
 
-    def get_reference_plane(self, ID: int) -> Frame | None:
+    def get_user_ref_plane(self, ID: int) -> Frame | None:
         """Return the :class:`~compas.geometry.Frame` stored under ``ID``, or ``None``.
 
         Parameters
@@ -437,7 +437,7 @@ class TimberElement(Element, abc.ABC):
                 return plane.frame
         return None
 
-    def remove_reference_plane(self, ID: int):
+    def remove_user_ref_plane(self, ID: int):
         """Remove the reference plane stored under ``ID``.
 
         Parameters
