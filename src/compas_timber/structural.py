@@ -268,7 +268,7 @@ class BeamStructuralElementSolver:
         return results
 
 
-class StructuralGraph(object):
+class StructuralGraph:
     """A structural graph derived from a :class:`~compas_timber.model.TimberModel`.
 
     Wraps a :class:`~compas.datastructures.Graph` and provides a domain-specific
@@ -279,7 +279,7 @@ class StructuralGraph(object):
     segments themselves, each tagged as either ``"beam"`` or ``"connector"`` and
     carrying a back-reference to the originating timber model element.
 
-    Create instances via :func:`build_structural_graph` rather than directly.
+    Create instances via :meth:`from_model` rather than directly.
 
     Attributes
     ----------
@@ -295,7 +295,7 @@ class StructuralGraph(object):
 
     Examples
     --------
-    >>> sg = build_structural_graph(model)
+    >>> sg = StructuralGraph.from_model(model)
     >>> for u, v in sg.beam_edges:
     ...     pt_i = sg.node_point(u)
     ...     pt_j = sg.node_point(v)
@@ -311,6 +311,83 @@ class StructuralGraph(object):
         # type: (Graph) -> None
         self._graph = graph
         self._cached_node_index = None  # built lazily
+
+    @classmethod
+    def from_model(cls, model):
+        # type: (TimberModel) -> StructuralGraph
+        """Builds a :class:`StructuralGraph` from the structural segments stored in a timber model.
+
+        Nodes represent unique endpoints of structural segments (identified within tolerance).
+        Edges represent the segments themselves.  Each edge carries:
+
+        - ``segment`` — the :class:`StructuralSegment`;
+        - ``type`` — ``"beam"`` or ``"connector"``;
+        - ``beam`` — *(beam edges)* the source :class:`~compas_timber.elements.Beam`;
+        - ``joint`` — *(connector edges)* the source
+          :class:`~compas_timber.connections.Joint`, or ``None`` when the connector
+          was derived from a candidate rather than a resolved joint.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The timber model whose structural segments are used to build the graph.
+
+        Returns
+        -------
+        :class:`StructuralGraph`
+
+        Raises
+        ------
+        ValueError
+            If no structural segments are found in the model.  Call
+            :meth:`~compas_timber.model.TimberModel.create_beam_structural_segments`
+            first.
+
+        Examples
+        --------
+        >>> model.create_beam_structural_segments()
+        >>> sg = StructuralGraph.from_model(model)
+        >>> for u, v in sg.beam_edges:
+        ...     print(sg.node_index(u), sg.node_index(v), sg.segment(u, v).line.length, sg.beam(u, v).name)
+
+        """
+        graph = Graph()
+        _node_positions = {}  # node_key -> Point, used for tolerance-based deduplication
+
+        def _find_or_create_node(point):
+            # type: (Point) -> object
+            for node_key, existing in _node_positions.items():
+                if TOL.is_zero(distance_point_point(existing, point)):
+                    return node_key
+            node_key = graph.add_node(x=point.x, y=point.y, z=point.z)
+            _node_positions[node_key] = point
+            return node_key
+
+        # --- beam structural segments (stored per node in the model graph) ---
+        for beam in model.beams:
+            segments = model.get_beam_structural_segments(beam)
+            for segment in segments:
+                u = _find_or_create_node(segment.line.start)
+                v = _find_or_create_node(segment.line.end)
+                graph.add_edge(u, v, segment=segment, type="beam", beam=beam)
+
+        # --- connector segments (stored per edge in the model graph) ---
+        for edge in model._graph.edges():
+            connector_segments = model._graph.edge_attribute(edge, "structural_segments")
+            if not connector_segments:
+                continue
+            # Retrieve the joint that sits on this edge (may be None when only a candidate exists)
+            joint_guid = model._graph.edge_attribute(edge, "joints")
+            joint = model._joints.get(joint_guid) if joint_guid else None
+            for segment in connector_segments:
+                u = _find_or_create_node(segment.line.start)
+                v = _find_or_create_node(segment.line.end)
+                graph.add_edge(u, v, segment=segment, type="connector", joint=joint)
+
+        if graph.number_of_nodes() == 0:
+            raise ValueError("No structural segments found in the model. Call TimberModel.create_beam_structural_segments() before building the structural graph.")
+
+        return cls(graph)
 
     # ------------------------------------------------------------------
     # Node interface
@@ -494,15 +571,8 @@ def build_structural_graph(model):
     # type: (TimberModel) -> StructuralGraph
     """Builds a :class:`StructuralGraph` from the structural segments stored in a timber model.
 
-    Nodes represent unique endpoints of structural segments (identified within tolerance).
-    Edges represent the segments themselves.  Each edge carries:
-
-    - ``segment`` — the :class:`StructuralSegment`;
-    - ``type`` — ``"beam"`` or ``"connector"``;
-    - ``beam`` — *(beam edges)* the source :class:`~compas_timber.elements.Beam`;
-    - ``joint`` — *(connector edges)* the source
-      :class:`~compas_timber.connections.Joint`, or ``None`` when the connector
-      was derived from a candidate rather than a resolved joint.
+    .. deprecated::
+        Use :meth:`StructuralGraph.from_model` instead.
 
     Parameters
     ----------
@@ -513,57 +583,5 @@ def build_structural_graph(model):
     -------
     :class:`StructuralGraph`
 
-    Raises
-    ------
-    ValueError
-        If no structural segments are found in the model.  Call
-        :meth:`~compas_timber.model.TimberModel.create_beam_structural_segments`
-        first.
-
-    Examples
-    --------
-    >>> model.create_beam_structural_segments()
-    >>> sg = build_structural_graph(model)
-    >>> for u, v in sg.beam_edges:
-    ...     print(sg.node_index(u), sg.node_index(v), sg.segment(u, v).line.length, sg.beam(u, v).name)
-    >>> for u, v in sg.connector_edges:
-    ...     print(sg.joint(u, v))
-
     """
-    graph = Graph()
-    _node_positions = {}  # node_key -> Point, used for tolerance-based deduplication
-
-    def _find_or_create_node(point):
-        # type: (Point) -> object
-        for node_key, existing in _node_positions.items():
-            if TOL.is_zero(distance_point_point(existing, point)):
-                return node_key
-        node_key = graph.add_node(x=point.x, y=point.y, z=point.z)
-        _node_positions[node_key] = point
-        return node_key
-
-    # --- beam structural segments (stored per node in the model graph) ---
-    for beam in model.beams:
-        segments = model.get_beam_structural_segments(beam)
-        for segment in segments:
-            u = _find_or_create_node(segment.line.start)
-            v = _find_or_create_node(segment.line.end)
-            graph.add_edge(u, v, segment=segment, type="beam", beam=beam)
-
-    # --- connector segments (stored per edge in the model graph) ---
-    for edge in model._graph.edges():
-        connector_segments = model._graph.edge_attribute(edge, "structural_segments")
-        if not connector_segments:
-            continue
-        # Retrieve the joint that sits on this edge (may be None when only a candidate exists)
-        joint_guid = model._graph.edge_attribute(edge, "joints")
-        joint = model._joints.get(joint_guid) if joint_guid else None
-        for segment in connector_segments:
-            u = _find_or_create_node(segment.line.start)
-            v = _find_or_create_node(segment.line.end)
-            graph.add_edge(u, v, segment=segment, type="connector", joint=joint)
-
-    if graph.number_of_nodes() == 0:
-        raise ValueError("No structural segments found in the model. Call TimberModel.create_beam_structural_segments() before building the structural graph.")
-
-    return StructuralGraph(graph)
+    return StructuralGraph.from_model(model)
