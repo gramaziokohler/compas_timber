@@ -10,7 +10,7 @@ from compas.geometry import Line
 from compas.geometry import Vector
 from compas.geometry import Transformation
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
@@ -21,7 +21,8 @@ from compas_timber.fabrication import LapProxy
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-2, relative=1e-2)
+    with TOL.temporary(unit="MM", absolute=1e-2, relative=1e-2) as tolerance:
+        yield tolerance
 
 
 def test_lap_for_pocket_from_frame(tol):
