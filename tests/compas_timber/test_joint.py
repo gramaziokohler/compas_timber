@@ -290,7 +290,7 @@ def test_plate_joint_candidate():
 
 
 def test_joint_candidate_should_no_be_created_as_a_joint(mocker):
-    """Test that JointCandidate.create() still works for creating actual joints."""
+    """Test that the base JointCandidate.create() is not usable and raises NotImplementedError instead of creating a joint."""
 
     with pytest.raises(NotImplementedError):
         _ = JointCandidate.create(mocker.MagicMock(), mocker.MagicMock(), mocker.MagicMock(), topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
