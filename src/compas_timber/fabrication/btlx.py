@@ -801,6 +801,25 @@ def dual_contour_to_xml(contour):
 class BTLxProcessing(Data, ABC):
     """Abstract base class for BTLx Processing.
 
+    Parameters
+    ----------
+    ref_side_index : int, optional
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
+    priority : int, optional
+        The priority of the process. Defaults to 0.
+    process_id : int, optional
+        The process ID. Defaults to 0.
+    tool_id : int, optional
+        The tool ID for the processing. Only used by specific processing types.
+    counter_sink : bool, optional
+        If True, the processing creates a counter sink. Only used by specific processing types.
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    user_plane_id : int, optional
+        The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
+    is_joinery : bool, optional
+        If True, the process is a result of joinery process. Defaults to True.
+
     Attributes
     ----------
     ref_side_index : int
@@ -817,12 +836,12 @@ class BTLxProcessing(Data, ABC):
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
     user_plane_id : int, optional
         The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
+    is_joinery : bool
+        If True, the process is a result of joinery process.
     PROCESSING_NAME : str
         The name of the process.
     ATTRIBUTE_MAP : dict
         Mapping of BTLx XML attribute names to Python attribute names.
-    is_joinery : bool
-        If True, the process is a result of joinery process.
     params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
         The BTLx processing parameters for serialization.
 
@@ -832,7 +851,7 @@ class BTLxProcessing(Data, ABC):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id, "user_plane_id": self.user_plane_id}
 
-    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, is_joinery=True, user_plane_id=None, tool_position=None):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, user_plane_id=None, is_joinery=True):
         super(BTLxProcessing, self).__init__()
         self._priority = priority
         self._process_id = process_id
