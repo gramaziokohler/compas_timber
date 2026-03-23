@@ -143,10 +143,7 @@ class Panel(Element):
 
     @property
     def geometry(self):
-        """The geometry of the element in the model's global coordinates."""
-        if self._geometry is None:
-            self._geometry = self.compute_modelgeometry()
-        return self._geometry
+        return self.modelgeometry
 
     @geometry.setter
     def geometry(self, geometry):
