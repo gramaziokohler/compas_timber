@@ -41,7 +41,7 @@ def test_intersection_line_line_param():
 
 
 def test_intersection_line_plane_param():
-    with TOL.temporary(unit="M", absolute=1e-3, relative=1e-3) as tol:
+    with TOL.temporary(unit="M", absolute=1e-3, relative=1e-3):
         line = Line(Point(x=5.53733031674, y=12.3190045249, z=0.0), Point(x=20.8427601810, y=12.3190045249, z=0.0))
         plane = Plane(point=Point(x=15.436, y=16.546, z=-2.703), normal=Vector(x=-0.957, y=-0.289, z=0.000))
 
