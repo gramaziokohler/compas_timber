@@ -1,5 +1,6 @@
 import abc
 from functools import wraps
+from typing import Optional
 
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -418,7 +419,7 @@ class TimberElement(Element, abc.ABC):
         self.attributes.setdefault("user_ref_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
         return ID
 
-    def get_user_ref_plane(self, ID: int) -> Frame | None:
+    def get_user_ref_plane(self, ID: int) -> Optional[Frame]:
         """Return the :class:`~compas.geometry.Frame` stored under ``ID``, or ``None``.
 
         Parameters
