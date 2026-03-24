@@ -85,8 +85,8 @@ class DrillFeature(Feature):
 
     Parameters
     ----------
-    plane : :class:`compas.geometry.Plane`
-        The plane on which the drill hole is to be made.
+    line : :class:`compas.geometry.Line`
+        The line on which the drill hole is to be made.
     diameter : float
         The diameter of the drill hole.
     length : float

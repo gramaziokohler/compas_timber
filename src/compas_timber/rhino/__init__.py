@@ -7,14 +7,14 @@ def find_neighboring_elements(elements, inflate_by=0.0):
 
     Parameters
     ----------
-    beams : list(:class:`~compas_timber.parts.Beam`)
+    elements : list(:class:`~compas_timber.elements.Beam`)
         The collection of beams to check.
     inflate_by : float
         If set, inflate bounding boxes by this amount in all directions prior to adding to the RTree.
 
     Returns
     -------
-    list(set(:class:`compas_timber.parts.Beam`))
+    list(set(:class:`compas_timber.elements.Beam`))
         List containing sets or neightboring pairs beams.
 
     """

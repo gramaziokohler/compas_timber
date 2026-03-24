@@ -9,7 +9,7 @@ from compas_viewer.scene import Tag
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
-from compas_timber.connections import MaxNCompositeAnalyzer
+from compas_timber.analyzers import MaxNCompositeAnalyzer
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 

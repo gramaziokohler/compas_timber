@@ -13,6 +13,9 @@ from compas.tolerance import TOL
 from compas_timber.elements import Panel
 from compas_timber.model import TimberModel
 
+from brep_mocks import make_plate_brep
+from brep_mocks import make_single_face_brep
+
 
 @pytest.fixture
 def model():
@@ -185,3 +188,100 @@ def test_apply_and_remove_exensions_with_index():
     pg.remove_blank_extension(3)  # removing extension at index 3 revert to original
     assert all([TOL.is_allclose(planes[i].normal, list(pg.edge_planes.values())[i].normal) for i in range(len(planes))])
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
+
+
+def test_from_face_thickness_rectangular():
+    pts = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    brep = make_single_face_brep(pts)
+    thickness = 1.0
+    panel = Panel.from_face_thickness(brep, thickness)
+
+    assert panel is not None
+    assert TOL.is_close(panel.thickness, thickness)
+    assert panel.outline_a is not None
+    assert panel.outline_b is not None
+    assert len(panel.outline_a.points) == 5
+    assert len(panel.outline_b.points) == 5
+
+    for pt_a, pt_b in zip(panel.outline_a.points, panel.outline_b.points):
+        assert TOL.is_close(pt_a.distance_to_point(pt_b), thickness)
+
+
+def test_from_face_thickness_with_custom_vector():
+    pts = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    brep = make_single_face_brep(pts)
+    thickness = 1.0
+    vector = Vector(0, 0, -1)
+    panel = Panel.from_face_thickness(brep, thickness, vector=vector)
+
+    assert panel is not None
+    assert TOL.is_close(panel.thickness, thickness)
+    assert TOL.is_allclose(panel.normal, [0, 0, -1])
+
+
+def test_from_face_thickness_raises_on_multi_face_brep():
+    pts_a = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    pts_b = [Point(0, 0, 1), Point(10, 0, 1), Point(10, 20, 1), Point(0, 20, 1)]
+    multi_face_brep = make_plate_brep(pts_a, pts_b)
+
+    with pytest.raises(ValueError):
+        Panel.from_face_thickness(multi_face_brep, 1.0)
+
+
+def test_from_brep_rectangular_box():
+    thickness = 1.0
+    pts_a = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+    pts_b = [Point(0, 0, thickness), Point(10, 0, thickness), Point(10, 20, thickness), Point(0, 20, thickness)]
+    brep = make_plate_brep(pts_a, pts_b)
+
+    panel = Panel.from_brep(brep)
+
+    assert panel is not None
+    assert TOL.is_close(panel.thickness, thickness, atol=0.01)
+    assert panel.outline_a is not None
+    assert panel.outline_b is not None
+    assert len(panel.outline_a.points) == 5
+    assert len(panel.outline_b.points) == 5
+    assert TOL.is_close(panel.length, 10.0, atol=0.5)
+    assert TOL.is_close(panel.width, 20.0, atol=0.5)
+
+
+def test_from_brep_octagonal_prism():
+    import math
+
+    radius = 10.0
+    thickness = 2.0
+    n_sides = 8
+
+    pts_a = [Point(radius * math.cos(2 * math.pi * i / n_sides), radius * math.sin(2 * math.pi * i / n_sides), 0) for i in range(n_sides)]
+    pts_b = [Point(pt.x, pt.y, thickness) for pt in pts_a]
+    brep = make_plate_brep(pts_a, pts_b)
+
+    panel = Panel.from_brep(brep)
+
+    assert panel is not None
+    assert TOL.is_close(panel.thickness, thickness, atol=0.1)
+    assert len(panel.outline_a.points) == n_sides + 1
+    assert len(panel.outline_b.points) == n_sides + 1
+
+
+def test_from_brep_tilted_box():
+    import math
+
+    angle = math.pi / 4
+    thickness = 1.0
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+    base = [Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0)]
+
+    pts_a = [Point(pt.x, pt.y * cos_a, pt.y * sin_a) for pt in base]
+    normal_scaled = Vector(0, -sin_a, cos_a) * thickness
+    pts_b = [Point(pt.x + normal_scaled.x, pt.y + normal_scaled.y, pt.z + normal_scaled.z) for pt in pts_a]
+    brep = make_plate_brep(pts_a, pts_b)
+
+    panel = Panel.from_brep(brep)
+
+    assert panel is not None
+    assert panel.outline_a is not None
+    assert panel.outline_b is not None
+    assert len(panel.outline_a.points) == len(panel.outline_b.points)
