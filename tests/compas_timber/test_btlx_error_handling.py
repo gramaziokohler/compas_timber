@@ -102,7 +102,7 @@ def test_model_to_xml_with_mixed_processing_results(btlx_writer, mock_model):
 
 
 def test_model_to_xml_with_multiple_beams_and_errors(btlx_writer):
-    model = TimberModel()
+    model = TimberModel(tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
 
     # First beam with error
     beam1 = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)

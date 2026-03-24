@@ -14,12 +14,13 @@ from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+    with TOL.temporary(unit="MM", absolute=1e-3, relative=1e-3) as tolerance:
+        yield tolerance
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ from compas.geometry import Polyhedron
 from compas.geometry import Line
 from compas.geometry import Vector
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Pocket
@@ -19,7 +19,8 @@ from compas_timber.connections import LapJoint
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-2, relative=1e-2)
+    with TOL.temporary(unit="MM", absolute=1e-2, relative=1e-2) as tolerance:
+        yield tolerance
 
 
 @pytest.fixture
