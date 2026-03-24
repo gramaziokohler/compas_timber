@@ -48,6 +48,7 @@ class TOliGinaJoint(MortiseTenonJoint):
             self.guid,
         )
 
+
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 

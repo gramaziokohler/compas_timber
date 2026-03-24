@@ -72,8 +72,8 @@ def test_t_step_joint_serialization_deserialization(beams):
     assert deserialized_joint.step_depth == 0.0
     assert deserialized_joint.heel_depth == 20.0
     assert deserialized_joint.tenon_mortise_height == 40.0
-    assert deserialized_joint.main_beam_guid == str(main_beam.guid)
-    assert deserialized_joint.cross_beam_guid == str(cross_beam.guid)
+    assert deserialized_joint.element_guids[0] == str(main_beam.guid)
+    assert deserialized_joint.element_guids[1] == str(cross_beam.guid)
 
     # Beams should be None after deserialization (before restoration)
     assert deserialized_joint.main_beam is None
@@ -94,7 +94,7 @@ def test_t_step_joint_beam_restoration_from_keys(beams):
     deserialized_joint = TStepJoint.__from_data__(data)
 
     # Restore beams from model
-    deserialized_joint.restore_beams_from_keys(model)
+    deserialized_joint.restore_elements_from_keys(model)
 
     # Check that beams are properly restored
     assert deserialized_joint.main_beam == main_beam
@@ -177,6 +177,6 @@ def test_t_step_joint_restore_beams_resolves_attributes(beams):
     with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
         assert spy.call_count == 0  # not called yet — beams are absent
 
-        deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()

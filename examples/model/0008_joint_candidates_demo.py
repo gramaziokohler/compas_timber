@@ -18,7 +18,7 @@ from compas_viewer.viewer import Viewer
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
-from compas_timber.connections import NBeamKDTreeAnalyzer
+from compas_timber.analyzers import NBeamKDTreeAnalyzer
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel

@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
+* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
+* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
+* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
+* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
+
+### Changed
+
+* Changed minimum required `compas` version to `2.15.1` due to bugfix.
+* Fixed `Plate.geometry` is `None`.
+
+### Removed
+
+
+## [2.1.1-dev0] 2026-03-17
+
+### Added
+
+### Changed
+
+### Removed
+
+
+## [2.1.0-dev0] 2026-03-16
+
+### Added
 
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
@@ -17,9 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
 * Added `LTenonMortiseJoint` and `TTenonMortiseJoint` classes that inherit from `MortiseTenonJoint` to avoid using `SUPPORTED_TOPOLOGY` as a list.
 * Added `MortiseTenonJoint` base class to centralize shared mortise/tenon joint logic.
+* Added `Beam.from_box()` alternative constructor to create a beam from a `compas.geometry.Box`, handling the frame offset between the box center and the beam's centerline start point.
+* Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
 
 ### Changed
+* Breaking change: the previous single-face `Plate.from_brep()` constructor behavior has been replaced, and `Plate.from_brep()` is now used exclusively to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face_thickness()` for plates, or `Panel.from_face_thickness()` for panels, instead.
+* `Plate.from_brep()` now delegates all brep parsing logic to `get_plate_geometry_outlines_from_brep`, which uses `mesh_from_brep_simple` to convert the brep into a `Mesh` datastructure. Face identification and vertex correspondence are resolved through mesh topology instead of directly iterating the brep API.
+* Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
+* Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
 
+* `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
@@ -38,6 +71,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
 * Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
+* New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
+* Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
+* Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
 
 ### Removed
 
@@ -102,6 +138,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added user-defined `miter_plane` argument to `LMiterJoint` to allow users to define an arbitrary cut plane.
 * Added a `clean` option which trims eact beam of an `LMiterJoint` with the back sides of the other beam. 
 * Added Shape String implementation to `Plate` for representation in `BTLxPart`.
+* Added `elements` argument to `Joint.__init__`.
+* Added `element_guids` property to `Joint` which are used for deserializing joints. 
 
 ### Changed
 * Deprecated `element_by_guid()` in `TimberModel`; use `get_element()` for optional access or `model[guid]` for strict access.
@@ -169,6 +207,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Panel.elementgeometry` to return the geometry in local coordinates.
 * Fixed `Plate.elementgeometry` to return the geometry in local coordinates.
 * Changed `PlateGeometry` geometry creation to use `Brep.from_polygons` instead of `Brep.from_loft` to ensure every face is correctly generated.
+* Implemented `get_elements_from_keys` in `Joint`.
+* Made all element references(`beam_a`, `beam_b`, `main_beam`, `cross_beam`, etc.) in concrete joint implementations references to specific elements in the `Joint.elements` tuple. 
+* Moved the `small_beam_butts` parameter to the `create()` alternate constructor of `LButtJoint`.
+* Moved the `cut_plane_bias` parameter to the `LapJoint` parent class.
 
 ### Removed
 * Removed the `add_element()` method from `compas_timber.model.TimberModel`, as the inherited method from `Model` now covers this functionality.
@@ -186,6 +228,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `Slab` class and renamed to `Panel`.
 * Removed unused `main_outlines` and `cross_outlines` properties from `PlateButtJoint`.
 * Removed unused module `compas_timber.solvers`.
+* Removed `restore_beams_from_keys` in all `Joint` subclasses.
+* Removed `restore_plates_from_keys` in `PlateJoint`.
+* Removed all *guid properties, eg `main_beam_guid`, `cross_beam_guid`, `beam_a_guid`, etc. from concrete joint classes.
+* Removed `LButtJoint.update_beam_roles` as the `small_beam_butts` parameter is used in an alternate `create` constructor now.
 
 ## [1.0.1] 2025-10-16
 
