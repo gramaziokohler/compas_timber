@@ -8,15 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
-* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
-* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
-* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
+
+* Added `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
 
 ### Changed
 
-* Changed minimum required `compas` version to `2.15.1` due to bugfix.
+* Improved `PlateStock`/`NestingResult` reporting integration for plate nesting, including robust unplaced-element handling and per-stock utilization/report payload consistency.
 
 ### Removed
 
@@ -33,7 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0-dev0] 2026-03-16
 
 ### Added
-
+* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
+* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
+* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
+* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
+* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
@@ -46,11 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
 
 ### Changed
+* Changed minimum required `compas` version to `2.15.1` due to bugfix.
 * Breaking change: the previous single-face `Plate.from_brep()` constructor behavior has been replaced, and `Plate.from_brep()` is now used exclusively to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face_thickness()` for plates, or `Panel.from_face_thickness()` for panels, instead.
 * `Plate.from_brep()` now delegates all brep parsing logic to `get_plate_geometry_outlines_from_brep`, which uses `mesh_from_brep_simple` to convert the brep into a `Mesh` datastructure. Face identification and vertex correspondence are resolved through mesh topology instead of directly iterating the brep API.
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
 * Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
-
 * `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
