@@ -5,10 +5,9 @@ from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 from compas.data import json_load
+from compas.datastructures import Mesh
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
-from compas.geometry import Point
-from compas.geometry import Polygon
 
 import xml.etree.ElementTree as ET
 
@@ -379,26 +378,27 @@ def test_btlx_part_unique_functionalities():
     assert isinstance(btlx_part.processings, list)
 
 
-def _box_polygons():
-    """Return 6 Polygon objects representing a 1000x100x50 box (no backend needed)."""
-    v = [
-        Point(0, 0, 0),
-        Point(1000, 0, 0),
-        Point(1000, 100, 0),
-        Point(0, 100, 0),
-        Point(0, 0, 50),
-        Point(1000, 0, 50),
-        Point(1000, 100, 50),
-        Point(0, 100, 50),
+def _box_mesh():
+    """Return a Mesh representing a 1000x100x50 box (no backend needed)."""
+    vertices = [
+        [0, 0, 0],
+        [1000, 0, 0],
+        [1000, 100, 0],
+        [0, 100, 0],
+        [0, 0, 50],
+        [1000, 0, 50],
+        [1000, 100, 50],
+        [0, 100, 50],
     ]
-    return [
-        Polygon([v[0], v[3], v[2], v[1]]),  # bottom
-        Polygon([v[4], v[5], v[6], v[7]]),  # top
-        Polygon([v[0], v[1], v[5], v[4]]),  # front
-        Polygon([v[3], v[7], v[6], v[2]]),  # back
-        Polygon([v[0], v[4], v[7], v[3]]),  # left
-        Polygon([v[1], v[2], v[6], v[5]]),  # right
+    faces = [
+        [0, 3, 2, 1],  # bottom
+        [4, 5, 6, 7],  # top
+        [0, 1, 5, 4],  # front
+        [3, 7, 6, 2],  # back
+        [0, 4, 7, 3],  # left
+        [1, 2, 6, 5],  # right
     ]
+    return Mesh.from_vertices_and_faces(vertices, faces)
 
 
 def test_btlx_part_shape_strings_format():
@@ -407,7 +407,7 @@ def test_btlx_part_shape_strings_format():
     btlx_part = BTLxPart(beam, order_num=1)
 
     mock_geometry = MagicMock()
-    mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
+    mock_geometry.scaled.return_value.to_viewmesh.return_value = (_box_mesh(), [])
 
     with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
         with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
@@ -434,7 +434,7 @@ def test_btlx_part_shape_strings_box_vertex_and_face_count():
     btlx_part = BTLxPart(beam, order_num=1)
 
     mock_geometry = MagicMock()
-    mock_geometry.scaled.return_value.to_polygons.return_value = _box_polygons()
+    mock_geometry.scaled.return_value.to_viewmesh.return_value = (_box_mesh(), [])
 
     with patch.object(type(beam), "geometry", new_callable=PropertyMock, return_value=mock_geometry):
         with patch.object(BTLxPart, "frame", new_callable=PropertyMock, return_value=Frame.worldXY()):
