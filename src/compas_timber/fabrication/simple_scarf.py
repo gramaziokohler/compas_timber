@@ -1,33 +1,36 @@
 import math
 from collections import OrderedDict
 
+from compas.data import json_dump
 from compas.geometry import Brep
+from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import Cylinder
-from compas.geometry import Vector
-from compas.geometry import Polyline
-from compas.geometry import Point
-from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import distance_segment_segment_points
-from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 
 from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
-from compas.data import json_dump
-
 
 class SimpleScarf(BTLxProcessing):
 
     PROCESSING_NAME = "SimpleScarf" # type : ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": "orientation",
+        "StartX": "start_x",
+        "length": "length",
+        "depth_ref_side": "depth_ref_side",
+        "depth_opp_side": "depth_opp_side",
+        "num_drill_hole": "num_drill_hole",
+        "drill_hole_diam_1": "drill_hole_diam_1",
+        "drill_hole_diam_2": "drill_hole_diam_2",
+        }
 
     @property
     def __data__(self):
@@ -78,9 +81,9 @@ class SimpleScarf(BTLxProcessing):
     # Properties
     ########################################################################
 
-    @property
-    def params(self):
-        return SimpleScarfParams(self)
+    # @property
+    # def params(self):
+    #     return SimpleScarfParams(self)
 
     @property
     def orientation(self):
@@ -167,28 +170,24 @@ class SimpleScarf(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_beams(
+    def from_beam_and_side(
         cls,
         beam,
-        other_beam,
-        length=None,
-        depth_ref_side=None,
-        depth_opp_side=None,
+        side,
+        length,
+        depth_ref_side,
+        depth_opp_side,
         num_drill_hole=0,
         drill_hole_diam_1=20.0,
         drill_hole_diam_2=20.0,
         ref_side_index=0,
     ):
-        # type: (Beam, Beam, float, float, float, int, float, float, int) -> SimpleScarf
+        # type: (Beam, str, float, float, float, int, float, float, int) -> SimpleScarf
         print("FROM BEAMS CONSTRUCTOR")
         if num_drill_hole not in [0, 1, 2]:
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
 
-        depth_ref_side = beam.height / 3.0 if depth_ref_side is None else depth_ref_side
-        depth_opp_side = beam.height / 3.0 if depth_opp_side is None else depth_opp_side
-        length = beam.height * 3.0 if length is None else length
-
-        orientation = cls._calculate_orientation(beam, other_beam)
+        orientation = cls._define_orientation(side)
 
         start_x = cls._calculate_start_x(beam, orientation, length)
 
@@ -203,111 +202,15 @@ class SimpleScarf(BTLxProcessing):
                    ref_side_index=ref_side_index)
 
     @classmethod
-    def from_plane_and_beam(cls, beam, plane):
-        print("FROM PLANE AND BEAM CONSTRUCTOR")
-        # type: (Beam, Plane) -> SimpleScarf
-    
-        # Check that the plane is parallel to the beam centerline
-        # if abs(plane.normal.dot(beam.centerline.direction)) < 1.0 - TOL.cosine:
-        #     raise ValueError("The plane must be parallel to the beam centerline to create a SimpleScarf joint.")
-
-        # Check that the plane intersects with the beam centerline
-        # if not plane.intersect_line(beam.centerline):
-        #     raise ValueError("The plane must intersect with the beam centerline to create a SimpleScarf joint.")
-
-        if isinstance(plane, Frame):
-            plane = Plane.from_frame(plane)
-
-        # Check that the plane intersects with the beam centerline at an endpoint
-        # intersection = plane.intersect_line(beam.centerline)
-        # if not (intersection.is_close(beam.centerline.start) or intersection.is_close(beam.centerline.end)):
-        #     raise ValueError("The plane must intersect with the beam centerline at an endpoint to create a SimpleScarf joint.")
-        
-        orientation = cls._calculate_orientation_with_plane(plane, beam)
-
-        dot = plane.normal.dot(beam.centerline.direction)
-        if TOL.is_close(dot, -1.0) or TOL.is_close(dot, 1.0) or TOL.is_close(dot, 0.0):
-            ref_side_dict = beam_ref_side_incidence_with_vector(beam, Vector.Zaxis(), ignore_ends=True)
-            ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-            height_side_index = (ref_side_index + 1) % 4
-            vertical_height = beam.ref_edges[ref_side_index].start.distance_to_point(beam.ref_edges[height_side_index].start)
-            depth_ref_side = vertical_height / 3.0
-            depth_opp_side = vertical_height / 3.0
-            length = vertical_height * 3.0
-            num_drill_hole = 0
-            drill_hole_diam_1 = 20.0
-            drill_hole_diam_2 = 20.0
-
-            return cls(orientation,
-                       cls._calculate_start_x(beam, orientation, length),
-                       length,
-                       depth_ref_side,
-                       depth_opp_side,
-                       num_drill_hole,
-                       drill_hole_diam_1,
-                       drill_hole_diam_2,
-                       ref_side_index=ref_side_index)
-
-        else:
-            if dot < 0 and orientation == OrientationType.START or dot > 0 and orientation == OrientationType.END:
-                plane.normal = plane.normal * -1
-            
-            ref_side_dict = beam_ref_side_incidence_with_vector(beam, plane.normal, ignore_ends=True)
-            ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-            ref_side_angle = min(ref_side_dict.values())
-            plane_inclination_angle = abs(ref_side_angle)
-            height_side_index = (ref_side_index + 1) % 4
-            vertical_height = beam.ref_edges[ref_side_index].start.distance_to_point(beam.ref_edges[height_side_index].start)
-            depth_ref_side = vertical_height / 4.0
-            depth_opp_side = vertical_height / 4.0
-            length = (vertical_height - (depth_ref_side + depth_opp_side)) / math.tan(plane_inclination_angle)
-            num_drill_hole = 0
-            drill_hole_diam_1 = 20.0
-            drill_hole_diam_2 = 20.0
-        
-            return cls(orientation,
-                       cls._calculate_start_x(beam, orientation, length),
-                       length,
-                       depth_ref_side,
-                       depth_opp_side,
-                       num_drill_hole,
-                       drill_hole_diam_1,
-                       drill_hole_diam_2,
-                       ref_side_index=ref_side_index)
-    
-    @classmethod
-    def _calculate_orientation_with_plane(cls, plane, beam):
-        intersection = plane.intersection_with_line(beam.centerline)
-        dis = intersection.distance_to_point(beam.centerline.start)
-        die = intersection.distance_to_point(beam.centerline.end)
-        if TOL.is_close(dis, 0.0):
-            return OrientationType.START
-        elif TOL.is_close(die, 0.0):
-            return OrientationType.END
-        else:
-            raise ValueError("The plane must intersect with the beam centerline at an endpoint to create a SimpleScarf joint.")
-
-    @classmethod
-    def _calculate_orientation(cls, beam, other_beam):
-        ctls_intersection = cls._calculate_average_point(beam, other_beam)
-        if not ctls_intersection:
-            raise FeatureApplicationError("The beams should share an endpoint to apply a SimpleScarf joint.")
-        side, _ = beam.endpoint_closest_to_point(ctls_intersection)
+    def _define_orientation(cls, side):
         return OrientationType.START if side == "start" else OrientationType.END
 
     @staticmethod
-    def _calculate_start_x(beam, orientation, length): #TODO: modify to accept bias
+    def _calculate_start_x(beam, orientation, length):
         if orientation == OrientationType.START:
             return 0.0
         else:
             return beam.length + length/2
-
-    @staticmethod
-    def _calculate_average_point(beam, other_beam):
-        dist, p1, p2 = distance_segment_segment_points(beam.centerline, other_beam.centerline)
-        p1 = Point(*p1)
-        p2 = Point(*p2)
-        return (p1 + p2) * 0.5
 
 
     #########################################################################
@@ -363,8 +266,6 @@ class SimpleScarf(BTLxProcessing):
                 if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
                     return b
                 
-            
-            # return actual_b
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume,
@@ -398,8 +299,7 @@ class SimpleScarf(BTLxProcessing):
         top_frame = ref_surface.frame
         if self.orientation == OrientationType.END:
             top_frame.translate(top_frame.xaxis * (beam.length + self.length/2))
-        # else:
-        #     top_frame.translate(top_frame.xaxis * (self.length/2))
+
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
 
         angle_sf = -90 if self.orientation == OrientationType.START else 90
@@ -410,6 +310,7 @@ class SimpleScarf(BTLxProcessing):
         end_frame = start_frame.translated(-start_frame.normal * self.length)
 
         bottom_frame = beam.opp_side(self.ref_side_index)
+
         opp_middle_frame = bottom_frame.translated(-bottom_frame.normal * self.depth_opp_side)
 
         front_frame = beam.front_side(self.ref_side_index)
@@ -417,7 +318,7 @@ class SimpleScarf(BTLxProcessing):
         back_frame = beam.back_side(self.ref_side_index)
 
         frames = [top_frame, ref_middle_frame, start_frame, blank_frame, end_frame, opp_middle_frame, bottom_frame, front_frame, back_frame]
-
+        
         return [Plane.from_frame(frame) for frame in frames]
 
     def volume_from_params_and_beam(self, beam):
@@ -526,35 +427,35 @@ class SimpleScarf(BTLxProcessing):
         self.drill_hole_diam_1 *= factor
         self.drill_hole_diam_2 *= factor
 
-class SimpleScarfParams(BTLxProcessingParams):
-    """Parameters for the SimpleScarf feature.
+# class SimpleScarfParams(BTLxProcessingParams):
+#     """Parameters for the SimpleScarf feature.
 
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.SimpleScarf`
-        The instance of the SimpleScarf feature.
-    """
+#     Parameters
+#     ----------
+#     instance : :class:`~compas_timber.fabrication.SimpleScarf`
+#         The instance of the SimpleScarf feature.
+#     """
 
-    def __init__(self, instance):
-        # type: (SimpleScarf) -> None
-        super(SimpleScarfParams, self).__init__(instance)
+#     def __init__(self, instance):
+#         # type: (SimpleScarf) -> None
+#         super(SimpleScarfParams, self).__init__(instance)
 
-    def as_dict(self):
-        """Returns the parameters of the SimpleScarf feature as an ordered dictionary.
+#     def as_dict(self):
+#         """Returns the parameters of the SimpleScarf feature as an ordered dictionary.
 
-        Returns
-        -------
-        dict
-            The parameters of the SimpleScarf as an ordered dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["DepthRefSide"] = "{:.{prec}f}".format(float(self._instance.depth_ref_side), prec=TOL.precision)
-        result["DepthOppSide"] = "{:.{prec}f}".format(float(self._instance.depth_opp_side), prec=TOL.precision)
-        result["NumDrillHole"] = str(self._instance.num_drill_hole)
-        result["DrillHoleDiam1"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_1), prec=TOL.precision)
-        result["DrillHoleDiam2"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_2), prec=TOL.precision)
-        return result
+#         Returns
+#         -------
+#         dict
+#             The parameters of the SimpleScarf as an ordered dictionary.
+#         """
+#         # type: () -> OrderedDict
+#         result = OrderedDict()
+#         result["Orientation"] = self._instance.orientation
+#         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
+#         result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
+#         result["DepthRefSide"] = "{:.{prec}f}".format(float(self._instance.depth_ref_side), prec=TOL.precision)
+#         result["DepthOppSide"] = "{:.{prec}f}".format(float(self._instance.depth_opp_side), prec=TOL.precision)
+#         result["NumDrillHole"] = str(self._instance.num_drill_hole)
+#         result["DrillHoleDiam1"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_1), prec=TOL.precision)
+#         result["DrillHoleDiam2"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_2), prec=TOL.precision)
+#         return result
