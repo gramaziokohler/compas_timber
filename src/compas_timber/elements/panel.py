@@ -22,6 +22,7 @@ from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.panel_features import PanelFeatureType
+from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
 
@@ -368,8 +369,8 @@ class Panel(Element):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate geometry with the given outline and thickness.
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel geometry with the given outline and thickness.
         """
         # this ensure the plate geometry can always be computed
         if TOL.is_zero(thickness):
@@ -381,31 +382,54 @@ class Panel(Element):
         return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
-        """Creates a plate from a brep.
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+        """Creates a panel from a single-face brep.
 
         Parameters
         ----------
         brep : :class:`~compas.geometry.Brep`
-            The brep of the plate.
+            A single-face brep representing the panel surface.
         thickness : float
-            The thickness of the plate.
+            The thickness of the panel.
         vector : :class:`~compas.geometry.Vector`, optional
-            The vector in which the plate is extruded.
+            The vector in which the panel is extruded.
         **kwargs : dict, optional
             Additional keyword arguments.
-            These are passed to the :class:`~compas_timber.elements.Plate` constructor.
+            These are passed to the :class:`~compas_timber.elements.Panel` constructor.
 
         Returns
         -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate with the given brep and thickness.
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel with the given brep and thickness.
         """
 
         if len(brep.faces) > 1:
-            raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
+            raise ValueError("Can only use single-face breps to create a Panel. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        if not outer_polyline:
-            raise ValueError("no valid outer outline could be extracted from brep face.")
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+
+    @classmethod
+    def from_brep(cls, brep: Brep, **kwargs):
+        """Creates a panel from a brep by automatically detecting two parallel faces.
+
+        This method identifies the two main faces of the brep using topological analysis
+        (edge counts and adjacency) and uses them as the top and bottom faces of the panel.
+
+        Parameters
+        ----------
+        brep : :class:`~compas.geometry.Brep`
+            The brep representing the panel geometry. Must have at least 2 parallel faces.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+            These are passed to the :class:`~compas_timber.elements.Panel` constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Panel`
+            A Panel object created from the two parallel faces of the brep.
+        """
+        if len(brep.faces) < 2:
+            raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
+        outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
