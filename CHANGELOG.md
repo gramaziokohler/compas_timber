@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Changed minimum required `compas` version to `2.15.1` due to bugfix.
+* Fixed `Plate.geometry` is `None`.
 
 ### Removed
 
