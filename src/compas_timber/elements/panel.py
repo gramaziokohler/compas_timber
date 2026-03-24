@@ -143,6 +143,15 @@ class Panel(Element):
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     @property
+    def geometry(self):
+        return self.modelgeometry
+
+    @geometry.setter
+    def geometry(self, geometry):
+        # overriding to please linter but this shouldn't be setable directly.
+        raise AttributeError("Geometry is a computed property and cannot be set directly. To modify the geometry, change the outlines, thickness, or features of the panel.")
+
+    @property
     def outlines(self):
         return (self.outline_a, self.outline_b)
 
