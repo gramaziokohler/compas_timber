@@ -2,7 +2,7 @@ import os
 import pytest
 
 from compas.data import json_load
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL, Tolerance
 from compas.geometry import Frame
 
 import xml.etree.ElementTree as ET
@@ -21,6 +21,7 @@ from compas_timber.model import TimberModel
 def test_model():
     model_path = os.path.join(compas_timber.DATA, "model_test.json")
     model = json_load(model_path)
+    model._tolerance = Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
     model.process_joinery()
     return model
 
@@ -46,7 +47,8 @@ def namespaces():
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+    with TOL.temporary(unit="MM", absolute=1e-3, relative=1e-3) as tolerance:
+        yield tolerance
 
 
 def test_btlx_file_history(resulting_btlx, namespaces):

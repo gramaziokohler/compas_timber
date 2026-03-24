@@ -1,3 +1,5 @@
+from itertools import chain
+
 import compas
 
 if not compas.IPY:
@@ -62,7 +64,7 @@ class TimberModel(Model):
             element = model._graph.node_element(graphnode)  # type: ignore
             element.graph_node = graphnode  # type: ignore
 
-        for interaction in model.interactions():
+        for interaction in chain(model.joints, model.joint_candidates):
             interaction.restore_beams_from_keys(model)  # type: ignore
         return model
 

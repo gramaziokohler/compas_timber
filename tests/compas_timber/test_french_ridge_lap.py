@@ -13,12 +13,13 @@ from compas_timber.fabrication import FrenchRidgeLap
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import EdgePositionType
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+    with TOL.temporary(unit="MM", absolute=1e-3, relative=1e-3) as tolerance:
+        yield tolerance
 
 
 def test_ortho_french_ridge_lap_ref(tol):

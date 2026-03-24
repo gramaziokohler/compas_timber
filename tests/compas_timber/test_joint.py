@@ -3,6 +3,8 @@ import os
 import compas
 import pytest
 from compas.data import json_load
+from compas.data import json_loads
+from compas.data import json_dumps
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
@@ -287,23 +289,28 @@ def test_plate_joint_candidate():
     assert list(model.joint_candidates)[0].elements[0] == plate_b
 
 
-def test_joint_candidate_create_still_works():
-    """Test that JointCandidate.create() still works for creating actual joints."""
-    w, h = 20, 20
+def test_joint_candidate_should_no_be_created_as_a_joint(mocker):
+    """Test that the base JointCandidate.create() is not usable and raises NotImplementedError instead of creating a joint."""
 
-    lines = [
-        Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1.0, y=0.0, z=0.0)),
-        Line(Point(x=0.5, y=-0.5, z=0.0), Point(x=0.5, y=0.5, z=0.0)),
-    ]
+    with pytest.raises(NotImplementedError):
+        _ = JointCandidate.create(mocker.MagicMock(), mocker.MagicMock(), mocker.MagicMock(), topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
 
+
+def test_joint_candidate_serializes(mocker, l_topo_beams):
+    """Test that JointCandidate can be serialized and deserialized without error."""
     model = TimberModel()
-    beams = [Beam.from_centerline(line, w, h) for line in lines]
-    model.add_elements(beams)
+    model.add_elements(l_topo_beams)
 
-    # JointCandidate.create() should still create actual joints
-    joint = JointCandidate.create(model, beams[0], beams[1], topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
+    beam_a, beam_b = l_topo_beams
+    candidate = JointCandidate(beam_a, beam_b, topology=JointTopology.TOPO_L, location=Point(0.5, 0, 0))
+    model.add_joint_candidate(candidate)
 
-    assert isinstance(joint, JointCandidate)
-    assert joint in model.joints  # Should be in actual joints
-    assert len(model.joints) == 1
-    assert len(model.joint_candidates) == 0  # Should not be in candidates
+    model_copy = json_loads(json_dumps(model))
+
+    assert len(model_copy.joint_candidates) == 1
+    candidate_copy = list(model_copy.joint_candidates)[0]
+    assert isinstance(candidate_copy, JointCandidate)
+    assert candidate_copy.topology == JointTopology.TOPO_L
+    assert candidate_copy.location == Point(0.5, 0, 0)
+    assert str(candidate_copy.elements[0].guid) == str(beam_a.guid)
+    assert str(candidate_copy.elements[1].guid) == str(beam_b.guid)
