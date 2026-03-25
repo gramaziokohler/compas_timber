@@ -88,8 +88,6 @@ def test_l_tenon_mortise_joint_serialization(beams):
     )
     data = joint.__data__
 
-    assert data["main_beam_guid"] == str(main_beam.guid)
-    assert data["cross_beam_guid"] == str(cross_beam.guid)
     assert data["start_y"] == 10.0
     assert data["start_depth"] == 5.0
     assert data["rotation"] == 0.0
@@ -139,7 +137,7 @@ def test_l_tenon_mortise_joint_restore_beams_resolves_attributes(beams):
     with patch.object(deserialized_joint, "_set_unset_attributes", wraps=deserialized_joint._set_unset_attributes) as spy:
         assert spy.call_count == 0  # not called yet — beams are absent
 
-        deserialized_joint.restore_beams_from_keys(model)
+        deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()
 
