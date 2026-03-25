@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
 * Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
+* Added `get_clusters_from_joints` function to `compas_timber.connections`.
 
 ### Changed
 
@@ -22,9 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added interfaces `BeamSegmentGenerator` and `JointConnectorGenerator` for more extensible structural analysis segment generation.
 * Renamed attribute `segment` to `line` in `StructuralSegment` for better clarity.
 * New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
+* Renamed `compas_timber.connections.analyzers.py` to `compas_timber.connections.cluster.py`.
 
 ### Removed
-
+* Removed `NBeamKDTreeAnalyzer` from `compas_timber.connections`.
+* Removed `TripletAnalyzer` from `compas_timber.connections`.
+* Removed `QuadAnalyzer` from `compas_timber.connections`.
+* Removed `CompositeAnalyzer` from `compas_timber.connections`.
+* Removed `MaxNCompositeAnalyzer` from `compas_timber.connections`.
 
 ## [2.0.0-dev0] 2026-02-19
 

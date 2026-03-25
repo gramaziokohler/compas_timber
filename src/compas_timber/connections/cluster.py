@@ -1,5 +1,4 @@
 from collections import defaultdict
-from weakref import WeakKeyDictionary
 
 from compas.geometry import Point
 from compas.tolerance import TOL
@@ -7,7 +6,6 @@ from compas_model.elements import Element
 
 from compas_timber.connections import JointTopology
 from compas_timber.geometry import KDTree
-from compas_timber.model import TimberModel
 
 
 class Cluster(object):
@@ -70,57 +68,6 @@ class Cluster(object):
         return JointTopology.TOPO_Y
 
 
-class _CacheEntry(object):
-    def __init__(self, fingerprint: frozenset, joints: list, tree: KDTree) -> None:
-        self.fingerprint = fingerprint
-        self.joints = joints
-        self.tree = tree
-
-
-class _KDTreeCache(object):
-    """Caches a :class:`KDTree` per model instance, rebuilding it when the joint set changes.
-
-    The cache is keyed by model identity (via a :class:`~weakref.WeakKeyDictionary`) so the
-    tree is automatically released when the model is garbage-collected.  A fingerprint of
-    the current joint-candidate identities detects structural changes: if joints have been
-    added or removed since the tree was built, the tree is transparently rebuilt.
-
-    Crucially, the cache also stores the *canonical ordering* of joints used when the tree
-    was first built.  Every caller receives that same list so that KDTree indices are always
-    consistent with ``self._joints``, regardless of the iteration order of the underlying set.
-    """
-
-    _store = WeakKeyDictionary()  # type: WeakKeyDictionary  # model -> _CacheEntry
-
-    @classmethod
-    def get(cls, model: TimberModel, joints: list) -> tuple[list, KDTree]:
-        """Return the canonical joints list and :class:`KDTree` for *model*.
-
-        If the joint set has changed since the last call (joints added or removed),
-        a new tree is built and the canonical list is updated.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model whose joint candidates the tree covers.
-        joints : list
-            The current joint candidates used only to compute the fingerprint and,
-            on a cache miss, to build the new tree.
-
-        Returns
-        -------
-        tuple[list, :class:`KDTree`]
-            ``(canonical_joints, tree)`` – the ordering and tree that all callers
-            for this model generation must share.
-        """
-        fingerprint = frozenset(id(j) for j in joints)
-        cached = cls._store.get(model)
-        if cached is None or cached.fingerprint != fingerprint:
-            cls._store[model] = _CacheEntry(fingerprint, joints, KDTree([j.location for j in joints]))
-        entry = cls._store[model]
-        return entry.joints, entry.tree
-
-
 def get_clusters_from_model(model, max_distance=None, exclude=None):
     """Gets a sorted list of Cluster objects from a model's JointCandidates
     run model.connect_adjacent_beams() first to populate the model's joint_candidates
@@ -156,7 +103,7 @@ def get_clusters_from_model(model, max_distance=None, exclude=None):
     cluster_index_per_joint = list(range(len(active_joints)))
 
     def get_cluster_index(joint_index):
-
+        # if value is the index, then the joint's cluster index is the joint_index (that joint is cluster root)
         while cluster_index_per_joint[joint_index] != joint_index:
             # set this joint's cluster index to the cluster it points to.
             cluster_index_per_joint[joint_index] = cluster_index_per_joint[cluster_index_per_joint[joint_index]]
@@ -166,7 +113,6 @@ def get_clusters_from_model(model, max_distance=None, exclude=None):
     def merge_clusters(joint_index_a, joint_index_b):
         cluster_index_a = get_cluster_index(joint_index_a)
         cluster_index_b = get_cluster_index(joint_index_b)
-
         if cluster_index_a != cluster_index_b:
             cluster_index_per_joint[cluster_index_b] = cluster_index_a
 
@@ -179,6 +125,5 @@ def get_clusters_from_model(model, max_distance=None, exclude=None):
         joints_by_cluster_index[get_cluster_index(joint_index)].append(joint)
 
     grouped_joints = sorted(joints_by_cluster_index.values(), key=len, reverse=True)
-    clusters = [Cluster(joint_group) for joint_group in grouped_joints]
 
-    return clusters
+    return [Cluster(joint_group) for joint_group in grouped_joints]

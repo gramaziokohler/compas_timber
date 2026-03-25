@@ -34,8 +34,8 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
-from .analyzers import Cluster
-from .analyzers import get_clusters_from_model
+from .cluster import Cluster
+from .cluster import get_clusters_from_model
 
 
 __all__ = [
