@@ -20,10 +20,11 @@ class ISimpleScarf(Joint):
         data["main_beam_guid"] = self.main_beam_guid
         data["cross_beam_guid"] = self.cross_beam_guid
         data["length"] = self.length
+        data["depth_ref_side"] = self.depth_ref_side
+        data["depth_opp_side"] = self.depth_opp_side
         data["num_drill_hole"] = self.num_drill_hole
-        data["drill_hole_diam_1"] = self.drill_hole_diam_1
-        data["drill_hole_diam_2"] = self.drill_hole_diam_2
-        data["cutting_plane"] = self.cutting_plane
+        data["drill_hole_diam"] = self.drill_hole_diam
+        data["ref_side_index"] = self.ref_side_index
         return data
 
     def __init__(
