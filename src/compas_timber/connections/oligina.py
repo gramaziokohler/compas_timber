@@ -6,16 +6,17 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
 
-from compas_timber.connections import JointTopology
-from compas_timber.connections import TenonMortiseJoint
 from compas_timber.fabrication import Text
 
+from .mortise_tenon import MortiseTenonJoint
+from .solver import JointTopology
 from .utilities import beam_ref_side_incidence_with_vector
 
 
-class OliGinaJoint(TenonMortiseJoint):
-    SUPPORTED_TOPOLOGY = [JointTopology.TOPO_T, JointTopology.TOPO_L]
+class TOliGinaJoint(MortiseTenonJoint):
     TEXT_HEIGHT_FACTOR = 0.4
+
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
     # fmt: off
     def __init__(
@@ -24,10 +25,44 @@ class OliGinaJoint(TenonMortiseJoint):
         cross_beam,
         **kwargs
     ):
-        super(OliGinaJoint, self).__init__(main_beam, cross_beam, **kwargs)
+        super(TOliGinaJoint, self).__init__(main_beam, cross_beam, **kwargs)
+
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the extension could not be calculated.
+
+        """
+        assert self.main_beam and self.cross_beam
+        extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+
+        start_main, end_main = self.get_main_extension()
+        self.main_beam.add_blank_extension(
+            start_main + extension_tolerance,
+            end_main + extension_tolerance,
+            self.guid,
+        )
+
 
     def add_features(self):
-        super(OliGinaJoint, self).add_features()
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        self._clear_features()
+
+        main_feature = self._create_tenon_feature()
+        cross_feature = self._create_mortise_feature(main_feature)
+
+        # add features to beams
+        self.main_beam.add_features(main_feature)
+        self.cross_beam.add_features(cross_feature)
+        # add features to joint
+        self.features = [cross_feature, main_feature]
+
         self.cross_beam.add_feature(self._make_oli_text())
         self.cross_beam.add_feature(self._make_date_text())
         self.main_beam.add_feature(self._make_gina_text())

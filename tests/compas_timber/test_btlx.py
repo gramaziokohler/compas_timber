@@ -16,7 +16,6 @@ from compas_timber.fabrication import BTLxRawpart
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import OrientationType
 from compas_timber.elements import Beam
-from compas_timber.elements import CutFeature
 from compas_timber.model import TimberModel
 from compas_timber.planning import BeamStock
 from compas_timber.planning import NestingResult
@@ -48,11 +47,6 @@ def resulting_btlx(test_model):
 @pytest.fixture
 def namespaces():
     return {"d2m": "https://www.design2machine.com"}
-
-
-@pytest.fixture
-def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
 
 
 def test_btlx_file_history(resulting_btlx, namespaces):
@@ -167,19 +161,6 @@ def test_expected_btlx(resulting_btlx, expected_btlx, namespaces):
             assert resulting_processings == expected_processings
 
 
-def test_btlx_should_skip_feature():
-    writer = BTLxWriter()
-    model = TimberModel()
-    beam = Beam(Frame.worldXY(), 1000, 100, 100)
-    beam.add_features(CutFeature(Frame.worldXY()))
-    model.add_element(beam)
-
-    with pytest.warns():
-        result = writer.model_to_xml(model)
-
-    assert result is not None
-
-
 def test_float_formatting_of_param_dicts():
     test_processing = JackRafterCut(OrientationType.END, 10, 20.0, 0.5, 45.000, 90, ref_side_index=1)
     params_dict = test_processing.params.as_dict()
@@ -194,26 +175,32 @@ def test_float_formatting_of_param_dicts():
 
 
 def test_processing_scaled_called_for_meter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "M"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="M", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
     processing = JackRafterCut(OrientationType.END, 0.01, 0.02, 0.005, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
     model.add_element(beam)
 
     spy = mocker.spy(processing, "scaled")
-    writer.model_to_xml(model)
+    with pytest.warns(UserWarning, match="Model units are set to M and will auto-scale to mm for BTLx"):
+        writer.model_to_xml(model)
     spy.assert_called_once_with(1000.0)
 
 
 def test_processing_scaled_not_called_for_millimeter_units(mocker):
+    tolerance_mock = mocker.MagicMock(spec=Tolerance)
+    tolerance_mock.unit = "MM"
+
     writer = BTLxWriter()
-    model = TimberModel(Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    model = TimberModel(tolerance=tolerance_mock)
     beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=100.0)
     processing = JackRafterCut(OrientationType.END, 10.0, 20.0, 5.0, 45.0, 90.0, ref_side_index=0)
     beam.add_features(processing)
     model.add_element(beam)
-
     spy = mocker.spy(processing, "scaled")
     writer.model_to_xml(model)
     spy.assert_not_called()
