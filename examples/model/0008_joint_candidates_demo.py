@@ -72,7 +72,7 @@ def create_demo_structure():
 
 def find_and_create_ball_node_joints(model):
     """Find clusters of 6 beams and create BallNodeJoints for them."""
-    clusters = get_clusters_from_joint_candidates(model)
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates)
 
     ball_node_count = 0
     for cluster in clusters:

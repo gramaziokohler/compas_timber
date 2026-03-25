@@ -73,7 +73,7 @@ def main():
 
     tol = Tolerance(absolute=0.01)
 
-    clusters = get_clusters_from_joint_candidates(model, max_distance=tol)
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates, max_distance=tol)
 
     size_to_color = create_color_map(list(sorted({len(cluster) for cluster in clusters})))
     for cluster in clusters:
