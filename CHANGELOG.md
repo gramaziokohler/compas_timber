@@ -33,7 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
 * `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now use `AttributeSpec` dataclass instances, carrying both the Python attribute name and the deserialisation type.
 * `FreeContour.ATTRIBUTE_MAP` now has two entries (`Contour` and `DualContour`) both mapping to `contour_param_object`, allowing the reader to handle both XML child element types.
-* `FreeContour` now initialises `process_id` to `1`, overriding the inherited default of `0` which caused an error in the BTLx viewer.
 * `MachiningLimits.from_dict()` now accepts string values `"yes"` / `"no"` in addition to booleans, allowing the method to be used directly by `BTLxReader` when deserializing machining limit values from BTLx XML.
 
 ### Removed
