@@ -1,20 +1,19 @@
-"""This is a benchmarking script which was used to figure out performance bottlenecks in the analyzers."""
+"""This is a benchmarking script which was used to figure out performance bottlenecks in Cluster analysis."""
 
 from time import time
 import random
 import math
-from collections import OrderedDict
 
 from compas.geometry import Line
 from compas.geometry import Point
 
-from compas_timber.connections import MaxNCompositeAnalyzer
-from compas_timber.connections.analyzers import find_all_clusters
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
 
-def beams(seed=42, jitter=0.0):
+
+def beams_clusters(cluster_count, seed=42, jitter=0.0):
     """Generate beam centerlines arranged in clusters of known sizes.
 
     Each cluster is a group of lines whose centerlines all pass through
@@ -24,6 +23,8 @@ def beams(seed=42, jitter=0.0):
 
     Parameters
     ----------
+    cluster_count : int
+        Number of each size cluster to generate. 
     seed : int
         Random seed for reproducibility. Default 42.
     jitter : float
@@ -39,27 +40,17 @@ def beams(seed=42, jitter=0.0):
         One entry per cluster: (center_point, n_lines).
         Useful for asserting the correctness of the result.
 
-        6 clusters found with 10 elements
-        6 clusters found with 8 elements
-        6 clusters found with 6 elements
-        6 clusters found with 4 elements
-        6 clusters found with 3 elements
-        6 clusters found with 2 elements
-
     """
     rng = random.Random(seed)
 
-    # ------------------------------------------------------------------
-    # Cluster definitions: (number_of_clusters, lines_per_cluster)
-    # Totals: 12×10 + 12×8 + 12×6 + 12×4 + 12×3 + 12×2 = 396 lines
-    # ------------------------------------------------------------------
+
     cluster_specs = [
-        (6, 10),
-        (6, 8),
-        (6, 6),
-        (6, 4),
-        (6, 3),
-        (6, 2),
+        (cluster_count, 10),
+        (cluster_count, 8),
+        (cluster_count, 6),
+        (cluster_count, 4),
+        (cluster_count, 3),
+        (cluster_count, 2),
     ]
 
     LINE_HALF_LENGTH = 50.0   # each beam extends this far either side of its cluster center
@@ -135,39 +126,19 @@ def beams(seed=42, jitter=0.0):
 
 def make_model(lines):
     model = TimberModel()
+    start = time()
 
     WIDTH, HEIGHT = 0.08, 0.10
     for line in lines:
         model.add_element(Beam.from_centerline(line, width=WIDTH, height=HEIGHT))
+    print(f"    Time taken to generate beams and model: {time() - start}")
+
+
+    start = time()
 
     model.connect_adjacent_beams(max_distance=0.02)
+    print(f"    Time taken to find joint candidates: {time() - start}")
     return model
-
-def get_cluster_counts(clusters):
-    """Group clusters by their element count and return an OrderedDict
-    sorted by the count (the keys).
-
-    Parameters
-    ----------
-    clusters : iterable
-        Iterable of cluster objects with a length accessible via ``len(c.elements)``.
-
-    Returns
-    -------
-    OrderedDict
-        Mapping from count -> list[cluster], sorted by count.
-    """
-    output = OrderedDict()
-
-    for c in clusters:
-        count = len(c.elements)
-        output.setdefault(count, []).append(c)
-
-    od = OrderedDict(sorted(output.items()))
-    for count, clusters in od.items():
-        print(f"{len(clusters)} clusters found with {count} elements")
-
-    return ([len(clusters) for clusters in od.values()])
 
 def print_cluster_info(cluster):
     output = {}
@@ -184,33 +155,22 @@ def print_cluster_info(cluster):
 
 
 def main():
-    results = []
 
-    other_results = find_all_clusters(make_model(beams()[0]).joint_candidates, max_distance=0.02)
-    print("expected results:")
-    print_cluster_info(other_results)
-    print("--------------------------------------------------------------------")
-
-
-    for _ in range(4):
-        lines = beams()[0]
+    for i in [1,2,4,6,8,12]:
+        lines, _ = beams_clusters(i)
+        print(len(lines), "beams")
         model = make_model(lines)
 
-        # Test just pairs
+        print("")
+        start = time()
+        print(model)
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
+        duration=time() - start
+        print(f"    Time taken for get_clusters_from_joint_candidates: {duration}")
 
-        analyzer = MaxNCompositeAnalyzer(model, n=5)
-        clusters = analyzer.find()
-
-        results.append(get_cluster_counts(clusters))
-
+        print_cluster_info(clusters)
         print("--------------------------------------------------------------------")
 
-    other_results = find_all_clusters(model.joint_candidates, max_distance=0.02)
-    print("results:")
-    for r in results:
-        print(f"{r}")
-
-    assert all([results[0]==r for r in results[1:]]), "Results differ across runs — this should not happen!"
 
 
 if __name__ == "__main__":

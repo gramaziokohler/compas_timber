@@ -18,7 +18,7 @@ from compas_viewer.viewer import Viewer
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LMiterJoint
-from compas_timber.analyzers import NBeamKDTreeAnalyzer
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
@@ -72,8 +72,7 @@ def create_demo_structure():
 
 def find_and_create_ball_node_joints(model):
     """Find clusters of 6 beams and create BallNodeJoints for them."""
-    analyzer = NBeamKDTreeAnalyzer(model, n=6)
-    clusters = analyzer.find()
+    clusters = get_clusters_from_joint_candidates(model)
 
     ball_node_count = 0
     for cluster in clusters:

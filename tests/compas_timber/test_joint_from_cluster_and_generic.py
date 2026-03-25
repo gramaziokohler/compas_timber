@@ -6,7 +6,7 @@ from compas.geometry import Frame
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointCandidate
-from compas_timber.analyzers import Cluster
+from compas_timber.connections import Cluster
 from compas_timber.elements import Beam
 from compas_timber.errors import BeamJoiningError
 from compas_timber.model import TimberModel
@@ -266,7 +266,7 @@ def test_from_cluster_empty_cluster(model):
     # Create empty cluster
     cluster = Cluster([])
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # @chenkasirer @papachap what is our stance on instantiating joints without elements? Allowed?
         TButtJoint.promote_cluster(model, cluster)
 
 
