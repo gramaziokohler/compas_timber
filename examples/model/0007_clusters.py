@@ -9,7 +9,7 @@ from compas_viewer.scene import Tag
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
-from compas_timber.connections import get_clusters_from_joint_candidates
+from compas_timber.analyzers import MaxNCompositeAnalyzer
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -72,8 +72,18 @@ def main():
         viewer.scene.add(Tag(text=str(beam.graphnode), position=beam.centerline.midpoint, height=40, color=Color.black()))
 
     tol = Tolerance(absolute=0.01)
+    num_of_beams = len(model.beams)
 
-    clusters = get_clusters_from_joint_candidates(model, max_distance=tol)
+    ### find triplets only
+    # analyzer = TripletAnalyzer(model, tolerance=Tolerance(absolute=0.01))
+
+    ### find quads only
+    # analyzer = QuadAnalyzer(model, tolerance=Tolerance(absolute=0.01))
+
+    ### find all clusters up to n beams, then n-1 beams, then n-2 beams, etc.
+    analyzer = MaxNCompositeAnalyzer(model, n=num_of_beams, tolerance=tol)
+
+    clusters = analyzer.find()
 
     size_to_color = create_color_map(list(sorted({len(cluster) for cluster in clusters})))
     for cluster in clusters:

@@ -18,6 +18,7 @@ from compas_model.elements import reset_computed
 from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
+from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
 
@@ -38,9 +39,9 @@ class Plate(TimberElement):
         Width of the plate.
     thickness : float
         Thickness of the plate.
-    outline_a : :class:`~compas.geometry.Polyline`, optional
+    local_outline_a : :class:`~compas.geometry.Polyline`, optional
         A line representing the principal outline of this plate.
-    outline_b : :class:`~compas.geometry.Polyline`, optional
+    local_outline_b : :class:`~compas.geometry.Polyline`, optional
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
     openings : list[:class:`~compas.geometry.Polyline`], optional
         A list of Polyline objects representing openings in this plate.
@@ -277,7 +278,7 @@ class Plate(TimberElement):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
 
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
@@ -339,13 +340,13 @@ class Plate(TimberElement):
         return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
-        """Creates a plate from a brep.
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+        """Creates a plate from a single-face brep.
 
         Parameters
         ----------
         brep : :class:`~compas.geometry.Brep`
-            The brep of the plate.
+            A single-face brep representing the plate surface.
         thickness : float
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
@@ -357,13 +358,36 @@ class Plate(TimberElement):
         Returns
         -------
         :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate with the given brep and thickness.
+            A Plate object representing the plate with the given brep face and thickness.
         """
 
         if len(brep.faces) > 1:
             raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        if not outer_polyline:
-            raise ValueError("no outer loop for brep face was found")
         return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+
+    @classmethod
+    def from_brep(cls, brep: Brep, **kwargs):
+        """Creates a plate from a brep by automatically detecting two parallel faces.
+
+        This method identifies the two main faces of the brep using topological analysis
+        (edge counts and adjacency) and uses them as the top and bottom faces of the plate.
+
+        Parameters
+        ----------
+        brep : :class:`~compas.geometry.Brep`
+            The brep representing the plate geometry. Must have at least 5 faces.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+            These are passed to the :class:`~compas_timber.elements.Plate` constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Plate`
+            A Plate object created from the two parallel faces of the brep.
+        """
+        if len(brep.faces) < 5:
+            raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate). This brep has {}".format(len(brep.faces)))
+        outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)

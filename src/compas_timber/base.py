@@ -201,7 +201,7 @@ class TimberElement(Element, abc.ABC):
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
             The feature or features to be removed described as a BTLxProcessing or a list of BTLxProcessings.
             If None, all features will be removed.
 
@@ -351,7 +351,7 @@ class TimberElement(Element, abc.ABC):
 
     def get_dimensions_relative_to_side(self, ref_side_index):
         # type: (int) -> tuple[float, float]
-        """Returns the perpendicular and parallel dimensions of the beam to the given reference side.
+        """Returns the dimensions of a timber element with respect to the Y- axis and Normal of the given reference side.
 
         Parameters
         ----------
@@ -361,9 +361,9 @@ class TimberElement(Element, abc.ABC):
         Returns
         -------
         tuple(float, float)
-            The perpendicular and parallel dimensions of the beam to the reference side.
-                - Perpendicular dimension: The measurement normal to the reference side.
-                - Parallel dimension: The measurement along y-axis of reference side.
+            Y-axis dimension, Normal direction dimension.
+                - Y-axis dimension: The element dimension along y-axis of reference side.
+                - Normal dimension: The element dimension normal to the reference side.
         """
         if ref_side_index in [1, 3]:
             return self.height, self.width

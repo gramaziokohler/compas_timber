@@ -38,7 +38,7 @@ def test_create_with_fastener():
     F = PlateFastener(interfaces=[I1, I2])
     instance = TButtJoint.create(model, B1, B2, fastener=F)
 
-    assert len(instance.elements) == 4
+    assert len(instance.elements) + len(instance.generated_elements) == 4
     assert isinstance(instance, TButtJoint)
     assert instance.main_beam == B1
     assert instance.cross_beam == B2

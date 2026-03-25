@@ -92,11 +92,11 @@ class Fastener(Element):
 class FastenerTimberInterface(Data):
     """A class to represent the interface between a fastener and a timber element.
 
-    # TODO: we need to put some thought as to what's the minimal representation of an interface.
-    # TODO: the responsibilities of the Fastener-based-joint vs. Fastener vs. FastenerTimberInterface should be perhaps more clearly defined
-    # TODO: prehaps it would make sense to move stuff over from here to the BallNodeJoint
-    # TODO: while it attempts to be generic, it is tightly coupled with the BallNodeJoint.
-    # TODO: what is the differece between the outline and the shapes? they seem to all just result in geometry.
+    TODO: we need to put some thought as to what's the minimal representation of an interface.
+    the responsibilities of the Fastener-based-joint vs. Fastener vs. FastenerTimberInterface should be perhaps more clearly defined
+    prehaps it would make sense to move stuff over from here to the BallNodeJoint
+    while it attempts to be generic, it is tightly coupled with the BallNodeJoint.
+    what is the differece between the outline and the shapes? they seem to all just result in geometry.
 
     Parameters
     ----------
