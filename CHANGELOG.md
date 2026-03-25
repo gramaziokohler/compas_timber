@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [2.1.1-rc0] 2026-03-25
+
+### Added
 * Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
 * Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
 * Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
