@@ -68,14 +68,14 @@ class Cluster(object):
         return JointTopology.TOPO_Y
 
 
-def get_clusters_from_model(model, max_distance=None, exclude=None):
+def get_clusters_from_joint_candidates(candidates, max_distance=None, exclude=None):
     """Gets a sorted list of Cluster objects from a model's JointCandidates
     run model.connect_adjacent_beams() first to populate the model's joint_candidates
 
     Parameters
     ----------
-    model : :class:`~compas_timber.model.TimberModel`
-        TimberModel whose joint_candidates should be clustered.
+    candiates: list[:class:`~compas_timber.connections.JointCandidate`]
+        The joint candidates to be grouped into Clusters
     max_distance : float
         Maximum distance between joints to be considered co-located.
     exclude : set[Joint] | None
@@ -83,13 +83,13 @@ def get_clusters_from_model(model, max_distance=None, exclude=None):
 
     Returns
     -------
-    list[Cluster]
+    list[:class:`~compas_timber.connections.Cluster`]
         Clusters sorted largest-first.
     """
 
     max_distance = max_distance or TOL.absolute
     exclude = exclude or set()
-    active_joints = [joint for joint in model.joint_candidates if joint not in exclude]
+    active_joints = [joint for joint in candidates if joint not in exclude]
     active_joints.sort(key=lambda j: j.location[0])  # ensure a deterministic order for caching and testing)
     if not active_joints:
         return []

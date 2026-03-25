@@ -7,7 +7,7 @@ import math
 from compas.geometry import Line
 from compas.geometry import Point
 
-from compas_timber.connections import get_clusters_from_joints
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -155,11 +155,6 @@ def print_cluster_info(cluster):
 
 
 def main():
-    # ballpark execution times:
-    # 7 beams - Time taken: 0.0003750324249267578
-    # 26 beams - Time taken: 0.012112855911254883
-    # 57 beams - Time taken: 0.1553349494934082
-
 
     for i in [1,2,4,6,8,12]:
         lines, _ = beams_clusters(i)
@@ -168,9 +163,10 @@ def main():
 
         print("")
         start = time()
-        clusters = get_clusters_from_joints(model.joint_candidates)
+        print(model)
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
         duration=time() - start
-        print(f"    Time taken for get_clusters_from_joints: {duration}")
+        print(f"    Time taken for get_clusters_from_joint_candidates: {duration}")
 
         print_cluster_info(clusters)
         print("--------------------------------------------------------------------")

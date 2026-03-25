@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
 * Added new module `geometry` with `KDTree` wrapper around `scipy.spatial.KDTree` for spatial queries in timber models.
-* Added `get_clusters_from_joints` function to `compas_timber.connections`.
+* Added `get_clusters_from_joint_candidates` function to `compas_timber.connections`.
 
 ### Changed
 

@@ -9,7 +9,7 @@ from compas_viewer.scene import Tag
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
-from compas_timber.connections import get_clusters_from_model
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -73,7 +73,7 @@ def main():
 
     tol = Tolerance(absolute=0.01)
 
-    clusters = get_clusters_from_model(model, max_distance=tol)
+    clusters = get_clusters_from_joint_candidates(model, max_distance=tol)
 
     size_to_color = create_color_map(list(sorted({len(cluster) for cluster in clusters})))
     for cluster in clusters:

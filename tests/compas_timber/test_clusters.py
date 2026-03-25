@@ -4,7 +4,7 @@ from unittest.mock import Mock
 from compas.geometry import Point
 from compas.geometry import Line
 
-from compas_timber.connections import get_clusters_from_model
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import Cluster
@@ -56,7 +56,7 @@ def test_get_clusters_from_two_triplets_two_pairs_beams(two_triplets_two_pairs_b
     model.add_elements(two_triplets_two_pairs_beams)
     model.connect_adjacent_beams()
 
-    clusters = get_clusters_from_model(model)
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates)
     pairs = [cluster for cluster in clusters if len(cluster) == 2]
     triplets = [cluster for cluster in clusters if len(cluster) == 3]
 
@@ -70,7 +70,7 @@ def test_get_clusters_from_one_pair_one_triplet_two_quads_beams(one_pair_one_tri
     model.add_elements(one_pair_one_triplet_two_quads_beams)
     model.connect_adjacent_beams()
 
-    clusters = get_clusters_from_model(model)
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates)
     pairs = [cluster for cluster in clusters if len(cluster) == 2]
     triplets = [cluster for cluster in clusters if len(cluster) == 3]
     quads = [cluster for cluster in clusters if len(cluster) == 4]
@@ -81,13 +81,13 @@ def test_get_clusters_from_one_pair_one_triplet_two_quads_beams(one_pair_one_tri
     assert len(quads) == 2, "We expect two quad clusters from the provided beams"
 
 
-def test_get_clusters_from_model():
+def test_get_clusters_from_joint_candidates():
     for i in range(1, 6):
         model = TimberModel()
         model.add_elements(beams_clusters(i))
         model.connect_adjacent_beams()
 
-        clusters = get_clusters_from_model(model)
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
         output = {}
 
         for c in clusters:
@@ -99,23 +99,23 @@ def test_get_clusters_from_model():
         assert all(len(clusters) == i for clusters in output.values()), f"Expected {i} clusters of each size, but got: { {k: len(v) for k, v in output.items()} }"
 
 
-def test_get_clusters_from_model_jitter():
+def test_get_clusters_from_joint_candidates_jitter():
     for i in range(1, 6):
         model = TimberModel()
         model.add_elements(beams_clusters(i, jitter=1.0))
         model.connect_adjacent_beams(max_distance=2.0)
         assert len(model.joint_candidates) > 0, "joints should still be found when jitter is applied"
-        clusters = get_clusters_from_model(model)
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
         assert all([len(cluster) == 2 for cluster in clusters]), "Expected every cluster to contain 2 elements."
 
 
-def test_get_clusters_from_model_jitter_max_distance():
+def test_get_clusters_from_joint_candidates_jitter_max_distance():
     for i in range(1, 6):
         model = TimberModel()
         model.add_elements(beams_clusters(i, jitter=0.5))
         model.connect_adjacent_beams(max_distance=1.0)
 
-        clusters = get_clusters_from_model(model, max_distance=1.0)
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates, max_distance=1.0)
 
         output = {}
 
