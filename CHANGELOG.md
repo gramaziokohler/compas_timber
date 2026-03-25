@@ -28,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
 * Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
 * `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
-* `BTLxWriter` now uses a fixed `Tolerance("MM", ...)` instance instead of the global `TOL`, ensuring consistent millimeter-based output regardless of global tolerance settings.
 * `BTLxGenericPart` annotation attribute now uses `str(self.name)` only, dropping the appended GUID fragment.
 * `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
 * `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now use `AttributeSpec` dataclass instances, carrying both the Python attribute name and the deserialisation type.
