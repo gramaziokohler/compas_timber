@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
 * Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
 * Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
+* Added `StructuralGraph` to represent a `TimberModel` for structural analysis.
 
 ### Changed
 

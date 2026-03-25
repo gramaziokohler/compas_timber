@@ -268,7 +268,7 @@ class BeamStructuralElementSolver:
         return results
 
 
-class StructuralGraph:
+class StructuralGraph(Graph):
     """A structural graph derived from a :class:`~compas_timber.model.TimberModel`.
 
     Wraps a :class:`~compas.datastructures.Graph` and provides a domain-specific
@@ -307,14 +307,12 @@ class StructuralGraph:
 
     """
 
-    def __init__(self, graph):
-        # type: (Graph) -> None
-        self._graph = graph
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self._cached_node_index = None  # built lazily
 
     @classmethod
-    def from_model(cls, model):
-        # type: (TimberModel) -> StructuralGraph
+    def from_model(cls, model: TimberModel) -> StructuralGraph:
         """Builds a :class:`StructuralGraph` from the structural segments stored in a timber model.
 
         Nodes represent unique endpoints of structural segments (identified within tolerance).
@@ -351,7 +349,8 @@ class StructuralGraph:
         ...     print(sg.node_index(u), sg.node_index(v), sg.segment(u, v).line.length, sg.beam(u, v).name)
 
         """
-        graph = Graph()
+        instance = cls(default_edge_attributes={"beam": None, "structural_segments": None, "connector": None})
+
         _node_positions = {}  # node_key -> Point, used for tolerance-based deduplication
 
         def _find_or_create_node(point):
@@ -359,7 +358,7 @@ class StructuralGraph:
             for node_key, existing in _node_positions.items():
                 if TOL.is_zero(distance_point_point(existing, point)):
                     return node_key
-            node_key = graph.add_node(x=point.x, y=point.y, z=point.z)
+            node_key = instance.add_node(x=point.x, y=point.y, z=point.z)
             _node_positions[node_key] = point
             return node_key
 
@@ -369,7 +368,7 @@ class StructuralGraph:
             for segment in segments:
                 u = _find_or_create_node(segment.line.start)
                 v = _find_or_create_node(segment.line.end)
-                graph.add_edge(u, v, segment=segment, type="beam", beam=beam)
+                instance.add_edge(u, v, segment=segment, type="beam", beam=beam)
 
         # --- connector segments (stored per edge in the model graph) ---
         for edge in model._graph.edges():
@@ -377,26 +376,21 @@ class StructuralGraph:
             if not connector_segments:
                 continue
             # Retrieve the joint that sits on this edge (may be None when only a candidate exists)
-            joint_guid = model._graph.edge_attribute(edge, "joints")
+            joint_guid = model._graph.edge_attribute(edge, "joints")  # TODO: shouldn't joints be on nodes?
             joint = model._joints.get(joint_guid) if joint_guid else None
             for segment in connector_segments:
                 u = _find_or_create_node(segment.line.start)
                 v = _find_or_create_node(segment.line.end)
-                graph.add_edge(u, v, segment=segment, type="connector", joint=joint)
+                instance.add_edge(u, v, segment=segment, type="connector", joint=joint)
 
-        if graph.number_of_nodes() == 0:
+        if instance.number_of_nodes() == 0:
             raise ValueError("No structural segments found in the model. Call TimberModel.create_beam_structural_segments() before building the structural graph.")
 
-        return cls(graph)
+        return instance
 
     # ------------------------------------------------------------------
     # Node interface
     # ------------------------------------------------------------------
-
-    @property
-    def nodes(self):
-        # type: () -> Iterable
-        return self._graph.nodes()
 
     def node_point(self, node):
         # type: (object) -> Point
@@ -411,9 +405,9 @@ class StructuralGraph:
         -------
         :class:`~compas.geometry.Point`
         """
-        x = self._graph.node_attribute(node, "x")
-        y = self._graph.node_attribute(node, "y")
-        z = self._graph.node_attribute(node, "z")
+        x = self.node_attribute(node, "x")
+        y = self.node_attribute(node, "y")
+        z = self.node_attribute(node, "z")
         return Point(x, y, z)
 
     def node_index(self, node):
@@ -433,93 +427,65 @@ class StructuralGraph:
         int
         """
         if self._cached_node_index is None:
-            self._cached_node_index = {n: i for i, n in enumerate(self._graph.nodes())}
+            self._cached_node_index = {n: i for i, n in enumerate(self.nodes())}
         return self._cached_node_index[node]
-
-    def neighbors(self, node):
-        # type: (object) -> List
-        """Return the neighbors of *node*.
-
-        Parameters
-        ----------
-        node : object
-            A node key.
-
-        Returns
-        -------
-        list
-        """
-        return self._graph.neighbors(node)
-
-    def number_of_nodes(self):
-        # type: () -> int
-        """Return the total number of nodes."""
-        return self._graph.number_of_nodes()
 
     # ------------------------------------------------------------------
     # Edge interface
     # ------------------------------------------------------------------
 
     @property
-    def edges(self):
-        # type: () -> Iterable[Tuple]
-        return self._graph.edges()
-
-    @property
     def beam_edges(self):
         # type: () -> Iterable[Tuple]
         """Iterate over ``(u, v)`` pairs for all beam-segment edges."""
-        for u, v in self._graph.edges():
-            if self._graph.edge_attribute((u, v), "type") == "beam":
+        for u, v in self.edges():
+            if self.edge_attribute((u, v), "type") == "beam":
                 yield u, v
 
     @property
     def connector_edges(self):
         # type: () -> Iterable[Tuple]
         """Iterate over ``(u, v)`` pairs for all connector-segment edges."""
-        for u, v in self._graph.edges():
-            if self._graph.edge_attribute((u, v), "type") == "connector":
+        for u, v in self.edges():
+            if self.edge_attribute((u, v), "type") == "connector":
                 yield u, v
 
     def segment(self, u, v):
-        # type: (object, object) -> StructuralSegment
         """Return the :class:`StructuralSegment` on the edge ``(u, v)``.
 
         Parameters
         ----------
-        u : object
-        v : object
+        u : int, graph node
+        v : int, graph node
 
         Returns
         -------
         :class:`StructuralSegment`
         """
-        return self._graph.edge_attribute((u, v), "segment")
+        return self.edge_attribute((u, v), "segment")
 
     def beam(self, u, v):
-        # type: (object, object) -> Optional[Beam]
         """Return the source :class:`~compas_timber.elements.Beam` for a beam edge.
 
         Parameters
         ----------
-        u : object
-        v : object
+        u : int, graph node
+        v : int, graph node
 
         Returns
         -------
         :class:`~compas_timber.elements.Beam` or None
             ``None`` for connector edges.
         """
-        return self._graph.edge_attribute((u, v), "beam")
+        return self.edge_attribute((u, v), "beam")
 
     def joint(self, u, v):
-        # type: (object, object) -> Optional[Joint]
         """Return the source :class:`~compas_timber.connections.Joint` for a connector edge.
 
         Parameters
         ----------
-        u : object
-        v : object
+        u : int, graph node
+        v : int, graph node
 
         Returns
         -------
@@ -527,14 +493,10 @@ class StructuralGraph:
             ``None`` for beam edges or when the connector was derived from a
             candidate rather than a resolved joint.
         """
-        return self._graph.edge_attribute((u, v), "joint")
+        return self.edge_attribute((u, v), "joint")
 
-    def number_of_edges(self):
-        # type: () -> int
-        """Return the total number of edges."""
-        return self._graph.number_of_edges()
+        # ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
     # Reverse lookups  (model element → graph edges)
     # ------------------------------------------------------------------
 
@@ -550,7 +512,7 @@ class StructuralGraph:
         -------
         list of tuple(u, v)
         """
-        return [(u, v) for u, v in self.beam_edges if self._graph.edge_attribute((u, v), "beam") is beam]
+        return [(u, v) for u, v in self.beam_edges if self.edge_attribute((u, v), "beam") is beam]
 
     def segments_for_joint(self, joint):
         # type: (Joint) -> List[Tuple]
@@ -564,24 +526,4 @@ class StructuralGraph:
         -------
         list of tuple(u, v)
         """
-        return [(u, v) for u, v in self.connector_edges if self._graph.edge_attribute((u, v), "joint") is joint]
-
-
-def build_structural_graph(model):
-    # type: (TimberModel) -> StructuralGraph
-    """Builds a :class:`StructuralGraph` from the structural segments stored in a timber model.
-
-    .. deprecated::
-        Use :meth:`StructuralGraph.from_model` instead.
-
-    Parameters
-    ----------
-    model : :class:`~compas_timber.model.TimberModel`
-        The timber model whose structural segments are used to build the graph.
-
-    Returns
-    -------
-    :class:`StructuralGraph`
-
-    """
-    return StructuralGraph.from_model(model)
+        return [(u, v) for u, v in self.connector_edges if self.edge_attribute((u, v), "joint") is joint]

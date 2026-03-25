@@ -10,7 +10,6 @@ from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import InteractionType
 from compas_timber.structural import StructuralGraph
 from compas_timber.structural import StructuralSegment
-from compas_timber.structural import build_structural_graph
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.model import TimberModel
@@ -499,7 +498,7 @@ def test_build_structural_graph_single_beam():
     model.add_element(beam)
 
     model.create_beam_structural_segments()
-    sg = build_structural_graph(model)
+    sg = StructuralGraph.from_model(model)
 
     assert isinstance(sg, StructuralGraph)
     assert sg.number_of_nodes() == 2
@@ -522,7 +521,7 @@ def test_build_structural_graph_shared_endpoint(mocker: pytest_mock.MockerFixtur
     mocker.patch.object(model, "get_candidates_for_element", return_value=[])
 
     model.create_beam_structural_segments()
-    sg = build_structural_graph(model)
+    sg = StructuralGraph.from_model(model)
 
     assert sg.number_of_nodes() == 3  # start, midpoint, end → no duplicates
     assert sg.number_of_edges() == 2
@@ -541,7 +540,7 @@ def test_build_structural_graph_two_beams_no_connection():
     model.add_element(beam_b)
 
     model.create_beam_structural_segments()
-    sg = build_structural_graph(model)
+    sg = StructuralGraph.from_model(model)
 
     assert sg.number_of_nodes() == 4
     assert sg.number_of_edges() == 2
@@ -558,7 +557,7 @@ def test_build_structural_graph_raises_when_no_segments():
     # deliberately skip create_beam_structural_segments()
 
     with pytest.raises(ValueError, match="No structural segments"):
-        build_structural_graph(model)
+        StructuralGraph.from_model(model)
 
 
 def test_build_structural_graph_with_connector_segment():
@@ -598,7 +597,7 @@ def test_build_structural_graph_with_connector_segment():
     )
     model.add_structural_connector_segments(beam_a, beam_b, [connector])
 
-    sg = build_structural_graph(model)
+    sg = StructuralGraph.from_model(model)
 
     assert len(list(sg.beam_edges)) == 2
     assert len(list(sg.connector_edges)) == 1
@@ -618,5 +617,5 @@ def test_build_structural_graph_with_connector_segment():
     assert len(sg.segments_for_joint(None)) == 1
 
     # node_index gives a stable integer index
-    indices = {sg.node_index(n) for n in sg.nodes}
+    indices = {sg.node_index(n) for n in sg.nodes()}
     assert indices == {0, 1, 2, 3}
