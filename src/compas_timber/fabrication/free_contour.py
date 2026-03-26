@@ -159,11 +159,11 @@ class FreeContour(BTLxProcessing):
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
-    def from_polyline_plane_and_beam(
+    def from_polyline_ref_plane_and_beam(
         cls,
         polyline: Polyline,
         element: TimberElement,
-        ref_frame: Frame,
+        user_ref_plane: Frame,
         depth: Optional[float] = 0.0,
         interior: Optional[bool] = False,
         tool_position: Optional[AlignmentType] = AlignmentType.LEFT,
@@ -180,7 +180,7 @@ class FreeContour(BTLxProcessing):
             The polyline of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
-        ref_frame : :class:`compas.geometry.Frame`
+        user_ref_plane : :class:`compas.geometry.Frame`
             The custom reference plane in model (world) coordinates.
         depth : float, optional
             The depth of the contour. Default is 0.0.
@@ -189,8 +189,8 @@ class FreeContour(BTLxProcessing):
         tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
             The position of the tool. Default is derived from the polyline winding direction.
         """
-        user_plane_id = element.add_user_ref_plane(ref_frame)
-        transformed_polyline = polyline.transformed(Transformation.from_frame(ref_frame).inverse())
+        user_plane_id = element.add_user_ref_plane(user_ref_plane)
+        transformed_polyline = polyline.transformed(Transformation.from_frame(user_ref_plane).inverse())
         contour = Contour(transformed_polyline, depth=depth)
         return cls(contour, tool_position=tool_position, counter_sink=interior, user_plane_id=user_plane_id, **kwargs)
 
@@ -324,15 +324,17 @@ class FreeContour(BTLxProcessing):
         vol = self.contour_param_object.to_brep()
         if self.user_plane_id is not None:
             ref_frame = element.get_user_ref_plane(self.user_plane_id)
+            transformation = Transformation.from_frame(ref_frame)
         else:
+            # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
             ref_frame = element.ref_sides[self.ref_side_index]
-        # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
-        transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(ref_frame)
-        vol.transform(transformation_ref_side_to_local)
-        if self.counter_sink:  # contour should remove material inside of the contour
-            return geometry - vol
-        else:
-            return geometry & vol
+            transformation = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
+        vol.transform(transformation)
+        return vol
+        # if self.counter_sink:  # contour should remove material inside of the contour
+        #     return geometry - vol
+        # else:
+        #     return geometry & vol
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
