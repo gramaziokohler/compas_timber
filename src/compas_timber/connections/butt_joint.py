@@ -96,7 +96,7 @@ class ButtJoint(Joint):
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
-        self.mill_depth = mill_depth or 0.0
+        self.mill_depth = mill_depth
         self.modify_cross = modify_cross
         self.force_pocket = force_pocket
         self.conical_tool = conical_tool
@@ -131,27 +131,19 @@ class ButtJoint(Joint):
 
     @property
     def butt_plane(self):
-        if self._butt_plane:
-            return self._butt_plane
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        if self.mill_depth:
-            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-        return Plane.from_frame(cutting_plane)
-
-    @butt_plane.setter
-    def butt_plane(self, plane):
-        self._butt_plane = plane
+        if self._butt_plane is None:
+            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            cutting_plane.xaxis = -cutting_plane.xaxis
+            if self.mill_depth:
+                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+            self._butt_plane = Plane.from_frame(cutting_plane)
+        return self._butt_plane
 
     @property
     def back_plane(self):
-        if self._back_plane:
-            return self._back_plane
-        return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
-
-    @back_plane.setter
-    def back_plane(self, plane):
-        self._back_plane = plane
+        if self._back_plane is None:
+            return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
+        return self._back_plane
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -204,7 +196,10 @@ class ButtJoint(Joint):
         # apply lap or pocket on the cross beam
         if self.mill_depth:
             if self.force_pocket:
-                milling_volume = self._get_milling_volume_for_pocket()
+                try:
+                    milling_volume = self._get_milling_volume_for_pocket()
+                except Exception as ex:
+                    raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
                 cross_feature = Pocket.from_volume_and_element(
                     milling_volume,
                     self.cross_beam,
