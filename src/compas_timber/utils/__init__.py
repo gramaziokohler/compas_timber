@@ -867,20 +867,21 @@ def mesh_from_brep_simple(brep):
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
 
-def ensure_polyhedron_faces_outwards(polyhedron: Polyhedron) -> Polyhedron:
-    """
-    Ensure that the normals of the polyhedron's faces are oriented outwards.
-    This is achieved by reordering the indices that define the faces, ensuring consistent outward-facing normals.
+def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
+    """Creates a new polyhedron with consistently oriented faces.
+
+    This function ensures that the normals of the polyhedron's faces are all
+    oriented outwards by reordering the vertex indices that define each face.
 
     Parameters
     ----------
     polyhedron : :class:`~compas.geometry.Polyhedron`
-        The polyhedron whose face orientations are to be checked and corrected if necessary.
+        The input polyhedron.
 
     Returns
     -------
     :class:`~compas.geometry.Polyhedron`
-        The same polyhedron with its faces reordered to ensure outward-facing normals.
+        A new polyhedron with its faces reordered to ensure outward-facing normals.
 
     """
     vertices = [Point(*vertex) for vertex in polyhedron.vertices]
@@ -946,7 +947,7 @@ def polyhedron_from_box_planes(top_plane, bottom_plane, side_a_plane, side_b_pla
         Point(*intersection_plane_plane_plane(bottom_plane, side_b_plane, end_a_plane)),
     ]
     faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
-    return ensure_polyhedron_faces_outwards(Polyhedron(vertices=vertices, faces=faces))
+    return oriented_polyhedron(Polyhedron(vertices=vertices, faces=faces))
 
 
 __all__ = [
@@ -970,7 +971,7 @@ __all__ = [
     "get_plate_geometry_outlines_from_brep",
     "get_polyline_normal_vector",
     "combine_parallel_segments",
-    "ensure_polyhedron_faces_outwards",
+    "oriented_polyhedron",
     "polyhedron_from_box_planes",
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
