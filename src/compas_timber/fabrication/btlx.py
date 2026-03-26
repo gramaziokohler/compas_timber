@@ -641,50 +641,66 @@ class BTLxPart(BTLxGenericPart):
         """
 
         if not self._shape_strings:
-            brep_vertex_points = []
-            brep_indices = []
+            poly_vertex_points = []
+            poly_indices = []
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
-            for face in scaled_geometry.faces:
-                pts = []
-                frame = face.surface.frame_at(0.5, 0.5)
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
-                overflow = len(edges)
-                while edges and overflow > 0:
-                    for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
-                            edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
-                    overflow -= 1
-                pts = correct_polyline_direction(pts, frame.normal)
+            polygons = scaled_geometry.to_polygons()
 
-                if len(pts) != len(face.edges):
-                    print("edge count doesnt match point count, BTLxPart shape will be incorrect")
+            if not polygons:
+                warn("BTLxPart shape_strings: to_polygons() returned no polygons for element {}.".format(self.element.guid))
 
-                if len(pts) > 2:
-                    for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
-                        else:
-                            brep_indices.append(len(brep_vertex_points))
-                            brep_vertex_points.append(pt)
-                    brep_indices.append(-1)
+            # validate and fix winding
+            for i, polygon in enumerate(polygons):
+                pts = polygon.points
+                if len(pts) < 3:
+                    warn("BTLxPart shape_strings: polygon {} of element {} has fewer than 3 points, skipping.".format(i, self.element.guid))
+                    continue
+                normal = polygon.normal
+                if TOL.is_zero(normal.length):
+                    warn("BTLxPart shape_strings: polygon {} of element {} has a zero-length normal (degenerate face), skipping.".format(i, self.element.guid))
+                    continue
+                pts = correct_polyline_direction(pts, normal)
 
-            brep_indices_string = ""
-            for index in brep_indices:
-                brep_indices_string += str(index) + " "
+                # vertex deduplication
+                for pt in pts:
+                    existing_index = next(
+                        (j for j, existing in enumerate(poly_vertex_points) if TOL.is_allclose(pt, existing)),
+                        None,
+                    )
+                    if existing_index is not None:
+                        poly_indices.append(existing_index)
+                    else:
+                        poly_indices.append(len(poly_vertex_points))
+                        poly_vertex_points.append(pt)
+                poly_indices.append(-1)
 
-            brep_vertices_string = ""
-            for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
-                point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
-                brep_vertices_string = brep_vertices_string.replace("-", "")
+            if not poly_indices:
+                warn("BTLxPart shape_strings: no valid polygons were produced for element {}.".format(self.element.guid))
 
-            self._shape_strings = [brep_indices_string, brep_vertices_string]
+            poly_indices_string = ""
+            for index in poly_indices:
+                poly_indices_string += str(index) + " "
+
+            poly_vertices_string = ""
+            xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
+            for point in poly_vertex_points:
+                # work on a transformed copy to avoid mutating shared geometry
+                point_local = point.transformed(xform)
+                x = point_local.x
+                y = point_local.y
+                z = point_local.z
+                # clamp floating point noise to zero; warn if significantly negative (geometry outside blank)
+                x = 0.0 if x < 0.0 and abs(x) <= TOL.absolute else x
+                y = 0.0 if y < 0.0 and abs(y) <= TOL.absolute else y
+                z = 0.0 if z < 0.0 and abs(z) <= TOL.absolute else z
+                if x < -TOL.absolute or y < -TOL.absolute or z < -TOL.absolute:
+                    warn(
+                        "BTLxPart shape_strings: vertex ({:.3f}, {:.3f}, {:.3f}) has negative local coordinates after frame transform for element {}."
+                        " This may indicate the joinery geometry extends outside the blank.".format(x, y, z, self.element.guid)
+                    )
+                poly_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(x, y, z, prec=3)
+
+            self._shape_strings = [poly_indices_string, poly_vertices_string]
         return self._shape_strings
 
 

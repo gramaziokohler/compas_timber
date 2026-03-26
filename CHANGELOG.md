@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Changed minimum required `compas` version to `2.15.1` due to bugfix.
 * Fixed `Plate.geometry` is `None`.
+* Refactored `BTLxPart.shape_strings` to use `Brep.to_polygons()` instead of raw Brep face edge traversal for more robust and accurate shape geometry generation.
 
 ### Removed
 
