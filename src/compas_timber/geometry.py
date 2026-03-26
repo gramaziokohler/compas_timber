@@ -60,3 +60,39 @@ class KDTree:
             results.append((None, None, math.inf))
 
         return results
+
+
+def brep_to_vertices_and_faces(brep):
+    """Convert a BREP to a list of vertices and faces.
+
+    Parameters
+    ----------
+    brep : :class:`compas_timber.brep.Brep`
+        The BREP to convert.
+
+    Returns
+    -------
+    tuple[list[:class:`~compas.geometry.Point`], list[tuple[int]]]
+        A tuple containing the list of vertices and the list of faces.
+    """
+    TOL = 1e-6
+    vertices = []
+    faces = []
+    tree = None
+
+    for polygon in brep.to_polygons():
+        face = []
+        for point in polygon.points:
+            index = None
+            if tree is not None:
+                _, nearest_index, distance = tree.nearest_neighbors(point, 1)[0]
+                if distance < TOL:
+                    index = nearest_index
+            if index is None:
+                index = len(vertices)
+                vertices.append(point)
+                tree = KDTree(vertices)
+            face.append(index)
+        faces.append(tuple(face))
+
+    return vertices, faces
