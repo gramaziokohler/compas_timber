@@ -206,7 +206,7 @@ def test_dual_contour_plate():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert isinstance(plate.features[0].params.as_dict().get("Contour"), DualContour)
+    assert isinstance(plate.features[0].params.as_dict().get("DualContour"), DualContour)
 
 
 def test_contour_scaled():

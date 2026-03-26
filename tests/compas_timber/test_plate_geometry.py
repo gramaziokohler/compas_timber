@@ -71,3 +71,101 @@ def test_apply_and_remove_exensions_with_index():
     pg.remove_blank_extension(3)  # removing extension at index 3 revert to original
     assert all([TOL.is_allclose(planes[i].normal, list(pg.edge_planes.values())[i].normal) for i in range(len(planes))])
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
+
+
+def test_compute_shape_no_openings(mocker):
+    """compute_shape builds polygons from outlines and calls Brep.from_polygons."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(polyline_a, polyline_b)
+
+    mock_brep = mocker.MagicMock()
+    mock_from_polygons = mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+
+    result = pg.compute_shape()
+
+    mock_from_polygons.assert_called_once()
+    polygons = mock_from_polygons.call_args[0][0]
+    # 2 cap polygons + 4 side polygons for a rectangular plate
+    assert len(polygons) == 6
+    assert result is mock_brep
+
+
+def test_compute_shape_from_polygons_returns_list(mocker):
+    """When Brep.from_polygons returns a single-element list (Rhino quirk), it should be unwrapped."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(polyline_a, polyline_b)
+
+    mock_brep = mocker.MagicMock()
+    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep])
+
+    result = pg.compute_shape()
+
+    assert result is mock_brep
+
+
+def test_compute_shape_from_polygons_returns_multiple_breps_raises(mocker):
+    """When Brep.from_polygons returns multiple breps, a ValueError should be raised."""
+    from pytest import raises
+
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(polyline_a, polyline_b)
+
+    mock_brep_1 = mocker.MagicMock()
+    mock_brep_2 = mocker.MagicMock()
+    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep_1, mock_brep_2])
+
+    with raises(ValueError):
+        pg.compute_shape()
+
+
+def test_compute_shape_with_opening(mocker):
+    """compute_shape subtracts opening breps from the plate brep."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    opening = Polyline([Point(2, 2, 0), Point(2, 5, 0), Point(5, 5, 0), Point(5, 2, 0), Point(2, 2, 0)])
+    pg = PlateGeometry(polyline_a, polyline_b, openings=[opening])
+
+    mock_plate_brep = mocker.MagicMock()
+    mock_opening_brep = mocker.MagicMock()
+    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", side_effect=[mock_plate_brep, mock_opening_brep])
+
+    result = pg.compute_shape()
+
+    # opening brep should be subtracted via __isub__
+    mock_plate_brep.__isub__.assert_called_once_with(mock_opening_brep)
+    assert result is mock_plate_brep.__isub__.return_value
+
+
+def test_compute_shape_with_unclosed_opening_raises(mocker):
+    """An opening polyline that is not closed should raise ValueError."""
+    from pytest import raises
+
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    # NOT closed: first point != last point
+    bad_opening = Polyline([Point(2, 2, 0), Point(2, 5, 0), Point(5, 5, 0), Point(5, 2, 0)])
+    pg = PlateGeometry(polyline_a, polyline_b, openings=[bad_opening])
+
+    mock_brep = mocker.MagicMock()
+    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+
+    with raises(ValueError):
+        pg.compute_shape()
+
+
+def test_compute_shape_applies_edge_extensions(mocker):
+    """compute_shape should apply edge extensions before building geometry."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(polyline_a, polyline_b)
+
+    mock_apply = mocker.patch.object(pg, "apply_edge_extensions")
+    mock_brep = mocker.MagicMock()
+    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+
+    pg.compute_shape()
+
+    mock_apply.assert_called_once()
