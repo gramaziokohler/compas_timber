@@ -39,7 +39,7 @@ class ISimpleScarf(Joint):
         ref_side_index=0,
         **kwargs
     ):
-        super(ISimpleScarf, self).__init__(**kwargs)
+        super(ISimpleScarf, self).__init__(elements=(main_beam,cross_beam),**kwargs)
         self.main_beam = main_beam
         self.cross_beam = cross_beam
         self.main_beam_guid = kwargs.get("main_beam_guid") or (str(main_beam.guid) if main_beam else None)
@@ -121,7 +121,7 @@ class ISimpleScarf(Joint):
             depth_ref_side=self.depth_ref_side,
             depth_opp_side=self.depth_opp_side,
             num_drill_hole=self.num_drill_hole,
-            drill_hole_diam_1=self.drill_hole_diam,
+            drill_hole_diam=self.drill_hole_diam,
             ref_side_index=self.ref_side_index
         )
 
@@ -132,7 +132,7 @@ class ISimpleScarf(Joint):
             depth_ref_side=self.depth_opp_side,
             depth_opp_side=self.depth_ref_side,
             num_drill_hole=self.num_drill_hole,
-            drill_hole_diam_1=self.drill_hole_diam,
+            drill_hole_diam=self.drill_hole_diam,
             ref_side_index=self.cross_beam_ref_side_index
         )
             

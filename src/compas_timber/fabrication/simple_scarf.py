@@ -20,16 +20,16 @@ from .btlx import OrientationType
 
 class SimpleScarf(BTLxProcessing):
 
-    PROCESSING_NAME = "SimpleScarf" # type : ignore
+    PROCESSING_NAME = "Scarf" # type : ignore
     ATTRIBUTE_MAP = {
         "Orientation": "orientation",
         "StartX": "start_x",
-        "length": "length",
-        "depth_ref_side": "depth_ref_side",
-        "depth_opp_side": "depth_opp_side",
-        "num_drill_hole": "num_drill_hole",
-        "drill_hole_diam_1": "drill_hole_diam_1",
-        "drill_hole_diam_2": "drill_hole_diam_2",
+        "Length": "length",
+        "DepthRefSide": "depth_ref_side",   
+        "DepthOppSide": "depth_opp_side",
+        "NumDrillHole": "num_drill_hole",
+        "DrillHoleDiam1": "drill_hole_diam_1",
+        "DrillHoleDiam2": "drill_hole_diam_2",
         }
 
     @property
@@ -76,6 +76,7 @@ class SimpleScarf(BTLxProcessing):
         self.num_drill_hole = num_drill_hole
         self.drill_hole_diam_1 = drill_hole_diam_1
         self.drill_hole_diam_2 = drill_hole_diam_2
+        print(self.params)
 
     ########################################################################
     # Properties
@@ -178,8 +179,7 @@ class SimpleScarf(BTLxProcessing):
         depth_ref_side,
         depth_opp_side,
         num_drill_hole=0,
-        drill_hole_diam_1=20.0,
-        drill_hole_diam_2=20.0,
+        drill_hole_diam=20.0,
         ref_side_index=0,
     ):
         # type: (Beam, str, float, float, float, int, float, float, int) -> SimpleScarf
@@ -197,8 +197,8 @@ class SimpleScarf(BTLxProcessing):
                    depth_ref_side,
                    depth_opp_side,
                    num_drill_hole,
-                   drill_hole_diam_1,
-                   drill_hole_diam_2,
+                   drill_hole_diam,
+                   drill_hole_diam,
                    ref_side_index=ref_side_index)
 
     @classmethod
@@ -247,7 +247,7 @@ class SimpleScarf(BTLxProcessing):
 
         try:
             scarf_volume = Brep.from_mesh(scarf_volume)
-            drill_volumes = [Brep.from_mesh(dv) for dv in drill_volumes]
+            drill_volumes = [Brep.from_cylinder(dv) for dv in drill_volumes]
             json_dump(scarf_volume, "C:/Users/paulj/Downloads/scarf_volume.json")
         except Exception:
             raise FeatureApplicationError(
@@ -386,26 +386,25 @@ class SimpleScarf(BTLxProcessing):
             return []
         
         elif self.num_drill_hole == 1:
+            width, height = beam.get_dimensions_relative_to_side(self.ref_side_index)
             c_radius = self.drill_hole_diam_1 / 2.0
-            c_height = max(beam.width, beam.height)
             if self.orientation == OrientationType.START:
                 c_frame = Frame(beam.centerline.start, ref_frame.xaxis, ref_frame.yaxis)
             else:
                 c_frame = Frame(beam.centerline.end, ref_frame.xaxis, ref_frame.yaxis)
-            return [Cylinder(c_radius, c_height, c_frame)]
+            return [Cylinder(c_radius, height, c_frame)]
         
         elif self.num_drill_hole == 2:
+            width, height = beam.get_dimensions_relative_to_side(self.ref_side_index)
             c1_radius = self.drill_hole_diam_1 / 2.0
-            c1_height = max(beam.width, beam.height)
             c2_radius = self.drill_hole_diam_2 / 2.0
-            c2_height = max(beam.width, beam.height)
             if self.orientation == OrientationType.START:
                 c1_frame = Frame(beam.centerline.start.translated(beam.centerline.direction * self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
                 c2_frame = Frame(beam.centerline.start.translated(beam.centerline.direction * -self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
             else:
                 c1_frame = Frame(beam.centerline.end.translated(beam.centerline.direction * self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
                 c2_frame = Frame(beam.centerline.end.translated(beam.centerline.direction * -self.length / 6.0), ref_frame.xaxis, ref_frame.yaxis)
-            return [Cylinder(c1_radius, c1_height, c1_frame), Cylinder(c2_radius, c2_height, c2_frame)]
+            return [Cylinder(c1_radius, height, c1_frame), Cylinder(c2_radius, height, c2_frame)]
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
