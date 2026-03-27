@@ -73,7 +73,7 @@ class TimberModel(Model):
             model._joints[guid_str] = joint
 
         for joint in model._joints.values():
-            joint.restore_beams_from_keys(model)
+            joint.restore_elements_from_keys(model)
 
         return model
 
@@ -263,17 +263,66 @@ class TimberModel(Model):
     # Interactions
     # =============================================================================
 
-    def _safely_get_interactions(self, node_pair):
-        # type: (tuple) -> List[Interaction]
+    def _safely_get_edge_attribute(self, node_pair, attribute):
+        results = []
+        node_a, node_b = node_pair
         try:
-            joint_guids = self._graph.edge_attribute(node_pair, "joints") or []
-            return [self._joints[guid] for guid in joint_guids if guid in self._joints]
+            attr_value = self._graph.edge_attribute((node_a, node_b), attribute)
+            if attr_value:
+                results.append(attr_value)
         except KeyError:
-            return []
+            pass
+        try:
+            attr_value = self._graph.edge_attribute((node_b, node_a), attribute)
+            if attr_value:
+                results.append(attr_value)
+        except KeyError:
+            pass
+        return results
+
+    def get_joints_for_element(self, element) -> List[Joint]:
+        """Get all joints for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.connections.Joint`]
+            A list of joints for the given element.
+        """
+        neighbors = self._graph.neighbors(element.graphnode)
+        result = []
+        for nbr in neighbors:
+            joint_guids = self._safely_get_edge_attribute((element.graphnode, nbr), "joints")
+            result.extend([self._joints[guid] for guid in joint_guids if guid in self._joints])
+        return result
+
+    def get_candidates_for_element(self, element) -> List[JointCandidate]:
+        """Get all joint candidates for a given element.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to query.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.connections.JointCandidate`]
+            A list of joint candidates for the given element.
+        """
+        neighbors = self._graph.neighbors(element.graphnode)
+        result = []
+        for nbr in neighbors:
+            candidates = self._safely_get_edge_attribute((element.graphnode, nbr), "candidates")
+            result.extend(candidates)
+        return result
 
     def get_interactions_for_element(self, element):
         # type: (Element) -> List[Interaction]
-        """Get all interactions for a given element.
+        """Get all interactions (joints and candidates) for a given element.
 
         Parameters
         ----------
@@ -285,12 +334,8 @@ class TimberModel(Model):
         list[:class:`~compas_model.interactions.Interaction`]
             A list of interactions for the given element.
         """
-
-        neighbors = self._graph.neighbors(element.graphnode)
-        result = []
-        for nbr in neighbors:
-            result.extend(self._safely_get_interactions((element.graphnode, nbr)))
-            result.extend(self._safely_get_interactions((nbr, element.graphnode)))
+        result = self.get_joints_for_element(element)
+        result.extend(self.get_candidates_for_element(element))
         return result
 
     def add_joint(self, joint):
@@ -308,10 +353,7 @@ class TimberModel(Model):
         for interaction in joint.interactions:
             element_a, element_b = interaction
             edge = self.add_interaction(element_a, element_b)
-            joint_guids = self._graph.edge_attribute(edge, "joints") or []  # GET
-            joint_guids.append(joint_guid)
-            self._graph.edge_attribute(edge, "joints", value=joint_guids)  # SET
-            # TODO: should we create a bidirectional interaction here?
+            self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
@@ -330,9 +372,6 @@ class TimberModel(Model):
             edge = (element_a.graphnode, element_b.graphnode)
             if edge not in self._graph.edges():
                 self._graph.add_edge(*edge)
-
-                # HACK: calls to `model.joints` expect there to be a "joints" on any edges
-                self._graph.edge_attribute(edge, "joints", [])
 
             # this is how joints and candidates co-exist on the same edge, they are stored under different attributes
             # (``joints`` vs. ``candidates``)
@@ -466,7 +505,7 @@ class TimberModel(Model):
 
             if not self._is_remaining_attrs_on_edge(edge):
                 # if there's no other timber related attributes on that edge, then remove the edge as well
-                super(TimberModel, self).remove_interaction(element_a, element_b)
+                super().remove_interaction(element_a, element_b)
 
     def remove_joint(self, joint):
         # type: (Joint) -> None
@@ -504,12 +543,11 @@ class TimberModel(Model):
         if edge not in self._graph.edges():
             return
 
-        edge_interactions = self._graph.edge_attribute(edge, "joints")
-        edge_interactions.clear()  # type: ignore
+        self._graph.unset_edge_attribute(edge, "joints")
 
         if not self._is_remaining_attrs_on_edge(edge):
             # if there's no other timber related attributes on that edge, then remove the edge as well
-            super(TimberModel, self).remove_interaction(a, b)
+            super().remove_interaction(a, b)
 
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
@@ -579,11 +617,16 @@ class TimberModel(Model):
                     raise bje
         return errors
 
-    def create_beam_structural_segments(self) -> None:
-        """Creates structural segments for all beams in the model based on their joints."""
-        if not self.joints:
-            raise ValueError("No joints in the model to create structural segments from.")
+    def create_beam_structural_segments(self, solver=None) -> None:
+        """Creates structural segments for all beams in the model based on their joints.
 
+        Parameters
+        ----------
+        solver : :class:`~compas_timber.structural.BeamStructuralElementSolver`, optional
+            The solver to use for creating structural segments.
+            If not provided, a default solver is created.
+
+        """
         if not self.beams:
             raise ValueError("No beams in the model to create structural segments for.")
 
@@ -593,12 +636,9 @@ class TimberModel(Model):
         for edge in self._graph.edges():
             self._graph.unset_edge_attribute(edge, "structural_segments")
 
-        solver = BeamStructuralElementSolver()
-        for beam in self.beams:
-            solver.add_structural_segments(beam, model=self)
-
-        for joint in self.joints:
-            solver.add_joint_structural_segments(joint, model=self)
+        solver = solver or BeamStructuralElementSolver()
+        _, joints_traversed = solver.add_structural_segments(model=self)
+        solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
     def connect_adjacent_beams(self, max_distance=None):
         # Clear existing joint candidates

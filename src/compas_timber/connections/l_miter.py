@@ -66,8 +66,6 @@ class LMiterJoint(Joint):
     @property
     def __data__(self):
         data = super(LMiterJoint, self).__data__
-        data["beam_a_guid"] = self.beam_a_guid
-        data["beam_b_guid"] = self.beam_b_guid
         data["cutoff"] = self.cutoff
         data["ref_side_miter"] = self.ref_side_miter
         data["miter_plane"] = self.miter_plane
@@ -76,11 +74,7 @@ class LMiterJoint(Joint):
         return data
 
     def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
-        super(LMiterJoint, self).__init__(**kwargs)
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.beam_a_guid = kwargs.get("beam_a_guid", None) or str(beam_a.guid)
-        self.beam_b_guid = kwargs.get("beam_b_guid", None) or str(beam_b.guid)
+        super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.miter_plane = miter_plane
         self._cutting_planes = []
         self.ref_side_miter = ref_side_miter
@@ -91,8 +85,12 @@ class LMiterJoint(Joint):
         self._back_b_index = None
 
     @property
-    def elements(self):
-        return [self.beam_a, self.beam_b]
+    def beam_a(self):
+        return self.element_a
+
+    @property
+    def beam_b(self):
+        return self.element_b
 
     @property
     def cutting_planes(self):
@@ -282,8 +280,3 @@ class LMiterJoint(Joint):
             self.beam_b.add_features(clean_cuts_b)
             self.features.extend(clean_cuts_a)
             self.features.extend(clean_cuts_b)
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.beam_a = model[self.beam_a_guid]
-        self.beam_b = model[self.beam_b_guid]

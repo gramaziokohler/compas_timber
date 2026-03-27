@@ -6,8 +6,10 @@ from typing import TYPE_CHECKING
 from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
+from compas_timber.utils import distance_segment_segment_points
 
 from .solver import JointTopology
 
@@ -15,6 +17,35 @@ if TYPE_CHECKING:
     from compas.geometry import Vector
 
     from compas_timber.elements.beam import Beam
+
+
+def location_from_centerlines(beams):
+    """Compute the approximate joint location from two beam centerlines.
+
+    Returns the closest point between the two centerlines, or the midpoint
+    between them when the beams are skew (non-intersecting).
+
+    Parameters
+    ----------
+    beams : list(:class:`~compas_timber.elements.Beam`)
+        A list of two beams for which to calculate the joint location.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Point`
+
+    """
+    if len(beams) != 2:
+        raise ValueError(
+            "Automatic location calculation only works for joints connecting 2 elements. "
+            "Please set the location manually or implement a custom location calculation for your joint type."
+        )
+    beam_a, beam_b = beams
+    distance, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+    point_a, point_b = Point(*point_a), Point(*point_b)
+    if not TOL.is_zero(distance):
+        return (point_a + point_b) / 2.0
+    return point_a
 
 
 class Joint(Data):
@@ -54,18 +85,45 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, topology=None, location=None, name=None, **kwargs):
+    def __init__(self, elements=None, topology=None, location=None, name=None, element_guids=None, **kwargs):
         super().__init__(name=name)
+        # filter out Nones — subclasses pass e.g. elements=(None, None) during deserialization
+        elements = tuple(e for e in (elements or ()) if e is not None)
+
+        if elements:
+            # Normal creation: elements are live objects, derive guids from them
+            self._elements = elements
+            self.element_guids = tuple(str(e.guid) for e in elements)
+        elif element_guids:
+            # Deserialization: only guids available, elements are restored later
+            # by TimberModel.__from_data__() via restore_elements_from_keys()
+            self._elements = ()
+            self.element_guids = tuple(element_guids)
+        else:
+            raise ValueError("Joint requires either elements or element_guids.")
+
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
-        self._location = location or Point(0, 0, 0)
+        self._location = location
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name}
+        return {"name": self.name, "topology": self._topology, "location": self._location, "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
+
+    @property
+    def elements(self):
+        return self._elements
+
+    @property
+    def element_a(self):
+        return self._elements[0] if len(self._elements) > 0 else None
+
+    @property
+    def element_b(self):
+        return self._elements[1] if len(self._elements) > 1 else None
 
     @property
     def topology(self):
@@ -73,11 +131,17 @@ class Joint(Data):
 
     @topology.setter
     def topology(self, value):
-        """Set the topology of the joint."""
-        self._topology = value
+        self._topology = value or JointTopology.TOPO_UNKNOWN
 
     @property
-    def location(self) -> Point:
+    def location(self):
+        # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
+        if self._location is None and all(self.elements) and len(self.elements) == 2:
+            self._location = location_from_centerlines(self.elements)
+
+        if self._location is None:
+            raise ValueError("Location of the joint could not be determined. Please set it manually.")
+
         return self._location
 
     @location.setter
@@ -86,10 +150,6 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
-
-    @property
-    def elements(self):
-        raise NotImplementedError
 
     @property
     def generated_elements(self):
@@ -159,7 +219,7 @@ class Joint(Data):
         """
         pass
 
-    def restore_beams_from_keys(self, model):
+    def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
 
         During serialization, :class:`compas_timber.elements.Beam` objects
@@ -175,7 +235,21 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        raise NotImplementedError
+        self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        self._set_unset_attributes()
+
+        # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
+
+    def _set_unset_attributes(self):
+        """Sets attributes that are not set during initialization but are required for the joint to function properly.
+
+        This is necessary because during de-serialization, the constructor is not called and therefore these attributes
+        are not set. This method is called by `restore_elements_from_keys()` after the elements have been restored.
+
+        This method should be implemented by the concrete implementation of `Joint` if there are any such attributes.
+
+        """
+        pass
 
     def get_beam_direction_towards_joint(self, beam: Beam) -> Vector:
         """Returns the direction of the beam towards the joint.

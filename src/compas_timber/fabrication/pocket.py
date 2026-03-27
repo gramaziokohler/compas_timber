@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from collections import OrderedDict
 from typing import Optional
 from typing import Union
 
@@ -26,8 +25,8 @@ from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 
 
@@ -68,6 +67,22 @@ class Pocket(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Pocket"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "InternalAngle": AttributeSpec("internal_angle", float),
+        "TiltRefSide": AttributeSpec("tilt_ref_side", float),
+        "TiltEndSide": AttributeSpec("tilt_end_side", float),
+        "TiltOppSide": AttributeSpec("tilt_opp_side", float),
+        "TiltStartSide": AttributeSpec("tilt_start_side", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
+    }
 
     @property
     def __data__(self):
@@ -141,10 +156,6 @@ class Pocket(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self) -> PocketParams:
-        return PocketParams(self)
 
     @property
     def start_x(self) -> float:
@@ -417,10 +428,6 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -724,46 +731,6 @@ class Pocket(BTLxProcessing):
         self.width *= factor
 
 
-class PocketParams(BTLxProcessingParams):
-    """A class to store the parameters of a Pocket feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Pocket`
-        The instance of the Pocket feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Pocket) -> None
-        super(PocketParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Pocket feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Pocket feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["InternalAngle"] = "{:.{prec}f}".format(float(self._instance.internal_angle), prec=TOL.precision)
-        result["TiltRefSide"] = "{:.{prec}f}".format(float(self._instance.tilt_ref_side), prec=TOL.precision)
-        result["TiltEndSide"] = "{:.{prec}f}".format(float(self._instance.tilt_end_side), prec=TOL.precision)
-        result["TiltOppSide"] = "{:.{prec}f}".format(float(self._instance.tilt_opp_side), prec=TOL.precision)
-        result["TiltStartSide"] = "{:.{prec}f}".format(float(self._instance.tilt_start_side), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
-
-
 class PocketProxy(object):
     """This object behaves like a Pocket except it only calculates the machining parameters once unproxified.
     Can also be used to defer the creation of the processing instance until it is actually needed.
@@ -772,20 +739,20 @@ class PocketProxy(object):
     This slightly improves performance.
 
     Parameters
-        ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-            The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
-        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
+    ----------
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        The volume of the pocket. Must have 6 faces.
+    element : :class:`~compas_timber.base.TimberElement`
+        The element that is cut by this instance.
+    machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
+        The machining limits for the cut. Default is None.
+    ref_side_index : int, optional
+        The index of the reference side of the element. Default is 0.
 
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Pocket`
-            The Pocket feature.
+    Returns
+    -------
+    :class:`~compas_timber.fabrication.Pocket`
+        The Pocket feature.
 
     """
 
@@ -849,8 +816,6 @@ class PocketProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the pocket to.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
 
         Raises
         ------

@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -17,8 +16,8 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import LimitationTopType
 from .btlx import OrientationType
 from .btlx import TenonShapeType
@@ -65,6 +64,24 @@ class DovetailMortise(BTLxProcessing):
     """
 
     PROCESSING_NAME = "DovetailMortise"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Slope": AttributeSpec("slope", float),
+        # "Inclination": AttributeSpec("inclination", float),  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LimitationTop": AttributeSpec("limitation_top", str),
+        "LengthLimitedBottom": AttributeSpec("length_limited_bottom", bool),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "ConeAngle": AttributeSpec("cone_angle", float),
+        "UseFlankAngle": AttributeSpec("use_flank_angle", bool),
+        "FlankAngle": AttributeSpec("flank_angle", float),
+        "Shape": AttributeSpec("shape", str),
+        "ShapeRadius": AttributeSpec("shape_radius", float),
+    }
 
     # Class-level attribute
     _DOVETAIL_TOOL_PARAMS = {}
@@ -150,9 +167,6 @@ class DovetailMortise(BTLxProcessing):
     # Properties
     ########################################################################
 
-    @property
-    def params(self):
-        return DovetailMortiseParams(self)
 
     @property
     def start_x(self):
@@ -725,47 +739,3 @@ class DovetailMortise(BTLxProcessing):
         self._width *= factor
         self._depth *= factor
         self._shape_radius *= factor
-
-
-class DovetailMortiseParams(BTLxProcessingParams):
-    """A class to store the parameters of a Dovetail Mortise feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.DovetailMortise`
-        The instance of the Dovetail Mortise feature.
-    """
-
-    def __init__(self, instance):
-        # type: (DovetailMortise) -> None
-        super(DovetailMortiseParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Dovetail Mortise feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Dovetail Mortise as a dictionary.
-        """
-        # type: () -> OrderedDict
-
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        # result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        result["LimitationTop"] = self._instance.limitation_top
-        result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["ConeAngle"] = "{:.{prec}f}".format(float(self._instance.cone_angle), prec=TOL.precision)
-        result["UseFlankAngle"] = "yes" if self._instance.use_flank_angle else "no"
-        result["FlankAngle"] = "{:.{prec}f}".format(float(self._instance.flank_angle), prec=TOL.precision)
-        result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
-        return result

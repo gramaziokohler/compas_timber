@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -24,8 +23,8 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 from .btlx import OrientationType
 
@@ -67,6 +66,22 @@ class Lap(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Lap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "LeadAngleParallel": AttributeSpec("lead_angle_parallel", bool),
+        "LeadAngle": AttributeSpec("lead_angle", float),
+        "LeadInclinationParallel": AttributeSpec("lead_inclination_parallel", bool),
+        "LeadInclination": AttributeSpec("lead_inclination", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
+    }
 
     @property
     def __data__(self):
@@ -140,10 +155,6 @@ class Lap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LapParams(self)
 
     @property
     def orientation(self):
@@ -503,10 +514,6 @@ class Lap(BTLxProcessing):
             The volume of the Lap. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam`
             The element that is cut by this instance.
-        machining_limits : dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -840,46 +847,6 @@ class Lap(BTLxProcessing):
         self.depth *= factor
 
 
-class LapParams(BTLxProcessingParams):
-    """A class to store the parameters of a Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Lap`
-        The instance of the Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Lap) -> None
-        super(LapParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["LeadAngleParallel"] = "yes" if self._instance.lead_angle_parallel else "no"
-        result["LeadAngle"] = "{:.{prec}f}".format(float(self._instance.lead_angle), prec=TOL.precision)
-        result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
-        result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.limits.items()}
-        return result
-
-
 class LapProxy(object):
     """This object behaves like a Lap except it only calculates the machining parameters once unproxified.
     Can also be used to defer the creation of the processing instance until it is actually needed.
@@ -960,8 +927,6 @@ class LapProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the lap to.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is lapped by this instance.
 
         Raises
         ------

@@ -13,6 +13,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
 
+from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
@@ -28,15 +29,21 @@ class PlateFastener(Fastener):
 
     Parameters
     ----------
-    shape : :class:`~compas.geometry.Geometry`
-        The shape of the fastener at the XY plane origin.
+    outline : list of :class:`~compas.geometry.Point`
+        The outline of the plate in the local XY plane.
+    thickness : float
+        Thickness of the plate.
+    interfaces : list of :class:`~compas_timber.elements.FastenerTimberInterface
+        The interfaces of the fastener. The order of the interfaces should correspond to the order of the beams in the joint.
     frame : :class:`~compas.geometry.Frame`
         The frame of the instance of the fastener that is applied to the model.
         The fastener should be defined at the XY plane origin with the x-axis pointing in the direction of the main_beam.
-    holes : list of tuple, optional
-        The holes of the fastener. Structure is as follows: [(point, diameter), ...]
     angle : float, optional (default=math.pi / 2)
         The angle of the fastener. The angle between the beam elements must be the same.
+    topology : int or list of int, optional
+        The supported topology of the joint.
+    cutouts : list of :class:`~compas.geometry.Polyline`, optional
+        A list of cutouts to be subtracted from the base shape of the fastener.
 
     Attributes
     ----------
@@ -118,11 +125,7 @@ class PlateFastener(Fastener):
     def set_default(self, joint):
         width_a = joint.beams[0].width
         width_b = joint.beams[1].width
-        if isinstance(joint.SUPPORTED_TOPOLOGY, list):
-            joint_topo = joint.SUPPORTED_TOPOLOGY
-        else:
-            joint_topo = [joint.SUPPORTED_TOPOLOGY]
-        if 3 in joint_topo:  # JointTopology.TOPO_T TODO: fix joint.SUPPORTED_TOPOLOGY import
+        if joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_T:
             self.outline = [
                 Point(-width_b / 2, -width_b * 2.5, 0),
                 Point(-width_b / 2, width_b * 2.5, 0),
@@ -156,9 +159,9 @@ class PlateFastener(Fastener):
                     )
                 )
             self.thickness = width_a / 20
-        elif 4 in joint_topo:  #  JointTopology.TOPO_X TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_X:
             raise NotImplementedError
-        elif 2 in joint_topo:  # JointTopology.TOPO_L TODO: implement
+        elif joint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_L:
             raise NotImplementedError
 
     def place_instances(self, joint):

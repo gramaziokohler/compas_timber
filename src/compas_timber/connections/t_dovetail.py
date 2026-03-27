@@ -39,8 +39,9 @@ class TDovetailJoint(Joint):
         Width of the dovetail cut.
     cone_angle : float
         The angle of the dovetail cut, determining the taper of the joint.
-    dovetail_shape : int
-        The shape of the dovetail cut, represented by an integer index: 0: AUTOMATIC, 1: SQUARE, 2: ROUND, 3: ROUNDED, 4: RADIUS.
+    dovetail_shape : str
+        Shape of the dovetail cut. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
+        Defaults to ``TenonShapeType.RADIUS``.
     tool_angle : float
         The angle of the tool used to create the dovetail cut.
     tool_diameter : float
@@ -66,20 +67,14 @@ class TDovetailJoint(Joint):
         Width of the dovetail cut.
     cone_angle : float
         The angle of the dovetail cut, determining the taper of the joint.
-    dovetail_shape : int
-        The shape of the dovetail cut, represented by an integer index.
+    dovetail_shape : str
+        Shape of the dovetail cut. One of :class:`~compas_timber.fabrication.TenonShapeType`: AUTOMATIC, SQUARE, ROUND, ROUNDED, RADIUS.
     tool_angle : float
         The angle of the tool used to create the dovetail cut.
     tool_diameter : float
         The diameter of the tool used to create the dovetail cut.
     tool_height : float
         The height of the tool used to create the dovetail cut.
-    height : float, optional
-        The height of the joint. This is not set during initialization but can be defined later.
-    flank_angle : float, optional
-        The angle of the flanks of the dovetail joint, if applicable.
-    shape_radius : float, optional
-        The radius used to define the shape of the joint, if applicable.
     features : list
         List of features or machining processings applied to the joint.
     """
@@ -89,8 +84,6 @@ class TDovetailJoint(Joint):
     @property
     def __data__(self):
         data = super(TDovetailJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["rotation"] = self.rotation
@@ -120,34 +113,34 @@ class TDovetailJoint(Joint):
         tool_height=None,
         **kwargs
     ):
-        super(TDovetailJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        super(TDovetailJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
+        self.start_y = start_y
+        self.start_depth = start_depth
+        self.rotation = rotation
+        self.length = length
+        self.width = width
+        self.cone_angle = cone_angle
+        self.dovetail_shape = dovetail_shape
+        self.tool_angle = tool_angle
+        self.tool_diameter = tool_diameter
+        self.tool_height = tool_height
 
-        # Default values if not provided
-        self.start_y = start_y if start_y is not None else 0.0
-        self.start_depth = start_depth if start_depth is not None else 0.0
-        self.rotation = rotation if rotation is not None else 0.0
-        self.length = length if length is not None else 60.0
-        self.width = width if width is not None else 25.0
-        self.cone_angle = cone_angle if cone_angle is not None else 10.0
-        self.dovetail_shape = dovetail_shape if dovetail_shape is not None else 4  # shape: RADIUS
-
-        self.tool_angle = tool_angle if tool_angle is not None else 15.0
-        self.tool_diameter = tool_diameter if tool_diameter is not None else 60.0
-        self.tool_height = tool_height if tool_height is not None else 28.0
-
-        self.height = None
-        self.flank_angle = None
-        self.shape_radius = None
+        self._height = None
+        self._flank_angle = None
+        self._shape_radius = None
 
         self.features = []
 
+        if self.main_beam and self.cross_beam:
+            self._set_unset_attributes()
+
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
 
     @property
     def cross_beam_ref_side_index(self):
@@ -167,21 +160,23 @@ class TDovetailJoint(Joint):
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
-    @property
-    def shape(self):
-        if self.dovetail_shape == 0:
-            shape_type = TenonShapeType.AUTOMATIC
-        elif self.dovetail_shape == 1:
-            shape_type = TenonShapeType.SQUARE
-        elif self.dovetail_shape == 2:
-            shape_type = TenonShapeType.ROUND
-        elif self.dovetail_shape == 3:
-            shape_type = TenonShapeType.ROUNDED
-        elif self.dovetail_shape == 4:
-            shape_type = TenonShapeType.RADIUS
-        else:
-            raise ValueError("Invalid tenon shape index. Please provide a valid index between 0 and 4.")
-        return shape_type
+    def _set_unset_attributes(self):
+        """Sets attributes derived from tool parameters that are required for feature generation."""
+        assert self.cross_beam and self.main_beam
+        width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+
+        # Default values if not provided
+        self.start_y = self.start_y or 0.0
+        self.start_depth = self.start_depth or 0.0
+        self.rotation = self.rotation or 0.0
+        self.length = self.length or height/2
+        self.width = self.width or width/3
+        self.cone_angle = self.cone_angle or 10.0 # default cone angle for dovetail joints
+        self.dovetail_shape = self.dovetail_shape or TenonShapeType.RADIUS
+
+        self.tool_angle = self.tool_angle or 15.0 # default tool angle for dovetail cutters
+        self.tool_diameter = self.tool_diameter or width/3
+        self.tool_height = self.tool_height or width/3
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -234,11 +229,11 @@ class TDovetailJoint(Joint):
             rotation=self.rotation,
             length=self.length,
             width=self.width,
-            height=self.height,
+            height=self._height,
             cone_angle=self.cone_angle,
-            flank_angle=self.flank_angle,
-            shape=self.shape,
-            shape_radius=self.shape_radius,
+            flank_angle=self._flank_angle,
+            shape=self.dovetail_shape,
+            shape_radius=self._shape_radius,
             ref_side_index=self.main_beam_ref_side_index,
         )
 
@@ -247,7 +242,6 @@ class TDovetailJoint(Joint):
             frame=main_feature.frame_from_params_and_beam(self.main_beam),
             beam=self.cross_beam,
             start_depth=0.0,  # TODO: to be updated once housing is implemented
-            angle=self.rotation,
             length=main_feature.length,
             width=main_feature.width,
             depth=main_feature.height,
@@ -281,11 +275,6 @@ class TDovetailJoint(Joint):
         # get the tool parameters
         tool_top_radius = tool_diameter / 2 - tool_height * (math.tan(math.radians(tool_angle)))
         # define parameters related to the tool if a tool is defined
-        self.height = tool_height
-        self.flank_angle = tool_angle
-        self.shape_radius = tool_top_radius
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]
+        self._height = tool_height
+        self._flank_angle = tool_angle
+        self._shape_radius = tool_top_radius
