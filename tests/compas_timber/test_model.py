@@ -81,7 +81,7 @@ def test_get_joint_from_interaction():
 def test_copy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -97,7 +97,7 @@ def test_copy(mocker):
 def test_deepcopy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -128,7 +128,7 @@ def test_beams_have_keys_after_serialization():
 def test_serialization_with_l_butt_joints(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()

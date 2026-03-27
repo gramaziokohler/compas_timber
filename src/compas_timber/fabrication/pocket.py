@@ -311,6 +311,7 @@ class Pocket(BTLxProcessing):
         cls,
         volume: Union[Polyhedron, Brep, Mesh],
         element: TimberElement,
+        allow_undercut: bool = True,
         machining_limits: Optional[dict] = None,
         ref_side_index: Optional[int]=None
     ) -> Pocket:
@@ -396,6 +397,13 @@ class Pocket(BTLxProcessing):
         tilt_end_side = cls._calculate_tilt_angle(bottom_plane, end_plane)
         tilt_opp_side = cls._calculate_tilt_angle(bottom_plane, back_plane)
         tilt_start_side = cls._calculate_tilt_angle(bottom_plane, start_plane)
+
+        # clamp tilt angles to 90 degrees for non-conical (flat-bottom) tools
+        if not allow_undercut:
+            tilt_ref_side = max(tilt_ref_side, 90.0)
+            tilt_end_side = max(tilt_end_side, 90.0)
+            tilt_opp_side = max(tilt_opp_side, 90.0)
+            tilt_start_side = max(tilt_start_side, 90.0)
 
         # define machining limits
         if not machining_limits:
@@ -779,7 +787,9 @@ class PocketProxy(object):
         """
         if not self._processing:
             volume = self.volume.transformed(self.element.modeltransformation)
-            self._processing = Pocket.from_volume_and_element(volume, self.element, self.machining_limits, self.ref_side_index)
+            self._processing = Pocket.from_volume_and_element(
+                volume, self.element, allow_undercut=True, machining_limits=self.machining_limits, ref_side_index=self.ref_side_index
+            )
         return self._processing
 
     @classmethod

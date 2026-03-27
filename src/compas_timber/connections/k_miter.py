@@ -7,20 +7,23 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
 from compas.geometry import intersection_plane_plane_plane
 
-from compas_timber.connections import Joint
-from compas_timber.connections.l_miter import LMiterJoint
-from compas_timber.connections.solver import JointTopology
-from compas_timber.connections.t_butt import ButtJoint
-from compas_timber.connections.utilities import angle_and_dot_product_main_beam_and_cross_beam
-from compas_timber.connections.utilities import are_beams_aligned_with_cross_vector
-from compas_timber.connections.utilities import beam_ref_side_incidence
-from compas_timber.connections.utilities import extend_beam_to_plane
-from compas_timber.connections.utilities import parse_cross_beams_and_main_beams_from_cluster
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication.lap import Lap
-from compas_timber.fabrication.pocket import Pocket
-from compas_timber.utils import ensure_polyhedron_faces_outwards
+from compas_timber.fabrication import DoubleCut
+from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Lap
+from compas_timber.fabrication import Pocket
+from compas_timber.utils import polyhedron_from_box_planes
+
+from .joint import Joint
+from .l_miter import LMiterJoint
+from .solver import JointTopology
+from .t_butt import ButtJoint
+from .utilities import angle_and_dot_product_main_beam_and_cross_beam
+from .utilities import are_beams_aligned_with_cross_vector
+from .utilities import beam_ref_side_incidence
+from .utilities import extend_beam_to_plane
+from .utilities import parse_cross_beams_and_main_beams_from_cluster
 
 
 class KMiterJoint(Joint):
@@ -67,7 +70,7 @@ class KMiterJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_K
     MIN_ELEMENT_COUNT = 3
-    MAX_ELEMENT_COUNT = 100
+    MAX_ELEMENT_COUNT = 999
 
     @property
     def __data__(self):
@@ -81,8 +84,7 @@ class KMiterJoint(Joint):
 
     def __init__(self, cross_beam: Beam = None, *main_beams: Beam, mill_depth: float = 0, force_pocket: bool = False, conical_tool=False, **kwargs):
         super().__init__(
-            main_beams=list(main_beams),
-            cross_beam=cross_beam,
+            elements=(main_beams + (cross_beam,)),
             **kwargs,
         )
         self.cross_beam = cross_beam
@@ -144,12 +146,17 @@ class KMiterJoint(Joint):
         return cls.create(model, *elements, **kwargs)
 
     def cross_beam_ref_side_index(self, beam):
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
     def main_beam_ref_side_index(self, beam):
-        ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(beam, beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
+
+    def beam_relative_side_to_beam(self, beam, ref_beam):
+        ref_side_dict = beam_ref_side_incidence(ref_beam, beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
@@ -185,32 +192,50 @@ class KMiterJoint(Joint):
         # self.main_beams is sorted based on their dot product with the cross beam direction
         sorted_angles, sorted_dots = self._sort_main_beams()
 
+        # processings on cross_beam
         if self.force_pocket and self.mill_depth:
-            pocket = KMiterJoint.get_pocket_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth, conical_tool=self.conical_tool)
+            milling_volume = self._pocket_milling_volume()
+            pocket = Pocket.from_volume_and_element(
+                milling_volume, self.cross_beam, allow_undercut=self.conical_tool, ref_side_index=self.cross_beam_ref_side_index(self.main_beams[0])
+            )
             self.cross_beam.add_feature(pocket)
             self.features.append(pocket)
 
         elif self.mill_depth:
-            lap = KMiterJoint.get_lap_on_cross_beam(self.cross_beam, self.main_beams[0], self.main_beams[-1], mill_depth=self.mill_depth)
+            milling_volume = self._lap_milling_volume()
+            lap = Lap.from_volume_and_beam(milling_volume, self.cross_beam)
             self.cross_beam.add_feature(lap)
             self.features.append(lap)
 
-        for i in range(len(self.main_beams) - 1):
-            beam_1 = self.main_beams[i]
-            beam_2 = self.main_beams[i + 1]
-            # NOTE: LMiter currently going under refactor
-            # TODO: FixMe after LMiter refactoring
-            L_joint = LMiterJoint(beam_1, beam_2, location=self.location)
-            L_joint.add_extensions()
-            L_joint.add_features()
+        # processings on beams
+        for i, beam in enumerate(self.main_beams):
+            prev_plane, next_plane = self._get_double_cut_planes(beam)
 
-        print("oh", self.location)
+            try:  # Double cut!
+                double_cut = DoubleCut.from_planes_and_beam([prev_plane, next_plane], beam)
+                beam.add_feature(double_cut)
+                self.features.append(double_cut)
 
-        # Apply Jack Rafter Cuts to the main beams
-        for beam in self.main_beams:
-            feature = ButtJoint.get_cut_main_beam(self.cross_beam, beam, mill_depth=self.mill_depth)
-            beam.add_feature(feature)
-            self.features.append(feature)
+            except Exception as e:  # If it fails apply two JackRafterCuts
+                print(f"Couldn't apply a DoubleCut: {e}. Applying two JackRafterCuts instead.")
+                prev_plane.normal *= -1
+                next_plane.normal *= -1
+                jrc1 = JackRafterCut.from_plane_and_beam(prev_plane, beam)
+                beam.add_feature(jrc1)
+                self.features.append(jrc1)
+
+                jrc2 = JackRafterCut.from_plane_and_beam(next_plane, beam)
+                beam.add_feature(jrc2)
+                self.features.append(jrc2)
+
+            if 0 < i < len(self.main_beams):
+                cutting_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index(beam)])
+                if self.mill_depth:
+                    cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
+                cutting_plane.normal *= -1
+                jrc = JackRafterCut.from_plane_and_beam(cutting_plane, beam)
+                beam.add_feature(jrc)
+                self.features.append(jrc)
 
     def _sort_main_beams(self):
         angles = []
@@ -227,165 +252,116 @@ class KMiterJoint(Joint):
         self.main_beams = sorted_beams
         return sorted_angles, sorted_dots
 
-    def restore_beams_from_keys(self, model):
-        """After de-seriallization, restores references to the main and cross beams saved in the model."""
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
-        self.main_beams = [model.element_by_guid(guid) for guid in self.main_beams_guids]
+    def _pocket_milling_volume(self):
 
-    @staticmethod
-    def get_pocket_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: float, conical_tool: bool = False):
-        """
-        Creates a `Pocket` feature on the `cross_beam` for the K-Miter joint, based on the geometry of two beams, if more than two beams, the last and the first of the list.
-        It does not apply the features to the beams, it only creates it.
-
-        Parameters
-        ----------
-        cross_beam : :class:`~compas_timber.elements.Beam`
-            The cross beam on which to create the porcessing.
-        first_main_beam : :class:`~compas_timber.elements.Beam`
-            The first beam of the sorted list of main beams in the joint.
-        last_main_beam : :class:`~compas_timber.elements.Beam`
-            The last beam of the sorted list of main beams in the joint.
-        mill_depth : float
-            The depth of material to be milled from the cross beam at the cutting planes.
-        conical_tool : bool, optional
-            If True, the pocket allows overhangs that require a conical tool to be milled.
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Pocket`
-             The computed `Pocket` feature for the cross beam.
-        """
+        first_main_beam = self.main_beams[0]
+        last_main_beam = self.main_beams[-1]
 
         # first beam and last beam have to be on the same side of the cross beam
-        ref_side_dict = beam_ref_side_incidence(first_main_beam, cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(first_main_beam, self.cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cross_plane = cross_beam.ref_sides[cross_beam_ref_side_index]
-        cross_plane_next = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
-        cross_plane_prev = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
+        cross_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
+        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
+        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
 
         # first_plane
-        ref_side_dict = beam_ref_side_incidence(cross_beam, first_main_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
         first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
         first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
 
         # last_plane
-        ref_side_dict = beam_ref_side_incidence(cross_beam, last_main_beam)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, last_main_beam)
         last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
 
         # adjust mill depth
-        if mill_depth:
-            cutting_plane = Plane.from_frame(cross_plane.translated(-cross_plane.normal * mill_depth))
+        if self.mill_depth:
+            cutting_plane = Plane.from_frame(cross_plane.translated(-cross_plane.normal * self.mill_depth))
         else:
             cutting_plane = Plane.from_frame(cross_plane)
 
         # make a plane
         cross_plane = Plane.from_frame(cross_plane)
 
-        vertices = [
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, first_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, last_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, last_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, first_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, first_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, last_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, last_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, first_plane)),
-        ]
-        faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
-        cutout_volume = Polyhedron(vertices=vertices, faces=faces)
-        cutout_volume = ensure_polyhedron_faces_outwards(cutout_volume)
+        milling_volume = polyhedron_from_box_planes(cross_plane, cutting_plane, first_plane, last_plane, cross_plane_next, cross_plane_prev)
+        return milling_volume
 
-        pocket = Pocket.from_volume_and_element(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
-        if not conical_tool:
-            pocket.tilt_start_side = 90 if pocket.tilt_start_side < 90 else pocket.tilt_start_side
-            pocket.tilt_end_side = 90 if pocket.tilt_end_side < 90 else pocket.tilt_end_side
-            pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
-            pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
-        return pocket
+    def _lap_milling_volume(self):
 
-    @staticmethod
-    def get_lap_on_cross_beam(cross_beam: Beam, first_main_beam: Beam, last_main_beam: Beam, mill_depth: Optional[float]):
-        """
-        Creates a `Lap` feature on the `cross_beam` for the K-Miter joint, based on the geometry of two beams, if more than two beams, the last and the first of the list.
-        It does not add the `Lap` feature to the cross_beam, it only computes it.
-
-        Parameters
-        ----------
-           cross_beam : :class:`~compas_timber.elements.Beam`
-               The cross beam on which to create the porcessing.
-           first_main_beam : :class:`~compas_timber.elements.Beam`
-               The first beam of the sorted list of main beams in the joint.
-           last_main_beam : :class:`~compas_timber.elements.Beam`
-               The last beam of the sorted list of main beams in the joint.
-           mill_depth : float, optional
-               The depth of material to be milled from the cross beam at the cutting planes.
-
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Lap`
-             The computed `Lap` feature for the cross beam.
-
-        """
+        first_main_beam = self.main_beams[0]
+        last_main_beam = self.main_beams[-1]
 
         # first beam and last beam have to be on the same side of the cross beam
-        ref_side_dict = beam_ref_side_incidence(first_main_beam, cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(first_main_beam, self.cross_beam, ignore_ends=True)
         cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cross_frame = cross_beam.ref_sides[cross_beam_ref_side_index]
+        cross_frame = self.cross_beam.ref_sides[cross_beam_ref_side_index]
         cross_plane = Plane.from_frame(cross_frame)
-        cross_plane_next = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
-        cross_plane_prev = Plane.from_frame(cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
+        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
+        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
 
         # adjust mill depth
-        if mill_depth:
-            cutting_plane = Plane.from_frame(cross_frame.translated(-cross_frame.normal * mill_depth))
+        if self.mill_depth:
+            cutting_plane = Plane.from_frame(cross_frame.translated(-cross_frame.normal * self.mill_depth))
         else:
             cutting_plane = Plane.from_frame(cross_frame)
 
         # first_plane
-        ref_side_dict = beam_ref_side_incidence(cross_beam, first_main_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
         first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
         first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
         exterior_first_plane = first_plane.copy()
         exterior_first_plane.point = Point(*intersection_plane_plane(cross_plane, first_plane)[0])
-        exterior_first_plane.normal = cross_beam.centerline.direction
+        exterior_first_plane.normal = self.cross_beam.centerline.direction
         interior_first_plane = first_plane.copy()
         interior_first_plane.point = Point(*intersection_plane_plane(cutting_plane, first_plane)[0])
-        interior_first_plane.normal = cross_beam.centerline.direction
+        interior_first_plane.normal = self.cross_beam.centerline.direction
 
         # last_plane
-        ref_side_dict = beam_ref_side_incidence(cross_beam, last_main_beam)
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, last_main_beam)
         last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
         exterior_last_plane = last_plane.copy()
         exterior_last_plane.point = Point(*intersection_plane_plane(cross_plane, last_plane)[0])
-        exterior_last_plane.normal = cross_beam.centerline.direction
+        exterior_last_plane.normal = self.cross_beam.centerline.direction
         interior_last_plane = last_plane.copy()
         interior_last_plane.point = Point(*intersection_plane_plane(cutting_plane, last_plane)[0])
-        interior_last_plane.normal = cross_beam.centerline.direction
+        interior_last_plane.normal = self.cross_beam.centerline.direction
 
         planes = [exterior_first_plane, interior_first_plane, exterior_last_plane, interior_last_plane]
-        planes = sorted(planes, key=lambda plane: plane.point.distance_to_point(cross_beam.centerline.start))
-
-        print(planes)
-
+        planes = sorted(planes, key=lambda plane: plane.point.distance_to_point(self.cross_beam.centerline.start))
         first_plane = planes[0]
         last_plane = planes[-1]
 
-        vertices = [
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, first_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_next, last_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, last_plane)),
-            Point(*intersection_plane_plane_plane(cutting_plane, cross_plane_prev, first_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, first_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_next, last_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, last_plane)),
-            Point(*intersection_plane_plane_plane(cross_plane, cross_plane_prev, first_plane)),
-        ]
-        faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
-        cutout_volume = Polyhedron(vertices=vertices, faces=faces)
-        cutout_volume = ensure_polyhedron_faces_outwards(cutout_volume)
+        milling_volume = polyhedron_from_box_planes(cross_plane, cutting_plane, first_plane, last_plane, cross_plane_next, cross_plane_prev)
+        return milling_volume
 
-        lap = Lap.from_volume_and_beam(cutout_volume, cross_beam, ref_side_index=cross_beam_ref_side_index)
-        return lap
+    def _get_double_cut_planes(self, beam: Beam) -> tuple[Plane, Plane]:
+        if beam is self.main_beams[0]:
+            prev_beam = self.cross_beam
+            prev_plane = Plane.from_frame(prev_beam.ref_sides[self.beam_relative_side_to_beam(prev_beam, beam)])
+            if self.mill_depth:
+                prev_plane.translate(-prev_plane.normal * self.mill_depth)
+        else:
+            index = self.main_beams.index(beam)
+            prev_beam = self.main_beams[index - 1]
+            prev_beam_plane = Plane.from_frame(prev_beam.ref_sides[self.beam_relative_side_to_beam(prev_beam, beam)])
+            beam_plane = Plane.from_frame(beam.ref_sides[self.beam_relative_side_to_beam(beam, prev_beam)])
+            int_point1, int_point_2 = intersection_plane_plane(prev_beam_plane, beam_plane)
+            new_normal = prev_beam_plane.normal - beam_plane.normal
+            prev_plane = Plane(int_point1, new_normal)
+
+        if beam is self.main_beams[-1]:
+            next_beam = self.cross_beam
+            next_plane = Plane.from_frame(next_beam.ref_sides[self.beam_relative_side_to_beam(next_beam, beam)])
+            next_plane.translate(self.cross_beam.centerline.direction * self.cross_beam.length)
+            next_plane.translate(-next_plane.normal * self.mill_depth)
+        else:
+            index = self.main_beams.index(beam)
+            next_beam = self.main_beams[index + 1]
+            next_beam_plane = Plane.from_frame(next_beam.ref_sides[self.beam_relative_side_to_beam(next_beam, beam)])
+            beam_plane = Plane.from_frame(beam.ref_sides[self.beam_relative_side_to_beam(beam, next_beam)])
+            int_point1, int_point_2 = intersection_plane_plane(next_beam_plane, beam_plane)
+            new_normal = next_beam_plane.normal - beam_plane.normal
+            next_plane = Plane(int_point1, new_normal)
+
+        return prev_plane, next_plane
