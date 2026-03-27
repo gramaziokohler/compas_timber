@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.data import json_dump
 from compas.geometry import Brep
@@ -9,27 +8,26 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 
 
 class SimpleScarf(BTLxProcessing):
 
-    PROCESSING_NAME = "Scarf" # type : ignore
+    PROCESSING_NAME = "SimpleScarf" # type : ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "Length": "length",
-        "DepthRefSide": "depth_ref_side",   
-        "DepthOppSide": "depth_opp_side",
-        "NumDrillHole": "num_drill_hole",
-        "DrillHoleDiam1": "drill_hole_diam_1",
-        "DrillHoleDiam2": "drill_hole_diam_2",
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "Length": AttributeSpec("length", float),
+        "DepthRefSide": AttributeSpec("depth_ref_side", float),
+        "DepthOppSide": AttributeSpec("depth_opp_side", float),
+        "NumDrillHole": AttributeSpec("num_drill_hole", int),
+        "DrillHoleDiam1": AttributeSpec("drill_hole_diam_1", float),
+        "DrillHoleDiam2": AttributeSpec("drill_hole_diam_2", float),
         }
 
     @property
@@ -76,15 +74,10 @@ class SimpleScarf(BTLxProcessing):
         self.num_drill_hole = num_drill_hole
         self.drill_hole_diam_1 = drill_hole_diam_1
         self.drill_hole_diam_2 = drill_hole_diam_2
-        print(self.params)
 
     ########################################################################
     # Properties
     ########################################################################
-
-    # @property
-    # def params(self):
-    #     return SimpleScarfParams(self)
 
     @property
     def orientation(self):
@@ -183,7 +176,6 @@ class SimpleScarf(BTLxProcessing):
         ref_side_index=0,
     ):
         # type: (Beam, str, float, float, float, int, float, float, int) -> SimpleScarf
-        print("FROM BEAMS CONSTRUCTOR")
         if num_drill_hole not in [0, 1, 2]:
             raise ValueError("NumDrillHole must be either 0, 1 or 2.")
 
@@ -425,36 +417,3 @@ class SimpleScarf(BTLxProcessing):
         self.depth_opp_side *= factor
         self.drill_hole_diam_1 *= factor
         self.drill_hole_diam_2 *= factor
-
-# class SimpleScarfParams(BTLxProcessingParams):
-#     """Parameters for the SimpleScarf feature.
-
-#     Parameters
-#     ----------
-#     instance : :class:`~compas_timber.fabrication.SimpleScarf`
-#         The instance of the SimpleScarf feature.
-#     """
-
-#     def __init__(self, instance):
-#         # type: (SimpleScarf) -> None
-#         super(SimpleScarfParams, self).__init__(instance)
-
-#     def as_dict(self):
-#         """Returns the parameters of the SimpleScarf feature as an ordered dictionary.
-
-#         Returns
-#         -------
-#         dict
-#             The parameters of the SimpleScarf as an ordered dictionary.
-#         """
-#         # type: () -> OrderedDict
-#         result = OrderedDict()
-#         result["Orientation"] = self._instance.orientation
-#         result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-#         result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-#         result["DepthRefSide"] = "{:.{prec}f}".format(float(self._instance.depth_ref_side), prec=TOL.precision)
-#         result["DepthOppSide"] = "{:.{prec}f}".format(float(self._instance.depth_opp_side), prec=TOL.precision)
-#         result["NumDrillHole"] = str(self._instance.num_drill_hole)
-#         result["DrillHoleDiam1"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_1), prec=TOL.precision)
-#         result["DrillHoleDiam2"] = "{:.{prec}f}".format(float(self._instance.drill_hole_diam_2), prec=TOL.precision)
-#         return result

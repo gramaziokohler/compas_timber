@@ -144,18 +144,11 @@ class ISimpleScarf(Joint):
     def check_elements_compatibility(cls, elements, raise_error=False):
         """Checks if the cluster of beams complies with the requirements for the ISimpleScarf joint."""
         dot = abs(elements[0].centerline.direction.dot(elements[1].centerline.direction))
-        
         if not TOL.is_close(dot, 1):
             if not raise_error:
                 return False
-            raise BeamJoiningError(elements, cls, debug_info="The two beams are not parallel to create a Simple Scarf joint.")
-            
+            raise BeamJoiningError(elements, cls, debug_info="The two beams are not parallel to create a Simple Scarf joint.")    
         return True
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and other beams saved in the model."""
-        self.main_beam = model.element_by_guid(self.main_beam_guid)
-        self.cross_beam = model.element_by_guid(self.cross_beam_guid)
     
     def _set_unset_attributes(self):
         """Sets attributes that were not provided at initialization based on the geometry of the beams."""
