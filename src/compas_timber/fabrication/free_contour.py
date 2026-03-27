@@ -208,10 +208,10 @@ class FreeContour(BTLxProcessing):
         tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
             The position of the tool. Default is derived from the polyline winding direction.
         """
-        user_plane_id = element.add_user_ref_plane(user_ref_plane)
+        ref_side_index = element.add_user_ref_plane(user_ref_plane)
         transformed_polyline = polyline.transformed(Transformation.from_frame(user_ref_plane).inverse())
         contour = Contour(transformed_polyline, depth=depth)
-        return cls(contour, tool_position=tool_position, counter_sink=interior, user_plane_id=user_plane_id, **kwargs)
+        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
     def from_top_bottom_and_elements(cls, top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None, **kwargs):
@@ -341,8 +341,8 @@ class FreeContour(BTLxProcessing):
         """
 
         vol = self.contour_param_object.to_brep()
-        if self.user_plane_id is not None:
-            ref_frame = element.get_user_ref_plane(self.user_plane_id)
+        if self.ref_side_index >= 100:
+            ref_frame = element.get_user_ref_plane(self.ref_side_index)
             transformation = Transformation.from_frame(ref_frame)
         else:
             # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created

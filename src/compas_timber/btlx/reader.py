@@ -266,12 +266,6 @@ class BTLxReader(object):
                         raise BTLxParsingError("No deserializer found for type: {}".format(child_name), processing_type=processing_name)
                     kwargs[python_name] = deserializer(child)
 
-        # ReferencePlaneID >= 100 encodes a user reference plane, not a standard ref side.
-        # Route it to the correct parameter so ref_side_index stays in 0-5 range.
-        ref_side = kwargs.get("ref_side_index", None)
-        if ref_side is not None and ref_side >= 100:
-            kwargs["user_plane_id"] = kwargs.pop("ref_side_index")
-
         # Create processing instance
         try:
             return processing_class(**kwargs)

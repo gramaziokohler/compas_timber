@@ -895,11 +895,9 @@ class BTLxProcessing(Data, ABC):
 
     @property
     def __data__(self):
-        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id, "user_plane_id": self.user_plane_id}
+        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(
-        self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, user_plane_id=None, name=None, process=None, is_joinery=True
-    ):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
         super(BTLxProcessing, self).__init__()
         self._priority = priority
         self._process_id = process_id
@@ -912,7 +910,6 @@ class BTLxProcessing(Data, ABC):
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
-        self._user_plane_id = user_plane_id
 
     def __init_subclass__(cls, **kwargs):
         super(BTLxProcessing, cls).__init_subclass__(**kwargs)
@@ -931,12 +928,9 @@ class BTLxProcessing(Data, ABC):
 
     @ref_side_index.setter
     def ref_side_index(self, value):
-        if value is None:
-            self._ref_side_index = None
-            return
         value_ = int(value)
-        if not 0 <= value_ <= 5:
-            raise ValueError("Reference side index must be between 0 and 5, inclusive. Got: {}".format(value))
+        if not (0 <= value_ <= 5 or value_ >= 100):
+            raise ValueError("Reference side index must be 0-5 (standard sides) or >= 100 (user reference plane ID). Got: {}".format(value))
         self._ref_side_index = value_
 
     @property
@@ -970,10 +964,6 @@ class BTLxProcessing(Data, ABC):
     @property
     def tool_position(self):
         return self._tool_position
-
-    @property
-    def user_plane_id(self):
-        return self._user_plane_id
 
     @property
     @abstractmethod
@@ -1045,8 +1035,8 @@ class BTLxProcessingParams(object):
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
-        if self._instance.user_plane_id is not None:
-            result["ReferencePlaneID"] = str(self._instance.user_plane_id)
+        if self._instance.ref_side_index >= 100:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index)
         else:
             result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
 
