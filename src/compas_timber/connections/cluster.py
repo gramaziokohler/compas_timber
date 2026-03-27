@@ -8,7 +8,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.geometry import KDTree
 
 
-class Cluster(object):
+class Cluster:
     """Groups together the clustered joints and offers access to the beams
 
     Parameters
