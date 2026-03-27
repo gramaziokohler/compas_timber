@@ -883,7 +883,7 @@ class BTLxProcessing(Data, ABC):
 
     # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
     HEADER_ATTRIBUTE_MAP = {
-        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
+        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1 if int(v) < 100 else int(v)),  # Convert 1-based to 0-based; user planes (>=100) pass through
         "Priority": ("priority", int),
         "ProcessID": ("process_id", int),
         "ToolID": ("tool_id", int),
@@ -931,9 +931,12 @@ class BTLxProcessing(Data, ABC):
 
     @ref_side_index.setter
     def ref_side_index(self, value):
+        if value is None:
+            self._ref_side_index = None
+            return
         value_ = int(value)
-        if value_ < 0 or value_ > 5:
-            raise ValueError("Reference side index must be between 0 and 5, inclusive.")
+        if not 0 <= value_ <= 5:
+            raise ValueError("Reference side index must be between 0 and 5, inclusive. Got: {}".format(value))
         self._ref_side_index = value_
 
     @property

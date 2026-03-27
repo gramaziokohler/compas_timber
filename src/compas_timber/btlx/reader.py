@@ -5,6 +5,7 @@ from warnings import warn
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.tolerance import Tolerance
 
@@ -191,6 +192,9 @@ class BTLxReader(object):
         element.name = annotation
         element.attributes["single_member_number"] = single_member_number
 
+        # Parse UserReferencePlanes
+        self._parse_user_reference_planes(part_element, element)
+
         # Parse Processings
         self._parse_processings(part_element, element)
         return element
@@ -262,6 +266,12 @@ class BTLxReader(object):
                         raise BTLxParsingError("No deserializer found for type: {}".format(child_name), processing_type=processing_name)
                     kwargs[python_name] = deserializer(child)
 
+        # ReferencePlaneID >= 100 encodes a user reference plane, not a standard ref side.
+        # Route it to the correct parameter so ref_side_index stays in 0-5 range.
+        ref_side = kwargs.get("ref_side_index", None)
+        if ref_side is not None and ref_side >= 100:
+            kwargs["user_plane_id"] = kwargs.pop("ref_side_index")
+
         # Create processing instance
         try:
             return processing_class(**kwargs)
@@ -295,6 +305,55 @@ class BTLxReader(object):
 
         # Handle standard types (int, float, str)
         return type_info(value)
+
+    def _parse_user_reference_planes(self, part_elem, element):
+        """Parse the UserReferencePlanes XML element and add planes to the element.
+
+        Planes are stored in local ref_frame coordinates in the BTLx file.
+        They are transformed back to world (model) coordinates using the
+        element's ref_frame before being added to the element.
+        """
+        planes_elem = part_elem.find("{*}UserReferencePlanes")
+        if planes_elem is None:
+            return
+
+        for plane_elem in planes_elem.findall("{*}UserReferencePlane"):
+            try:
+                plane_id = int(plane_elem.get("ID"))
+                position = plane_elem.find("{*}Position")
+                ref_point = position.find("{*}ReferencePoint")
+                x_vector = position.find("{*}XVector")
+                y_vector = position.find("{*}YVector")
+
+                local_point = Point(
+                    float(ref_point.get("X")),
+                    float(ref_point.get("Y")),
+                    float(ref_point.get("Z")),
+                )
+                xaxis = Vector(
+                    float(x_vector.get("X")),
+                    float(x_vector.get("Y")),
+                    float(x_vector.get("Z")),
+                )
+                yaxis = Vector(
+                    float(y_vector.get("X")),
+                    float(y_vector.get("Y")),
+                    float(y_vector.get("Z")),
+                )
+
+                local_frame = Frame(local_point, xaxis, yaxis)
+                # Planes in the BTLx are in local ref_frame space; transform back to world
+                T = Transformation.from_frame(element.ref_frame)
+                world_frame = local_frame.transformed(T)
+
+                element.add_user_ref_plane(world_frame, ID=plane_id)
+            except Exception as e:
+                self._errors.append(
+                    BTLxParsingError(
+                        "Failed to parse UserReferencePlane ID={}: {}".format(plane_elem.get("ID", "?"), e),
+                        part_id=element.attributes.get("single_member_number"),
+                    )
+                )
 
     def _parse_transformation(self, part_elem):
         """Extract GUID and Frame from a Part's Transformation element."""
