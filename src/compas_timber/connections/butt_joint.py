@@ -76,7 +76,8 @@ class ButtJoint(Joint):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
-        data["butt_plane"] = self.butt_plane
+        data["butt_plane"] = self._butt_plane
+        data["back_plane"] = self._back_plane
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -88,17 +89,19 @@ class ButtJoint(Joint):
         mill_depth: Optional[float] = None,
         modify_cross: bool = True,
         butt_plane: Optional[Plane] = None,
+        back_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
-        self.mill_depth: float = mill_depth or 0.0
-        self.modify_cross: bool = modify_cross
-        self.butt_plane: Optional[Plane] = butt_plane
-        self.force_pocket: bool = force_pocket
-        self.conical_tool: bool = conical_tool
-        self.features: list[BTLxProcessing] = []
+        self.mill_depth = mill_depth
+        self.modify_cross = modify_cross
+        self.force_pocket = force_pocket
+        self.conical_tool = conical_tool
+        self.features = []
+        self._butt_plane = butt_plane
+        self._back_plane = back_plane
 
     @property
     def main_beam(self):
