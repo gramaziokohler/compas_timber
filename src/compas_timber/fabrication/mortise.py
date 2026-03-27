@@ -14,6 +14,7 @@ from compas.geometry import is_point_behind_plane
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 from .btlx import TenonShapeType
@@ -55,19 +56,19 @@ class Mortise(BTLxProcessing):
 
     PROCESSING_NAME = "Mortise"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Slope": "slope",
-        # "Inclination": "inclination",  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
-        "LengthLimitedTop": "length_limited_top",
-        "LengthLimitedBottom": "length_limited_bottom",
-        "Length": "length",
-        "Width": "width",
-        "Depth": "depth",
-        "Shape": "shape",
-        "ShapeRadius": "shape_radius",
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Slope": AttributeSpec("slope", float),
+        # "Inclination": AttributeSpec("inclination", float),  #! Inclination is a parameter according to the documentation but gives an error in BTL Viewer.
+        "LengthLimitedTop": AttributeSpec("length_limited_top", bool),
+        "LengthLimitedBottom": AttributeSpec("length_limited_bottom", bool),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "Shape": AttributeSpec("shape", str),
+        "ShapeRadius": AttributeSpec("shape_radius", float),
     }
 
     @property

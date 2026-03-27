@@ -864,6 +864,15 @@ def mesh_from_brep_simple(brep):
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
 
+def get_leaf_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_leaf_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_leaf_subclasses(subclass))
+    return subclasses
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -887,4 +896,5 @@ __all__ = [
     "combine_parallel_segments",
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
+    "get_leaf_subclasses",
 ]
