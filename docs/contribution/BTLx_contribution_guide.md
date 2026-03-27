@@ -22,8 +22,8 @@ Study the processing definition to understand:
 Create a new module in `src/compas_timber/fabrication/` that inherits from `BTLxProcessing`.
 The following methods and attributes are the absolute minimum required to implement a processing:
 
-- `PROCESSING_NAME` : Class attribute matching BTLx specification
-- `ATTRIBUTE_MAP` : Class attribute dictionary mapping BTLx XML parameter names to Python attribute names
+- `PROCESSING_NAME` : Abstract property returning a string matching the BTLx specification name
+- `ATTRIBUTE_MAP` : Abstract property returning a dictionary mapping BTLx XML parameter names to `AttributeSpec` instances
 - `__init__()` : Method with meaningful defaults set by the BTLx specification
 - `__data__` : Property returning a dictionary of processing data for serialization
 - `scale()` : Method for scaling parameters when units are not set in mm
@@ -32,13 +32,18 @@ The following methods and attributes are the absolute minimum required to implem
 #### Example:
 
 ```python
-class NewProcessing(BTLxProcessing):
-    PROCESSING_NAME = "HypotheticalProcessing"  # need to match the name in the BTLx specification
+from compas_timber.fabrication import BTLxProcessing
+from compas_timber.fabrication.btlx import AttributeSpec
 
-    # Map BTLx XML parameter names to Python attribute names
+class NewProcessing(BTLxProcessing):
+    PROCESSING_NAME = "HypotheticalProcessing"  # must match the name in the BTLx specification
+
+    # Map BTLx XML parameter names to AttributeSpec instances.
+    # Each AttributeSpec takes the Python attribute name and its type.
+    # The type is used for deserialization when reading BTLx files.
     ATTRIBUTE_MAP = {
-        "ArgA": "arg_a",  # BTLx name : Python attribute name
-        "ArgB": "arg_b",
+        "ArgA": AttributeSpec("arg_a", float),
+        "ArgB": AttributeSpec("arg_b", float),
     }
     
     @property
@@ -62,14 +67,16 @@ class NewProcessing(BTLxProcessing):
 !!! note
     The `params` property is automatically inherited from `BTLxProcessing` and uses the `ATTRIBUTE_MAP` to serialize the processing parameters. The `BTLxProcessingParams` class handles the conversion of Python attribute values to BTLx-compliant string formats.
 
+!!! important
+    Every value in `ATTRIBUTE_MAP` **must** be an `AttributeSpec` instance. `BTLxProcessing.__init_subclass__` validates this at class definition time and raises `TypeError` for any non-`AttributeSpec` value, or `AttributeError` if a referenced Python attribute does not exist on the class. This means mistakes in the map are caught immediately when the module is imported, not at serialization time.
 
 See also:
 
-- `JackRafterCut`
-- `Lap`
-- `Drilling`
-- `DoubleCut`
-- `FrenchRidgeLap`
+- [`JackRafterCut`](../api/compas_timber.fabrication.md#JackRafterCut)
+- [`Lap`](../api/compas_timber.fabrication.md#Lap)
+- [`Drilling`](../api/compas_timber.fabrication.md#Drilling)
+- [`DoubleCut`](../api/compas_timber.fabrication.md#DoubleCut)
+- [`FrenchRidgeLap`](../api/compas_timber.fabrication.md#FrenchRidgeLap)
 
 ### 3. Add Alternative Constructors in Processing Class
 
@@ -105,11 +112,11 @@ class NewProcessing(BTLxProcessing):
 
 See also:
 
-- `JackRafterCut.from_plane_and_beam()`
-- `Lap.from_volume_and_beam()`
-- `Drilling.from_line_and_element()`
-- `DoubleCut.from_planes_and_beam()`
-- `FrenchRidgeLap.from_beam_beam_and_plane()`
+- [`JackRafterCut.from_plane_and_beam()`](../api/compas_timber.fabrication.md#JackRafterCut.from_plane_and_beam)
+- [`Lap.from_volume_and_beam()`](../api/compas_timber.fabrication.md#Lap.from_volume_and_beam)
+- [`Drilling.from_line_and_element()`](../api/compas_timber.fabrication.md#Drilling.from_line_and_element)
+- [`DoubleCut.from_planes_and_beam()`](../api/compas_timber.fabrication.md#DoubleCut.from_planes_and_beam)
+- [`FrenchRidgeLap.from_beam_beam_and_plane()`](../api/compas_timber.fabrication.md#FrenchRidgeLap.from_beam_beam_and_plane)
 
 ### 4. Add Geometry Generation Method in Processing Class
 
@@ -151,11 +158,11 @@ class NewProcessing(BTLxProcessing):
 
 See also:
 
-- `JackRafterCut.plane_from_params_and_beam`
-- `Lap.volume_from_params_and_beam`
-- `Drilling.cylinder_from_params_and_element`
-- `DoubleCut.planes_from_params_and_beam`
-- `FrenchRidgeLap.lap_volume_from_params_and_beam`
+- [`JackRafterCut.plane_from_params_and_beam`](../api/compas_timber.fabrication.md#JackRafterCut.plane_from_params_and_beam)
+- [`Lap.volume_from_params_and_beam`](../api/compas_timber.fabrication.md#Lap.volume_from_params_and_beam)
+- [`Drilling.cylinder_from_params_and_element`](../api/compas_timber.fabrication.md#Drilling.cylinder_from_params_and_element)
+- [`DoubleCut.planes_from_params_and_beam`](../api/compas_timber.fabrication.md#DoubleCut.planes_from_params_and_beam)
+- [`FrenchRidgeLap.lap_volume_from_params_and_beam`](../api/compas_timber.fabrication.md#FrenchRidgeLap.lap_volume_from_params_and_beam)
 
 ### 5. Update Module Imports
 

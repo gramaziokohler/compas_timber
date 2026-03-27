@@ -8,16 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [2.1.1-rc0] 2026-03-25
+
+### Added
 * Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
 * Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
 * Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
 * Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
 * Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
+* Added new `compas_timber.btlx` package with `BTLxReader` class for reading BTLx XML files into a `TimberModel`.
+* Added `BTLxParsingError` to `compas_timber.errors` — a non-fatal exception with `part_id` and `processing_type` fields, collected during BTLx parsing without aborting the process.
+* Added `BTLxProcessing.HEADER_ATTRIBUTE_MAP` class attribute mapping BTLx XML header attributes (e.g. `ReferencePlaneID`, `ProcessID`, `CounterSink`) to Python parameter names with type converters, used by the reader.
+* Added `name` and `process` parameters and read-only properties to `BTLxProcessing` to capture BTLx metadata attributes that are not serialized back.
+* Added `FreeContourParams` class and overridden `FreeContour.params` property as a special case: unlike all other processings, `FreeContour` requires custom serialization logic to handle its polymorphic `Contour` / `DualContour` child element.
+* Added `get_leaf_subclasses` utility function back to `compas_timber.utils`.
+* Added `AttributeSpec` dataclass in `compas_timber.fabrication.btlx` to declare `ATTRIBUTE_MAP` entries with a `python_name` and a `type` for deserialization.
 
 ### Changed
 
 * Changed minimum required `compas` version to `2.15.1` due to bugfix.
 * Fixed `Plate.geometry` is `None`.
+* Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
+* Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
+* `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
+* `BTLxGenericPart` annotation attribute now uses `str(self.name)` only, dropping the appended GUID fragment.
+* `BTLxPart.attr` now includes a `Designation` field (`"Beam"` or `"Plate"`) based on element type.
+* `ATTRIBUTE_MAP` entries in `BTLxProcessing` subclasses now use `AttributeSpec` dataclass instances, carrying both the Python attribute name and the deserialisation type.
+* `FreeContour.ATTRIBUTE_MAP` now has two entries (`Contour` and `DualContour`) both mapping to `contour_param_object`, allowing the reader to handle both XML child element types.
+* `MachiningLimits.from_dict()` now accepts string values `"yes"` / `"no"` in addition to booleans, allowing the method to be used directly by `BTLxReader` when deserializing machining limit values from BTLx XML.
 
 ### Removed
 
@@ -52,7 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
 * Improved `join_polyline_segments` to silently discard degenerate (zero-length) segments at entry.
 
-* `Joint.location` now auto-computes from element centerlines when not explicitly set, and raises `ValueError` if accessed before elements are available (e.g. during deserialization).
 * Fixed multi-beam joints get de-serialized multiple times.
 * Changed `BeamStructuralElementSolver` to accept an `InteractionType` via the `interaction_type` parameter.
 * Changed `TimberModel.create_beam_structural_segments()` to accept an optional `BeamStructuralElementSolver` allowing users to configure the solver externally.
@@ -72,8 +95,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
 * Refactored `TTenonMortiseJoint`, `LTenonMortiseJoint`, and `TOliGinaJoint` to inherit shared mortise/tenon behavior and reuse common feature/extension logic.
 * New `NBeamKDTreeAnalyzer` instances for the same `TimberModel` share a KDTree for efficient spatial queries.
-* Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
-* Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
 
 ### Removed
 
