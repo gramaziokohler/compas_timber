@@ -256,6 +256,11 @@ class Joint(Data):
 
         This is used to determine the orientation of the beam for feature calculation.
 
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam for which to calculate the direction towards the joint.
+
         Returns
         -------
         :class:`~compas.geometry.Vector`

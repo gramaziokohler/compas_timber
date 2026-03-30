@@ -877,7 +877,7 @@ def get_leaf_subclasses(cls):
 
 
 def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
-    """Creates a new polyhedron with consistently oriented faces.
+    """Returns the polyhedron with consistently oriented faces.
 
     This function ensures that the normals of the polyhedron's faces are all
     oriented outwards by reordering the vertex indices that define each face.

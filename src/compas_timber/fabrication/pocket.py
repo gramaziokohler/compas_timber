@@ -323,6 +323,8 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
+        allow_undercut : bool, optional
+            Whether to allow undercuts in the pocket. If False, tilt angles will be clamped to 90 degrees. Default is True.
         machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
