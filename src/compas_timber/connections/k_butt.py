@@ -247,7 +247,6 @@ class KButtJoint(Joint):
         return sorted_angles, sorted_dots
 
     def _pocket_milling_volume(self):
-
         first_main_beam = self.main_beams[0]
         last_main_beam = self.main_beams[-1]
 
@@ -281,7 +280,6 @@ class KButtJoint(Joint):
         return milling_volume
 
     def _lap_milling_volume(self):
-
         first_main_beam = self.main_beams[0]
         last_main_beam = self.main_beams[-1]
 

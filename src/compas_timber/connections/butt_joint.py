@@ -4,10 +4,7 @@ from typing import TYPE_CHECKING
 from typing import Optional
 
 from compas.geometry import Plane
-from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import distance_point_plane
-from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
@@ -21,7 +18,6 @@ from .utilities import beam_ref_side_incidence
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
-    from src.compas_timber.fabrication.btlx import BTLxProcessing
 
 
 class ButtJoint(Joint):

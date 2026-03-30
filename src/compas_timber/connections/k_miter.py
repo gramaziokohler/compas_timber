@@ -1,11 +1,7 @@
-from typing import Optional
-
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Polyhedron
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.elements.beam import Beam
 from compas_timber.errors import BeamJoiningError
@@ -16,9 +12,7 @@ from compas_timber.fabrication import Pocket
 from compas_timber.utils import polyhedron_from_box_planes
 
 from .joint import Joint
-from .l_miter import LMiterJoint
 from .solver import JointTopology
-from .t_butt import ButtJoint
 from .utilities import angle_and_dot_product_main_beam_and_cross_beam
 from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
@@ -253,7 +247,6 @@ class KMiterJoint(Joint):
         return sorted_angles, sorted_dots
 
     def _pocket_milling_volume(self):
-
         first_main_beam = self.main_beams[0]
         last_main_beam = self.main_beams[-1]
 
@@ -287,7 +280,6 @@ class KMiterJoint(Joint):
         return milling_volume
 
     def _lap_milling_volume(self):
-
         first_main_beam = self.main_beams[0]
         last_main_beam = self.main_beams[-1]
 
