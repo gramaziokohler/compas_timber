@@ -262,11 +262,11 @@ class Joint(Data):
             The direction of the beam towards the joint.
 
         """
-        end, _ = beam.endpoint_closest_to_point(self.location)
-        if end == "start":
-            beam_direction = beam.centerline.vector
-        else:
+        is_start, _ = beam.endpoint_closest_to_point(self.location)
+        if is_start == "start":
             beam_direction = beam.centerline.vector * -1
+        else:
+            beam_direction = beam.centerline.vector
         beam_direction.unitize()
         return beam_direction
 

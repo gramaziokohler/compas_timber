@@ -428,3 +428,16 @@ def test_location_from_centerlines_touching_at_endpoint():
     b2 = Beam.from_centerline(Line(Point(1, 0, 0), Point(1, 1, 0)), 0.1, 0.1)
     loc = location_from_centerlines([b1, b2])
     assert TOL.is_allclose(loc, Point(1, 0, 0))
+
+
+def test_beam_direction(l_topo_beams):
+    beam_a, beam_b = l_topo_beams
+    model = model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+    joint = LButtJoint.create(model, beam_a, beam_b)
+    a_direction = joint.get_beam_direction_towards_joint(beam_a)
+    b_direction = joint.get_beam_direction_towards_joint(beam_b)
+    assert a_direction and b_direction
+    assert a_direction == beam_a.centerline.direction
+    assert b_direction != beam_b.centerline.direction
+    assert (b_direction * -1) == beam_b.centerline.direction

@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
+from typing import Optional
 
-from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
@@ -210,7 +211,7 @@ def point_centerline_towards_joint(beam_a, beam_b):
     return centerline_vec
 
 
-def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
+def extend_beam_to_plane(beam: Beam, plane: Plane, joint: Optional[Joint] = None) -> Beam:
     """
     Extend a beam parametrically until it reaches a specified plane.
     The beam is modified in place.
@@ -221,6 +222,8 @@ def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
         The beam to extend.
     plane : :class:`~compas.geometry.Plane`
         The target plane to which the beam is extended.
+    joint : :class:`~compas_timber.connections.joint.Joint`, optional
+         The joint of the beam where it has to be extend, used as reference for serialization and de-serialization.
 
     Returns
     -------
@@ -228,8 +231,10 @@ def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
         The extended beam.
 
     """
-    start_beam, end_beam = beam.extension_to_plane(plane)
-    beam.add_blank_extension(start_beam, end_beam)
+    start, end = beam.extension_to_plane(plane)
+    extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+    joint_id = joint.guid if joint else None
+    beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
     return beam
 
 
