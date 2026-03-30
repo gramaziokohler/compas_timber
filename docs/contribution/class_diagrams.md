@@ -333,36 +333,6 @@ classDiagram
          +cross_plate : Plate
       }
 
-      class KMiterJoint {
-          +beams : list[Beam]
-          +main_beams: list[Beams]
-          +elements : list[Beam]
-          +force_pocket
-          +conical_tool
-          +mill_depth
-          +are_beams_coplanar : bool
-          +promote_cluster()
-          +beam_relative_side_to_beam()
-          +cross_beam_ref_side_index()
-          +main_beam_red_side_index()
-          +add_extensions()
-          +add_features()
-      }
-
-      class KButtJoint {
-          +beams : list[Beam]
-          +elements : list[Beam]
-          +are_beams_coplanar : bool
-          +main_beams: list[Beam]
-          
-          +promote_cluster()$
-          +cross_beam_ref_side_index()
-          +main_beam_red_side_index()
-          +beam_relative_side_to_beam()
-          +add_extensions()
-          +add_features()
-      }
-
       class PlateLButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
       }
@@ -408,8 +378,7 @@ classDiagram
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
       Joint <|-- PlateJoint
-      Joint <|-- KMiterJoint
-      Joint <|-- KButtJoint
+
       PlateJoint <|-- PanelJoint
 
       ButtJoint <|-- LButtJoint

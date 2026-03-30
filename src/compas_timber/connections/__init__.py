@@ -23,8 +23,6 @@ from .t_tenon_mortise import TTenonMortiseJoint
 from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
-from .k_butt import KButtJoint
-from .k_miter import KMiterJoint
 from .oligina import TOliGinaJoint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
@@ -70,8 +68,6 @@ __all__ = [
     "TTenonMortiseJoint",
     "LTenonMortiseJoint",
     "YButtJoint",
-    "KMiterJoint",
-    "KButtJoint",
     "TOliGinaJoint",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
