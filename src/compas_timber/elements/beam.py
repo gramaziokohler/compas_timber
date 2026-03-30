@@ -241,8 +241,6 @@ class Beam(TimberElement):
         ----------
         centerline : :class:`~compas.geometry.Line`
             The centerline of the beam to be created.
-        length : float
-            Length of the beam.
         width : float
             Width of the cross-section.
         height : float
@@ -253,7 +251,7 @@ class Beam(TimberElement):
 
         Returns
         -------
-        :class:`~compas_timber.parts.Beam`
+        :class:`~compas_timber.elements.Beam`
 
         """
         if centerline.length < TOL.absolute:
@@ -276,7 +274,7 @@ class Beam(TimberElement):
         ----------
         point_start : :class:`~compas.geometry.Point`
             The start point of a centerline
-        end_point : :class:`~compas.geometry.Point`
+        point_end : :class:`~compas.geometry.Point`
             The end point of a centerline
         width : float
             Width of the cross-section.
@@ -288,11 +286,37 @@ class Beam(TimberElement):
 
         Returns
         -------
-        :class:`~compas_timber.parts.Beam`
+        :class:`~compas_timber.elements.Beam`
 
         """
         line = Line(point_start, point_end)
         return cls.from_centerline(line, width, height, z_vector)
+
+    @classmethod
+    def from_box(cls, box):
+        """Define the beam from a box.
+
+        Parameters
+        ----------
+        box : :class:`~compas.geometry.Box`
+            A box whose dimensions and orientation define the beam.
+            The box's x-axis is taken as the beam's centerline direction (length),
+            y-axis as the width direction, and z-axis as the height direction.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Beam`
+
+        """
+        if TOL.is_zero(box.xsize):
+            raise ValueError("The given box has zero length along its x-axis. Check the box dimensions.")
+        if TOL.is_zero(box.ysize):
+            raise ValueError("The given box has zero width along its y-axis. Check the box dimensions.")
+        if TOL.is_zero(box.zsize):
+            raise ValueError("The given box has zero height along its z-axis. Check the box dimensions.")
+        origin = box.frame.point + box.frame.xaxis * (-box.xsize / 2.0)
+        frame = Frame(origin, box.frame.xaxis, box.frame.yaxis)
+        return cls(frame, box.xsize, box.ysize, box.zsize)
 
     # ==========================================================================
     # Extensions and Modifications

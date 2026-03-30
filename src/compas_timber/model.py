@@ -73,7 +73,7 @@ class TimberModel(Model):
             model._joints[guid_str] = joint
 
         for joint in model._joints.values():
-            joint.restore_beams_from_keys(model)
+            joint.restore_elements_from_keys(model)
 
         return model
 

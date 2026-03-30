@@ -20,7 +20,6 @@ from .utilities import beam_ref_side_incidence
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
-    from compas_timber.model.model import TimberModel
     from src.compas_timber.fabrication.btlx import BTLxProcessing
 
 
@@ -74,8 +73,6 @@ class ButtJoint(Joint):
     @property
     def __data__(self):
         data = super(ButtJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
         data["butt_plane"] = self.butt_plane
@@ -95,11 +92,7 @@ class ButtJoint(Joint):
         base_fastener: Optional[Fastener] = None,
         **kwargs,
     ):
-        super(ButtJoint, self).__init__(**kwargs)
-        self.main_beam: Beam = main_beam
-        self.cross_beam: Beam = cross_beam
-        self.main_beam_guid: str = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid: str = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth: float = mill_depth or 0.0
         self.modify_cross: bool = modify_cross
         self.butt_plane: Optional[Plane] = butt_plane
@@ -108,8 +101,12 @@ class ButtJoint(Joint):
         self.features: list[BTLxProcessing] = []
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
 
     @property
     def beams(self):
@@ -130,8 +127,6 @@ class ButtJoint(Joint):
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
 
         Raises
         ------
@@ -184,10 +179,7 @@ class ButtJoint(Joint):
             )
 
     def add_features(self) -> None:
-        """Adds the required extension and trimming features to both beams.
-
-        This method is automatically called when joint is created by the call to `Joint.create()`.
-        """
+        """Removes this joint's previously generated features and adds new features to each beam."""
         assert self.main_beam and self.cross_beam
 
         if self.features:
@@ -272,8 +264,3 @@ class ButtJoint(Joint):
         self.cross_beam.add_features(pocket)
         self.features.append(pocket)
         return cutout_volume
-
-    def restore_beams_from_keys(self, model: TimberModel):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

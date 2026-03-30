@@ -25,6 +25,7 @@ from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import MachiningLimits
 
@@ -67,20 +68,20 @@ class Pocket(BTLxProcessing):
 
     PROCESSING_NAME = "Pocket"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Slope": "slope",
-        "Length": "length",
-        "Width": "width",
-        "InternalAngle": "internal_angle",
-        "TiltRefSide": "tilt_ref_side",
-        "TiltEndSide": "tilt_end_side",
-        "TiltOppSide": "tilt_opp_side",
-        "TiltStartSide": "tilt_start_side",
-        "MachiningLimits": "machining_limits",
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "InternalAngle": AttributeSpec("internal_angle", float),
+        "TiltRefSide": AttributeSpec("tilt_ref_side", float),
+        "TiltEndSide": AttributeSpec("tilt_end_side", float),
+        "TiltOppSide": AttributeSpec("tilt_opp_side", float),
+        "TiltStartSide": AttributeSpec("tilt_start_side", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
     }
 
     @property
@@ -427,10 +428,6 @@ class Pocket(BTLxProcessing):
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
-        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -742,20 +739,20 @@ class PocketProxy(object):
     This slightly improves performance.
 
     Parameters
-        ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
-            The volume of the pocket. Must have 6 faces.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
-        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
+    ----------
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        The volume of the pocket. Must have 6 faces.
+    element : :class:`~compas_timber.base.TimberElement`
+        The element that is cut by this instance.
+    machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict, optional
+        The machining limits for the cut. Default is None.
+    ref_side_index : int, optional
+        The index of the reference side of the element. Default is 0.
 
-        Returns
-        -------
-        :class:`~compas_timber.fabrication.Pocket`
-            The Pocket feature.
+    Returns
+    -------
+    :class:`~compas_timber.fabrication.Pocket`
+        The Pocket feature.
 
     """
 
@@ -819,8 +816,6 @@ class PocketProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the pocket to.
-        element : :class:`~compas_timber.base.TimberElement`
-            The element that is cut by this instance.
 
         Raises
         ------

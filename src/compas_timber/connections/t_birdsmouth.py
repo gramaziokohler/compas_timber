@@ -39,24 +39,22 @@ class TBirdsmouthJoint(Joint):
     @property
     def __data__(self):
         data = super(TBirdsmouthJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["mill_depth"] = self.mill_depth
         return data
 
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, **kwargs):
-        super(TBirdsmouthJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+        super(TBirdsmouthJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
 
-        self.features = []
+        self.features = []  # TODOL remove?
 
     @property
-    def elements(self):
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
 
     @property
     def cross_ref_side_indices(self):
@@ -145,8 +143,3 @@ class TBirdsmouthJoint(Joint):
             # register cross features to beam and joint
             self.cross_beam.add_features([cross_feature_1, cross_feature_2])
             self.features.extend([cross_feature_1, cross_feature_2])
-
-    def restore_beams_from_keys(self, model):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]

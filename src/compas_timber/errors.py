@@ -1,7 +1,7 @@
 class FeatureApplicationError(Exception):
     """Raised when a feature cannot be applied to an element geometry.
 
-    # TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
+    TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
 
     Attributes
     ----------
@@ -115,9 +115,42 @@ class BTLxProcessingError(Exception):
         self.failed_processing = failed_processing
 
 
+class BTLxParsingError(Exception):
+    """Raised when a non-fatal error occurs while parsing a BTLx file.
+
+    These errors are collected during parsing and do not abort the process.
+    Inspect ``BTLxReader.errors`` after reading to retrieve them.
+
+    Attributes
+    ----------
+    message : str
+        The error message.
+    part_id : str, optional
+        The annotation or name of the BTLx Part in which the error occurred.
+    processing_type : str, optional
+        The processing type name (e.g. ``JackRafterCut``) that caused the error, if applicable.
+
+    """
+
+    def __init__(self, message, part_id=None, processing_type=None):
+        super(BTLxParsingError, self).__init__(message)
+        self.message = message
+        self.part_id = part_id
+        self.processing_type = processing_type
+
+    def __str__(self):
+        location = ""
+        if self.part_id:
+            location += " [Part: {}]".format(self.part_id)
+        if self.processing_type:
+            location += " [Processing: {}]".format(self.processing_type)
+        return "BTLxParsingError{}: {}".format(location, self.message)
+
+
 __all__ = [
     "BeamJoiningError",
     "BTLxProcessingError",
+    "BTLxParsingError",
     "FastenerApplicationError",
     "FeatureApplicationError",
 ]

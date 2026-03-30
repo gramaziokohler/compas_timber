@@ -201,7 +201,7 @@ class TimberElement(Element, abc.ABC):
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
+        features : :class:`~compas_timber.fabrication.BTLxProcessing` | list(:class:`~compas_timber.fabrication.BTLxProcessing`) | None
             The feature or features to be removed described as a BTLxProcessing or a list of BTLxProcessings.
             If None, all features will be removed.
 

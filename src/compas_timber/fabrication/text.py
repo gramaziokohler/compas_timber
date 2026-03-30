@@ -8,6 +8,7 @@ from compas.geometry import Transformation
 from compas_timber import DATA
 
 from .btlx import AlignmentType
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 
 
@@ -41,16 +42,16 @@ class Text(BTLxProcessing):
 
     PROCESSING_NAME = "Text"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle": "angle",
-        "AlignmentVertical": "alignment_vertical",
-        "AlignmentHorizontal": "alignment_horizontal",
-        "AlignmentMultiline": "alignment_multiline",
-        "StackedMarking": "stacked_marking",
-        "TextHeightAuto": "text_height_auto",
-        "TextHeight": "text_height",
-        "Text": "text",
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "AlignmentVertical": AttributeSpec("alignment_vertical", str),
+        "AlignmentHorizontal": AttributeSpec("alignment_horizontal", str),
+        "AlignmentMultiline": AttributeSpec("alignment_multiline", str),
+        "StackedMarking": AttributeSpec("stacked_marking", bool),
+        "TextHeightAuto": AttributeSpec("text_height_auto", bool),
+        "TextHeight": AttributeSpec("text_height", float),
+        "Text": AttributeSpec("text", str),
     }
     _CHARACTER_DICT = {}
 
@@ -237,9 +238,10 @@ class Text(BTLxProcessing):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
+            The resulting geometry after processing.
 
         """
+        # TODO: think about ways to display text curves from `draw_string_on_element()`
         # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 
