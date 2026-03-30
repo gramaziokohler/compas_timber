@@ -154,21 +154,7 @@ class ButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         # extend the main beam
         try:
-            if self.butt_plane:
-                cutting_plane_main = self.butt_plane
-                start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
-                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-                self.main_beam.add_blank_extension(
-                    start_main + extension_tolerance,
-                    end_main + extension_tolerance,
-                    self.guid,
-                )
-            else:
-                cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-                if self.mill_depth:
-                    cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
-                start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
-
+            start_main, end_main = self.main_beam.extension_to_plane(self.butt_plane)
             extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
             self.main_beam.add_blank_extension(
                 start_main + extension_tolerance,
@@ -176,19 +162,16 @@ class ButtJoint(Joint):
                 self.guid,
             )
         except AttributeError as ae:
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.butt_plane])
         except Exception as ex:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
+
         # extend the cross beam
         if self.modify_cross:
             try:
-                if self.back_plane:
-                    cutting_plane_cross = self.back_plane
-                else:
-                    cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
-                start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
+                start_cross, end_cross = self.cross_beam.extension_to_plane(self.back_plane)
             except AttributeError as ae:
-                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
             extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
             self.cross_beam.add_blank_extension(
                 start_cross + extension_tolerance,

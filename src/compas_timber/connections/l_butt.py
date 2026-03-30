@@ -1,5 +1,3 @@
-from turtle import back
-
 from compas_timber.errors import BeamJoiningError
 
 from .butt_joint import ButtJoint
