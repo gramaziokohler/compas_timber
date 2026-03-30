@@ -50,7 +50,8 @@ class BallNodeJoint(JointFastener, Joint):
     def __init__(self, beams: list[Beam], ball_diameter: float = 10, rods_length: float = 30, **kwargs):
         self.beams = beams
         self._beam_guids = []
-        super().__init__(base_fastener=BallNodeFastener.from_joint(self, ball_diameter, rods_length), **kwargs)
+        base_fastener = BallNodeFastener.from_joint(self, ball_diameter, rods_length)
+        super().__init__(base_fastener=base_fastener, elements=self.beams, **kwargs)
         self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
         self._fastener_guid = kwargs.get("fastener_guid", None)
 
