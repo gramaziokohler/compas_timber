@@ -28,7 +28,6 @@ from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .utilities import angle_and_dot_product_main_beam_and_cross_beam
-from .utilities import parse_cross_beams_and_main_beams_from_cluster
 from .utilities import extend_beam_to_plane
 from .plate_joint import PlateJoint
 from .panel_joint import PanelJoint

@@ -15,6 +15,7 @@ from compas_timber.utils import polyhedron_from_box_planes
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
+from .utilities import extend_beam_to_plane
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
@@ -160,13 +161,7 @@ class ButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         # extend the main beam
         try:
-            start_main, end_main = self.main_beam.extension_to_plane(self.butt_plane)
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-            self.main_beam.add_blank_extension(
-                start_main + extension_tolerance,
-                end_main + extension_tolerance,
-                self.guid,
-            )
+            extend_beam_to_plane(beam=self.main_beam, plane=self.butt_plane, joint=self)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.butt_plane])
         except Exception as ex:
@@ -175,15 +170,9 @@ class ButtJoint(Joint):
         # extend the cross beam
         if self.modify_cross:
             try:
-                start_cross, end_cross = self.cross_beam.extension_to_plane(self.back_plane)
+                extend_beam_to_plane(self.cross_beam, self.back_plane, self)
             except AttributeError as ae:
                 raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-            self.cross_beam.add_blank_extension(
-                start_cross + extension_tolerance,
-                end_cross + extension_tolerance,
-                self.guid,
-            )
 
     def add_features(self) -> None:
         """Removes this joint's previously generated features and adds new features to each beam."""
