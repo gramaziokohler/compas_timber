@@ -176,28 +176,23 @@ classDiagram
 	    +mill_depth : float
 	    +modify_cross : bool
 	    +butt_plane : Plane
+		+back_plane: Plane
+		+force_pocket: bool
+		+conical_tool: bool
 	    +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
-        +get_pocket_on_cross_beam()  Pocket$
-        +get_lap_on_cross_beam()  Lap$
-        +get_cut_on_main_beam() JackRafterCutProxy$
+
       }
 
       class LButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_L
-         +start_y : float
-         +strut_inclination : float
-         +small_beam_butts : bool
-         +back_plane : Plane
          +reject_i : bool
       }
 
       class TButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_T
-         +modify_cross = False
          +fasteners : list[Fastener]
          +base_fastener : Fastener
          +fasteners : list
-         +base_fastener : object
       }
 
       class TBirdsmouthJoint {
@@ -340,9 +335,14 @@ classDiagram
 
       class KMiterJoint {
           +beams : list[Beam]
+          +main_beams: list[Beams]
           +elements : list[Beam]
+          +force_pocket
+          +conical_tool
+          +mill_depth
           +are_beams_coplanar : bool
-          +promote_cluster()$
+          +promote_cluster()
+          +beam_relative_side_to_beam()
           +cross_beam_ref_side_index()
           +main_beam_red_side_index()
           +add_extensions()
@@ -353,9 +353,12 @@ classDiagram
           +beams : list[Beam]
           +elements : list[Beam]
           +are_beams_coplanar : bool
+          +main_beams: list[Beam]
+          
           +promote_cluster()$
           +cross_beam_ref_side_index()
           +main_beam_red_side_index()
+          +beam_relative_side_to_beam()
           +add_extensions()
           +add_features()
       }
