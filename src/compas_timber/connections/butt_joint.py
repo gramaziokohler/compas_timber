@@ -202,10 +202,8 @@ class ButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 milling_volume = self._get_milling_volume_for_pocket()
-                print("I am in")
-                print("Milling volume for pocket:", milling_volume)
                 # except Exception as ex:
-                # raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
+                #     raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
                 cross_feature = Pocket.from_volume_and_element(
                     milling_volume,
                     self.cross_beam,
