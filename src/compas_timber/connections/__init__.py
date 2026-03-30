@@ -40,7 +40,6 @@ from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 
-
 __all__ = [
     "Joint",
     "LapJoint",
