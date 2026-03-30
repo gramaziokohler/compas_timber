@@ -39,6 +39,8 @@ class ButtJoint(Joint):
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    back_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the cross beam if `modify_cross` is True.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -50,18 +52,26 @@ class ButtJoint(Joint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
+    beams : list[:class:`~compas_timber.elements.Beam`]
+        A list containing the main beam and the cross beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    back_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the cross beam if `modify_cross` is True.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
         If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
     features: list[BTLxProcessing]
         List of features to be applied to the cross beam and main beam.
+    cross_beam_ref_side_index : int
+        The index of the side of the cross beam relative to the main beam..
+    main_beam_ref_side_index : int
+        The index of the side of the main beam relative to the cross beam.
 
     """
 

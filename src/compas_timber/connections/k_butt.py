@@ -97,7 +97,7 @@ class KButtJoint(Joint):
 
     @property
     def beams(self):
-        return [self.cross_beam, self.main_beam_a, self.main_beam_b]
+        return [self.cross_beam] + self.main_beams
 
     @property
     def elements(self):
@@ -114,16 +114,8 @@ class KButtJoint(Joint):
         return False
 
     @property
-    def main_beam_a(self):
-        return self.main_beams[0]
-
-    @property
-    def main_beam_b(self):
-        return self.main_beams[1]
-
-    @property
     def location(self):
-        return Point(*(intersection_line_line(self.main_beam_a.centerline, self.main_beam_b.centerline)[0]))
+        return Point(*(intersection_line_line(self.main_beams[0].centerline, self.main_beams[-1].centerline)[0]))
 
     @classmethod
     def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
@@ -177,7 +169,7 @@ class KButtJoint(Joint):
         BeamJoiningError
             If the extension could not be calculated.
         """
-        assert self.main_beam_a and self.main_beam_b and self.cross_beam
+        assert self.main_beams and self.cross_beam
         for beam in self.main_beams:
             ref_side_dict = beam_ref_side_incidence(beam, self.cross_beam, ignore_ends=True)
             cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
