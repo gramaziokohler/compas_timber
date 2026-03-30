@@ -236,7 +236,7 @@ def extend_beam_to_plane(beam: Beam, plane: Frame) -> Beam:
 def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: Beam, joint: Joint) -> tuple[float, float]:
     """
     Computes the angle and dot product between the `main_beam` and the `cross_beam` relative to their joint.
-    The angle and dot products are computed with the direction of the `main_beam` goinf towards the joint.
+    The angle and dot products are computed with the direction of the `main_beam` going towards the joint.
 
     Parameters
     ----------
