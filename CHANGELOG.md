@@ -10,8 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added `extend_beam_to_plane`, `angle_and_dot_product_main_beam_and_cross_beam`, `parse_cross_beams_and_main_beams_from_cluster` functions in `compas_timber.connections.utilites`.
 * Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas.utils`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` attribute to `ButtJoint`.
+
 
 ### Changed
+* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes. 
 
 ### Removed
 
