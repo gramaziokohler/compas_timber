@@ -28,7 +28,7 @@ class KMiterJoint(Joint):
     If the beams are coplanar, a :class:`~compas_timber.fabrication.Pocket` feature is created in the `cross_beam`, otherwise
     T-Butt joints are applied directly.
 
-    This joint type is compatible with beams in K topology and supports 3 to 50 beams.
+    This joint type is compatible with beams in K topology and supports 3 or more beams.
 
     Parameters
     ----------
@@ -210,7 +210,7 @@ class KMiterJoint(Joint):
                 beam.add_feature(double_cut)
                 self.features.append(double_cut)
 
-            except Exception as e:  # If it fails apply two JackRafterCuts
+            except Exception:  # If it fails apply two JackRafterCuts
                 prev_plane.normal *= -1
                 next_plane.normal *= -1
                 jrc1 = JackRafterCut.from_plane_and_beam(prev_plane, beam)
