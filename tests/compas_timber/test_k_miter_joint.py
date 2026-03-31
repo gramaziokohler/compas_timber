@@ -33,7 +33,7 @@ def beam_c():
     return Beam.from_centerline(line, width=20.0, height=30.0)
 
 
-def test_create_k_butt(beam_a, beam_b, cross_beam):
+def test_create_k_miter(beam_a, beam_b, cross_beam):
     model = TimberModel()
     model.add_element(beam_a)
     model.add_element(beam_b)
@@ -80,6 +80,5 @@ def test_model_deserialization_with_K_miter_joint(beam_a, beam_b, cross_beam):
     deserialized_model = model.to_jsonstring()
     new_model = TimberModel.from_jsonstring(deserialized_model)
 
-    # NOTE: the correct behavior is to have 1 joint in the new model, this bug need a fix
     assert len(new_model.joints) == 1
     assert isinstance(list(new_model.joints)[0], KMiterJoint)
