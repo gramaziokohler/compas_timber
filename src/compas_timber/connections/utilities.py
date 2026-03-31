@@ -11,6 +11,10 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 
+from compas_timber.analyzers import Cluster
+
+from .joint import JointTopology
+
 if TYPE_CHECKING:
     from compas_timber.connections.joint import Joint
     from compas_timber.elements.beam import Beam
@@ -259,3 +263,32 @@ def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: 
     angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
     dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
     return angle, dot
+
+
+def parse_cross_beams_and_main_beams_from_cluster(cluster: Cluster) -> tuple[list[Beam], list[Beam]]:
+    """
+    Parses cross beams and main beams from a cluster of joints.
+
+    Parameters
+    ----------
+    cluster : :class:`~compas_timber.connections.analyzers.Cluster`
+        The cluster of joints to parse.
+
+    Returns
+    -------
+    list[:class:`~compas_timber.elements.beam.Beam`], list[:class:`~compas_timber.elements.beam.Beam`]
+        Two lists containing the cross beams and main beams respectively.
+    """
+    cross_beams = []
+    main_beams = []
+    for candidate in cluster.joints:
+        if candidate.topology == JointTopology.TOPO_L:
+            main_beams.extend(candidate.elements)
+        elif candidate.topology == JointTopology.TOPO_T:
+            main_beams.append(candidate.elements[0])
+            cross_beams.append(candidate.elements[1])
+        elif candidate.topology == JointTopology.TOPO_X:
+            cross_beams.extend(candidate.elements)
+    cross_beams = list(set(cross_beams))
+    main_beams = list(set(main_beams))
+    return cross_beams, main_beams
