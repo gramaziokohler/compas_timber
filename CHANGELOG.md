@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `back_plane` attribute to `ButtJoint`.
 * Added `KMiterJoint`
 * Added `parse_cross_beams_and_main_beams_from_cluster` in `compas_timber.connections.utilites`.
+* Added `KButtJoint`
 
 
 ### Changed

@@ -40,6 +40,7 @@ from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 from .k_miter import KMiterJoint
+from .k_butt import KButtJoint
 
 __all__ = [
     "Joint",
@@ -85,4 +86,5 @@ __all__ = [
     "PanelTButtJoint",
     "PanelMiterJoint",
     "KMiterJoint",
+    "KButtJoint",
 ]
