@@ -11,13 +11,13 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 
-from compas_timber.analyzers import Cluster
-
-from .joint import JointTopology
+from .solver import JointTopology
 
 if TYPE_CHECKING:
-    from compas_timber.connections.joint import Joint
-    from compas_timber.elements.beam import Beam
+    from compas_timber.analyzers import Cluster
+    from compas_timber.elements import Beam
+
+    from .joint import Joint
 
 
 def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):

@@ -5,7 +5,7 @@ from compas.geometry import Line
 
 
 from compas_timber.elements import Beam
-from compas_timber.connections.k_miter import KMiterJoint
+from compas_timber.connections import KMiterJoint
 from compas_timber.model import TimberModel
 
 
