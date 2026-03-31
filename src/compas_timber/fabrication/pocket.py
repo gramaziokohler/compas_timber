@@ -25,6 +25,7 @@ from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import MachiningLimits
 
@@ -67,20 +68,20 @@ class Pocket(BTLxProcessing):
 
     PROCESSING_NAME = "Pocket"  # type: ignore
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
-        "Slope": "slope",
-        "Length": "length",
-        "Width": "width",
-        "InternalAngle": "internal_angle",
-        "TiltRefSide": "tilt_ref_side",
-        "TiltEndSide": "tilt_end_side",
-        "TiltOppSide": "tilt_opp_side",
-        "TiltStartSide": "tilt_start_side",
-        "MachiningLimits": "machining_limits",
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "InternalAngle": AttributeSpec("internal_angle", float),
+        "TiltRefSide": AttributeSpec("tilt_ref_side", float),
+        "TiltEndSide": AttributeSpec("tilt_end_side", float),
+        "TiltOppSide": AttributeSpec("tilt_opp_side", float),
+        "TiltStartSide": AttributeSpec("tilt_start_side", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
     }
 
     @property

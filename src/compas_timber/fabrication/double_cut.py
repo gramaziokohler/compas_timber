@@ -16,6 +16,7 @@ from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_beam_param
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 
@@ -45,13 +46,13 @@ class DoubleCut(BTLxProcessing):
 
     PROCESSING_NAME = "DoubleCut"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "Angle1": "angle_1",
-        "Inclination1": "inclination_1",
-        "Angle2": "angle_2",
-        "Inclination2": "inclination_2",
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle1": AttributeSpec("angle_1", float),
+        "Inclination1": AttributeSpec("inclination_1", float),
+        "Angle2": AttributeSpec("angle_2", float),
+        "Inclination2": AttributeSpec("inclination_2", float),
     }
 
     @property

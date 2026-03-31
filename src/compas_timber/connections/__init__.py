@@ -36,6 +36,9 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .cluster import Cluster
+from .cluster import get_clusters_from_joint_candidates
+
 
 __all__ = [
     "Joint",
@@ -77,4 +80,6 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "Cluster",
+    "get_clusters_from_joint_candidates",
 ]

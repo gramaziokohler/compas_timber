@@ -18,6 +18,7 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import EdgePositionType
 from .btlx import OrientationType
@@ -45,12 +46,12 @@ class FrenchRidgeLap(BTLxProcessing):
 
     PROCESSING_NAME = "FrenchRidgeLap"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "Angle": "angle",
-        "RefPosition": "ref_position",
-        "Drillhole": "drillhole",
-        "DrillholeDiam": "drillhole_diam",
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "Angle": AttributeSpec("angle", float),
+        "RefPosition": AttributeSpec("ref_position", str),
+        "Drillhole": AttributeSpec("drillhole", bool),
+        "DrillholeDiam": AttributeSpec("drillhole_diam", float),
     }
 
     @property

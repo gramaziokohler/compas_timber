@@ -707,19 +707,8 @@ def get_plate_geometry_outlines_from_brep(brep):
         # rectangular plate (all quads): choose the most-parallel non-adjacent pair,
         # then use centroid separation as tiebreaker.
         face_normals = {f: mesh.face_normal(f) for f in face_keys}
-        face_centroids = {
-            f: [
-                sum(pt[i] for pt in (mesh.vertex_coordinates(v) for v in mesh.face_vertices(f))) / len(mesh.face_vertices(f))
-                for i in range(3)
-            ]
-            for f in face_keys
-        }
-        non_adjacent_pairs = [
-            (i, j)
-            for i in face_keys
-            for j in face_keys
-            if j > i and j not in mesh.face_neighbors(i)
-        ]
+        face_centroids = {f: [sum(pt[i] for pt in (mesh.vertex_coordinates(v) for v in mesh.face_vertices(f))) / len(mesh.face_vertices(f)) for i in range(3)] for f in face_keys}
+        non_adjacent_pairs = [(i, j) for i in face_keys for j in face_keys if j > i and j not in mesh.face_neighbors(i)]
         if not non_adjacent_pairs:
             raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
 
@@ -867,12 +856,21 @@ def mesh_from_brep_simple(brep):
         try:
             for loop in face.loops:
                 if loop.is_outer:
-                    outer_loop = loop # only RhinoBrep has this attribute
+                    outer_loop = loop  # only RhinoBrep has this attribute
                     break
         except AttributeError:
             outer_loop = face.loops[0]  # OCC brep
         faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
+
+
+def get_leaf_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_leaf_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_leaf_subclasses(subclass))
+    return subclasses
 
 
 __all__ = [
@@ -898,4 +896,5 @@ __all__ = [
     "combine_parallel_segments",
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
+    "get_leaf_subclasses",
 ]

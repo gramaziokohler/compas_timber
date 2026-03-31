@@ -10,6 +10,7 @@ from compas_timber.fabrication import Contour
 from compas_timber.fabrication import FreeContour
 from compas_timber.fabrication import MachiningLimits
 from compas_timber.fabrication import Mortise
+from compas_timber.fabrication.btlx import AttributeSpec
 from compas_timber.fabrication.btlx import BTLxProcessingParams
 
 
@@ -18,11 +19,11 @@ class _MockProcessing(BTLxProcessing):
 
     PROCESSING_NAME = "MockProcessing"
     ATTRIBUTE_MAP = {
-        "TestString": "test_str",
-        "TestInteger": "test_int",
-        "TestFloat": "test_float",
-        "TestBoolean": "test_bool",
-        "MachiningLimits": "test_machining_limits",
+        "TestString": AttributeSpec("test_str"),
+        "TestInteger": AttributeSpec("test_int"),
+        "TestFloat": AttributeSpec("test_float"),
+        "TestBoolean": AttributeSpec("test_bool"),
+        "MachiningLimits": AttributeSpec("test_machining_limits"),
     }
 
     def __init__(self, test_str="", test_int=0, test_float=0.0, test_bool=False, test_machining_limits=None):

@@ -14,6 +14,7 @@ from compas.tolerance import TOL
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
 
@@ -40,12 +41,12 @@ class JackRafterCut(BTLxProcessing):
 
     PROCESSING_NAME = "JackRafterCut"  # type: ignore
     ATTRIBUTE_MAP = {
-        "Orientation": "orientation",
-        "StartX": "start_x",
-        "StartY": "start_y",
-        "StartDepth": "start_depth",
-        "Angle": "angle",
-        "Inclination": "inclination",
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
     }
 
     @property

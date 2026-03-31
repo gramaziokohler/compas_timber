@@ -1,5 +1,6 @@
 import pytest
 
+from compas_timber.fabrication.btlx import AttributeSpec
 from compas_timber.fabrication import BTLxProcessing
 
 
@@ -8,8 +9,8 @@ class _ValidProcessing(BTLxProcessing):
 
     PROCESSING_NAME = "ValidProcessing"
     ATTRIBUTE_MAP = {
-        "StartX": "start_x",
-        "StartY": "start_y",
+        "StartX": AttributeSpec("start_x"),
+        "StartY": AttributeSpec("start_y"),
     }
 
     def __init__(self):
@@ -68,8 +69,8 @@ def test_invalid_attribute_map_raises_at_definition_time():
         class InvalidProcessing(BTLxProcessing):
             PROCESSING_NAME = "InvalidProcessing"
             ATTRIBUTE_MAP = {
-                "StartX": "start_x",
-                "Typo": "typo_attribute",  # this attribute does not exist on the class
+                "StartX": AttributeSpec("start_x"),
+                "Typo": AttributeSpec("typo_attribute"),  # this attribute does not exist on the class
             }
 
             @property
@@ -83,7 +84,7 @@ def test_error_message_contains_missing_attribute_name():
         class InvalidProcessing(BTLxProcessing):
             PROCESSING_NAME = "InvalidProcessing"
             ATTRIBUTE_MAP = {
-                "Typo": "typo_attribute",
+                "Typo": AttributeSpec("typo_attribute"),
             }
 
 
@@ -93,8 +94,8 @@ def test_multiple_missing_attributes_all_reported():
         class MultiMissingProcessing(BTLxProcessing):
             PROCESSING_NAME = "MultiMissingProcessing"
             ATTRIBUTE_MAP = {
-                "A": "missing_one",
-                "B": "missing_two",
+                "A": AttributeSpec("missing_one"),
+                "B": AttributeSpec("missing_two"),
             }
 
     message = str(exc_info.value)
@@ -121,3 +122,15 @@ def test_inherited_attribute_map_is_not_rechecked():
 
     processing = ChildProcessing()
     assert processing is not None
+
+
+def test_type_error_takes_precedence_over_missing_attribute():
+    """TypeError (wrong value type) should be raised before AttributeError (missing attribute)."""
+    with pytest.raises(TypeError):
+
+        class MixedErrorProcessing(BTLxProcessing):
+            PROCESSING_NAME = "MixedErrorProcessing"
+            ATTRIBUTE_MAP = {
+                "Good": AttributeSpec("missing_attr"),  # valid spec, but attribute missing
+                "Bad": "not_a_spec",  # invalid spec type
+            }
