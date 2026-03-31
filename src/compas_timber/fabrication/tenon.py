@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.geometry import Box
 from compas.geometry import Brep
@@ -12,13 +11,12 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
-from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import OrientationType
 from .btlx import TenonShapeType
 
@@ -62,6 +60,23 @@ class Tenon(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Tenon"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "StartDepth": AttributeSpec("start_depth", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Rotation": AttributeSpec("rotation", float),
+        "LengthLimitedTop": AttributeSpec("length_limited_top", bool),
+        "LengthLimitedBottom": AttributeSpec("length_limited_bottom", bool),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Height": AttributeSpec("height", float),
+        "Shape": AttributeSpec("shape", str),
+        "ShapeRadius": AttributeSpec("shape_radius", float),
+        "Chamfer": AttributeSpec("chamfer", bool),
+    }
 
     @property
     def __data__(self):
@@ -139,10 +154,6 @@ class Tenon(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return TenonParams(self)
 
     @property
     def orientation(self):
@@ -668,8 +679,8 @@ class Tenon(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
@@ -685,44 +696,3 @@ class Tenon(BTLxProcessing):
         self.width *= factor
         self.height *= factor
         self.shape_radius *= factor
-
-
-class TenonParams(BTLxProcessingParams):
-    """A class to store the parameters of a Tenon feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Tenon`
-        The instance of the Tenon feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Tenon) -> None
-        super(TenonParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Tenon feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Tenon as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["StartDepth"] = "{:.{prec}f}".format(float(self._instance.start_depth), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Rotation"] = "{:.{prec}f}".format(float(self._instance.rotation), prec=TOL.precision)
-        result["LengthLimitedTop"] = "yes" if self._instance.length_limited_top else "no"
-        result["LengthLimitedBottom"] = "yes" if self._instance.length_limited_bottom else "no"
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Height"] = "{:.{prec}f}".format(float(self._instance.height), prec=TOL.precision)
-        result["Shape"] = self._instance.shape
-        result["ShapeRadius"] = "{:.{prec}f}".format(float(self._instance.shape_radius), prec=TOL.precision)
-        result["Chamfer"] = "yes" if self._instance.chamfer else "no"
-        return result

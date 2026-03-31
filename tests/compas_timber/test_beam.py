@@ -83,6 +83,51 @@ def test_create_from_centerline():
     assert B.transformation is not None
 
 
+def test_create_from_box():
+    from compas.geometry import Box
+
+    box = Box(xsize=2.0, ysize=0.1, zsize=0.2)
+    B = Beam.from_box(box)
+    assert close(B.length, 2.0)
+    assert close(B.width, 0.1)
+    assert close(B.height, 0.2)
+    assert B.frame is not None
+    assert B.transformation is not None
+
+
+def test_create_from_box_frame_origin():
+    """The beam frame origin should be at the center of the start face, not the box center."""
+    from compas.geometry import Box
+
+    box = Box(xsize=2.0, ysize=0.1, zsize=0.2, frame=Frame.worldXY())
+    B = Beam.from_box(box)
+    # box center is at (0,0,0); beam frame origin should be at (-1, 0, 0)
+    assert close(B.frame.point.x, -1.0)
+    assert close(B.frame.point.y, 0.0)
+    assert close(B.frame.point.z, 0.0)
+
+
+def test_create_from_box_zero_length_raises():
+    from compas.geometry import Box
+
+    with pytest.raises(ValueError):
+        Beam.from_box(Box(xsize=0.0, ysize=0.1, zsize=0.2))
+
+
+def test_create_from_box_zero_width_raises():
+    from compas.geometry import Box
+
+    with pytest.raises(ValueError):
+        Beam.from_box(Box(xsize=2.0, ysize=0.0, zsize=0.2))
+
+
+def test_create_from_box_zero_height_raises():
+    from compas.geometry import Box
+
+    with pytest.raises(ValueError):
+        Beam.from_box(Box(xsize=2.0, ysize=0.1, zsize=0.0))
+
+
 def test__eq__():
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
     F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
@@ -109,6 +154,27 @@ def test_deepcopy(beam):
     assert B2 is not B1
     assert B2.frame is not B1.frame
     assert B2.width is B1.width
+
+
+def test_serialization_beam_with_attributes(beam):
+    beam.attributes["custom_attr"] = "test_value"
+    beam.attributes["numeric_attr"] = 42
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert deserialized.attributes["custom_attr"] == "test_value"
+    assert deserialized.attributes["numeric_attr"] == 42
+
+
+def test_serialization_beam_with_attributes_sent_as_kwargs(beam):
+    beam = Beam(Frame.worldXY(), length=1000.0, width=100.0, height=60.0, custom_attr="test_value", numeric_attr=42)
+
+    deserialized = json_loads(json_dumps(beam))
+
+    assert isinstance(deserialized, Beam)
+    assert deserialized.attributes["custom_attr"] == "test_value"
+    assert deserialized.attributes["numeric_attr"] == 42
 
 
 def test_serialization_beam_with_joinery_processings(beam):

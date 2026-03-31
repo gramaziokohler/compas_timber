@@ -16,12 +16,13 @@ from compas_timber.fabrication import AlignmentType
 
 from compas_timber.fabrication import LongitudinalCutProxy
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-3, relative=1e-3)
+    with TOL.temporary(unit="MM", absolute=1e-3, relative=1e-3) as tolerance:
+        yield tolerance
 
 
 def test_longitudinal_cut_from_plane_with_ref_side_index(tol):

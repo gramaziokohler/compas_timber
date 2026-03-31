@@ -4,7 +4,7 @@ import os
 from compas.data import json_load
 from compas.geometry import Translation
 from compas.geometry import Vector
-from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import JointTopology
@@ -18,7 +18,7 @@ HERE = os.path.dirname(__file__)
 DATA_DIR = os.path.join(os.path.dirname(HERE), "..", "data")
 LINES = os.path.join(HERE, "stand.json")
 
-TOL.absolute = 1e-3
+TOLERANCE = Tolerance("MM", absolute=1e-3, relative=1e-3)
 
 
 def create_viewer():
@@ -31,12 +31,12 @@ def create_viewer():
     return viewer
 
 
-def create_stand_model():
+def create_stand_model(tol):
     """Create and return a timber stand model with joints."""
     # Load centerlines from file
     lines = json_load(LINES)
 
-    model = TimberModel()
+    model = TimberModel(tolerance=tol)
 
     # Add beams to model
     CROSS_SQUARE = (120, 120)
@@ -119,7 +119,7 @@ def main():
 
     # Create the model
     print("Creating timber stand model...")
-    model = create_stand_model()
+    model = create_stand_model(TOLERANCE)
     print(f"Model created with {len(list(model.elements()))} elements and {len(model.joints)} joints")
 
     if args.serialize:

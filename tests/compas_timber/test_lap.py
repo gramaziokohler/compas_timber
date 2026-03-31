@@ -10,7 +10,7 @@ from compas.geometry import Line
 from compas.geometry import Vector
 from compas.geometry import Transformation
 
-from compas.tolerance import Tolerance
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Lap
@@ -21,7 +21,8 @@ from compas_timber.fabrication import LapProxy
 
 @pytest.fixture
 def tol():
-    return Tolerance(unit="MM", absolute=1e-2, relative=1e-2)
+    with TOL.temporary(unit="MM", absolute=1e-2, relative=1e-2) as tolerance:
+        yield tolerance
 
 
 def test_lap_for_pocket_from_frame(tol):
@@ -61,7 +62,7 @@ def test_lap_for_pocket_from_frame(tol):
     assert tol.is_close(instance.depth, 20.0)
     assert tol.is_close(instance.lead_angle, 90.0)
     assert tol.is_close(instance.lead_inclination, 90.0)
-    assert instance.machining_limits == {
+    assert instance.machining_limits.limits == {
         "FaceLimitedBack": False,
         "FaceLimitedStart": True,
         "FaceLimitedBottom": True,
@@ -137,7 +138,7 @@ def test_lap_from_polyhedron(tol):
     assert instance.lead_inclination_parallel
     assert tol.is_close(instance.lead_angle, 90.0)
     assert tol.is_close(instance.lead_inclination, 90.0)
-    assert instance.machining_limits == {
+    assert instance.machining_limits.limits == {
         "FaceLimitedBack": False,
         "FaceLimitedStart": True,
         "FaceLimitedBottom": True,
@@ -216,7 +217,7 @@ def test_lap_data():
     assert copied_instance.depth == instance.depth
     assert copied_instance.lead_angle == instance.lead_angle
     assert copied_instance.lead_inclination == instance.lead_inclination
-    assert copied_instance.machining_limits == instance.machining_limits
+    assert copied_instance.machining_limits.limits == instance.machining_limits.limits
     assert copied_instance.ref_side_index == instance.ref_side_index
 
 
@@ -321,7 +322,7 @@ def test_lap_scaled():
     assert scaled_instance.depth == instance.depth * 2.0
     assert scaled_instance.lead_angle == instance.lead_angle
     assert scaled_instance.lead_inclination == instance.lead_inclination
-    assert scaled_instance.machining_limits == instance.machining_limits
+    assert scaled_instance.machining_limits.limits == instance.machining_limits.limits
     assert scaled_instance.ref_side_index == instance.ref_side_index
 
 

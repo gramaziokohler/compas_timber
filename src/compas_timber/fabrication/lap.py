@@ -1,5 +1,4 @@
 import math
-from collections import OrderedDict
 
 from compas.datastructures import Mesh
 from compas.geometry import Brep
@@ -20,13 +19,12 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
-from compas.tolerance import Tolerance
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 from .btlx import MachiningLimits
 from .btlx import OrientationType
 
@@ -62,12 +60,28 @@ class Lap(BTLxProcessing):
         The lead inclination is parallel to the beam axis.
     lead_inclination : float
         The lead inclination of the cut. 0.1 < lead_inclination < 179.9.
-    machining_limits : dict, optional
+    machining_limits : :class:`~compas_timber.fabrication.btlx.MachiningLimits` or dict, optional
         The machining limits for the cut. Default is None
 
     """
 
     PROCESSING_NAME = "Lap"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "Orientation": AttributeSpec("orientation", str),
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "Inclination": AttributeSpec("inclination", float),
+        "Slope": AttributeSpec("slope", float),
+        "Length": AttributeSpec("length", float),
+        "Width": AttributeSpec("width", float),
+        "Depth": AttributeSpec("depth", float),
+        "LeadAngleParallel": AttributeSpec("lead_angle_parallel", bool),
+        "LeadAngle": AttributeSpec("lead_angle", float),
+        "LeadInclinationParallel": AttributeSpec("lead_inclination_parallel", bool),
+        "LeadInclination": AttributeSpec("lead_inclination", float),
+        "MachiningLimits": AttributeSpec("machining_limits", MachiningLimits),
+    }
 
     @property
     def __data__(self):
@@ -85,7 +99,7 @@ class Lap(BTLxProcessing):
         data["lead_angle"] = self.lead_angle
         data["lead_inclination_parallel"] = self.lead_inclination_parallel
         data["lead_inclination"] = self.lead_inclination
-        data["machining_limits"] = self.machining_limits
+        data["machining_limits"] = self.machining_limits.limits
         return data
 
     # fmt: off
@@ -141,10 +155,6 @@ class Lap(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return LapParams(self)
 
     @property
     def orientation(self):
@@ -282,15 +292,14 @@ class Lap(BTLxProcessing):
 
     @machining_limits.setter
     def machining_limits(self, machining_limits):
-        if not isinstance(machining_limits, dict):
-            raise ValueError("Machining limits must be a dictionary.")
-        for key, value in machining_limits.items():
-            if key not in MachiningLimits.EXPECTED_KEYS:
-                raise ValueError("The key must be one of the following: ", {self.EXPECTED_KEYS})
-            if not isinstance(value, bool):
-                raise ValueError("The values must be a boolean.")
-        self._machining_limits = machining_limits
-
+        if isinstance(machining_limits, MachiningLimits):
+            self._machining_limits = machining_limits
+        elif isinstance(machining_limits, dict):
+            self._machining_limits = MachiningLimits.from_dict(machining_limits)
+        elif machining_limits is None:
+            self._machining_limits = MachiningLimits()
+        else:
+            raise ValueError("Invalid machining limits")
 
     ########################################################################
     # Alternative constructors
@@ -370,7 +379,7 @@ class Lap(BTLxProcessing):
                    length=length,
                    width=width,
                    depth=depth,
-                   machining_limits=machining_limits.limits,
+                   machining_limits=machining_limits,
                    ref_side_index=ref_side_index)
 
     @classmethod
@@ -383,7 +392,7 @@ class Lap(BTLxProcessing):
             The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`~compas_timber.fabrication.MachiningLimits` or dict
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -473,10 +482,7 @@ class Lap(BTLxProcessing):
             lead_inclination = angle_vectors_signed(front_plane.normal, bottom_plane.normal, ref_side.xaxis, deg=True)
 
         # define machining limits
-        if machining_limits:
-            if not isinstance(machining_limits, dict):
-                raise ValueError("machining_limits must be a dictionary.")
-        else:
+        if not machining_limits:
             machining_limits = cls._define_machining_limits(planes, beam, ref_side_index)
 
         return cls(
@@ -508,10 +514,6 @@ class Lap(BTLxProcessing):
             The volume of the Lap. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam`
             The element that is cut by this instance.
-        machining_limits : dict, optional
-            The machining limits for the cut. Default is None.
-        ref_side_index : int, optional
-            The index of the reference side of the element. Default is 0.
 
         Returns
         -------
@@ -638,7 +640,7 @@ class Lap(BTLxProcessing):
         machining_limits.face_limited_front = is_point_behind_plane(front_plane.point, front_side)
         machining_limits.face_limited_back = is_point_behind_plane(back_plane.point, back_side)
         machining_limits.face_limited_bottom = is_point_behind_plane(bottom_plane.point, opp_side)
-        return machining_limits.limits
+        return machining_limits
 
 
     ########################################################################
@@ -743,39 +745,38 @@ class Lap(BTLxProcessing):
         assert self.depth is not None
         assert self.machining_limits is not None
 
-        tol = Tolerance()
-        tol.absolute=1e-3
+        tol = 1e-3  # TODO: use TOL.absolute if possible, but do not manipulate the global tolerance value
 
         start_frame = self._start_frame_from_params_and_beam(beam)
 
         top_frame = beam.ref_sides[self.ref_side_index] # top should always be unlimited
-        top_frame.translate(top_frame.normal * TOL.absolute)
+        top_frame.translate(top_frame.normal * tol)
 
-        if self.machining_limits["FaceLimitedEnd"]:
+        if self.machining_limits.face_limited_end:
             end_frame = start_frame.translated(-start_frame.normal * self.length)
             end_frame.yaxis = -end_frame.yaxis
         else:
             end_frame = beam.ref_sides[5]
 
-        if self.machining_limits["FaceLimitedBottom"]:
+        if self.machining_limits.face_limited_bottom:
             bottom_frame = Frame(start_frame.point, start_frame.zaxis, start_frame.yaxis)
             angle = angle_vectors_signed(top_frame.xaxis, -start_frame.xaxis, top_frame.yaxis)
             bottom_frame = bottom_frame.translated(bottom_frame.zaxis * (self.depth/math.sin(angle)))
         else:
             bottom_frame = beam.opp_side(self.ref_side_index)
 
-        if self.machining_limits["FaceLimitedFront"]:
+        if self.machining_limits.face_limited_front:
             front_frame = bottom_frame.rotated(math.radians(self.lead_angle), bottom_frame.xaxis, point=bottom_frame.point)
         else:
             front_frame = beam.front_side(self.ref_side_index)
-            front_frame.translate(front_frame.normal * tol.absolute)
+            front_frame.translate(front_frame.normal * tol)
 
-        if self.machining_limits["FaceLimitedBack"]:
+        if self.machining_limits.face_limited_back:
             back_frame = front_frame.translated(-front_frame.zaxis * self.width)
             back_frame.xaxis = -back_frame.xaxis
         else:
             back_frame = beam.back_side(self.ref_side_index)
-            back_frame.translate(back_frame.normal * tol.absolute)
+            back_frame.translate(back_frame.normal * tol)
 
         frames = [start_frame, end_frame, top_frame, bottom_frame, front_frame, back_frame]
         return [Plane.from_frame(frame) for frame in frames]
@@ -829,8 +830,8 @@ class Lap(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
@@ -844,46 +845,6 @@ class Lap(BTLxProcessing):
         self.length *= factor
         self.width *= factor
         self.depth *= factor
-
-
-class LapParams(BTLxProcessingParams):
-    """A class to store the parameters of a Lap feature.
-
-    Parameters
-    ----------
-    instance : :class:`~compas_timber.fabrication.Lap`
-        The instance of the Lap feature.
-    """
-
-    def __init__(self, instance):
-        # type: (Lap) -> None
-        super(LapParams, self).__init__(instance)
-
-    def as_dict(self):
-        """Returns the parameters of the Lap feature as a dictionary.
-
-        Returns
-        -------
-        dict
-            The parameters of the Lap feature as a dictionary.
-        """
-        # type: () -> OrderedDict
-        result = OrderedDict()
-        result["Orientation"] = self._instance.orientation
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["Inclination"] = "{:.{prec}f}".format(float(self._instance.inclination), prec=TOL.precision)
-        result["Slope"] = "{:.{prec}f}".format(float(self._instance.slope), prec=TOL.precision)
-        result["Length"] = "{:.{prec}f}".format(float(self._instance.length), prec=TOL.precision)
-        result["Width"] = "{:.{prec}f}".format(float(self._instance.width), prec=TOL.precision)
-        result["Depth"] = "{:.{prec}f}".format(float(self._instance.depth), prec=TOL.precision)
-        result["LeadAngleParallel"] = "yes" if self._instance.lead_angle_parallel else "no"
-        result["LeadAngle"] = "{:.{prec}f}".format(float(self._instance.lead_angle), prec=TOL.precision)
-        result["LeadInclinationParallel"] = "yes" if self._instance.lead_inclination_parallel else "no"
-        result["LeadInclination"] = "{:.{prec}f}".format(float(self._instance.lead_inclination), prec=TOL.precision)
-        result["MachiningLimits"] = {key: "yes" if value else "no" for key, value in self._instance.machining_limits.items()}
-        return result
 
 
 class LapProxy(object):
@@ -942,7 +903,7 @@ class LapProxy(object):
             The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        machining_limits : dict, optional
+        machining_limits : :class:`compas_timber.fabrication.MachiningLimits()` or dict
             The machining limits for the cut. Default is None.
         ref_side_index : int, optional
             The index of the reference side of the element. Default is 0.
@@ -966,8 +927,6 @@ class LapProxy(object):
         ----------
         geometry : :class:`~compas.geometry.Brep`
             The beam geometry to apply the lap to.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is lapped by this instance.
 
         Raises
         ------

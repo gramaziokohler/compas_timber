@@ -1,17 +1,15 @@
 import os
-from collections import OrderedDict
 
 from compas.data import json_loadz
 from compas.geometry import Frame
 from compas.geometry import Scale
 from compas.geometry import Transformation
-from compas.tolerance import TOL
 
 from compas_timber import DATA
 
 from .btlx import AlignmentType
+from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
-from .btlx import BTLxProcessingParams
 
 
 class Text(BTLxProcessing):
@@ -43,6 +41,18 @@ class Text(BTLxProcessing):
     """
 
     PROCESSING_NAME = "Text"  # type: ignore
+    ATTRIBUTE_MAP = {
+        "StartX": AttributeSpec("start_x", float),
+        "StartY": AttributeSpec("start_y", float),
+        "Angle": AttributeSpec("angle", float),
+        "AlignmentVertical": AttributeSpec("alignment_vertical", str),
+        "AlignmentHorizontal": AttributeSpec("alignment_horizontal", str),
+        "AlignmentMultiline": AttributeSpec("alignment_multiline", str),
+        "StackedMarking": AttributeSpec("stacked_marking", bool),
+        "TextHeightAuto": AttributeSpec("text_height_auto", bool),
+        "TextHeight": AttributeSpec("text_height", float),
+        "Text": AttributeSpec("text", str),
+    }
     _CHARACTER_DICT = {}
 
     @property
@@ -109,10 +119,6 @@ class Text(BTLxProcessing):
     ########################################################################
     # Properties
     ########################################################################
-
-    @property
-    def params(self):
-        return TextParams(self)
 
     @property
     def start_x(self):
@@ -232,9 +238,10 @@ class Text(BTLxProcessing):
         Returns
         -------
         :class:`compas.geometry.Brep`
-            The resulting geometry after processing. #TODO: think about ways to display text curves from `draw_string_on_element()`
+            The resulting geometry after processing.
 
         """
+        # TODO: think about ways to display text curves from `draw_string_on_element()`
         # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
         return geometry
 
@@ -297,8 +304,8 @@ class Text(BTLxProcessing):
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
 
-        Note
-        ----
+        Notes
+        -----
         Only distances are scaled, angles remain unchanged.
 
         Parameters
@@ -310,22 +317,3 @@ class Text(BTLxProcessing):
         self.start_x *= factor
         self.start_y *= factor
         self.text_height *= factor
-
-
-class TextParams(BTLxProcessingParams):
-    def __init__(self, instance):
-        super(TextParams, self).__init__(instance)
-
-    def as_dict(self):
-        result = OrderedDict()
-        result["StartX"] = "{:.{prec}f}".format(float(self._instance.start_x), prec=TOL.precision)
-        result["StartY"] = "{:.{prec}f}".format(float(self._instance.start_y), prec=TOL.precision)
-        result["Angle"] = "{:.{prec}f}".format(float(self._instance.angle), prec=TOL.precision)
-        result["AlignmentVertical"] = self._instance.alignment_vertical
-        result["AlignmentHorizontal"] = self._instance.alignment_horizontal
-        result["AlignmentMultiline"] = self._instance.alignment_multiline
-        result["StackedMarking"] = "yes" if self._instance.stacked_marking else "no"
-        result["TextHeightAuto"] = "yes" if self._instance.text_height_auto else "no"
-        result["TextHeight"] = "{:.{prec}f}".format(float(self._instance.text_height), prec=TOL.precision)
-        result["Text"] = self._instance.text
-        return result

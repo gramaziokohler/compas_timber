@@ -1,6 +1,7 @@
 from math import fabs
 from typing import Optional
 
+from compas.datastructures import Mesh
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -372,13 +373,16 @@ def is_point_in_polyline(point, polyline, in_plane=True, tol=TOL):
     bool
         True if the point is inside the polyline, False otherwise.
     """
-    frame = Frame.from_points(*polyline.points[:3])
+    pgon = Polygon(polyline.points[:-1])
+    normal = pgon.normal
+    if tol.is_zero(length_vector(normal)):
+        return False  # degenerate: collinear or coincident vertices
+    frame = Frame.from_plane(Plane(pgon.centroid, normal))
     xform = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-    pgon = Polygon([pt.transformed(xform) for pt in polyline.points[:-1]])
     pt = point.transformed(xform)
     if in_plane and not tol.is_zero(pt[2]):
         return False
-    return is_point_in_polygon_xy(pt, pgon)
+    return is_point_in_polygon_xy(pt, pgon.transformed(xform))
 
 
 def do_segments_overlap(segment_a, segment_b):
@@ -503,6 +507,262 @@ def planar_surface_point_at(surface, u, v):
     point = Point(u, v, 0)
     point.transform(surface.transformation)
     return point
+
+
+def move_polyline_segment_to_line(polyline, segment_index, line):
+    """Move a segment of a polyline to lay colinear to the projection of a line on that polyline.
+    This is accomplished by extending the adjacent segments to intersect with the line.
+    Parameters
+    ----------
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline to modify.
+    segment_index : int
+        The index of the segment to move.
+    line : :class:`~compas.geometry.Line`
+        The line to intersect with.
+    """
+    start_pt = intersection_line_line(polyline.lines[segment_index - 1], line)[0]
+    if start_pt:
+        polyline[segment_index] = start_pt
+        if segment_index == 0:
+            polyline[-1] = start_pt
+    end_pt = intersection_line_line(polyline.lines[(segment_index + 1) % len(polyline.lines)], line)[0]
+    if end_pt:
+        polyline[segment_index + 1] = end_pt
+        if segment_index + 1 == len(polyline.lines):
+            polyline[0] = end_pt
+
+
+def join_polyline_segments(segments: list[Line], close_loop: bool = False):
+    """Join segments into one or more polylines.
+
+    Parameters
+    ----------
+    segments : list of :class:`~compas.geometry.Line`
+        the line segments to be joined
+    close_loop : bool
+        if True, each returned Polyline will be closed by appending the first point to the end, if not already the case.
+
+    Returns
+    -------
+    tuple(list[:class:`~compas.geometry.Polyline`], list[:class:`~compas.geometry.Line`])
+        A tuple with a list of joined Polylines and a list of segments that could not be joined.
+    """
+
+    # helper to add a segment to an existing ordered points list if it connects
+    def add_seg_to_points(seg: Line, points: list) -> bool:
+        if seg.start == points[-1]:
+            points.append(seg.end)
+            return True
+        if seg.end == points[-1]:
+            points.append(seg.start)
+            return True
+        if seg.end == points[0]:
+            points.insert(0, seg.start)
+            return True
+        if seg.start == points[0]:
+            points.insert(0, seg.end)
+            return True
+        return False
+
+    if not segments:
+        return [], []
+
+    # filter out degenerate segments (start == end) before joining
+    segments = [seg for seg in segments if not TOL.is_allclose(seg.start, seg.end)]
+    if not segments:
+        return [], []
+
+    remaining = segments[:]  # copy so we don't mutate caller's list
+    polylines: list[Polyline] = []
+    unjoined: list[Line] = []
+
+    while remaining:
+        # start a new chain from the first remaining segment
+        start_seg = remaining.pop(0)
+        points = [start_seg.start, start_seg.end]
+
+        extended = True
+        while extended and remaining:
+            extended = False
+            for seg in remaining:
+                if add_seg_to_points(seg, points):
+                    remaining.remove(seg)
+                    extended = True
+                    break
+
+        if len(points) == 2:  # no segments joined, points to unjoined
+            unjoined.append(start_seg)
+        else:
+            if close_loop and not TOL.is_allclose(points[0], points[-1]):
+                points.append(points[0])
+            polylines.append(Polyline(points))
+
+    return polylines, unjoined
+
+
+def polyline_from_brep_loop(loop):
+    """Creates a Polyline from a BrepLoop.
+
+    Only straight (linear) edges are supported. Curved edges are treated as straight
+    lines between their start and end vertices. If your brep contains curved faces,
+    tessellate them to polygon faces before passing them to this function.
+
+    Uses :func:`join_polyline_segments` internally to handle edges whose start/end
+    points may be in any order or orientation, as can occur in polyhedron-style breps.
+    Degenerate edges (start == end) are automatically filtered by :func:`join_polyline_segments`.
+
+    Parameters
+    ----------
+    loop : :class:`~compas.geometry.BrepLoop`
+        The BrepLoop to convert to a polyline.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Polyline` or None
+        The Polyline resulting from joining the BrepLoop edges, or None if the edges
+        cannot be joined into a single closed polyline.
+    """
+    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
+
+    # join_polyline_segments handles any edge order / orientation, and filters degenerate segments
+    polylines, _ = join_polyline_segments(segments, close_loop=True)
+
+    if not polylines:
+        return None
+    # a valid closed polyline needs at least 4 points (3 unique vertices + 1 closing point);
+    # 3 points would yield only 2 overlapping line segments
+    if len(polylines[0].points) < 4:
+        return None
+    return polylines[0]
+
+
+def polylines_from_brep_face(face):
+    """Extract polylines from a BRep face.
+    Parameters
+    ----------
+    face : :class:`~compas.geometry.BrepFace`
+        The Brep face to extract polylines from.
+    Returns
+    -------
+    tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
+        The extracted polylines.
+    """
+    outer = None
+    openings = []
+    for loop in face.loops:
+        if loop.is_outer:
+            outer = polyline_from_brep_loop(loop)
+        else:
+            opening = polyline_from_brep_loop(loop)
+            if opening is not None:
+                openings.append(opening)
+
+    if outer is None:
+        raise ValueError("Could not extract outer boundary polyline from BRep face")
+
+    return outer, openings
+
+
+def get_plate_geometry_outlines_from_brep(brep):
+    """Extract the two parallel face outlines from a plate-like brep.
+
+    Converts the brep to a :class:`~compas.datastructures.Mesh` via
+    :func:`mesh_from_brep_simple`. Mesh face keys are sequential integers
+    corresponding directly to the index of each face in ``brep.faces``.
+    Main faces are identified as the two non-quad faces (top and bottom of the plate);
+    if all faces are quads (rectangular plate), the most-parallel non-adjacent pair
+    with smallest centroid separation wins.
+    Vertex correspondence between outlines is resolved via the shared side face of the
+    first edge of face_a.
+
+    Parameters
+    ----------
+    brep : :class:`~compas.geometry.Brep`
+        A plate-like brep. Must have at least 5 faces.
+
+    Returns
+    -------
+    tuple(:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`, list[:class:`~compas.geometry.Polyline`] or None)
+        ``outline_a``, ``outline_b``, and inner opening polylines from the
+        primary face, or ``None`` if there are none.
+    """
+    if len(brep.faces) < 5:
+        raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate), got {}.".format(len(brep.faces)))
+     # mesh face key N corresponds 1:1 to brep.faces[N]
+    mesh = mesh_from_brep_simple(brep)
+    face_keys = list(mesh.faces())
+
+    # non-quad faces are top/bottom candidates, quads are side faces.
+    face_vcount = {f: len(mesh.face_vertices(f)) for f in face_keys}
+    non_quad_faces = [f for f in face_keys if face_vcount[f] != 4]
+
+    if len(non_quad_faces) == 2:
+        if face_vcount[non_quad_faces[0]] != face_vcount[non_quad_faces[1]]:
+            raise ValueError("The two non-quad faces must have the same number of edges, got {} and {}.".format(face_vcount[non_quad_faces[0]], face_vcount[non_quad_faces[1]]))
+        face_a_key, face_b_key = non_quad_faces
+    elif len(non_quad_faces) != 0:
+        raise ValueError("Expected exactly 2 non-quad faces (top and bottom of plate), got {}.".format(len(non_quad_faces)))
+    else:
+        # rectangular plate (all quads): choose the most-parallel non-adjacent pair,
+        # then use centroid separation as tiebreaker.
+        face_normals = {f: mesh.face_normal(f) for f in face_keys}
+        face_centroids = {f: [sum(pt[i] for pt in (mesh.vertex_coordinates(v) for v in mesh.face_vertices(f))) / len(mesh.face_vertices(f)) for i in range(3)] for f in face_keys}
+        non_adjacent_pairs = [(i, j) for i in face_keys for j in face_keys if j > i and j not in mesh.face_neighbors(i)]
+        if not non_adjacent_pairs:
+            raise ValueError("Could not identify the two main faces: no non-adjacent face pair found.")
+
+        face_a_key, face_b_key = max(
+            non_adjacent_pairs,
+            key=lambda ij: (
+                abs(dot_vectors(face_normals[ij[0]], face_normals[ij[1]])),
+                -abs(dot_vectors(face_normals[ij[0]], subtract_vectors(face_centroids[ij[1]], face_centroids[ij[0]]))),
+            ),
+        )
+
+    verts_a = mesh.face_vertices(face_a_key)  # winding order from mesh
+    verts_b = mesh.face_vertices(face_b_key)  # winding order from mesh
+    lookup_b = set(verts_b)  # membership checks only; ordering stays in verts_b
+
+    # find anchors on face_b corresponding to first edge of face_a.
+    a0, a1 = verts_a[0], verts_a[1]
+    b0, b1 = None, None
+    for side_face in face_keys:
+        if side_face in (face_a_key, face_b_key):
+            continue
+        side_verts = mesh.face_vertices(side_face)
+        if a0 not in side_verts or a1 not in side_verts:
+            continue
+        for k, v in enumerate(side_verts):
+            if v not in lookup_b:
+                continue
+            prev_v = side_verts[(k - 1) % len(side_verts)]
+            next_v = side_verts[(k + 1) % len(side_verts)]
+            if prev_v == a0 or next_v == a0:
+                b0 = v
+            if prev_v == a1 or next_v == a1:
+                b1 = v
+        break  # only one side face shares edge (a0, a1)
+
+    pts_a = [Point(*mesh.vertex_coordinates(v)) for v in verts_a]
+    outline_a = Polyline(pts_a + [pts_a[0]])
+
+    if b0 is not None and b1 is not None:
+        # reorder verts_b to align its first edge with face_a orientation.
+        n = len(verts_b)
+        start = verts_b.index(b0)
+        step = 1 if verts_b[(start + 1) % n] == b1 else -1
+        pts_b = [Point(*mesh.vertex_coordinates(verts_b[(start + step * i) % n])) for i in range(n)]
+    else:
+        pts_b = [Point(*mesh.vertex_coordinates(v)) for v in verts_b]
+    outline_b = Polyline(pts_b + [pts_b[0]])
+
+    # openings from inner loops of the primary brep face
+    inner_loops = [loop for loop in brep.faces[face_a_key].loops if not loop.is_outer]
+    opening_polylines = [o for o in (polyline_from_brep_loop(loop) for loop in inner_loops) if o is not None]
+    openings = opening_polylines or None
+
+    return outline_a, outline_b, openings
 
 
 def move_polyline_segment_to_line(polyline, segment_index, line):
@@ -760,6 +1020,116 @@ def get_interior_segment_indices(polyline):
             _interior_segment_indices.append(i)
     return _interior_segment_indices
 
+   
+
+def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
+    """Get the vector normal to a polyline. if no normal direction is given, the normal is determined based on the polyline's winding order.
+    parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The polyline to get the normal vector from.
+    normal_direction : :class:`compas.geometry.Vector`, optional
+        A vector indicating the desired normal direction.
+
+    Returns
+    -------
+    :class:`compas.geometry.Vector`
+        The normal vector of the polyline.
+    """
+    offset_vector = Frame.from_points(polyline[0], polyline[1], polyline[-2]).normal  # gets frame perpendicular to outline
+    if normal_direction:
+        if normal_direction.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
+            offset_vector = -offset_vector
+    elif not is_polyline_clockwise(polyline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
+        offset_vector = -offset_vector
+    return offset_vector.unitized()
+
+
+def combine_parallel_segments(polyline, tol=TOL):
+    for i in range(len(polyline) - 2, 0, -1):
+        v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
+        v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
+        if tol.is_zero(angle_vectors(v1, v2)):
+            polyline.points.pop(i)
+
+
+def get_brep_loop_vertex_indices(loop, brep):
+    """Get the vertex indices of a BrepLoop.
+
+    Tries to use ``native_vertex.VertexIndex`` of the BrepLoop edges if
+    available (Rhino), otherwise falls back to comparing vertex positions
+    with a tolerance.
+
+    Parameters
+    ----------
+    loop : :class:`~compas.geometry.BrepLoop`
+        The BrepLoop to get the vertex indices from.
+    brep : :class:`~compas.geometry.Brep`
+        The Brep to get the vertex indices from.
+
+    Returns
+    -------
+    list of int
+        The vertex indices of the BrepLoop (closed: first index repeated at end).
+    """
+    face_vertex_indices = []
+    for edge in loop.edges:
+        try:
+            if edge.start_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
+            if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
+                face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
+        except AttributeError:
+            for i, v in enumerate(brep.vertices):
+                if TOL.is_allclose(edge.start_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+                if TOL.is_allclose(edge.end_vertex.point, v.point):
+                    if i not in face_vertex_indices:
+                        face_vertex_indices.append(i)
+    face_vertex_indices.append(face_vertex_indices[0])
+    return face_vertex_indices
+
+
+def mesh_from_brep_simple(brep):
+    """Build a :class:`~compas.datastructures.Mesh` from a Brep's face structure.
+
+    Creates a one-to-one relationship between Brep and Mesh vertices and faces.
+    Each Brep face becomes one non-triangulated mesh face (outer loop only);
+    inner loops (holes) are ignored. Brep faces must be planar.
+
+    Parameters
+    ----------
+    brep : :class:`~compas.geometry.Brep`
+        A polyhedral Brep with planar faces and straight edges.
+
+    Returns
+    -------
+    :class:`~compas.datastructures.Mesh`
+    """
+    faces_indices = []
+    for face in brep.faces:
+        outer_loop = None
+        try:
+            for loop in face.loops:
+                if loop.is_outer:
+                    outer_loop = loop  # only RhinoBrep has this attribute
+                    break
+        except AttributeError:
+            outer_loop = face.loops[0]  # OCC brep
+        faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
+    return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
+
+
+def get_leaf_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_leaf_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_leaf_subclasses(subclass))
+    return subclasses
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -774,6 +1144,16 @@ __all__ = [
     "move_polyline_segment_to_plane",
     "planar_surface_point_at",
     "StrEnum",
+    "move_polyline_segment_to_line",
+    "join_polyline_segments",
+    "polyline_from_brep_loop",
+    "polylines_from_brep_face",
+    "get_plate_geometry_outlines_from_brep",
+    "get_polyline_normal_vector",
+    "combine_parallel_segments",
+    "get_brep_loop_vertex_indices",
+    "mesh_from_brep_simple",
+    "get_leaf_subclasses",
     "move_polyline_segment_to_line",
     "join_polyline_segments",
     "polyline_from_brep_loop",

@@ -60,7 +60,16 @@ def test_plate_contour():
     plate = Plate.from_outline_thickness(pline, thickness)
 
     expected = {
-        "header_attributes": {"ToolID": "0", "Name": "FreeContour", "ToolPosition": "right", "ReferencePlaneID": "1", "CounterSink": "no", "Process": "yes"},
+        "header_attributes": {
+            "Priority": "0",
+            "ProcessID": "1",
+            "ToolID": "0",
+            "Name": "FreeContour",
+            "ToolPosition": "right",
+            "ReferencePlaneID": "1",
+            "CounterSink": "no",
+            "Process": "yes",
+        },
         "contour_attributes": {"Inclination": "0", "DepthBounded": "no", "Depth": "10.0"},
         "contour_points": [
             {"StartPoint": {"Y": "105.000", "X": "5.000", "Z": "0.000"}},
@@ -197,7 +206,7 @@ def test_dual_contour_plate():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert isinstance(plate.features[0].params.as_dict().get("Contour"), DualContour)
+    assert isinstance(plate.features[0].params.as_dict().get("DualContour"), DualContour)
 
 
 def test_contour_scaled():

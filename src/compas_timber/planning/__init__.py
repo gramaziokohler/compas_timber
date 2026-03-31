@@ -12,8 +12,7 @@ from .nesting import NestingResult
 from .nesting import Stock
 from .nesting import BeamStock
 from .nesting import PlateStock
-from .optimalpositioner import get_consoles_positions
-from .optimalpositioner import set_gripper_positions
+from .nesting import NestedElementData
 
 __all__ = [
     "Actor",
@@ -30,6 +29,5 @@ __all__ = [
     "BeamStock",
     "PlateStock",
     "NestingResult",
-    "get_consoles_positions",
-    "set_gripper_positions",
+    "NestedElementData",
 ]

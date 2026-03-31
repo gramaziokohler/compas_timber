@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
 
-import math
-
 if TYPE_CHECKING:
     from compas.datastructures import Mesh  # noqa: F401
     from compas.geometry import Brep  # noqa: F401
@@ -17,24 +15,16 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import angle_vectors
-from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.panel_features import PanelFeatureType
-from compas_timber.panel_features import Opening
-
+from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
-from compas_timber.utils import combine_parallel_segments
-from compas_timber.utils import join_polyline_segments
-from compas_timber.utils import get_interior_segment_indices
-
 
 from .plate_geometry import PlateGeometry
 
@@ -83,8 +73,6 @@ class Panel(Element):
         A polyline representing the associated outline of this panel.
     openings : list[:class:`~compas.geometry.Polyline`], optional
         A list of Polyline objects representing openings in this panel.
-    name : str, optional
-        Name of the panel. Defaults to "Panel".
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -106,12 +94,6 @@ class Panel(Element):
         The normal vector of the panel.
     edge_planes : dict[int, :class:`~compas.geometry.Plane`]
         The edge planes of the panel by edge index.
-    name : str
-        Name of the panel.
-    interfaces : list
-        List of interfaces associated with this panel.
-    attributes : dict
-        Dictionary of additional attributes.
     is_group_element : bool
         Always True for panels as they can contain other elements.
 
@@ -125,6 +107,7 @@ class Panel(Element):
         data["width"] = self.width
         data["thickness"] = self.height
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data.update(self.attributes)
         data.update(self.plate_geometry.__data__)
         return data
 
@@ -151,7 +134,6 @@ class Panel(Element):
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
-        # self.features: Optional[list[PanelFeature]]=features or []
         self._planes = None
 
     def __repr__(self) -> str:
@@ -159,6 +141,15 @@ class Panel(Element):
 
     def __str__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
+
+    @property
+    def geometry(self):
+        return self.modelgeometry
+
+    @geometry.setter
+    def geometry(self, geometry):
+        # overriding to please linter but this shouldn't be setable directly.
+        raise AttributeError("Geometry is a computed property and cannot be set directly. To modify the geometry, change the outlines, thickness, or features of the panel.")
 
     @property
     def outlines(self):
@@ -222,12 +213,12 @@ class Panel(Element):
 
     @reset_computed
     def remove_features(self, features: Optional[Union[PanelFeature, list[PanelFeature]]] = None) -> None:
-        """Removes interfaces from the element.
+        """Removes features from the element.
 
         Parameters
         ----------
-        interfaces : :class:`~compas_timber.panel_features.PanelConnectionInterface` | list[:class:`~compas_timber.panel_features.PanelConnectionInterface`], optional
-            The interfaces to be removed. If None, all interfaces will be removed.
+        features : :class:`~compas_timber.panel_features.PanelFeature` | list[:class:`~compas_timber.panel_features.PanelFeature`], optional
+            The features to be removed. If None, all features will be removed.
 
         """
         if features is None:
@@ -329,7 +320,33 @@ class Panel(Element):
                     plate_geo = feature.apply(plate_geo, self)
                 except FeatureApplicationError as error:
                     self.debug_info.append(error)
-        return plate_geo.transformed(Transformation.from_frame(self.frame))
+        return plate_geo
+
+    @classmethod
+    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
+        """
+        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the panel geometry in parent space.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the panel geometry in parent space.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the panel geometry.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel geometry with the given outlines.
+        """
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
+        kwargs.update(args)
+        return cls(**kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
@@ -352,8 +369,8 @@ class Panel(Element):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate geometry with the given outline and thickness.
+        :class:`~compas_timber.elements.Panel`
+            A Panel object representing the panel geometry with the given outline and thickness.
         """
         # this ensure the plate geometry can always be computed
         if TOL.is_zero(thickness):
@@ -365,150 +382,54 @@ class Panel(Element):
         return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
-        """Creates a plate from a brep.
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+        """Creates a panel from a single-face brep.
 
         Parameters
         ----------
         brep : :class:`~compas.geometry.Brep`
-            The brep of the plate.
+            A single-face brep representing the panel surface.
         thickness : float
-            The thickness of the plate.
+            The thickness of the panel.
         vector : :class:`~compas.geometry.Vector`, optional
-            The vector in which the plate is extruded.
+            The vector in which the panel is extruded.
         **kwargs : dict, optional
             Additional keyword arguments.
-            These are passed to the :class:`~compas_timber.elements.Plate` constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.Plate`
-            A Plate object representing the plate with the given brep and thickness.
-        """
-
-        if len(brep.faces) > 1:
-            raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
-        face = brep.faces[0]
-        outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        if not outer_polyline:
-            raise ValueError("no valid outer outline could be extracted from brep face.")
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
-
-    @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
-        """
-        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
-
-        Parameters
-        ----------
-        outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the plate geometry in parent space. For exterior walls, this is the interior side.
-        outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry in parent space. For exterior walls, this is the exterior side.
-            This should have the same number of points as outline_a.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the plate geometry.
-        recognize_doors : bool
-            if True, door features will be extracted from exterior polylines and added as Openings to the Panel.
-        horizontal_openings : bool
-            if True, openings in Panels that are not Vertical or Horizontal will be extruded horzontally through the Panel.
-        **kwargs : dict, optional
-            Additional keyword arguments to be passed to the constructor.
+            These are passed to the :class:`~compas_timber.elements.Panel` constructor.
 
         Returns
         -------
         :class:`~compas_timber.elements.Panel`
-            A PlateGeometry object representing the plate geometry with the given outlines.
+            A Panel object representing the panel with the given brep and thickness.
         """
 
-        if openings:
-            openings = [(o, "window") for o in openings]
-        if recognize_doors:
-            outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
-            if door_openings:
-                if openings is None:
-                    openings = [(o, "door") for o in door_openings]
-                else:
-                    openings.extend([(o, "door") for o in door_openings])
+        if len(brep.faces) > 1:
+            raise ValueError("Can only use single-face breps to create a Panel. This brep has {}".format(len(brep.faces)))
+        face = brep.faces[0]
+        outer_polyline, inner_polylines = polylines_from_brep_face(face)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
-        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
-        kwargs.update(args)
-        panel = cls(**kwargs)
-        if openings:
-            for polyline, opening_type in openings:
-                opening = Opening.from_outline_panel(polyline, panel, opening_type=opening_type, project_horizontal=horizontal_openings)
-                panel.add_feature(opening)
-        return panel
+    @classmethod
+    def from_brep(cls, brep: Brep, **kwargs):
+        """Creates a panel from a brep by automatically detecting two parallel faces.
 
+        This method identifies the two main faces of the brep using topological analysis
+        (edge counts and adjacency) and uses them as the top and bottom faces of the panel.
 
-def extract_door_openings(outline_a, outline_b):
-    """Extract door openings from the given outlines.
+        Parameters
+        ----------
+        brep : :class:`~compas.geometry.Brep`
+            The brep representing the panel geometry. Must have at least 2 parallel faces.
+        **kwargs : dict, optional
+            Additional keyword arguments.
+            These are passed to the :class:`~compas_timber.elements.Panel` constructor.
 
-    Parameters
-    ----------
-    outline_a : :class:`~compas.geometry.Polyline`
-        A polyline representing the principal outline of the plate geometry in parent space.
-    outline_b : :class:`~compas.geometry.Polyline`
-        A polyline representing the associated outline of the plate geometry in parent space.
-        This should have the same number of points as outline_a.
-
-    Returns
-    -------
-    list[:class:`~compas.geometry.Polyline`]
-        A list of polylines representing the door openings.
-    """
-    combine_parallel_segments(outline_a)
-    combine_parallel_segments(outline_b)
-    internal_segment_indices_a = get_interior_segment_indices(outline_a)
-    internal_segment_indices_b = get_interior_segment_indices(outline_b)
-    if set(internal_segment_indices_a) != set(internal_segment_indices_b):
-        raise ValueError("The internal segments of outline_a and outline_b do not match.")
-    openings = []
-    done = False
-    while not done:
-        for seg_index in internal_segment_indices_a:
-            i_a = seg_index
-            panel_segments_a = outline_a.lines
-            panel_segments_b = outline_b.lines
-            door_segments = []
-            door_segments_b = []
-            for i in range(i_a - 2, i_a + 3):
-                door_segments.append(panel_segments_a[i % (len(panel_segments_a))])
-                door_segments_b.append(panel_segments_b[i % (len(panel_segments_b))])
-            parallel = True
-            for a, b in zip(door_segments, door_segments_b):
-                if angle_vectors(a.direction, b.direction) > TOL.ABSOLUTE:
-                    parallel = False
-                    break
-            if not parallel:
-                continue
-            side_angle = angle_vectors(door_segments[1].direction, door_segments[3].direction)
-            if abs(side_angle - math.pi) > TOL.ABSOLUTE:
-                continue
-            if not is_colinear_line_line(door_segments[0], door_segments[4], tol=TOL.RELATIVE):
-                continue
-            vertical = door_segments[1].direction
-            vertical.unitize()
-            segs_a = []
-            segs_b = []
-            for i in range(len(panel_segments_a)):
-                if panel_segments_a[i] in door_segments:
-                    continue
-                segs_a.append(panel_segments_a[i])
-                segs_b.append(panel_segments_b[i])
-            opening = join_polyline_segments(door_segments[1:4])[0][0]
-            opening[0] -= vertical * 1.0
-            opening[3] -= vertical * 1.0
-            opening.append(opening.points[0])  # close loop
-            openings.append(opening)
-            outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
-            outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
-            internal_segment_indices_a = get_interior_segment_indices(outline_a)
-            break
-        else:
-            done = True
-    return outline_a, outline_b, openings
-
-
-
+        Returns
+        -------
+        :class:`~compas_timber.elements.Panel`
+            A Panel object created from the two parallel faces of the brep.
+        """
+        if len(brep.faces) < 2:
+            raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
+        outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
