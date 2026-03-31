@@ -378,7 +378,7 @@ classDiagram
       
       class KButtJoint{
         +cross_beam: Beam
-        +main_bemas: list[Beam]
+        +main_beams: list[Beam]
         +mill_depth: float
         +force_pocket: bool
         +conical_tool: bool

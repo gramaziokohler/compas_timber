@@ -211,7 +211,6 @@ class KMiterJoint(Joint):
                 self.features.append(double_cut)
 
             except Exception as e:  # If it fails apply two JackRafterCuts
-                print(f"Couldn't apply a DoubleCut: {e}. Applying two JackRafterCuts instead.")
                 prev_plane.normal *= -1
                 next_plane.normal *= -1
                 jrc1 = JackRafterCut.from_plane_and_beam(prev_plane, beam)

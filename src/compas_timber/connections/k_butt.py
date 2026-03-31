@@ -19,12 +19,10 @@ from .utilities import parse_cross_beams_and_main_beams_from_cluster
 
 
 class KButtJoint(Joint):
-    """Represents a K-Butt type joint which joins the ends of two beams along the length of another beam.
+    """Represents a K-Butt type joint which joins the ends of two or more beams along the length of another beam.
 
     This joint type is compatible with beams in K topology. The two main beams are trimmed at their
-    ends to meet the cross beam. If the three beams are coplanar, the cross beam receives a
-    :class:`~compas_timber.fabrication.Pocket` feature; otherwise, the joint uses
-    :class:`~compas_timber.connections.t_butt.TButtJoint` features.
+    ends to meet the cross beam.
 
     Parameters
     ----------
