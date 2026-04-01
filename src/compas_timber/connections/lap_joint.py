@@ -66,6 +66,56 @@ class LapJoint(Joint):
     def beam_b(self):
         return self.element_b
 
+    @staticmethod
+    def _end_index_from_side(side):
+        return 4 if side == "start" else 5
+
+    @staticmethod
+    def _endpoint_point(beam, side):
+        return beam.centerline.start if side == "start" else beam.centerline.end
+
+    @staticmethod
+    def _outward_vector(beam, side):
+        return -beam.centerline.direction if side == "start" else beam.centerline.direction
+
+    @classmethod
+    def _select_joint_end_sides(cls, beam_a, beam_b, require_opposite_outward=False):
+        """Return the endpoint-side pair that best represents the beam-beam interface.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.elements.Beam`
+        beam_b : :class:`~compas_timber.elements.Beam`
+        require_opposite_outward : bool, optional
+            If True, only side pairs with opposite outward directions are considered.
+
+        Returns
+        -------
+        tuple[str, str]
+            Side labels for beam_a and beam_b, each either ``"start"`` or ``"end"``.
+        """
+        candidates = [("start", "start"), ("start", "end"), ("end", "start"), ("end", "end")]
+        if require_opposite_outward:
+            opposite_candidates = []
+            for side_a, side_b in candidates:
+                out_a = cls._outward_vector(beam_a, side_a)
+                out_b = cls._outward_vector(beam_b, side_b)
+                if out_a.dot(out_b) < 0:
+                    opposite_candidates.append((side_a, side_b))
+            if opposite_candidates:
+                candidates = opposite_candidates
+
+        best_side_pair = None
+        best_distance = None
+        for side_a, side_b in candidates:
+            point_a = cls._endpoint_point(beam_a, side_a)
+            point_b = cls._endpoint_point(beam_b, side_b)
+            distance = point_a.distance_to_point(point_b)
+            if best_distance is None or distance < best_distance:
+                best_distance = distance
+                best_side_pair = (side_a, side_b)
+        return best_side_pair
+
     @property
     def ref_side_index_a(self):
         """The reference side index of the beam_a."""
