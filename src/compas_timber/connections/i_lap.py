@@ -84,15 +84,16 @@ class ILapJoint(LapJoint):
         return side_a, side_b, point_a, point_b, signed_separation
 
     def _assert_is_continuous_i_topology(self):
-        is_parallel = TOL.is_zero(angle_vectors(self.beam_a.centerline.direction, self.beam_b.centerline.direction) % math.pi)
+        angle = angle_vectors(self.beam_a.centerline.direction, self.beam_b.centerline.direction)
+        is_parallel = TOL.is_zero(angle) or TOL.is_zero(angle - math.pi)
         if not is_parallel:
-            raise AssertionError("ILapJoint only supports continuous beams in I topology.")
+            raise BeamJoiningError("ILapJoint only supports continuous beams in I topology.")
 
         is_colinear = TOL.is_zero(distance_point_line(self.beam_a.centerline.start, self.beam_b.centerline)) and TOL.is_zero(
             distance_point_line(self.beam_a.centerline.end, self.beam_b.centerline)
         )
         if not is_colinear:
-            raise AssertionError("ILapJoint only supports continuous beams in I topology.")
+            raise BeamJoiningError("ILapJoint only supports continuous beams in I topology.")
 
     def _cutting_setup(self):
         side_a, side_b, point_a, point_b, signed_separation = self._joint_end_state()
