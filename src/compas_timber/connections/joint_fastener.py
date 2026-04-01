@@ -4,10 +4,8 @@ from abc import abstractmethod
 from compas.data import Data
 from compas.geometry import Frame
 
-from compas_timber.fasteners.fastener import Fastener
 
-
-class JointFastener(Data, ABC):
+class FastenerJoint(Data, ABC):
     """
     A an abstract parent class for joints that uses fasteners. It provides the general methods and functionality of a joint that uses fasteners.
 

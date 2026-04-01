@@ -1,247 +1,210 @@
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
-from typing import TYPE_CHECKING
+import uuid
 from typing import Optional
-from typing import Union
 
+from compas.geometry import Box
+from compas.geometry import Cylinder
 from compas.geometry import Frame
+from compas.geometry import Point
 from compas.geometry import Transformation
-from compas_model.elements import Element
 
-if TYPE_CHECKING:
-    from compas.datastructures import Mesh
-    from compas.geometry import Brep
-    from compas.geometry import Transformation
-
-    from compas_timber.connections.joint import Joint
+from compas_timber.fabrication import Pocket
 
 
-class Fastener(Element, ABC):
+class Fastener:
     """
-    An abstract class to represent timber fasteners (screws, dowels, brackets).
+    This is the fastener and it is composed by parts.
 
-    This is an abstract class and should not be instantiated directly. Instead, specific types of fasteners should be implemented as subclasses of this class.
+    The fastener has to create the interactions between the elements.
 
-    Parameters
-    ----------
-    shape : :class:`~compas.geometry.Geometry`, optional
-        The geometry of the fastener.
-    frame : :class:`~compas.geometry.Frame`, optional
-        The frame of the fastener in parent space.
-    **kwargs : dict, optional
-        Additional keyword arguments.
+    The fastener should be as independent as possible.
 
-    Attributes
-    ----------
-    shape : :class:`~compas.geometry.Geometry`
-        The geometry of the fastener.
-    frame : :class:`~compas.geometry.Frame`
-        The frame of the fastener in parent space.
-    interfaces : list
-        A list of interfaces associated with this fastener.
-    attributes : dict
-        Dictionary of attributes for this fastener.
-    debug_info : list
-        A list of debug information.
-    is_fastener : bool
-        Always True for fasteners.
-    key : int or None
-        The graph node key of this fastener.
+    Each part tells how the beam should be machined.
 
+    It should never interact with a joint but it dies have one as reference.
     """
 
-    def __init__(self, frame: Frame, target_frame: Frame = None, **kwargs):
-        # super(Fastener, self).__init__(transformation=Transformation.from_frame(frame) if frame else Transformation(), **kwargs)
-        super(Fastener, self).__init__(transformation=Transformation.from_frame_to_frame(frame, frame) if frame else Transformation(), **kwargs)
-        self._frame = frame
-        self.target_frame = frame
-        self._sub_fasteners = []
-        self.attributes = {}
-        self.attributes.update(kwargs)
-        self.debug_info = []
+    def __init__(self, main_part, frame: Frame = Frame.worldXY(), target_frames: Optional[list[Frame]] = None):
+        self.frame = Frame.worldXY()
+        self.main_part = main_part
+        self.interactions = []  # list of interactions tuple (child, parent)
+        self.parts = [main_part]
+        self.target_frames = target_frames
+        self.guid = uuid.uuid4()
 
     @property
-    def __data__(self) -> dict:
-        return {
-            "transformation": self.transformation,
-            "attributes": self.attributes,
-            "frame": self.frame.__data__,
-            "target_frame": self.target_frame.__data__,
-            "sub_fasteners": [sub_fastener.__data__ for sub_fastener in self._sub_fasteners],
-        }
+    def target_frames(self) -> list[Frame]:
+        return self._target_frames
 
-    def __repr__(self) -> str:
-        return "Fastener(frame={!r}, name={})".format(Frame.from_transformation(self.transformation), self.name)
-
-    def __str__(self) -> str:
-        return "<Fastener {}>".format(self.name)
+    @target_frames.setter
+    def target_frames(self, value: Optional[list[Frame]]):
+        if value is None:
+            self._target_frames = []
+            return
+        if not isinstance(value, list):
+            raise ValueError("target_frames should be a list of Frames.")
+        else:
+            self._target_frames = value
 
     @property
-    def is_fastener(self) -> bool:
-        return True
+    def geometry(self):
+        geometries = []
+        for part in self.parts:
+            part_geometry = part.geometry
+            geometries.append(part_geometry)
+        return geometries
+
+    def copy(self) -> Fastener:
+        new_fastener = Fastener(self.main_part)
+        new_fastener.frame = self.frame.copy()
+        new_fastener.parts = [part.copy() for part in self.parts]
+        new_fastener.interactions = list(self.interactions)
+        new_fastener.target_frames = list(self.target_frames)
+        return new_fastener
+
+    def add_child_part(self, part, parent):
+        """
+        Add a single part to the fastener.
+
+        Parameters
+        ----------
+
+        part : Part
+            The part to be added to the fastener.
+
+        parent : list[Part]
+            The parent of the part added.
+        """
+        self.parts.append(part)
+        self.interactions.append((part, parent))
+
+    def get_parent(self, part):
+        """Return the parent of a specific part."""
+        for interaction in self.interactions:
+            if interaction[0] == part:
+                return interaction[1]
+        return None
+
+    def get_children(self, part):
+        """Return the children of the specific part."""
+        children = []
+        for interaction in self.interactions:
+            if interaction[1] == part:
+                children.append(interaction[0])
+        return children
+
+    def get_fastener_instances(self) -> list[Fastener]:
+        fastener_instances = []
+        for target_frame in self.target_frames:
+            fastener_instance = self.copy()
+            fastener_instance.frame = target_frame
+            fastener_instance.target_frames = None
+
+            transformation = Transformation.from_frame_to_frame(self.frame, target_frame)
+            fastener_instance._update_parts_frame(transformation)
+
+            fastener_instances.append(fastener_instance)
+        return fastener_instances
+
+    def apply_features(self, elements):
+        for part in self.parts:
+            part.apply_features(elements)
+
+    def _update_parts_frame(self, transformation):
+        for part in self.parts:
+            part.frame = part.frame.transformed(transformation)
+
+
+### ------------------
+
+
+class PlateHole:
+    def __init__(self, frame: Frame, diameter: float, height: float):
+        self.frame = frame
+        self.diameter = diameter
+        self.height = height
+
+    def copy(self):
+        return PlateHole(self.frame.copy(), self.diameter, self.height)
 
     @property
-    def key(self) -> Optional[int]:
-        return self.graphnode
+    def geometry(self):
+        cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.frame)
+        cylinder.frame.point += cylinder.frame.zaxis * self.height / 2
+        cylinder_brep = cylinder.to_brep()
+        return cylinder_brep
+
+
+class RectangularPlate:
+    def __init__(self, width: float, height: float, thickeness: float, frame: Frame = Frame.worldXY(), recess: float = 0, recess_offset: float = 0):
+        self.width = width
+        self.height = height
+        self.thickness = thickeness
+        self.holes = []
+        self.frame = frame
+        self.recess = recess
+        self.recess_offset = recess_offset
+
+    def copy(self) -> RectangularPlate:
+        new_plate = RectangularPlate(self.width, self.height, self.thickness, self.frame.copy())
+        new_plate.holes = [hole.copy() for hole in self.holes]
+        return new_plate
 
     @property
-    def frame(self) -> Frame:
+    def frame(self):
         return self._frame
 
     @frame.setter
-    def frame(self, frame) -> None:
-        self._frame = frame
+    def frame(self, value):
+        if not isinstance(value, Frame):
+            raise ValueError("frame should be a Frame object.")
+        for hole in self.holes:
+            hole.frame.transform(Transformation.from_frame_to_frame(self._frame, value))
+        self._frame = value
 
     @property
-    def sub_fasteners(self) -> list[Fastener]:
-        """
-        Returns the direct sub-fasteners of this fastener.
-
-        Returns
-        -------
-        list[:class:`compas_timber.fasteners.Fastener`]
-            A list of direct sub_fasteners.
-        """
-        return self._sub_fasteners
+    def geometry(self):
+        box_brep = self.blank_geometry
+        for hole in self.holes:
+            box_brep -= hole.geometry
+        return box_brep
 
     @property
-    def geometry(self) -> Brep:
-        """The geometry of the element in the model's global coordinates."""
-        if self._geometry is None:
-            self._geometry = self.compute_modelgeometry()
-        return self._geometry
+    def blank_geometry(self):
+        box = Box(self.width, self.height, self.thickness, frame=self.frame)
+        box.frame.point += self.frame.zaxis * self.thickness / 2
+        box_brep = box.to_brep()
+        return box_brep
 
-    @property
-    def to_joint_transformation(self) -> Transformation:
-        """
-        Computes the transformation from the fastener's local frame to the target frame in the joint.
-        """
-        return Transformation.from_frame_to_frame(self.frame, self.target_frame)
+    def add_hole(self, point: Point, diameter: float):
+        hole_frame = self.frame.copy()
+        hole_frame.point = point
+        hole = PlateHole(hole_frame, diameter, self.thickness)
+        self.holes.append(hole)
 
-    def compute_joint_instance(self, target_frame: Frame) -> Fastener:
-        """
-        Computes an instance of this fastener for a specific target frame in a joint.
+    def add_hole_grid(self, nx: int, ny: int, border_padding: float, diameter: float):
+        for ix in range(nx):
+            for iy in range(ny):
+                x = self.frame.point.x + border_padding + ix * (self.width - 2 * border_padding) / (nx - 1)
+                x -= self.width / 2
 
-        Parameters
-        ----------
-        target_frame : :class:`compas.geometry.Frame`
-            The target frame in the joint where the fastener instance is to be computed.
+                y = self.frame.point.y + border_padding + iy * (self.height - 2 * border_padding) / (ny - 1)
+                y -= self.height / 2
 
-        Returns
-        -------
-        :class:`compas_timber.fasteners.Fastener`
-            The computed fastener instance for the specified target frame.
-        """
-        joint_fastener = self.copy()
-        joint_fastener.target_frame = target_frame.copy()
+                self.add_hole(Point(x, y, 0), diameter)
 
-        for sub_fastener in self.sub_fasteners:
-            sub_target_frame = sub_fastener.frame.transformed(joint_fastener.to_joint_transformation)
-            sub_instance = sub_fastener.compute_joint_instance(sub_target_frame)
-            joint_fastener.sub_fasteners.append(sub_instance)
+    def apply_features(self, elements):
+        for element in elements:
+            geo = self.blank_geometry
+            geo.translate(-self.frame.zaxis * 3)
+            pocket = Pocket.from_volume_and_element(geo, element)
+            element.add_feature(pocket)
+            print(pocket.start_depth)
 
-        return joint_fastener
 
-    @abstractmethod
-    def apply_processings(self, joint: Joint) -> None:
-        """
-        Applies BTLx processings to the elements of the joint base on this fastener.
-
-        Parameters
-        ----------
-        joint: :class:`compas_timber.connections.Joint`
-            The joint to wiche the fastener is to be applied.
-
-        """
-        raise NotImplementedError
-
-    # ---- SUB FASTENERS -----
-
-    def add_sub_fastener(self, sub_fastener: Fastener) -> None:
-        """
-        Adds a sub-fastener to this fastener.
-
-        Parameters
-        ----------
-        sub_fastener : :class:`compas_timber.fasteners.Fastener`
-            The sub-fastener to be added.
-        """
-        self._sub_fasteners.append(sub_fastener)
-
-    def find_all_nested_sub_fasteners(self) -> list[Fastener]:
-        """
-        Returna a list of all sub_fastener and nested sub_fasteners of this fastener.
-
-        Returns
-        -------
-        list[:class:`compas_timber.fasteners.Fastener`]
-            A list of all sub_fasteners and nested sub_fasteners.
-        """
-        sub_fasteners = []
-        for sub_fastener in self.sub_fasteners:
-            sub_fasteners.extend(sub_fastener.find_all_nested_sub_fasteners())
-        else:
-            sub_fasteners.append(self)
-        return sub_fasteners
-
-    def compute_sub_fasteners_interactions(self) -> list[tuple[Fastener, Fastener]]:
-        """
-        Computes the interactions between this fastener and its sub-fasteners recursively.
-        This method returns a list of tuples, each containing a pair of fasteners that interact, needed to build the interaction graph of the `TimberModel`.
-
-        Returns
-        -------
-        list[tuple(:class:`compas_timber.fasteners.Fastener`, :class:`compas_timber.fasteners.Fastener`)]
-            A list of tuples representing the interactions between fasteners.
-        """
-
-        interactions = []
-        for sub_fastener in self.sub_fasteners:
-            interaction = (self, sub_fastener)
-            interactions.append(interaction)
-            interactions.extend(sub_fastener.compute_sub_fasteners_interactions())
-        return interactions
-
-    # ---- GEOMETRY -----
-
-    @abstractmethod
-    def compute_elementgeometry(self, include_interfaces=True) -> Brep:
-        """
-        Compute the geoemtry of the element in local coordinates.
-
-        Parameters
-        ----------
-        include_interfaces: bool, optional
-            If True, the geometry of the interfaces are applied to the creation of the geometry. Default is True.
-        """
-        raise NotImplementedError
-
-    def compute_modeltransformation(self) -> Optional[Transformation]:
-        """Same as parent but handles standalone elements."""
-        if not self.model:
-            return self.transformation
-        return super().compute_modeltransformation()
-
-    def compute_modelgeometry(self) -> Union[Brep, Mesh]:
-        """Computes the geometry of the element in model coordinates and taking into account the effect of interations with connected elements.
-
-        Returns:
-        -------
-        :class:`~compas.geometry.Geometry.Brep`
-        """
-        if not self.model:
-            return self.elementgeometry.transformed(self.transformation)
-        return super().compute_modelgeometry()
-
-    def transformation_to_local(self) -> Transformation:
-        """Compute the transformation to local coordinates of this element
-        based on its position in the spatial hierarchy of the model.
-
-        Returns
-        -------
-        :class:`compas.geometry.Transformation`
-
-        """
-        return self.modeltransformation.inverted()
+class Dowel:
+    def __init__(self, diameter: float, length: float, frame: Optional[Frame]):
+        self.frame = Frame.worldXY()
+        self.diameter = diameter
+        self.length = length

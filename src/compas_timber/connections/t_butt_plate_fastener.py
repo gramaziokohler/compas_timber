@@ -7,17 +7,15 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import cross_vectors
 
-from compas_timber.connections.joint_fastener import JointFastener
 from compas_timber.connections.t_butt import TButtJoint
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
-from compas_timber.fasteners import PlateFastener
 from compas_timber.utils import intersection_line_line_param
 
 if TYPE_CHECKING:
     from compas_timber.fasteners.fastener import Fastener
 
 
-class TButtJointPlateFastener(JointFastener, TButtJoint):
+class TButtJointPlateFastener(FastenerJoint, TButtJoint):
     def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, butt_plane=None, base_fastener: Optional[Fastener] = None, **kwargs):
         super().__init__(
             main_beam=main_beam,

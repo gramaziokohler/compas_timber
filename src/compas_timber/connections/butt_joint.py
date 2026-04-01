@@ -12,7 +12,6 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
-from compas_timber.fasteners import Fastener
 
 from .joint import Joint
 from .solver import JointTopology
