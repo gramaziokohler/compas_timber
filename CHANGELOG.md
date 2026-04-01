@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `FreeContourParams` class and overridden `FreeContour.params` property as a special case: unlike all other processings, `FreeContour` requires custom serialization logic to handle its polymorphic `Contour` / `DualContour` child element.
 * Added `get_leaf_subclasses` utility function back to `compas_timber.utils`.
 * Added `AttributeSpec` dataclass in `compas_timber.fabrication.btlx` to declare `ATTRIBUTE_MAP` entries with a `python_name` and a `type` for deserialization.
+* Added `StructuralGraph` to represent a `TimberModel` for structural analysis.
 
 ### Changed
 
