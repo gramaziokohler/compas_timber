@@ -1,23 +1,21 @@
 import pytest
-from unittest import mock
 from unittest.mock import Mock
 
 from compas.geometry import Point
 from compas.geometry import Line
 
-from compas_timber.analyzers import NBeamKDTreeAnalyzer
-from compas_timber.analyzers import CompositeAnalyzer
-from compas_timber.analyzers import QuadAnalyzer
-from compas_timber.analyzers import TripletAnalyzer
+from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
-from compas_timber.analyzers import Cluster
+from compas_timber.connections import Cluster
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
+from fixtures.cluster_generator import beams_clusters
+
 
 @pytest.fixture
-def two_triplets_beams():
+def two_triplets_two_pairs_beams():
     height, width = (12, 6)
 
     lines = [
@@ -34,7 +32,7 @@ def two_triplets_beams():
 
 
 @pytest.fixture
-def one_triplet_two_quads_beams():
+def one_pair_one_triplet_two_quads_beams():
     height, width = (12, 6)
 
     lines = [
@@ -53,60 +51,81 @@ def one_triplet_two_quads_beams():
     return [Beam.from_centerline(centerline=line, height=height, width=width) for line in lines]
 
 
-def test_analyzer_empty_model():
-    with pytest.raises(ValueError):
-        _ = NBeamKDTreeAnalyzer(TimberModel())
-
-
-def test_two_triplet_analyzer(two_triplets_beams):
+def test_get_clusters_from_two_triplets_two_pairs_beams(two_triplets_two_pairs_beams):
     model = TimberModel()
-    model.add_elements(two_triplets_beams)
+    model.add_elements(two_triplets_two_pairs_beams)
     model.connect_adjacent_beams()
 
-    analyzer = NBeamKDTreeAnalyzer(model, n=3)
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates)
+    pairs = [cluster for cluster in clusters if len(cluster) == 2]
+    triplets = [cluster for cluster in clusters if len(cluster) == 3]
 
-    clusters = analyzer.find()
-    assert len(clusters) == 2
-    assert all(len(cluster) == 3 for cluster in clusters)
+    assert len(clusters) == 4, "We expect four clusters from the provided beams"
+    assert len(triplets) == 2, "We expect two triplet clusters from the provided beams"
+    assert len(pairs) == 2, "We expect two pair clusters from the provided beams"
 
 
-def test_one_triplet_analyzer(one_triplet_two_quads_beams):
+def test_get_clusters_from_one_pair_one_triplet_two_quads_beams(one_pair_one_triplet_two_quads_beams):
     model = TimberModel()
-    model.add_elements(one_triplet_two_quads_beams)
+    model.add_elements(one_pair_one_triplet_two_quads_beams)
     model.connect_adjacent_beams()
 
-    analyzer = NBeamKDTreeAnalyzer(model, n=3)
-
-    clusters = analyzer.find()
-    assert len(clusters) == 1  # We expect two triplets from the provided beams
-    assert len(clusters[0]) == 3
-
-
-def test_two_quads_analyzer(one_triplet_two_quads_beams):
-    model = TimberModel()
-    model.add_elements(one_triplet_two_quads_beams)
-    model.connect_adjacent_beams()
-
-    analyzer = NBeamKDTreeAnalyzer(model, n=4)
-
-    clusters = analyzer.find()
-    assert len(clusters) == 2
-    assert all(len(cluster) == 4 for cluster in clusters)
-
-
-def test_composite_analyzer(one_triplet_two_quads_beams):
-    model = TimberModel()
-    model.add_elements(one_triplet_two_quads_beams)
-    model.connect_adjacent_beams()
-
-    analyzer = CompositeAnalyzer.from_model(model=model, analyzers_cls=[QuadAnalyzer, TripletAnalyzer])
-
-    clusters = analyzer.find()
-
+    clusters = get_clusters_from_joint_candidates(model.joint_candidates)
+    pairs = [cluster for cluster in clusters if len(cluster) == 2]
     triplets = [cluster for cluster in clusters if len(cluster) == 3]
     quads = [cluster for cluster in clusters if len(cluster) == 4]
-    assert len(triplets) == 1
-    assert len(quads) == 2
+
+    assert len(clusters) == 4, "We expect three clusters from the provided beams"
+    assert len(triplets) == 1, "We expect one triplet cluster from the provided beams"
+    assert len(pairs) == 1, "We expect one pair cluster from the provided beams"
+    assert len(quads) == 2, "We expect two quad clusters from the provided beams"
+
+
+def test_get_clusters_from_joint_candidates():
+    for i in range(1, 6):
+        model = TimberModel()
+        model.add_elements(beams_clusters(i))
+        model.connect_adjacent_beams()
+
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
+        output = {}
+
+        for c in clusters:
+            count = len(c.elements)
+            if not output.get(count):
+                output[count] = []
+            output[count].append(c)
+
+        assert all(len(clusters) == i for clusters in output.values()), f"Expected {i} clusters of each size, but got: { {k: len(v) for k, v in output.items()} }"
+
+
+def test_get_clusters_from_joint_candidates_jitter():
+    for i in range(1, 6):
+        model = TimberModel()
+        model.add_elements(beams_clusters(i, jitter=1.0))
+        model.connect_adjacent_beams(max_distance=2.0)
+        assert len(model.joint_candidates) > 0, "joints should still be found when jitter is applied"
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates)
+        assert all([len(cluster) == 2 for cluster in clusters]), "Expected every cluster to contain 2 elements."
+
+
+def test_get_clusters_from_joint_candidates_jitter_max_distance():
+    for i in range(1, 6):
+        model = TimberModel()
+        model.add_elements(beams_clusters(i, jitter=0.5))
+        model.connect_adjacent_beams(max_distance=1.0)
+
+        clusters = get_clusters_from_joint_candidates(model.joint_candidates, max_distance=1.0)
+
+        output = {}
+
+        for c in clusters:
+            count = len(c.elements)
+            if not output.get(count):
+                output[count] = []
+            output[count].append(c)
+
+        assert all(len(clusters) == i for clusters in output.values()), f"Expected {i} clusters of each size, but got: { {k: len(v) for k, v in output.items()} }"
 
 
 def test_single_joint_cluster_topology():
@@ -277,59 +296,3 @@ def test_empty_cluster_topology():
     """Test topology behavior with empty cluster."""
     cluster = Cluster([])
     assert cluster.topology == JointTopology.TOPO_UNKNOWN
-
-
-def test_kdtree_cache_reuses_same_instance(two_triplets_beams):
-    """Two analyzers built from the same model must share the identical KDTree object."""
-    model = TimberModel()
-    model.add_elements(two_triplets_beams)
-    model.connect_adjacent_beams()
-
-    analyzer_a = NBeamKDTreeAnalyzer(model, n=2)
-    analyzer_b = NBeamKDTreeAnalyzer(model, n=3)
-
-    assert analyzer_a._kdtree is analyzer_b._kdtree
-
-
-def test_kdtree_cache_rebuilds_after_model_change(two_triplets_beams):
-    """After joints are added to the model, a new KDTree must be built."""
-    model = TimberModel()
-    model.add_elements(two_triplets_beams)
-    model.connect_adjacent_beams()
-
-    analyzer_before = NBeamKDTreeAnalyzer(model, n=2)
-    tree_before = analyzer_before._kdtree
-
-    # Add a new beam so that connect_adjacent_beams produces new joint candidates
-    extra_beam = Beam.from_centerline(
-        centerline=Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=50.0, y=-300.0, z=0.0)),
-        height=12,
-        width=6,
-    )
-    model.add_element(extra_beam)
-    model.connect_adjacent_beams()
-
-    analyzer_after = NBeamKDTreeAnalyzer(model, n=2)
-    tree_after = analyzer_after._kdtree
-
-    assert tree_after is not tree_before
-
-
-def test_kdtree_ordering_consistency(two_triplets_beams):
-    model = TimberModel()
-    model.add_elements(two_triplets_beams)
-    model.connect_adjacent_beams()
-
-    analyzer_a = NBeamKDTreeAnalyzer(model, n=3)
-    clusters_a = analyzer_a.find()
-    expected = sorted([frozenset(id(e) for e in cluster.elements) for cluster in clusters_a])
-
-    # Simulate a subsequent call to model.joint_candidates returning the same joints reversed.
-    reversed_joints = list(reversed(analyzer_a._joints))
-    with mock.patch.object(type(model), "joint_candidates", new_callable=mock.PropertyMock, return_value=reversed_joints):
-        analyzer_b = NBeamKDTreeAnalyzer(model, n=3)
-        assert analyzer_b._kdtree is analyzer_a._kdtree
-        clusters_b = analyzer_b.find()
-
-    actual = sorted([frozenset(id(e) for e in cluster.elements) for cluster in clusters_b])
-    assert expected == actual

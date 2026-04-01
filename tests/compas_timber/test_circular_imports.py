@@ -18,7 +18,6 @@ import pytest
 # Add new modules here as they are created.
 MODULES = [
     "compas_timber",
-    "compas_timber.analyzers",
     "compas_timber.base",
     "compas_timber.connections",
     "compas_timber.elements",
