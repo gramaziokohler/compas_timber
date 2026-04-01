@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `ILapJoint` class for continuous parallel beam lap joint connections.
+* Added test coverage for `ILapJoint`.
+
 ### Changed
 
 ### Removed
