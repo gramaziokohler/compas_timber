@@ -648,7 +648,7 @@ class BTLxPart(BTLxGenericPart):
         :class:`xml.etree.ElementTree.Element`
         """
         user_ref_planes = ET.Element("UserReferencePlanes")
-        T = Transformation.from_frame(self.element.ref_frame).inverted()
+        T = Transformation.from_frame(self.frame).inverted()
         for plane in self.element.user_ref_planes:
             local_frame = plane.frame.transformed(T)
             local_frame.point.scale(self._scale_factor)

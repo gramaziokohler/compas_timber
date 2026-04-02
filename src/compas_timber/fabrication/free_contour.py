@@ -343,17 +343,16 @@ class FreeContour(BTLxProcessing):
         vol = self.contour_param_object.to_brep()
         if self.ref_side_index >= 100:
             ref_frame = element.get_user_ref_plane(self.ref_side_index)
-            transformation = Transformation.from_frame(ref_frame)
         else:
-            # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
             ref_frame = element.ref_sides[self.ref_side_index]
-            transformation = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
+        # contour is in ref_frame local space; transform to world then to element local (where geometry lives)
+        transformation = element.modeltransformation.inverse() * Transformation.from_frame(ref_frame)
         vol.transform(transformation)
-        return vol
-        # if self.counter_sink:  # contour should remove material inside of the contour
-        #     return geometry - vol
-        # else:
-        #     return geometry & vol
+
+        if self.counter_sink:  # contour should remove material inside of the contour
+            return geometry - vol
+        else:
+            return geometry & vol
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.
