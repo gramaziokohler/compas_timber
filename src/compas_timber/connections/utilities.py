@@ -2,6 +2,7 @@ import math
 
 from compas.geometry import Point
 from compas.geometry import angle_vectors
+from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 
@@ -196,3 +197,29 @@ def point_centerline_towards_joint(beam_a, beam_b):
     else:
         centerline_vec = beam_a.centerline.vector
     return centerline_vec
+
+
+def angle_and_dot_product_main_beam_and_cross_beam(main_beam, cross_beam, joint) -> tuple[float, float]:
+    """
+    Computes the angle and dot product between the `main_beam` and the `cross_beam` relative to their joint.
+    The angle and dot products are computed with the direction of the `main_beam` goinf towards the joint.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        The main beam of the joint.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        The cross beam of the joint.
+    joint : :class:`~compas_timber.connections.joint.Joint`
+        The joint connecting the main beam and the cross beam.
+
+    Returns
+    -------
+    tuple[float, float]
+        A tuple containing the angle (in radians) and the dot product between the main beam and the cross beam relative to their joint.
+
+    """
+    main_beam_direction = joint.get_beam_direction_towards_joint(main_beam)
+    angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
+    dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
+    return angle, dot

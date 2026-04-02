@@ -4,10 +4,11 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import DoubleCutProxy
+from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.utils import polyhedron_from_box_planes
 
 from .joint import Joint
 from .solver import JointTopology
@@ -114,7 +115,7 @@ class KButtJoint(Joint):
 
     @property
     def location(self):
-        return Point(*(intersection_line_line(self.main_beam_a.centerline, self.main_beam_b.centerline)[0]))
+        return Point(*(intersection_line_line(self.main_beams[0].centerline, self.main_beams[1].centerline)[0]))
 
     @classmethod
     def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
@@ -143,7 +144,7 @@ class KButtJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence(self.main_beam_a, self.cross_beam, ignore_ends=True)
+        ref_side_dict = beam_ref_side_incidence(self.main_beams[0], self.cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         return ref_side_index
 
@@ -151,16 +152,17 @@ class KButtJoint(Joint):
     def main_beams_ref_side_indices(self):
         ref_side_indices = []
         for beam_to_cut, beam_cutter in zip(self.main_beams, self.main_beams[1:]):
-            ref_side_dict = beam_ref_side_incidence(beam_cutter, beam_to_cut, ignore_ends=True)
+            ref_side_dict = beam_ref_side_incidence(beam_to_cut, beam_cutter, ignore_ends=True)
             ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
             ref_side_indices.append(ref_side_index)
         return ref_side_indices
 
     @property
     def cross_cutting_plane(self):
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beams[0], ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cutting_plane = self.cross_beam.ref_sides[ref_side_index]
+        first_main_beam = self.main_beams[0]
+        ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
+        ref_side_index = max(ref_side_dict, key=ref_side_dict.get)
+        cutting_plane = first_main_beam.ref_sides[ref_side_index]
         return Plane.from_frame(cutting_plane)
 
     @property
@@ -171,9 +173,9 @@ class KButtJoint(Joint):
             butt_plane.translate(butt_plane.normal * self.mill_depth)
         return Plane.from_frame(butt_plane)
 
-    def main_cutting_plane(self, index):
+    def main_cutting_planes(self, index):
         """Return the cutting plane for main beam at ``index`` in open-chain ordering.
-        The cutting plane is the ref_side of the adjacent main beam that faces the beam to cut. The plane is flipped to face towards the beam to cut.
+        The cutting plane is the ref_side of the next main beam that faces the beam to cut. The plane is flipped to face towards the beam to cut.
 
         Parameters
         ----------
@@ -191,9 +193,12 @@ class KButtJoint(Joint):
             raise IndexError("index must be in range [0, len(main_beams) - 2] for open-chain cutting")
 
         ref_side_index = self.main_beams_ref_side_indices[index]
-        cutting_plane = self.main_beams[index].ref_sides[ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        return Plane.from_frame(cutting_plane)
+        cutting_plane = self.main_beams[index + 1].ref_sides[ref_side_index]
+
+        butt_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        # butt_plane = butt_plane.translated(-butt_plane.normal * self.mill_depth)
+        # TODO: this for now causes issues. Once you add offset for the pocket, the beams don't butt to eachother in a successive way.
+        return [Plane.from_frame(cutting_plane), Plane.from_frame(butt_plane)]
 
     def add_extensions(self):
         """
@@ -227,11 +232,10 @@ class KButtJoint(Joint):
         for i, main_beam in enumerate(self.main_beams):
             if i < len(self.main_beams) - 1:
                 # For all but the last main beam, add a double cut feature that cuts the beam with both the adjacent main beam's cutting plane and the butt plane.
-                cutting_planes = self.main_cutting_plane(i) + self.butt_plane
-                feature = DoubleCutProxy.from_planes_and_beam(cutting_planes, main_beam)
+                feature = DoubleCut.from_planes_and_beam(self.main_cutting_planes(i), main_beam)
             else:
                 # For the last main beam, add a jack rafter cut feature that cuts the beam with the butt plane only.
-                feature = JackRafterCutProxy.from_planes_and_beam(self.butt_plane, main_beam)
+                feature = JackRafterCutProxy.from_plane_and_beam(self.butt_plane, main_beam)
             main_beam.add_feature(feature)
             self.features.append(feature)
 
@@ -239,19 +243,12 @@ class KButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 milling_volume = self._get_milling_volume_for_pocket()
-                cross_feature = Pocket.from_volume_and_element(milling_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
-                if not self.conical_tool:
-                    self._limit_pocket_tilt_angles(cross_feature)
+                cross_feature = Pocket.from_volume_and_element(milling_volume, self.cross_beam, allow_undercut=self.conical_tool, ref_side_index=self.cross_beam_ref_side_index)
             else:
-                first_main_beam = self.main_beams[0]
-                ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
-                first_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-                cross_cutting_plane = first_main_beam.ref_sides[first_main_beam_ref_side_index]
-
                 lap_width = self._get_lap_width_for_main_beams()
 
                 cross_feature = Lap.from_plane_and_beam(
-                    cross_cutting_plane,
+                    self.cross_cutting_plane,
                     self.cross_beam,
                     lap_width,
                     self.mill_depth,
@@ -275,6 +272,16 @@ class KButtJoint(Joint):
         sorted_indices = sorted(range(len(dots)), key=lambda i: dots[i])
         sorted_beams = [self.main_beams[i] for i in sorted_indices]
         self.main_beams = sorted_beams
+
+    def _get_milling_volume_for_pocket(self):
+        top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
+        bottom_plane = self.butt_plane
+        side_a_plane = self.cross_cutting_plane
+        side_b_plane = Plane.from_frame(self.main_beams[-1].opp_side(self.main_beams_ref_side_indices[-1]))
+        end_a_plane = Plane.from_frame(self.main_beams[-1].front_side(self.main_beams_ref_side_indices[-1]))
+        end_b_plane = Plane.from_frame(self.main_beams[-1].back_side(self.main_beams_ref_side_indices[-1]))
+
+        return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
 
     def _get_lap_width_for_main_beams(self):
         lap_width = 0.0
