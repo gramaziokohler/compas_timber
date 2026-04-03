@@ -640,6 +640,78 @@ class TimberModel(Model):
         _, joints_traversed = solver.add_structural_segments(model=self)
         solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
+    def merge_model(self, other, parent=None):
+        """Merge another TimberModel into this model.
+
+        All elements, interactions, joints, and joint candidates from the other model are
+        transferred into this model. The other model should not be used after this operation.
+
+        The hierarchy of the other model is preserved. Top-level elements from the other model
+        are added as children of ``parent`` if provided, or under the root of this model otherwise.
+
+        Interactions from the other model are added as a disconnected island in this model's
+        interaction graph and will need to be reconnected manually or via a solver if needed.
+
+        Parameters
+        ----------
+        other : :class:`TimberModel`
+            The model to merge into this one.
+        parent : :class:`~compas_model.elements.Element`, optional
+            An element already in this model under which the other model's top-level
+            elements will be placed. If ``None``, they are added under the root.
+
+        """
+        # Step 1: capture graph state from other before elements are moved
+        old_node_to_element = {}
+        for node in other._graph.nodes():
+            old_node_to_element[node] = other._graph.node_element(node)
+
+        edges_data = []
+        for u, v in other._graph.edges():
+            edge_attrs = {}
+            for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
+                value = other._graph.edge_attribute((u, v), attr)
+                if value is not None:
+                    edge_attrs[attr] = value
+            edges_data.append((old_node_to_element[u], old_node_to_element[v], edge_attrs))
+
+        node_attrs_data = {}
+        for node in other._graph.nodes():
+            element = old_node_to_element[node]
+            node_attrs = {}
+            for attr in self._TIMBER_GRAPH_NODE_ATTRIBUTES:
+                value = other._graph.node_attribute(node, attr)
+                if value is not None:
+                    node_attrs[attr] = value
+            if node_attrs:
+                node_attrs_data[str(element.guid)] = node_attrs
+
+        # Step 2: walk other's tree and add elements to self, preserving hierarchy
+        def _add_subtree(other_treenode, self_parent):
+            element = other_treenode.element
+            self.add_element(element, parent=self_parent)
+            for child_node in other_treenode.children:
+                _add_subtree(child_node, element)
+
+        for child_node in list(other.tree.root.children):
+            _add_subtree(child_node, parent)
+
+        # Step 3: recreate edges with their attributes
+        for element_a, element_b, edge_attrs in edges_data:
+            edge = self.add_interaction(element_a, element_b)
+            for attr, value in edge_attrs.items():
+                self._graph.edge_attribute(edge, attr, value)
+
+        # Step 4: restore node attributes
+        for guid_str, node_attrs in node_attrs_data.items():
+            element = self._elements[guid_str]
+            for attr, value in node_attrs.items():
+                self._graph.node_attribute(element.graphnode, attr, value)
+
+        # Step 5: transfer joints
+        for guid_str, joint in other._joints.items():
+            self._joints[guid_str] = joint
+
     def connect_adjacent_beams(self, max_distance=None):
         # Clear existing joint candidates
         for candidate in list(self.joint_candidates):
