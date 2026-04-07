@@ -10,12 +10,11 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
-from compas_timber.utils import polyhedron_from_box_planes
+from compas_timber.geometry import polyhedron_from_box_planes
 
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
-from .utilities import extend_beam_to_plane
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
@@ -161,7 +160,10 @@ class ButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         # extend the main beam
         try:
-            extend_beam_to_plane(beam=self.main_beam, plane=self.butt_plane, joint=self)
+            start, end = self.main_beam.extension_to_plane(self.butt_plane)
+            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+            joint_id = self.guid
+            self.main_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.butt_plane])
         except Exception as ex:
@@ -170,7 +172,10 @@ class ButtJoint(Joint):
         # extend the cross beam
         if self.modify_cross:
             try:
-                extend_beam_to_plane(self.cross_beam, self.back_plane, self)
+                start, end = self.cross_beam.extension_to_plane(self.back_plane)
+                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+                joint_id = self.guid
+                self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
             except AttributeError as ae:
                 raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
 

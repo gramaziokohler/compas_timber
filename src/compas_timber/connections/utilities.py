@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import math
 from typing import TYPE_CHECKING
-from typing import Optional
 
-from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
@@ -208,43 +206,16 @@ def point_centerline_towards_joint(beam_a, beam_b):
     return centerline_vec
 
 
-def extend_beam_to_plane(beam: Beam, plane: Plane, joint: Optional[Joint] = None) -> Beam:
+def angle_and_dot_product_beam_a_and_beam_b(beam_a: Beam, beam_b: Beam, joint: Joint) -> tuple[float, float]:
     """
-    Extend a beam parametrically until it reaches a specified plane.
-    The beam is modified in place.
+    Computes the angle and dot product between the `beam_a` and the `beam_b` relative to their joint.
+    The angle and dot products are computed with the direction of the `beam_a` going towards the joint.
 
     Parameters
     ----------
-    beam : :class:`~compas_timber.elements.Beam`
-        The beam to extend.
-    plane : :class:`~compas.geometry.Plane`
-        The target plane to which the beam is extended.
-    joint : :class:`~compas_timber.connections.joint.Joint`, optional
-         The joint of the beam where it has to be extend, used as reference for serialization and de-serialization.
-
-    Returns
-    -------
-    :class:`~compas_timber.elements.Beam`
-        The extended beam.
-
-    """
-    start, end = beam.extension_to_plane(plane)
-    extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-    joint_id = joint.guid if joint else None
-    beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
-    return beam
-
-
-def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: Beam, joint: Joint) -> tuple[float, float]:
-    """
-    Computes the angle and dot product between the `main_beam` and the `cross_beam` relative to their joint.
-    The angle and dot products are computed with the direction of the `main_beam` going towards the joint.
-
-    Parameters
-    ----------
-    main_beam : :class:`~compas_timber.elements.Beam`
+    beam_a : :class:`~compas_timber.elements.Beam`
         The main beam of the joint.
-    cross_beam : :class:`~compas_timber.elements.Beam`
+    beam_b : :class:`~compas_timber.elements.Beam`
         The cross beam of the joint.
     joint : :class:`~compas_timber.connections.joint.Joint`
         The joint connecting the main beam and the cross beam.
@@ -255,7 +226,7 @@ def angle_and_dot_product_main_beam_and_cross_beam(main_beam: Beam, cross_beam: 
         A tuple containing the angle (in radians) and the dot product between the main beam and the cross beam relative to their joint.
 
     """
-    main_beam_direction = joint.get_beam_direction_towards_joint(main_beam)
-    angle = angle_vectors(main_beam_direction, cross_beam.centerline.direction)
-    dot = dot_vectors(main_beam_direction, cross_beam.centerline.direction)
+    main_beam_direction = joint.get_beam_direction_towards_joint(beam_a)
+    angle = angle_vectors(main_beam_direction, beam_b.centerline.direction)
+    dot = dot_vectors(main_beam_direction, beam_b.centerline.direction)
     return angle, dot
