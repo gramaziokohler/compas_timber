@@ -39,6 +39,7 @@ from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 from .k_miter import KMiterJoint
+from .k_butt import KButtJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 
@@ -86,6 +87,7 @@ __all__ = [
     "PanelTButtJoint",
     "PanelMiterJoint",
     "KMiterJoint",
+    "KButtJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
 ]
