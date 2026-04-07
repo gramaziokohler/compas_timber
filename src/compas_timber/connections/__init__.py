@@ -28,6 +28,7 @@ from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .utilities import angle_and_dot_product_beam_a_and_beam_b
+from .utilities import parse_cross_beams_and_main_beams_from_cluster
 from .plate_joint import PlateJoint
 from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
@@ -37,6 +38,7 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .k_miter import KMiterJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 
@@ -73,7 +75,7 @@ __all__ = [
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
     "angle_and_dot_product_beam_a_and_beam_b",
-    "angle_and_dot_product_beam_a_and_beam_b",
+    "parse_cross_beams_and_main_beams_from_cluster",
     "PlateJoint",
     "PanelJoint",
     "PlateButtJoint",
@@ -83,6 +85,7 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "KMiterJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
 ]
