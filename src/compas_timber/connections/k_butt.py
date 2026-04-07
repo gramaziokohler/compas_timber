@@ -1,3 +1,4 @@
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import intersection_line_line
@@ -286,21 +287,18 @@ class KButtJoint(Joint):
         last_main_beam = self.main_beams[-1]
 
         # first beam and last beam have to be on the same side of the cross beam
-        ref_side_dict = beam_ref_side_incidence(first_main_beam, self.cross_beam, ignore_ends=True)
-        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cross_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
-        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
-        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
+        cross_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(self.cross_beam_ref_side_index + 1) % 4])
+        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(self.cross_beam_ref_side_index - 1) % 4])
 
         # first_plane
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
-        first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
-        first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
+        first_plane_index = self.beam_relative_side_to_beam(first_main_beam, self.cross_beam)
+        first_plane_index = (first_plane_index + 2) % 4
+        first_plane = Plane.from_frame(first_main_beam.ref_sides[first_plane_index])
 
         # last_plane
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, last_main_beam)
-        last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
+        last_plane_index = self.beam_relative_side_to_beam(last_main_beam, self.cross_beam)
+        last_plane = Plane.from_frame(last_main_beam.ref_sides[last_plane_index])
 
         # adjust mill depth
         if self.mill_depth:
@@ -311,6 +309,7 @@ class KButtJoint(Joint):
         # make a plane
         cross_plane = Plane.from_frame(cross_plane)
 
+        # polyhedron
         milling_volume = polyhedron_from_box_planes(cross_plane, cutting_plane, first_plane, last_plane, cross_plane_next, cross_plane_prev)
         return milling_volume
 
@@ -318,24 +317,19 @@ class KButtJoint(Joint):
         first_main_beam = self.main_beams[0]
         last_main_beam = self.main_beams[-1]
 
-        # first beam and last beam have to be on the same side of the cross beam
-        ref_side_dict = beam_ref_side_incidence(first_main_beam, self.cross_beam, ignore_ends=True)
-        cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        cross_frame = self.cross_beam.ref_sides[cross_beam_ref_side_index]
-        cross_plane = Plane.from_frame(cross_frame)
-        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index - 1) % 4])
-        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(cross_beam_ref_side_index + 1) % 4])
+        cross_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
+        cross_plane_prev = Plane.from_frame(self.cross_beam.ref_sides[(self.cross_beam_ref_side_index - 1) % 4])
+        cross_plane_next = Plane.from_frame(self.cross_beam.ref_sides[(self.cross_beam_ref_side_index + 1) % 4])
 
-        # adjust mill depth
         if self.mill_depth:
-            cutting_plane = Plane.from_frame(cross_frame.translated(-cross_frame.normal * self.mill_depth))
+            cutting_plane = cross_plane.translated(-cross_plane.normal * self.mill_depth)
         else:
-            cutting_plane = Plane.from_frame(cross_frame)
+            cutting_plane = cross_plane.copy()
 
-        # first_plane
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, first_main_beam, ignore_ends=True)
-        first_main_beam_ref_side_index = (min(ref_side_dict, key=ref_side_dict.get) + 2) % 4
-        first_plane = Plane.from_frame(first_main_beam.ref_sides[first_main_beam_ref_side_index])
+        # first_zplane
+        first_plane_index = self.beam_relative_side_to_beam(first_main_beam, self.cross_beam)
+        first_plane_index = (first_plane_index + 2) % 4
+        first_plane = Plane.from_frame(first_main_beam.ref_sides[first_plane_index])
         exterior_first_plane = first_plane.copy()
         exterior_first_plane.point = Point(*intersection_plane_plane(cross_plane, first_plane)[0])
         exterior_first_plane.normal = self.cross_beam.centerline.direction
@@ -344,9 +338,8 @@ class KButtJoint(Joint):
         interior_first_plane.normal = self.cross_beam.centerline.direction
 
         # last_plane
-        ref_side_dict = beam_ref_side_incidence(self.cross_beam, last_main_beam)
-        last_main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        last_plane = Plane.from_frame(last_main_beam.ref_sides[last_main_beam_ref_side_index])
+        last_plane_index = self.beam_relative_side_to_beam(last_main_beam, self.cross_beam)
+        last_plane = Plane.from_frame(last_main_beam.ref_sides[last_plane_index])
         exterior_last_plane = last_plane.copy()
         exterior_last_plane.point = Point(*intersection_plane_plane(cross_plane, last_plane)[0])
         exterior_last_plane.normal = self.cross_beam.centerline.direction
