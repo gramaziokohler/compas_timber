@@ -9,14 +9,13 @@ from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
-from compas_timber.utils import polyhedron_from_box_planes
+from compas_timber.geometry import polyhedron_from_box_planes
 
 from .joint import Joint
 from .joint import JointTopology
-from .utilities import angle_and_dot_product_main_beam_and_cross_beam
+from .utilities import angle_and_dot_product_beam_a_and_beam_b
 from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
-from .utilities import extend_beam_to_plane
 from .utilities import parse_cross_beams_and_main_beams_from_cluster
 
 
@@ -194,7 +193,10 @@ class KButtJoint(Joint):
             cutting_plane = self.cross_beam.ref_sides[cross_beam_ref_side_index]
             if self.mill_depth:
                 cutting_plane.translate(-cutting_plane.normal * self.mill_depth)
-            extend_beam_to_plane(beam, cutting_plane)
+            start, end = beam.extension_to_plane(cutting_plane)
+            extension_tolerance = 0.01
+            joint_id = self.guid
+            beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
 
     def add_features(self):
         """
@@ -271,7 +273,7 @@ class KButtJoint(Joint):
         angles = []
         dots = []
         for main_beam in self.main_beams:
-            angle, dot = angle_and_dot_product_main_beam_and_cross_beam(main_beam, self.cross_beam, self)
+            angle, dot = angle_and_dot_product_beam_a_and_beam_b(main_beam, self.cross_beam, self)
             angles.append(angle)
             dots.append(dot)
         # Sort main_beams based on dots (ascending order)
