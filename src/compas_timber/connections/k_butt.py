@@ -1,4 +1,3 @@
-from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import intersection_line_line
@@ -229,7 +228,7 @@ class KButtJoint(Joint):
                 # the adjecent main beam's cutting -lane and the butt_plane
                 try:
                     feature = DoubleCut.from_planes_and_beam(self.main_cutting_planes(i), main_beam)
-                except Exception as e:
+                except Exception:
                     jack_plane = self.main_cutting_planes(i)[0]
                     jack_plane.normal *= -1
                     feature = JackRafterCut.from_plane_and_beam(jack_plane, main_beam)
