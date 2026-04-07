@@ -69,6 +69,10 @@ class KDTree:
 
         return results
 
+    def query_pairs(self, max_distance) -> list[tuple[int, int]]:
+        """returns a list of pairs of indices of points in the tree that are within *max_distance* of each other."""
+        return self._tree.query_pairs(max_distance)
+
 
 def polyhedron_from_box_planes(top_plane, bottom_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane):
     """Create a hexahedral :class:`~compas.geometry.Polyhedron` defined by 6 bounding planes.
@@ -151,6 +155,3 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     polyhedron.faces = new_faces
     return polyhedron
-    def query_pairs(self, max_distance) -> list[tuple[int, int]]:
-        """returns a list of pairs of indices of points in the tree that are within *max_distance* of each other."""
-        return self._tree.query_pairs(max_distance)
