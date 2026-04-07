@@ -151,3 +151,6 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     polyhedron.faces = new_faces
     return polyhedron
+    def query_pairs(self, max_distance) -> list[tuple[int, int]]:
+        """returns a list of pairs of indices of points in the tree that are within *max_distance* of each other."""
+        return self._tree.query_pairs(max_distance)
