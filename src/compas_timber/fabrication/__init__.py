@@ -36,6 +36,9 @@ from .btlx import UserReferencePlane
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
 
+# from .multi_step_joint import MultiStepJoint
+from .birds_mouth import BirdsMouth
+
 __all__ = [
     "BTLxWriter",
     "BTLxPart",
@@ -73,5 +76,7 @@ __all__ = [
     "UserReferencePlane",
     "LongitudinalCut",
     "LongitudinalCutProxy",
+    # "MultiStepJoint",
+    "BirdsMouth",
     "BTLxRawpart",
 ]
