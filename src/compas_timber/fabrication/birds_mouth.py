@@ -1,14 +1,20 @@
-from compas.geometry import Frame, angle_vectors_signed
+import math
+
+from compas.geometry import Brep
+from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import angle_vectors_projected
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements.beam import Beam
+from compas_timber.elements import Beam
+from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
@@ -115,26 +121,26 @@ class BirdsMouth(BTLxProcessing):
     # fmt: off
     def __init__(
         self,
-        orientation=OrientationType.START,
-        start_x=0.0,
-        start_y=0.0,
-        start_depth=20.0,
-        angle=90.0,
-        inclination1=45.0,
-        inclination2=135.0,
-        depth=20.0,
-        width=0.0,
-        width_counter_part_limited=False,
-        width_counter_part=120.0,
-        height_counter_part_limited=False,
-        height_counter_part=120.0,
-        face_limited_front=False,
-        face_limited_back=False,
-        lead_angle_parallel=True,
-        lead_angle=90.0,
-        lead_inclination_parallel=True,
-        lead_inclination=90.0,
-        rafter_nail_hole=False,
+        orientation: OrientationType = OrientationType.START,
+        start_x: float = 0.0,
+        start_y: float = 0.0,
+        start_depth: float = 20.0,
+        angle: float = 90.0,
+        inclination1: float = 45.0,
+        inclination2: float = 135.0,
+        depth: float = 20.0,
+        width: float = 0.0,
+        width_counter_part_limited: bool = False,
+        width_counter_part: float = 120.0,
+        height_counter_part_limited: bool = False,
+        height_counter_part: float = 120.0,
+        face_limited_front: bool = False,
+        face_limited_back: bool = False,
+        lead_angle_parallel: bool = True,
+        lead_angle: float = 90.0,
+        lead_inclination_parallel: bool = True,
+        lead_inclination: float = 90.0,
+        rafter_nail_hole: bool = False,
         **kwargs
     ):
         super(BirdsMouth, self).__init__(**kwargs)
@@ -389,7 +395,7 @@ class BirdsMouth(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes:list[Plane], beam:Beam, start_y:float=0.0, width:float=0.0, ref_side_index:int=None, **kwargs):
+    def from_planes_and_beam(cls, planes:list[Plane], beam:Beam, start_y:float=0.0, width:float=None, ref_side_index:int=None, **kwargs) -> "BirdsMouth":
         """Create a BirdsMouth instance from two cutting planes and the beam they notch.
 
         The intersection line of the two planes defines the ridge of the birds mouth notch.
@@ -413,7 +419,6 @@ class BirdsMouth(BTLxProcessing):
         :class:`~compas_timber.fabrication.BirdsMouth`
 
         """
-        # type: (list, Beam, float, float, int) -> BirdsMouth
         if len(planes) != 2:
             raise ValueError("Exactly two cutting planes are required to create a BirdsMouth instance.")
 
@@ -459,7 +464,7 @@ class BirdsMouth(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, ridge_line, orientation)
 
         # inclination1 and inclination2 — each plane's tilt relative to ref_side normal
-        inclination1, inclination2 = cls._calculate_inclinations(ref_side, planes)
+        inclination1, inclination2 = cls._calculate_inclinations(ref_side, planes, ridge_line)
 
 
         return cls(
@@ -551,11 +556,144 @@ class BirdsMouth(BTLxProcessing):
         return angle
 
     @staticmethod
-    def _calculate_inclinations(ref_side, planes):
+    def _calculate_inclinations(ref_side, planes, ridge_line):
         """Inclination of each cutting plane relative to the ref_side normal. Returned in ascending order as inclination1 and inclination2."""
         inclinations = []
         for plane in planes:
-            inclination = angle_vectors(plane.normal, ref_side.normal, deg=True)
-            inclinations.append(inclination)
+            inclination = angle_vectors_projected(plane.normal, ref_side.normal, -ridge_line.direction, deg=True)
+            inclinations.append(abs(inclination))
         inclinations[0] = 180.0 - inclinations[0]
         return sorted(inclinations)  # return in ascending order as inclination1 and inclination2
+
+    ########################################################################
+    # Methods
+    ########################################################################
+
+    def planes_from_params_and_beam(self, beam:Beam) -> list[Plane]:
+        """Calculates the two cutting planes from the machining parameters in this instance and the given beam.
+
+        Parameters
+        ----------
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is notched by this instance.
+
+        Returns
+        -------
+        list of :class:`~compas.geometry.Plane`
+            The two cutting planes for this instance.
+
+        """
+        assert self.inclination1 is not None
+        assert self.inclination2 is not None
+
+        ref_frame = beam.ref_sides[self.ref_side_index]
+        ridge_line = self._get_ridge_line_from_params_and_beam(beam)
+
+        # # For START the stored angle is measured from -xaxis; flip xaxis for reconstruction.
+        # # Inclinations are adjusted accordingly, mirroring DoubleCut's END handling.
+        inclination_1 = self.inclination1
+        inclination_2 = self.inclination2
+        if self.orientation == OrientationType.END:
+            inclination_1 = 180.0 - inclination_1
+            inclination_2 = 180.0 - inclination_2
+
+        plane_1 = Plane(ridge_line.start, ref_frame.xaxis)
+        plane_1.rotate(math.radians(inclination_1), -ridge_line.direction, point=ridge_line.start)
+
+        plane_2 = Plane(ridge_line.end, ref_frame.xaxis)
+        plane_2.rotate(math.radians(inclination_2), -ridge_line.direction, point=ridge_line.end)
+
+        return [plane_1, plane_2]
+
+    def _get_ridge_line_from_params_and_beam(self, beam:Beam) -> Line:
+        """Calculate the ridge line created by the intersection of the two cutting planes of the BirdsMouth notch from the machining parameters and the given beam."""
+        assert self.orientation is not None
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.start_depth is not None
+        assert self.angle is not None
+        assert self.depth is not None
+        assert self.width is not None
+        assert self.ref_side_index is not None
+
+        ref_side = beam.side_as_surface(self.ref_side_index)
+        # Reconstruct apex: on ref_side surface at (start_x, start_y), shifted inward by start_depth
+        p_apex = planar_surface_point_at(ref_side, self.start_x, self.start_y)
+        p_apex -= ref_side.zaxis * self.start_depth
+
+        angle = self.angle
+        if self.orientation == OrientationType.END:
+            angle = 180.0 - angle
+        dx = self.width / math.tan(math.radians(angle))
+        p_rear = planar_surface_point_at(ref_side, self.start_x + dx , self.start_y + self.width)
+        p_rear -= ref_side.zaxis * (self.depth)
+        return Line(p_apex, p_rear)
+
+    def apply(self, geometry: Brep, beam: Beam) -> Brep:
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be notched.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is notched by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting planes do not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            cutting_planes = self.planes_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+            )
+        # convert to the local coordinates of the beam
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
+
+        # birds mouth is always a concave (v-notch) cut
+        trim_volume = geometry.copy()
+        try:
+            for cutting_plane in cutting_planes:
+                flipped_plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                trim_volume.trim(flipped_plane)
+        except Exception as e:
+            raise FeatureApplicationError(cutting_planes, beam, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
+
+        try:
+            return geometry - trim_volume
+        except Exception as e:
+            raise FeatureApplicationError(trim_volume, beam, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
+
+    def scale(self, factor: float) -> None:
+        """Scale the parameters of the processing by the given factor.
+
+        Notes
+        -----
+        Only distances are scaled, angles remain unchanged.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor. A value of 1.0 means no scaling, while a value of 2.0 means doubling the size.
+
+        """
+        # type: (float) -> None
+        assert self.start_x is not None
+        assert self.start_y is not None
+        assert self.start_depth is not None
+        assert self.depth is not None
+        assert self.width is not None
+        self._start_x *= factor
+        self._start_y *= factor
+        self._start_depth *= factor
+        self._depth *= factor
+        self._width *= factor
