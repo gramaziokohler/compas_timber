@@ -8,6 +8,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_projected
+from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
@@ -560,7 +561,8 @@ class BirdsMouth(BTLxProcessing):
         """Inclination of each cutting plane relative to the ref_side normal. Returned in ascending order as inclination1 and inclination2."""
         inclinations = []
         for plane in planes:
-            inclination = angle_vectors_projected(plane.normal, ref_side.normal, -ridge_line.direction, deg=True)
+            v = cross_vectors(plane.normal, ref_side.yaxis)
+            inclination = angle_vectors_projected(ref_side.xaxis, v, -ridge_line.direction, deg=True)
             inclinations.append(abs(inclination))
         inclinations[0] = 180.0 - inclinations[0]
         return sorted(inclinations)  # return in ascending order as inclination1 and inclination2
@@ -588,20 +590,13 @@ class BirdsMouth(BTLxProcessing):
 
         ref_frame = beam.ref_sides[self.ref_side_index]
         ridge_line = self._get_ridge_line_from_params_and_beam(beam)
+        rotation_axis = ridge_line.direction if self.orientation == OrientationType.END else -ridge_line.direction
 
-        # # For START the stored angle is measured from -xaxis; flip xaxis for reconstruction.
-        # # Inclinations are adjusted accordingly, mirroring DoubleCut's END handling.
-        inclination_1 = self.inclination1
-        inclination_2 = self.inclination2
-        if self.orientation == OrientationType.END:
-            inclination_1 = 180.0 - inclination_1
-            inclination_2 = 180.0 - inclination_2
+        plane_1 = Plane(ridge_line.start, ref_frame.zaxis)
+        plane_1.rotate(math.radians(self.inclination1), rotation_axis, point=ridge_line.start)
 
-        plane_1 = Plane(ridge_line.start, ref_frame.xaxis)
-        plane_1.rotate(math.radians(inclination_1), -ridge_line.direction, point=ridge_line.start)
-
-        plane_2 = Plane(ridge_line.end, ref_frame.xaxis)
-        plane_2.rotate(math.radians(inclination_2), -ridge_line.direction, point=ridge_line.end)
+        plane_2 = Plane(ridge_line.end, -ref_frame.zaxis)
+        plane_2.rotate(math.radians(self.inclination2), rotation_axis, point=ridge_line.end)
 
         return [plane_1, plane_2]
 
@@ -621,10 +616,9 @@ class BirdsMouth(BTLxProcessing):
         p_apex = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         p_apex -= ref_side.zaxis * self.start_depth
 
-        angle = self.angle
-        if self.orientation == OrientationType.END:
-            angle = 180.0 - angle
+        angle = self.angle if self.orientation == OrientationType.START else 180.0 - self.angle
         dx = self.width / math.tan(math.radians(angle))
+
         p_rear = planar_surface_point_at(ref_side, self.start_x + dx , self.start_y + self.width)
         p_rear -= ref_side.zaxis * (self.depth)
         return Line(p_apex, p_rear)
