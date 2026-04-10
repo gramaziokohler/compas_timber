@@ -1,0 +1,371 @@
+import math
+from copy import deepcopy
+
+from compas.geometry import Plane
+from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
+from compas.geometry import cross_vectors
+from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane_plane
+from compas.tolerance import TOL
+
+from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import StepShapeType
+from compas_timber.fabrication.birds_mouth import BirdsMouth
+from compas_timber.fabrication.double_cut import DoubleCut
+from compas_timber.fabrication.jack_cut import JackRafterCutProxy
+
+from .joint import Joint
+from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
+from .utilities import beam_ref_side_incidence_with_vector
+
+
+class TMultiStepJoint(Joint):
+    """Represents an T-MultiStep type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).
+    Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.
+
+    This joint type is compatible with beams in T topology.
+
+    Please use `TMultiStepJoint.create()` to properly create an instance of this class and associate it with a model.
+
+    Parameters
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        First beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        Second beam to be joined.
+    step_shape : str
+        The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP or HEEL.
+        The shape type takes priority: depths irrelevant to the chosen shape are ignored and forced to zero. Defaults to ``StepShapeType.STEP``.
+    step_depth : float, optional
+        Depth of the step or heel cut. This is a targeted depth, the actual depth may be adjusted to fit an integer number of steps.
+        Defaults to a value proportional to the cross beam's cross-section.
+
+
+
+    Attributes
+    ----------
+    main_beam : :class:`~compas_timber.elements.Beam`
+        First beam to be joined.
+    cross_beam : :class:`~compas_timber.elements.Beam`
+        Second beam to be joined.
+
+    """
+
+    SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
+
+    @property
+    def __data__(self):
+        data = super(TMultiStepJoint, self).__data__
+        data["step_shape"] = self.step_shape
+        data["step_depth"] = self.step_depth
+        data["riser_angle"] = self.riser_angle
+        data["step_count"] = self.step_count
+        return data
+
+    # fmt: off
+    def __init__(
+        self,
+        main_beam=None,
+        cross_beam=None,
+        step_shape=None,
+        step_depth=None,
+        riser_angle=None,
+        step_count=None,
+        **kwargs
+    ):
+        super(TMultiStepJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
+        self.step_shape = step_shape or StepShapeType.STEP
+        self.step_depth = step_depth
+        self.riser_angle = riser_angle
+        self.step_count = step_count
+
+        self._strut_inclination = None
+        self._strut_length = None
+        self._strut_height = None
+
+
+        self.features = []
+        if self.main_beam and self.cross_beam:
+            self._resolve_steps()
+            self._set_unset_attributes()  # resolve defaults at init if beams are provided
+
+    @property
+    def main_beam(self):
+        return self.element_a
+
+    @property
+    def cross_beam(self):
+        return self.element_b
+
+    @property
+    def cross_beam_ref_side_index(self):
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
+
+    @property
+    def main_beam_ref_side_index(self):
+        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        ref_side_dict = beam_ref_side_incidence_with_vector(
+            self.main_beam, cross_beam_ref_side.normal, ignore_ends=True
+        )
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
+
+    def _calculate_strut_values(self):
+        """Calculate the strut inclination, height, and length based on the geometry of the main and cross beams."""
+        main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+        cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+
+        strut_inclination_vector = Vector.cross(-main_ref_side.normal, -cross_ref_side.normal)
+        self._strut_inclination = 180 - abs(
+            angle_vectors_signed(-main_ref_side.normal, -cross_ref_side.normal, strut_inclination_vector, deg=True)
+        )
+        self._strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
+        self._strut_length = self._strut_height / math.sin(math.radians(self._strut_inclination))
+        self._strut_vector = Vector(*cross_vectors(main_ref_side.yaxis, cross_ref_side.zaxis)).unitized()
+        if TOL.is_positive(dot_vectors(main_ref_side.normal, self._strut_vector)):
+            self._strut_vector = -self._strut_vector
+
+    def _resolve_steps(self):
+        """Calculate the number of steps, step interval, adjusted step depth, and strut vector.
+
+        K converts step_depth to the horizontal step_interval along the strut contact line:
+        step_interval = step_depth * K, where K is derived from the two triangle angles at the
+        tread/riser junction (half-inclination on the tread side, complementary angle on the riser side).
+        """
+        self._calculate_strut_values()
+
+        half_inc = math.radians(self._strut_inclination / 2.0)
+        riser_complement = math.radians(180.0 - self.riser_angle - self._strut_inclination / 2.0)
+        K = 1.0 / math.tan(half_inc) + 1.0 / math.tan(riser_complement)
+
+        # for this joint to make sense, there should be at least 2 steps. If the provided step_depth results in less than 2 steps, adjust the step_depth to fit 2 steps.
+        # TODO: consider raising a warning instead of silently adjusting the step depth, or at least log the adjustment.
+        self._step_count = max(2, int(round(self._strut_length / (self.step_depth * K))))
+        self._step_interval = self._strut_length / self._step_count
+        self._adjusted_step_depth = self._step_interval / K
+
+        self._compute_step_displacements()
+
+    def _compute_step_displacements(self):
+        """Compute per-step BTLx coordinate shifts from the resolved strut vector and step interval.
+
+        Stores the following attributes:
+
+        - ``_step_delta``  — 3-D world-space shift vector for one step interval
+        - ``_dx_main``     — start_x shift per step in main beam BTLx space
+        - ``_dy_main``     — start_y shift per step in main beam BTLx space
+        - ``_dx_cross``    — start_x shift per step in cross beam BTLx space
+        - ``_dy_cross``    — start_y shift per step in cross beam BTLx space
+
+        """
+        main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+        cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        self._step_delta = self._strut_vector * self._step_interval
+        self._dx_main = dot_vectors(self._step_delta, main_ref_side.xaxis)
+        self._dy_main = dot_vectors(self._step_delta, -main_ref_side.zaxis)
+        self._dx_cross = dot_vectors(self._step_delta, cross_ref_side.xaxis)
+        self._dy_cross = dot_vectors(self._step_delta, cross_ref_side.yaxis)
+
+    def _compute_base_planes(self):
+        """Compute anchor geometry for all steps.
+
+        Calls ``_resolve_steps()`` (which also calls ``_compute_step_displacements()``) then
+        builds the two template planes that all other step geometry is derived from::
+
+            tread_0  — at the strut contact corner (position 0)
+            riser_0  — pre-translated by one ``_step_interval`` (position +1)
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`)
+            ``(tread_0, riser_0)``
+
+        """
+        self._resolve_steps()
+
+        main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+        cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+
+        # Corner point where beam bottom, cross beam contact face, and beam front face all meet.
+        intersection_point = intersection_plane_plane_plane(
+            Plane.from_frame(main_ref_side),
+            Plane.from_frame(cross_ref_side),
+            Plane.from_frame(self.main_beam.front_side(self.main_beam_ref_side_index)),
+        )
+
+        # rotation_axis lies along the strut contact line.
+        rotation_axis = Vector.cross(main_ref_side.normal, cross_ref_side.normal).unitized()
+
+        # Template planes for step 0, anchored at intersection_point.
+        tread_0 = Plane(intersection_point, main_ref_side.normal)
+        tread_0.rotate(math.radians(self._strut_inclination), rotation_axis, intersection_point)
+        riser_0 = tread_0.rotated(math.radians(180.0 - self.riser_angle), -rotation_axis, intersection_point)
+        # riser_0 lives at position +1×step_interval so it is co-located with tread_1.
+        riser_0.translate(self._step_delta)
+
+        return tread_0, riser_0
+
+    def get_cut_planes(self):
+        """Returns the two single endpoint cut planes.
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`)
+            ``(tread_0, riser_last)`` — the leading tread and the trailing riser.
+
+        """
+        tread_0, riser_0 = self._compute_base_planes()
+        riser_last = riser_0.translated(self._step_delta * (self._step_count - 1))
+        return tread_0, riser_last
+
+    def get_step_planes(self):
+        """Returns the anchor plane pair for the first DoubleCut V-cut.
+
+        ``riser_0`` and ``tread_1`` are co-located at position ``+1 × step_interval``
+        with opposite orientations, forming the valley of the first V-cut.
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`)
+            ``(riser_0, tread_1)``
+
+        """
+        tread_0, riser_0 = self._compute_base_planes()
+        tread_1 = tread_0.translated(self._step_delta)
+        return tread_1, riser_0
+
+    def get_notch_planes(self):
+        """Returns the anchor plane pair for the first BirdsMouth notch.
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Plane`, :class:`~compas.geometry.Plane`)
+            ``(tread_0, riser_0)``
+
+        """
+        return self._compute_base_planes()
+
+    def main_butt_plane(self):
+        """Calculates the plane for the initial butt cut on the main beam.
+
+        This is the cut that creates the flat surface on the end of the main beam to which the cross beam will be joined.
+        It is defined by the cross beam's ref side and is parallel to the main beam's end face.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Plane`
+            The plane for the initial butt cut on the main beam.
+
+        """
+        cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        butt_plane = Plane(cross_ref_side.point, -cross_ref_side.normal)  # make a copy to avoid modifying the cross beam's ref side
+        butt_plane.translate(butt_plane.normal * self._adjusted_step_depth)  # extend plane to
+        return butt_plane
+
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the extension could not be calculated.
+
+        """
+        assert self.cross_beam and self.main_beam
+        start_a = None
+        try:
+            plane_a = self.main_butt_plane()
+            start_a, end_a = self.main_beam.extension_to_plane(plane_a)
+        except AttributeError as ae:
+            # I want here just the plane that caused the error
+            raise BeamJoiningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
+        except Exception as ex:
+            raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
+        self.main_beam.add_blank_extension(start_a, end_a, self.guid)
+
+    def add_features(self):
+        """Adds the required trimming features to both beams.
+
+        This method is automatically called when joint is created by the call to `Joint.create()`.
+
+        """
+        assert self.main_beam and self.cross_beam  # should never happen
+
+        if self.features:
+            self.main_beam.remove_features(self.features)
+            self.cross_beam.remove_features(self.features)
+
+        cut_planes = self.get_cut_planes()      # two single-plane end cuts
+        step_planes = self.get_step_planes()    # DoubleCut anchor: first V-cut valley
+        notch_planes = self.get_notch_planes()  # BirdsMouth anchor: first notch
+
+        # -- butt cut on main beam end face --
+        butt_plane = self.main_butt_plane()
+        cut = JackRafterCutProxy.from_plane_and_beam(butt_plane, self.main_beam)
+        self.main_beam.add_features(cut)
+        self.features.append(cut)
+
+        # -- single endpoint cuts --
+        for plane in cut_planes:
+            cut = JackRafterCutProxy.from_plane_and_beam(plane, self.main_beam)
+            self.main_beam.add_features(cut)
+            self.features.append(cut)
+
+        # -- N-1 DoubleCut V-cuts on main beam --
+        # First V-cut is computed from geometry; the rest are copies shifted by one step interval each.
+        dc0 = DoubleCut.from_planes_and_beam(step_planes, self.main_beam)
+        self.main_beam.add_features(dc0)
+        self.features.append(dc0)
+        for i in range(1, self._step_count - 1):
+            dc = deepcopy(dc0)
+            dc.start_x += i * self._dx_main  # shift along beam axis
+            dc.start_y += i * self._dy_main  # shift across face (non-zero for skewed joints)
+            self.main_beam.add_features(dc)
+            self.features.append(dc)
+
+        # -- N BirdsMouth notches on cross beam --
+        # First notch is computed from geometry; the rest are copies shifted by one step interval each.
+        bm0 = BirdsMouth.from_planes_and_beam(notch_planes, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
+        self.cross_beam.add_features(bm0)
+        self.features.append(bm0)
+        for i in range(1, self._step_count):
+            bm = deepcopy(bm0)
+            bm.start_x += i * self._dx_cross  # shift along beam axis
+            bm.start_y += i * self._dy_cross  # shift across face (non-zero for skewed joints)
+            self.cross_beam.add_features(bm)
+            self.features.append(bm)
+
+    # @classmethod
+    # def check_elements_compatibility(cls, elements, raise_error=False):
+    #     """Checks if the cluster of beams complies with the requirements for the TStepJoint.
+
+    #     Parameters
+    #     ----------
+    #     elements : list of :class:`~compas_timber.model.TimberElement`
+    #         The cluster of elements to be checked.
+    #     raise_error : bool, optional
+    #         Whether to raise an error if the elements are not compatible.
+    #         If False, the method will return False instead of raising an error.
+
+    #     Returns
+    #     -------
+    #     bool
+    #         True if the cluster complies with the requirements, False otherwise.
+
+    #     """
+    #     cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
+    #     for beam in elements:
+    #         beam_normal = beam.frame.normal.unitized()
+    #         dot = abs(beam_normal.dot(cross_vect.unitized()))
+    #         if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
+    #             if not raise_error:
+    #                 return False
+    #             raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+    #     return True

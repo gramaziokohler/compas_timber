@@ -36,6 +36,7 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .t_multi_step_joint import TMultiStepJoint
 
 __all__ = [
     "Joint",
@@ -77,4 +78,5 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "TMultiStepJoint",
 ]
