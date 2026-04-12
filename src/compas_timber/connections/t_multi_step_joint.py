@@ -41,7 +41,12 @@ class TMultiStepJoint(Joint):
     step_depth : float, optional
         Depth of the step or heel cut. This is a targeted depth, the actual depth may be adjusted to fit an integer number of steps.
         Defaults to a value proportional to the cross beam's cross-section.
-
+    riser_angle : float, optional
+        Angle of the riser face relative to the horizontal plane, in degrees.
+        Only relevant for STEP shape type; ignored for HEEL where it is forced to 90°. Defaults to 90° (i.e. vertical riser).
+    step_count : int, optional
+        Number of steps to be created. If not provided, it will be calculated based on the provided step_depth and the geometry of the beams.
+        If the provided step_depth results in less than 2 steps, it will be adjusted to fit 2 steps.
 
 
     Attributes
@@ -50,6 +55,15 @@ class TMultiStepJoint(Joint):
         First beam to be joined.
     cross_beam : :class:`~compas_timber.elements.Beam`
         Second beam to be joined.
+    step_shape : str
+        The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP or HEEL.
+    step_depth : float
+        Depth of the step or heel cut. This is a targeted depth, the actual depth may be adjusted to fit an integer number of steps.
+    riser_angle : float
+        Angle of the riser face relative to the horizontal plane, in degrees. Only relevant for STEP shape type; ignored for HEEL where it is forced to 90°.
+    step_count : int
+        Number of steps to be created. If not provided, it will be calculated based on the provided step_depth and the geometry of the beams.
+        If the provided step_depth results in less than 2 steps, it will be adjusted to fit 2 steps.
 
     """
 
@@ -77,8 +91,9 @@ class TMultiStepJoint(Joint):
     ):
         super(TMultiStepJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
         self.step_shape = step_shape or StepShapeType.STEP
+        # TODO: define priority in case of conflicting inputs (e.g. step_shape = HEEL but riser_angle provided, or step_count provided but step_depth not compatible with it). For now, the shape type takes priority and forces irrelevant parameters to zero or default values.
         self.step_depth = step_depth
-        self.riser_angle = riser_angle
+        self.riser_angle = riser_angle if self.step_shape == StepShapeType.STEP else 90.0
         self.step_count = step_count
 
         self._strut_inclination = None
@@ -140,9 +155,13 @@ class TMultiStepJoint(Joint):
         """
         self._calculate_strut_values()
 
-        half_inc = math.radians(self._strut_inclination / 2.0)
-        riser_complement = math.radians(180.0 - self.riser_angle - self._strut_inclination / 2.0)
-        K = 1.0 / math.tan(half_inc) + 1.0 / math.tan(riser_complement)
+        if self.step_shape == StepShapeType.HEEL:
+            tread_angle = math.radians(self._strut_inclination - 90.0)
+        else:
+            tread_angle = math.radians(self._strut_inclination / 2.0)
+
+        riser_complement = math.radians(180.0 - self.riser_angle) - tread_angle
+        K = 1.0 / math.tan(tread_angle) + 1.0 / math.tan(riser_complement)
 
         # for this joint to make sense, there should be at least 2 steps. If the provided step_depth results in less than 2 steps, adjust the step_depth to fit 2 steps.
         # TODO: consider raising a warning instead of silently adjusting the step depth, or at least log the adjustment.
@@ -206,7 +225,11 @@ class TMultiStepJoint(Joint):
         rotation_axis = Vector.cross(main_ref_side.normal, cross_ref_side.normal).unitized()
 
         # Template planes for step 0, anchored at intersection_point.
-        tread_0 = Plane(intersection_point, (cross_ref_side.normal - main_ref_side.normal).unitized())
+        if self.step_shape == StepShapeType.HEEL:
+            # For a heel cut, the tread plane is parallel to the cross beam's contact face, and the riser plane is parallel to the main beam's end face.
+            tread_0 = Plane(intersection_point, cross_vectors(rotation_axis, main_ref_side.normal))
+        else:
+            tread_0 = Plane(intersection_point, (cross_ref_side.normal - main_ref_side.normal).unitized())
         riser_0 = tread_0.rotated(math.radians(180.0 - self.riser_angle), -rotation_axis, intersection_point)
         # riser_0 lives at position +1×step_interval so it is co-located with tread_1.
         riser_0.translate(self._step_delta)
@@ -224,8 +247,11 @@ class TMultiStepJoint(Joint):
 
         """
         tread_0, riser_0 = self._compute_base_planes()
-        riser_last = riser_0.translated(self._step_delta * (self._step_count - 1))
-        planes = [tread_0, riser_last]
+        if self.step_shape == StepShapeType.HEEL:
+            planes = [tread_0]
+        else:
+            riser_last = riser_0.translated(self._step_delta * (self._step_count - 1))
+            planes = [tread_0, riser_last]
         return [Plane(plane.point, -plane.normal) for plane in planes]
 
     def get_step_planes(self):
