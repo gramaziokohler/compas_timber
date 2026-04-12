@@ -465,7 +465,7 @@ class BirdsMouth(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, ridge_line, orientation)
 
         # inclination1 and inclination2 — each plane's tilt relative to ref_side normal
-        inclination1, inclination2 = cls._calculate_inclinations(ref_side, planes, ridge_line)
+        inclination1, inclination2 = cls._calculate_inclinations(ref_side, planes, orientation, ridge_line)
 
 
         return cls(
@@ -557,14 +557,15 @@ class BirdsMouth(BTLxProcessing):
         return angle
 
     @staticmethod
-    def _calculate_inclinations(ref_side, planes, ridge_line):
+    def _calculate_inclinations(ref_side, planes, orientation, ridge_line):
         """Inclination of each cutting plane relative to the ref_side normal. Returned in ascending order as inclination1 and inclination2."""
         inclinations = []
         for plane in planes:
-            v = cross_vectors(plane.normal, ref_side.yaxis)
-            inclination = angle_vectors_projected(ref_side.xaxis, v, -ridge_line.direction, deg=True)
+            if orientation == OrientationType.START:
+                inclination = angle_vectors_projected(ref_side.xaxis, plane.normal, -ridge_line.direction, deg=True)
+            else:
+                inclination = angle_vectors_projected(plane.normal, -ref_side.xaxis, ridge_line.direction, deg=True)
             inclinations.append(abs(inclination))
-        inclinations[0] = 180.0 - inclinations[0]
         return sorted(inclinations)  # return in ascending order as inclination1 and inclination2
 
     ########################################################################
