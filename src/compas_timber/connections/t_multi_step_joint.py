@@ -120,15 +120,16 @@ class TMultiStepJoint(Joint):
         main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
 
+        self._strut_vector = Vector(*cross_vectors(main_ref_side.yaxis, cross_ref_side.zaxis)).unitized()
+        if TOL.is_positive(dot_vectors(main_ref_side.normal, self._strut_vector)):
+            self._strut_vector = -self._strut_vector
+
         strut_inclination_vector = Vector.cross(-main_ref_side.normal, -cross_ref_side.normal)
         self._strut_inclination = 180 - abs(
             angle_vectors_signed(-main_ref_side.normal, -cross_ref_side.normal, strut_inclination_vector, deg=True)
         )
         self._strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
         self._strut_length = self._strut_height / math.sin(math.radians(self._strut_inclination))
-        self._strut_vector = Vector(*cross_vectors(main_ref_side.yaxis, cross_ref_side.zaxis)).unitized()
-        if TOL.is_positive(dot_vectors(main_ref_side.normal, self._strut_vector)):
-            self._strut_vector = -self._strut_vector
 
     def _resolve_steps(self):
         """Calculate the number of steps, step interval, adjusted step depth, and strut vector.
@@ -205,8 +206,7 @@ class TMultiStepJoint(Joint):
         rotation_axis = Vector.cross(main_ref_side.normal, cross_ref_side.normal).unitized()
 
         # Template planes for step 0, anchored at intersection_point.
-        tread_0 = Plane(intersection_point, main_ref_side.normal)
-        tread_0.rotate(math.radians(self._strut_inclination), rotation_axis, intersection_point)
+        tread_0 = Plane(intersection_point, (cross_ref_side.normal - main_ref_side.normal).unitized())
         riser_0 = tread_0.rotated(math.radians(180.0 - self.riser_angle), -rotation_axis, intersection_point)
         # riser_0 lives at position +1×step_interval so it is co-located with tread_1.
         riser_0.translate(self._step_delta)
