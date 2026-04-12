@@ -84,11 +84,12 @@ class TMultiStepJoint(Joint):
         self._strut_inclination = None
         self._strut_length = None
         self._strut_height = None
+        self._base_planes = None
 
 
         self.features = []
         if self.main_beam and self.cross_beam:
-            self._resolve_steps()
+            self._compute_base_planes()
             self._set_unset_attributes()  # resolve defaults at init if beams are provided
 
     @property
@@ -144,7 +145,7 @@ class TMultiStepJoint(Joint):
 
         # for this joint to make sense, there should be at least 2 steps. If the provided step_depth results in less than 2 steps, adjust the step_depth to fit 2 steps.
         # TODO: consider raising a warning instead of silently adjusting the step depth, or at least log the adjustment.
-        self._step_count = max(2, int(round(self._strut_length / (self.step_depth * K))))
+        self._step_count = max(1, int(round(self._strut_length / (self.step_depth * K))))
         self._step_interval = self._strut_length / self._step_count
         self._adjusted_step_depth = self._step_interval / K
 
@@ -185,6 +186,9 @@ class TMultiStepJoint(Joint):
             ``(tread_0, riser_0)``
 
         """
+        if self._base_planes:
+            return self._base_planes
+
         self._resolve_steps()
 
         main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
@@ -207,7 +211,8 @@ class TMultiStepJoint(Joint):
         # riser_0 lives at position +1×step_interval so it is co-located with tread_1.
         riser_0.translate(self._step_delta)
 
-        return tread_0, riser_0
+        self._base_planes = (tread_0, riser_0)
+        return self._base_planes
 
     def get_cut_planes(self):
         """Returns the two single endpoint cut planes.
@@ -220,7 +225,8 @@ class TMultiStepJoint(Joint):
         """
         tread_0, riser_0 = self._compute_base_planes()
         riser_last = riser_0.translated(self._step_delta * (self._step_count - 1))
-        return tread_0, riser_last
+        planes = [tread_0, riser_last]
+        return [Plane(plane.point, -plane.normal) for plane in planes]
 
     def get_step_planes(self):
         """Returns the anchor plane pair for the first DoubleCut V-cut.
@@ -236,7 +242,7 @@ class TMultiStepJoint(Joint):
         """
         tread_0, riser_0 = self._compute_base_planes()
         tread_1 = tread_0.translated(self._step_delta)
-        return tread_1, riser_0
+        return riser_0, tread_1
 
     def get_notch_planes(self):
         """Returns the anchor plane pair for the first BirdsMouth notch.
@@ -262,9 +268,8 @@ class TMultiStepJoint(Joint):
 
         """
         cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        butt_plane = Plane(cross_ref_side.point, -cross_ref_side.normal)  # make a copy to avoid modifying the cross beam's ref side
-        butt_plane.translate(butt_plane.normal * self._adjusted_step_depth)  # extend plane to
-        return butt_plane
+        butt_plane = Plane(cross_ref_side.point, -cross_ref_side.normal)
+        return butt_plane.translated(butt_plane.normal * self._adjusted_step_depth)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -278,9 +283,9 @@ class TMultiStepJoint(Joint):
 
         """
         assert self.cross_beam and self.main_beam
-        start_a = None
+
+        plane_a = self.main_butt_plane()
         try:
-            plane_a = self.main_butt_plane()
             start_a, end_a = self.main_beam.extension_to_plane(plane_a)
         except AttributeError as ae:
             # I want here just the plane that caused the error
@@ -319,27 +324,29 @@ class TMultiStepJoint(Joint):
 
         # -- N-1 DoubleCut V-cuts on main beam --
         # First V-cut is computed from geometry; the rest are copies shifted by one step interval each.
-        dc0 = DoubleCut.from_planes_and_beam(step_planes, self.main_beam)
-        self.main_beam.add_features(dc0)
-        self.features.append(dc0)
-        for i in range(1, self._step_count - 1):
-            dc = deepcopy(dc0)
-            dc.start_x += i * self._dx_main  # shift along beam axis
-            dc.start_y += i * self._dy_main  # shift across face (non-zero for skewed joints)
-            self.main_beam.add_features(dc)
-            self.features.append(dc)
+        if self._step_count > 1:
+            first_step = DoubleCut.from_planes_and_beam(step_planes, self.main_beam, reorder_planes=False)
+            self.main_beam.add_features(first_step)
+            self.features.append(first_step)
+            for i in range(1, self._step_count - 1):
+                next_step = deepcopy(first_step)
+                next_step.start_x += i * self._dx_main  # shift along beam axis
+                next_step.start_y += i * self._dy_main  # shift across face (non-zero for skewed joints)
+                self.main_beam.add_features(next_step)
+                self.features.append(next_step)
+
 
         # -- N BirdsMouth notches on cross beam --
         # First notch is computed from geometry; the rest are copies shifted by one step interval each.
-        bm0 = BirdsMouth.from_planes_and_beam(notch_planes, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
-        self.cross_beam.add_features(bm0)
-        self.features.append(bm0)
+        first_notch = BirdsMouth.from_planes_and_beam(notch_planes, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
+        self.cross_beam.add_features(first_notch)
+        self.features.append(first_notch)
         for i in range(1, self._step_count):
-            bm = deepcopy(bm0)
-            bm.start_x += i * self._dx_cross  # shift along beam axis
-            bm.start_y += i * self._dy_cross  # shift across face (non-zero for skewed joints)
-            self.cross_beam.add_features(bm)
-            self.features.append(bm)
+            next_notch = deepcopy(first_notch)
+            next_notch.start_x += i * self._dx_cross  # shift along beam axis
+            next_notch.start_y += i * self._dy_cross  # shift across face (non-zero for skewed joints)
+            self.cross_beam.add_features(next_notch)
+            self.features.append(next_notch)
 
     # @classmethod
     # def check_elements_compatibility(cls, elements, raise_error=False):
