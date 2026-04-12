@@ -181,7 +181,7 @@ class DoubleCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, ref_side_index=None, **kwargs):
+    def from_planes_and_beam(cls, planes, beam, reorder_planes=True, ref_side_index=None, **kwargs):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
@@ -190,6 +190,8 @@ class DoubleCut(BTLxProcessing):
             The two cutting planes that define the double cut.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
+        reorder_planes : bool, optional
+            Whether to reorder the planes based on their intersection with the beam. Default is True.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
@@ -227,7 +229,8 @@ class DoubleCut(BTLxProcessing):
                 index = face_indices.index(ref_side_index)
                 point_start_xy = intersection_points[index]
 
-        planes = cls._reorder_planes(planes, line, ref_side)
+        if reorder_planes:
+            planes = cls._reorder_planes(planes, line, ref_side)
         orientation = cls._calculate_orientation(beam, planes)
         start_x, start_y = cls._calculate_start_x_y(ref_side, point_start_xy)
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
@@ -345,15 +348,25 @@ class DoubleCut(BTLxProcessing):
         cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
         if self.is_concave:
-            trim_volume = geometry.copy()
-            for cutting_plane in cutting_planes:
-                trim_volume.trim(cutting_plane)
-            return geometry - trim_volume
+            try:
+                trim_volume = beam.compute_elementgeometry(include_features=False)
+                for cutting_plane in cutting_planes:
+                    trim_volume.trim(cutting_plane)
+                return geometry - trim_volume
+            except Exception as e:
+                raise FeatureApplicationError(
+                    trim_volume, geometry, "Failed to apply concave double cut: {}".format(str(e))
+                )
         else:
-            for cutting_plane in cutting_planes:
-                plane = Plane(cutting_plane.point, -cutting_plane.normal)
-                geometry.trim(plane)
-            return geometry
+            try:
+                for cutting_plane in cutting_planes:
+                    plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                    geometry.trim(plane)
+                return geometry
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cutting_planes, geometry, "Failed to apply convex double cut: {}".format(str(e))
+                )
 
 
     def planes_from_params_and_beam(self, beam):
