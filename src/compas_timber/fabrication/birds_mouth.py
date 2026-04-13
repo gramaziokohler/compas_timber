@@ -572,6 +572,50 @@ class BirdsMouth(BTLxProcessing):
     # Methods
     ########################################################################
 
+    def apply(self, geometry: Brep, beam: Beam) -> Brep:
+        """Apply the feature to the beam geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The beam geometry to be notched.
+        beam : :class:`compas_timber.elements.Beam`
+            The beam that is notched by this instance.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If the cutting planes do not intersect with beam geometry.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The resulting geometry after processing.
+
+        """
+        try:
+            cutting_planes = self.planes_from_params_and_beam(beam)
+        except ValueError as e:
+            raise FeatureApplicationError(
+                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+            )
+        # convert to the local coordinates of the beam
+        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
+
+        # birds mouth is always a concave (v-notch) cut
+        trim_volume = geometry.copy()
+        try:
+            for cutting_plane in cutting_planes:
+                flipped_plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                trim_volume.trim(flipped_plane)
+        except Exception as e:
+            raise FeatureApplicationError(cutting_planes, beam, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
+
+        try:
+            return geometry - trim_volume
+        except Exception as e:
+            raise FeatureApplicationError(trim_volume, beam, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
+
     def planes_from_params_and_beam(self, beam:Beam) -> list[Plane]:
         """Calculates the two cutting planes from the machining parameters in this instance and the given beam.
 
@@ -623,50 +667,6 @@ class BirdsMouth(BTLxProcessing):
         p_rear = planar_surface_point_at(ref_side, self.start_x + dx , self.start_y + self.width)
         p_rear -= ref_side.zaxis * (self.depth)
         return Line(p_apex, p_rear)
-
-    def apply(self, geometry: Brep, beam: Beam) -> Brep:
-        """Apply the feature to the beam geometry.
-
-        Parameters
-        ----------
-        geometry : :class:`~compas.geometry.Brep`
-            The beam geometry to be notched.
-        beam : :class:`compas_timber.elements.Beam`
-            The beam that is notched by this instance.
-
-        Raises
-        ------
-        :class:`~compas_timber.errors.FeatureApplicationError`
-            If the cutting planes do not intersect with beam geometry.
-
-        Returns
-        -------
-        :class:`~compas.geometry.Brep`
-            The resulting geometry after processing.
-
-        """
-        try:
-            cutting_planes = self.planes_from_params_and_beam(beam)
-        except ValueError as e:
-            raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
-            )
-        # convert to the local coordinates of the beam
-        cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
-
-        # birds mouth is always a concave (v-notch) cut
-        trim_volume = geometry.copy()
-        try:
-            for cutting_plane in cutting_planes:
-                flipped_plane = Plane(cutting_plane.point, -cutting_plane.normal)
-                trim_volume.trim(flipped_plane)
-        except Exception as e:
-            raise FeatureApplicationError(cutting_planes, beam, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
-
-        try:
-            return geometry - trim_volume
-        except Exception as e:
-            raise FeatureApplicationError(trim_volume, beam, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
 
     def scale(self, factor: float) -> None:
         """Scale the parameters of the processing by the given factor.
