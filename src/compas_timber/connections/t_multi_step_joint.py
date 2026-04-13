@@ -350,7 +350,7 @@ class TMultiStepJoint(Joint):
         # -- N-1 DoubleCut V-cuts on main beam --
         # First V-cut is computed from geometry; the rest are copies shifted by one step interval each.
         if self._step_count > 1:
-            first_step = DoubleCut.from_planes_and_beam(step_planes, self.main_beam, reorder_planes=False)
+            first_step = DoubleCut.from_planes_and_beam(step_planes, self.main_beam, reorder_planes=False, ref_side_index=(self.main_beam_ref_side_index-1)%4)
             self.main_beam.add_features(first_step)
             self.features.append(first_step)
 
