@@ -100,10 +100,11 @@ class TMultiStepJoint(Joint):
         self._main_beam_ref_side_index = None
 
         self._strut_inclination = None
-        self._strut_length = None
-        self._strut_height = None
-        self._base_planes = None
+        self._step_count = None
+        self._step_delta = None
+        self._adjusted_step_depth = None
 
+        self._base_planes = None
 
         self.features = []
         if self.main_beam and self.cross_beam:
@@ -142,30 +143,26 @@ class TMultiStepJoint(Joint):
         self.riser_angle = self.riser_angle or 90.0
         self._resolve_steps()  # this will also adjust step_depth if it doesn't fit an integer number of steps
 
-    def _calculate_strut_values(self):
-        """Calculate the strut inclination, height, and length based on the geometry of the main and cross beams."""
+    def _resolve_steps(self):
+        """Calculate and store the step count, step delta vector, and adjusted step depth.
+
+        K converts step_depth to the horizontal step_interval along the strut contact line:
+        step_interval = step_depth * K, where K is derived from the two triangle angles at the
+        tread/riser junction (tread_angle on the tread side, complementary angle on the riser side).
+        """
         main_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
         cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
 
-        self._strut_vector = Vector(*cross_vectors(main_ref_side.yaxis, cross_ref_side.zaxis)).unitized()
-        if TOL.is_positive(dot_vectors(main_ref_side.normal, self._strut_vector)):
-            self._strut_vector = -self._strut_vector
+        strut_vector = Vector(*cross_vectors(main_ref_side.yaxis, cross_ref_side.zaxis)).unitized()
+        if TOL.is_positive(dot_vectors(main_ref_side.normal, strut_vector)):
+            strut_vector = -strut_vector
 
         strut_inclination_vector = Vector.cross(-main_ref_side.normal, -cross_ref_side.normal)
         self._strut_inclination = 180 - abs(
             angle_vectors_signed(-main_ref_side.normal, -cross_ref_side.normal, strut_inclination_vector, deg=True)
         )
-        self._strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
-        self._strut_length = self._strut_height / math.sin(math.radians(self._strut_inclination))
-
-    def _resolve_steps(self):
-        """Calculate the number of steps, step interval, adjusted step depth, and strut vector.
-
-        K converts step_depth to the horizontal step_interval along the strut contact line:
-        step_interval = step_depth * K, where K is derived from the two triangle angles at the
-        tread/riser junction (half-inclination on the tread side, complementary angle on the riser side).
-        """
-        self._calculate_strut_values()
+        strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
+        strut_length = strut_height / math.sin(math.radians(self._strut_inclination))
 
         if self.step_shape == StepShapeType.HEEL:
             tread_angle = math.radians(self._strut_inclination - 90.0)
@@ -176,10 +173,10 @@ class TMultiStepJoint(Joint):
         K = 1.0 / math.tan(tread_angle) + 1.0 / math.tan(riser_complement)
 
         # TODO: consider raising a warning instead of silently adjusting the step depth, or at least log the adjustment.
-        self._step_count = max(1, int(round(self._strut_length / (self.step_depth * K))))
-        self._step_interval = self._strut_length / self._step_count
-        self._step_delta = self._strut_vector * self._step_interval
-        self._adjusted_step_depth = self._step_interval / K
+        self._step_count = max(1, int(round(strut_length / (self.step_depth * K))))
+        step_interval = strut_length / self._step_count
+        self._step_delta = strut_vector * step_interval
+        self._adjusted_step_depth = step_interval / K
 
     def _compute_step_displacements(self):
         """Compute per-step BTLx coordinate shifts from the resolved strut vector and step interval."""
