@@ -301,7 +301,7 @@ class DoubleCut(BTLxProcessing):
                 angle = angle_vectors(ref_side.xaxis, -angle_vector, deg=True)
             # HACK: if the angle is equal to 0 or 180, override with 0.1 to avoid failure
             if angle < 0.1 or angle > 179.9:
-                angle = 0.1
+                angle = 1.0
             angles.append(angle)
         return angles
 
