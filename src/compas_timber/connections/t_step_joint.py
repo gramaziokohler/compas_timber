@@ -1,5 +1,6 @@
 import warnings
 
+from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
@@ -258,5 +259,17 @@ class TStepJoint(Joint):
                 if not raise_error:
                     return False
                 raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
+
+        dir_a = elements[0].centerline.direction.unitized()
+        dir_b = elements[1].centerline.direction.unitized()
+        if TOL.is_zero(abs(dot_vectors(dir_a, dir_b))):
+            if not raise_error:
+                return False
+            raise BeamJoiningError(
+                elements,
+                cls,
+                debug_info="TStepJoint requires the beams to meet at a non-perpendicular angle. "
+                           "Use TButtJoint for perpendicular configurations.",
+            )
 
         return True
