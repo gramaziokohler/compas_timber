@@ -1,4 +1,5 @@
 import math
+import warnings
 from copy import deepcopy
 
 from compas.geometry import Plane
@@ -37,16 +38,19 @@ class TMultiStepJoint(Joint):
         Second beam to be joined.
     step_shape : str
         The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP or HEEL.
-        The shape type takes priority: depths irrelevant to the chosen shape are ignored and forced to zero. Defaults to ``StepShapeType.STEP``.
+        Defaults to ``StepShapeType.STEP``.
     step_depth : float, optional
-        Depth of the step or heel cut. This is a targeted depth, the actual depth may be adjusted to fit an integer number of steps.
-        Defaults to a value proportional to the cross beam's cross-section.
+        Targeted depth of the step or heel cut, in model units. Provide either ``step_depth`` or ``step_count``, not both.
+        If neither is provided, defaults to one quarter of the cross beam height.
+        The actual depth may differ slightly from the target because it is adjusted to fit an integer number of steps.
     riser_angle : float, optional
-        Angle of the riser face relative to the horizontal plane, in degrees.
-        Only relevant for STEP shape type; ignored for HEEL where it is forced to 90°. Defaults to 90° (i.e. vertical riser).
+        Angle of the riser face in degrees. Defaults to 90° (vertical riser).
+        For ``StepShapeType.HEEL``, the riser is always perpendicular to the tread by geometric definition;
+        any provided value will be ignored and a :class:`UserWarning` will be issued.
     step_count : int, optional
-        Number of steps to be created. If not provided, it will be calculated based on the provided step_depth and the geometry of the beams.
-        If the provided step_depth results in less than 1 step, it will be adjusted to fit 1 step.
+        Exact number of steps to create. Provide either ``step_count`` or ``step_depth``, not both.
+        When provided, ``step_depth`` is derived exactly from the beam geometry with no rounding.
+        If both are given, ``step_count`` takes priority and a :class:`UserWarning` is issued.
 
 
     Attributes
@@ -58,12 +62,12 @@ class TMultiStepJoint(Joint):
     step_shape : str
         The shape of the step cut. One of :class:`~compas_timber.fabrication.StepShapeType`: STEP or HEEL.
     step_depth : float
-        Depth of the step or heel cut. This is a targeted depth, the actual depth may be adjusted to fit an integer number of steps.
+        Resolved depth of each step or heel cut, in model units. May differ from the constructor argument
+        when it was adjusted to fit an integer number of steps along the strut contact length.
     riser_angle : float
-        Angle of the riser face relative to the horizontal plane, in degrees. Only relevant for STEP shape type; ignored for HEEL where it is forced to 90°.
+        Angle of the riser face in degrees. Always 90° for ``StepShapeType.HEEL``.
     step_count : int
-        Number of steps to be created. If not provided, it will be calculated based on the provided step_depth and the geometry of the beams.
-        If the provided step_depth results in less than 1 step, it will be adjusted to fit 1 step.
+        Resolved number of steps. Always a positive integer.
 
     """
 
@@ -73,9 +77,9 @@ class TMultiStepJoint(Joint):
     def __data__(self):
         data = super(TMultiStepJoint, self).__data__
         data["step_shape"] = self.step_shape
-        data["step_depth"] = self.step_depth
         data["riser_angle"] = self.riser_angle
         data["step_count"] = self.step_count
+        data["step_depth"] = self.step_depth
         return data
 
     # fmt: off
@@ -91,18 +95,24 @@ class TMultiStepJoint(Joint):
     ):
         super(TMultiStepJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
         self.step_shape = step_shape or StepShapeType.STEP
-        # TODO: define priority in case of conflicting inputs (e.g. step_shape = HEEL but riser_angle provided, or step_count provided but step_depth not compatible with it). For now, the shape type takes priority and forces irrelevant parameters to zero or default values.
         self.step_depth = step_depth
-        self.riser_angle = riser_angle if self.step_shape == StepShapeType.STEP else 90.0
+        if self.step_shape == StepShapeType.HEEL and riser_angle is not None and not TOL.is_close(riser_angle, 90.0):
+            warnings.warn(
+                "riser_angle is always 90° for HEEL shape by geometric definition. "
+                "The provided value ({:.1f}°) will be ignored.".format(riser_angle)
+            )
+        # user input attributes, resolved ones are stored in private attributes
+        self.riser_angle = riser_angle
         self.step_count = step_count
 
         self._cross_beam_ref_side_index = None
         self._main_beam_ref_side_index = None
 
-        self._strut_inclination = None
+        self._riser_angle = None
+        self._step_depth = None
         self._step_count = None
         self._step_delta = None
-        self._adjusted_step_depth = None
+        self._strut_inclination = None
 
         self._base_planes = None
 
@@ -136,12 +146,18 @@ class TMultiStepJoint(Joint):
         return self._main_beam_ref_side_index
 
     def _set_unset_attributes(self):
-        """Sets default values for step_depth and riser_angle if not provided."""
+        """Sets default values for step_depth, riser_angle, and step_count if not provided, resolving conflicts."""
         assert self.cross_beam and self.main_beam
         cross_height = self.cross_beam.get_dimensions_relative_to_side(self.cross_beam_ref_side_index)[1]
-        self.step_depth = self.step_depth or cross_height / 4
-        self.riser_angle = self.riser_angle or 90.0
-        self._resolve_steps()  # this will also adjust step_depth if it doesn't fit an integer number of steps
+        if self.step_count is not None and self.step_depth is not None:
+            warnings.warn(
+                "Both step_count and step_depth were provided. "
+                "step_count takes priority; step_depth will be derived from the geometry."
+            )
+        if self.step_count is None and self.step_depth is None:
+            self.step_depth = cross_height / 4
+        self._riser_angle = 90.0 if self.step_shape == StepShapeType.HEEL else (self.riser_angle or 90.0)
+        self._resolve_steps()
 
     def _resolve_steps(self):
         """Calculate and store the step count, step delta vector, and adjusted step depth.
@@ -169,14 +185,26 @@ class TMultiStepJoint(Joint):
         else:
             tread_angle = math.radians(self._strut_inclination / 2.0)
 
-        riser_complement = math.radians(180.0 - self.riser_angle) - tread_angle
+        riser_complement = math.radians(180.0 - self._riser_angle) - tread_angle
         K = 1.0 / math.tan(tread_angle) + 1.0 / math.tan(riser_complement)
 
-        # TODO: consider raising a warning instead of silently adjusting the step depth, or at least log the adjustment.
-        self._step_count = max(1, int(round(strut_length / (self.step_depth * K))))
-        step_interval = strut_length / self._step_count
+        if self.step_count is not None:
+            self._step_count = self.step_count
+            step_interval = strut_length / self._step_count
+            self._step_depth = step_interval / K
+        else:
+            target_depth = self.step_depth
+            self._step_count = max(1, int(round(strut_length / (target_depth * K))))
+            step_interval = strut_length / self._step_count
+            self._step_depth = step_interval / K
+            if abs(self._step_depth - target_depth) > 1e-6:
+                warnings.warn(
+                    "step_depth adjusted from {:.4f} to {:.4f} to fit {:d} step(s).".format(
+                        target_depth, self._step_depth, self._step_count
+                    )
+                )
+
         self._step_delta = strut_vector * step_interval
-        self._adjusted_step_depth = step_interval / K
 
     def _compute_step_displacements(self):
         """Compute per-step BTLx coordinate shifts from the resolved strut vector and step interval."""
@@ -229,7 +257,7 @@ class TMultiStepJoint(Joint):
             tread_0 = Plane(intersection_point, cross_vectors(rotation_axis, main_ref_side.normal))
         else:
             tread_0 = Plane(intersection_point, (cross_ref_side.normal - main_ref_side.normal).unitized())
-        riser_0 = tread_0.rotated(math.radians(180.0 - self.riser_angle), -rotation_axis, intersection_point)
+        riser_0 = tread_0.rotated(math.radians(180.0 - self._riser_angle), -rotation_axis, intersection_point)
         # riser_0 lives at position +1×step_interval so it is co-located with tread_1.
         riser_0.translate(self._step_delta)
 
@@ -266,7 +294,7 @@ class TMultiStepJoint(Joint):
         """
         cross_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
         butt_plane = Plane(cross_ref_side.point, -cross_ref_side.normal)
-        return butt_plane.translated(butt_plane.normal * self._adjusted_step_depth)
+        return butt_plane.translated(butt_plane.normal * self._step_depth)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
