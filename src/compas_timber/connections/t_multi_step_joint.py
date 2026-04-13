@@ -189,7 +189,7 @@ class TMultiStepJoint(Joint):
         K = 1.0 / math.tan(tread_angle) + 1.0 / math.tan(riser_complement)
 
         if self.step_count is not None:
-            self._step_count = self.step_count
+            self._step_count = int(self.step_count)
             step_interval = strut_length / self._step_count
             self._step_depth = step_interval / K
         else:
