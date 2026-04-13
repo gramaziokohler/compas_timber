@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import math
+import typing
 
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -8,18 +11,19 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_projected
-from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
-from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
 from .btlx import OrientationType
+
+if typing.TYPE_CHECKING:
+    from compas_timber.elements import Beam
 
 
 class BirdsMouth(BTLxProcessing):
