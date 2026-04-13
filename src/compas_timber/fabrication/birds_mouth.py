@@ -516,14 +516,7 @@ class BirdsMouth(BTLxProcessing):
     def _get_default_ref_side_index(planes, beam):
         """Return the ref_side whose normal is most aligned with the average of the two plane normals."""
         avg_normal = planes[0].normal + planes[1].normal
-        best_index = 0
-        best_dot = -1.0
-        for i, ref_side in enumerate(beam.ref_sides[:4]):
-            d = abs(dot_vectors(ref_side.zaxis, avg_normal))
-            if d > best_dot:
-                best_dot = d
-                best_index = i
-        return best_index
+        return min(range(4), key=lambda i: angle_vectors(avg_normal, beam.ref_sides[i].normal))
 
     @staticmethod
     def _calculate_orientation(beam, planes):
@@ -641,11 +634,11 @@ class BirdsMouth(BTLxProcessing):
         ridge_line = self._get_ridge_line_from_params_and_beam(beam)
         rotation_axis = ridge_line.direction if self.orientation == OrientationType.END else -ridge_line.direction
 
-        plane_1 = Plane(ridge_line.start, ref_frame.zaxis)
-        plane_1.rotate(math.radians(self.inclination1), rotation_axis, point=ridge_line.start)
+        plane_1 = Plane(ridge_line.end, -ref_frame.zaxis)
+        plane_1.rotate(math.radians(self.inclination2), rotation_axis, point=ridge_line.end)
 
-        plane_2 = Plane(ridge_line.end, -ref_frame.zaxis)
-        plane_2.rotate(math.radians(self.inclination2), rotation_axis, point=ridge_line.end)
+        plane_2 = Plane(ridge_line.start, ref_frame.zaxis)
+        plane_2.rotate(math.radians(self.inclination1), rotation_axis, point=ridge_line.start)
 
         return [plane_1, plane_2]
 
@@ -665,7 +658,7 @@ class BirdsMouth(BTLxProcessing):
         p_apex = planar_surface_point_at(ref_side, self.start_x, self.start_y)
         p_apex -= ref_side.zaxis * self.start_depth
 
-        angle = self.angle if self.orientation == OrientationType.START else 180.0 - self.angle
+        angle = self.angle if self.orientation == OrientationType.END else 180.0 - self.angle
         dx = self.width / math.tan(math.radians(angle))
 
         p_rear = planar_surface_point_at(ref_side, self.start_x + dx , self.start_y + self.width)
