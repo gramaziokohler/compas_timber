@@ -96,6 +96,9 @@ class TMultiStepJoint(Joint):
         self.riser_angle = riser_angle if self.step_shape == StepShapeType.STEP else 90.0
         self.step_count = step_count
 
+        self._cross_beam_ref_side_index = None
+        self._main_beam_ref_side_index = None
+
         self._strut_inclination = None
         self._strut_length = None
         self._strut_height = None
@@ -117,18 +120,20 @@ class TMultiStepJoint(Joint):
 
     @property
     def cross_beam_ref_side_index(self):
-        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        return ref_side_index
+        if self._cross_beam_ref_side_index is None:
+            ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+            self._cross_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return self._cross_beam_ref_side_index
 
     @property
     def main_beam_ref_side_index(self):
-        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        ref_side_dict = beam_ref_side_incidence_with_vector(
-            self.main_beam, cross_beam_ref_side.normal, ignore_ends=True
-        )
-        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
-        return ref_side_index
+        if self._main_beam_ref_side_index is None:
+            cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+            ref_side_dict = beam_ref_side_incidence_with_vector(
+                self.main_beam, cross_beam_ref_side.normal, ignore_ends=True
+            )
+            self._main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return self._main_beam_ref_side_index
 
     def _calculate_strut_values(self):
         """Calculate the strut inclination, height, and length based on the geometry of the main and cross beams."""
