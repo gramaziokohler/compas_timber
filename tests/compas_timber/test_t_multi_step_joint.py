@@ -27,6 +27,7 @@ def beams():
     return main_beam, cross_beam
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_creation_default_args(beams):
     """TMultiStepJoint created with only beams resolves all defaults."""
     main_beam, cross_beam = beams
@@ -38,6 +39,7 @@ def test_creation_default_args(beams):
     assert joint._riser_angle == 90.0
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_creation_explicit_step_depth(beams):
     """step_depth drives step count when step_count is not provided."""
     main_beam, cross_beam = beams
@@ -126,6 +128,7 @@ def test_serialization_step_count_driven(beams):
     assert data["step_depth"] is None
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_model_roundtrip(beams):
     """Full JSON round-trip via TimberModel restores the joint and its resolved geometry."""
     main_beam, cross_beam = beams
@@ -164,6 +167,7 @@ def test_check_elements_compatibility_accepts_angled_beams(beams):
     assert len(cross_beam.features) > 0
 
 
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_add_features_heel_shape(beams):
     """add_features() runs without error for HEEL shape and populates features on both beams."""
     main_beam, cross_beam = beams
