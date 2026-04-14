@@ -6,7 +6,8 @@ from typing import List
 from typing import cast
 
 from compas.geometry import Point
-from compas.tolerance import TOL, Tolerance
+from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 from compas_model.elements import Element
 from compas_model.models import Model
 
