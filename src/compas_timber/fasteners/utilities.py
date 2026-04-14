@@ -2,7 +2,6 @@ from compas.geometry import angle_vectors
 
 
 def beam_ref_side_incidence_vector(beam, vector, ignore_ends=True):
-
     if ignore_ends:
         ref_sides = beam.ref_sides[:4]
     else:

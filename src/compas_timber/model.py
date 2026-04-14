@@ -377,7 +377,6 @@ class TimberModel(Model):
             self._graph.edge_attribute(edge, "candidates", candidate)
 
     def add_fastener(self, fastener, elements: list):
-
         # 1: place all fastener parts to the target_frames
         fastener_instances = fastener.get_fastener_instances()
         fasteners_guids = []
@@ -393,12 +392,15 @@ class TimberModel(Model):
                 if element_a is element_b or ia < ib:
                     continue
                 interaction = self.has_interaction(element_a, element_b)
-                print("interaction: ", interaction)
                 if interaction:
                     edge = (element_a.graphnode, element_b.graphnode)
                 else:
                     edge = self.add_interaction(element_a, element_b)
-                self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
+                try:
+                    self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
+                except:
+                    edge = (element_b.graphnode, element_a.graphnode)
+                    self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
 
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.

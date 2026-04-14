@@ -9,11 +9,12 @@ from compas.geometry import Transformation
 from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import Pocket
 
+from .part import Part
 from .plate_hole import PlateHole
 from .utilities import beam_ref_side_index
 
 
-class RectangularPlate:
+class RectangularPlate(Part):
     """
     Describes a rectangular plate that can be used as part of a fastener.
 
