@@ -194,6 +194,7 @@ class LMiterJoint(Joint):
         """
         assert self.beam_a and self.beam_b
         start_a, start_b = None, None
+        plane_a, plane_b = None, None
         try:
             if self.cutoff:
                 plane_a = self._get_cutoff_plane()
