@@ -145,7 +145,7 @@ class JackRafterCut(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0, **kwargs):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=3, **kwargs):
         """Create a JackRafterCut instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -155,7 +155,7 @@ class JackRafterCut(BTLxProcessing):
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         ref_side_index : int, optional
-            The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+            The reference side index of the beam to be cut. Default is 3 (i.e. RS4).
 
         Returns
         -------
