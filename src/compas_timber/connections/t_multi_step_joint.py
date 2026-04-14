@@ -14,7 +14,7 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import StepShapeType
 from compas_timber.fabrication.birds_mouth import BirdsMouth
 from compas_timber.fabrication.double_cut import DoubleCut
-from compas_timber.fabrication.jack_cut import JackRafterCutProxy
+from compas_timber.fabrication.jack_cut import JackRafterCut
 
 from .joint import Joint
 from .solver import JointTopology
@@ -337,13 +337,13 @@ class TMultiStepJoint(Joint):
 
         # -- butt cut on main beam end face --
         butt_plane = self._get_butt_plane()
-        cut = JackRafterCutProxy.from_plane_and_beam(butt_plane, self.main_beam)
+        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam)
         self.main_beam.add_features(cut)
         self.features.append(cut)
 
         # -- single endpoint cuts --
         for plane in cut_planes:
-            cut = JackRafterCutProxy.from_plane_and_beam(plane, self.main_beam)
+            cut = JackRafterCut.from_plane_and_beam(plane, self.main_beam)
             self.main_beam.add_features(cut)
             self.features.append(cut)
 
