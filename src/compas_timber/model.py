@@ -394,13 +394,13 @@ class TimberModel(Model):
                 interaction = self.has_interaction(element_a, element_b)
                 if interaction:
                     edge = (element_a.graphnode, element_b.graphnode)
+                    if not self._graph.has_edge(edge):
+                        edge = (element_b.graphnode, element_a.graphnode)
+
                 else:
                     edge = self.add_interaction(element_a, element_b)
-                try:
-                    self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
-                except:
-                    edge = (element_b.graphnode, element_a.graphnode)
-                    self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
+
+                self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
 
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.
@@ -415,7 +415,7 @@ class TimberModel(Model):
             The first element.
         element_b : :class:`~compas_timber.elements.TimberElement`
             The second element.
-        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
+        segments : list[:class:`~compas_timber.structurñal.StructuralSegment`]
             The structural segments to add.
         """
         edge = (element_a.graphnode, element_b.graphnode)

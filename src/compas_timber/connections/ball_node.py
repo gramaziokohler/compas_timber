@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
+from compas_timber.fasteners import Fastener
+from compas_timber.fasteners.ball_node import BallNode
+from compas_timber.fasteners.ball_node import BallNodePlate
+from compas_timber.fasteners.ball_node import BallNodeRod
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
 from .solver import JointTopology
 
 
-class BallNodeJoint(JointFastener, Joint):
+class BallNodeJoint(Joint):
     """Represents a ball node type joint which joins the ends of multiple beams,
     trimming the main beam.
 
@@ -45,49 +52,21 @@ class BallNodeJoint(JointFastener, Joint):
 
         return data
 
-    def __init__(self, beams: list[Beam], ball_diameter: float = 10, rods_length: float = 30, **kwargs):
+    def __init__(self, beams: list[Beam], ball_diameter: float = 100, rods_length: float = 300, **kwargs):
+        super().__init__(elements=beams, **kwargs)
         self.beams = beams
-        self._beam_guids = []
-        base_fastener = BallNodeFastener.from_joint(self, ball_diameter, rods_length)
-        super().__init__(base_fastener=base_fastener, elements=self.beams, **kwargs)
-        self._beam_guids = kwargs.get("beam_guids", None) or [str(beam.guid) for beam in self.beams]
-        self._fastener_guid = kwargs.get("fastener_guid", None)
+        self.ball_diameter = ball_diameter
+        self.rods_length = rods_length
 
     @property
     def elements(self):
         return list(self.beams) + self.generated_elements
 
-    @classmethod
-    def create(cls, model, *elements, **kwargs):
-        """Creates an instance of the BallNodeJoint and creates the new connection in `model`.
-
-        This differs fom the generic `Joint.create()` method in that it passes the `beams` to
-        the constructor of the BallNodeJoint as a list instead of as separate arguments.
-
-        `beams` are expected to have been added to `model` before calling this method.
-
-        This code does not verify that the given beams are adjacent and/or lie in a topology which allows connecting
-        them. This is the responsibility of the calling code.
-
-        A `ValueError` is raised if `beams` contains less than two `Beam` objects.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
-        elements : list(:class:`~compas_timber.elements.Beam`)
-            A list containing beams that whould be joined together
-
-        Returns
-        -------
-        :class:`compas_timber.connections.Joint`
-            The instance of the created joint.
-
-        """
-        joint = cls(elements, **kwargs)
-        print(joint)
-        model.add_joint(joint)
-        return joint
+    @property
+    def location(self):
+        """Returns the location of the joint, which is the average of the endpoints of the beams."""
+        point = Point(*intersection_line_line(self.beams[0].centerline, self.beams[1].centerline)[0])
+        return point
 
     @property
     def node_point(self):
@@ -103,38 +82,40 @@ class BallNodeJoint(JointFastener, Joint):
         self._node_point = cpt * (1.0 / count)
         return self._node_point
 
-    def place_fasteners_instances(self):
-        target_frame = Frame.worldXY()
-        target_frame.point = self.node_point
-        fastener_instance = self.base_fastener.compute_joint_instance(target_frame)
-        self._fasteners.append(fastener_instance)
+    def create_fastener(self):
+        ball_node = BallNode(diameter=self.ball_diameter)
 
-    def compute_fastener_target_frames(self) -> list[Frame]:
-        target_frame = Frame.worldXY()
-        return [target_frame]
+        ball_rods = []
+        for beam in self.beams:
+            rod_direction = (beam.centerline.midpoint - self.location).unitized()
+            plane = Plane(Point(0, 0, 0), rod_direction)
+            rod_frame = Frame.from_plane(plane)
+            rod_frame.yaxis = beam.frame.zaxis
+            rod_frame.translate(rod_direction * self.ball_diameter / 2)
+            rod = BallNodeRod(length=self.rods_length, diameter=self.ball_diameter / 3, frame=rod_frame)
+            ball_rods.append(rod)
 
-    def compute_fasteners_interactions(self) -> list[tuple]:
-        """
-        Computes the interactions between fasteners and beams and fastener and sub-fastnert participating to the joint.
-        """
-        interactions = []
-        # beam ---- fastener ---- beam
-        for fastener in self._fasteners:
-            for beam in self.beams:
-                interactions.append((beam, fastener))
-            # fastener ---- sub_fastener ---- sub-fastener
-            interactions.extend(fastener.compute_sub_fasteners_interactions())
-        return interactions
+        self.ball_plates = []
+        for rod in ball_rods:
+            plate_frame = rod.frame.copy()
+            plate_frame.translate(plate_frame.zaxis * rod.length)
+            plate = BallNodePlate(20, plate_frame)
+            self.ball_plates.append(plate)
+        fastener = Fastener(ball_node)
+        for rod, plate in zip(ball_rods, self.ball_plates):
+            fastener.add_part(rod)
+            fastener.add_child_part(plate, rod)
+
+        fastener.target_frames = [Frame(self.node_point, [1, 0, 0], [0, 1, 0])]
+
+        return fastener
+
+    def add_extensions(self):
+        pass
 
     def add_features(self):
         """Adds the features of the joint as generated by `FastenerTimberInterface` to the timber elements.
         In this joint, the fastener adapt to the beams, therefore, the joint creates the FastenerTimberInterface
         and adds it to the fastener.
-
         """
-        for fastener in self.fasteners:
-            fastener.apply_processings(self)
-
-    def restore_beams_from_keys(self, model):
-        self.beams = [model[guid] for guid in self._beam_guids]
-        self.fastener = model[self._fastener_guid]
+        pass
