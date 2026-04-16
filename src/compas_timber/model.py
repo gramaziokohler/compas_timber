@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from multiprocessing import Value
 from typing import Iterable
 from typing import List
 from typing import cast
@@ -22,6 +23,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.errors import FastenerApplicationError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
@@ -377,6 +379,24 @@ class TimberModel(Model):
             self._graph.edge_attribute(edge, "candidates", candidate)
 
     def add_fastener(self, fastener, elements: list):
+        """
+        Adds a fastener to the model.
+
+        This method adds the "fasteners" attribute to the edge connecting the specified elements.
+        If the two elements are not yet connected by an edge, a new edge will be created between them.
+
+        The fasteners added to the model are copies of the specified fastener instance, with one copy created per target frame.
+
+
+        Parameters
+        ----------
+
+        fastener : :class:`~compas_timber.fasteners.Fastener`
+            The fastener to be added to the model and connecting the elements.
+        elements : list[:class:`~compas_timber.elements.Element`]
+            The elements to be connected by the fastener.
+
+        """
         # 1: place all fastener parts to the target_frames
         fastener_instances = fastener.get_fastener_instances()
         fasteners_guids = []
@@ -415,7 +435,7 @@ class TimberModel(Model):
             The first element.
         element_b : :class:`~compas_timber.elements.TimberElement`
             The second element.
-        segments : list[:class:`~compas_timber.structurñal.StructuralSegment`]
+        segments : list[:class:`~compas_timber.structural.StructuralSegment`]
             The structural segments to add.
         """
         edge = (element_a.graphnode, element_b.graphnode)
@@ -642,7 +662,22 @@ class TimberModel(Model):
                     raise bje
         return errors
 
-    def process_fasteners(self):
+    def process_fasteners(self, stop_on_first_error=False):
+        """
+        Process the fasteners of the model.
+        Applies the features of the fasteners in the model to their respective elements.
+
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.FastenerApplicationError`]
+            A list of errors that occurred during the fastener application process.
+        """
+        errors = []
         fasteners = self.fasteners
 
         for fastener in fasteners:
@@ -660,8 +695,15 @@ class TimberModel(Model):
                     elements.append(element_a)
                 if element_b not in elements:
                     elements.append(element_b)
+            try:
+                fastener.apply_features(elements)
+            except ValueError as ve:
+                bje = FastenerApplicationError(elements, fastener, message=str(ve))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
 
-            fastener.apply_features(elements)
+            return errors
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.

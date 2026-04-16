@@ -45,7 +45,6 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
-    "TButtJointPlateFastener",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",

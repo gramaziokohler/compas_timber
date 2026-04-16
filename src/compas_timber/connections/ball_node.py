@@ -84,6 +84,24 @@ class BallNodeJoint(Joint):
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
+        """
+        Creates an instance of the BallNodeJont and create the new connections in the `model`.
+        It also builds and adds to the model the fastener relative to this joint.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joing belong.
+        elements : list(:class:`~compas_timber.elements.Beam`)
+            A list containing beams that whould be joined together
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         fastener = joint.create_fastener()
@@ -91,6 +109,14 @@ class BallNodeJoint(Joint):
         return joint
 
     def create_fastener(self):
+        """
+        Create the fastener specific for this joint.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Fastener`
+            The fastener created for this joint.
+        """
         # Crete the fastener
         ball_node = BallNode(diameter=self.ball_diameter)
         fastener = Fastener(ball_node)
