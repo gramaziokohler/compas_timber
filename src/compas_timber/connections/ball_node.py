@@ -8,9 +8,9 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
 from compas_timber.fasteners import Fastener
-from compas_timber.fasteners.ball_node import BallNode
-from compas_timber.fasteners.ball_node import BallNodePlate
-from compas_timber.fasteners.ball_node import BallNodeRod
+from compas_timber.fasteners.ball_node_fastener import BallNode
+from compas_timber.fasteners.ball_node_fastener import BallNodePlate
+from compas_timber.fasteners.ball_node_fastener import BallNodeRod
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
@@ -52,7 +52,7 @@ class BallNodeJoint(Joint):
 
         return data
 
-    def __init__(self, beams: list[Beam], ball_diameter: float = 100, rods_length: float = 300, **kwargs):
+    def __init__(self, beams: list[Beam], ball_diameter: float = 100, rods_length: float = 200, **kwargs):
         super().__init__(elements=beams, **kwargs)
         self.beams = beams
         self.ball_diameter = ball_diameter
@@ -82,32 +82,42 @@ class BallNodeJoint(Joint):
         self._node_point = cpt * (1.0 / count)
         return self._node_point
 
-    def create_fastener(self):
-        ball_node = BallNode(diameter=self.ball_diameter)
+    @classmethod
+    def create(cls, model, *elements, **kwargs):
+        joint = cls(*elements, **kwargs)
+        model.add_joint(joint)
+        fastener = joint.create_fastener()
+        model.add_fastener(fastener, *elements)
+        return joint
 
+    def create_fastener(self):
+        # Crete the fastener
+        ball_node = BallNode(diameter=self.ball_diameter)
+        fastener = Fastener(ball_node)
+
+        # Build the rods and plates
         ball_rods = []
+        self.ball_plates = []
         for beam in self.beams:
-            rod_direction = (beam.centerline.midpoint - self.location).unitized()
+            rod_direction = (beam.centerline.midpoint - self.node_point).unitized()
             plane = Plane(Point(0, 0, 0), rod_direction)
             rod_frame = Frame.from_plane(plane)
+            rod_frame.xaxis = beam.frame.yaxis
             rod_frame.yaxis = beam.frame.zaxis
             rod_frame.translate(rod_direction * self.ball_diameter / 2)
             rod = BallNodeRod(length=self.rods_length, diameter=self.ball_diameter / 3, frame=rod_frame)
             ball_rods.append(rod)
 
-        self.ball_plates = []
-        for rod in ball_rods:
             plate_frame = rod.frame.copy()
             plate_frame.translate(plate_frame.zaxis * rod.length)
-            plate = BallNodePlate(20, plate_frame)
+            plate = BallNodePlate(beam.width, beam.height, 20, plate_frame, plate_depth=300, rod=rod, ball=ball_node)
             self.ball_plates.append(plate)
-        fastener = Fastener(ball_node)
-        for rod, plate in zip(ball_rods, self.ball_plates):
+
             fastener.add_part(rod)
             fastener.add_child_part(plate, rod)
 
+        # Set the target frame
         fastener.target_frames = [Frame(self.node_point, [1, 0, 0], [0, 1, 0])]
-
         return fastener
 
     def add_extensions(self):

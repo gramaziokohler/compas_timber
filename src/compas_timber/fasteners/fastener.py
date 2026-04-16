@@ -52,36 +52,6 @@ class Fastener:
             geometries.append(part_geometry)
         return geometries
 
-    @classmethod
-    def from_library(cls, library_element) -> Fastener:
-        """
-        Create a fastener from the library.
-
-        This method is called by `compas_timber.model` when creating a fastener from the library.
-
-        Returns
-        -------
-        Fastener
-            The fastener created from the library.
-        """
-        frame = Frame.worldXY()
-        # Load the geometry of the perforated angle bracket from the STEP file
-        # NOTE: the path is relative to this module file so it works when the
-        # package is installed.
-        here = os.path.dirname(__file__)
-        step_path = os.path.join(here, f"fasteners_library/{library_element.value}")
-
-        if not os.path.exists(step_path):
-            raise FileNotFoundError("STEP file for perforated angle bracket not found: {}".format(step_path))
-
-        mesh = Mesh.from_stl(step_path)
-        # brep = Brep.from_step(step_path)
-        # print(brep)
-        print(mesh)
-        part = GeometryPart(geometry=mesh)
-
-        return cls(main_part=part, frame=frame)
-
     def copy(self) -> Fastener:
         new_fastener = Fastener(self.main_part)
         new_fastener.frame = self.frame.copy()
@@ -174,36 +144,3 @@ class Fastener:
         """
         for part in self.parts:
             part.apply_features(elements)
-
-
-class GeometryPart:
-    """
-    This fasteners part contains only the geometry, of the fastener.
-    """
-
-    def __init__(self, geometry, frame=None):
-        self.frame = frame or Frame.worldXY()
-        self._geometry = geometry
-
-    @property
-    def frame(self) -> Frame:
-        return self._frame
-
-    @frame.setter
-    def frame(self, value: Frame):
-        if not isinstance(value, Frame):
-            raise ValueError("Frame should be a Frame.")
-        self._frame = value
-
-    @property
-    def geometry(self):
-        geometry = self._geometry.copy()
-        transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
-        geometry.transform(transformation)
-        return geometry
-
-    def copy(self):
-        return GeometryPart(self._geometry.copy(), self.frame.copy())
-
-    def apply_features(self, elements):
-        pass

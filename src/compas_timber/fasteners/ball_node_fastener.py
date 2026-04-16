@@ -1,4 +1,5 @@
 from compas.geometry import Box
+from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
@@ -6,6 +7,7 @@ from compas.geometry import Sphere
 from compas.geometry import dot_vectors
 
 from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import Slot
 
 from .part import Part
 
@@ -75,9 +77,14 @@ class BallNodeRod(Part):
 
 
 class BallNodePlate(Part):
-    def __init__(self, thickness, frame):
+    def __init__(self, x_size, y_size, thickness, frame, plate_depth, rod, ball):
+        self.x_size = x_size
+        self.y_size = y_size
         self.frame = frame
         self.thicknees = thickness
+        self.plate_depth = plate_depth
+        self.rod = rod
+        self.ball = ball
 
     @property
     def frame(self):
@@ -91,13 +98,23 @@ class BallNodePlate(Part):
 
     @property
     def geometry(self):
-        box = Box(100, 100, self.thicknees, frame=self.frame)
+        # cap plate
+        box = Box(self.x_size, self.y_size, self.thicknees, frame=self.frame)
         box.frame.point += self.frame.zaxis * self.thicknees / 2
         box_brep = box.to_brep()
-        return box_brep
+
+        # slot_plate
+        slot_plate_frame = self.frame.copy()
+        slot_plate_frame.translate(slot_plate_frame.zaxis * (self.thicknees + self.plate_depth / 2))
+        box = Box(self.thicknees, self.y_size, self.plate_depth, frame=slot_plate_frame)
+        slot_brep = box.to_brep()
+
+        full_brep = Brep.from_boolean_union(box_brep, slot_brep)[0]
+        print(full_brep)
+        return full_brep
 
     def copy(self):
-        plate = BallNodePlate(self.thicknees / (2), self.frame.copy())
+        plate = BallNodePlate(self.x_size, self.y_size, self.thicknees / (2), self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
         return plate
 
     def apply_features(self, elements):
@@ -108,7 +125,17 @@ class BallNodePlate(Part):
         for ele in elements:
             if dot_vectors(ele.frame.xaxis, cutting_plane.normal) >= 0.8:
                 cutting_plane.normal *= -1
+
+                # jack rafter cut
                 jrc = JackRafterCut.from_plane_and_beam(cutting_plane, ele)
                 ele.add_feature(jrc)
                 features.append(jrc)
+
+                # slot
+                plane = Plane(self.frame.point, self.frame.xaxis)
+                slot_depth = self.plate_depth + self.thicknees + self.rod.length + self.ball.radius
+                slot = Slot.from_plane_and_beam(plane, ele, slot_depth, self.thicknees)
+                ele.add_feature(slot)
+                features.append(slot)
+
         return features
