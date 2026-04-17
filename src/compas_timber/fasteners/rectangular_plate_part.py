@@ -59,10 +59,10 @@ class RectangularPlate(Part):
 
     """
 
-    def __init__(self, width: float, height: float, thickeness: float, frame: Frame = Frame.worldXY(), recess: float = 0, recess_offset: float = 0):
+    def __init__(self, width: float, height: float, thickness: float, frame: Frame = Frame.worldXY(), recess: float = 0, recess_offset: float = 0):
         self.width = width
         self.height = height
-        self.thickness = thickeness
+        self.thickness = thickness
         self.holes = []
         self.frame = frame
         self.recess = recess

@@ -88,7 +88,6 @@ class ButtJoint(Joint):
         butt_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
-        base_fastener: Optional[Fastener] = None,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)

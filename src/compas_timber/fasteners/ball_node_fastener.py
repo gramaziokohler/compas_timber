@@ -1,15 +1,10 @@
-import math
-
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Sphere
-from compas.geometry import Vector
-from compas.geometry import dot_vectors
 
-from compas_timber.elements.beam import Beam
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Slot
 

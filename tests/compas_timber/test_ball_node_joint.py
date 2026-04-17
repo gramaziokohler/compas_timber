@@ -7,14 +7,14 @@ from compas_timber.fasteners import Fastener
 
 
 def test_ball_node_joint():
-
     centerlines = [Line([1, 1, 1], [100, 100, 100]), Line([1, 1, 1], [100, -50, 30]), Line([1, 1, 1], [-100, -20, -60]), Line([1, 1, 1], [-100, 100, 80])]
     beams = [Beam.from_centerline(centerline, 10, 30) for centerline in centerlines]
 
     model = TimberModel()
-    model.add_elements(beams)
+    for beam in beams:
+        model.add_element(beam)
 
-    joint = BallNodeJoint.create(model, beams, ball_diameter=8, rods_length=10)
+    joint = BallNodeJoint.create(model, beams, ball_diameter=8, rods_length=10, plate_thickness=2, plate_depth=10)
     assert joint
 
     model.process_joinery()
@@ -35,6 +35,7 @@ def test_ball_node_joint():
     assert all(isinstance(beam, Beam) for beam in model_beams)
 
     for beam in model_beams:
-        print(beam.features)
-        print(beam)
         assert len(beam.features) == 2
+        feature_names = [type(f).__name__ for f in beam.features]
+        assert "Slot" in feature_names
+        assert "JackRafterCut" in feature_names

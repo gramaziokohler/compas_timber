@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import os
 import uuid
 from typing import Optional
 
-from compas.datastructures import Mesh
 from compas.geometry import Frame
 from compas.geometry import Transformation
 

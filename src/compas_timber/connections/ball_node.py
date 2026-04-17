@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -104,7 +103,6 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         fastener = joint.create_fastener()
