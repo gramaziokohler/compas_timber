@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
@@ -52,11 +53,13 @@ class BallNodeJoint(Joint):
 
         return data
 
-    def __init__(self, beams: list[Beam], ball_diameter: float = 100, rods_length: float = 200, **kwargs):
+    def __init__(self, beams: list[Beam], ball_diameter: float = 8, rods_length: float = 10, plate_thickness=2, plate_depth=10, **kwargs):
         super().__init__(elements=beams, **kwargs)
         self.beams = beams
         self.ball_diameter = ball_diameter
         self.rods_length = rods_length
+        self.plate_thickness = plate_thickness
+        self.plate_depth = plate_depth
 
     @property
     def elements(self):
@@ -122,21 +125,30 @@ class BallNodeJoint(Joint):
         fastener = Fastener(ball_node)
 
         # Build the rods and plates
-        ball_rods = []
+        self.ball_rods = []
         self.ball_plates = []
+
         for beam in self.beams:
-            rod_direction = (beam.centerline.midpoint - self.node_point).unitized()
+            rod_direction = beam.centerline.direction
+
+            if not self._is_beam_pointing_outwards(beam):
+                rod_direction *= -1
+
             plane = Plane(Point(0, 0, 0), rod_direction)
             rod_frame = Frame.from_plane(plane)
             rod_frame.xaxis = beam.frame.yaxis
             rod_frame.yaxis = beam.frame.zaxis
-            rod_frame.translate(rod_direction * self.ball_diameter / 2)
-            rod = BallNodeRod(length=self.rods_length, diameter=self.ball_diameter / 3, frame=rod_frame)
-            ball_rods.append(rod)
+
+            if not self._is_beam_pointing_outwards(beam):
+                rod_frame.yaxis *= -1
+
+            rod_frame.translate(rod_frame.zaxis * self.ball_diameter / 2)
+            rod = BallNodeRod(length=self.rods_length, diameter=self.ball_diameter / 3, beam=beam, frame=rod_frame)
+            self.ball_rods.append(rod)
 
             plate_frame = rod.frame.copy()
             plate_frame.translate(plate_frame.zaxis * rod.length)
-            plate = BallNodePlate(beam.width, beam.height, 20, plate_frame, plate_depth=300, rod=rod, ball=ball_node)
+            plate = BallNodePlate(beam.width, beam.height, self.plate_thickness, plate_frame, plate_depth=self.plate_depth, rod=rod, ball=ball_node)
             self.ball_plates.append(plate)
 
             fastener.add_part(rod)
@@ -145,6 +157,11 @@ class BallNodeJoint(Joint):
         # Set the target frame
         fastener.target_frames = [Frame(self.node_point, [1, 0, 0], [0, 1, 0])]
         return fastener
+
+    def _is_beam_pointing_outwards(self, beam):
+        """Check if the beam is pointing outwards from the node point."""
+        beam_direction = beam.centerline.direction
+        return beam_direction.dot(Vector.from_start_end(self.location, beam.centerline.midpoint)) > 0
 
     def add_extensions(self):
         pass

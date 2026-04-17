@@ -1,11 +1,15 @@
+import math
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Sphere
+from compas.geometry import Vector
 from compas.geometry import dot_vectors
 
+from compas_timber.elements.beam import Beam
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Slot
 
@@ -46,13 +50,14 @@ class BallNode(Part):
 
 
 class BallNodeRod(Part):
-    def __init__(self, length: float, diameter: float, frame: Frame = Frame.worldXY()):
+    def __init__(self, length: float, diameter: float, beam, frame: Frame = Frame.worldXY()):
         self.length = length
         self.diameter = diameter
         self.frame = frame
+        self.referenced_beam = beam
 
     def copy(self):
-        rod = BallNodeRod(self.length, self.diameter, self.frame.copy())
+        rod = BallNodeRod(self.length, self.diameter, self.referenced_beam, self.frame.copy())
         return rod
 
     @property
@@ -110,7 +115,6 @@ class BallNodePlate(Part):
         slot_brep = box.to_brep()
 
         full_brep = Brep.from_boolean_union(box_brep, slot_brep)[0]
-        print(full_brep)
         return full_brep
 
     def copy(self):
@@ -118,12 +122,11 @@ class BallNodePlate(Part):
         return plate
 
     def apply_features(self, elements):
-        cutting_plane = Plane(self.frame.point, self.frame.zaxis)
-        cutting_plane.translate(self.frame.zaxis * self.thicknees)
-
         features = []
         for ele in elements:
-            if dot_vectors(ele.frame.xaxis, cutting_plane.normal) >= 0.8:
+            if ele is self.rod.referenced_beam:
+                cutting_plane = Plane(self.frame.point, self.frame.zaxis)
+                cutting_plane.translate(self.frame.zaxis * self.thicknees)
                 cutting_plane.normal *= -1
 
                 # jack rafter cut
