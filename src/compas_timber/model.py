@@ -702,7 +702,7 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
 
-            return errors
+        return errors
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.

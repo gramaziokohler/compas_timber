@@ -2,11 +2,15 @@ from compas.geometry import Point
 from compas.geometry import Frame
 from compas.geometry import Line
 
+from compas_timber.model import TimberModel
+from compas_timber.elements import Beam
+from compas_timber.connections import TButtJoint
 from compas_timber.fasteners import RectangularPlate
 from compas_timber.fasteners import PlateHole
 from compas_timber.fasteners import BallNode
 from compas_timber.fasteners import BallNodeRod
 from compas_timber.fasteners import BallNodePlate
+from compas_timber.fasteners import Fastener
 
 
 def test_rectangular_plate():
@@ -50,3 +54,39 @@ def test_plate_hole_dirlling_line():
     test_line = Line(Point(0, 0, 0), Point(0, 0, -10))
 
     assert test_line == hole.drilling_line
+
+
+def test_rect_plate_features():
+
+    model = TimberModel()
+    cross_beam = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
+    main_beam = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
+
+    model.add_elements([cross_beam, main_beam])
+
+    joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
+
+    plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
+    hole1 = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
+    plate.add_hole(hole1)
+    fastener = Fastener(main_part=plate)
+    fastener.target_frames = [
+        Frame(Point(0, -5, 20), [1, 0, 0], [0, 0, 1]),
+        Frame(Point(0, 5, 20), [-1, 0, 0], [0, 0, 1]),
+    ]
+
+    model.add_fastener(fastener, [main_beam, cross_beam])
+
+    model.process_fasteners()
+
+    assert len(cross_beam.features) == 4
+    features_names = [type(f).__name__ for f in cross_beam.features]
+    assert features_names.count("Drilling") == 2
+    assert features_names.count("Pocket") == 2
+
+    model.process_joinery()
+    assert len(cross_beam.features) == 5
+    features_names = [type(f).__name__ for f in cross_beam.features]
+    assert features_names.count("Drilling") == 2
+    assert features_names.count("Pocket") == 2
+    assert features_names.count("Lap") == 1
