@@ -7,9 +7,6 @@ from compas_timber.elements import Beam
 from compas_timber.connections import TButtJoint
 from compas_timber.fasteners import RectangularPlate
 from compas_timber.fasteners import PlateHole
-from compas_timber.fasteners import BallNode
-from compas_timber.fasteners import BallNodeRod
-from compas_timber.fasteners import BallNodePlate
 from compas_timber.fasteners import Fastener
 
 
@@ -57,14 +54,13 @@ def test_plate_hole_dirlling_line():
 
 
 def test_rect_plate_features():
-
     model = TimberModel()
     cross_beam = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
     main_beam = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
 
     model.add_elements([cross_beam, main_beam])
 
-    joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
+    _ = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
     plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
     hole1 = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
