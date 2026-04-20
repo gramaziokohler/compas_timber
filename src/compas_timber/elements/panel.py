@@ -481,52 +481,53 @@ def extract_door_openings(outline_a, outline_b):
     """
     combine_parallel_segments(outline_a)
     combine_parallel_segments(outline_b)
-    internal_segment_indices_a = get_interior_segment_indices(outline_a)
-    internal_segment_indices_b = get_interior_segment_indices(outline_b)
-    if set(internal_segment_indices_a) != set(internal_segment_indices_b):
-        raise ValueError("The internal segments of outline_a and outline_b do not match.")
+
+    interior_indices_a = get_interior_segment_indices(outline_a)
+    interior_indices_b = get_interior_segment_indices(outline_b)
+    interior_indices = set(interior_indices_a) | set(interior_indices_b)
+
     openings = []
-    done = False
-    while not done:
-        for seg_index in internal_segment_indices_a:
-            i_a = seg_index
-            panel_segments_a = outline_a.lines
-            panel_segments_b = outline_b.lines
-            door_segments = []
-            door_segments_b = []
-            for i in range(i_a - 2, i_a + 3):
-                door_segments.append(panel_segments_a[i % (len(panel_segments_a))])
-                door_segments_b.append(panel_segments_b[i % (len(panel_segments_b))])
-            parallel = True
-            for a, b in zip(door_segments, door_segments_b):
-                if angle_vectors(a.direction, b.direction) > TOL.ABSOLUTE:
-                    parallel = False
-                    break
-            if not parallel:
+    while True:
+        segments_a = outline_a.lines
+        segments_b = outline_b.lines
+        n = len(segments_a)
+
+        for seg_index in interior_indices:
+            # collect the 5-segment window centered on the interior segment
+            window_indices = [(seg_index + i) % n for i in range(-2, 3)]
+            door_segs_a = [segments_a[i] for i in window_indices]
+            door_segs_b = [segments_b[i] for i in window_indices]
+
+            # both outlines must agree on segment directions
+            if not all(angle_vectors(a.direction, b.direction) <= TOL.ABSOLUTE for a, b in zip(door_segs_a, door_segs_b)):
                 continue
-            side_angle = angle_vectors(door_segments[1].direction, door_segments[3].direction)
-            if abs(side_angle - math.pi) > TOL.ABSOLUTE:
+            # the two side segments must be anti-parallel (opposite directions)
+            if abs(angle_vectors(door_segs_a[1].direction, door_segs_a[3].direction) - math.pi) > TOL.ABSOLUTE:
                 continue
-            if not is_colinear_line_line(door_segments[0], door_segments[4], tol=TOL.RELATIVE):
+            # the segments above and below the door opening must be collinear (same horizontal line)
+            if not is_colinear_line_line(door_segs_a[0], door_segs_a[4], tol=TOL.RELATIVE):
                 continue
-            vertical = door_segments[1].direction
+
+            vertical = door_segs_a[1].direction
             vertical.unitize()
-            segs_a = []
-            segs_b = []
-            for i in range(len(panel_segments_a)):
-                if panel_segments_a[i] in door_segments:
-                    continue
-                segs_a.append(panel_segments_a[i])
-                segs_b.append(panel_segments_b[i])
-            opening = join_polyline_segments(door_segments[1:4])[0][0]
+
+            remaining = {i for i in range(n)} - set(window_indices)
+            segs_a = [segments_a[i] for i in sorted(remaining)]
+            segs_b = [segments_b[i] for i in sorted(remaining)]
+
+            opening = join_polyline_segments(door_segs_a[1:4])[0][0]
             opening[0] -= vertical * 1.0
             opening[3] -= vertical * 1.0
             opening.append(opening.points[0])  # close loop
             openings.append(opening)
+
             outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
             outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
-            internal_segment_indices_a = get_interior_segment_indices(outline_a)
+            interior_indices_a = get_interior_segment_indices(outline_a)
+            interior_indices_b = get_interior_segment_indices(outline_b)
+            interior_indices = set(interior_indices_a) | set(interior_indices_b)
             break
         else:
-            done = True
+            break  # no door candidates found in this pass
+
     return outline_a, outline_b, openings

@@ -41,6 +41,7 @@ class Opening(PanelFeature):
         data = super(Opening, self).__data__
         data["outline_a"] = self._outline_a
         data["outline_b"] = self._outline_b
+        data["opening_type"] = self.opening_type
         return data
 
     @property
