@@ -1,4 +1,3 @@
-from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -9,11 +8,11 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
-from compas.geometry import distance_line_line
 from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import correct_polyline_direction
+
 from .panel_features import PanelFeature
 
 
@@ -144,4 +143,3 @@ class OpeningType(object):
 
     DOOR = "door"
     WINDOW = "window"
-

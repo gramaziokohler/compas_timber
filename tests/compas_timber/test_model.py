@@ -516,6 +516,7 @@ def test_element_by_guid_deprecated_warning(mocker):
     warn_spy = mocker.spy(model, "element_by_guid")
 
     _ = model.element_by_guid(str(beam.guid))
+    warn_spy.assert_called_once()
 
 
 def test_unpromoted_joint_candidates():
@@ -545,4 +546,3 @@ def test_unpromoted_joint_candidates():
     result = list(model.unpromoted_joint_candidates)
     assert len(result) == 1
     assert result[0] is unpromoted_candidate
-

@@ -131,7 +131,7 @@ class TimberModel(Model):
             if edge_candidate is not None:
                 candidates.add(edge_candidate)
         return candidates
-    
+
     @property
     def unpromoted_joint_candidates(self):
         # type: () -> set[JointCandidate]
@@ -142,7 +142,7 @@ class TimberModel(Model):
             if edge_candidate is not None and not joints:
                 candidates.add(edge_candidate)
         return candidates
-    
+
     @property
     def topologies(self):
         return self._topologies

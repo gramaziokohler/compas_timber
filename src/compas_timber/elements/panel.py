@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
@@ -16,14 +17,20 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.panel_features import Opening
 from compas_timber.panel_features import PanelFeatureType
+from compas_timber.utils import combine_parallel_segments
+from compas_timber.utils import get_interior_segment_indices
 from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
+from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
