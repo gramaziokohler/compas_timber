@@ -6,6 +6,8 @@ from typing import Optional
 from compas.geometry import Frame
 from compas.geometry import Transformation
 
+from .part import Part
+
 
 class Fastener:
     """
@@ -20,13 +22,37 @@ class Fastener:
     It should never interact with a joint but it dies have one as reference.
     """
 
-    def __init__(self, main_part, frame: Frame = Frame.worldXY(), target_frames: Optional[list[Frame]] = None):
+    def __init__(self, frame: Frame = Frame.worldXY(), target_frames: Optional[list[Frame]] = None):
         self.frame = Frame.worldXY()
-        self.main_part = main_part
         self.interactions = []  # list of interactions tuple (child, parent)
-        self.parts = [main_part]
+        self.parts = []
         self.target_frames = target_frames
         self.guid = uuid.uuid4()
+
+    @property
+    def __data__(self):
+        data = {}
+        data["frame"] = self.frame.__data__
+        data["interactions"] = [(child.guid, parent.guid) for child, parent in self.interactions]
+        data["parts"] = [part.__data__ for part in self.parts]
+        data["target_frames"] = [frame.__data__ for frame in self.target_frames]
+        data["guid"] = str(self.guid)
+        return data
+
+    @classmethod
+    def from_data(cls, data):
+        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
+        target_frames = [Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"]) for frame_data in data["target_frames"]]
+        parts = [Part.from_data(part_data) for part_data in data["parts"]]
+
+        # create the fastener with the main parts
+        fastener = cls(frame, target_frames)
+
+        fastener.parts = parts
+
+        # keep the same guid
+        fastener.guid = uuid.UUID(data["guid"])
+        return fastener
 
     @property
     def target_frames(self) -> list[Frame]:
@@ -51,7 +77,7 @@ class Fastener:
         return geometries
 
     def copy(self) -> Fastener:
-        new_fastener = Fastener(self.main_part)
+        new_fastener = Fastener()
         new_fastener.frame = self.frame.copy()
         new_fastener.parts = [part.copy() for part in self.parts]
         new_fastener.interactions = list(self.interactions)
@@ -60,7 +86,7 @@ class Fastener:
 
     def add_part(self, part):
         """
-        Add a single part to the fastener. The parent of the part is the main_part.
+        Add a single part to the fastener. This part does not have interaction with any other parts.
 
         Parameters
         ----------
@@ -69,7 +95,6 @@ class Fastener:
 
         """
         self.parts.append(part)
-        self.interactions.append((part, self.main_part))
 
     def add_child_part(self, part, parent):
         """

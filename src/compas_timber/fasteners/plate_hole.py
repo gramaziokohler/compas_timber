@@ -46,6 +46,28 @@ class PlateHole:
         return PlateHole(self.frame.copy(), self.diameter, self.height, self.apply_drilling, self.drilling_depth, self.drilling_diameter)
 
     @property
+    def __data__(self):
+        return {
+            "frame": self.frame.__data__,
+            "diameter": self.diameter,
+            "height": self.height,
+            "apply_drilling": self.apply_drilling,
+            "drilling_depth": self.drilling_depth,
+            "drilling_diameter": self.drilling_diameter,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        diameter = data["diameter"]
+        height = data["height"]
+        apply_drilling = data["apply_drilling"]
+        drilling_depth = data["drilling_depth"]
+        drilling_diameter = data["drilling_diameter"]
+        return cls(frame, diameter, height, apply_drilling, drilling_depth, drilling_diameter)
+
+    @property
     def geometry(self):
         cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.frame)
         cylinder.frame.point += cylinder.frame.zaxis * self.height / 2

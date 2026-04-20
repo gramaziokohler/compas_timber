@@ -23,6 +23,7 @@ from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
@@ -63,6 +64,11 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
+        fasteners_data = {}
+        for guid_str, fastener in self._fasteners.items():
+            fasteners_data[guid_str] = fastener.__data__
+        data["fasteners"] = fasteners_data
+
         return data
 
     @classmethod
@@ -74,6 +80,11 @@ class TimberModel(Model):
 
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
+
+        fasteners_data = data["fasteners"]
+        for guid_str, fastener_data in fasteners_data.items():
+            print(fastener_data)
+            model._fasteners[guid_str] = Fastener.from_data(fastener_data)
 
         return model
 

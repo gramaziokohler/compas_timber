@@ -76,6 +76,36 @@ class RectangularPlate(Part):
         return new_plate
 
     @property
+    def __data__(self):
+        data = super().__data__
+        data["type"] = "RectangularPlate"
+        data["width"] = self.width
+        data["height"] = self.height
+        data["thickness"] = self.thickness
+        data["frame"] = self.frame.__data__
+        data["recess"] = self.recess
+        data["recess_offset"] = self.recess_offset
+        data["holes"] = [hole.__data__ for hole in self.holes]
+        return data
+
+    @classmethod
+    def from_data(cls, data):
+        width = data["width"]
+        height = data["height"]
+        thickness = data["thickness"]
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        recess = data["recess"]
+        recess_offset = data["recess_offset"]
+        holes_data = data["holes"]
+        plate = cls(width, height, thickness, frame, recess, recess_offset)
+        for hole_data in holes_data:
+            hole = PlateHole.from_data(hole_data)
+            plate.add_hole(hole)
+
+        return plate
+
+    @property
     def frame(self):
         return self._frame
 

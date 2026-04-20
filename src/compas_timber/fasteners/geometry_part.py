@@ -1,15 +1,26 @@
 from compas.geometry import Frame
 from compas.geometry import Transformation
 
+from .part import Part
 
-class GeometryPart:
+
+class GeometryPart(Part):
     """
     This fasteners part contains only the geometry, of the fastener.
     """
 
     def __init__(self, geometry, frame=None):
+        super().__init__()
         self.frame = frame or Frame.worldXY()
         self._geometry = geometry
+
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["type"] = "GeometryPart"
+        data["geometry"] = self._geometry
+        data["frame"] = self.frame.__data__
+        return data
 
     @property
     def frame(self) -> Frame:
@@ -27,6 +38,16 @@ class GeometryPart:
         transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
         geometry.transform(transformation)
         return geometry
+
+    @classmethod
+    def from_data(cls, data):
+        geometry = data["geometry"]
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        part = cls(geometry, frame)
+        guid = data["guid"]
+        part.guid = guid
+        return part
 
     def copy(self):
         return GeometryPart(self._geometry.copy(), self.frame.copy())

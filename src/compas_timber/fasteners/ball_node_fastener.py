@@ -16,6 +16,20 @@ class BallNode(Part):
         self.diameter = diameter
         self.frame = frame
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["type"] = "BallNode"
+        data["diameter"] = self.diameter
+        data["frame"] = self.frame
+        return data
+
+    @classmethod
+    def from_data(cls, data):
+        diameter = data["diameter"]
+        frame = Frame(data["frame"]["point"], data["frame"]["xaxis"], data["frame"]["yaxis"])
+        return cls(diameter, frame)
+
     def copy(self):
         ball_node = BallNode(self.diameter, self.frame.copy())
         return ball_node
@@ -51,6 +65,23 @@ class BallNodeRod(Part):
         self.frame = frame
         self.referenced_beam = beam
 
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["type"] = "BallNodeRod"
+        data["length"] = self.length
+        data["diameter"] = self.diameter
+        data["frame"] = self.frame.__data__
+        return data
+
+    @classmethod
+    def from_data(cls, data):
+        length = data["length"]
+        diameter = data["diameter"]
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        return cls(length, diameter, None, frame)
+
     def copy(self):
         rod = BallNodeRod(self.length, self.diameter, self.referenced_beam, self.frame.copy())
         return rod
@@ -85,6 +116,27 @@ class BallNodePlate(Part):
         self.plate_depth = plate_depth
         self.rod = rod
         self.ball = ball
+
+    @property
+    def __data__(self):
+        data = super().__data__
+        data["type"] = "BallNodePlate"
+        data["x_size"] = self.x_size
+        data["y_size"] = self.y_size
+        data["thickness"] = self.thicknees
+        data["frame"] = self.frame.__data__
+        data["plate_depth"] = self.plate_depth
+        return data
+
+    @classmethod
+    def from_data(cls, data):
+        x_size = data["x_size"]
+        y_size = data["y_size"]
+        thickness = data["thickness"]
+        frame_data = data["frame"]
+        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
+        plate_depth = data["plate_depth"]
+        return cls(x_size, y_size, thickness, frame, plate_depth, None, None)
 
     @property
     def frame(self):
