@@ -11,15 +11,35 @@ from .part import Part
 
 class Fastener:
     """
-    This is the fastener and it is composed by parts.
+    Describes a fastener connecting two or more elements.
+    A fastener contains `parts` that are the components of the fastener, and `interactions` that describe how the parts
+    interact with each other. Each part can have a parent and/or a child.
 
-    The fastener has to create the interactions between the elements.
+    When added to a model, new instances of the fastener are created and added to the model for each `target_frame`
+    specified.
 
-    The fastener should be as independent as possible.
+    Parameters
+    ----------
+    frame : Frame, optional
+        The frame of the fastener. The default is the world XY frame.
+    target_frames : list[Frame], optional
+        The target frames where the fastener will be instantiated. The default is None, which means that the fastener will not be instantiated at any target frame. If target
+        frames are specified, the fastener will be instantiated at each target frame when added to a model.
 
-    Each part tells how the beam should be machined.
+    Attributes
+    ----------
+    frame : Frame
+        The frame of the fastener.
+    interactions : list[tuple[Part, Part]]
+        The interactions between the parts of the fastener. Each interaction is a tuple of (child, parent).
+    parts : list[Part]
+        The parts that make up the fastener.
+    target_frames : list[Frame]
+        The target frames where the fastener will be instantiated.
+    geometry : list[Geometry]
+        The geometry of the fastener, which is the combination of the geometry of its parts.
 
-    It should never interact with a joint but it dies have one as reference.
+
     """
 
     def __init__(self, frame: Frame = Frame.worldXY(), target_frames: Optional[list[Frame]] = None):
