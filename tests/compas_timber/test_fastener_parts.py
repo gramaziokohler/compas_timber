@@ -45,6 +45,43 @@ def test_rectangular_plate_copy():
     assert plate.holes[1].frame.yaxis == plate_copy.holes[1].frame.yaxis
 
 
+def test_rectangular_plate_desrialization():
+    plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
+    hole = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
+    plate.add_hole(hole)
+    plate.add_hole_point_diameter(Point(2, 3, 0), diameter=3)
+
+    data = plate.__data__
+
+    rec_plate = RectangularPlate.from_data(data)
+    assert plate.width == rec_plate.width
+    assert plate.height == rec_plate.height
+    assert plate.thickness == rec_plate.thickness
+    assert plate.recess == rec_plate.recess
+    assert plate.recess_offset == rec_plate.recess_offset
+    assert len(plate.holes) == len(rec_plate.holes)
+    assert plate.holes[0].diameter == rec_plate.holes[0].diameter
+    assert plate.holes[0].height == rec_plate.holes[0].height
+    assert plate.holes[0].frame.point == rec_plate.holes[0].frame.point
+    assert plate.holes[0].frame.xaxis == rec_plate.holes[0].frame.xaxis
+    assert plate.holes[0].frame.yaxis == rec_plate.holes[0].frame.yaxis
+    assert plate.holes[1].diameter == rec_plate.holes[1].diameter
+    assert plate.holes[1].height == rec_plate.holes[1].height
+    assert plate.holes[1].frame.point == rec_plate.holes[1].frame.point
+    assert plate.holes[1].frame.xaxis == rec_plate.holes[1].frame.xaxis
+    assert plate.holes[1].frame.yaxis == rec_plate.holes[1].frame.yaxis
+
+
+def test_rectangular_plate_grid_holes():
+    plate = RectangularPlate(width=10, height=20, thickness=2)
+    plate.add_holes_grid(3, 5, 2, 2)
+
+    assert len(plate.holes) == 15
+    assert all(isinstance(hole, PlateHole) for hole in plate.holes)
+    assert all(hole.diameter == 2 for hole in plate.holes)
+    assert all(hole.height == 2 for hole in plate.holes)
+
+
 def test_plate_hole_dirlling_line():
     hole = PlateHole(diameter=5, height=2, frame=Frame.worldXY(), drilling_depth=10, drilling_diameter=3)
 

@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Cylinder
@@ -15,13 +17,15 @@ class BallNode(Part):
     def __init__(self, diameter: float, frame: Frame = Frame.worldXY()):
         self.diameter = diameter
         self.frame = frame
+        self.guid = str(uuid4())
 
     @property
     def __data__(self):
         data = super().__data__
         data["type"] = "BallNode"
         data["diameter"] = self.diameter
-        data["frame"] = self.frame
+        data["frame"] = self.frame.__data__
+        data["guid"] = self.guid
         return data
 
     @classmethod
@@ -64,6 +68,7 @@ class BallNodeRod(Part):
         self.diameter = diameter
         self.frame = frame
         self.referenced_beam = beam
+        self.guid = str(uuid4())
 
     @property
     def __data__(self):
@@ -72,6 +77,7 @@ class BallNodeRod(Part):
         data["length"] = self.length
         data["diameter"] = self.diameter
         data["frame"] = self.frame.__data__
+        data["guid"] = self.guid
         return data
 
     @classmethod
@@ -112,10 +118,11 @@ class BallNodePlate(Part):
         self.x_size = x_size
         self.y_size = y_size
         self.frame = frame
-        self.thicknees = thickness
+        self.thickness = thickness
         self.plate_depth = plate_depth
         self.rod = rod
         self.ball = ball
+        self.guid = str(uuid4())
 
     @property
     def __data__(self):
@@ -123,9 +130,10 @@ class BallNodePlate(Part):
         data["type"] = "BallNodePlate"
         data["x_size"] = self.x_size
         data["y_size"] = self.y_size
-        data["thickness"] = self.thicknees
+        data["thickness"] = self.thickness
         data["frame"] = self.frame.__data__
         data["plate_depth"] = self.plate_depth
+        data["guid"] = self.guid
         return data
 
     @classmethod
@@ -151,21 +159,21 @@ class BallNodePlate(Part):
     @property
     def geometry(self):
         # cap plate
-        box = Box(self.x_size, self.y_size, self.thicknees, frame=self.frame)
-        box.frame.point += self.frame.zaxis * self.thicknees / 2
+        box = Box(self.x_size, self.y_size, self.thickness, frame=self.frame)
+        box.frame.point += self.frame.zaxis * self.thickness / 2
         box_brep = box.to_brep()
 
         # slot_plate
         slot_plate_frame = self.frame.copy()
-        slot_plate_frame.translate(slot_plate_frame.zaxis * (self.thicknees + self.plate_depth / 2))
-        box = Box(self.thicknees, self.y_size, self.plate_depth, frame=slot_plate_frame)
+        slot_plate_frame.translate(slot_plate_frame.zaxis * (self.thickness + self.plate_depth / 2))
+        box = Box(self.thickness, self.y_size, self.plate_depth, frame=slot_plate_frame)
         slot_brep = box.to_brep()
 
         full_brep = Brep.from_boolean_union(box_brep, slot_brep)[0]
         return full_brep
 
     def copy(self):
-        plate = BallNodePlate(self.x_size, self.y_size, self.thicknees / (2), self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
+        plate = BallNodePlate(self.x_size, self.y_size, self.thickness / (2), self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
         return plate
 
     def apply_features(self, elements):
@@ -173,7 +181,7 @@ class BallNodePlate(Part):
         for ele in elements:
             if ele is self.rod.referenced_beam:
                 cutting_plane = Plane(self.frame.point, self.frame.zaxis)
-                cutting_plane.translate(self.frame.zaxis * self.thicknees)
+                cutting_plane.translate(self.frame.zaxis * self.thickness)
                 cutting_plane.normal *= -1
 
                 # jack rafter cut
@@ -183,8 +191,8 @@ class BallNodePlate(Part):
 
                 # slot
                 plane = Plane(self.frame.point, self.frame.xaxis)
-                slot_depth = self.plate_depth + self.thicknees + self.rod.length + self.ball.radius
-                slot = Slot.from_plane_and_beam(plane, ele, slot_depth, self.thicknees)
+                slot_depth = self.plate_depth + self.thickness + self.rod.length + self.ball.radius
+                slot = Slot.from_plane_and_beam(plane, ele, slot_depth, self.thickness)
                 ele.add_feature(slot)
                 features.append(slot)
 

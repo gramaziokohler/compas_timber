@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import uuid
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -67,6 +69,7 @@ class RectangularPlate(Part):
         self.frame = frame
         self.recess = recess
         self.recess_offset = recess_offset
+        self.guid = str(uuid.uuid4())
 
     def copy(self) -> RectangularPlate:
         new_plate = RectangularPlate(self.width, self.height, self.thickness, self.frame.copy())
@@ -86,6 +89,7 @@ class RectangularPlate(Part):
         data["recess"] = self.recess
         data["recess_offset"] = self.recess_offset
         data["holes"] = [hole.__data__ for hole in self.holes]
+        data["guid"] = self.guid
         return data
 
     @classmethod
@@ -174,7 +178,7 @@ class RectangularPlate(Part):
         """
         self.holes.append(hole)
 
-    def add_hole_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=5, drilling_diameter=2) -> list[PlateHole]:
+    def add_holes_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=5, drilling_diameter=2) -> list[PlateHole]:
         """
         Add a grid of holes to the plate.
 
