@@ -38,7 +38,6 @@ from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
-from .l_miter import MiterType
 
 __all__ = [
     "Joint",
