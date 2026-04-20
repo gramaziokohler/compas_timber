@@ -119,8 +119,9 @@ class BallNodeJoint(Joint):
             The fastener created for this joint.
         """
         # Crete the fastener
+        fastener = Fastener()
         ball_node = BallNode(diameter=self.ball_diameter)
-        fastener = Fastener(ball_node)
+        fastener.add_part(ball_node)
 
         # Build the rods and plates
         self.ball_rods = []

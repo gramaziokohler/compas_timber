@@ -81,10 +81,10 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
-        fasteners_data = data["fasteners"]
-        for guid_str, fastener_data in fasteners_data.items():
-            print(fastener_data)
-            model._fasteners[guid_str] = Fastener.from_data(fastener_data)
+        if data.get("fasteners") is not None:
+            fasteners_data = data["fasteners"]
+            for guid_str, fastener_data in fasteners_data.items():
+                model._fasteners[guid_str] = Fastener.from_data(fastener_data)
 
         return model
 

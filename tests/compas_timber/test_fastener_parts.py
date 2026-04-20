@@ -65,7 +65,8 @@ def test_rect_plate_features():
     plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
     hole1 = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
     plate.add_hole(hole1)
-    fastener = Fastener(main_part=plate)
+    fastener = Fastener()
+    fastener.add_part(plate)
     fastener.target_frames = [
         Frame(Point(0, -5, 20), [1, 0, 0], [0, 0, 1]),
         Frame(Point(0, 5, 20), [-1, 0, 0], [0, 0, 1]),
