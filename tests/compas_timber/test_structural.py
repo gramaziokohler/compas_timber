@@ -2,11 +2,14 @@ import pytest
 import pytest_mock
 
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import InteractionType
+from compas_timber.structural import StructuralGraph
+from compas_timber.structural import StructuralSegment
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.model import TimberModel
@@ -481,3 +484,138 @@ def test_solver_candidates_only(mocker: pytest_mock.MockerFixture):
 
     assert candidate in interactions
     assert joint not in interactions
+
+
+# =============================================================================
+# build_structural_graph tests
+# =============================================================================
+
+
+def test_build_structural_graph_single_beam():
+    """Single beam with no joints → one beam edge, two nodes."""
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    model.add_element(beam)
+
+    model.create_beam_structural_segments()
+    sg = StructuralGraph.from_model(model)
+
+    assert isinstance(sg, StructuralGraph)
+    assert sg.number_of_nodes() == 2
+    assert sg.number_of_edges() == 1
+
+    (u, v) = list(sg.beam_edges)[0]
+    assert sg.beam(u, v) is beam
+    assert sg.segment(u, v) is not None
+    assert isinstance(sg.node_point(u), Point)
+
+
+def test_build_structural_graph_shared_endpoint(mocker: pytest_mock.MockerFixture):
+    """Beam split at midpoint → 3 nodes (start, split, end), 2 beam edges sharing the middle node."""
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    model.add_element(beam)
+
+    joint = mocker.MagicMock(spec=Joint, location=beam.centerline.point_at(0.5))
+    mocker.patch.object(model, "get_joints_for_element", return_value=[joint])
+    mocker.patch.object(model, "get_candidates_for_element", return_value=[])
+
+    model.create_beam_structural_segments()
+    sg = StructuralGraph.from_model(model)
+
+    assert sg.number_of_nodes() == 3  # start, midpoint, end → no duplicates
+    assert sg.number_of_edges() == 2
+    assert len(list(sg.beam_edges)) == 2
+    assert len(list(sg.connector_edges)) == 0
+    # the split point is shared → checking reverse lookup
+    assert len(sg.segments_for_beam(beam)) == 2
+
+
+def test_build_structural_graph_two_beams_no_connection():
+    """Two isolated beams produce 4 nodes and 2 beam edges with no shared nodes."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    beam_b = Beam(Frame(Point(0, 500, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    model.create_beam_structural_segments()
+    sg = StructuralGraph.from_model(model)
+
+    assert sg.number_of_nodes() == 4
+    assert sg.number_of_edges() == 2
+    assert len(list(sg.beam_edges)) == 2
+    assert len(sg.segments_for_beam(beam_a)) == 1
+    assert len(sg.segments_for_beam(beam_b)) == 1
+
+
+def test_build_structural_graph_raises_when_no_segments():
+    """ValueError is raised when no structural segments have been computed yet."""
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    model.add_element(beam)
+    # deliberately skip create_beam_structural_segments()
+
+    with pytest.raises(ValueError, match="No structural segments"):
+        StructuralGraph.from_model(model)
+
+
+def test_build_structural_graph_with_connector_segment():
+    """A connector segment stored on a model edge appears as a 'connector' type edge."""
+    model = TimberModel()
+    beam_a = Beam(Frame.worldXY(), length=1000, width=100, height=100)
+    # beam_b placed away so neither endpoint overlaps with beam_a
+    beam_b = Beam(Frame(Point(0, 500, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=1000, width=100, height=100)
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    # Create an interaction edge between the two beams (required for connector segments)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate.location = Point(500, 0, 0)
+    model.add_joint_candidate(candidate)
+
+    # Add one segment per beam manually (equivalent to calling the solver)
+    seg_a = StructuralSegment(
+        line=beam_a.centerline,
+        frame=Frame(beam_a.centerline.start, beam_a.frame.xaxis, beam_a.frame.yaxis),
+        cross_section=(beam_a.width, beam_a.height),
+    )
+    seg_b = StructuralSegment(
+        line=beam_b.centerline,
+        frame=Frame(beam_b.centerline.start, beam_b.frame.xaxis, beam_b.frame.yaxis),
+        cross_section=(beam_b.width, beam_b.height),
+    )
+    model.add_beam_structural_segments(beam_a, [seg_a])
+    model.add_beam_structural_segments(beam_b, [seg_b])
+
+    # Add a connector segment bridging the closest points on each beam's centerline
+    p1 = beam_a.centerline.start  # (0, 0, 0)
+    p2 = beam_b.centerline.start  # (0, 500, 0)
+    connector = StructuralSegment(
+        line=Line(p1, p2),
+        frame=Frame(p1, Vector.Xaxis(), Vector.Yaxis()),
+    )
+    model.add_structural_connector_segments(beam_a, beam_b, [connector])
+
+    sg = StructuralGraph.from_model(model)
+
+    assert len(list(sg.beam_edges)) == 2
+    assert len(list(sg.connector_edges)) == 1
+    # The connector endpoints p1 and p2 coincide with beam segment start points,
+    # so those nodes are shared → total unique nodes = 4 (beam_a: 2, beam_b: 2, connector reuses both starts)
+    assert sg.number_of_nodes() == 4
+
+    # connector has no joint (derived from candidate, not resolved joint)
+    (cu, cv) = list(sg.connector_edges)[0]
+    assert sg.joint(cu, cv) is None
+    assert sg.segment(cu, cv) is connector
+
+    # reverse lookups
+    assert len(sg.segments_for_beam(beam_a)) == 1
+    assert len(sg.segments_for_beam(beam_b)) == 1
+    # segments_for_joint(None) returns connectors that have no joint (candidate-only)
+    assert len(sg.segments_for_joint(None)) == 1
+
+    # node_index gives a stable integer index
+    indices = {sg.node_index(n) for n in sg.nodes()}
+    assert indices == {0, 1, 2, 3}
