@@ -18,8 +18,8 @@ from .panel_features import PanelFeature
 
 
 class Opening(PanelFeature):
-    def __init__(self, frame, outline_a, outline_b, opening_type=None, name="Opening"):
-        super(Opening, self).__init__(frame=frame, name=name)
+    def __init__(self, frame, outline_a, outline_b, opening_type=None, name="Opening", **kwargs):
+        super(Opening, self).__init__(frame=frame, name=name, **kwargs)
         self._outline_a = outline_a
         self._outline_b = outline_b
         self.opening_type = opening_type or OpeningType.WINDOW

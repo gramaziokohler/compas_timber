@@ -22,6 +22,7 @@ from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.panel_features import PanelFeatureType
+from compas_timber.panel_features import Opening
 from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face

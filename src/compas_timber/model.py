@@ -133,6 +133,17 @@ class TimberModel(Model):
         return candidates
 
     @property
+    def unpromoted_joint_candidates(self):
+        # type: () -> set[JointCandidate]
+        candidates = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate and not joint:
+                candidates.add(edge_candidate)
+        return candidates
+
+    @property
     def topologies(self):
         return self._topologies
 
@@ -655,12 +666,13 @@ class TimberModel(Model):
             if result.topology == JointTopology.TOPO_UNKNOWN:
                 continue
             assert beam_a and beam_b
-
+            print(result.topology)
             # Create candidate and add it to the model
             candidate = JointCandidate(
                 result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location
             )  # use the beam order determined by find_topology to keep main, cross relationship
             self.add_joint_candidate(candidate)
+        print(f"Created {len(self.joint_candidates)} joint candidates.")
 
     def connect_adjacent_plates(self, max_distance=None):
         """Connects adjacent plates in the model.
