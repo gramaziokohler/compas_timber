@@ -895,9 +895,11 @@ class BTLxProcessing(Data, ABC):
 
     @property
     def __data__(self):
-        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+        data = {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+        data.update(self.user_attributes)
+        return data
 
-    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True, **kwargs):
         super(BTLxProcessing, self).__init__()
         self._priority = priority
         self._process_id = process_id
@@ -910,6 +912,8 @@ class BTLxProcessing(Data, ABC):
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
+        self.user_attributes = {}
+        self.user_attributes.update(kwargs)
 
     def __init_subclass__(cls, **kwargs):
         super(BTLxProcessing, cls).__init_subclass__(**kwargs)
@@ -1066,6 +1070,8 @@ class BTLxProcessingParams(object):
             The processing parameters as a dictionary.
         """
         result = OrderedDict()
+        if self._instance.user_attributes:
+            result["UserAttributes"] = UserAttributesParam(self._instance.user_attributes)
         for btlx_name, attr_spec in self.attribute_map.items():
             value = getattr(self._instance, attr_spec.python_name)
             result[btlx_name] = self._format_value(value)
@@ -1512,6 +1518,43 @@ class DualContour(Data):
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
+
+
+class UserAttributesParam(object):
+    """Container for user-defined key-value attributes attached to a BTLx processing.
+
+    Parameters
+    ----------
+    attributes : dict
+        A dict mapping attribute names (str) to attribute values (str).
+
+    """
+
+    def __init__(self, attributes):
+        self.attributes = attributes
+
+
+def user_attributes_to_xml(param):
+    """Converts a :class:`UserAttributesParam` to an XML element.
+
+    Parameters
+    ----------
+    param : :class:`UserAttributesParam`
+        The user attributes to be serialized.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The ``<UserAttributes>`` XML element.
+
+    """
+    root = ET.Element("UserAttributes")
+    for name, value in param.attributes.items():
+        ET.SubElement(root, "UserAttribute", Name=str(name), Value=str(value), Type="string")
+    return root
+
+
+BTLxWriter.register_type_serializer(UserAttributesParam.__name__, user_attributes_to_xml)
 
 
 class BTLxFromGeometryDefinition(Data):
