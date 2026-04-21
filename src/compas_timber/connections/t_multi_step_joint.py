@@ -220,6 +220,16 @@ class TMultiStepJoint(Joint):
         notch_dy = dot_vectors(self._step_delta, cross_ref_side.yaxis)
         return notch_dx, notch_dy
 
+    def _compute_riser_and_tread_lengths(self):
+        """Compute the horizontal lengths of the tread and riser faces from the step depth and angles."""
+        if self.step_shape == StepShapeType.HEEL:
+            angle = 180.0 - self._strut_inclination
+        else:
+            angle = self._strut_inclination / 2.0
+        riser_length = abs(self._step_depth / math.sin(math.radians(angle)))
+        tread_length = abs(self._step_depth / math.cos(math.radians(angle)))
+        return riser_length, tread_length
+
     def _compute_base_planes(self):
         """Compute anchor geometry for all steps.
 
@@ -335,6 +345,8 @@ class TMultiStepJoint(Joint):
         step_planes = self._get_step_planes()    # DoubleCut anchor: first V-cut valley
         notch_planes = self._get_notch_planes()  # BirdsMouth anchor: first notch
 
+        riser_length, tread_length = self._compute_riser_and_tread_lengths() # compute riser and tread lengths for feature dimensions and debug info
+
         # -- butt cut on main beam end face --
         butt_plane = self._get_butt_plane()
         cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam)
@@ -351,6 +363,8 @@ class TMultiStepJoint(Joint):
         # First V-cut is computed from geometry; the rest are copies shifted by one step interval each.
         if self._step_count > 1:
             first_step = DoubleCut.from_planes_and_beam(step_planes, self.main_beam, reorder_planes=False, ref_side_index=(self.main_beam_ref_side_index-1)%4)
+            first_step.user_attributes["riser_length"] = riser_length
+            first_step.user_attributes["tread_length"] = tread_length
             self.main_beam.add_features(first_step)
             self.features.append(first_step)
 
@@ -366,6 +380,8 @@ class TMultiStepJoint(Joint):
         # -- N BirdsMouth notches on cross beam --
         # First notch is computed from geometry; the rest are copies shifted by one step interval each.
         first_notch = BirdsMouth.from_planes_and_beam(notch_planes, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
+        first_notch.user_attributes["riser_length"] = riser_length
+        first_notch.user_attributes["tread_length"] = tread_length
         self.cross_beam.add_features(first_notch)
         self.features.append(first_notch)
 
