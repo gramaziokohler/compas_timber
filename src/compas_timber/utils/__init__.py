@@ -25,7 +25,6 @@ from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
-from compas.geometry import intersection_line_segment
 
 from compas.tolerance import TOL
 
@@ -630,6 +629,8 @@ def polyline_from_brep_loop(loop):
 
     if not polylines:
         return None
+    if len(polylines) != 1:
+        raise ValueError("The BrepLoop returned multiple polylines")
     # a valid closed polyline needs at least 4 points (3 unique vertices + 1 closing point);
     # 3 points would yield only 2 overlapping line segments
     if len(polylines[0].points) < 4:
@@ -689,7 +690,7 @@ def get_plate_geometry_outlines_from_brep(brep):
     """
     if len(brep.faces) < 5:
         raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate), got {}.".format(len(brep.faces)))
-     # mesh face key N corresponds 1:1 to brep.faces[N]
+    # mesh face key N corresponds 1:1 to brep.faces[N]
     mesh = mesh_from_brep_simple(brep)
     face_keys = list(mesh.faces())
 
@@ -765,135 +766,10 @@ def get_plate_geometry_outlines_from_brep(brep):
     return outline_a, outline_b, openings
 
 
-def move_polyline_segment_to_line(polyline, segment_index, line):
-    """Move a segment of a polyline to lay colinear to the projection of a line on that polyline.
-    This is accomplished by extending the adjacent segments to intersect with the line.
-    Parameters
-    ----------
-    polyline : :class:`~compas.geometry.Polyline`
-        The polyline to modify.
-    segment_index : int
-        The index of the segment to move.
-    line : :class:`~compas.geometry.Line`
-        The line to intersect with.
-    """
-    start_pt = intersection_line_line(polyline.lines[segment_index - 1], line)[0]
-    if start_pt:
-        polyline[segment_index] = start_pt
-        if segment_index == 0:
-            polyline[-1] = start_pt
-    end_pt = intersection_line_line(polyline.lines[(segment_index + 1) % len(polyline.lines)], line)[0]
-    if end_pt:
-        polyline[segment_index + 1] = end_pt
-        if segment_index + 1 == len(polyline.lines):
-            polyline[0] = end_pt
-
-
-def join_polyline_segments(segments: list[Line], close_loop: bool = False):
-    """Join segments into one or more polylines.
-
-    Parameters
-    ----------
-    segments : list of :class:`~compas.geometry.Line`
-        the line segments to be joined
-    close_loop : bool
-        if True, each returned Polyline will be closed by appending the first point to the end, if not already the case.
-
-    Returns
-    -------
-    tuple(list[:class:`~compas.geometry.Polyline`], list[:class:`~compas.geometry.Line`])
-        A tuple with a list of joined Polylines and a list of segments that could not be joined.
-    """
-
-    # helper to add a segment to an existing ordered points list if it connects
-    def add_seg_to_points(seg: Line, points: list) -> bool:
-        if seg.start == points[-1]:
-            points.append(seg.end)
-            return True
-        if seg.end == points[-1]:
-            points.append(seg.start)
-            return True
-        if seg.end == points[0]:
-            points.insert(0, seg.start)
-            return True
-        if seg.start == points[0]:
-            points.insert(0, seg.end)
-            return True
-        return False
-
-    if not segments:
-        return [], []
-
-    remaining = segments[:]  # copy so we don't mutate caller's list
-    polylines: list[Polyline] = []
-    unjoined: list[Line] = []
-
-    while remaining:
-        # start a new chain from the first remaining segment
-        start_seg = remaining.pop(0)
-        points = [start_seg.start, start_seg.end]
-
-        extended = True
-        while extended and remaining:
-            extended = False
-            for seg in remaining:
-                if add_seg_to_points(seg, points):
-                    remaining.remove(seg)
-                    extended = True
-                    break
-
-        if len(points) == 2:  # no segments joined, points to unjoined
-            unjoined.append(start_seg)
-        else:
-            if close_loop and not TOL.is_allclose(points[0], points[-1]):
-                points.append(points[0])
-            polylines.append(Polyline(points))
-
-    return polylines, unjoined
-
-
-def polyline_from_brep_loop(loop):
-    """Creates a Polyline from a BrepLoop. BrepLoop edges are not always aligned in the same direction, so this is necessary.
-    Parameters
-    ----------
-    loop : :class:`~compas.geometry.BrepLoop`
-
-    Returns
-    -------
-    :class:`~compas.geometry.Polyline`
-        The Polyline resulting from joining the BrepLoop edges.
-    """
-    segments = [Line(edge.start_vertex.point, edge.end_vertex.point) for edge in loop.edges]
-    polylines, _ = join_polyline_segments(segments, close_loop=True)
-    if len(polylines) != 1:
-        raise ValueError("The BrepLoop returned multiple polylines")
-    return polylines[0]
-
-
-def polylines_from_brep_face(face):
-    """Extract polylines from a BRep face.
-    Parameters
-    ----------
-    face : :class:`~compas.geometry.BrepFace`
-        The Brep face to extract polylines from.
-    Returns
-    -------
-    tuple (`~compas.geometry.Polyline`, list: :class:`~compas.geometry.Polyline`)
-        The extracted polylines.
-    """
-    outer = None
-    openings = []
-    for loop in face.loops:
-        if loop.is_outer:
-            outer = polyline_from_brep_loop(loop)
-        else:
-            openings.append(polyline_from_brep_loop(loop))
-    return outer, openings
-
-
 def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
     """Get the vector normal to a polyline. if no normal direction is given, the normal is determined based on the polyline's winding order.
-    parameters
+    Assumes that all polyline points lay on the same plane.
+    Parameters
     ----------
     polyline : :class:`compas.geometry.Polyline`
         The polyline to get the normal vector from.
@@ -914,77 +790,6 @@ def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Ve
     return offset_vector.unitized()
 
 
-def combine_parallel_segments(polyline, tol=TOL):
-    for i in range(len(polyline) - 2, 0, -1):
-        v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
-        if tol.is_zero(angle_vectors(v1, v2)):
-            polyline.points.pop(i)
-
-
-def intersection_line_beams(line, beams, max_distance=None):
-    """Find intersections between a line and a list of beams.
-    Parameters
-    ----------
-    line : :class:`compas.geometry.Line`
-        The line to check for intersections.
-    beams : list of :class:`compas_timber.elements.Beam`
-        The beams to check for intersections.
-    max_distance : float, optional
-        The maximum distance from the line to consider an intersection valid.
-        Defaults to 0.0, meaning no distance check.
-    Returns
-    -------
-    list of dict
-        A list of dictionaries containing the intersection points, dot products, and the corresponding beams.
-    Each dictionary has the keys "point", "dot", and "beam".
-    """
-    intersections = []
-    max_distance = max_distance or TOL.relative
-    for beam in beams:
-        line_pt, beam_pt = intersection_line_segment(line, beam.centerline)
-        if line_pt:
-            if distance_point_point(beam_pt, closest_point_on_segment(beam_pt, beam.centerline)) > max_distance:
-                continue
-            intersection = {}
-            intersection["point"] = Point(*line_pt)
-            intersection["dot"] = dot_vectors(Vector.from_start_end(line.start, Point(*line_pt)), line.direction)
-            intersection["beam"] = beam
-            intersections.append(intersection)
-    return intersections
-
-
-def split_beam_at_lengths(beam, lengths):
-    """Splits a beam at given lengths.
-
-    Parameters
-    ----------
-    beam : :class:`compas_timber.elements.Beam`
-        The beam to split.
-    length : float
-        The length at which to split the beam.
-
-    Returns
-    -------
-    :class:`compas_timber.elements.Beam` or None
-        The new beam that is created by the split, or None if the length is outside the beam's length.
-
-    """
-    lengths.sort(reverse=True)
-    for length in lengths:
-        if length <= 0.0 or length >= beam.length:
-            lengths.remove(length)  # remove lengths that are outside the beam's length
-    beams = [beam]
-    for length in lengths:
-        new_beam = beam.copy()
-        new_beam.attributes.update(beam.attributes)
-        new_beam.length = beam.length - length
-        beam.length = length
-        new_beam.frame.translate(beam.frame.xaxis * length)
-        beams.insert(1, new_beam)
-    return beams
-
-
 def extend_line_segments(segments, close_loop=False):
     """Extend segments to their intersections."""
     start = 0 if close_loop else 1
@@ -996,6 +801,7 @@ def extend_line_segments(segments, close_loop=False):
             continue
         segments[i - 1] = Line(segments[i - 1].start, ints[0])
         segments[i] = Line(ints[0], segments[i].end)
+
 
 def get_interior_corner_indices(polyline):
     """Get the indices of the interior corners of a polyline."""
@@ -1019,30 +825,6 @@ def get_interior_segment_indices(polyline):
         if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
             _interior_segment_indices.append(i)
     return _interior_segment_indices
-
-   
-
-def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
-    """Get the vector normal to a polyline. if no normal direction is given, the normal is determined based on the polyline's winding order.
-    parameters
-    ----------
-    polyline : :class:`compas.geometry.Polyline`
-        The polyline to get the normal vector from.
-    normal_direction : :class:`compas.geometry.Vector`, optional
-        A vector indicating the desired normal direction.
-
-    Returns
-    -------
-    :class:`compas.geometry.Vector`
-        The normal vector of the polyline.
-    """
-    offset_vector = Frame.from_points(polyline[0], polyline[1], polyline[-2]).normal  # gets frame perpendicular to outline
-    if normal_direction:
-        if normal_direction.dot(offset_vector) < 0:  # if vector is given and points in the opposite direction
-            offset_vector = -offset_vector
-    elif not is_polyline_clockwise(polyline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
-        offset_vector = -offset_vector
-    return offset_vector.unitized()
 
 
 def combine_parallel_segments(polyline, tol=TOL):
@@ -1157,11 +939,6 @@ __all__ = [
     "move_polyline_segment_to_line",
     "join_polyline_segments",
     "polyline_from_brep_loop",
-    "polylines_from_brep_face",
-    "get_polyline_normal_vector",
-    "combine_parallel_segments",
-    "intersection_line_beams",
-    "split_beam_at_lengths",
     "extend_line_segments",
     "get_interior_corner_indices",
     "get_interior_segment_indices",

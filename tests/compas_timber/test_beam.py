@@ -200,6 +200,7 @@ def test_serialization_beam_with_nonjoinery_processings(beam):
     assert cut is not deserialized.features[0], "copying beam should create new instances of features"
     assert cut.guid == deserialized.features[0].guid
 
+
 # ==========================================================================
 # Blank Extension & Transformation Tests
 # ==========================================================================
