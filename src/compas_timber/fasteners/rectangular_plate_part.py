@@ -178,7 +178,7 @@ class RectangularPlate(Part):
         """
         self.holes.append(hole)
 
-    def add_holes_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=5, drilling_diameter=2) -> list[PlateHole]:
+    def add_holes_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=None, drilling_diameter=None) -> list[PlateHole]:
         """
         Add a grid of holes to the plate.
 
@@ -206,6 +206,12 @@ class RectangularPlate(Part):
 
                 y = self.frame.point.y + border_padding + iy * (self.height - 2 * border_padding) / (ny - 1)
                 y -= self.height / 2
+
+                if not drilling_depth:
+                    apply_drilling = False
+
+                if not drilling_diameter:
+                    drilling_diameter = diameter
 
                 hole = self.add_hole_point_diameter(Point(x, y, 0), diameter, apply_drilling, drilling_depth, drilling_diameter)
                 holes.append(hole)
