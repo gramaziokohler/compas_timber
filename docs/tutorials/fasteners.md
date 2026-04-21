@@ -33,7 +33,7 @@ model.process_joinery()
 beams = [beam.geometry for beam in model.beams]
 ```
 
-![](.\images\fastener_tuto_t_butt.png)
+![](./images/fastener_tuto_t_butt.png)
 
 
 ## Setup the fastener
@@ -59,13 +59,13 @@ geo = fastener.geometry
 ```
 As we can see the reference fastener is created at the world origin.
 
-![](.\images\fastener_tuto_generic_fastener.png)
+![](./images/fastener_tuto_generic_fastener.png)
 
 ## Add the fastener to the model
 
 To add the fastener to the model, we need to specify the location and orientation of the fastener in relation to the beams. We can do that by setting the `Fastener.target_frames` attribute to a list of frames that we are free to choose. In this case we want to place the fastener at the location of the joint, and orient it such that it is parallel to the cross beam and perpendicular to the main beam. We want to define the target frames as shown in the image.
 
-![](.\images\fastener_tuto_target_frames.png)
+![](./images/fastener_tuto_target_frames.png)
 
 ```python
 from compas_timber.fasteners import Fastener
