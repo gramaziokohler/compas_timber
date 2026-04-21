@@ -41,10 +41,10 @@ class BirdsMouth(BTLxProcessing):
         The start depth of the cut. 0.0 < start_depth < 50000.0.
     angle : float
         The angle of the cut in degrees. 0.1 < angle < 179.9.
-    inclination1 : float
-        The first inclination angle of the cut in degrees. 0.0 < inclination1 < 180.0.
-    inclination2 : float
-        The second inclination angle of the cut in degrees. 0.0 < inclination2 < 180.0.
+    inclination_1 : float
+        The first inclination angle of the cut in degrees. 0.0 < inclination_1 < 180.0.
+    inclination_2 : float
+        The second inclination angle of the cut in degrees. 0.0 < inclination_2 < 180.0.
     depth : float
         The depth of the cut. 0.0 < depth < 50000.0.
     width : float
@@ -81,8 +81,8 @@ class BirdsMouth(BTLxProcessing):
         "StartY": AttributeSpec("start_y", float),
         "StartDepth": AttributeSpec("start_depth", float),
         "Angle": AttributeSpec("angle", float),
-        "Inclination1": AttributeSpec("inclination1", float),
-        "Inclination2": AttributeSpec("inclination2", float),
+        "Inclination1": AttributeSpec("inclination_1", float),
+        "Inclination2": AttributeSpec("inclination_2", float),
         "Depth": AttributeSpec("depth", float),
         "Width": AttributeSpec("width", float),
         "WidthCounterPartLimited": AttributeSpec("width_counter_part_limited", bool),
@@ -106,8 +106,8 @@ class BirdsMouth(BTLxProcessing):
         data["start_y"] = self.start_y
         data["start_depth"] = self.start_depth
         data["angle"] = self.angle
-        data["inclination1"] = self.inclination1
-        data["inclination2"] = self.inclination2
+        data["inclination_1"] = self.inclination_1
+        data["inclination_2"] = self.inclination_2
         data["depth"] = self.depth
         data["width"] = self.width
         data["width_counter_part_limited"] = self.width_counter_part_limited
@@ -131,8 +131,8 @@ class BirdsMouth(BTLxProcessing):
         start_y: float = 0.0,
         start_depth: float = 20.0,
         angle: float = 90.0,
-        inclination1: float = 45.0,
-        inclination2: float = 135.0,
+        inclination_1: float = 45.0,
+        inclination_2: float = 135.0,
         depth: float = 20.0,
         width: float = 0.0,
         width_counter_part_limited: bool = False,
@@ -154,8 +154,8 @@ class BirdsMouth(BTLxProcessing):
         self._start_y = None
         self._start_depth = None
         self._angle = None
-        self._inclination1 = None
-        self._inclination2 = None
+        self._inclination_1 = None
+        self._inclination_2 = None
         self._depth = None
         self._width = None
         self._width_counter_part_limited = None
@@ -175,8 +175,8 @@ class BirdsMouth(BTLxProcessing):
         self.start_y = start_y
         self.start_depth = start_depth
         self.angle = angle
-        self.inclination1 = inclination1
-        self.inclination2 = inclination2
+        self.inclination_1 = inclination_1
+        self.inclination_2 = inclination_2
         self.depth = depth
         self.width = width
         self.width_counter_part_limited = width_counter_part_limited
@@ -246,24 +246,24 @@ class BirdsMouth(BTLxProcessing):
         self._angle = angle
 
     @property
-    def inclination1(self):
-        return self._inclination1
+    def inclination_1(self):
+        return self._inclination_1
 
-    @inclination1.setter
-    def inclination1(self, inclination1):
-        if inclination1 > 180.0 or inclination1 < 0.0:
+    @inclination_1.setter
+    def inclination_1(self, inclination_1):
+        if inclination_1 > 180.0 or inclination_1 < 0.0:
             raise ValueError("Inclination1 must be between 0.0 and 180.0.")
-        self._inclination1 = inclination1
+        self._inclination_1 = inclination_1
 
     @property
-    def inclination2(self):
-        return self._inclination2
+    def inclination_2(self):
+        return self._inclination_2
 
-    @inclination2.setter
-    def inclination2(self, inclination2):
-        if inclination2 > 180.0 or inclination2 < 0.0:
+    @inclination_2.setter
+    def inclination_2(self, inclination_2):
+        if inclination_2 > 180.0 or inclination_2 < 0.0:
             raise ValueError("Inclination2 must be between 0.0 and 180.0.")
-        self._inclination2 = inclination2
+        self._inclination_2 = inclination_2
 
     @property
     def depth(self):
@@ -469,7 +469,7 @@ class BirdsMouth(BTLxProcessing):
         angle = cls._calculate_angle(ref_side, ridge_line, orientation)
 
         # inclination1 and inclination2 — each plane's tilt relative to ref_side normal
-        inclination1, inclination2 = cls._calculate_inclinations(ref_side, planes, orientation, ridge_line)
+        inclination_1, inclination_2 = cls._calculate_inclinations(ref_side, planes, orientation, ridge_line)
 
 
         return cls(
@@ -478,8 +478,8 @@ class BirdsMouth(BTLxProcessing):
             start_y=start_y,
             start_depth=start_depth,
             angle=angle,
-            inclination1=inclination1,
-            inclination2=inclination2,
+            inclination_1=inclination_1,
+            inclination_2=inclination_2,
             depth=depth,
             width=width,
             face_limited_front=face_limited_front,
@@ -627,18 +627,18 @@ class BirdsMouth(BTLxProcessing):
             The two cutting planes for this instance.
 
         """
-        assert self.inclination1 is not None
-        assert self.inclination2 is not None
+        assert self.inclination_1 is not None
+        assert self.inclination_2 is not None
 
         ref_frame = beam.ref_sides[self.ref_side_index]
         ridge_line = self._get_ridge_line_from_params_and_beam(beam)
         rotation_axis = ridge_line.direction if self.orientation == OrientationType.END else -ridge_line.direction
 
         plane_1 = Plane(ridge_line.end, -ref_frame.zaxis)
-        plane_1.rotate(math.radians(self.inclination2), rotation_axis, point=ridge_line.end)
+        plane_1.rotate(math.radians(self.inclination_2), rotation_axis, point=ridge_line.end)
 
         plane_2 = Plane(ridge_line.start, ref_frame.zaxis)
-        plane_2.rotate(math.radians(self.inclination1), rotation_axis, point=ridge_line.start)
+        plane_2.rotate(math.radians(self.inclination_1), rotation_axis, point=ridge_line.start)
 
         return [plane_1, plane_2]
 
