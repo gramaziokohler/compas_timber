@@ -14,6 +14,30 @@ from .part import Part
 
 
 class BallNode(Part):
+    """
+    This part is used by the `BallNodeJoint`.
+    It describes the ball node itself, which is a sphere that can be used to connect multiple beams together. The ball node can be connected to the beams through rods and plates.
+
+    Parameters
+    ----------
+    diameter : float
+        The diameter of the ball node.
+    frame : Frame, optional
+        The frame of the ball node, by default Frame.worldXY().
+
+    Attributes
+    ----------
+    diameter : float
+        The diameter of the ball node.
+    frame : Frame
+        The frame of the ball node.
+    radius : float
+        The radius of the ball node, which is half of the diameter.
+    geometry : Brep
+        The geometry of the ball node as a Brep, which is a sphere with the given diameter and frame.
+
+    """
+
     def __init__(self, diameter: float, frame: Frame = Frame.worldXY()):
         self.diameter = diameter
         self.frame = frame
@@ -63,6 +87,38 @@ class BallNode(Part):
 
 
 class BallNodeRod(Part):
+    """
+    This part describes the rod that connects the ball node to the beam. It is used by the `BallNodeJoint`.
+    The rod is a cylinder that can be used to connect the ball node to the beam. The rod can be connected to the ball node through a plate.
+
+    Parameters
+    ----------
+    length : float
+        The length of the rod.
+    diameter : float
+        The diameter of the rod.
+    frame : Frame, optional
+        The frame of the rod, by default Frame.worldXY().
+    beam : Beam
+        The beam that the rod is connected to, used as reference for the directionality.
+
+    Attributes
+    ----------
+    length : float
+        The length of the rod.
+    diameter : float
+        The diameter of the rod.
+    frame : Frame
+        The frame of the rod.
+    geometry : Brep
+        The geometry of the rod as a Brep, which is a cylinder with the given length and diameter, and the frame of the rod.
+    referenced_beam : Beam
+        The beam that the rod is connected to, used as reference for the directionality.
+    radius : float
+        The radius of the rod, which is half of the diameter.
+
+    """
+
     def __init__(self, length: float, diameter: float, beam, frame: Frame = Frame.worldXY()):
         self.length = length
         self.diameter = diameter
@@ -114,6 +170,49 @@ class BallNodeRod(Part):
 
 
 class BallNodePlate(Part):
+    """
+    Describes the plate that connects the ball node to the beam. It is used by the `BallNodeJoint`.
+    The plate is a box that can be used to connect the ball node to the beam.
+
+    Parameters
+    ----------
+    x_size : float
+        The size of the plate in the x direction.
+    y_size : float
+        The size of the plate in the y direction.
+    thickness : float
+        The thickness of the plate.
+    frame : Frame, optional
+        The frame of the plate, by default Frame.worldXY().
+    plate_depth : float
+        The depth of the slot that will be cut in the plate to fit the rod.
+    rod : BallNodeRod
+        The rod that the plate is connected to, used as reference for the directionality.
+    ball : BallNode
+        The ball node that the plate is connected to, used as reference for the directionality.
+
+    Attributes
+    ----------
+    x_size : float
+        The size of the plate in the x direction.
+    y_size : float
+        The size of the plate in the y direction.
+    thickness : float
+        The thickness of the plate
+    frame : Frame
+        The frame of the plate.
+    plate_depth : float
+        The depth of the slot that will be cut in the plate to fit the rod.
+    geometry : Brep
+        The geometry of the plate as a Brep, which is a box with the given x
+        and y size, and thickness, with a slot cut in it to fit the rod, and the frame of the plate.
+    rod : BallNodeRod
+        The rod that the plate is connected to, used as reference for the directionality.
+    ball : BallNode
+        The ball node that the plate is connected to, used as reference for the directionality
+
+    """
+
     def __init__(self, x_size, y_size, thickness, frame, plate_depth, rod, ball):
         self.x_size = x_size
         self.y_size = y_size
