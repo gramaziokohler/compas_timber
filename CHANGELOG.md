@@ -13,6 +13,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [2.1.1-rc1] 2026-04-22
+
+### Added
+
+* Added SimpleScarf Joint (i_simple_scarf.py) and BTLx processing (simple_scarf.py) for connecting paralell beams (TOPOLOGY I)
+* Added series of uni tests
+
+### Changed
+* Changed BTLxProcessingParams._format_value(value) to return int as str as needed for the ScarfJoint
+
+### Removed
 
 ## [2.1.1-rc1] 2026-04-01
 
