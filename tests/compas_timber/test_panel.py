@@ -332,12 +332,8 @@ def test_from_brep_tilted_box():
 #    |    (3,5)───(7,5)      |
 #    |    |           |      |
 #  (0,0)─(3,0)   (7,0)─(10,0)
-_WALL_WITH_DOOR_A = Polyline(
-    [Point(0, 0, 0), Point(3, 0, 0), Point(3, 5, 0), Point(7, 5, 0), Point(7, 0, 0), Point(10, 0, 0), Point(10, 8, 0), Point(0, 8, 0), Point(0, 0, 0)]
-)
-_WALL_WITH_DOOR_B = Polyline(
-    [Point(0, 0, 1), Point(3, 0, 1), Point(3, 5, 1), Point(7, 5, 1), Point(7, 0, 1), Point(10, 0, 1), Point(10, 8, 1), Point(0, 8, 1), Point(0, 0, 1)]
-)
+_WALL_WITH_DOOR_A = Polyline([Point(0, 0, 0), Point(3, 0, 0), Point(3, 5, 0), Point(7, 5, 0), Point(7, 0, 0), Point(10, 0, 0), Point(10, 8, 0), Point(0, 8, 0), Point(0, 0, 0)])
+_WALL_WITH_DOOR_B = Polyline([Point(0, 0, 1), Point(3, 0, 1), Point(3, 5, 1), Point(7, 5, 1), Point(7, 0, 1), Point(10, 0, 1), Point(10, 8, 1), Point(0, 8, 1), Point(0, 0, 1)])
 
 
 def test_extract_door_openings_no_door():
