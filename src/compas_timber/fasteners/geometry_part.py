@@ -6,7 +6,23 @@ from .part import Part
 
 class GeometryPart(Part):
     """
-    This fasteners part contains only the geometry, of the fastener.
+    Describes a fastener part defined by a geometry. Can be used to add a custom fastener or coming from a library of fasteners.
+
+
+    Parameters
+    ----------
+    geometry : Geometry
+        The geometry of the part.
+    frame : Frame, optional
+        The frame of the part, by default Frame.worldXY().
+
+    Attributes
+    ----------
+    geometry : Geometry
+        The geometry of the part, transformed to the part's frame.
+    frame : Frame
+        The frame of the part.
+
     """
 
     def __init__(self, geometry, frame=None):

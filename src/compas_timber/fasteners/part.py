@@ -5,8 +5,13 @@ from uuid import uuid4
 
 class Part(ABC):
     """
-    Base class for parts of a fastener.
-    A part can be a fastener_plate, a screw, a doweel, etc. It has a geometry and can interact with other parts of the fastener.
+    Base class for a part of a fastener.
+    A part can be a plate, a rod, a node, or any other component that can be used to create a fastener.
+
+    This is an abstract class and should be inherited by specific part classes.
+    It contains a unique identifier (guid) that can be used to track the part across different fasteners and interactions.
+
+
     """
 
     def __init__(self):
