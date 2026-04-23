@@ -268,6 +268,7 @@ class Joint(Data):
             The instance of the created joint.
 
         """
+        print("Creating {} Joint in generic Joint.create".format(cls.__name__))
 
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
