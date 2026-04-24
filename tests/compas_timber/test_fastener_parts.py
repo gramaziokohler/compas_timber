@@ -82,7 +82,7 @@ def test_rectangular_plate_grid_holes():
     assert all(hole.height == 2 for hole in plate.holes)
 
 
-def test_plate_hole_dirlling_line():
+def test_plate_hole_drilling_line():
     hole = PlateHole(diameter=5, height=2, frame=Frame.worldXY(), drilling_depth=10, drilling_diameter=3)
 
     test_line = Line(Point(0, 0, 0), Point(0, 0, -10))
