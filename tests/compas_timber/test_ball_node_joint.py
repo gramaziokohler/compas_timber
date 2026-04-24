@@ -15,7 +15,7 @@ def test_ball_node_joint():
     for beam in beams:
         model.add_element(beam)
 
-    joint = BallNodeJoint.create(model, beams, ball_diameter=8, rods_length=10, plate_thickness=2, plate_depth=10)
+    joint = BallNodeJoint.create(model, *beams, ball_diameter=8, rods_length=10, plate_thickness=2, plate_depth=10)
     assert joint
 
     model.process_joinery()

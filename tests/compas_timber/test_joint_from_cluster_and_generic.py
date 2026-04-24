@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from compas.geometry import Frame
 
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import BallNodeJoint
 
 # from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointCandidate
@@ -84,20 +85,20 @@ def test_from_cluster_with_single_joint(cluster_with_single_joint):
     assert isinstance(list(model.joint_candidates)[0], JointCandidate)
 
 
-# def test_from_cluster_with_multiple_joints(cluster_with_multiple_joints):
-#     """Test creating a joint from a cluster with multiple joints."""
-#     model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
+def test_from_cluster_with_multiple_joints(cluster_with_multiple_joints):
+    """Test creating a joint from a cluster with multiple joints."""
+    model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
 
-#     # Store initial joint count
-#     joint_candidate_count = len(list(model.joint_candidates))
+    # Store initial joint count
+    joint_candidate_count = len(list(model.joint_candidates))
 
-#     # Create a TButtJoint from the cluster (should connect all elements)
-#     joint = BallNodeJoint.promote_cluster(model, cluster)
+    # Create a TButtJoint from the cluster (should connect all elements)
+    joint = BallNodeJoint.promote_cluster(model, cluster)
 
-#     # Verify the joint was created
-#     assert isinstance(joint, BallNodeJoint)
-#     assert joint in model.joints
-#     assert joint_candidate_count == len(list(model.joint_candidates))
+    # Verify the joint was created
+    assert isinstance(joint, BallNodeJoint)
+    assert joint in model.joints
+    assert joint_candidate_count == len(list(model.joint_candidates))
 
 
 def test_from_cluster_with_custom_elements_order(cluster_with_single_joint):
@@ -157,19 +158,19 @@ def test_from_cluster_calls_from_generic_joint_for_single_joint(cluster_with_sin
     )
 
 
-# def test_from_cluster_calls_create_for_multiple_joints(cluster_with_multiple_joints, mocker):
-#     """Test that promote_cluster calls create when cluster has multiple joints."""
-#     model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
+def test_from_cluster_calls_create_for_multiple_joints(cluster_with_multiple_joints, mocker):
+    """Test that promote_cluster calls create when cluster has multiple joints."""
+    model, cluster, beam1, beam2, beam3 = cluster_with_multiple_joints
 
-#     # Mock the create method
-#     mock_create = mocker.patch.object(BallNodeJoint, "create")
-#     mock_create.return_value = Mock(spec=BallNodeJoint)
+    # Mock the create method
+    mock_create = mocker.patch.object(BallNodeJoint, "create")
+    mock_create.return_value = Mock(spec=BallNodeJoint)
 
-#     # Call promote_cluster
-#     BallNodeJoint.promote_cluster(model, cluster)
+    # Call promote_cluster
+    BallNodeJoint.promote_cluster(model, cluster)
 
-#     # Verify create was called with cluster elements
-#     mock_create.assert_called_once_with(model, *list(cluster.elements))
+    # Verify create was called with cluster elements
+    mock_create.assert_called_once_with(model, *list(cluster.elements))
 
 
 def test_from_generic_joint_basic(generic_joint_with_beams):

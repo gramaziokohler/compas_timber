@@ -67,17 +67,18 @@ class BallNodeJoint(Joint):
 
         return data
 
-    def __init__(self, beams: list[Beam], ball_diameter: float = 8, rods_length: float = 10, plate_thickness=2, plate_depth=10, **kwargs):
+    def __init__(self, *beams: Beam, ball_diameter: float = 8, rods_length: float = 10, plate_thickness=2, plate_depth=10, **kwargs):
+        print(beams)
         super().__init__(elements=beams, **kwargs)
-        self.beams = beams
         self.ball_diameter = ball_diameter
         self.rods_length = rods_length
         self.plate_thickness = plate_thickness
         self.plate_depth = plate_depth
 
     @property
-    def elements(self):
-        return list(self.beams) + self.generated_elements
+    def beams(self):
+        """Returns the beams joined by this joint."""
+        return self.elements
 
     @property
     def location(self):
@@ -118,10 +119,11 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
+        print(*elements)
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         fastener = joint.create_fastener()
-        model.add_fastener(fastener, *elements)
+        model.add_fastener(fastener, list(elements))
         return joint
 
     def create_fastener(self):

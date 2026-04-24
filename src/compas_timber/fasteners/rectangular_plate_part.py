@@ -145,7 +145,7 @@ class RectangularPlate(Part):
         Parameters
         ----------
         point : Point
-            The point where the hole should be added, relative to the plate frame.
+            The point where the hole should be added, relative to the plate frame and not the world_frame.
         diameter : float
             The diameter of the hole.
         apply_drilling : bool, optional
@@ -162,7 +162,7 @@ class RectangularPlate(Part):
 
         """
         hole_frame = self.frame.copy()
-        hole_frame.point = point
+        hole_frame.point = self.frame.point + self.frame.xaxis * point.x + self.frame.yaxis * point.y + self.frame.zaxis * point.z
         hole = PlateHole(hole_frame, diameter, self.thickness, apply_drilling=apply_drilling, drilling_depth=drilling_depth, drilling_diameter=drilling_diameter)
         self.add_hole(hole)
         return hole
