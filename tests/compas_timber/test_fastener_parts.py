@@ -45,7 +45,7 @@ def test_rectangular_plate_copy():
     assert plate.holes[1].frame.yaxis == plate_copy.holes[1].frame.yaxis
 
 
-def test_rectangular_plate_desrialization():
+def test_rectangular_plate_deserialization():
     plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
     hole = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
     plate.add_hole(hole)

@@ -62,12 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
-* Added module `compas_timber.fasteners`
-* Added abstract class `Fastener` with child classes `PlateFastener`, `Dowel`, `BallNodeFastener`. 
-* Added `PlateFastenerHole` to support `PlateFastener`.
-* Added dataclass `Rod` to support `BallNodeFastener`.
-* Added abstract class `JointFastener` as parent for all joints with fasteners. 
-* Added class `TButtJointPlateFastener` class inheriting from `JointFastener` and `ButtJoint`.
+* Added module `compas_timber.fasteners`.
+* Added abstract class `Fastener` as the base type for fastener definitions.
+* Added `RectangularPlate` and `PlateHole` to support plate-based fastener geometry.
+* Added `BallNode`, `BallNodeRod`, and `BallNodePlate` to support ball-node fastener assemblies.
+* Added `GeometryPart` and `Part` as supporting types in `compas_timber.fasteners`.
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
