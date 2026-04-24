@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
+from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Transformation
 
@@ -67,7 +68,6 @@ class Fastener:
 
         # create the fastener with the main parts
         fastener = cls(frame, target_frames)
-
         fastener.parts = parts
 
         # keep the same guid
@@ -89,7 +89,7 @@ class Fastener:
             self._target_frames = value
 
     @property
-    def geometry(self):
+    def geometry(self) -> list[Brep]:
         geometries = []
         for part in self.parts:
             part_geometry = part.geometry
