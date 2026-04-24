@@ -125,3 +125,6 @@ conda.recipe/
 tests/temp/
 
 src/*.btlx
+src/GH(1).ghx
+src/GH.ghx
+src/RH.3dm

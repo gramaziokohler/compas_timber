@@ -19,10 +19,11 @@ from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.errors import FastenerApplicationError
+from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
@@ -63,6 +64,11 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
+        fasteners_data = {}
+        for guid_str, fastener in self._fasteners.items():
+            fasteners_data[guid_str] = fastener.__data__
+        data["fasteners"] = fasteners_data
+
         return data
 
     @classmethod
@@ -75,11 +81,17 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
+        if data.get("fasteners") is not None:
+            fasteners_data = data["fasteners"]
+            for guid_str, fastener_data in fasteners_data.items():
+                model._fasteners[guid_str] = Fastener.from_data(fastener_data)
+
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._joints = {}
+        self._fasteners = {}
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
@@ -115,8 +127,7 @@ class TimberModel(Model):
 
     @property
     def fasteners(self):
-        # type: () -> List[Fastener]
-        return self.find_all_elements_of_type(Fastener)
+        return self._fasteners.values()
 
     @property
     def joints(self) -> Iterable[Joint]:
@@ -377,6 +388,50 @@ class TimberModel(Model):
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
 
+    def add_fastener(self, fastener, elements: list):
+        """
+        Adds a fastener to the model.
+
+        This method adds the "fasteners" attribute to the edge connecting the specified elements.
+        If the two elements are not yet connected by an edge, a new edge will be created between them.
+
+        The fasteners added to the model are copies of the specified fastener instance, with one copy created per target frame.
+
+
+        Parameters
+        ----------
+
+        fastener : :class:`~compas_timber.fasteners.Fastener`
+            The fastener to be added to the model and connecting the elements.
+        elements : list[:class:`~compas_timber.elements.Element`]
+            The elements to be connected by the fastener.
+
+        """
+        # 1: place all fastener parts to the target_frames
+        fastener_instances = fastener.get_fastener_instances()
+        fasteners_guids = []
+        for fastener in fastener_instances:
+            guid = str(fastener.guid)
+            self._fasteners[guid] = fastener
+            fasteners_guids.append(guid)
+
+        # 2: check if the elements are already connected by a joint
+        # and add the fastener as an attribute to the edge
+        for ia, element_a in enumerate(elements):
+            for ib, element_b in enumerate(elements):
+                if element_a is element_b or ia < ib:
+                    continue
+                interaction = self.has_interaction(element_a, element_b)
+                if interaction:
+                    edge = (element_a.graphnode, element_b.graphnode)
+                    if not self._graph.has_edge(edge):
+                        edge = (element_b.graphnode, element_a.graphnode)
+
+                else:
+                    edge = self.add_interaction(element_a, element_b)
+
+                self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
+
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.
 
@@ -615,6 +670,49 @@ class TimberModel(Model):
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
+        return errors
+
+    def process_fasteners(self, stop_on_first_error=False):
+        """
+        Process the fasteners of the model.
+        Applies the features of the fasteners in the model to their respective elements.
+
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.FastenerApplicationError`]
+            A list of errors that occurred during the fastener application process.
+        """
+        errors = []
+        fasteners = self.fasteners
+
+        for fastener in fasteners:
+            elements = []
+            for edge in self._graph.edges():
+                edge_fasteners = self._graph.edge_attribute(edge, "fasteners")
+                if not edge_fasteners:
+                    continue
+                ele_a_guid = self._graph.node_attribute(edge[0], "element")
+                ele_b_guid = self._graph.node_attribute(edge[1], "element")
+                element_a = self._elements[ele_a_guid]
+                element_b = self._elements[ele_b_guid]
+
+                if element_a not in elements:
+                    elements.append(element_a)
+                if element_b not in elements:
+                    elements.append(element_b)
+            try:
+                fastener.apply_features(elements)
+            except ValueError as ve:
+                bje = FastenerApplicationError(elements, fastener, message=str(ve))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+
         return errors
 
     def create_beam_structural_segments(self, solver=None) -> None:
