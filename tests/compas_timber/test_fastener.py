@@ -76,7 +76,7 @@ def test_fastener_parts():
     assert fastener.get_children(part1) == [part2]
 
 
-def test_fastener_deserialiazation():
+def test_fastener_deserialization():
     box = Box(1, 1, 1)
     geo = box.to_mesh()
     fastener = Fastener()
