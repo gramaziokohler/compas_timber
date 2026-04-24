@@ -238,5 +238,7 @@ def test_l_miter_joint_serialization_user_plane(beam_a, angle_beam):
     model.add_elements([beam_a, angle_beam])
     _ = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     model_copy = json_loads(json_dumps(model))
+
     joint_copy = list(model_copy.joints)[0]
+    joint_copy.restore_elements_from_keys(model_copy)
     assert joint_copy.miter_plane == Plane([0, 0, 0], [1, 0, 0])

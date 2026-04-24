@@ -105,6 +105,12 @@ class LMiterJoint(Joint):
             return self.local_miter_plane.transformed(self.beam_a.modeltransformation)
         return None
 
+    @classmethod
+    def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False):
+        if miter_plane:
+            miter_plane  = miter_plane.transformed(elements[0].modeltransformation.inverse()) 
+
+
     def _get_cut_planes_from_miter_plane(self, miter_plane):
         # create two cutting planes from the butt plane
         pln_a = miter_plane
