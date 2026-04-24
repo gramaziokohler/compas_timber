@@ -272,7 +272,7 @@ class BallNodePlate(Part):
         return full_brep
 
     def copy(self):
-        plate = BallNodePlate(self.x_size, self.y_size, self.thickness / (2), self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
+        plate = BallNodePlate(self.x_size, self.y_size, self.thickness, self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
         return plate
 
     def apply_features(self, elements):
