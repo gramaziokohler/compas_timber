@@ -62,8 +62,10 @@ class BallNodeJoint(Joint):
     @property
     def __data__(self):
         data = super(BallNodeJoint, self).__data__
-        data["beam_guids"] = self._beam_guids
-        data["fastener_guid"] = self._fastener_guid
+        data["ball_diameter"] = self.ball_diameter
+        data["rods_length"] = self.rods_length
+        data["plate_thickness"] = self.plate_thickness
+        data["plate_depth"] = self.plate_depth
 
         return data
 
