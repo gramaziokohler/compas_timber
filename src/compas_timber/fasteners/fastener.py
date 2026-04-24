@@ -70,6 +70,8 @@ class Fastener:
         fastener = cls(frame, target_frames)
         fastener.parts = parts
 
+        # TODO: recontruct child-parent interactions
+
         # keep the same guid
         fastener.guid = uuid.UUID(data["guid"])
         return fastener
