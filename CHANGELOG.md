@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `create` overrides to `LMiterJoint`, `LButtJoint` and `ButtJoint` to handle transformation of planes to local space.
 
 ### Changed
+* Changed `miter_plane` argument in `LMiterJoint` to `local_miter_plane` to ensure plane is kept and translated with joint elements.
+* Changed `back_plane` argument in `LButtJoint` to `local_back_plane` to ensure plane is kept and translated with joint elements.
+* Changed `butt_plane` argument in `LButtJoint` and `TButtJoint` to `local_butt_plane` to ensure plane is kept and translated with joint elements.
 
 ### Removed
 

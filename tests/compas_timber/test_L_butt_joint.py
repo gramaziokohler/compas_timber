@@ -8,6 +8,10 @@ from compas_timber.fabrication.lap import Lap
 from compas_timber.model import TimberModel
 
 import pytest
+from compas.geometry import Plane
+from compas.geometry import Translation
+from compas.data import json_dumps, json_loads
+from compas.tolerance import TOL
 
 
 def test_L_butt_joint_create():
@@ -111,3 +115,56 @@ def test_small_beam_butts():
     assert small_beam == joint.cross_beam, "small_beam_butts is False, Order stays the same"
     assert big_beam == joint_sbb.cross_beam, "small_beam_butts is True, Order changes"
     assert small_beam == joint_sbb.main_beam, "small_beam_butts is False, Order changes"
+
+
+def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
+    """Ensure butt_plane and back_plane passed to create() are stored and exposed."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
+    back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
+
+    assert joint.butt_plane is not None
+    assert joint.back_plane is not None
+    assert TOL.is_allclose(joint.butt_plane.normal, butt_plane.normal)
+    assert TOL.is_allclose(joint.back_plane.normal, back_plane.normal)
+
+
+def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam):
+    """Test that butt/back planes survive model serialization and model transforms."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
+    back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
+
+    # copy the model via JSON round-trip
+    model_copy = json_loads(json_dumps(model))
+    copied_joints = list(model_copy.joints)
+    assert len(copied_joints) == 1
+    copied_joint = copied_joints[0]
+
+    assert copied_joint.butt_plane is not None
+    assert copied_joint.back_plane is not None
+    assert TOL.is_allclose(copied_joint.butt_plane.normal, butt_plane.normal)
+    assert TOL.is_allclose(copied_joint.back_plane.normal, back_plane.normal)
+
+    # transform the original model and ensure planes follow the transform
+    translation = Translation.from_vector([10.0, 5.0, -2.0])
+    # capture original plane points
+    orig_butt_point = joint.butt_plane.point
+    orig_back_point = joint.back_plane.point
+
+    model.transform(translation)
+
+    # after transform, the joint's planes points should have been transformed by same translation
+    new_butt_point = joint.butt_plane.point
+    new_back_point = joint.back_plane.point
+
+    assert TOL.is_allclose([new_butt_point.x - orig_butt_point.x, new_butt_point.y - orig_butt_point.y, new_butt_point.z - orig_butt_point.z], [10.0, 5.0, -2.0])
+    assert TOL.is_allclose([new_back_point.x - orig_back_point.x, new_back_point.y - orig_back_point.y, new_back_point.z - orig_back_point.z], [10.0, 5.0, -2.0])

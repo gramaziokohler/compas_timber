@@ -1,5 +1,4 @@
 import math
-from tkinter import MITER
 
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -107,7 +106,7 @@ class LMiterJoint(Joint):
 
     @classmethod
     def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False):
-        local_miter_plane  = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
+        local_miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
         joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean)
         model.add_joint(joint)
         return joint

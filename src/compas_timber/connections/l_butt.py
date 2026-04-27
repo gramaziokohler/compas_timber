@@ -1,8 +1,8 @@
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
 from .solver import JointTopology
-from compas_timber.fabrication import JackRafterCutProxy
 
 
 class LButtJoint(ButtJoint):
@@ -104,8 +104,8 @@ class LButtJoint(ButtJoint):
             reject_i=reject_i,
             local_butt_plane=butt_plane.transformed(main_beam.modeltransformation.inverse()) if butt_plane else None,
             local_back_plane=back_plane.transformed(main_beam.modeltransformation.inverse()) if back_plane else None,
-            **kwargs
-            )
+            **kwargs,
+        )
         model.add_joint(joint)
         return joint
 

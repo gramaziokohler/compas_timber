@@ -129,20 +129,17 @@ class ButtJoint(Joint):
         return None
 
     @classmethod
-    def create(
-        cls, model, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None,**kwargs
-    ):
+    def create(cls, model, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, **kwargs):
         joint = cls(
             main_beam,
             cross_beam,
             mill_depth=mill_depth,
             modify_cross=modify_cross,
             local_butt_plane=butt_plane.transformed(main_beam.modeltransformation) if butt_plane else None,
-            **kwargs
-            )
+            **kwargs,
+        )
         model.add_joint(joint)
         return joint
-
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
