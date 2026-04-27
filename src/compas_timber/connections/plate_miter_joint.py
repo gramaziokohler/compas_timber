@@ -14,7 +14,6 @@ class PlateMiterJoint(PlateJoint):
         return "PlateMiterJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
 
     def _set_edge_planes(self):
-        print("set miter planes")
         line_a = intersection_plane_plane(self.a_planes[0], self.b_planes[0])
         line_b = intersection_plane_plane(self.a_planes[1], self.b_planes[1])
         plane = Plane.from_three_points(line_a[0], line_a[1], line_b[0])
