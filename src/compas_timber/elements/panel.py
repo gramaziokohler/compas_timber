@@ -293,7 +293,6 @@ class Panel(Element):
             return self.elementgeometry.transformed(self.transformation)  # type: ignore
         return super().compute_modelgeometry()  # type: ignore
 
-    
     def transformation_to_local(self):
         """Compute the transformation from model space to local element space."""
         return self.modeltransformation.inverse()

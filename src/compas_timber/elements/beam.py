@@ -234,7 +234,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_centerline(cls, centerline, width, height, z_vector=None, **kwargs):
+    def from_centerline(cls, centerline, width, height, z_vector=None):
         """Define the beam from its centerline.
 
         Parameters
@@ -264,10 +264,10 @@ class Beam(TimberElement):
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
 
-        return cls(frame, length, width, height, **kwargs)
+        return cls(frame, length, width, height)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, **kwargs):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
         """Creates a Beam from the given endpoints.
 
         Parameters
@@ -290,10 +290,10 @@ class Beam(TimberElement):
 
         """
         line = Line(point_start, point_end)
-        return cls.from_centerline(line, width, height, z_vector, **kwargs)
+        return cls.from_centerline(line, width, height, z_vector)
 
     @classmethod
-    def from_box(cls, box, **kwargs):
+    def from_box(cls, box):
         """Define the beam from a box.
 
         Parameters
@@ -316,7 +316,7 @@ class Beam(TimberElement):
             raise ValueError("The given box has zero height along its z-axis. Check the box dimensions.")
         origin = box.frame.point + box.frame.xaxis * (-box.xsize / 2.0)
         frame = Frame(origin, box.frame.xaxis, box.frame.yaxis)
-        return cls(frame, box.xsize, box.ysize, box.zsize, **kwargs)
+        return cls(frame, box.xsize, box.ysize, box.zsize)
 
     # ==========================================================================
     # Extensions and Modifications
