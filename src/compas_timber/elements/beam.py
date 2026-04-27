@@ -234,7 +234,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_centerline(cls, centerline, width, height, z_vector=None, **kwargs):
+    def from_centerline(cls, centerline, width, height, z_vector=None):
         """Define the beam from its centerline.
 
         Parameters
@@ -264,7 +264,7 @@ class Beam(TimberElement):
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
 
-        return cls(frame, length, width, height, **kwargs)
+        return cls(frame, length, width, height)
 
     @classmethod
     def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):

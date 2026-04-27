@@ -39,6 +39,7 @@ from .panel_miter_joint import PanelMiterJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 
+
 __all__ = [
     "Joint",
     "LapJoint",

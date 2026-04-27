@@ -629,8 +629,6 @@ def polyline_from_brep_loop(loop):
 
     if not polylines:
         return None
-    if len(polylines) != 1:
-        raise ValueError("The BrepLoop returned multiple polylines")
     # a valid closed polyline needs at least 4 points (3 unique vertices + 1 closing point);
     # 3 points would yield only 2 overlapping line segments
     if len(polylines[0].points) < 4:
@@ -690,6 +688,7 @@ def get_plate_geometry_outlines_from_brep(brep):
     """
     if len(brep.faces) < 5:
         raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate), got {}.".format(len(brep.faces)))
+
     # mesh face key N corresponds 1:1 to brep.faces[N]
     mesh = mesh_from_brep_simple(brep)
     face_keys = list(mesh.faces())
@@ -768,8 +767,7 @@ def get_plate_geometry_outlines_from_brep(brep):
 
 def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Vector] = None) -> Vector:
     """Get the vector normal to a polyline. if no normal direction is given, the normal is determined based on the polyline's winding order.
-    Assumes that all polyline points lay on the same plane.
-    Parameters
+    parameters
     ----------
     polyline : :class:`compas.geometry.Polyline`
         The polyline to get the normal vector from.
@@ -788,43 +786,6 @@ def get_polyline_normal_vector(polyline: Polyline, normal_direction: Optional[Ve
     elif not is_polyline_clockwise(polyline, offset_vector):  # if no vector and outline is not clockwise, flip the offset vector
         offset_vector = -offset_vector
     return offset_vector.unitized()
-
-
-def extend_line_segments(segments, close_loop=False):
-    """Extend segments to their intersections."""
-    start = 0 if close_loop else 1
-    for i in range(start, len(segments)):
-        if TOL.is_allclose(segments[i - 1].end, segments[i].start):  # points are already coincident
-            continue
-        ints = intersection_line_line(segments[i - 1], segments[i])
-        if not ints[0]:
-            continue
-        segments[i - 1] = Line(segments[i - 1].start, ints[0])
-        segments[i] = Line(ints[0], segments[i].end)
-
-
-def get_interior_corner_indices(polyline):
-    """Get the indices of the interior corners of a polyline."""
-    _interior_corner_indices = []
-    vector = Plane.from_points(polyline.points).normal
-    points = polyline.points[0:-1]
-    cw = is_polyline_clockwise(polyline, vector)
-    for i in range(len(points)):
-        angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
-        if not (cw ^ (angle < 0)):
-            _interior_corner_indices.append(i)
-    return _interior_corner_indices
-
-
-def get_interior_segment_indices(polyline):
-    """Get the indices of the interior segments of a polyline."""
-    interior_corner_indices = get_interior_corner_indices(polyline)
-    edge_count = len(polyline.points) - 1
-    _interior_segment_indices = []
-    for i in range(edge_count):
-        if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
-            _interior_segment_indices.append(i)
-    return _interior_segment_indices
 
 
 def combine_parallel_segments(polyline, tol=TOL):
@@ -936,10 +897,4 @@ __all__ = [
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
     "get_leaf_subclasses",
-    "move_polyline_segment_to_line",
-    "join_polyline_segments",
-    "polyline_from_brep_loop",
-    "extend_line_segments",
-    "get_interior_corner_indices",
-    "get_interior_segment_indices",
 ]
