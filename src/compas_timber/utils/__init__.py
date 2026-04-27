@@ -967,6 +967,15 @@ def get_interior_segment_indices(polyline):
             _interior_segment_indices.append(i)
     return _interior_segment_indices
 
+def get_leaf_subclasses(cls):
+    subclasses = []
+    for subclass in cls.__subclasses__():
+        if not get_leaf_subclasses(subclass):
+            subclasses.append(subclass)
+        subclasses.extend(get_leaf_subclasses(subclass))
+    return subclasses
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_plane_param",
@@ -995,4 +1004,5 @@ __all__ = [
     "extend_line_segments",
     "get_interior_corner_indices",
     "get_interior_segment_indices",
+    "get_leaf_subclasses",
 ]
