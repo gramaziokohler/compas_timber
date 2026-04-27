@@ -60,10 +60,10 @@ class LButtJoint(ButtJoint):
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, reject_i=False, local_butt_plane=None, local_back_plane=None, **kwargs):
-        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, local_butt_plane=local_butt_plane, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
+        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
         self.reject_i = reject_i
-        self.local_back_plane = local_back_plane or None
+        self.local_back_plane = back_plane.transformed(main_beam.modeltransformation.inverse()) if back_plane else None
 
     @property
     def back_plane(self):
@@ -95,18 +95,17 @@ class LButtJoint(ButtJoint):
         if small_beam_butts:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
-
-        joint = cls(
-            main_beam,
-            cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            reject_i=reject_i,
-            local_butt_plane=butt_plane.transformed(main_beam.modeltransformation.inverse()) if butt_plane else None,
-            local_back_plane=back_plane.transformed(main_beam.modeltransformation.inverse()) if back_plane else None,
-            **kwargs,
-        )
+        joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
         model.add_joint(joint)
+        return joint
+
+    @classmethod
+    def __from_data__(cls, data):
+        local_butt_plane = data.pop("local_butt_plane", None)
+        local_back_plane = data.pop("local_back_plane", None)
+        joint = cls(**data)
+        joint.local_butt_plane = local_butt_plane
+        joint.local_back_plane = local_back_plane
         return joint
 
     def add_features(self) -> None:

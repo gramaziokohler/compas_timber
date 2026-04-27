@@ -125,7 +125,7 @@ def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
 
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 
-    joint = LMiterJoint(beam_a, angle_beam, local_miter_plane=Plane([0, 0, 0], [1, 0, 0]).transformed(beam_a.modeltransformation))
+    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 200)
@@ -133,7 +133,7 @@ def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 
 
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
-    joint = LMiterJoint(beam_a, angle_beam, local_miter_plane=Plane([0, 0, 0], [1, -1, 0]).transformed(beam_a.modeltransformation))
+    joint = LMiterJoint(beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, -1, 0]))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 215)

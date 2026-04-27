@@ -85,7 +85,7 @@ class ButtJoint(Joint):
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
         modify_cross: bool = True,
-        local_butt_plane: Optional[Plane] = None,
+        butt_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
@@ -93,7 +93,7 @@ class ButtJoint(Joint):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth: float = mill_depth or 0.0
         self.modify_cross: bool = modify_cross
-        self.local_butt_plane: Optional[Plane] = local_butt_plane or None
+        self.local_butt_plane: Optional[Plane] = butt_plane.transformed(main_beam.modeltransformation.inverse()) if butt_plane else None
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
@@ -129,16 +129,10 @@ class ButtJoint(Joint):
         return None
 
     @classmethod
-    def create(cls, model, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, **kwargs):
-        joint = cls(
-            main_beam,
-            cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            local_butt_plane=butt_plane.transformed(main_beam.modeltransformation) if butt_plane else None,
-            **kwargs,
-        )
-        model.add_joint(joint)
+    def __from_data__(cls, data):
+        local_butt_plane = data.pop("local_butt_plane", None)
+        joint = cls(**data)
+        joint.local_butt_plane = local_butt_plane
         return joint
 
     def add_extensions(self):

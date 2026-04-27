@@ -73,9 +73,9 @@ class LMiterJoint(Joint):
 
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, local_miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
         super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
-        self.local_miter_plane = local_miter_plane or None
+        self.local_miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
         self._cutting_planes = []
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
@@ -105,10 +105,11 @@ class LMiterJoint(Joint):
         return None
 
     @classmethod
-    def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False):
-        local_miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
-        joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean)
-        model.add_joint(joint)
+    def __from_data__(cls, data):
+        print("FROM DATA!!!")
+        local_miter_plane = data.pop("local_miter_plane", None)
+        joint = cls(**data)
+        joint.local_miter_plane = local_miter_plane
         return joint
 
     def _get_cut_planes_from_miter_plane(self, miter_plane):
