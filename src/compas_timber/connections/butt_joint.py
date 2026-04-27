@@ -74,7 +74,7 @@ class ButtJoint(Joint):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
-        data["local_butt_plane"] = self.local_butt_plane
+        data["butt_plane"] = self.butt_plane
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -85,7 +85,7 @@ class ButtJoint(Joint):
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
         modify_cross: bool = True,
-        local_butt_plane: Optional[Plane] = None,
+        butt_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
@@ -93,7 +93,7 @@ class ButtJoint(Joint):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth: float = mill_depth or 0.0
         self.modify_cross: bool = modify_cross
-        self.local_butt_plane: Optional[Plane] = local_butt_plane or None
+        self.butt_plane: Optional[Plane] = butt_plane
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
@@ -120,29 +120,8 @@ class ButtJoint(Joint):
     def main_beam_ref_side_index(self):
         ref_side_dict = beam_ref_side_incidence(self.cross_beam, self.main_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+
         return ref_side_index
-
-    @property
-    def butt_plane(self):
-        if self.local_butt_plane:
-            return self.local_butt_plane.transformed(self.main_beam.modeltransformation.inverse())
-        return None
-
-    @classmethod
-    def create(
-        cls, model, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None,**kwargs
-    ):
-        joint = cls(
-            main_beam,
-            cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            local_butt_plane=butt_plane.transformed(main_beam.modeltransformation) if butt_plane else None,
-            **kwargs
-            )
-        model.add_joint(joint)
-        return joint
-
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -222,6 +201,15 @@ class ButtJoint(Joint):
             self._apply_pocket_to_cross_beam()
         else:
             self._apply_lap_to_cross_beam()
+        # apply a refinement cut on the cross beam
+        if self.modify_cross:
+            if self.back_plane:
+                modification_plane = self.back_plane
+            else:
+                modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
+            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            self.cross_beam.add_features(cross_refinement_feature)
+            self.features.append(cross_refinement_feature)
 
     def _apply_lap_to_cross_beam(self):
         # apply the lap on the cross beam

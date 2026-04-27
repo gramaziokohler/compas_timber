@@ -1,5 +1,4 @@
 import math
-from tkinter import MITER
 
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -69,14 +68,14 @@ class LMiterJoint(Joint):
         data = super(LMiterJoint, self).__data__
         data["cutoff"] = self.cutoff
         data["ref_side_miter"] = self.ref_side_miter
-        data["local_miter_plane"] = self.local_miter_plane
+        data["miter_plane"] = self.miter_plane
         data["clean"] = self.clean
 
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, local_miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
         super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
-        self.local_miter_plane = local_miter_plane or None
+        self.miter_plane = miter_plane
         self._cutting_planes = []
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
@@ -98,19 +97,6 @@ class LMiterJoint(Joint):
         if not self._cutting_planes:
             self._cutting_planes = self._get_cutting_planes()
         return self._cutting_planes
-
-    @property
-    def miter_plane(self):
-        if self.local_miter_plane:
-            return self.local_miter_plane.transformed(self.beam_a.modeltransformation)
-        return None
-
-    @classmethod
-    def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False):
-        local_miter_plane  = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
-        joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean)
-        model.add_joint(joint)
-        return joint
 
     def _get_cut_planes_from_miter_plane(self, miter_plane):
         # create two cutting planes from the butt plane
