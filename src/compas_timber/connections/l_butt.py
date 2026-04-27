@@ -56,20 +56,25 @@ class LButtJoint(ButtJoint):
     @property
     def __data__(self):
         data = super(LButtJoint, self).__data__
-        data["back_plane"] = self.back_plane
+        data["local_back_plane"] = self.local_back_plane
         data["reject_i"] = self.reject_i
         return data
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs):
-        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane=butt_plane, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, reject_i=False, local_butt_plane=None, local_back_plane=None, **kwargs):
+        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, local_butt_plane=local_butt_plane, **kwargs)
         self.reject_i = reject_i
-        self.local_back_plane = back_plane.transformed(main_beam.modeltransformation.inverse()) if back_plane else None
-
+        self.local_back_plane = local_back_plane or None
 
     @property
     def back_plane(self):
         if self.local_back_plane:
             return self.local_back_plane.transformed(self.main_beam.modeltransformation)
+        return None
+
+    @property
+    def butt_plane(self):
+        if self.local_butt_plane:
+            return self.local_butt_plane.transformed(self.main_beam.modeltransformation)
         return None
 
     @property
@@ -97,8 +102,8 @@ class LButtJoint(ButtJoint):
             mill_depth=mill_depth,
             modify_cross=modify_cross,
             reject_i=reject_i,
-            butt_plane=butt_plane,
-            back_plane=back_plane,
+            local_butt_plane=butt_plane.transformed(main_beam.modeltransformation.inverse()) if butt_plane else None,
+            local_back_plane=back_plane.transformed(main_beam.modeltransformation.inverse()) if back_plane else None,
             **kwargs
             )
         model.add_joint(joint)
