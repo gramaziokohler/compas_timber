@@ -2,8 +2,6 @@ from itertools import combinations
 
 from compas.data import Data
 from compas.geometry import Point
-from compas.geometry import Frame
-from compas.geometry import cross_vectors
 from compas.geometry import distance_point_line
 from compas.tolerance import TOL
 
@@ -146,12 +144,6 @@ class Joint(Data):
         self._location = value
 
     @property
-    def frame(self):
-        if TOL.is_allzero(cross_vectors(self.element_a.frame.xaxis, self.element_b.frame.xaxis)): # parallel vectors/TOPO_I
-            return Frame(self.location, self.element_a.frame.xaxis, self.element_a.frame.yaxis)
-        return Frame(self.location, self.element_a.frame.xaxis, self.element_b.frame.xaxis)
-
-    @property
     def generated_elements(self):
         return []
 
@@ -276,7 +268,6 @@ class Joint(Data):
             The instance of the created joint.
 
         """
-        print("Creating {} Joint in generic Joint.create".format(cls.__name__))
 
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
