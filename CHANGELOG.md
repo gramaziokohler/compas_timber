@@ -12,10 +12,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
 * Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
 * Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
+* Added `JointTopology.TOPO_FACE_FACE = 9` constant for joints between two parallel elements sharing a coplanar face.
+* Added `TimberModel.unpromoted_joint_candidates` property — returns the set of `JointCandidate` objects that have been identified on model edges but not yet promoted to a concrete joint.
 
 ### Changed
 
+* `Beam.from_centerline()`, `Beam.from_endpoints()`, and `Beam.from_box()` now accept and forward `**kwargs` to the `Beam` constructor, allowing attributes such as `name` to be passed through at construction time.
+
 ### Removed
+
+* Removed unused `TimberModel.topologies` property and the internal `_topologies` list.
 
 
 ## [2.1.1-rc1] 2026-04-01
