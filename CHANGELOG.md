@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
+* Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
+* Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
+
 ### Changed
 
 ### Removed
