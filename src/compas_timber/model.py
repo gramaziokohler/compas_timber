@@ -80,7 +80,6 @@ class TimberModel(Model):
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._joints = {}
-        self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
         self._graph.update_default_node_attributes(**self._TIMBER_GRAPH_NODE_ATTRIBUTES)
@@ -142,10 +141,6 @@ class TimberModel(Model):
             if edge_candidate and not joint:
                 candidates.add(edge_candidate)
         return candidates
-
-    @property
-    def topologies(self):
-        return self._topologies
 
     @property
     def center_of_mass(self):
