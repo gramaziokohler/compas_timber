@@ -349,7 +349,7 @@ class TMultiStepJoint(Joint):
 
         # -- butt cut on main beam end face --
         butt_plane = self._get_butt_plane()
-        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam)
+        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam, name="Roughing_Cut")
         self.main_beam.add_features(cut)
         self.features.append(cut)
 
