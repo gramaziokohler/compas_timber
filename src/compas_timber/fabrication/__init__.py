@@ -34,6 +34,7 @@ from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
+from .simple_scarf import SimpleScarf
 
 __all__ = [
     "BTLxWriter",
@@ -70,6 +71,7 @@ __all__ = [
     "Contour",
     "DualContour",
     "LongitudinalCut",
-    "LongitudinalCutProxy",
     "BTLxRawpart",
+    "SimpleScarf",
+    "LongitudinalCutProxy",
 ]
