@@ -42,8 +42,6 @@ class Plate(TimberElement):
         A line representing the principal outline of this plate.
     local_outline_b : :class:`~compas.geometry.Polyline`, optional
         A line representing the associated outline of this plate. This should have the same number of points as outline_a.
-    openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this plate.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -91,13 +89,12 @@ class Plate(TimberElement):
         thickness: float,
         local_outline_a: Optional[Polyline] = None,
         local_outline_b: Optional[Polyline] = None,
-        openings: Optional[list[Polyline]] = None,
         **kwargs,
     ) -> None:
         super(Plate, self).__init__(frame=frame, length=length, width=width, height=thickness, **kwargs)
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
+        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b)
         self._outline_feature = None
         self.attributes = {}
         self.attributes.update(kwargs)

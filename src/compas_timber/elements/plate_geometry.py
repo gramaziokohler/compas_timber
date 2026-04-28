@@ -29,8 +29,6 @@ class PlateGeometry(Data):
     local_outline_b : :class:`~compas.geometry.Polyline`
         A line representing the associated outline of this plate. This should be declared in the local frame of the plate and have the same number of points as outline_a.
         Must be parallel to outline_a. Must be in the +Z direction of the frame.
-    openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this plate.
 
     Attributes
     ----------
@@ -44,8 +42,6 @@ class PlateGeometry(Data):
         Frames representing the edge planes of the plate.
     shape : :class:`~compas.geometry.Brep`
         The geometry of the Plate before other machining features are applied.
-    openings : list[:class:`~compas.geometry.Polyline`]
-        A list of Polyline objects representing openings in this plate.
 
     """
 
@@ -54,16 +50,14 @@ class PlateGeometry(Data):
         data = {}
         data["local_outline_a"] = self._original_outlines[0]
         data["local_outline_b"] = self._original_outlines[1]
-        data["openings"] = self.openings
         return data
 
-    def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
+    def __init__(self, local_outline_a, local_outline_b, **kwargs):
         super().__init__(**kwargs)
         self._original_outlines = None
         self._mutable_outlines = None
         self._original_edge_planes = {}
         self._set_original_attributes(local_outline_a, local_outline_b)
-        self.openings = openings or []
         self._extension_planes = {}
 
     def __repr__(self):
@@ -175,14 +169,6 @@ class PlateGeometry(Data):
         outline_b = correct_polyline_direction(self.outline_b, Vector(0, 0, 1), clockwise=True)
         plate_geo = brep_from_outlines(outline_a, outline_b)
 
-        for opening in self.openings:
-            if not TOL.is_allclose(opening[0], opening[-1]):
-                raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            polyline_a = correct_polyline_direction(opening, Vector(0, 0, 1), clockwise=True)
-            # z-value of opening_b should be the same as outline_b to make sure the opening goes through the whole plate
-            polyline_b = Polyline([Point(pt[0], pt[1], self.outline_b[0][2]) for pt in polyline_a.points])
-            opening_brep = brep_from_outlines(polyline_a, polyline_b)
-            plate_geo -= opening_brep
         return plate_geo
 
     # ==========================================================================
@@ -190,10 +176,10 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @staticmethod
-    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None):
+    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline):
         """
         Get constructor arguments for the PlateGeometry and subclasses from outlines.
-        Outlines and openings are transformed to the local frame of the plate.
+        Outlines are transformed to the local frame of the plate.
 
         Parameters
         ----------
@@ -201,8 +187,6 @@ class PlateGeometry(Data):
             Principal outline of the plate.
         outline_b : :class:`~compas.geometry.Polyline`
             Associated outline of the plate.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            List of opening polylines.
 
         Returns
         -------
@@ -210,7 +194,6 @@ class PlateGeometry(Data):
             Dictionary of constructor arguments containing:
             - local_outline_a (:class:`~compas.geometry.Polyline`)
             - local_outline_b (:class:`~compas.geometry.Polyline`)
-            - openings (list[:class:`~compas.geometry.Polyline`]|None)
             - frame (:class:`~compas.geometry.Frame`)
             - length (float)
             - width (float)
@@ -235,11 +218,9 @@ class PlateGeometry(Data):
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
-        openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,
             "local_outline_b": local_outline_b,
-            "openings": openings,
             "frame": frame,
             "length": box.xsize,
             "width": box.ysize,
