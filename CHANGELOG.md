@@ -8,12 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `create` overrides to `LMiterJoint`, `LButtJoint` and `ButtJoint` to handle transformation of planes to local space.
 
 * Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
 * Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
 * Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
 
 ### Changed
+* Changed `miter_plane` argument in `LMiterJoint` to `local_miter_plane` to ensure plane is kept and translated with joint elements.
+* Changed `back_plane` argument in `LButtJoint` to `local_back_plane` to ensure plane is kept and translated with joint elements.
+* Changed `butt_plane` argument in `LButtJoint` and `TButtJoint` to `local_butt_plane` to ensure plane is kept and translated with joint elements.
 
 ### Removed
 
