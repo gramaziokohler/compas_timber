@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
+* Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
+* Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
+
 * Added `Opening` panel feature class to `compas_timber.panel_features` for representing door and window cutouts in panels. Includes `Opening.from_outline_panel()` classmethod to create an opening from a single outline and a panel.
 * Added `OpeningType` constants class to `compas_timber.panel_features` with `DOOR` and `WINDOW` string constants.
 * Added `recognize_doors` and `horizontal_openings` parameters to `Panel.from_outlines()`. When `recognize_doors=True`, L-shaped door notches in the wall outline are automatically extracted and added as `Opening` features with `OpeningType.DOOR`.
 * Added `extract_door_openings(outline_a, outline_b)` module-level function in `compas_timber.elements.panel` that detects door cutouts from paired wall outlines by identifying interior segments and geometric constraints.
-* Added `extend_line_segments()`, `get_interior_corner_indices()`, and `get_interior_segment_indices()` to `compas_timber.utils.__all__`.
 
 ### Changed
 
