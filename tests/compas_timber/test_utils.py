@@ -21,6 +21,9 @@ from compas_timber.utils import move_polyline_segment_to_line
 from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import combine_parallel_segments
+from compas_timber.utils import extend_line_segments
+from compas_timber.utils import get_interior_corner_indices
+from compas_timber.utils import get_interior_segment_indices
 
 
 def test_intersection_line_line_param():
@@ -374,3 +377,91 @@ def test_combine_parallel_segments():
     combine_parallel_segments(polyline)
     expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
     assert polyline == expected
+
+
+# --- extend_line_segments ---
+
+
+def test_extend_line_segments_basic():
+    # two segments that nearly meet at (1, 0, 0) but don't quite touch
+    segments = [
+        Line(Point(0, 0, 0), Point(0.9, 0, 0)),  # horizontal, ends short
+        Line(Point(1, 0.1, 0), Point(1, 2, 0)),  # vertical, starts above
+    ]
+    extend_line_segments(segments)
+    assert TOL.is_allclose(segments[0].end, Point(1, 0, 0))
+    assert TOL.is_allclose(segments[1].start, Point(1, 0, 0))
+
+
+def test_extend_line_segments_already_connected():
+    segments = [
+        Line(Point(0, 0, 0), Point(1, 0, 0)),
+        Line(Point(1, 0, 0), Point(1, 1, 0)),
+    ]
+    extend_line_segments(segments)
+    assert TOL.is_allclose(segments[0].end, Point(1, 0, 0))
+    assert TOL.is_allclose(segments[1].start, Point(1, 0, 0))
+
+
+def test_extend_line_segments_close_loop():
+    # triangle where each pair of segments nearly meets
+    segments = [
+        Line(Point(0, 0, 0), Point(0.9, 0, 0)),
+        Line(Point(1, 0.1, 0), Point(0.6, 0.9, 0)),
+        Line(Point(0.4, 1, 0), Point(0, 0.1, 0)),
+    ]
+    extend_line_segments(segments, close_loop=True)
+    # all adjacent pairs should now share endpoints
+    assert TOL.is_allclose(segments[0].end, segments[1].start)
+    assert TOL.is_allclose(segments[1].end, segments[2].start)
+    assert TOL.is_allclose(segments[2].end, segments[0].start)
+
+
+# --- get_interior_corner_indices ---
+
+
+@pytest.fixture
+def l_shaped_polyline():
+    # CCW L-shape: a rectangle with the top-right corner notched out
+    return Polyline([[0, 0, 0], [3, 0, 0], [3, 1, 0], [2, 1, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+
+
+def test_get_interior_corner_indices_convex():
+    square = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert get_interior_corner_indices(square) == []
+
+
+def test_get_interior_corner_indices_l_shape(l_shaped_polyline):
+    interior = get_interior_corner_indices(l_shaped_polyline)
+    assert len(interior) == 1
+    # the two re-entrant corners are at (3,1) index 2 and (2,1) index 3
+    assert 3 in interior
+
+
+def test_get_interior_corner_indices_u_shape():
+    # U-shape: rectangle with a rectangular notch cut into one side
+    u_shape = Polyline([[0, 0, 0], [4, 0, 0], [4, 3, 0], [3, 3, 0], [3, 1, 0], [1, 1, 0], [1, 3, 0], [0, 3, 0], [0, 0, 0]])
+    interior = get_interior_corner_indices(u_shape)
+    assert len(interior) == 2
+    assert 4 in interior
+    assert 5 in interior
+
+
+# --- get_interior_segment_indices ---
+
+
+def test_get_interior_segment_indices_convex():
+    square = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert get_interior_segment_indices(square) == []
+
+
+def test_get_interior_segment_indices_l_shape(l_shaped_polyline):
+    interior_segs = get_interior_segment_indices(l_shaped_polyline)
+    assert interior_segs == []
+
+
+def test_get_interior_segment_indices_u_shape():
+    # U-shape has two interior corners connected by one interior segment
+    u_shape = Polyline([[0, 0, 0], [4, 0, 0], [4, 3, 0], [3, 3, 0], [3, 1, 0], [1, 1, 0], [1, 3, 0], [0, 3, 0], [0, 0, 0]])
+    interior_segs = get_interior_segment_indices(u_shape)
+    assert interior_segs == [4]
