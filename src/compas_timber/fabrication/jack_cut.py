@@ -347,7 +347,7 @@ class JackRafterCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, plane, beam, ref_side_index=0):
+    def __init__(self, plane, beam, ref_side_index=3):
         self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.ref_side_index = ref_side_index
@@ -367,7 +367,7 @@ class JackRafterCutProxy(object):
         return self._processing
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=3):
         """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
 
         Parameters
