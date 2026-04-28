@@ -215,7 +215,7 @@ class Panel(Element):
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
-        self._features = []
+        self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
 
     @reset_computed

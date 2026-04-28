@@ -106,9 +106,9 @@ class LMiterJoint(Joint):
         return None
 
     @classmethod
-    def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False):
+    def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
         local_miter_plane  = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
-        joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean)
+        joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean, **kwargs)
         model.add_joint(joint)
         return joint
 
