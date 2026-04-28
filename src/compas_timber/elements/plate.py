@@ -10,6 +10,7 @@ from compas.geometry import Frame  # noqa: F401
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.tolerance import TOL
 from compas_model.elements import reset_computed
@@ -99,6 +100,7 @@ class Plate(TimberElement):
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
         self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
         self._outline_feature = None
+        self._opening_features = None
         self.attributes = {}
         self.attributes.update(kwargs)
         self.debug_info = []
@@ -179,8 +181,14 @@ class Plate(TimberElement):
     @property
     def features(self):
         if not self._outline_feature:
+            # TODO FreeContour from Plate
             self._outline_feature = FreeContour.from_top_bottom_and_elements(self.outline_a, self.outline_b, self, interior=False)
-        return [self._outline_feature] + self._features
+        if not self._opening_features:
+            # TODO remove openings from PlateGeometry, implement as feature.
+            self._opening_features = [
+                FreeContour.from_polyline_and_element(o.transformed(Transformation.from_frame(self.frame)), self, interior=True) for o in self.plate_geometry.openings
+            ]
+        return [self._outline_feature] + self._opening_features + self._features
 
     @features.setter
     def features(self, features):
@@ -194,6 +202,7 @@ class Plate(TimberElement):
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = []
         self._outline_feature = None
+        self._opening_features = None
         self.debug_info = []
 
     # ==========================================================================
@@ -293,13 +302,9 @@ class Plate(TimberElement):
         :class:`~compas_timber.elements.Plate`
             A Plate object representing the plate geometry with the given outlines.
         """
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
         kwargs.update(args)
-        plate = cls(**kwargs)
-        if openings:
-            for opening in openings:
-                plate.add_feature(FreeContour.from_polyline_and_element(opening, plate, interior=True))
-        return plate
+        return cls(**kwargs)
 
     @classmethod
     def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
