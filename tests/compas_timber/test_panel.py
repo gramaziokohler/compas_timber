@@ -11,6 +11,8 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.elements import Panel
+from compas_timber.elements import Beam
+from compas_timber.elements.panel import extract_door_openings
 from compas_timber.model import TimberModel
 
 from brep_mocks import make_plate_brep
@@ -86,6 +88,22 @@ def test_sloped_panel_creation():
     assert TOL.is_close(expected_obb.xsize, panel_a.obb.xsize)
     assert TOL.is_close(expected_obb.ysize, panel_a.obb.ysize)
     assert TOL.is_close(panel_a.obb.zsize, 1.0)
+
+
+def test_panel_addition_to_model(model):
+    panels = model.panels
+    assert panels[0].modeltransformation == panels[0].transformation, "Expected panel model transformation to match panel transformation"
+    assert panels[1].modeltransformation == panels[1].transformation, "Expected panel model transformation to match panel transformation"
+    assert len(list(model.elements())) == 2, "Expected model to contain two panels"
+    assert all(isinstance(element, Panel) for element in model.elements()), "Expected all elements in the model to be panels"
+
+
+def test_add_beam_to_panel(model):
+    beam = Beam(Frame.worldXY(), length=5, width=0.3, height=0.5, name="Beam 1")
+    model.add_element(beam, parent=model.panels[1])
+    assert len(list(model.elements())) == 3, "Expected model to contain two panels"
+    assert beam in model.panels[1].children, "Expected beam to be a child of the panel"
+    assert beam.modeltransformation == model.panels[1].transformation, "Expected beam model transformation to match panel transformation"
 
 
 def test_copy_panel_model(model):
@@ -305,3 +323,40 @@ def test_from_brep_tilted_box():
     assert panel.outline_a is not None
     assert panel.outline_b is not None
     assert len(panel.outline_a.points) == len(panel.outline_b.points)
+
+
+# Wall: 10 wide, 8 tall. Door cutout: x=3..7, height=5.
+#
+#  (0,8)────────────────(10,8)
+#    |                      |
+#    |    (3,5)───(7,5)      |
+#    |    |           |      |
+#  (0,0)─(3,0)   (7,0)─(10,0)
+_WALL_WITH_DOOR_A = Polyline([Point(0, 0, 0), Point(3, 0, 0), Point(3, 5, 0), Point(7, 5, 0), Point(7, 0, 0), Point(10, 0, 0), Point(10, 8, 0), Point(0, 8, 0), Point(0, 0, 0)])
+_WALL_WITH_DOOR_B = Polyline([Point(0, 0, 1), Point(3, 0, 1), Point(3, 5, 1), Point(7, 5, 1), Point(7, 0, 1), Point(10, 0, 1), Point(10, 8, 1), Point(0, 8, 1), Point(0, 0, 1)])
+
+
+def test_extract_door_openings_no_door():
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 8, 0), Point(0, 8, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 8, 1), Point(0, 8, 1), Point(0, 0, 1)])
+    _, _, openings = extract_door_openings(outline_a, outline_b)
+    assert openings == []
+
+
+def test_extract_door_openings_single_door():
+    result_a, result_b, openings = extract_door_openings(_WALL_WITH_DOOR_A.copy(), _WALL_WITH_DOOR_B.copy())
+    assert len(openings) == 1
+    assert len(result_a.points) == 5  # door removed, simple rectangle remains
+    assert len(result_b.points) == 5
+
+
+def test_extract_door_openings_mismatched_interior_indices_no_error():
+    # outline_b has the door notch at a different segment index (extra split before the notch)
+    # so interior_indices_a != interior_indices_b — previously this raised ValueError
+    outline_a = _WALL_WITH_DOOR_A.copy()  # interior indices: {1, 2, 3}
+    outline_b = Polyline(  # shifted point by one place in list door to interior indices: {2, 3, 4}
+        [Point(0, 8, 1), Point(0, 0, 1), Point(3, 0, 1), Point(3, 5, 1), Point(7, 5, 1), Point(7, 0, 1), Point(10, 0, 1), Point(10, 8, 1), Point(0, 8, 1)]
+    )
+    # must not raise; directions don't match so no door is generated
+    _, _, openings = extract_door_openings(outline_a, outline_b)
+    assert openings == []

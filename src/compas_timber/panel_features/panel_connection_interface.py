@@ -62,6 +62,10 @@ class PanelConnectionInterface(PanelFeature):
     def geometry(self) -> Polyline:
         return self.polyline
 
+    @property
+    def is_joinery(self):
+        return True
+
     def compute_elementgeometry(self, include_features=False) -> Polyline:
         return self._polyline
 

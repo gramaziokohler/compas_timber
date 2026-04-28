@@ -53,7 +53,6 @@ classDiagram
          +plate_geometry : PlateGeometry
          +outline_a : Polyline
          +outline_b : Polyline
-         +openings : list[Polyline]
          +planes : tuple[Plane]
          +blank : Box
          +blank_length : float
@@ -61,7 +60,7 @@ classDiagram
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
          +compute_collision_mesh()
-         +from_outlines(outline_a, outline_b)
+         +from_outlines(outline_a, outline_b, openings)
          +from_outline_thickness(outline, thickness)
          +from_brep(brep, thickness)
          +set_extension_plane(edge_index, plane)
@@ -107,7 +106,7 @@ classDiagram
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
          +attributes : dict
-         +from_outlines(outline_a, outline_b, openings)
+         +from_outlines(outline_a, outline_b, openings, recognize_doors, horizontal_openings)
          +from_outline_thickness(outline, thickness, vector)
          +from_brep(brep, thickness, vector)
          +compute_elementgeometry(include_features=True)
@@ -121,15 +120,41 @@ classDiagram
          +remove_features(features=None)
       }
 
+      class PanelFeature {
+         <<abstract>>
+         +frame : Frame
+         +name : str
+         +transformation : Transformation
+         +geometry : list[Geometry]
+         +apply(panel_geometry, panel)
+      }
+
+      class Opening {
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +opening_type : str
+         +shape : Brep
+         +from_outline_panel(outline, panel, opening_type, project_horizontal)
+         +apply(panel_geometry, panel)
+      }
+
+      class OpeningType {
+         +DOOR : str = "door"
+         +WINDOW : str = "window"
+      }
+
       %% Inheritance relationships
       Element <|-- TimberElement
       TimberElement <|-- Beam
       TimberElement <|-- Plate
       Element <|-- Panel
       Element <|-- Fastener
+      PanelFeature <|-- Opening
 
       %% Composition relationships
       Fastener ..> FastenerTimberInterface : contains
+      Panel ..> PanelFeature : contains
+      Opening ..> OpeningType : uses
 ```
 
 ## Connections Subsystem

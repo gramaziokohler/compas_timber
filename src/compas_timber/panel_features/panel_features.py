@@ -36,6 +36,10 @@ class PanelFeature(Element, ABC):
         return data
 
     @property
+    def is_joinery(self):
+        return False
+
+    @property
     def geometry(self) -> Geometry:
         """The geometry of the element in the model's global coordinates."""
         if self._geometry is None:
@@ -58,3 +62,4 @@ class PanelFeature(Element, ABC):
     def apply(self, geometry: Brep, panel: Panel) -> Brep:
         """Apply the panel feature to the panel geometry."""
         return geometry
+

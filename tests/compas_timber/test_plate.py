@@ -257,7 +257,7 @@ def test_from_outline_with_openings():
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness)
-    assert len(plate.plate_geometry.openings) == 1
+    assert len(plate._features) == 1
 
 
 def test_from_brep_rectangular_box():
