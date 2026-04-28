@@ -78,6 +78,8 @@ class Panel(Element):
         A polyline representing the principal outline of this panel.
     local_outline_b: :class:`~compas.geometry.Polyline`, optional
         A polyline representing the associated outline of this panel.
+    openings : list[:class:`~compas.geometry.Polyline`], optional
+        A list of Polyline objects representing openings in this panel.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -124,13 +126,14 @@ class Panel(Element):
         thickness: float,
         local_outline_a: Optional[Polyline] = None,
         local_outline_b: Optional[Polyline] = None,
+        openings: Optional[list[Polyline]] = None,
         type: Optional[str] = None,
         **kwargs,
     ):
         super(Panel, self).__init__(transformation=frame.to_transformation(), **kwargs)  # NOTE: Element wants a transfomration, not a frame
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b)
+        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
 
         self.length = length
         self.width = width
@@ -212,7 +215,7 @@ class Panel(Element):
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
-        self._features = []
+        self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
 
     @reset_computed
@@ -438,22 +441,25 @@ class Panel(Element):
         :class:`~compas_timber.elements.Panel`
             A PlateGeometry object representing the plate geometry with the given outlines.
         """
-        windows = []
+
         if openings:
-            windows = [o for o in openings]
-        doors = []
+            openings = [(o, "window") for o in openings]
         if recognize_doors:
-            outline_a, outline_b, doors = extract_door_openings(outline_a, outline_b)
+            outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
+            if door_openings:
+                if openings is None:
+                    openings = [(o, "door") for o in door_openings]
+                else:
+                    openings.extend([(o, "door") for o in door_openings])
 
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
+        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
         kwargs.update(args)
         panel = cls(**kwargs)
-        for polyline in windows:
-            opening = Opening.from_outline_panel(polyline, panel, opening_type="window", project_horizontal=horizontal_openings)
-            panel.add_feature(opening)
-        for polyline in doors:
-            opening = Opening.from_outline_panel(polyline, panel, opening_type="door", project_horizontal=horizontal_openings)
-            panel.add_feature(opening)
+        if openings:
+            for polyline, opening_type in openings:
+                opening = Opening.from_outline_panel(polyline, panel, opening_type=opening_type, project_horizontal=horizontal_openings)
+                panel.add_feature(opening)
         return panel
 
 
