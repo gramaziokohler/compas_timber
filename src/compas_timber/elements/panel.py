@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import Optional
 from typing import Union
@@ -16,14 +17,20 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
+from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.panel_features import Opening
 from compas_timber.panel_features import PanelFeatureType
+from compas_timber.utils import combine_parallel_segments
+from compas_timber.utils import get_interior_segment_indices
 from compas_timber.utils import get_plate_geometry_outlines_from_brep
 from compas_timber.utils import get_polyline_normal_vector
+from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
@@ -71,8 +78,6 @@ class Panel(Element):
         A polyline representing the principal outline of this panel.
     local_outline_b: :class:`~compas.geometry.Polyline`, optional
         A polyline representing the associated outline of this panel.
-    openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this panel.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -119,14 +124,13 @@ class Panel(Element):
         thickness: float,
         local_outline_a: Optional[Polyline] = None,
         local_outline_b: Optional[Polyline] = None,
-        openings: Optional[list[Polyline]] = None,
         type: Optional[str] = None,
         **kwargs,
     ):
         super(Panel, self).__init__(transformation=frame.to_transformation(), **kwargs)  # NOTE: Element wants a transfomration, not a frame
         local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
+        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b)
 
         self.length = length
         self.width = width
@@ -323,32 +327,6 @@ class Panel(Element):
         return plate_geo
 
     @classmethod
-    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
-        """
-        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
-
-        Parameters
-        ----------
-        outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the panel geometry in parent space.
-        outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the panel geometry in parent space.
-            This should have the same number of points as outline_a.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the panel geometry.
-        **kwargs : dict, optional
-            Additional keyword arguments to be passed to the constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.Panel`
-            A Panel object representing the panel geometry with the given outlines.
-        """
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, openings)
-        kwargs.update(args)
-        return cls(**kwargs)
-
-    @classmethod
     def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from a polyline outline and a thickness.
@@ -433,3 +411,117 @@ class Panel(Element):
             raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
         outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
         return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
+
+    @classmethod
+    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
+        """
+        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
+
+        Parameters
+        ----------
+        outline_a : :class:`~compas.geometry.Polyline`
+            A polyline representing the principal outline of the plate geometry in parent space. For exterior walls, this is the interior side.
+        outline_b : :class:`~compas.geometry.Polyline`
+            A polyline representing the associated outline of the plate geometry in parent space. For exterior walls, this is the exterior side.
+            This should have the same number of points as outline_a.
+        openings : list[:class:`~compas.geometry.Polyline`], optional
+            A list of openings to be added to the plate geometry.
+        recognize_doors : bool
+            if True, door features will be extracted from exterior polylines and added as Openings to the Panel.
+        horizontal_openings : bool
+            if True, openings in Panels that are not Vertical or Horizontal will be extruded horzontally through the Panel.
+        **kwargs : dict, optional
+            Additional keyword arguments to be passed to the constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Panel`
+            A PlateGeometry object representing the plate geometry with the given outlines.
+        """
+        windows = []
+        if openings:
+            windows = [o for o in openings]
+        doors = []
+        if recognize_doors:
+            outline_a, outline_b, doors = extract_door_openings(outline_a, outline_b)
+
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
+        kwargs.update(args)
+        panel = cls(**kwargs)
+        for polyline in windows:
+            opening = Opening.from_outline_panel(polyline, panel, opening_type="window", project_horizontal=horizontal_openings)
+            panel.add_feature(opening)
+        for polyline in doors:
+            opening = Opening.from_outline_panel(polyline, panel, opening_type="door", project_horizontal=horizontal_openings)
+            panel.add_feature(opening)
+        return panel
+
+
+def extract_door_openings(outline_a, outline_b):
+    """Extract door openings from the given outlines.
+
+    Parameters
+    ----------
+    outline_a : :class:`~compas.geometry.Polyline`
+        A polyline representing the principal outline of the plate geometry in parent space.
+    outline_b : :class:`~compas.geometry.Polyline`
+        A polyline representing the associated outline of the plate geometry in parent space.
+        This should have the same number of points as outline_a.
+
+    Returns
+    -------
+    list[:class:`~compas.geometry.Polyline`]
+        A list of polylines representing the door openings.
+    """
+    combine_parallel_segments(outline_a)
+    combine_parallel_segments(outline_b)
+
+    interior_indices_a = get_interior_segment_indices(outline_a)
+    interior_indices_b = get_interior_segment_indices(outline_b)
+    interior_indices = set(interior_indices_a) | set(interior_indices_b)
+
+    openings = []
+    while True:
+        segments_a = outline_a.lines
+        segments_b = outline_b.lines
+        n = len(segments_a)
+
+        for seg_index in interior_indices:
+            # collect the 5-segment window centered on the interior segment
+            window_indices = [(seg_index + i) % n for i in range(-2, 3)]
+            door_segs_a = [segments_a[i] for i in window_indices]
+            door_segs_b = [segments_b[i] for i in window_indices]
+
+            # both outlines must agree on segment directions
+            if not all(angle_vectors(a.direction, b.direction) <= TOL.ABSOLUTE for a, b in zip(door_segs_a, door_segs_b)):
+                continue
+            # the two side segments must be anti-parallel (opposite directions)
+            if abs(angle_vectors(door_segs_a[1].direction, door_segs_a[3].direction) - math.pi) > TOL.ABSOLUTE:
+                continue
+            # the segments above and below the door opening must be collinear (same horizontal line)
+            if not is_colinear_line_line(door_segs_a[0], door_segs_a[4], tol=TOL.RELATIVE):
+                continue
+
+            vertical = door_segs_a[1].direction
+            vertical.unitize()
+
+            remaining = {i for i in range(n)} - set(window_indices)
+            segs_a = [segments_a[i] for i in sorted(remaining)]
+            segs_b = [segments_b[i] for i in sorted(remaining)]
+
+            opening = join_polyline_segments(door_segs_a[1:4])[0][0]
+            opening[0] -= vertical * 1.0
+            opening[3] -= vertical * 1.0
+            opening.append(opening.points[0])  # close loop
+            openings.append(opening)
+
+            outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
+            outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
+            interior_indices_a = get_interior_segment_indices(outline_a)
+            interior_indices_b = get_interior_segment_indices(outline_b)
+            interior_indices = set(interior_indices_a) | set(interior_indices_b)
+            break
+        else:
+            break  # no door candidates found in this pass
+
+    return outline_a, outline_b, openings
