@@ -937,8 +937,6 @@ __all__ = [
     "combine_parallel_segments",
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
-    "intersection_line_beams",
-    "split_beam_at_lengths",
     "extend_line_segments",
     "get_interior_corner_indices",
     "get_interior_segment_indices",
