@@ -22,7 +22,6 @@ def test_simple_joint_and_reset():
     kwargs = {"topology": JointTopology.TOPO_EDGE_EDGE, "a_segment_index": 1, "b_segment_index": 0}
     joint = PanelMiterJoint(panel_a, panel_b, **kwargs)
     joint.add_extensions()
-    joint.add_features()
     for s in [panel_a, panel_b]:
         s.apply_edge_extensions()
     joint.add_features()
@@ -46,7 +45,6 @@ def test_simple_joint_and_reset_no_kwargs():
 
     joint = PanelMiterJoint(panel_a, panel_b)
     joint.add_extensions()
-    joint.add_features()
     for s in [panel_a, panel_b]:
         s.apply_edge_extensions()
     joint.add_features()
