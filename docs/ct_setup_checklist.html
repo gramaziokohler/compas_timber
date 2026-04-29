@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>COMPAS Timber — T2 2025/26 Setup</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #0F172A;
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0F172A; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    const sections = [
+      {
+        id: "pre",
+        label: "Pre-Session",
+        color: "#6B7280",
+        accent: "#9CA3AF",
+        steps: [
+          { id: "pre-1", text: "Confirm t2-2526 branch is on MAS-dfab fork and up to date with your feature branch" },
+          { id: "pre-2", text: "Know exact path to Rhino 8 Python interpreter for Windows and Mac" },
+          { id: "pre-3", text: "Confirm compas_timber not already installed non-editable in student Rhino envs" },
+        ],
+      },
+      {
+        id: "ct",
+        label: "Part 1 — compas_timber",
+        color: "#0E7490",
+        accent: "#22D3EE",
+        steps: [
+          {
+            id: "ct-0",
+            text: "Pre-check: confirm compas_timber is not installed",
+            code: `# Windows
+"C:\\Users\\<user>\\.rhinocode\\py39-rh8\\python.exe" -m pip show compas_timber
+
+# Mac
+~/.rhinocode/py39-rh8/python3 -m pip show compas_timber
+
+# If installed → uninstall (same interpreter, swap pip show for pip uninstall)
+"C:\\Users\\<user>\\.rhinocode\\py39-rh8\\python.exe" -m pip uninstall compas_timber`,
+            note: "Or verify inside Rhino's Python editor:\nimport compas_timber\nprint(compas_timber.__file__)  # ImportError = clean",
+          },
+          {
+            id: "ct-1",
+            text: "Clone the compas_timber fork",
+            code: `git clone https://github.com/mas-dfab/compas_timber.git\ncd compas_timber`,
+          },
+          {
+            id: "ct-2",
+            text: "Checkout project branch",
+            code: `git checkout t2-2526\ngit branch  # confirm`,
+          },
+          {
+            id: "ct-3",
+            text: "Create conda environment",
+            code: `conda create -n t2-2526 python=3.9\nconda activate t2-2526`,
+            note: "Python 3.9 matches Rhino 8's CPython interpreter.",
+          },
+          {
+            id: "ct-4",
+            text: "Editable install into conda env",
+            code: `pip install -e .`,
+          },
+          {
+            id: "ct-5",
+            text: "Editable install into Rhino 8's Python",
+            code: `# Windows
+"C:\\Users\\<user>\\.rhinocode\\py39-rh8\\python.exe" -m pip install -e .
+
+# Mac
+~/.rhinocode/py39-rh8/python3 -m pip install -e .`,
+            note: "Run from inside the cloned repo. Restart Rhino if it was open.",
+          },
+          {
+            id: "ct-6",
+            text: "Verify in Rhino — path must point to local clone",
+            code: `import compas_timber\nprint(compas_timber.__file__)`,
+          },
+        ],
+      },
+      {
+        id: "td",
+        label: "Part 2 — timber_design",
+        color: "#065F46",
+        accent: "#34D399",
+        steps: [
+          {
+            id: "td-1",
+            text: "Clone timber_design repo",
+            code: `git clone https://github.com/papachap/timber_design.git\ncd timber_design`,
+          },
+          {
+            id: "td-2",
+            text: "Checkout project branch",
+            code: `git checkout t2-2526\ngit branch  # confirm`,
+          },
+          {
+            id: "td-3",
+            text: "Editable install into conda env",
+            code: `pip install -e .`,
+          },
+          {
+            id: "td-4",
+            text: "Editable install into Rhino 8's Python",
+            code: `# Windows
+"C:\\Users\\<user>\\.rhinocode\\py39-rh8\\python.exe" -m pip install -e .
+
+# Mac
+~/.rhinocode/py39-rh8/python3 -m pip install -e .`,
+          },
+          {
+            id: "td-5",
+            text: "Verify in Rhino — path must point to local clone",
+            code: `import timber_design\nprint(timber_design.__file__)`,
+          },
+        ],
+      },
+      {
+        id: "gh",
+        label: "Part 3 — GH Components & Yak",
+        color: "#7C3AED",
+        accent: "#A78BFA",
+        steps: [
+          {
+            id: "gh-1",
+            text: "Update Grasshopper component headers",
+            code: `invoke update-gh-header --dev`,
+            note: "Each component should get:\n# env: C:\\Users\\<user>\\...\\timber_design\\src\n# r: compas_timber>=0.16.2\n\nVerify the env path resolves to your local clone.",
+          },
+          {
+            id: "gh-2",
+            text: "Build Grasshopper user object components",
+            code: `invoke build-cpython-ghuser-components`,
+          },
+          {
+            id: "gh-3",
+            text: "Create Yak package",
+            code: `invoke yakerize -m src\\timber_design\\ghpython\\yak_template\\manifest.yml -l src\\timber_design\\ghpython\\yak_template\\icon.png`,
+            note: "Output:\ndist\\yak_package\\timber_design-0.1.0-rh8-any.yak",
+          },
+          {
+            id: "gh-4",
+            text: "Install Yak in Rhino — drag & drop onto viewport",
+            note: "dist\\yak_package\\timber_design-0.1.0-rh8-any.yak\n\nRestart Rhino when prompted.\nComponents appear in the Grasshopper toolbar.",
+          },
+        ],
+      },
+    ];
+
+    function Step({ step, accent }) {
+      const [done, setDone] = useState(false);
+      const [open, setOpen] = useState(false);
+      const hasExtra = step.code || step.note;
+
+      return (
+        <div style={{ marginBottom: "8px", opacity: done ? 0.35 : 1, transition: "opacity 0.3s" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+            {/* Checkbox */}
+            <div
+              onClick={() => setDone(!done)}
+              style={{
+                marginTop: "2px",
+                width: "16px",
+                height: "16px",
+                borderRadius: "3px",
+                border: `2px solid ${accent}`,
+                backgroundColor: done ? accent : "transparent",
+                flexShrink: 0,
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {done && (
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="#0a0a0a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+
+            {/* Text */}
+            <span
+              onClick={() => setDone(!done)}
+              style={{ fontSize: "13px", color: "#CBD5E1", lineHeight: "1.5", flex: 1, cursor: "pointer" }}
+            >
+              {step.text}
+            </span>
+
+            {/* Expand toggle */}
+            {hasExtra && (
+              <span
+                onClick={() => setOpen(!open)}
+                style={{
+                  fontSize: "10px",
+                  color: accent,
+                  border: `1px solid ${accent}44`,
+                  borderRadius: "3px",
+                  padding: "1px 6px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                  userSelect: "none",
+                  transition: "background 0.15s",
+                }}
+              >
+                {open ? "▲" : "▼"}
+              </span>
+            )}
+          </div>
+
+          {open && hasExtra && (
+            <div style={{ marginLeft: "26px", marginTop: "8px" }}>
+              {step.code && (
+                <pre style={{
+                  backgroundColor: "#080D18",
+                  border: `1px solid ${accent}22`,
+                  borderLeft: `2px solid ${accent}`,
+                  borderRadius: "4px",
+                  padding: "10px 12px",
+                  fontSize: "11.5px",
+                  color: "#94A3B8",
+                  overflowX: "auto",
+                  marginBottom: step.note ? "8px" : "0",
+                  lineHeight: "1.7",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  whiteSpace: "pre",
+                }}>
+                  {step.code}
+                </pre>
+              )}
+              {step.note && (
+                <div style={{
+                  fontSize: "11px",
+                  color: "#475569",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: "1.7",
+                  padding: "4px 0 0 0",
+                }}>
+                  {step.note}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function Section({ section }) {
+      const [collapsed, setCollapsed] = useState(false);
+      const done = 0;
+
+      return (
+        <div style={{ marginBottom: "20px" }}>
+          <div
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              cursor: "pointer",
+              padding: "9px 12px",
+              borderRadius: "6px",
+              backgroundColor: `${section.color}14`,
+              border: `1px solid ${section.color}30`,
+              marginBottom: collapsed ? "0" : "12px",
+              userSelect: "none",
+            }}
+          >
+            <div style={{
+              width: "8px", height: "8px",
+              borderRadius: "2px",
+              backgroundColor: section.accent,
+              flexShrink: 0,
+            }} />
+            <span style={{
+              fontSize: "10px",
+              fontWeight: "700",
+              color: section.accent,
+              flex: 1,
+              letterSpacing: "0.12em",
+            }}>
+              {section.label.toUpperCase()}
+            </span>
+            <span style={{ fontSize: "10px", color: section.color }}>
+              {collapsed ? "▶" : "▼"}
+            </span>
+          </div>
+
+          {!collapsed && (
+            <div style={{ paddingLeft: "4px" }}>
+              {section.steps.map((step) => (
+                <Step key={step.id} step={step} accent={section.accent} />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function App() {
+      const totalSteps = sections.reduce((acc, s) => acc + s.steps.length, 0);
+
+      return (
+        <div style={{ padding: "28px 20px", maxWidth: "520px", margin: "0 auto" }}>
+          {/* Header */}
+          <div style={{ marginBottom: "28px" }}>
+            <div style={{
+              fontSize: "9px",
+              color: "#334155",
+              letterSpacing: "0.2em",
+              marginBottom: "6px",
+              textTransform: "uppercase",
+            }}>
+              MAS DFAB · ETH Zurich · T2 2025/26
+            </div>
+            <div style={{
+              fontSize: "22px",
+              fontWeight: "700",
+              color: "#F1F5F9",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+            }}>
+              COMPAS Timber
+            </div>
+            <div style={{ fontSize: "12px", color: "#475569", marginTop: "4px" }}>
+              Setup Guide · {totalSteps} steps
+            </div>
+            <div style={{
+              marginTop: "16px",
+              height: "1px",
+              background: "linear-gradient(to right, #1E293B, transparent)",
+            }} />
+          </div>
+
+          {/* Sections */}
+          {sections.map((section) => (
+            <Section key={section.id} section={section} />
+          ))}
+
+          {/* Footer */}
+          <div style={{
+            marginTop: "16px",
+            fontSize: "10px",
+            color: "#1E293B",
+            textAlign: "center",
+            letterSpacing: "0.05em",
+          }}>
+            click step to mark done · ▼ to expand commands
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
