@@ -4,7 +4,7 @@ from copy import deepcopy
 
 from compas.geometry import Plane
 from compas.geometry import Vector
-from compas.geometry import angle_vectors_signed
+from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
@@ -18,6 +18,7 @@ from compas_timber.fabrication.jack_cut import JackRafterCut
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 
@@ -51,6 +52,10 @@ class TMultiStepJoint(Joint):
         Exact number of steps to create. Provide either ``step_count`` or ``step_depth``, not both.
         When provided, ``step_depth`` is derived exactly from the beam geometry with no rounding.
         If both are given, ``step_count`` takes priority and a :class:`UserWarning` is issued.
+    do_refine_cut : bool, optional
+        If True, an additional cut is added to the main beam to clean up the protruding portion of the cut if the beams are not perfectly aligned.
+        This may be desirable for aesthetic reasons when the joint is visible, but could potentially add an unnecessary cut if there is no significant misalignment.
+        Defaults to False.
 
 
     Attributes
@@ -68,6 +73,8 @@ class TMultiStepJoint(Joint):
         Angle of the riser face in degrees. Always 90° for ``StepShapeType.HEEL``.
     step_count : int
         Resolved number of steps. Always a positive integer.
+    do_refine_cut : bool
+        If True, an additional cut is added to the main beam to clean up the protruding portion of the cut if the beams are not perfectly aligned.
 
     """
 
@@ -80,6 +87,7 @@ class TMultiStepJoint(Joint):
         data["riser_angle"] = self.riser_angle
         data["step_count"] = self.step_count
         data["step_depth"] = self.step_depth
+        data["do_refine_cut"] = self.do_refine_cut
         return data
 
     # fmt: off
@@ -91,6 +99,7 @@ class TMultiStepJoint(Joint):
         step_depth=None,
         riser_angle=None,
         step_count=None,
+        do_refine_cut=False,
         **kwargs
     ):
         super(TMultiStepJoint, self).__init__(elements=(main_beam,cross_beam), **kwargs)
@@ -104,6 +113,8 @@ class TMultiStepJoint(Joint):
         # user input attributes, resolved ones are stored in private attributes
         self.riser_angle = riser_angle
         self.step_count = step_count
+        self.do_refine_cut = do_refine_cut
+
 
         self._cross_beam_ref_side_index = None
         self._main_beam_ref_side_index = None
@@ -173,10 +184,7 @@ class TMultiStepJoint(Joint):
         if TOL.is_positive(dot_vectors(main_ref_side.normal, strut_vector)):
             strut_vector = -strut_vector
 
-        strut_inclination_vector = Vector.cross(-main_ref_side.normal, -cross_ref_side.normal)
-        self._strut_inclination = 180 - abs(
-            angle_vectors_signed(-main_ref_side.normal, -cross_ref_side.normal, strut_inclination_vector, deg=True)
-        )
+        self._strut_inclination =  angle_vectors(self.point_centerline_towards_joint(self.main_beam), strut_vector, deg=True)
         strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
         strut_length = strut_height / math.sin(math.radians(self._strut_inclination))
 
@@ -306,6 +314,14 @@ class TMultiStepJoint(Joint):
         butt_plane = Plane(cross_ref_side.point, -cross_ref_side.normal)
         return butt_plane.translated(butt_plane.normal * self._step_depth)
 
+    def _get_refine_cut_plane(self):
+        # get end point offset direction
+        _, point = self.main_beam.endpoint_closest_to_point(self.location)
+        offset_vector = Vector.from_start_end(self.location, point)
+        ref_side_dict = beam_ref_side_incidence_with_vector(self.cross_beam, offset_vector, ignore_ends=True)
+        refinement_cut_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return self.cross_beam.ref_sides[refinement_cut_side_index]
+
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -393,8 +409,16 @@ class TMultiStepJoint(Joint):
             self.cross_beam.add_features(next_notch)
             self.features.append(next_notch)
 
+        # -- non_coplanar cut to the main beam --
+        if self.do_refine_cut:
+            if not are_beams_aligned_with_cross_vector(self.main_beam, self.cross_beam):
+                refine_cut_plane = self._get_refine_cut_plane()
+                cut = JackRafterCut.from_plane_and_beam(refine_cut_plane, self.main_beam, name="Refinement_Cut")
+                self.main_beam.add_features(cut)
+                self.features.append(cut)
+
     @classmethod
-    def check_elements_compatibility(cls, elements, raise_error=False):
+    def check_elements_compatibility(cls, elements, raise_error=True):
         """Checks if the cluster of beams complies with the requirements for the TMultiStepJoint.
 
         Parameters
@@ -411,15 +435,6 @@ class TMultiStepJoint(Joint):
             True if the cluster complies with the requirements, False otherwise.
 
         """
-        cross_vect = elements[0].centerline.direction.cross(elements[1].centerline.direction)
-        for beam in elements:
-            beam_normal = beam.frame.normal.unitized()
-            dot = abs(beam_normal.dot(cross_vect.unitized()))
-            if not (TOL.is_zero(dot) or TOL.is_close(dot, 1)):
-                if not raise_error:
-                    return False
-                raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
-
         dir_a = elements[0].centerline.direction.unitized()
         dir_b = elements[1].centerline.direction.unitized()
         if TOL.is_zero(abs(dot_vectors(dir_a, dir_b))):
