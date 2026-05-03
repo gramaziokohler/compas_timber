@@ -8,12 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
+* Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` attribute to `ButtJoint`.
+* Added `force_pocket` and `conical_tool` flags to `TButtJoint`
+* Added `force_pocket` and `conical_tool` flags to `LButtJoint`
+
 
 * Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
 * Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
 * Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
 
 ### Changed
+* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes. 
 
 ### Removed
 

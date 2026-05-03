@@ -916,7 +916,6 @@ def get_leaf_subclasses(cls):
 
 __all__ = [
     "intersection_line_line_param",
-    "intersection_line_plane_param",
     "intersection_line_beam_param",
     "distance_segment_segment",
     "is_polyline_clockwise",
