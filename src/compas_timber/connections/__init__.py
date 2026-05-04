@@ -37,6 +37,7 @@ from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 from .t_multi_step_joint import TMultiStepJoint
+from .k_birdsmouth import KBirdsmouthJoint
 
 __all__ = [
     "Joint",
@@ -79,4 +80,5 @@ __all__ = [
     "PanelTButtJoint",
     "PanelMiterJoint",
     "TMultiStepJoint",
+    "KBirdsmouthJoint",
 ]
