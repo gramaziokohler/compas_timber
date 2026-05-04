@@ -355,16 +355,17 @@ class Joint(Data):
         """
         return True
 
-    def point_centerline_towards_joint(self, beam):
+    def point_centerline_towards_joint(self, beam, point=None):
         """
         Returns the centerline vector of beam_a pointing towards the joint with beam_b.
 
         Parameters
         ----------
-        beam_a : :class:`~compas_timber.elements.Beam`
-            The beam that attaches with one of its ends to the side of beam_b.
-        beam_b : :class:`~compas_timber.elements.Beam`
-            The other beam.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam for which to calculate the centerline vector pointing towards the joint.
+        point : :class:`~compas.geometry.Point`, optional
+            The point towards which the centerline should be oriented. If None, the joint's location will be used.
+
 
         Returns
         -------
@@ -374,7 +375,11 @@ class Joint(Data):
 
         # find the orientation of beams's centerline so that it's pointing towards the joint
         # find the closest end
-        end, _ = beam.endpoint_closest_to_point(self.location)
+        if point is None:
+            point = self.location
+
+        end, _ = beam.endpoint_closest_to_point(point)
+        end, _ = beam.endpoint_closest_to_point(point)
         if end == "start":
             centerline_vec = beam.centerline.vector * -1
         else:
