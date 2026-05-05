@@ -33,6 +33,7 @@ class JointCandidate(Joint):
         super(JointCandidate, self).__init__(elements=(element_a, element_b), **kwargs)
         # TODO: make distance a property of `Joint`?
         self.distance = distance if distance is not None else None
+        self.is_promoted = False
 
     def add_features(self):
         """This joint does not add any features."""
@@ -62,6 +63,7 @@ class PlateJointCandidate(PlateJoint):
 
     def __init__(self, plate_a=None, plate_b=None, **kwargs):
         super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+        self.is_promoted = False
 
     def _set_edge_planes(self):
         pass

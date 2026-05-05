@@ -303,7 +303,10 @@ class Joint(Data):
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
             elements = reordered_elements or list(cluster.elements)
-        return cls.create(model, *elements, **kwargs)
+            joint = cls.create(model, *elements, **kwargs)
+            for candidate in cluster.joints:
+                candidate.is_promoted = True
+            return joint
 
     @classmethod
     def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
@@ -334,6 +337,7 @@ class Joint(Data):
             elements = candidate.elements
         kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
         joint = cls.create(model, *elements, **kwargs)
+        candidate.is_promoted = True
         return joint
 
     @classmethod
