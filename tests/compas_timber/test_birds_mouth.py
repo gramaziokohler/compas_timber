@@ -63,8 +63,8 @@ def test_birds_mouth_from_planes_params(tol, beam, notch_planes):
     assert tol.is_close(bm.start_y, 0.0)
     assert tol.is_close(bm.start_depth, 36.752)
     assert tol.is_close(bm.angle, 45.0)
-    assert tol.is_close(bm.inclination1, 45.0)
-    assert tol.is_close(bm.inclination2, 135.0)
+    assert tol.is_close(bm.inclination_1, 45.0)
+    assert tol.is_close(bm.inclination_2, 135.0)
     assert tol.is_close(bm.depth, 36.752)
     assert tol.is_close(bm.width, 80.0)
     assert bm.face_limited_front is False
@@ -105,8 +105,8 @@ def test_birds_mouth_serialization(tol, beam, notch_planes):
     assert tol.is_close(restored.start_y, bm.start_y)
     assert tol.is_close(restored.start_depth, bm.start_depth)
     assert tol.is_close(restored.angle, bm.angle)
-    assert tol.is_close(restored.inclination1, bm.inclination1)
-    assert tol.is_close(restored.inclination2, bm.inclination2)
+    assert tol.is_close(restored.inclination_1, bm.inclination_1)
+    assert tol.is_close(restored.inclination_2, bm.inclination_2)
     assert tol.is_close(restored.depth, bm.depth)
     assert tol.is_close(restored.width, bm.width)
     assert restored.face_limited_front == bm.face_limited_front
@@ -123,8 +123,8 @@ def test_birds_mouth_scaled(tol, beam, notch_planes):
     assert tol.is_close(scaled.width, bm.width * 2.0)
     # angles are not scaled
     assert tol.is_close(scaled.angle, bm.angle)
-    assert tol.is_close(scaled.inclination1, bm.inclination1)
-    assert tol.is_close(scaled.inclination2, bm.inclination2)
+    assert tol.is_close(scaled.inclination_1, bm.inclination_1)
+    assert tol.is_close(scaled.inclination_2, bm.inclination_2)
 
 
 def test_birds_mouth_requires_two_planes(beam, notch_planes):
