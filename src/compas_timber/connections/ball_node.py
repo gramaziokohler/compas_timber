@@ -70,7 +70,6 @@ class BallNodeJoint(Joint):
         return data
 
     def __init__(self, *beams: Beam, ball_diameter: float = 8, rods_length: float = 10, plate_thickness=2, plate_depth=10, **kwargs):
-        print(beams)
         super().__init__(elements=beams, **kwargs)
         self.ball_diameter = ball_diameter
         self.rods_length = rods_length
@@ -121,7 +120,6 @@ class BallNodeJoint(Joint):
             The instance of the created joint.
 
         """
-        print(*elements)
         joint = cls(*elements, **kwargs)
         model.add_joint(joint)
         fastener = joint.create_fastener()

@@ -268,8 +268,8 @@ class BallNodePlate(Part):
         box = Box(self.thickness, self.y_size, self.plate_depth, frame=slot_plate_frame)
         slot_brep = box.to_brep()
 
-        full_brep = Brep.from_boolean_union(box_brep, slot_brep)[0]
-        return full_brep
+        # full_brep = Brep.from_boolean_union(box_brep, slot_brep)[0]
+        return [box_brep, slot_brep]
 
     def copy(self):
         plate = BallNodePlate(self.x_size, self.y_size, self.thickness, self.frame.copy(), self.plate_depth, self.rod.copy(), self.ball.copy())
