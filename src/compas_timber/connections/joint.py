@@ -303,6 +303,7 @@ class Joint(Data):
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
             elements = reordered_elements or list(cluster.elements)
+
         return cls.create(model, *elements, **kwargs)
 
     @classmethod
