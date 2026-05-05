@@ -12,6 +12,7 @@ from compas_timber.utils import intersection_line_line_param
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
+from .utilities import beam_ref_side_incidence_cross
 
 
 class KBirdsmouthJoint(Joint):
@@ -87,6 +88,12 @@ class KBirdsmouthJoint(Joint):
             common_idx = next(iter(common))
             indices = [sorted(pair, key=lambda i: i != common_idx) for pair in indices]
         return indices
+
+    @property
+    def main_ref_side_index(self):
+        ref_side_dict = beam_ref_side_incidence_cross(self.main_beams[0], self.main_beams[1], ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        return ref_side_index
 
     def _get_cutting_planes(self):
         all_cutting_planes = []
@@ -186,10 +193,8 @@ class KBirdsmouthJoint(Joint):
             self.features.append(miter_feature)
 
         if self.mill_depth:
-            main_beam = self.main_beams[0]
-            main_ref_side_index = self.features[0].ref_side_index
-            lap_cutting_plane = main_beam.ref_sides[main_ref_side_index]
-            lap_length = main_beam.get_dimensions_relative_to_side(main_ref_side_index)[1]
+            lap_cutting_plane = main_beam.ref_sides[self.main_ref_side_index]
+            lap_length = main_beam.get_dimensions_relative_to_side(self.main_ref_side_index)[1]
             common_ref_side_index = self.cross_ref_side_indices[0][0]
 
             cross_feature = Lap.from_plane_and_beam(
