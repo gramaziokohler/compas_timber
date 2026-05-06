@@ -303,7 +303,10 @@ class Joint(Data):
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
             elements = reordered_elements or list(cluster.elements)
-        return cls.create(model, *elements, **kwargs)
+            joint = cls.create(model, *elements, **kwargs)
+            for candidate in cluster.joints:
+                candidate.is_promoted = True
+            return joint
 
     @classmethod
     def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
@@ -334,6 +337,7 @@ class Joint(Data):
             elements = candidate.elements
         kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
         joint = cls.create(model, *elements, **kwargs)
+        candidate.is_promoted = True
         return joint
 
     @classmethod
@@ -354,3 +358,34 @@ class Joint(Data):
 
         """
         return True
+
+    def point_centerline_towards_joint(self, beam, point=None):
+        """
+        Returns the centerline vector of beam_a pointing towards the joint with beam_b.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam for which to calculate the centerline vector pointing towards the joint.
+        point : :class:`~compas.geometry.Point`, optional
+            The point towards which the centerline should be oriented. If None, the joint's location will be used.
+
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            The centerline vector of beam_a pointing towards the joint with beam_b.
+        """
+
+        # find the orientation of beams's centerline so that it's pointing towards the joint
+        # find the closest end
+        if point is None:
+            point = self.location
+
+        end, _ = beam.endpoint_closest_to_point(point)
+        end, _ = beam.endpoint_closest_to_point(point)
+        if end == "start":
+            centerline_vec = beam.centerline.vector * -1
+        else:
+            centerline_vec = beam.centerline.vector
+        return centerline_vec
