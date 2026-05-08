@@ -8,8 +8,8 @@ from compas.geometry import Rotation
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
+from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 
 from compas_timber.errors import FeatureApplicationError
@@ -174,24 +174,20 @@ class DoubleCut(BTLxProcessing):
     def is_concave(self):
         return self.angle_1 < self.angle_2
 
-
-
     ########################################################################
     # Alternative constructors
     ########################################################################
 
     @classmethod
-    def from_planes_and_beam(cls, planes, beam, reorder_planes=True, ref_side_index=None, **kwargs):
+    def from_planes_and_beam(cls, planes, beam, ref_side_index=None, **kwargs):
         """Create a DoubleCut instance from two cutting planes and the beam they should cut.
 
         Parameters
         ----------
         planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The two cutting planes that define the double cut.
+            The two cutting planes that define the double cut. Order does not matter.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
-        reorder_planes : bool, optional
-            Whether to reorder the planes based on their intersection with the beam. Default is True.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
 
@@ -229,27 +225,22 @@ class DoubleCut(BTLxProcessing):
                 index = face_indices.index(ref_side_index)
                 point_start_xy = intersection_points[index]
 
-        if reorder_planes:
-            planes = cls._reorder_planes(planes, line, ref_side)
         orientation = cls._calculate_orientation(beam, planes)
+
         start_x, start_y = cls._calculate_start_x_y(ref_side, point_start_xy)
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
-        # TODO: evaluate if the planes should be cached for use in geometry creation.
+        # define concavity based on the average normal of the planes and the ref_side orientation.
+        is_concave = cls._define_concavity(ref_side, planes, orientation)
+
+        # enforce BTLx convention: concave → angle_1 < angle_2, convex → angle_1 > angle_2
+        if is_concave != (angle_1 < angle_2):
+            angle_1, angle_2 = angle_2, angle_1
+            inclination_1, inclination_2 = inclination_2, inclination_1
+
         return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
 
-
-    @staticmethod
-    def _reorder_planes(planes, intersection_line, ref_side):
-        """this makes sure that plane[0] is the one that is closest to the ref_side yaxis"""
-        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
-        points = [Point(*intersection_line_plane(line, Plane.from_frame(ref_side))) for line in lines]
-        dots = [dot_vectors(point, ref_side.yaxis) for point in points]
-        if dots[0] > dots[1]:
-            return [planes[1],planes[0]]
-        else:
-            return planes
 
     @classmethod
     def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
@@ -313,6 +304,14 @@ class DoubleCut(BTLxProcessing):
             inclination = angle_vectors(ref_side.normal, plane.normal, deg=True)
             inclinations.append(inclination)
         return inclinations
+
+    @staticmethod
+    def _define_concavity(ref_side, planes, orientation):
+        # define concavity based on the average normal of the planes and the ref_side orientation.
+        average_normal = planes[0].normal + planes[1].normal
+        if orientation == OrientationType.END:
+            average_normal = -average_normal
+        return dot_vectors(average_normal, ref_side.xaxis) > 0
 
     ########################################################################
     # Methods
