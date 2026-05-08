@@ -13,6 +13,7 @@ from compas.data import Data
 from compas.datastructures import Graph
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Polyline
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_segment
@@ -63,6 +64,40 @@ class StructuralSegment(Data):
         self.frame = frame
         self.cross_section = cross_section
 
+class StructuralSurface(Data):
+    def __init__(
+        self,
+        outline: Polyline,
+        frame: Frame,
+        thickness: float,
+        parent_plate=None,
+        role="surface",
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.outline = outline
+        self.frame = frame
+        self.thickness = thickness
+        self.parent_plate = parent_plate
+        self.role = role
+        self.attributes = kwargs
+
+class StructuralSurfaceLine(Data):
+    """Possible Line Types: boundary, internal, connection, subdivision, hinge, support"""
+    def __init__(
+        self,
+        line: Line,
+        parent_surface=None,
+        parent_plate=None,
+        line_type="internal",
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.line = line
+        self.parent_surface = parent_surface
+        self.parent_plate = parent_plate
+        self.line_type = line_type
+        self.attributes = kwargs
 
 class BeamSegmentGenerator(ABC):
     """Base class for beam segment generators.
@@ -90,7 +125,6 @@ class BeamSegmentGenerator(ABC):
         """
         raise NotImplementedError
 
-
 class JointConnectorGenerator(ABC):
     """Base class for joint connector segment generators.
 
@@ -117,6 +151,14 @@ class JointConnectorGenerator(ABC):
         """
         raise NotImplementedError
 
+class PlateSurfaceGenerator(ABC):
+    @abstractmethod
+    def generate_surfaces(self, plate: Plate, joints: Sequence[Joint]) -> List[StructuralSurface]:
+        raise NotImplementedError
+class PlateConnectionGenerator(ABC):
+    @abstractmethod
+    def generate_connection_lines(self, joint: Joint) -> List[StructuralSurfaceLine]:
+        raise NotImplementedError
 
 class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
     """Generates structural segments by splitting the beam centerline at joint locations."""
@@ -144,8 +186,6 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
             split_segments.append(Line(p1, p2))
 
         return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis), cross_section=(beam.width, beam.height)) for seg in split_segments]
-
-
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
     """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
@@ -169,7 +209,29 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
             frame = Frame(p1, Vector.Xaxis(), Vector.Yaxis())
             results.append((beam_a, beam_b, [StructuralSegment(line=virtual_segment, frame=frame)]))
         return results
+class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
+    """
+    Generates analytical surfaces from plate centre outlines.
 
+    If split=False:
+        one StructuralSurface per physical plate.
+
+    If split=True:
+        multiple StructuralSurface objects per physical plate,
+        each carrying parent_plate=plate.
+    """
+
+    def __init__(self, split=True):
+        self.split = split
+
+    def generate_surfaces(self, plate, joints):
+        # reconstruct centre outline from outline_a / outline_b
+        # collect relevant joint/contact lines
+        # if split:
+        #     create split analytical face outlines
+        # else:
+        #     return one centre-surface outline
+        pass
 
 class BeamStructuralElementSolver:
     """Produces structural segments for beams and joints in a timber model.
@@ -267,7 +329,62 @@ class BeamStructuralElementSolver:
                 results.extend(segments)
         return results
 
+class PlateStructuralElementSolver:
+    def __init__(
+        self,
+        plate_surface_generator=None,
+        plate_connection_generator=None,
+        interaction_type=None,
+        split=True,
+    ):
+        self.plate_surface_generator = plate_surface_generator or SimplePlateSurfaceGenerator(split=split)
+        self.plate_connection_generator = plate_connection_generator or SimplePlateConnectionGenerator()
+        self._interaction_type = interaction_type
 
+    def _get_interactions(self, plate, model):
+        interaction_type = self._interaction_type or InteractionType.AUTO
+
+        if interaction_type == InteractionType.JOINTS:
+            return model.get_joints_for_element(plate)
+
+        if interaction_type == InteractionType.CANDIDATES:
+            return model.get_candidates_for_element(plate)
+
+        joints = model.get_joints_for_element(plate)
+        candidates = model.get_candidates_for_element(plate)
+
+        if joints:
+            return joints
+
+        return candidates
+
+    def add_structural_surfaces(self, model):
+        joints_traversed = set()
+        surfaces = []
+
+        for plate in model.plates:
+            joints_for_plate = self._get_interactions(plate, model)
+            plate_surfaces = self.plate_surface_generator.generate_surfaces(plate, joints_for_plate)
+
+            model.add_plate_structural_surfaces(plate, plate_surfaces)
+
+            surfaces.extend(plate_surfaces)
+            joints_traversed.update(joints_for_plate)
+
+        return surfaces, joints_traversed
+
+    def add_joint_structural_lines(self, model, joints):
+        lines = []
+
+        for joint in joints:
+            connection_lines = self.plate_connection_generator.generate_connection_lines(joint)
+
+            for connection_line in connection_lines:
+                model.add_structural_surface_line(connection_line)
+
+            lines.extend(connection_lines)
+
+        return lines
 class StructuralGraph(Graph):
     """A structural graph derived from a :class:`~compas_timber.model.TimberModel`.
 
