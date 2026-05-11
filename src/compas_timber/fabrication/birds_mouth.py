@@ -606,12 +606,12 @@ class BirdsMouth(BTLxProcessing):
                 flipped_plane = Plane(cutting_plane.point, -cutting_plane.normal)
                 trim_volume.trim(flipped_plane)
         except Exception as e:
-            raise FeatureApplicationError(cutting_planes, beam, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
+            raise FeatureApplicationError(cutting_planes, beam.blank, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
 
         try:
             return geometry - trim_volume
         except Exception as e:
-            raise FeatureApplicationError(trim_volume, beam, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
+            raise FeatureApplicationError(trim_volume, beam.blank, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
 
     def planes_from_params_and_beam(self, beam:Beam) -> list[Plane]:
         """Calculates the two cutting planes from the machining parameters in this instance and the given beam.
