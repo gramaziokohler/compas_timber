@@ -205,12 +205,6 @@ class TMultiStepJoint(Joint):
             self._step_count = max(1, int(round(strut_length / (target_depth * K))))
             step_interval = strut_length / self._step_count
             self._step_depth = step_interval / K
-            if abs(self._step_depth - target_depth) > 1e-6:
-                warnings.warn(
-                    "step_depth adjusted from {:.4f} to {:.4f} to fit {:d} step(s).".format(
-                        target_depth, self._step_depth, self._step_count
-                    )
-                )
 
         self._step_delta = strut_vector * step_interval
 
