@@ -13,6 +13,7 @@ from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_cross
+from .utilities import beam_ref_side_incidence_with_vector
 
 
 class KBirdsmouthJoint(Joint):
@@ -86,7 +87,18 @@ class KBirdsmouthJoint(Joint):
         common = set(indices[0]) & set(indices[1])
         if common:
             common_idx = next(iter(common))
-            indices = [sorted(pair, key=lambda i: i != common_idx) for pair in indices]
+        else:
+            # fallback: use average of both approach vectors to find the shared cross beam face
+            vA = self.point_centerline_towards_joint(self.main_beam_a)
+            vB = self.point_centerline_towards_joint(self.main_beam_b)
+            avg_vector = vA + vB
+            avg_vector.unitize()
+            avg_dict = beam_ref_side_incidence_with_vector(self.cross_beam, avg_vector, ignore_ends=True)
+            common_idx = max(avg_dict, key=avg_dict.get)
+            # replace the opposite face index with common_idx in whichever pair picked it
+            opposite_common = (common_idx + 2) % 4
+            indices = [[common_idx if i == opposite_common else i for i in pair] for pair in indices]
+        indices = [sorted(pair, key=lambda i: i != common_idx) for pair in indices]
         return indices
 
     @property
