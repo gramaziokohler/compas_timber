@@ -1,4 +1,4 @@
-from compas_timber.fabrication import LapProxy
+from compas_timber.fabrication import Lap
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
@@ -51,8 +51,8 @@ class XLapJoint(LapJoint):
         # create lap features
         negative_volume_a, negative_volume_b = self._create_negative_volumes(self.cut_plane_bias)
 
-        lap_feature_a = LapProxy.from_volume_and_beam(negative_volume_a, self.beam_a, ref_side_index=self.ref_side_index_a)
-        lap_feature_b = LapProxy.from_volume_and_beam(negative_volume_b, self.beam_b, ref_side_index=self.ref_side_index_b)
+        lap_feature_a = Lap.from_volume_and_beam(negative_volume_a, self.beam_a, ref_side_index=self.ref_side_index_a)
+        lap_feature_b = Lap.from_volume_and_beam(negative_volume_b, self.beam_b, ref_side_index=self.ref_side_index_b)
 
         # add features to the beams
         self.beam_a.add_features(lap_feature_a)
