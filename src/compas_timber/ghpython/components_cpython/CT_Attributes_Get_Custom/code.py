@@ -1,4 +1,3 @@
-# r: compas_timber==1.0.5
 """Read all attributes encoded in the referenced object's name."""
 
 # flake8: noqa

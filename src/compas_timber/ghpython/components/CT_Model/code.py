@@ -1,4 +1,3 @@
-# r: compas_timber>=0.15.3
 """Creates an Model"""
 
 import Grasshopper
