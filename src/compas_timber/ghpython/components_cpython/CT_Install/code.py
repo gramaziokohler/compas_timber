@@ -2,6 +2,7 @@
 
 # r: compas_timber==1.0.5
 import compas
+
 import compas_timber
 
 print(f"compas: {compas.__version__}")
