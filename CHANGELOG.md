@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added Install GH component and removed the `#r` from all other components to avoid the Rhino re-install bug.
+
 ### Changed
 
 * Fixed `KeyError: 'main_beam_key'` when de-serializing `TimberModel` with joint candidates.

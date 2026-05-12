@@ -1,4 +1,3 @@
-# r: compas_timber>=1.0.2
 # flake8: noqa
 
 """Creates a BTLx MachiningLimits object from boolean inputs for each face limit."""
