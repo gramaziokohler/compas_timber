@@ -232,7 +232,12 @@ class BTLxWriter(object):
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
             for beam_guid, data in stock.element_data.items():
-                position_frame = data.frame
+                if isinstance(data, dict):
+                    position_frame = data.get("frame")
+                else:
+                    position_frame = getattr(data, "frame", None)
+                if position_frame is None:
+                    raise AttributeError("Element data for GUID {} is missing a frame.".format(beam_guid))
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
