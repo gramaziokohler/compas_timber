@@ -50,6 +50,7 @@ class KBirdsmouthJoint(Joint):
     def __data__(self):
         data = super(KBirdsmouthJoint, self).__data__
         data["mill_depth"] = self.mill_depth
+        data["miter_plane"] = self.miter_plane
         return data
 
     def __init__(self, cross_beam=None, main_beam_a=None, main_beam_b=None, mill_depth=None, miter_plane=None, **kwargs):
