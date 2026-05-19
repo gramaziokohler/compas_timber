@@ -168,7 +168,7 @@ class KBirdsmouthJoint(Joint):
                 miter_plane = self._get_miter_planes()[0]
             else:
                 miter_plane = self.miter_plane
-            # miter_plane = self._get_miter_planes()[0]
+
             try:
                 start_a, end_a = beam.extension_to_plane(miter_plane)
             except Exception as ex:
@@ -196,7 +196,6 @@ class KBirdsmouthJoint(Joint):
             self.features.append(main_feature)
 
         # generate miter cut features for each main beam
-        # miter_planes = self._get_miter_planes()
         if self.miter_plane is None:
             miter_planes = self._get_miter_planes()
         else:
