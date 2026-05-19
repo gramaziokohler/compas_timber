@@ -1,6 +1,7 @@
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Frame
 from compas.geometry import cross_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -120,29 +121,20 @@ class KBirdsmouthJoint(Joint):
         return all_cutting_planes
 
     def _get_miter_planes(self):
-        # default bisector miter plane
-        vA = Vector(*self.main_beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
-        vB = Vector(*self.main_beam_b.frame.xaxis)
-        # intersection point (average) of both centrelines
-        try:
-            p = self.location
-        except ValueError:
-            p = None
+        # intersection point (average) of two main beam centrelines
+        [pxA, tA], [pxB, tB] = intersection_line_line_param(
+            self.main_beam_a.centerline,
+            self.main_beam_b.centerline,
+            max_distance=float("inf"),
+            limit_to_segments=False,
+        )
+        # TODO: add error-trap + solution for I-miter joints
 
-        if not p:
-            [pxA, tA], [pxB, tB] = intersection_line_line_param(
-                self.main_beam_a.centerline,
-                self.main_beam_b.centerline,
-                max_distance=float("inf"),
-                limit_to_segments=False,
-            )
-            # TODO: add error-trap + solution for I-miter joints
+        p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
-            p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
-
-        # makes sure they point outward of a joint point
-        vA = self.point_centerline_towards_joint(self.main_beam_a, p)
-        vB = self.point_centerline_towards_joint(self.main_beam_b, p)
+        # makes sure they point outward of a joint point, and are unitized
+        vA = self.point_centerline_towards_joint(self.main_beam_a, p).unitized()
+        vB = self.point_centerline_towards_joint(self.main_beam_b, p).unitized()
 
         # bisector
         v_bisector = vA + vB
