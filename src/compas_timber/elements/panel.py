@@ -416,7 +416,7 @@ class Panel(Element):
         return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
+    def from_outlines(cls, outline_a, outline_b, openings=None, extract_doors=False, horizontal_openings=False, **kwargs):
         """
         Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
 
@@ -444,7 +444,7 @@ class Panel(Element):
 
         if openings:
             openings = [(o, "window") for o in openings]
-        if recognize_doors:
+        if extract_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
             if door_openings:
                 if openings is None:
