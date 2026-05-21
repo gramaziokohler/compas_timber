@@ -1,9 +1,14 @@
 import warnings
 
+from compas.geometry import Plane
+from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import StepJoint
 from compas_timber.fabrication import StepJointNotch
 from compas_timber.fabrication import StepShapeType
@@ -159,6 +164,36 @@ class TStepJoint(Joint):
             self.step_depth = self.step_depth or self.cross_beam.height / 6
             self.heel_depth = self.heel_depth or self.cross_beam.height / 4
 
+    def _get_double_cut_butt_plane(self, planes):
+        """Calculates the butt plane that creates the flat surface on the end of the main beam to which the cross beam will be joined.
+        It is defined by the cross beam's ref side and is parallel to the main beam's end face.
+
+        """
+        main_side = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index])
+        front_side = Plane.from_frame(self.main_beam.front_side(self.main_beam_ref_side_index))
+
+        step_int = Point(*intersection_plane_plane_plane(planes[1], planes[2], front_side))
+        heel_int = Point(*intersection_plane_plane_plane(planes[0], main_side, front_side))
+        butt_vector = Vector.from_start_end(step_int, heel_int)
+        butt_plane = Plane(step_int, butt_vector.cross(front_side.normal))
+
+        # if the normal of the plane is pointing in the same direction as the cross beam's ref side normal, flip it to ensure the cut is made in the correct direction
+        if dot_vectors(butt_plane.normal, self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal) > 0:
+            butt_plane = Plane(butt_plane.point, -butt_plane.normal)
+        return butt_plane
+
+    def _get_roughing_cut_plane(self, planes=None):
+        if self.step_shape == StepShapeType.DOUBLE:
+            return self._get_double_cut_butt_plane(planes)
+        elif self.step_shape == StepShapeType.HEEL:
+            offset = self.heel_depth
+        elif self.step_shape == StepShapeType.STEP:
+            offset = self.step_depth
+
+        butt_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        butt_plane.point -= butt_plane.normal * offset
+        return Plane(butt_plane.point, -butt_plane.normal)
+
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -227,11 +262,18 @@ class TStepJoint(Joint):
             cross_feature.add_mortise(tenon_mortise_width, self.tenon_mortise_height)
             main_feature.add_tenon(tenon_mortise_width, self.tenon_mortise_height)
 
+
+        # -- butt cut on main beam end face --
+        roughing_plane = self._get_roughing_cut_plane(main_feature.planes_from_params_and_beam(self.main_beam))
+        cut = JackRafterCut.from_plane_and_beam(roughing_plane, self.main_beam, name="Roughing_Cut")
+        self.main_beam.add_features(cut)
+        self.features.append(cut)
+
         # add features to beams
         self.main_beam.add_features(main_feature)
         self.cross_beam.add_features(cross_feature)
         # add features to joint
-        self.features = [cross_feature, main_feature]
+        self.features.extend([cross_feature, main_feature])
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
