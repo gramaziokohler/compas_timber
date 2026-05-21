@@ -1,6 +1,7 @@
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import Frame
 from compas.geometry import cross_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -49,11 +50,13 @@ class KBirdsmouthJoint(Joint):
     def __data__(self):
         data = super(KBirdsmouthJoint, self).__data__
         data["mill_depth"] = self.mill_depth
+        data["miter_plane"] = self.miter_plane
         return data
 
-    def __init__(self, cross_beam=None, main_beam_a=None, main_beam_b=None, mill_depth=None, **kwargs):
+    def __init__(self, cross_beam=None, main_beam_a=None, main_beam_b=None, mill_depth=None, miter_plane=None, **kwargs):
         super(KBirdsmouthJoint, self).__init__(elements=(cross_beam, main_beam_a, main_beam_b), **kwargs)
         self.mill_depth = mill_depth
+        self.miter_plane = miter_plane
         self.features = []  # TODO: remove?
 
     @property
@@ -119,29 +122,20 @@ class KBirdsmouthJoint(Joint):
         return all_cutting_planes
 
     def _get_miter_planes(self):
-        # default bisector miter plane
-        vA = Vector(*self.main_beam_a.frame.xaxis)  # frame.axis gives a reference, not a copy
-        vB = Vector(*self.main_beam_b.frame.xaxis)
-        # intersection point (average) of both centrelines
-        try:
-            p = self.location
-        except ValueError:
-            p = None
+        # intersection point (average) of two main beam centrelines
+        [pxA, tA], [pxB, tB] = intersection_line_line_param(
+            self.main_beam_a.centerline,
+            self.main_beam_b.centerline,
+            max_distance=float("inf"),
+            limit_to_segments=False,
+        )
+        # TODO: add error-trap + solution for I-miter joints
 
-        if not p:
-            [pxA, tA], [pxB, tB] = intersection_line_line_param(
-                self.main_beam_a.centerline,
-                self.main_beam_b.centerline,
-                max_distance=float("inf"),
-                limit_to_segments=False,
-            )
-            # TODO: add error-trap + solution for I-miter joints
+        p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
 
-            p = Point((pxA.x + pxB.x) * 0.5, (pxA.y + pxB.y) * 0.5, (pxA.z + pxB.z) * 0.5)
-
-        # makes sure they point outward of a joint point
-        vA = self.point_centerline_towards_joint(self.main_beam_a, p)
-        vB = self.point_centerline_towards_joint(self.main_beam_b, p)
+        # makes sure they point outward of a joint point, and are unitized
+        vA = self.point_centerline_towards_joint(self.main_beam_a, p).unitized()
+        vB = self.point_centerline_towards_joint(self.main_beam_b, p).unitized()
 
         # bisector
         v_bisector = vA + vB
@@ -170,7 +164,12 @@ class KBirdsmouthJoint(Joint):
         assert self.main_beams and self.cross_beam
         for beam in self.main_beams:
             start_a, end_a = None, None
-            miter_plane = self._get_miter_planes()[0]
+
+            if self.miter_plane is None:
+                miter_plane = self._get_miter_planes()[0]
+            else:
+                miter_plane = self.miter_plane
+
             try:
                 start_a, end_a = beam.extension_to_plane(miter_plane)
             except Exception as ex:
@@ -198,7 +197,11 @@ class KBirdsmouthJoint(Joint):
             self.features.append(main_feature)
 
         # generate miter cut features for each main beam
-        miter_planes = self._get_miter_planes()
+        if self.miter_plane is None:
+            miter_planes = self._get_miter_planes()
+        else:
+            miter_planes = self.miter_plane, Plane(self.miter_plane.point, self.miter_plane.normal * -1.0)
+            
         for main_beam, miter_plane in zip(self.main_beams, miter_planes):
             miter_feature = JackRafterCut.from_plane_and_beam(miter_plane, main_beam)
             main_beam.add_features(miter_feature)
