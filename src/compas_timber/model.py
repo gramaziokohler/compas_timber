@@ -56,8 +56,8 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
-    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None, "structural_surface_lines": None}
+    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None, "structural_surfaces": None}
 
     @property
     def __data__(self):
@@ -474,6 +474,36 @@ class TimberModel(Model):
         """
         segments = cast(List[StructuralSegment], self._graph.node_attribute(beam.graphnode, "structural_segments"))
         return segments or []
+
+    def add_plate_structural_surfaces(self, plate: Plate, surfaces: List['compas_timber.structural.StructuralSurface']) -> None:
+        """Adds structural surfaces to the model node corresponding to the given plate."""
+        node = plate.graphnode
+        existing_surfaces = cast(List['compas_timber.structural.StructuralSurface'], self._graph.node_attribute(node, "structural_surfaces")) or []
+        existing_surfaces.extend(surfaces)
+        self._graph.node_attribute(node, "structural_surfaces", existing_surfaces)
+
+    def get_plate_structural_surfaces(self, plate: Plate) -> List['compas_timber.structural.StructuralSurface']:
+        """Gets the structural surfaces assigned to the given plate."""
+        surfaces = cast(List['compas_timber.structural.StructuralSurface'], self._graph.node_attribute(plate.graphnode, "structural_surfaces"))
+        return surfaces or []
+
+    def remove_plate_structural_surfaces(self, plate: Plate) -> None:
+        """Removes the structural surfaces assigned to the given plate."""
+        self._graph.node_attribute(plate.graphnode, "structural_surfaces", None)
+
+    def add_structural_surface_lines(self, element_a: Element, element_b: Element, lines: List['compas_timber.structural.StructuralSurfaceLine']) -> None:
+        """Adds structural surface lines to the interaction (edge) between two elements."""
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge in self._graph.edges():
+            existing_lines = cast(List['compas_timber.structural.StructuralSurfaceLine'], self._graph.edge_attribute(edge, "structural_surface_lines")) or []
+            existing_lines.extend(lines)
+            self._graph.edge_attribute(edge, "structural_surface_lines", existing_lines)
+
+    def remove_structural_surface_lines(self, element_a: Element, element_b: Element) -> None:
+        """Removes the structural surface lines from the interaction (edge) between two elements."""
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge in self._graph.edges():
+            self._graph.unset_edge_attribute(edge, "structural_surface_lines")
 
     def remove_beam_structural_segments(self, beam: Beam) -> None:
         """Removes all structural segments assigned to the given beam.
