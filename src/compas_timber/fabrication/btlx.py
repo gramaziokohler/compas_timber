@@ -672,6 +672,12 @@ class BTLxPart(BTLxGenericPart):
         return shape
 
     @property
+    def et_reference_side(self):
+        """Create the reference side XML element."""
+        index = self.element.attributes.get("ref_side_index", 0)  # default to 0 if not set, which corresponds to RS1
+        return ET.Element("ReferenceSide", Side=str(index + 1), Align="yes")
+
+    @property
     def shape_strings(self):
         """Generates the shape strings for the BTLxPart. Only works in environments where the element.geometry Brep is available.
 
