@@ -19,6 +19,7 @@ from compas.geometry import Vector
 from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_segment_segment
+from compas.geometry import Translation
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
@@ -157,7 +158,7 @@ class PlateSurfaceGenerator(ABC):
         raise NotImplementedError
 class PlateConnectionGenerator(ABC):
     @abstractmethod
-    def generate_connection_lines(self, joint: Joint) -> List[StructuralSurfaceLine]:
+    def generate_connection_lines(self, joint: Joint, model: TimberModel) -> List[StructuralSurfaceLine]:
         raise NotImplementedError
 
 class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
@@ -209,29 +210,180 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
             frame = Frame(p1, Vector.Xaxis(), Vector.Yaxis())
             results.append((beam_a, beam_b, [StructuralSegment(line=virtual_segment, frame=frame)]))
         return results
+def _get_open_points(polyline):
+    points = list(polyline.points)
+    if points[0].distance_to_point(points[-1]) < TOL.absolute:
+        points = points[:-1]
+    return points
+
+def _polyline_normal_and_direction(polyline):
+    points = _get_open_points(polyline)
+    nx = ny = nz = 0.0
+    longest = None
+    longest_length = 0.0
+    for i, p0 in enumerate(points):
+        p1 = points[(i + 1) % len(points)]
+        nx += (p0.y - p1.y) * (p0.z + p1.z)
+        ny += (p0.z - p1.z) * (p0.x + p1.x)
+        nz += (p0.x - p1.x) * (p0.y + p1.y)
+        
+        vector = Vector.from_start_end(p0, p1)
+        if vector.length > longest_length:
+            longest = vector
+            longest_length = vector.length
+
+    normal = Vector(nx, ny, nz)
+    normal.unitize()
+    if longest:
+        longest.unitize()
+    return normal, longest
+
+def _get_plate_center_outline(plate):
+    pts_a = _get_open_points(plate.outline_a)
+    pts_b = _get_open_points(plate.outline_b)
+    center_points = []
+    for pa, pb in zip(pts_a, pts_b):
+        center_points.append(Point(0.5 * (pa.x + pb.x), 0.5 * (pa.y + pb.y), 0.5 * (pa.z + pb.z)))
+    center_points.append(center_points[0])
+    return Polyline(center_points)
+
 class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
     """
     Generates analytical surfaces from plate centre outlines.
-
-    If split=False:
-        one StructuralSurface per physical plate.
-
-    If split=True:
-        multiple StructuralSurface objects per physical plate,
-        each carrying parent_plate=plate.
+    It stretches the center-plane of the plate to automatically close gaps 
+    to adjacent plates identified by the given joints.
     """
 
-    def __init__(self, split=True):
-        self.split = split
+    def __init__(self, tolerance=2.0):
+        self.split = False # We strictly don't split.
+        self.tolerance = tolerance
 
     def generate_surfaces(self, plate, joints):
-        # reconstruct centre outline from outline_a / outline_b
-        # collect relevant joint/contact lines
-        # if split:
-        #     create split analytical face outlines
-        # else:
-        #     return one centre-surface outline
-        pass
+        center_outline = _get_plate_center_outline(plate)
+        
+        for joint in joints:
+            foreign_element = None
+            for element in joint.elements:
+                if element is not plate and hasattr(element, "outline_a"):
+                    foreign_element = element
+                    break
+            if not foreign_element:
+                continue
+
+            foreign_outline = _get_plate_center_outline(foreign_element)
+            target_normal, _ = _polyline_normal_and_direction(foreign_outline)
+            target_point = _get_open_points(foreign_outline)[0]
+
+            points = _get_open_points(center_outline)
+            _, direction = _polyline_normal_and_direction(center_outline)
+            
+            if not direction:
+                continue
+
+            projections = [point.x * direction.x + point.y * direction.y + point.z * direction.z for point in points]
+            min_proj = min(projections)
+            max_proj = max(projections)
+
+            min_indices = [i for i, value in enumerate(projections) if abs(value - min_proj) <= self.tolerance]
+            max_indices = [i for i, value in enumerate(projections) if abs(value - max_proj) <= self.tolerance]
+
+            best = None
+            for indices in [min_indices, max_indices]:
+                if not indices: continue
+                midpoint = Point(
+                    sum(points[i].x for i in indices) / len(indices),
+                    sum(points[i].y for i in indices) / len(indices),
+                    sum(points[i].z for i in indices) / len(indices)
+                )
+                vec = Vector.from_start_end(midpoint, target_point)
+                signed_dist = vec.dot(target_normal)
+                dist = abs(signed_dist)
+
+                if best is None or dist < best[0]:
+                    best = (dist, signed_dist, indices, target_normal)
+
+            if best is not None:
+                dist, signed_dist, indices, target_normal = best
+                thickness = plate.thickness
+                if dist <= (thickness * 1.5): # allow a buffer
+                    move_vector = target_normal * signed_dist
+                    new_points = []
+                    for index, point in enumerate(points):
+                        if index in indices:
+                            new_points.append(point.transformed(Translation.from_vector(move_vector)))
+                        else:
+                            new_points.append(point)
+                    new_points.append(new_points[0])
+                    center_outline = Polyline(new_points)
+
+        normal, direction = _polyline_normal_and_direction(center_outline)
+        pts = _get_open_points(center_outline)
+        frame = Frame(pts[0], direction, normal)
+        
+        surface = StructuralSurface(
+            outline=center_outline,
+            frame=frame,
+            thickness=plate.thickness,
+            parent_plate=plate
+        )
+        return [surface]
+
+class SimplePlateConnectionGenerator(PlateConnectionGenerator):
+    """
+    Generates interaction lines strictly from the topological intersections of 
+    extended StructuralSurfaces. Assumes `StructuralSurfaces` have already been 
+    generated and stored in the model.
+    """
+    def __init__(self, tolerance=2.0):
+        self.tolerance = tolerance
+
+    def generate_connection_lines(self, joint, model):
+        plates = [el for el in joint.elements if hasattr(el, "outline_a")]
+        if len(plates) < 2:
+            return []
+
+        plate_a, plate_b = plates[0], plates[1]
+        
+        surfs_a = model.get_plate_structural_surfaces(plate_a)
+        surfs_b = model.get_plate_structural_surfaces(plate_b)
+        
+        if not surfs_a or not surfs_b:
+            return []
+            
+        surf_a = surfs_a[0]
+        surf_b = surfs_b[0]
+
+        lines_on_b = []
+        norm_b = surf_b.frame.normal
+        origin_b = surf_b.frame.point
+        
+        pts_a = _get_open_points(surf_a.outline)
+        for i, p0 in enumerate(pts_a):
+            p1 = pts_a[(i+1)%len(pts_a)]
+            d0 = Vector.from_start_end(origin_b, p0).dot(norm_b)
+            d1 = Vector.from_start_end(origin_b, p1).dot(norm_b)
+            
+            if abs(d0) <= self.tolerance and abs(d1) <= self.tolerance:
+                lines_on_b.append(Line(p0, p1))
+                
+        results = []
+        if lines_on_b:
+            # We assume the first collinear line is the joint line
+            intersection_line = lines_on_b[0]
+            results.append(StructuralSurfaceLine(
+                line=intersection_line,
+                parent_surface=surf_a,
+                parent_plate=plate_a,
+                line_type="connection"
+            ))
+            results.append(StructuralSurfaceLine(
+                line=intersection_line,
+                parent_surface=surf_b,
+                parent_plate=plate_b,
+                line_type="connection"
+            ))
+            
+        return results
 
 class BeamStructuralElementSolver:
     """Produces structural segments for beams and joints in a timber model.
@@ -377,10 +529,13 @@ class PlateStructuralElementSolver:
         lines = []
 
         for joint in joints:
-            connection_lines = self.plate_connection_generator.generate_connection_lines(joint)
+            connection_lines = self.plate_connection_generator.generate_connection_lines(joint, model)
 
-            for connection_line in connection_lines:
-                model.add_structural_surface_line(connection_line)
+            if connection_lines:
+                # Group lines by the elements they connect. For a standard joint between two plates:
+                elements = list(joint.elements)
+                if len(elements) >= 2:
+                    model.add_structural_surface_lines(elements[0], elements[1], connection_lines)
 
             lines.extend(connection_lines)
 
