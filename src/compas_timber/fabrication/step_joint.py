@@ -701,5 +701,5 @@ class StepJoint(BTLxProcessing):
         self.start_x *= factor
         self.step_depth *= factor
         self.heel_depth *= factor
-        self.tenon_width *= factor
-        self.tenon_height *= factor
+        # self.tenon_width *= factor
+        # self.tenon_height *= factor
