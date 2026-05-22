@@ -111,6 +111,9 @@ class TBirdsmouthJoint(Joint):
 
         # generate double cut feature
         main_feature = DoubleCut.from_planes_and_beam(cutting_planes, self.main_beam)
+        main_feature.set_ridge_attributes(self.main_beam)
+        main_feature.user_attributes["strategy"] = "pocketing"
+        self.main_beam.attributes["ref_side_index"] = main_feature.ref_side_index  # store for later use in lap feature
 
         # register main feature to beam and joint
         self.main_beam.add_features(main_feature)

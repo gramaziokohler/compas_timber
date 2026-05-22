@@ -357,15 +357,18 @@ class TMultiStepJoint(Joint):
 
         riser_length, tread_length = self._compute_riser_and_tread_lengths() # compute riser and tread lengths for feature dimensions and debug info
 
+        if self.main_beam.attributes.get("ref_side_index") is None:
+                self.main_beam.attributes["ref_side_index"] = (self.main_beam_ref_side_index-1)%4
+
         # -- butt cut on main beam end face --
         butt_plane = self._get_butt_plane()
-        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam, name="Roughing_Cut")
+        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam, ref_side_index = self.main_beam.attributes["ref_side_index"], name="Roughing_Cut")
         self.main_beam.add_features(cut)
         self.features.append(cut)
 
         # -- single endpoint cuts --
         for plane in cut_planes:
-            cut = JackRafterCut.from_plane_and_beam(plane, self.main_beam)
+            cut = JackRafterCut.from_plane_and_beam(plane, self.main_beam, ref_side_index = self.main_beam.attributes["ref_side_index"])
             self.main_beam.add_features(cut)
             self.features.append(cut)
 

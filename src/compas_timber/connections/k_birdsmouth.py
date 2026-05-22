@@ -194,8 +194,10 @@ class KBirdsmouthJoint(Joint):
         # generate double cut feature for each main beam
         for main_beam, cutting_planes in zip(self.main_beams, self._get_cutting_planes()):
             main_feature = DoubleCut.from_planes_and_beam(cutting_planes, main_beam)
+            main_feature.set_ridge_attributes(main_beam)
             main_beam.add_features(main_feature)
             self.features.append(main_feature)
+            main_beam.attributes["ref_side_index"] = main_feature.ref_side_index  # store for later use in lap feature
 
         # generate miter cut features for each main beam
         miter_planes = self._get_miter_planes()
