@@ -8,7 +8,6 @@ from compas.geometry import Rotation
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
-from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane
 
@@ -174,6 +173,98 @@ class DoubleCut(BTLxProcessing):
     def is_concave(self):
         return self.angle_1 < self.angle_2
 
+    def _ridge_unit_vector(self):
+        """3D unit vector of the ridge line (n2 x n1) in local ref_side coordinates."""
+        a1 = math.radians(self.angle_1)
+        i1 = math.radians(self.inclination_1)
+        a2 = math.radians(self.angle_2)
+        i2 = math.radians(self.inclination_2)
+        if self.orientation == OrientationType.END:
+            i1 = math.pi - i1
+            i2 = math.pi - i2
+        dx = math.sin(i1) * math.cos(i2) * math.cos(a1) - math.cos(i1) * math.sin(i2) * math.cos(a2)
+        dy = math.sin(i1) * math.cos(i2) * math.sin(a1) - math.cos(i1) * math.sin(i2) * math.sin(a2)
+        dz = math.sin(i1) * math.sin(i2) * math.sin(a1 - a2)
+        if self.orientation == OrientationType.END:
+            dx = -dx
+        length = math.sqrt(dx**2 + dy**2 + dz**2)
+        return dx / length, dy / length, dz / length
+
+    def _ridge_angle(self, plane_index=2):
+        """Angle in degrees between the ridge and the top edge of the given cutting plane on the ref_side.
+
+        Parameters
+        ----------
+        plane_index : int
+            Which cutting plane's top edge to measure against. 1 or 2.
+        """
+        a = math.radians(self.angle_1 if plane_index == 1 else self.angle_2)
+        ux, uy, _ = self._ridge_unit_vector()
+        dot = ux * math.cos(a) + uy * math.sin(a)
+        return math.degrees(math.acos(max(-1.0, min(1.0, dot))))
+
+    def _ridge_angle_and_length(self, face_depth, face_width=None, face_length=None, plane_index=2):
+        """Angle between the ridge and the top edge of a cutting plane, and the 3D ridge length within the beam.
+
+        The ridge is treated as a parametric ray starting at ``(start_x, start_y, 0)`` in local
+        ref_side coordinates. The beam is a box; the exit face is determined by finding the minimum
+        positive parametric distance ``t`` to each face.
+
+        Parameters
+        ----------
+        face_depth : float
+            Depth from the ref_side to the opposite face (perpendicular cross-section dimension).
+        face_width : float, optional
+            Y-extent of the ref_side face (in-plane cross-section dimension).
+        face_length : float, optional
+            X-extent of the ref_side face (beam length along its axis).
+        plane_index : int, optional
+            Which cutting plane's top edge to measure the angle against. 1 or 2. Default is 2.
+
+        Returns
+        -------
+        tuple(float, float)
+            ``(angle_deg, length)`` — angle in degrees and 3D ridge length in model units.
+        """
+        angle = self._ridge_angle(plane_index)
+        ux, uy, uz = self._ridge_unit_vector()
+
+        # Analytical: parametric ray (start_x, start_y, 0) + t*(ux, uy, uz).
+        # In local coords the ref_side is at z=0, outward normal = +z, so the beam
+        # interior is at z < 0 and the opposite face is at z = -face_depth.
+        candidates = []
+        if uz != 0.0:
+            t = -face_depth / uz          # opposite face
+            if t > 0:
+                candidates.append(t)
+        if face_width is not None and uy != 0.0:
+            for y_face in (0.0, face_width):
+                t = (y_face - self.start_y) / uy
+                if t > 0:
+                    candidates.append(t)
+        if face_length is not None and ux != 0.0:
+            for x_face in (0.0, face_length):
+                t = (x_face - self.start_x) / ux
+                if t > 0:
+                    candidates.append(t)
+        length = min(candidates) if candidates else None
+        return angle, length
+
+    def set_ridge_attributes(self, beam):
+        """Compute ridge angle and length and store them in user_attributes.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam this processing is applied to.
+        """
+        face_width, face_depth = beam.get_dimensions_relative_to_side(self.ref_side_index)
+        ridge_angle, ridge_length = self._ridge_angle_and_length(face_depth, face_width, beam.blank_length)
+        self.user_attributes["ridge_angle"] = ridge_angle
+        self.user_attributes["ridge_length"] = ridge_length
+        self.user_attributes["strategy"] = "pocketing"
+
+
     ########################################################################
     # Alternative constructors
     ########################################################################
@@ -214,8 +305,16 @@ class DoubleCut(BTLxProcessing):
             raise ValueError("Planes do not intersect with beam.")
         if not ref_side_index:
             ref_side_index = face_indices[0]
-            ref_side = beam.ref_sides[ref_side_index]
             point_start_xy = intersection_points[0]
+            if ref_side_index in [0, 2]:
+                #try the next intersecting face
+                try:
+                    ref_side_index = face_indices[1]
+                    point_start_xy = intersection_points[1]
+                except IndexError:
+                    pass
+            ref_side = beam.ref_sides[ref_side_index]
+
 
         else:
             if ref_side_index not in face_indices:
