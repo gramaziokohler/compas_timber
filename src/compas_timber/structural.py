@@ -187,6 +187,7 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
             split_segments.append(Line(p1, p2))
 
         return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis), cross_section=(beam.width, beam.height)) for seg in split_segments]
+
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
     """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
@@ -210,6 +211,7 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
             frame = Frame(p1, Vector.Xaxis(), Vector.Yaxis())
             results.append((beam_a, beam_b, [StructuralSegment(line=virtual_segment, frame=frame)]))
         return results
+
 def _get_open_points(polyline):
     points = list(polyline.points)
     if points[0].distance_to_point(points[-1]) < TOL.absolute:
@@ -582,6 +584,12 @@ class StructuralGraph(Graph):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._cached_node_index = None  # built lazily
+        self._cached_surfaces = []
+
+    @property
+    def surfaces(self):
+        """Return the cached list of surface dictionaries (boundary nodes and the parent StructuralSurface)."""
+        return self._cached_surfaces
 
     @classmethod
     def from_model(cls, model: TimberModel) -> StructuralGraph:
@@ -655,6 +663,32 @@ class StructuralGraph(Graph):
                 v = _find_or_create_node(segment.line.end)
                 instance.add_edge(u, v, segment=segment, type="connector", joint=joint)
 
+        # --- Generate Surface Topology ---
+        for plate in model.plates:
+            surfaces = model.get_plate_structural_surfaces(plate)
+            for surface in surfaces:
+                node_ids = [_find_or_create_node(pt) for pt in surface.outline.points]
+                
+                # close the loop
+                for u, v in pairwise(node_ids + [node_ids[0]]):
+                    instance.add_edge(u, v, type="surface_boundary", surface=surface, plate=plate)
+                
+                instance._cached_surfaces.append({
+                    "surface": surface,
+                    "boundary_nodes": node_ids[:-1] # Exclude duplicated end node
+                })
+
+        # --- Generate Surface Connections ---
+        for edge in model._graph.edges():
+            surface_lines = model._graph.edge_attribute(edge, "structural_surface_lines")
+            if not surface_lines: 
+                continue
+            
+            for s_line in surface_lines:
+                u = _find_or_create_node(s_line.line.start)
+                v = _find_or_create_node(s_line.line.end)
+                instance.add_edge(u, v, type=s_line.line_type, line=s_line)
+
         if instance.number_of_nodes() == 0:
             raise ValueError("No structural segments found in the model. Call TimberModel.create_beam_structural_segments() before building the structural graph.")
 
@@ -720,6 +754,22 @@ class StructuralGraph(Graph):
         """Iterate over ``(u, v)`` pairs for all connector-segment edges."""
         for u, v in self.edges():
             if self.edge_attribute((u, v), "type") == "connector":
+                yield u, v
+
+    @property
+    def surface_boundary_edges(self):
+        # type: () -> Iterable[Tuple]
+        """Iterate over ``(u, v)`` pairs for all surface boundary edges."""
+        for u, v in self.edges():
+            if self.edge_attribute((u, v), "type") == "surface_boundary":
+                yield u, v
+
+    @property
+    def surface_connection_edges(self):
+        # type: () -> Iterable[Tuple]
+        """Iterate over ``(u, v)`` pairs for all surface connection edges."""
+        for u, v in self.edges():
+            if self.edge_attribute((u, v), "type") == "connection":
                 yield u, v
 
     def segment(self, u, v):
