@@ -734,5 +734,5 @@ class StepJointNotch(BTLxProcessing):
         self.step_depth *= factor
         self.heel_depth *= factor
         self.strut_height *= factor
-        self.mortise_width *= factor
-        self.mortise_height *= factor
+        # self.mortise_width *= factor
+        # self.mortise_height *= factor
