@@ -54,10 +54,13 @@ class XLapJoint(LapJoint):
         lap_feature_a = Lap.from_volume_and_beam(negative_volume_a, self.beam_a, ref_side_index=self.ref_side_index_a, name="Lap_A")
         lap_feature_b = Lap.from_volume_and_beam(negative_volume_b, self.beam_b, ref_side_index=self.ref_side_index_b, name="Lap_B")
 
-
         # add features to the beams
         self.beam_a.add_features(lap_feature_a)
         self.beam_b.add_features(lap_feature_b)
+
+        # update the beam's ref_side_index to the side of the lap
+        self.beam_a.attributes["ref_side_index"] = lap_feature_a.ref_side_index
+        self.beam_b.attributes["ref_side_index"] = lap_feature_b.ref_side_index
 
         # register processings to the joint
         self.features.extend([lap_feature_a, lap_feature_b])
