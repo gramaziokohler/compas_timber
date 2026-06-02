@@ -19,3 +19,4 @@ class PlateMiterJoint(PlateJoint):
         plane = Plane.from_three_points(line_a[0], line_a[1], line_b[0])
         self.plate_a.set_extension_plane(self.a_segment_index, plane)
         self.plate_b.set_extension_plane(self.b_segment_index, plane)
+        print("set miter joint edge planes")
