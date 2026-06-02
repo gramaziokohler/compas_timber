@@ -158,8 +158,8 @@ class PlateJoint(Joint, ABC):
     def add_extensions(self):
         """Adjusts plate outlines to outer shape required for the joint."""
         if self.plate_a and self.plate_b:
-            if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
-                self.calculate_topology()
+            # if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
+            #     self.calculate_topology()
             self._reorder_planes_and_outlines()
             self._set_edge_planes()
 
@@ -176,6 +176,6 @@ class PlateJoint(Joint, ABC):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
             self._reverse_b_planes = True
 
-        if self.topology == JointTopology.TOPO_EDGE_EDGE:
+        if self.SUPPORTED_TOPOLOGY == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
                 self._reverse_a_planes = True
