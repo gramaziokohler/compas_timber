@@ -132,8 +132,7 @@ class TimberModel(Model):
         return candidates
 
     @property
-    def unpromoted_joint_candidates(self):
-        # type: () -> set[JointCandidate]
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
         candidates = set()
         for edge in self._graph.edges():
             edge_candidate = self._graph.edge_attribute(edge, "candidates")
