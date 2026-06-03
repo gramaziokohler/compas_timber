@@ -491,7 +491,7 @@ class PlateStructuralElementSolver:
         interaction_type=None,
         split=True,
     ):
-        self.plate_surface_generator = plate_surface_generator or SimplePlateSurfaceGenerator()
+        self.plate_surface_generator = plate_surface_generator or SimplePlateSurfaceGenerator(split=split)
         self.plate_connection_generator = plate_connection_generator or SimplePlateConnectionGenerator()
         self._interaction_type = interaction_type
 
