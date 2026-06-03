@@ -24,6 +24,7 @@ from compas.itertools import pairwise
 from compas.tolerance import TOL
 
 from compas_timber.utils import StrEnum
+from compas_timber.utils import distance_segment_segment_points
 
 if TYPE_CHECKING:
     from compas_timber.connections import Joint
@@ -162,20 +163,47 @@ class PlateConnectionGenerator(ABC):
         raise NotImplementedError
 
 class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
-    """Generates structural segments by splitting the beam centerline at joint locations."""
+    """Generates structural segments by splitting the beam centerline at joint and support locations."""
+
+    def _add_split_point(self, split_points_with_distances, beam, point):
+        point_on_segment = Point(*closest_point_on_segment(point, beam.centerline))
+        distance_from_start = distance_point_point(beam.centerline.start, point_on_segment)
+        distance_from_end = beam.length - distance_from_start
+
+        if TOL.is_zero(distance_from_start) or TOL.is_zero(distance_from_end):
+            # joints at start and end do not require splitting, as they are already segment boundaries
+            return
+
+        for existing_distance, _ in split_points_with_distances:
+            if TOL.is_zero(abs(existing_distance - distance_from_start)):
+                return
+
+        split_points_with_distances.append((distance_from_start, point_on_segment))
+
+    def _joint_points_on_beam(self, beam: Beam, joint: Joint) -> List[Point]:
+        points = []
+
+        for beam_a, beam_b in joint.interactions:
+            if beam is beam_a:
+                _, point_a, _ = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+                points.append(Point(*point_a))
+            elif beam is beam_b:
+                _, _, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+                points.append(Point(*point_b))
+
+        if not points:
+            points.append(joint.location)
+
+        return points
 
     def generate_segments(self, beam: Beam, joints: Sequence[Joint]) -> List[StructuralSegment]:
         split_points_with_distances = []
         for joint in joints:
-            point_on_segment = Point(*closest_point_on_segment(joint.location, beam.centerline))
-            distance_from_start = distance_point_point(beam.centerline.start, point_on_segment)
-            distance_from_end = beam.length - distance_from_start
+            for point in self._joint_points_on_beam(beam, joint):
+                self._add_split_point(split_points_with_distances, beam, point)
 
-            if TOL.is_zero(distance_from_start) or TOL.is_zero(distance_from_end):
-                # joints at start and end do not require splitting, as they are already segment boundaries
-                continue
-
-            split_points_with_distances.append((distance_from_start, point_on_segment))
+        for support_point in beam.attributes.get("support_points", []):
+            self._add_split_point(split_points_with_distances, beam, Point(*support_point))
 
         # sort split points along the centerline
         split_points_with_distances.sort(key=lambda x: x[0])
@@ -194,14 +222,11 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
     def generate_connectors(self, joint: Joint) -> List[Tuple[Beam, Beam, List[StructuralSegment]]]:
         results = []
         for beam_a, beam_b in joint.interactions:
-            p1, p2 = intersection_segment_segment(beam_a.centerline, beam_b.centerline)
+            distance, p1, p2 = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+            p1 = Point(*p1)
+            p2 = Point(*p2)
 
-            # NOTE: based on the documentation if the segments do not intersect, p1 and p2 are None
-            # however, it seems that even if they are parallel but adjacent, p1 and p2 are simply the closest points on each segment
-            if p1 is None or p2 is None:
-                continue
-
-            if TOL.is_zero(distance_point_point(p1, p2)):
+            if TOL.is_zero(distance):
                 # no need to create a virtual segment if centerlines intersect
                 continue
 
