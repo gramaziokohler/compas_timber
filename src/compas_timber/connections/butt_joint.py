@@ -82,8 +82,8 @@ class ButtJoint(Joint):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
-        data["butt_plane"] = self.butt_plane.__data__
-        data["back_plane"] = self.back_plane.__data__
+        data["butt_plane"] = self.butt_plane
+        data["back_plane"] = self.back_plane
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -161,7 +161,8 @@ class ButtJoint(Joint):
         # extend the main beam
         try:
             start, end = self.main_beam.extension_to_plane(self.butt_plane)
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+            extension_tolerance = 0
+            # extension_tolerance = 0.01 if TOL.unit == "M" else 10
             joint_id = self.guid
             self.main_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
         except AttributeError as ae:
@@ -173,7 +174,8 @@ class ButtJoint(Joint):
         if self.modify_cross:
             try:
                 start, end = self.cross_beam.extension_to_plane(self.back_plane)
-                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+                extension_tolerance = 0
+                # extension_tolerance = 0.01 if TOL.unit == "M" else 10
                 joint_id = self.guid
                 self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
             except AttributeError as ae:
@@ -196,8 +198,6 @@ class ButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 milling_volume = self._get_milling_volume_for_pocket()
-                # except Exception as ex:
-                #     raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
                 cross_feature = Pocket.from_volume_and_element(
                     milling_volume,
                     self.cross_beam,
