@@ -219,10 +219,23 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
     """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
+    def __init__(self, max_candidate_connector_distance=0.05, use_candidate_connectors=True):
+        self.max_candidate_connector_distance = max_candidate_connector_distance
+        self.use_candidate_connectors = use_candidate_connectors
+
     def generate_connectors(self, joint: Joint) -> List[Tuple[Beam, Beam, List[StructuralSegment]]]:
         results = []
+        is_candidate = type(joint).__name__ == "JointCandidate"
+
+        if is_candidate and not self.use_candidate_connectors:
+            return results
+
         for beam_a, beam_b in joint.interactions:
             distance, p1, p2 = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+
+            if is_candidate and distance > self.max_candidate_connector_distance:
+                continue
+
             p1 = Point(*p1)
             p2 = Point(*p2)
 
