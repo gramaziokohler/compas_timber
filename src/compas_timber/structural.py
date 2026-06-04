@@ -219,7 +219,7 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
     """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
-    def __init__(self, max_candidate_connector_distance=0.05, use_candidate_connectors=True):
+    def __init__(self, max_candidate_connector_distance=0.01, use_candidate_connectors=True):
         self.max_candidate_connector_distance = max_candidate_connector_distance
         self.use_candidate_connectors = use_candidate_connectors
 
