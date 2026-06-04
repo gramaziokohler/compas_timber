@@ -193,7 +193,7 @@ class Drilling(BTLxProcessing):
         line = cls._flip_line_if_start_inside(line, element, ref_side_index)
         depth_limited = cls._is_depth_limited(line, element)
         ref_surface = element.side_as_surface(ref_side_index)
-        depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
+        depth = cls._calculate_depth(line, ref_surface)
         x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
         angle = cls._calculate_angle(ref_surface, line, xy_point)
         inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
@@ -332,11 +332,11 @@ class Drilling(BTLxProcessing):
 
         try:
             return geometry - drill_geometry
-        except IndexError:
+        except Exception as e:
             raise FeatureApplicationError(
                 drill_geometry,
                 geometry,
-                "The drill geometry does not intersect with element geometry.",
+                "The drill geometry does not intersect with element geometry." + str(e),
             )
 
     def cylinder_from_params_and_element(self, element):
