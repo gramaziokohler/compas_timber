@@ -80,6 +80,7 @@ class TimberModel(Model):
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._joints = {}
+        self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
         self._graph.update_default_node_attributes(**self._TIMBER_GRAPH_NODE_ATTRIBUTES)
@@ -132,14 +133,8 @@ class TimberModel(Model):
         return candidates
 
     @property
-    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
-        candidates = set()
-        for edge in self._graph.edges():
-            edge_candidate = self._graph.edge_attribute(edge, "candidates")
-            joint = self._graph.edge_attribute(edge, "joints")
-            if edge_candidate and not joint:
-                candidates.add(edge_candidate)
-        return candidates
+    def topologies(self):
+        return self._topologies
 
     @property
     def center_of_mass(self):
@@ -660,6 +655,7 @@ class TimberModel(Model):
             if result.topology == JointTopology.TOPO_UNKNOWN:
                 continue
             assert beam_a and beam_b
+
             # Create candidate and add it to the model
             candidate = JointCandidate(
                 result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location
