@@ -193,6 +193,7 @@ class KBirdsmouthJoint(Joint):
         # generate double cut feature for each main beam
         for main_beam, cutting_planes in zip(self.main_beams, self._get_cutting_planes()):
             main_feature = DoubleCut.from_planes_and_beam(cutting_planes, main_beam)
+            main_feature.user_attributes["strategy"] = "pocketing"
             main_feature.set_ridge_attributes(main_beam)
             main_beam.add_features(main_feature)
             self.features.append(main_feature)
@@ -203,7 +204,7 @@ class KBirdsmouthJoint(Joint):
             miter_planes = self._get_miter_planes()
         else:
             miter_planes = self.miter_plane, Plane(self.miter_plane.point, self.miter_plane.normal * -1.0)
-            
+
         for main_beam, miter_plane in zip(self.main_beams, miter_planes):
             miter_feature = JackRafterCut.from_plane_and_beam(miter_plane, main_beam)
             main_beam.add_features(miter_feature)
