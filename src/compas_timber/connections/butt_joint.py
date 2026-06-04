@@ -162,7 +162,8 @@ class ButtJoint(Joint):
         # extend the main beam
         try:
             start, end = self.main_beam.extension_to_plane(self.butt_plane)
-            extension_tolerance = 0.01 if TOL.unit == "M" else 10
+            extension_tolerance = 0
+            # extension_tolerance = 0.01 if TOL.unit == "M" else 10
             joint_id = self.guid
             self.main_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
         except AttributeError as ae:
@@ -174,7 +175,8 @@ class ButtJoint(Joint):
         if self.modify_cross:
             try:
                 start, end = self.cross_beam.extension_to_plane(self.back_plane)
-                extension_tolerance = 0.01 if TOL.unit == "M" else 10
+                extension_tolerance = 0
+                # extension_tolerance = 0.01 if TOL.unit == "M" else 10
                 joint_id = self.guid
                 self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
             except AttributeError as ae:
