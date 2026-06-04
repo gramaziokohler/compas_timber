@@ -5,7 +5,6 @@ from typing import Optional
 
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
-from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
