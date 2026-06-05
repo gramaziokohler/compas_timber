@@ -190,7 +190,7 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @staticmethod
-    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None):
+    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None):
         """
         Get constructor arguments for the PlateGeometry and subclasses from outlines.
         Outlines and openings are transformed to the local frame of the plate.
@@ -203,6 +203,13 @@ class PlateGeometry(Data):
             Associated outline of the plate.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             List of opening polylines.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A direction (e.g. the stud direction) to align the local frame with.
+            When supplied, the vector is projected onto the plate plane and the
+            bounding box that defines ``frame`` is oriented so its **local +Y
+            axis** aligns with that projection.  When ``None`` (default) the box
+            is axis-aligned to the plate plane's world X / Y, preserving the
+            previous behaviour.
 
         Returns
         -------
@@ -221,20 +228,36 @@ class PlateGeometry(Data):
         # flip frame so that outline_b is in the +Z direction
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
             frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-        # transform outlines to worldXY
+        # transform outlines to worldXY (plate plane -> XY)
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
         rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
         rebased_pline_b = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_b.points])
-        # get bounding box to define new frame
-        box = Box.from_points(rebased_pline_a.points + rebased_pline_b.points)
-        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
-        # transform frame back to global space
-        frame.transform(transform_to_world_xy.inverse())
-        # move outlines to +XY
-        vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
-        local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
-        local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
+
+        # Choose the in-plane axes for the bounding box.  By default the box is
+        # axis-aligned to the plate plane's X/Y.  When an orientation vector is
+        # supplied, project it onto the plate plane and use it as the box's +Y so
+        # the resulting local frame's Y aligns with that direction.
+        box_frame = Frame.worldXY()
+        if orientation is not None:
+            ori = Vector(*orientation).transformed(transform_to_world_xy)
+            ori_in_plane = Vector(ori[0], ori[1], 0.0)
+            if not TOL.is_zero(ori_in_plane.length):
+                yaxis = ori_in_plane.unitized()
+                xaxis = Vector(*yaxis.cross(Vector(0, 0, 1)))  # in-plane, perpendicular to Y
+                box_frame = Frame(Point(0, 0, 0), xaxis, yaxis)
+
+        # Express the rebased outlines in the (possibly rotated) box frame, take the
+        # axis-aligned box there, and build the local frame at its min corner.
+        to_box = Transformation.from_frame_to_frame(box_frame, Frame.worldXY())
+        box = Box.from_points([pt.transformed(to_box) for pt in rebased_pline_a.points + rebased_pline_b.points])
+        # local frame: min corner with the box-frame axes, mapped back to rebased then global space.
+        obb_frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0)).transformed(to_box.inverse())
+        to_local = Transformation.from_frame(obb_frame).inverse()
+        local_outline_a = Polyline([pt.transformed(to_local) for pt in rebased_pline_a.points])
+        local_outline_b = Polyline([pt.transformed(to_local) for pt in rebased_pline_b.points])
         PlateGeometry._check_outlines(local_outline_a, local_outline_b)
+        # transform frame back to global space
+        frame = obb_frame.transformed(transform_to_world_xy.inverse())
         openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
         return {
             "local_outline_a": local_outline_a,

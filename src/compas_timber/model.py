@@ -110,7 +110,15 @@ class TimberModel(Model):
     @property
     def panels(self):
         # type: () -> List[Panel]
-        return self.find_all_elements_of_type(Panel)
+        # ``Layer`` is a ``Panel`` subclass; exclude layers here so panel-level
+        # operations (connection, top-level joinery) act on real panels only.
+        return [panel for panel in self.find_all_elements_of_type(Panel) if not panel.is_layer]
+
+    @property
+    def layers(self):
+        # type: () -> List[Panel]
+        """All :class:`~compas_timber.panel_features.Layer` elements in the model."""
+        return [panel for panel in self.find_all_elements_of_type(Panel) if panel.is_layer]
 
     @property
     def fasteners(self):
@@ -605,6 +613,10 @@ class TimberModel(Model):
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
+        # Realize the extension planes set above.  Layers are ``Panel`` subclasses
+        # that the panel joints extend too, so apply edge extensions to both.
+        for panel in self.panels + self.layers:
+            panel.apply_edge_extensions()
 
         for joint in joints:
             if not any([isinstance(e, Panel) for e in joint.elements]):
@@ -629,7 +641,7 @@ class TimberModel(Model):
 
 
 
-    def process_joinery(self, stop_on_first_error=False):
+    def process_joinery(self, stop_on_first_error=False, include_panels=True):
         """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
@@ -639,6 +651,12 @@ class TimberModel(Model):
         ----------
         stop_on_first_error : bool, optional
             If True, the method will raise an exception on the first error it encounters. Default is False.
+        include_panels : bool, optional
+            If True (default), all joints are processed.  If False, joints that
+            involve a :class:`~compas_timber.elements.Panel` are skipped — use
+            this when panel joinery has already been processed separately via
+            :meth:`process_panel_joinery` so it is not applied twice (panel-joint
+            extensions are not idempotent).
 
         Returns
         -------
@@ -648,6 +666,8 @@ class TimberModel(Model):
         """
         errors = []
         joints = self.joints
+        if not include_panels:
+            joints = [joint for joint in joints if not any(isinstance(e, Panel) for e in joint.elements)]
 
         for joint in joints:
             try:
@@ -727,9 +747,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PlateJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)# TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = self.plates
@@ -757,9 +777,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PanelJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PanelJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)# TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         panels = self.panels
@@ -778,3 +798,111 @@ class TimberModel(Model):
 
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
+
+
+# =============================================================================
+# Model sub-tree surgery
+# =============================================================================
+
+
+def _detach_subtree(model, parent):
+    # type: (TimberModel, Element | None) -> list
+    """Remove a subtree from *model*, returning ``(parent, [children])`` tuples.
+
+    When *parent* is an element it is **kept** in *model* and only its descendants
+    are removed; its direct children are recorded under ``None`` so they can be
+    re-rooted elsewhere.  When *parent* is ``None`` every top-level element of
+    *model* (and its subtree) is removed, also recorded under ``None``.
+
+    Removal is leaves-first (so each removed node is a tree leaf, which
+    ``remove_element`` handles cleanly); the returned tuples are ordered
+    parents-before-children for re-insertion.
+    """
+    tuples = []
+
+    def walk(element, is_kept_root):
+        children = list(element.children)
+        if children:
+            tuples.append((None if is_kept_root else element, children))
+            for child in children:
+                walk(child, is_kept_root=False)
+        if not is_kept_root and model.has_element(element):
+            model.remove_element(element)
+
+    if parent is not None:
+        walk(parent, is_kept_root=True)
+    else:
+        tops = [element for element in model.elements() if element.parent is None]
+        tuples.append((None, tops))
+        for top in tops:
+            walk(top, is_kept_root=False)
+    return tuples
+
+
+def _attach_subtree(tuples, model, root=None):
+    # type: (list, TimberModel, Element | None) -> None
+    """Re-add ``(parent, [children])`` tuples into *model* (parents before children).
+
+    Tuples whose recorded parent is ``None`` are attached under *root*.  Each
+    re-added element has its computed properties reset so geometry recomputes
+    against the new tree.
+    """
+    for parent, children in tuples:
+        target_parent = parent if parent is not None else root
+        for child in children:
+            model.add_element(child, parent=target_parent)
+            child.reset_computed_properties()
+
+
+def extract_model_from_parent(parent):
+    # type: (Element) -> TimberModel
+    """Detach *parent*'s child subtree into a new, standalone :class:`TimberModel`.
+
+    The *parent* element itself stays in its current model; its descendants are
+    removed from that model and re-rooted (hierarchy preserved) in a fresh
+    :class:`TimberModel`, which is returned.
+
+    A child element detached from its parent reports its geometry in the
+    parent's local frame — convenient for operating on, e.g., a panel's layers
+    in isolation, then merging them back with :func:`merge_model_into_model`.
+
+    Parameters
+    ----------
+    parent : :class:`~compas_model.elements.Element`
+        The element whose children are extracted.  Must be in a model.
+
+    Returns
+    -------
+    :class:`TimberModel`
+        A new model containing *parent*'s former subtree.
+    """
+    tuples = _detach_subtree(parent.model, parent)
+    new_model = TimberModel()
+    _attach_subtree(tuples, new_model, root=None)
+    return new_model
+
+
+def merge_model_into_model(model, target_model, parent=None):
+    # type: (TimberModel, TimberModel, Element | None) -> None
+    """Move every element (and joints) of *model* into *target_model* under *parent*.
+
+    All of *model*'s top-level elements and their subtrees are detached and
+    re-added beneath *parent* in *target_model* (or under the root when *parent*
+    is ``None``), preserving the hierarchy and resetting each moved element's
+    computed properties.  Joints defined on *model* are copied across.
+
+    Parameters
+    ----------
+    model : :class:`TimberModel`
+        The source model whose contents are moved out.
+    target_model : :class:`TimberModel`
+        The model to merge *model*'s elements into.
+    parent : :class:`~compas_model.elements.Element`, optional
+        The element under which the moved elements are re-rooted.  ``None``
+        attaches them under the target model's root.
+    """
+    joints = list(model.joints)
+    tuples = _detach_subtree(model, None)
+    _attach_subtree(tuples, target_model, root=parent)
+    for joint in joints:
+        target_model.add_joint(joint)
