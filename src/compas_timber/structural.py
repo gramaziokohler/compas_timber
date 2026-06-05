@@ -32,6 +32,41 @@ if TYPE_CHECKING:
     from compas_timber.model import TimberModel
 
 
+def effective_centerline(beam: Beam, max_structural_extension=0.30, include_points=None) -> Line:
+    """Return the beam centerline extended by blank extensions for structural use only."""
+    centerline = beam.centerline
+    start_extension = 0.0
+    end_extension = 0.0
+
+    if hasattr(beam, "_resolve_blank_extensions"):
+        start_extension, end_extension = beam._resolve_blank_extensions()
+        if start_extension > max_structural_extension or end_extension > max_structural_extension:
+            start_extension = 0.0
+            end_extension = 0.0
+
+    direction = centerline.direction
+    include_points = include_points or []
+    for point in include_points:
+        vector = Vector.from_start_end(centerline.start, point)
+        distance_along_centerline = vector.dot(direction)
+
+        if distance_along_centerline < 0.0:
+            extension = abs(distance_along_centerline)
+            if extension <= max_structural_extension:
+                start_extension = max(start_extension, extension)
+        elif distance_along_centerline > centerline.length:
+            extension = distance_along_centerline - centerline.length
+            if extension <= max_structural_extension:
+                end_extension = max(end_extension, extension)
+
+    if TOL.is_zero(start_extension) and TOL.is_zero(end_extension):
+        return centerline
+
+    start = centerline.start - direction * start_extension
+    end = centerline.end + direction * end_extension
+    return Line(start, end)
+
+
 class InteractionType(StrEnum):
     """Defines which interaction types to consider when creating structural segments.
 
@@ -165,10 +200,16 @@ class PlateConnectionGenerator(ABC):
 class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
     """Generates structural segments by splitting the beam centerline at joint and support locations."""
 
-    def _add_split_point(self, split_points_with_distances, beam, point):
-        point_on_segment = Point(*closest_point_on_segment(point, beam.centerline))
-        distance_from_start = distance_point_point(beam.centerline.start, point_on_segment)
-        distance_from_end = beam.length - distance_from_start
+    def __init__(self, max_structural_extension=0.30):
+        self.max_structural_extension = max_structural_extension
+
+    def _centerline(self, beam, include_points=None):
+        return effective_centerline(beam, self.max_structural_extension, include_points)
+
+    def _add_split_point(self, split_points_with_distances, centerline, point):
+        point_on_segment = Point(*closest_point_on_segment(point, centerline))
+        distance_from_start = distance_point_point(centerline.start, point_on_segment)
+        distance_from_end = centerline.length - distance_from_start
 
         if TOL.is_zero(distance_from_start) or TOL.is_zero(distance_from_end):
             # joints at start and end do not require splitting, as they are already segment boundaries
@@ -182,13 +223,17 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 
     def _joint_points_on_beam(self, beam: Beam, joint: Joint) -> List[Point]:
         points = []
+        include_points = [joint.location] if getattr(joint, "location", None) else None
 
         for beam_a, beam_b in joint.interactions:
+            centerline_a = self._centerline(beam_a, include_points)
+            centerline_b = self._centerline(beam_b, include_points)
+
             if beam is beam_a:
-                _, point_a, _ = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+                _, point_a, _ = distance_segment_segment_points(centerline_a, centerline_b)
                 points.append(Point(*point_a))
             elif beam is beam_b:
-                _, _, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+                _, _, point_b = distance_segment_segment_points(centerline_a, centerline_b)
                 points.append(Point(*point_b))
 
         if not points:
@@ -198,12 +243,15 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 
     def generate_segments(self, beam: Beam, joints: Sequence[Joint]) -> List[StructuralSegment]:
         split_points_with_distances = []
+        include_points = [joint.location for joint in joints if getattr(joint, "location", None)]
+        centerline = self._centerline(beam, include_points)
+
         for joint in joints:
             for point in self._joint_points_on_beam(beam, joint):
-                self._add_split_point(split_points_with_distances, beam, point)
+                self._add_split_point(split_points_with_distances, centerline, point)
 
         for support_point in beam.attributes.get("support_points", []):
-            self._add_split_point(split_points_with_distances, beam, Point(*support_point))
+            self._add_split_point(split_points_with_distances, centerline, Point(*support_point))
 
         # sort split points along the centerline
         split_points_with_distances.sort(key=lambda x: x[0])
@@ -211,7 +259,7 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
         split_points = [v[1] for v in split_points_with_distances]
 
         split_segments = []
-        for p1, p2 in pairwise([beam.centerline.start] + split_points + [beam.centerline.end]):
+        for p1, p2 in pairwise([centerline.start] + split_points + [centerline.end]):
             split_segments.append(Line(p1, p2))
 
         return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis), cross_section=(beam.width, beam.height)) for seg in split_segments]
@@ -219,9 +267,13 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 class SimpleJointConnectorGenerator(JointConnectorGenerator):
     """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
-    def __init__(self, max_candidate_connector_distance=0.01, use_candidate_connectors=True):
+    def __init__(self, max_candidate_connector_distance=0.01, use_candidate_connectors=True, max_structural_extension=0.30):
         self.max_candidate_connector_distance = max_candidate_connector_distance
         self.use_candidate_connectors = use_candidate_connectors
+        self.max_structural_extension = max_structural_extension
+
+    def _centerline(self, beam, include_points=None):
+        return effective_centerline(beam, self.max_structural_extension, include_points)
 
     def generate_connectors(self, joint: Joint) -> List[Tuple[Beam, Beam, List[StructuralSegment]]]:
         results = []
@@ -230,8 +282,11 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
         if is_candidate and not self.use_candidate_connectors:
             return results
 
+        include_points = [joint.location] if getattr(joint, "location", None) else None
         for beam_a, beam_b in joint.interactions:
-            distance, p1, p2 = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+            centerline_a = self._centerline(beam_a, include_points)
+            centerline_b = self._centerline(beam_b, include_points)
+            distance, p1, p2 = distance_segment_segment_points(centerline_a, centerline_b)
 
             if is_candidate and distance > self.max_candidate_connector_distance:
                 continue
