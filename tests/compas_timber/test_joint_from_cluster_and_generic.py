@@ -266,7 +266,7 @@ def test_from_cluster_empty_cluster(model):
     # Create empty cluster
     cluster = Cluster([])
 
-    with pytest.raises(ValueError): 
+    with pytest.raises(ValueError):
         TButtJoint.promote_cluster(model, cluster)
 
 

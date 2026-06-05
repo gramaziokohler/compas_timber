@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
+* Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` attribute to `ButtJoint`.
+* Added `force_pocket` and `conical_tool` flags to `TButtJoint`
+* Added `force_pocket` and `conical_tool` flags to `LButtJoint`
+
+
+### Changed
+* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes. 
+
+### Removed
+
+
+## [2.1.1-rc1] 2026-04-01
+
+### Added
 
 * Added `ILapJoint` class for continuous parallel beam lap joint connections.
 * Added test coverage for `ILapJoint`.
@@ -32,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `FreeContourParams` class and overridden `FreeContour.params` property as a special case: unlike all other processings, `FreeContour` requires custom serialization logic to handle its polymorphic `Contour` / `DualContour` child element.
 * Added `get_leaf_subclasses` utility function back to `compas_timber.utils`.
 * Added `AttributeSpec` dataclass in `compas_timber.fabrication.btlx` to declare `ATTRIBUTE_MAP` entries with a `python_name` and a `type` for deserialization.
+* Added `StructuralGraph` to represent a `TimberModel` for structural analysis.
 
 ### Changed
 
