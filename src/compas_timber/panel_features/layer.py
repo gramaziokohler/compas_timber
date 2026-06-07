@@ -62,7 +62,7 @@ class Layer(Panel):
         **kwargs,
     ):
         outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
+        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, orientation = panel.frame.yaxis)
         # Build the Layer as a real Panel from the slice geometry.  ``args`` carries
         # frame / length / width / thickness / local_outline_a / local_outline_b
         # (in the parent panel's local space), so the Layer's transformation is
