@@ -809,26 +809,26 @@ def extend_line_segments(segments, close_loop=False):
 
 def get_interior_corner_indices(polyline):
     """Get the indices of the interior corners of a polyline."""
-    _interior_corner_indices = []
+    interior_corner_indices = []
     vector = Plane.from_points(polyline.points).normal
     points = polyline.points[0:-1]
     cw = is_polyline_clockwise(polyline, vector)
     for i in range(len(points)):
         angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
         if not (cw ^ (angle < 0)):
-            _interior_corner_indices.append(i)
-    return _interior_corner_indices
+            interior_corner_indices.append(i)
+    return interior_corner_indices
 
 
 def get_interior_segment_indices(polyline):
     """Get the indices of the interior segments of a polyline."""
     interior_corner_indices = get_interior_corner_indices(polyline)
     edge_count = len(polyline.points) - 1
-    _interior_segment_indices = []
+    interior_segment_indices = []
     for i in range(edge_count):
         if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
-            _interior_segment_indices.append(i)
-    return _interior_segment_indices
+            interior_segment_indices.append(i)
+    return interior_segment_indices
 
 
 def combine_parallel_segments(polyline, tol=TOL):

@@ -4,6 +4,8 @@ from abc import ABC
 from typing import TYPE_CHECKING
 from typing import Union
 
+from compas_timber.utils import StrEnum
+
 if TYPE_CHECKING:
     from compas.geometry import Brep  # noqa: F401
 
@@ -15,7 +17,7 @@ from compas.geometry import Transformation
 from compas_model.elements import Element
 
 
-class PanelFeatureType:
+class PanelFeatureType(StrEnum):
     CONNECTION_INTERFACE = "CONNECTION_INTERFACE"
     RECESS = "RECESS"
     OPENING = "OPENING"
