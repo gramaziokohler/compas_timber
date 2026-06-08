@@ -1,8 +1,10 @@
+import math
 import warnings
 
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
@@ -264,7 +266,10 @@ class TStepJoint(Joint):
 
 
         # -- butt cut on main beam end face --
-        roughing_plane = self._get_roughing_cut_plane(main_feature.planes_from_params_and_beam(self.main_beam))
+        cutting_planes = main_feature.planes_from_params_and_beam(self.main_beam)
+        heel_angle = angle_vectors(cutting_planes[0].normal, cutting_planes[1].normal)
+        main_feature.user_attributes["heel_angle"] = 180-math.degrees(heel_angle)
+        roughing_plane = self._get_roughing_cut_plane(cutting_planes)
         cut = JackRafterCut.from_plane_and_beam(roughing_plane, self.main_beam, name="Roughing_Cut")
         self.main_beam.add_features(cut)
         self.features.append(cut)
