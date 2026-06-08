@@ -322,7 +322,6 @@ class Panel(Element):
     def layers(self):
         return self.layer_tree.values()
 
-
     @property
     def features(self) -> list[PanelFeature]:
         return self._features
