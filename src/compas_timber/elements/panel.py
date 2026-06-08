@@ -287,6 +287,10 @@ class Panel(Element):
         self.exterior_layer = Layer(self, 0, start, name="Exterior Layer") if start > 0 else None
         self.core_layer = Layer(self, start, end, name="Core Layer")
         self.interior_layer = Layer(self, end, self.thickness, name="Interior Layer") if end < self.thickness else None
+        if self.model:
+            for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
+                if layer is not None:
+                    self.model.add_element(layer, parent=self)
 
     @property
     def layer_tree(self):
@@ -555,7 +559,7 @@ class Panel(Element):
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of openings to be added to the plate geometry.
-        recognize_doors : bool
+        extract_doors : bool
             if True, door features will be extracted from exterior polylines and added as Openings to the Panel.
         horizontal_openings : bool
             if True, openings in Panels that are not Vertical or Horizontal will be extruded horzontally through the Panel.
@@ -573,7 +577,7 @@ class Panel(Element):
         """
         window_openings = openings or []
         door_openings = []
-        if recognize_doors:
+        if extract_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
 
         args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, orientation=orientation)
