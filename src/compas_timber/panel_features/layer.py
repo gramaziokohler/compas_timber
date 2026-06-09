@@ -1,5 +1,5 @@
 from __future__ import annotations
-import traceback
+
 from typing import Optional
 
 from compas.geometry import Polyline
@@ -120,14 +120,12 @@ class Layer(Panel):
         """
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
         for sublayer in self.sublayers:
-            print("setting edge plane for layer {} edge_index {}".format(sublayer, edge_index))
             sublayer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """Move this layer's edges onto its edge planes, then recurse to sublayers."""
         super().apply_edge_extensions()
         for sublayer in self.sublayers:
-            print("applying edge extensions for layer {}".format(sublayer))
             sublayer.apply_edge_extensions()
 
 

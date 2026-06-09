@@ -156,7 +156,6 @@ class PlateGeometry(Data):
             The shape of the element.
 
         """
-
         def brep_from_outlines(outline_a, outline_b):
             polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
             for i in range(len(outline_a) - 1):

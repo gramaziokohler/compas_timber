@@ -613,7 +613,13 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
 
-        for panel in self.panels + self.layers:
+        # Only iterate top-level panels: ``Panel.apply_edge_extensions`` already
+        # cascades to its layers, and ``Layer.apply_edge_extensions`` recurses to
+        # sublayers — so a panel applies its whole layer tree exactly once.
+        # Adding ``self.layers`` here would re-apply each layer (and re-apply each
+        # sublayer once per ancestor), and edge extensions are not idempotent
+        # across shared corner vertices, producing wrong outlines.
+        for panel in self.panels:
             panel.apply_edge_extensions()
 
         for joint in joints:

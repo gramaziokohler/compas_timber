@@ -186,6 +186,13 @@ class Panel(Element):
                 # setter is idempotent even if triggered more than once.
                 if layer.model is not model:
                     self._model.add_element(layer, parent=parent)
+                # A layer (sublayer) whose geometry was queried while standalone
+                # cached ``modeltransformation == transformation`` (model was None).
+                # That cache is stale now the layer is in the tree and is NOT
+                # invalidated by ``add_element`` — which would make
+                # ``transformation_to_local()`` (and hence ``set_extension_plane``)
+                # wrong.  Reset so it recomputes against the real tree.
+                layer.reset_computed_properties()
                 add_layers_to_model(layer.sublayers, layer)
 
         add_layers_to_model([self.exterior_layer, self.core_layer, self.interior_layer], self)  # add layers to model when panel is added to model
@@ -248,6 +255,9 @@ class Panel(Element):
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+        for layer in [self.interior_layer, self.core_layer, self.exterior_layer]:
+            if layer:
+                layer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
@@ -347,7 +357,6 @@ class Panel(Element):
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        print("resetting plate geometry")
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
