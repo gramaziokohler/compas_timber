@@ -1,8 +1,8 @@
 from __future__ import annotations
-
+import traceback
 from typing import Optional
 
-from compas.geometry import Polyline, Transformation
+from compas.geometry import Polyline
 
 from compas_timber.elements.panel import Panel
 from compas_timber.elements.plate_geometry import PlateGeometry
@@ -110,22 +110,25 @@ class Layer(Panel):
         frame_outline_b = Polyline([pt_a * (1.0 - offset) + pt_b * offset for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
         return frame_outline_a, frame_outline_b
 
-    def apply_edge_extensions(self):
-        super().apply_edge_extensions()
-        self.update_sublayer_geometry(self)
+    def set_extension_plane(self, edge_index: int, plane: Plane):
+        """Set an extension plane for a specific edge.  Called by plate joints.
 
-    @staticmethod
-    def update_sublayer_geometry(layer):
-        """Rebuild this layer's ``plate_geometry`` from the parent panel range.
-
-        Call after the parent panel's outlines change so the slice tracks it.
+        *plane* is given in model (world) space and stored in this layer's local
+        space.  The same world plane is propagated recursively to every sublayer
+        (each storing it in its own local space) so a sublayer's edge tracks its
+        parent's.  Sublayers must already be attached when this is called.
         """
-        for sublayer in layer.sublayers:
-            outline_a, outline_b = Layer.get_outlines_from_panel_range(layer, sublayer.start_level, sublayer.end_level)
-            args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
-            sublayer.plate_geometry = PlateGeometry(local_outline_a=args["local_outline_a"], local_outline_b=args["local_outline_b"])
-            sublayer.transformation = Transformation.from_frame(args["frame"])
-            Layer.update_sublayer_geometry(sublayer)
+        self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+        for sublayer in self.sublayers:
+            print("setting edge plane for layer {} edge_index {}".format(sublayer, edge_index))
+            sublayer.set_extension_plane(edge_index, plane)
+
+    def apply_edge_extensions(self):
+        """Move this layer's edges onto its edge planes, then recurse to sublayers."""
+        super().apply_edge_extensions()
+        for sublayer in self.sublayers:
+            print("applying edge extensions for layer {}".format(sublayer))
+            sublayer.apply_edge_extensions()
 
 
 

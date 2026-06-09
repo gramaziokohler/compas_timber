@@ -280,6 +280,15 @@ class Panel(Element):
 
         if start < 0 or end > self.thickness or start >= end:
             raise ValueError("Invalid core layer range. Start and end must be within the panel thickness and start must be less than end.")
+        # Re-slicing is idempotent: drop any previously-defined layers (and their
+        # whole subtrees) from the model first, so calling ``define_core_layer``
+        # again on a panel that is already in a model — e.g. a Grasshopper panel
+        # object reused across solves — does not accumulate stale, duplicate
+        # layers (which would render as uncut ghost shapes).
+        if self.model:
+            for old_layer in (self.exterior_layer, self.core_layer, self.interior_layer):
+                if old_layer is not None:
+                    _remove_element_subtree(self.model, old_layer)
         # Skip degenerate (zero-thickness) exterior / interior layers — e.g. when
         # the panel has sheeting on only one face, the opposite layer has zero
         # depth and would produce a degenerate slice.  Leaving the attribute
@@ -338,6 +347,7 @@ class Panel(Element):
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        print("resetting plate geometry")
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
@@ -590,6 +600,20 @@ class Panel(Element):
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.DOOR, project_horizontal=horizontal_openings)
             panel.add_feature(opening)
         return panel
+
+
+def _remove_element_subtree(model, element):
+    """Remove *element* and all its descendants from *model*, leaves-first.
+
+    ``Model.remove_element`` drops a node's whole treenode subtree but only one
+    guid from the element dict, so removing a non-leaf directly orphans its
+    descendants (they linger in the model, rendering as ghost geometry).  Walking
+    children-first ensures every ``remove_element`` call targets a leaf.
+    """
+    for child in list(element.children):
+        _remove_element_subtree(model, child)
+    if model.has_element(element):
+        model.remove_element(element)
 
 
 def extract_door_openings(outline_a, outline_b):

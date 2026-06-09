@@ -26,6 +26,8 @@ class PanelLLayerButtJoint(PanelJoint, PlateLButtJoint):
         return "PanelLButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
 
     def add_extensions(self):
+        print("main_panel layer_tree", self.main_panel.layer_tree)
+        print("cross_panel layer_tree", self.cross_panel.layer_tree)
         if not (self.main_panel.interior_layer and
                 self.main_panel.core_layer and
                 self.main_panel.interior_layer and

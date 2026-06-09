@@ -607,14 +607,12 @@ class TimberModel(Model):
             if not any([isinstance(e, Panel) for e in joint.elements]):
                 continue
             try:
-                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje
-        # Realize the extension planes set above.  Layers are ``Panel`` subclasses
-        # that the panel joints extend too, so apply edge extensions to both.
+
         for panel in self.panels + self.layers:
             panel.apply_edge_extensions()
 
@@ -671,7 +669,6 @@ class TimberModel(Model):
 
         for joint in joints:
             try:
-                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
                 joint.add_extensions()
             except BeamJoiningError as bje:
                 errors.append(bje)
