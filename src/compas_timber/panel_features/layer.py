@@ -49,8 +49,6 @@ class Layer(Element):
         use ``self.parent`` to navigate the model tree.
     start_level, end_level : float
         Range of this layer through the parent panel's thickness.
-    parent_layer : :class:`Layer` or None
-        Parent layer in the sublayer tree.
     sublayers : list[:class:`Layer`]
         Ordered child layers.
     thickness : float
@@ -76,9 +74,6 @@ class Layer(Element):
         data = super().__data__
         data["local_outline_a"] = self.plate_geometry.outline_a
         data["local_outline_b"] = self.plate_geometry.outline_b
-        data["length"] = self.length
-        data["width"] = self.width
-        data["height"] = self.height
         data["start_level"] = self.start_level
         data["end_level"] = self.end_level
         return data
@@ -91,13 +86,9 @@ class Layer(Element):
             local_outline_a=data["local_outline_a"],
             local_outline_b=data["local_outline_b"],
         )
-        layer.length = data["length"]
-        layer.width = data["width"]
-        layer.height = data["height"]
         layer.start_level = data["start_level"]
         layer.end_level = data["end_level"]
         layer.panel = None
-        layer.parent_layer = None
         layer.sublayers = []
         layer._planes = None
         return layer
@@ -122,19 +113,15 @@ class Layer(Element):
             local_outline_a=args["local_outline_a"],
             local_outline_b=args["local_outline_b"],
         )
-        self.length = args["length"]
-        self.width = args["width"]
-        self.height = args["thickness"]
 
         self.panel = panel
         self.start_level = start_level
         self.end_level = end_level
-        self.parent_layer = None
         self.sublayers = []
         self._planes = None
 
     def __repr__(self):
-        return "Layer(name={}, thickness={})".format(self.name, self.thickness)
+        return "Layer(name={}, position={}, thickness={})".format(self.name, self.frame.point[2], self.thickness)
 
     def __str__(self):
         return "Layer(name={}, position={}, thickness={})".format(self.name, self.frame.point[2], self.thickness)
@@ -145,7 +132,7 @@ class Layer(Element):
 
     @property
     def thickness(self):
-        return self.height
+        return self.end_level - self.start_level
 
     @property
     def outline_a(self):
