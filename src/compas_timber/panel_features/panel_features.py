@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import auto
 
 from abc import ABC
 from typing import TYPE_CHECKING
@@ -13,15 +14,15 @@ from compas.geometry import Frame
 from compas.geometry import Geometry
 from compas.geometry import Transformation
 from compas_model.elements import Element
+from compas_timber.utils import StrEnum
 
-
-class PanelFeatureType:
-    CONNECTION_INTERFACE = "CONNECTION_INTERFACE"
-    RECESS = "RECESS"
-    OPENING = "OPENING"
-    LINEAR = "LINEAR"
-    VOLUMETRIC = "VOLUMETRIC"
-    NONE = "NONE"  # TODO: what does NONE mean here?
+class PanelFeatureType(StrEnum):
+    CONNECTION_INTERFACE = auto()
+    RECESS = auto()
+    OPENING = auto()
+    LINEAR = auto()
+    VOLUMETRIC = auto()
+    NONE = auto()  # TODO: what does NONE mean here?
 
 
 class PanelFeature(Element, ABC):

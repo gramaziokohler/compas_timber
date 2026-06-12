@@ -1,3 +1,5 @@
+from enum import auto
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -11,6 +13,7 @@ from compas.geometry import Vector
 from compas.geometry import intersection_line_plane
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import StrEnum
 from compas_timber.utils import correct_polyline_direction
 
 from .panel_features import PanelFeature
@@ -131,8 +134,8 @@ class Opening(PanelFeature):
         return cls(frame, pl_a, pl_b, opening_type=opening_type, name=name)
 
 
-class OpeningType(object):
-    """Constants for different types of openings in walls.
+class OpeningType(StrEnum):
+    """Constants for different types of openings in panels.
 
     Attributes
     ----------
@@ -142,5 +145,5 @@ class OpeningType(object):
         Constant for window openings.
     """
 
-    DOOR = "door"
-    WINDOW = "window"
+    DOOR = auto()
+    WINDOW = auto()

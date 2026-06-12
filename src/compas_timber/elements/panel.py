@@ -24,7 +24,7 @@ from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.panel_features import Opening
+from compas_timber.panel_features import Opening, OpeningType
 from compas_timber.panel_features import PanelFeatureType
 from compas_timber.utils import combine_parallel_segments
 from compas_timber.utils import get_interior_segment_indices
@@ -436,21 +436,17 @@ class Panel(Element):
             A PlateGeometry object representing the plate geometry with the given outlines.
         """
 
-        if openings:
-            openings = [(o, "window") for o in openings]
+        window_polylines = [o for o in openings] if openings else []
+        door_polylines = []
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
-            if door_openings:
-                if openings is None:
-                    openings = [(o, "door") for o in door_openings]
-                else:
-                    openings.extend([(o, "door") for o in door_openings])
-
         panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
-        if openings:
-            for polyline, opening_type in openings:
-                opening = Opening.from_outline_panel(polyline, panel, opening_type=opening_type, project_horizontal=horizontal_openings)
-                panel.add_feature(opening)
+        for polyline in window_polylines:
+            opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
+            panel.add_feature(opening)
+        for polyline in door_polylines:
+            opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.DOOR, project_horizontal=horizontal_openings)
+            panel.add_feature(opening)
         return panel
 
 
@@ -470,35 +466,37 @@ def extract_door_openings(outline_a, outline_b):
     list[:class:`~compas.geometry.Polyline`]
         A list of polylines representing the door openings.
     """
-    combine_parallel_segments(outline_a)
-    combine_parallel_segments(outline_b)
-
-    interior_indices_a = get_interior_segment_indices(outline_a)
-    interior_indices_b = get_interior_segment_indices(outline_b)
-    interior_indices = set(interior_indices_a) | set(interior_indices_b)
-
     openings = []
-    while True:
+    is_door_found = True
+    while is_door_found:
+        combine_parallel_segments(outline_a)
+        combine_parallel_segments(outline_b)
         segments_a = outline_a.lines
         segments_b = outline_b.lines
         n = len(segments_a)
+        interior_indices_a = get_interior_segment_indices(outline_a)
+        interior_indices_b = get_interior_segment_indices(outline_b)
+        interior_indices = set(interior_indices_a) | set(interior_indices_b)
 
+        #walk around the polylines, extract door if found
         for seg_index in interior_indices:
             # collect the 5-segment window centered on the interior segment
             window_indices = [(seg_index + i) % n for i in range(-2, 3)]
             door_segs_a = [segments_a[i] for i in window_indices]
             door_segs_b = [segments_b[i] for i in window_indices]
 
+            # Check the segments for door-ness
             # both outlines must agree on segment directions
             if not all(angle_vectors(a.direction, b.direction) <= TOL.ABSOLUTE for a, b in zip(door_segs_a, door_segs_b)):
                 continue
             # the two side segments must be anti-parallel (opposite directions)
             if abs(angle_vectors(door_segs_a[1].direction, door_segs_a[3].direction) - math.pi) > TOL.ABSOLUTE:
                 continue
-            # the segments above and below the door opening must be collinear (same horizontal line)
+            # the segments left and right from door opening must be collinear (same horizontal line)
             if not is_colinear_line_line(door_segs_a[0], door_segs_a[4], tol=TOL.RELATIVE):
                 continue
 
+            # door-like segments found, now extract them
             vertical = door_segs_a[1].direction
             vertical.unitize()
 
@@ -514,11 +512,11 @@ def extract_door_openings(outline_a, outline_b):
 
             outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
             outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
-            interior_indices_a = get_interior_segment_indices(outline_a)
-            interior_indices_b = get_interior_segment_indices(outline_b)
-            interior_indices = set(interior_indices_a) | set(interior_indices_b)
-            break
+
+            break # only extract one door at a time to avoid issues with multiple doors in the same window of segments. After extracting one door, the outlines are updated and the process is repeated until no more doors are found.
+
+        # walked the entire perimeter, no door found
         else:
-            break  # no door candidates found in this pass
+            is_door_found = False  # no door candidates found in this pass
 
     return outline_a, outline_b, openings
