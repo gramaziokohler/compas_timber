@@ -633,10 +633,6 @@ def polyline_from_brep_loop(loop):
         raise ValueError("The BrepLoop returned multiple polylines")
     # a valid closed polyline needs at least 4 points (3 unique vertices + 1 closing point);
     # 3 points would yield only 2 overlapping line segments
-
-    polylines, _ = join_polyline_segments(segments, close_loop=True)
-    if len(polylines) != 1:
-        raise ValueError("The BrepLoop returned multiple polylines")
     if len(polylines[0].points) < 4:
         raise ValueError("The BrepLoop did not contain enough valid segments to join into a closed polyline (need at least 3 unique vertices)")
     return polylines[0]
@@ -918,7 +914,6 @@ def get_leaf_subclasses(cls):
 
 __all__ = [
     "intersection_line_line_param",
-    "intersection_line_plane_param",
     "intersection_line_beam_param",
     "distance_segment_segment",
     "is_polyline_clockwise",
@@ -939,9 +934,6 @@ __all__ = [
     "combine_parallel_segments",
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
-    "extend_line_segments",
-    "get_interior_corner_indices",
-    "get_interior_segment_indices",
     "get_leaf_subclasses",
     "move_polyline_segment_to_line",
     "join_polyline_segments",

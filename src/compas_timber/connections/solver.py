@@ -61,7 +61,6 @@ class JointTopology(object):
     TOPO_K - joint between three or more beams where at least one beam meet in the middle
     TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned
     TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other
-    TOPO_FACE_FACE  - joint between two parallel elements sharing a coplanar face
 
     """
 
@@ -74,7 +73,6 @@ class JointTopology(object):
     TOPO_K = 6
     TOPO_EDGE_EDGE = 7
     TOPO_EDGE_FACE = 8
-    TOPO_FACE_FACE = 9
 
     @classmethod
     def get_name(cls, value):

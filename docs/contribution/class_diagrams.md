@@ -169,6 +169,7 @@ classDiagram
       }
 
       class Joint {
+
          <<abstract>>
          +topology : JointTopology
          +location : Point
@@ -183,6 +184,7 @@ classDiagram
          +add_extensions()
          +check_elements_compatibility()
          +restore_beams_from_keys(model)
+         +get_beam_direction_towards_joint()
          +create(model, elements)
       }
 
@@ -194,32 +196,28 @@ classDiagram
       }
 
       class ButtJoint {
-         <<abstract>>
-         +main_beam : Beam
-         +cross_beam : Beam
-         +main_beam_guid : str
-         +cross_beam_guid : str
-         +mill_depth : float
-         +modify_cross : bool
-         +butt_plane : Plane
+	    +main_beam : Beam
+	    +cross_beam : Beam
+	    +mill_depth : float
+	    +modify_cross : bool
+	    +butt_plane : Plane
+		+back_plane: Plane
+		+force_pocket: bool
+		+conical_tool: bool
+	    +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+
       }
 
       class LButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_L
-         +start_y : float
-         +strut_inclination : float
-         +small_beam_butts : bool
-         +back_plane : Plane
          +reject_i : bool
       }
 
       class TButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_T
-         +modify_cross = False
          +fasteners : list[Fastener]
          +base_fastener : Fastener
          +fasteners : list
-         +base_fastener : object
       }
 
       class TBirdsmouthJoint {
@@ -389,7 +387,7 @@ classDiagram
       }
 
       class PanelMiterJoint {
-         
+
       }
 
       %% Inheritance relationships
@@ -405,6 +403,7 @@ classDiagram
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
       Joint <|-- PlateJoint
+
       PlateJoint <|-- PanelJoint
 
       ButtJoint <|-- LButtJoint

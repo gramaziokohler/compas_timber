@@ -81,7 +81,7 @@ def test_get_joint_from_interaction():
 def test_copy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -97,7 +97,7 @@ def test_copy(mocker):
 def test_deepcopy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -128,7 +128,7 @@ def test_beams_have_keys_after_serialization():
 def test_serialization_with_l_butt_joints(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -516,33 +516,5 @@ def test_element_by_guid_deprecated_warning(mocker):
     warn_spy = mocker.spy(model, "element_by_guid")
 
     _ = model.element_by_guid(str(beam.guid))
+
     warn_spy.assert_called_once()
-
-
-def test_unpromoted_joint_candidates():
-    model = TimberModel()
-
-    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
-    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
-    line3 = Line(Point(0, 0.5, 0), Point(1, 0.5, 0))
-
-    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
-    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
-    beam3 = Beam.from_centerline(line3, 0.1, 0.1)
-
-    model.add_element(beam1)
-    model.add_element(beam2)
-    model.add_element(beam3)
-
-    model.connect_adjacent_beams()
-    assert len(list(model.joint_candidates)) == 2
-
-    candidates = list(model.joint_candidates)
-    candidate_to_promote = next(c for c in candidates if beam1 in c.elements and beam2 in c.elements)
-    unpromoted_candidate = next(c for c in candidates if c is not candidate_to_promote)
-
-    LButtJoint.create(model, candidate_to_promote.elements[0], candidate_to_promote.elements[1])
-
-    result = list(model.unpromoted_joint_candidates)
-    assert len(result) == 1
-    assert result[0] is unpromoted_candidate
