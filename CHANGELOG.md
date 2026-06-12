@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
 * Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
 * Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
+* Added `JointTopology.TOPO_FACE_FACE = 9` constant for joints between two parallel elements sharing a coplanar face.
+* Added `TimberModel.unpromoted_joint_candidates` property — returns the set of `JointCandidate` objects that have been identified on model edges but not yet promoted to a concrete joint.
 
 * Added `Opening` panel feature class to `compas_timber.panel_features` for representing door and window cutouts in panels. Includes `Opening.from_outline_panel()` classmethod to create an opening from a single outline and a panel.
 * Added `OpeningType` constants class to `compas_timber.panel_features` with `DOOR` and `WINDOW` string constants.
@@ -19,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `extract_door_openings(outline_a, outline_b)` module-level function in `compas_timber.elements.panel` that detects door cutouts from paired wall outlines by identifying interior segments and geometric constraints.
 
 ### Changed
+
+* `Beam.from_centerline()`, `Beam.from_endpoints()`, and `Beam.from_box()` now accept and forward `**kwargs` to the `Beam` constructor, allowing attributes such as `name` to be passed through at construction time.
 
 * **Breaking:** `PlateGeometry.__init__` no longer accepts an `openings` parameter. The `openings` attribute has been removed from `PlateGeometry` entirely. Openings are now managed as features on the element, not as data on the geometry object.
 * **Breaking:** `Plate.__init__` no longer accepts an `openings` parameter. Pass openings via `Plate.from_outlines(openings=[...])`, which now adds each opening as a `FreeContour` feature, or add `FreeContour` features directly.
@@ -28,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `polyline_from_brep_loop()` now raises `ValueError` when the loop produces more than one polyline, rather than silently returning the first.
 
 ### Removed
+
+* Removed unused `TimberModel.topologies` property and the internal `_topologies` list.
 
 * Removed `openings` attribute from `PlateGeometry` — serialization of `PlateGeometry` no longer includes opening data.
 * Removed opening-feature caching (`_opening_features`) from `Plate` — all features are now stored uniformly in `_features`.
