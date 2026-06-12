@@ -196,6 +196,13 @@ class Plate(TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        super().clear_model_dependent_cache()
+        self._planes = []
+        self._outline_feature = None
+        self._opening_features = None
+
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
