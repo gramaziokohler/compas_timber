@@ -24,7 +24,8 @@ from compas_model.elements import Element
 from compas_model.elements import reset_computed
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.panel_features import Opening, OpeningType
+from compas_timber.panel_features import Opening
+from compas_timber.panel_features import OpeningType
 from compas_timber.panel_features import PanelFeatureType
 from compas_timber.utils import combine_parallel_segments
 from compas_timber.utils import get_interior_segment_indices
@@ -478,7 +479,7 @@ def extract_door_openings(outline_a, outline_b):
         interior_indices_b = get_interior_segment_indices(outline_b)
         interior_indices = set(interior_indices_a) | set(interior_indices_b)
 
-        #walk around the polylines, extract door if found
+        # walk around the polylines, extract door if found
         for seg_index in interior_indices:
             # collect the 5-segment window centered on the interior segment
             window_indices = [(seg_index + i) % n for i in range(-2, 3)]
@@ -513,7 +514,8 @@ def extract_door_openings(outline_a, outline_b):
             outline_a = join_polyline_segments(segs_a, close_loop=True)[0][0]
             outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
 
-            break # only extract one door at a time to avoid issues with multiple doors in the same window of segments. After extracting one door, the outlines are updated and the process is repeated until no more doors are found.
+            break   # only extract one door at a time to avoid issues with multiple doors in the same window of segments.
+                    #After extracting one door, the outlines are updated and the process is repeated until no more doors are found.
 
         # walked the entire perimeter, no door found
         else:

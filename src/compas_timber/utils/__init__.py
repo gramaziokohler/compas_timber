@@ -907,43 +907,6 @@ def mesh_from_brep_simple(brep):
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
 
-def extend_line_segments(segments, close_loop=False):
-    """Extend segments to their intersections."""
-    start = 0 if close_loop else 1
-    for i in range(start, len(segments)):
-        if TOL.is_allclose(segments[i - 1].end, segments[i].start):  # points are already coincident
-            continue
-        ints = intersection_line_line(segments[i - 1], segments[i])
-        if not ints[0]:
-            continue
-        segments[i - 1] = Line(segments[i - 1].start, ints[0])
-        segments[i] = Line(ints[0], segments[i].end)
-
-
-def get_interior_corner_indices(polyline):
-    """Get the indices of the interior corners of a polyline."""
-    _interior_corner_indices = []
-    vector = Plane.from_points(polyline.points).normal
-    points = polyline.points[0:-1]
-    cw = is_polyline_clockwise(polyline, vector)
-    for i in range(len(points)):
-        angle = angle_vectors_signed(points[i - 1] - points[i], points[(i + 1) % len(points)] - points[i], vector, deg=True)
-        if not (cw ^ (angle < 0)):
-            _interior_corner_indices.append(i)
-    return _interior_corner_indices
-
-
-def get_interior_segment_indices(polyline):
-    """Get the indices of the interior segments of a polyline."""
-    interior_corner_indices = get_interior_corner_indices(polyline)
-    edge_count = len(polyline.points) - 1
-    _interior_segment_indices = []
-    for i in range(edge_count):
-        if i in interior_corner_indices and (i + 1) % edge_count in interior_corner_indices:
-            _interior_segment_indices.append(i)
-    return _interior_segment_indices
-
-
 def get_leaf_subclasses(cls):
     subclasses = []
     for subclass in cls.__subclasses__():

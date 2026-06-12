@@ -1,7 +1,7 @@
 from __future__ import annotations
-from enum import auto
 
 from abc import ABC
+from enum import auto
 from typing import TYPE_CHECKING
 from typing import Union
 
@@ -14,7 +14,9 @@ from compas.geometry import Frame
 from compas.geometry import Geometry
 from compas.geometry import Transformation
 from compas_model.elements import Element
+
 from compas_timber.utils import StrEnum
+
 
 class PanelFeatureType(StrEnum):
     CONNECTION_INTERFACE = auto()
@@ -63,4 +65,3 @@ class PanelFeature(Element, ABC):
     def apply(self, geometry: Brep, panel: Panel) -> Brep:
         """Apply the panel feature to the panel geometry."""
         return geometry
-
