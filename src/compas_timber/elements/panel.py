@@ -413,28 +413,28 @@ class Panel(Element):
     @classmethod
     def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
         """
-        Constructs a Panel from two polyline outlines. to be implemented to instantialte Plates and Panels.
+        Constructs a Panel from two polyline outlines.
 
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
-            A polyline representing the principal outline of the plate geometry in parent space. For exterior walls, this is the interior side.
+            A polyline representing the principal outline of the panel geometry in global space. For exterior walls, this is the interior side.
         outline_b : :class:`~compas.geometry.Polyline`
-            A polyline representing the associated outline of the plate geometry in parent space. For exterior walls, this is the exterior side.
+            A polyline representing the associated outline of the panel geometry in global space. For exterior walls, this is the exterior side.
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
-            A list of openings to be added to the plate geometry.
+            A list of window opening polylines to be added to the panel.
         recognize_doors : bool
-            if True, door features will be extracted from exterior polylines and added as Openings to the Panel.
+            If True, door features will be extracted from the outlines and added as Openings to the Panel.
         horizontal_openings : bool
-            if True, openings in Panels that are not Vertical or Horizontal will be extruded horzontally through the Panel.
+            If True, openings that are not vertical or horizontal will be extruded horizontally through the Panel.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
         Returns
         -------
         :class:`~compas_timber.elements.Panel`
-            A PlateGeometry object representing the plate geometry with the given outlines.
+            A Panel object representing the panel with the given outlines.
         """
 
         window_polylines = [o for o in openings] if openings else []
@@ -464,8 +464,10 @@ def extract_door_openings(outline_a, outline_b):
 
     Returns
     -------
-    list[:class:`~compas.geometry.Polyline`]
-        A list of polylines representing the door openings.
+    tuple
+        A 3-tuple of (outline_a, outline_b, openings) where outline_a and outline_b are the
+        modified panel outlines with door segments removed, and openings is a list of
+        :class:`~compas.geometry.Polyline` objects representing the extracted door openings.
     """
     openings = []
     is_door_found = True
