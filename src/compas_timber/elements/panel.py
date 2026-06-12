@@ -515,7 +515,7 @@ def extract_door_openings(outline_a, outline_b):
             outline_b = join_polyline_segments(segs_b, close_loop=True)[0][0]
 
             break   # only extract one door at a time to avoid issues with multiple doors in the same window of segments.
-            # After extracting one door, the outlines are updated and the process is repeated until no more doors are found.
+                    # After extracting one door, the outlines are updated and the process is repeated until no more doors are found.
 
         # walked the entire perimeter, no door found
         else:

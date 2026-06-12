@@ -55,10 +55,12 @@ class Plate(TimberElement):
         Height of the plate (same as thickness).
     thickness : float
         Thickness of the plate.
+    plate_geometry : :class:`~compas_timber.elements.PlateGeometry`
+        The plate geometry object defining the shape of this plate.
     outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate.
+        A polyline representing the principal outline of this plate in global space.
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate.
+        A polyline representing the associated outline of this plate in global space.
     is_plate : bool
         Always True for plates.
     blank : :class:`~compas.geometry.Box`
@@ -273,7 +275,7 @@ class Plate(TimberElement):
     @classmethod
     def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
         """
-        Constructs a Plate from two polyline outlines. To be implemented to instantialte Plates and Panels.
+        Constructs a Plate from two polyline outlines.
 
         Parameters
         ----------
