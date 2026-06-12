@@ -66,20 +66,16 @@ class Panel(Element):
 
     Parameters
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this panel.
-    length : float
-        Length of the panel.
-    width : float
-        Width of the panel.
-    thickness : float
-        Thickness of the panel.
-    local_outline_a: :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the principal outline of this panel.
-    local_outline_b: :class:`~compas.geometry.Polyline`, optional
-        A polyline representing the associated outline of this panel.
-    openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this panel.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The coordinate system (frame) of this panel. Required when no plate_geometry is provided.
+    length : float, optional
+        Length of the panel. Required when no plate_geometry is provided.
+    width : float, optional
+        Width of the panel. Required when no plate_geometry is provided.
+    thickness : float, optional
+        Thickness of the panel. Required when no plate_geometry is provided.
+    plate_geometry : :class:`~compas_timber.elements.PlateGeometry`, optional
+        A PlateGeometry object defining the panel shape. When provided, frame and dimensions must not be given.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -108,36 +104,34 @@ class Panel(Element):
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["frame"] = Frame.from_transformation(data.pop("transformation"))
-        data["length"] = self.length
-        data["width"] = self.width
-        data["thickness"] = self.height
+        data = {}
+        data["plate_geometry"] = self.plate_geometry
+        data["type"] = self.type
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         data.update(self.attributes)
-        data.update(self.plate_geometry.__data__)
         return data
 
     def __init__(
         self,
-        frame: Frame,
-        length: float,
-        width: float,
-        thickness: float,
-        local_outline_a: Optional[Polyline] = None,
-        local_outline_b: Optional[Polyline] = None,
-        openings: Optional[list[Polyline]] = None,
+        frame: Optional[Frame] = None,
+        length: Optional[float] = None,
+        width: Optional[float] = None,
+        thickness: Optional[float] = None,
+        plate_geometry: Optional[PlateGeometry] = None,
         type: Optional[str] = None,
         **kwargs,
     ):
-        super(Panel, self).__init__(transformation=frame.to_transformation(), **kwargs)  # NOTE: Element wants a transfomration, not a frame
-        local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
-        local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b, openings=openings)
-
-        self.length = length
-        self.width = width
-        self.height = thickness
+        if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
+            raise ValueError("Panel cannot be instantiated with both a PlateGeometry and frame/dimension arguments.")
+        if plate_geometry is None:
+            if not all(x is not None for x in [frame, length, width, thickness]):
+                raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
+            plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
+        super(Panel, self).__init__(transformation=plate_geometry.frame.to_transformation(), **kwargs)  # NOTE: Element wants a transformation, not a frame
+        self.plate_geometry = plate_geometry
+        self.length = plate_geometry.length
+        self.width = plate_geometry.width
+        self.height = plate_geometry.thickness
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -452,10 +446,7 @@ class Panel(Element):
                 else:
                     openings.extend([(o, "door") for o in door_openings])
 
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
-        PlateGeometry._check_outlines(args["local_outline_a"], args["local_outline_b"])
-        kwargs.update(args)
-        panel = cls(**kwargs)
+        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
         if openings:
             for polyline, opening_type in openings:
                 opening = Opening.from_outline_panel(polyline, panel, opening_type=opening_type, project_horizontal=horizontal_openings)

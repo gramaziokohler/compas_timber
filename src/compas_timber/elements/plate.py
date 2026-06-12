@@ -30,18 +30,16 @@ class Plate(TimberElement):
 
     Parameters
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The coordinate system (frame) of this plate.
-    length : float
-        Length of the plate.
-    width : float
-        Width of the plate.
-    thickness : float
-        Thickness of the plate.
-    local_outline_a : :class:`~compas.geometry.Polyline`, optional
-        A line representing the principal outline of this plate.
-    local_outline_b : :class:`~compas.geometry.Polyline`, optional
-        A line representing the associated outline of this plate. This should have the same number of points as outline_a.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The coordinate system (frame) of this plate. Required when no plate_geometry is provided.
+    length : float, optional
+        Length of the plate. Required when no plate_geometry is provided.
+    width : float, optional
+        Width of the plate. Required when no plate_geometry is provided.
+    thickness : float, optional
+        Thickness of the plate. Required when no plate_geometry is provided.
+    plate_geometry : :class:`~compas_timber.elements.PlateGeometry`, optional
+        A PlateGeometry object defining the plate shape. When provided, frame and dimensions must not be given.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -76,25 +74,29 @@ class Plate(TimberElement):
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["thickness"] = data.pop("height")
-        data.update(self.plate_geometry.__data__)
+        data = {}
+        data["plate_geometry"] = self.plate_geometry
+        data["features"] = [f for f in self._features if not f.is_joinery]
+        data.update(self.attributes)
         return data
 
     def __init__(
         self,
-        frame: Frame,
-        length: float,
-        width: float,
-        thickness: float,
-        local_outline_a: Optional[Polyline] = None,
-        local_outline_b: Optional[Polyline] = None,
+        frame: Optional[Frame] = None,
+        length: Optional[float] = None,
+        width: Optional[float] = None,
+        thickness: Optional[float] = None,
+        plate_geometry: Optional[PlateGeometry] = None,
         **kwargs,
     ) -> None:
-        super(Plate, self).__init__(frame=frame, length=length, width=width, height=thickness, **kwargs)
-        local_outline_a = local_outline_a or Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
-        local_outline_b = local_outline_b or Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        self.plate_geometry = PlateGeometry(local_outline_a=local_outline_a, local_outline_b=local_outline_b)
+        if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
+            raise ValueError("Plate cannot be instantiated with both a PlateGeometry and frame/dimension arguments.")
+        if plate_geometry is None:
+            if not all(x is not None for x in [frame, length, width, thickness]):
+                raise ValueError("Plate must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
+            plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
+        super(Plate, self).__init__(frame=plate_geometry.frame, length=plate_geometry.length, width=plate_geometry.width, height=plate_geometry.thickness, **kwargs)
+        self.plate_geometry = plate_geometry
         self._outline_feature = None
         self.attributes = {}
         self.attributes.update(kwargs)
@@ -290,9 +292,7 @@ class Plate(TimberElement):
         :class:`~compas_timber.elements.Plate`
             A Plate object representing the plate geometry with the given outlines.
         """
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b)
-        kwargs.update(args)
-        plate = cls(**kwargs)
+        plate = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
         if openings:
             for opening in openings:
                 plate.add_feature(FreeContour.from_polyline_and_element(opening, plate, interior=True))
