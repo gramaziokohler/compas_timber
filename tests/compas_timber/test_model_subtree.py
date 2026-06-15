@@ -1,8 +1,7 @@
 """Tests for TimberModel subtree surgery methods:
-    remove_element_subtree, _detach_subtree, _attach_subtree,
-    extract_model_from_parent, merge_model.
+remove_element_subtree, _detach_subtree, _attach_subtree,
+extract_model_from_parent, merge_model.
 """
-import pytest
 
 from compas.geometry import Frame
 from compas.geometry import Point
@@ -295,7 +294,7 @@ def test_extract_model_from_parent_preserves_hierarchy(mocker):
     model.add_element(inner_panel, parent=beam_a)
     model.add_element(inner_beam, parent=inner_panel)
 
-    extracted = model.extract_model_from_parent(panel)
+    _ = model.extract_model_from_parent(panel)
 
     assert inner_beam in inner_panel.children
     assert inner_panel in beam_a.children

@@ -722,33 +722,47 @@ class TimberModel(Model):
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
-
     # =============================================================================
     # Model sub-tree surgery
     # =============================================================================
 
     def remove_element_subtree(self, element):
-        """Removes all descendants of *element*.
+        """Remove all children (and their descendants) of *element* from the model.
 
-        ``Model.remove_element`` drops a node's whole treenode subtree but only one
-        guid from the element dict, so removing a non-leaf directly orphans its
-        descendants.  Recursing to leaves keeps the model consistent.
+        *element* itself is kept in the model as a childless leaf.  Any joints
+        whose both elements are among the removed descendants are also removed;
+        joints that span a removed element and an element outside the subtree are
+        removed as well.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element whose descendants are removed.  Must already be in the model.
         """
         _, _ = self._detach_subtree(element)
 
-
     def _detach_subtree(self, parent=None):
-        # type: (TimberModel, Element | None) -> list
-        """Remove a subtree from *model*, returning ``(parent, [children])`` tuples.
+        # type: (Element | None) -> tuple[list, list]
+        """Remove elements from the model and return the information needed to re-attach them.
 
-        When *parent* is an element it is **kept** in *model* and only its descendants
-        are removed; its direct children are recorded under ``None`` so they can be
-        re-rooted elsewhere.  When *parent* is ``None`` every top-level element of
-        *model* (and its subtree) is removed, also recorded under ``None``.
+        Parameters
+        ----------
+        parent : :class:`~compas_model.elements.Element`, optional
+            When given, *parent* is **kept** in the model and only its descendants
+            are removed.  The direct children are recorded under ``None`` in the
+            returned tuples so they can be re-rooted under a different parent on
+            re-insertion.
+            When ``None``, every element in the model is removed.
 
-        Removal is leaves-first (so each removed node is a tree leaf, which
-        ``remove_element`` handles cleanly); the returned tuples are ordered
-        parents-before-children for re-insertion.
+        Returns
+        -------
+        tuple(list, list)
+            * ``tuples`` — list of ``(parent_element_or_None, [children])`` pairs,
+              ordered parents-before-children so ``_attach_subtree`` can re-insert
+              them in a single pass while preserving hierarchy.
+            * ``joints`` — list of joints that were removed because all their
+              elements were part of the detached subtree.  Joints that spanned a
+              removed element and a kept element are dropped entirely.
         """
         tuples = []
         elements_children_first = []
@@ -783,17 +797,23 @@ class TimberModel(Model):
             self.remove_element(e)
             e.clear_model_dependent_cache()
 
-
         return tuples, joints
 
-
     def _attach_subtree(self, tuples, joints=None, parent=None):
-        # type: (list, TimberModel, Element | None) -> None
-        """Re-add ``(parent, [children])`` tuples into *model* (parents before children).
+        # type: (list, list | None, Element | None) -> None
+        """Re-add elements described by *tuples* into this model.
 
-        Tuples whose recorded parent is ``None`` are attached under *root_element*.  Each
-        re-added element has its computed properties reset so geometry recomputes
-        against the new tree.
+        Parameters
+        ----------
+        tuples : list
+            ``(tuple_parent, [children])`` pairs as returned by :meth:`_detach_subtree`.
+            Pairs whose ``tuple_parent`` is ``None`` are rooted under *parent*
+            (or at the model root when *parent* is also ``None``).
+        joints : list, optional
+            Joints to restore after all elements have been re-added.
+        parent : :class:`~compas_model.elements.Element`, optional
+            Default parent for top-level elements (those recorded under ``None``).
+            When ``None``, they are added as model-root elements.
         """
         for tuple_parent, children in tuples:
             target_parent = tuple_parent if tuple_parent is not None else parent
@@ -830,7 +850,6 @@ class TimberModel(Model):
         new_model = TimberModel()
         new_model._attach_subtree(tuples, joints=joints)
         return new_model
-
 
     def merge_model(self, model, parent=None):
         # type: (TimberModel, TimberModel, Element | None) -> None
