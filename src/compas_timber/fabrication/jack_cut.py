@@ -347,12 +347,11 @@ class JackRafterCutProxy(object):
         # for now just return the unproxified version
         return self.unproxified()
 
-    def __init__(self, plane, beam, ref_side_index=0, **kwargs):
+    def __init__(self, plane, beam, ref_side_index=0):
         self.plane = plane.transformed(beam.transformation_to_local())
         self.beam = beam
         self.ref_side_index = ref_side_index
         self._processing = None
-        self.kwargs = kwargs
 
     def unproxified(self):
         """Returns the unproxified processing instance.
@@ -364,11 +363,11 @@ class JackRafterCutProxy(object):
         """
         if not self._processing:
             plane = self.plane.transformed(self.beam.modeltransformation)
-            self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index, **self.kwargs)
+            self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index)
         return self._processing
 
     @classmethod
-    def from_plane_and_beam(cls, plane, beam, ref_side_index=0, **kwargs):
+    def from_plane_and_beam(cls, plane, beam, ref_side_index=0):
         """Create a JackRafterCutProxy instance from a cutting plane and the beam it should cut.
 
         Parameters
@@ -385,7 +384,7 @@ class JackRafterCutProxy(object):
         :class:`~compas_timber.fabrication.JackRafterCutProxy`
 
         """
-        return cls(plane, beam, ref_side_index, **kwargs)
+        return cls(plane, beam, ref_side_index)
 
     def apply(self, geometry, beam):
         """Apply the feature to the beam geometry.

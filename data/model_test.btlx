@@ -1,17 +1,17 @@
 <?xml version="1.0" ?>
 <BTLx xmlns="https://www.design2machine.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="2.0.0" Language="en" xsi:schemaLocation="https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd">
    <FileHistory>
-      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.15.1" ComputerName="PAPACHAP" UserName="kapso" FileName="" Date="2026-03-25" Time="10:02:37" Comment=""/>
+      <InitialExportProgram CompanyName="Gramazio Kohler Research" ProgramName="COMPAS_Timber" ProgramVersion="Compas: 2.15.1" ComputerName="ITA-GK-W-30" UserName="egozzi" FileName="" Date="2026-06-04" Time="15:43:56" Comment=""/>
    </FileHistory>
    <Project Name="COMPAS Timber Project">
       <Parts>
-         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="window" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1507.101" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="8948" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="0" AssemblyNumber="" OrderNumber="0" Designation="Beam" Annotation="window" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1507.081" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6a98" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{89481342-b511-42eb-acea-75bdabd2bd3d}">
+               <Transformation GUID="{6a981e44-1623-49dc-b475-bf029f0c47bd}">
                   <Position>
-                     <ReferencePoint X="2004.994" Y="-60.000" Z="1539.572"/>
+                     <ReferencePoint X="2004.984" Y="-60.000" Z="1539.572"/>
                      <XVector X="-1.000" Y="0.000" Z="0.000"/>
-                     <YVector X="0.000" Y="-0.000" Z="1.000"/>
+                     <YVector X="-0.000" Y="-0.000" Z="1.000"/>
                   </Position>
                </Transformation>
             </Transformations>
@@ -20,7 +20,15 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>end</Orientation>
-                  <StartX>1477.091</StartX>
+                  <StartX>1477.081</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>1012.157</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -28,30 +36,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>30.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="window" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1507.101" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6773" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{6773a076-6366-4b32-9a0f-f3107d75bf4e}">
-                  <Position>
-                     <ReferencePoint X="2004.994" Y="-60.000" Z="940.000"/>
-                     <XVector X="-1.000" Y="0.000" Z="0.000"/>
-                     <YVector X="0.000" Y="-0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>end</Orientation>
-                  <StartX>1477.091</StartX>
+                  <StartX>30.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -59,7 +44,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>30.010</StartX>
+                  <StartX>474.984</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -67,11 +52,58 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2270.917" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="af1d" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="1" AssemblyNumber="" OrderNumber="1" Designation="Beam" Annotation="window" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1507.081" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="c760" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{af1da4bc-f1c3-4ba8-8b93-1c31f5524fcf}">
+               <Transformation GUID="{c760f2d8-37d6-41bd-8ccd-a03f4fd1e968}">
                   <Position>
-                     <ReferencePoint X="1085.726" Y="14.219" Z="1940.000"/>
+                     <ReferencePoint X="2004.984" Y="-60.000" Z="940.000"/>
+                     <XVector X="-1.000" Y="0.000" Z="0.000"/>
+                     <YVector X="0.000" Y="-0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>1477.081</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>1012.157</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>30.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>474.984</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="2" AssemblyNumber="" OrderNumber="2" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2270.897" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="0608" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{060875a1-a057-4dc8-9684-e7f233f521d2}">
+                  <Position>
+                     <ReferencePoint X="1085.731" Y="14.210" Z="1940.000"/>
                      <XVector X="0.474" Y="-0.881" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -81,16 +113,32 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>84.271</StartX>
+                  <Orientation>end</Orientation>
+                  <StartX>1433.643</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>86.235</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>2186.636</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>118.272</Inclination>
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>2186.646</StartX>
+                  <Orientation>start</Orientation>
+                  <StartX>580.121</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>100.733</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>84.261</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -98,11 +146,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="3" AssemblyNumber="" OrderNumber="3" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1403.249" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="c943" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="3" AssemblyNumber="" OrderNumber="3" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1403.229" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="9d51" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{c943cf75-a985-4246-82da-c820f6ff93d7}">
+               <Transformation GUID="{9d51b9d4-721d-4579-b6ad-41228650cb5c}">
                   <Position>
-                     <ReferencePoint X="1710.736" Y="-1207.112" Z="1940.000"/>
+                     <ReferencePoint X="1710.746" Y="-1207.108" Z="1940.000"/>
                      <XVector X="0.910" Y="0.415" Z="0.000"/>
                      <YVector X="-0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -111,29 +159,29 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1323.622</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>114.507</Inclination>
-               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>28.101</StartX>
+                  <StartX>28.091</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>86.235</Inclination>
                </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1323.612</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>114.507</Inclination>
+               </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="4" AssemblyNumber="" OrderNumber="4" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1731.947" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="5b96" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="4" AssemblyNumber="" OrderNumber="4" Designation="Beam" Annotation="ceiling" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1731.927" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="c1c7" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{5b96a2c5-2c41-4d23-b5b5-44f0e871f03a}">
+               <Transformation GUID="{c1c7146e-c7b9-4912-a0cd-09d68222b617}">
                   <Position>
-                     <ReferencePoint X="1364.747" Y="-556.108" Z="1940.000"/>
+                     <ReferencePoint X="1364.739" Y="-556.114" Z="1940.000"/>
                      <XVector X="-0.777" Y="-0.629" Z="0.000"/>
                      <YVector X="0.000" Y="-0.000" Z="1.000"/>
                   </Position>
@@ -142,29 +190,29 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>36.231</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>100.733</Inclination>
-               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>1630.428</StartX>
+                  <StartX>1630.418</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>129.005</Inclination>
                </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>36.221</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>100.733</Inclination>
+               </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="5" AssemblyNumber="" OrderNumber="5" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1414.234" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="fce3" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="5" AssemblyNumber="" OrderNumber="5" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1414.214" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="de24" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{fce3e9a1-1b51-42e5-8812-9a9728400ad6}">
+               <Transformation GUID="{de24c9aa-92d2-422e-bdf6-09e47d7649c0}">
                   <Position>
-                     <ReferencePoint X="2940.000" Y="-1042.433" Z="1957.581"/>
+                     <ReferencePoint X="2940.000" Y="-1042.426" Z="1957.574"/>
                      <XVector X="0.000" Y="0.707" Z="-0.707"/>
                      <YVector X="-0.000" Y="0.707" Z="0.707"/>
                   </Position>
@@ -173,17 +221,25 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>1269.361</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>135.000</Inclination>
+               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>24.863</StartX>
+                  <StartX>24.853</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>45.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>end</Orientation>
-                  <StartX>1269.371</StartX>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>682.254</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -191,11 +247,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="6" AssemblyNumber="" OrderNumber="6" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1414.234" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="121f" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="6" AssemblyNumber="" OrderNumber="6" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1414.214" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="e626" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{121fdcfd-2b87-45b6-b5be-637d6d2bb92a}">
+               <Transformation GUID="{e62615e3-3d55-4988-9b4c-3706f41ad351}">
                   <Position>
-                     <ReferencePoint X="60.000" Y="-42.419" Z="957.567"/>
+                     <ReferencePoint X="60.000" Y="-42.426" Z="957.574"/>
                      <XVector X="0.000" Y="-0.707" Z="0.707"/>
                      <YVector X="0.000" Y="0.707" Z="0.707"/>
                   </Position>
@@ -205,8 +261,8 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>end</Orientation>
-                  <StartX>1389.371</StartX>
+                  <Orientation>start</Orientation>
+                  <StartX>562.254</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -214,7 +270,15 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>24.863</StartX>
+                  <StartX>24.853</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>45.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>1389.361</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -222,11 +286,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="7" AssemblyNumber="" OrderNumber="7" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="27fa" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="7" AssemblyNumber="" OrderNumber="7" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="5094" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{27fab352-31a2-4f18-a73f-640069a0b29c}">
+               <Transformation GUID="{50940319-a44b-4eb5-be67-14933c16f538}">
                   <Position>
-                     <ReferencePoint X="2940.000" Y="-440.000" Z="1500.010"/>
+                     <ReferencePoint X="2940.000" Y="-440.000" Z="1500.000"/>
                      <XVector X="0.000" Y="0.000" Z="-1.000"/>
                      <YVector X="1.000" Y="0.000" Z="0.000"/>
                   </Position>
@@ -235,29 +299,29 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1440.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>144.863</StartX>
+                  <StartX>144.853</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>135.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="8" AssemblyNumber="" OrderNumber="8" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="3421" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="8" AssemblyNumber="" OrderNumber="8" Designation="Beam" Annotation="support" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="efde" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{3421a4e2-ad9d-4a3b-b1b9-0eadba302232}">
+               <Transformation GUID="{efde03ed-a40a-4212-85d2-9a5477e828b3}">
                   <Position>
-                     <ReferencePoint X="-60.000" Y="-440.000" Z="1500.010"/>
+                     <ReferencePoint X="-60.000" Y="-440.000" Z="1500.000"/>
                      <XVector X="0.000" Y="0.000" Z="-1.000"/>
                      <YVector X="1.000" Y="0.000" Z="0.000"/>
                   </Position>
@@ -268,7 +332,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>24.863</StartX>
+                  <StartX>24.853</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -276,7 +340,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
+                  <StartX>1440.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -284,50 +348,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="9" AssemblyNumber="" OrderNumber="9" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2000.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="8ee9" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="9" AssemblyNumber="" OrderNumber="9" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="1a71" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{8ee9dcc5-a2a5-4250-aa85-4ab75e739fe0}">
+               <Transformation GUID="{1a711710-6c26-49dc-8ae0-43ae1692624c}">
                   <Position>
-                     <ReferencePoint X="2496.669" Y="-60.000" Z="-0.010"/>
-                     <XVector X="0.000" Y="0.000" Z="1.000"/>
-                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1940.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="10" AssemblyNumber="" OrderNumber="10" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="4c29" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{4c291ab9-d0e0-4868-a376-e37aff1448d2}">
-                  <Position>
-                     <ReferencePoint X="2034.984" Y="-60.000" Z="-60.010"/>
+                     <ReferencePoint X="2496.669" Y="-60.000" Z="-60.000"/>
                      <XVector X="0.000" Y="0.000" Z="1.000"/>
                      <YVector X="0.000" Y="1.000" Z="-0.000"/>
                   </Position>
@@ -338,7 +363,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -346,7 +371,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
+                  <StartX>120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -354,7 +379,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>2000.010</StartX>
+                  <StartX>2000.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -362,11 +387,160 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="11" AssemblyNumber="" OrderNumber="11" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="b86d" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="10" AssemblyNumber="" OrderNumber="10" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2000.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="cf11" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{b86d7f94-6d75-46af-ba14-8bff1d43f0f2}">
+               <Transformation GUID="{cf11abdc-899c-42ca-bed1-d6f9e6a450ca}">
                   <Position>
-                     <ReferencePoint X="527.903" Y="-60.000" Z="-60.010"/>
+                     <ReferencePoint X="2034.984" Y="-60.000" Z="-0.000"/>
+                     <XVector X="0.000" Y="0.000" Z="1.000"/>
+                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1659.572</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>940.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1940.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="11" AssemblyNumber="" OrderNumber="11" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="251f" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{251f3ab6-5580-4d40-9219-ff11788f2d30}">
+                  <Position>
+                     <ReferencePoint X="527.903" Y="-60.000" Z="-60.000"/>
+                     <XVector X="0.000" Y="0.000" Z="1.000"/>
+                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>1719.572</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>1120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="12" AssemblyNumber="" OrderNumber="12" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1000.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="83d6" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{83d65f37-b71c-4774-8704-53520465b4b6}">
+                  <Position>
+                     <ReferencePoint X="1530.000" Y="-60.000" Z="-0.000"/>
+                     <XVector X="0.000" Y="0.000" Z="1.000"/>
+                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>940.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="13" AssemblyNumber="" OrderNumber="13" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1000.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="895b" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{895beb30-28c4-4794-98e0-06d24a086217}">
+                  <Position>
+                     <ReferencePoint X="1052.827" Y="-60.000" Z="-0.000"/>
                      <XVector X="0.000" Y="0.000" Z="1.000"/>
                      <YVector X="0.000" Y="1.000" Z="-0.000"/>
                   </Position>
@@ -377,7 +551,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -385,7 +559,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>2000.010</StartX>
+                  <StartX>940.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -393,7 +567,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -401,89 +575,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="12" AssemblyNumber="" OrderNumber="12" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1060.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="3004" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="14" AssemblyNumber="" OrderNumber="14" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="400.428" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="4507" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{300435ea-cac9-4323-abc4-261fb0b5998a}">
+               <Transformation GUID="{45078bb4-7729-4624-9966-b8609ddf1afd}">
                   <Position>
-                     <ReferencePoint X="1530.000" Y="-60.000" Z="-60.010"/>
-                     <XVector X="0.000" Y="0.000" Z="1.000"/>
-                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1000.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="13" AssemblyNumber="" OrderNumber="13" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1060.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="e439" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{e4393e8a-0326-4cdd-bd3d-3c08cdeebd21}">
-                  <Position>
-                     <ReferencePoint X="1052.827" Y="-60.000" Z="-60.010"/>
-                     <XVector X="0.000" Y="0.000" Z="1.000"/>
-                     <YVector X="0.000" Y="1.000" Z="-0.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>end</Orientation>
-                  <StartX>1000.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="14" AssemblyNumber="" OrderNumber="14" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="400.448" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="d694" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{d694c7ce-2b1c-4f31-aaa2-97dd891476f7}">
-                  <Position>
-                     <ReferencePoint X="1530.000" Y="-60.000" Z="1599.562"/>
+                     <ReferencePoint X="1530.000" Y="-60.000" Z="1599.572"/>
                      <XVector X="0.000" Y="0.000" Z="1.000"/>
                      <YVector X="0.000" Y="1.000" Z="-0.000"/>
                   </Position>
@@ -493,16 +589,16 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <Orientation>end</Orientation>
+                  <StartX>340.428</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>340.438</StartX>
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -510,11 +606,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="15" AssemblyNumber="" OrderNumber="15" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="400.448" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="09a0" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="15" AssemblyNumber="" OrderNumber="15" Designation="Beam" Annotation="verticals" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="400.428" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="928e" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{09a0f69a-6576-4661-9e9d-8c0fe2fb2954}">
+               <Transformation GUID="{928eb8b5-bea9-4504-832f-318c3231854a}">
                   <Position>
-                     <ReferencePoint X="1052.827" Y="-60.000" Z="1599.562"/>
+                     <ReferencePoint X="1052.827" Y="-60.000" Z="1599.572"/>
                      <XVector X="0.000" Y="0.000" Z="1.000"/>
                      <YVector X="0.000" Y="1.000" Z="-0.000"/>
                   </Position>
@@ -525,7 +621,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>340.438</StartX>
+                  <StartX>340.428</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -533,7 +629,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -541,11 +637,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="16" AssemblyNumber="" OrderNumber="16" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="127c" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="16" AssemblyNumber="" OrderNumber="16" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2000.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="960c" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{127c3659-da1a-4884-be53-e490b5919c63}">
+               <Transformation GUID="{960cda32-1a88-46a1-b360-1cd586c88067}">
                   <Position>
-                     <ReferencePoint X="3060.000" Y="60.010" Z="1940.000"/>
+                     <ReferencePoint X="3060.000" Y="0.000" Z="1940.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -556,15 +652,23 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>646.715</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>114.507</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -572,19 +676,27 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>2000.010</StartX>
+                  <StartX>1940.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>855.147</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>45.000</Inclination>
+               </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="17" AssemblyNumber="" OrderNumber="17" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1620.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="49cd" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="17" AssemblyNumber="" OrderNumber="17" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1620.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="b30d" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{49cd7cf2-b5bc-45b6-8596-97b7d97751cc}">
+               <Transformation GUID="{b30d063f-6537-477a-aa64-f5ff59f4a947}">
                   <Position>
-                     <ReferencePoint X="3060.000" Y="60.010" Z="-60.000"/>
+                     <ReferencePoint X="3060.000" Y="60.000" Z="-60.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -593,9 +705,25 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1620.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -603,15 +731,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1620.010</StartX>
+                  <StartX>500.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -619,11 +739,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="18" AssemblyNumber="" OrderNumber="18" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3120.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="2929" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="18" AssemblyNumber="" OrderNumber="18" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3060.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="2748" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{2929b5e9-d073-4cad-9797-04610c1f8867}">
+               <Transformation GUID="{2748d58b-7ad2-40fd-ac6a-0855a497a000}">
                   <Position>
-                     <ReferencePoint X="-60.010" Y="60.000" Z="-60.000"/>
+                     <ReferencePoint X="-60.000" Y="60.000" Z="-60.000"/>
                      <XVector X="1.000" Y="0.000" Z="0.000"/>
                      <YVector X="-0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -633,8 +753,40 @@
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>3000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>1530.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>1052.827</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>1530.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>-0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -642,7 +794,23 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>3000.010</StartX>
+                  <StartX>3000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>527.903</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>2094.984</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -650,7 +818,39 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>end</Orientation>
-                  <StartX>3120.010</StartX>
+                  <StartX>2094.984</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>2556.669</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>1052.827</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>2556.669</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -658,7 +858,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
+                  <StartX>527.903</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -666,11 +866,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="19" AssemblyNumber="" OrderNumber="19" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="8d1b" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="19" AssemblyNumber="" OrderNumber="19" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2120.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="6b02" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{8d1b64fe-d0d3-4efd-a1f2-22b0cc6115d4}">
+               <Transformation GUID="{6b029936-f988-407f-8b8e-8b4473795e0a}">
                   <Position>
-                     <ReferencePoint X="2940.000" Y="-60.000" Z="-0.010"/>
+                     <ReferencePoint X="2940.000" Y="-60.000" Z="-60.000"/>
                      <XVector X="0.000" Y="0.000" Z="1.000"/>
                      <YVector X="1.000" Y="0.000" Z="-0.000"/>
                   </Position>
@@ -679,17 +879,33 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>1035.147</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>135.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>2060.010</StartX>
+                  <StartX>2120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>end</Orientation>
-                  <StartX>1940.010</StartX>
+                  <StartX>2120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>-0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -697,15 +913,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -713,11 +921,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="20" AssemblyNumber="" OrderNumber="20" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3060.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="e919" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="20" AssemblyNumber="" OrderNumber="20" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3060.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="934f" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{e9192b9d-f620-404e-a53b-0a5ace76ac9b}">
+               <Transformation GUID="{934feddd-8db9-4d08-9ad0-083bba29a35f}">
                   <Position>
-                     <ReferencePoint X="3000.010" Y="-60.000" Z="1940.000"/>
+                     <ReferencePoint X="3060.000" Y="-60.000" Z="1940.000"/>
                      <XVector X="-1.000" Y="0.000" Z="0.000"/>
                      <YVector X="-0.000" Y="-0.000" Z="1.000"/>
                   </Position>
@@ -726,9 +934,9 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>2067.173</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -736,15 +944,15 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
-                  <Orientation>end</Orientation>
-                  <StartX>3060.010</StartX>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -752,7 +960,55 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>3060.010</StartX>
+                  <StartX>3000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2002.485</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>118.272</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1530.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>2592.097</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>end</Orientation>
+                  <StartX>3000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>563.331</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
+                  <Orientation>start</Orientation>
+                  <StartX>1025.016</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -760,11 +1016,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="21" AssemblyNumber="" OrderNumber="21" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="f952" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="21" AssemblyNumber="" OrderNumber="21" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2120.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="2181" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{f9520a69-b306-467e-804d-74e43194e56f}">
+               <Transformation GUID="{2181217f-7468-4cdd-ba5d-a2203d39f36b}">
                   <Position>
-                     <ReferencePoint X="-60.000" Y="60.000" Z="2060.010"/>
+                     <ReferencePoint X="-60.000" Y="60.000" Z="2060.000"/>
                      <XVector X="0.000" Y="0.000" Z="-1.000"/>
                      <YVector X="1.000" Y="0.000" Z="0.000"/>
                   </Position>
@@ -773,25 +1029,9 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>end</Orientation>
-                  <StartX>2000.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>end</Orientation>
-                  <StartX>2000.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
+                  <StartX>2120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -799,7 +1039,31 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>915.147</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>45.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>end</Orientation>
+                  <StartX>2120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -807,11 +1071,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="22" AssemblyNumber="" OrderNumber="22" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2000.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="99f1" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="22" AssemblyNumber="" OrderNumber="22" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="2060.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="0e91" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{99f11cc7-a6d0-4edf-b3b0-c16ce18ab713}">
+               <Transformation GUID="{0e918642-9d6b-4437-845a-03a8b85f59cd}">
                   <Position>
-                     <ReferencePoint X="60.000" Y="0.010" Z="1940.000"/>
+                     <ReferencePoint X="60.000" Y="60.000" Z="1940.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -822,7 +1086,23 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>1940.010</StartX>
+                  <StartX>1672.875</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>129.005</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2000.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -830,15 +1110,15 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>915.147</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
+                  <Inclination>45.000</Inclination>
                </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="1">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -846,11 +1126,97 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="23" AssemblyNumber="" OrderNumber="23" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3120.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="7618" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="23" AssemblyNumber="" OrderNumber="23" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3120.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="203d" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{7618620f-a30f-4e9a-b92d-ff611e33c121}">
+               <Transformation GUID="{203d7dd5-1e80-4f15-9b36-fc4b925d79a1}">
                   <Position>
-                     <ReferencePoint X="-60.010" Y="-1940.000" Z="1940.000"/>
+                     <ReferencePoint X="-60.000" Y="-1940.000" Z="1940.000"/>
+                     <XVector X="1.000" Y="0.000" Z="0.000"/>
+                     <YVector X="-0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2196.732</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>118.272</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>3120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="24" AssemblyNumber="" OrderNumber="24" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="2898" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{28984213-5f27-4ef5-8d12-a4dab0091968}">
+                  <Position>
+                     <ReferencePoint X="60.000" Y="0.000" Z="-60.000"/>
+                     <XVector X="0.000" Y="-1.000" Z="0.000"/>
+                     <YVector X="0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>1440.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>440.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="25" AssemblyNumber="" OrderNumber="25" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3060.000" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="a1a3" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{a1a31d0f-d10f-4f4a-9c70-77ce34f62795}">
+                  <Position>
+                     <ReferencePoint X="-60.000" Y="-1440.000" Z="-60.000"/>
                      <XVector X="1.000" Y="0.000" Z="0.000"/>
                      <YVector X="-0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -861,46 +1227,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>end</Orientation>
-                  <StartX>3120.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="24" AssemblyNumber="" OrderNumber="24" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1620.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="42a7" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{42a71582-b2ec-4014-b26e-21c1c0748aed}">
-                  <Position>
-                     <ReferencePoint X="60.000" Y="60.010" Z="-60.000"/>
-                     <XVector X="0.000" Y="-1.000" Z="0.000"/>
-                     <YVector X="0.000" Y="0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>end</Orientation>
-                  <StartX>1620.010</StartX>
+                  <StartX>1052.827</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -908,30 +1235,23 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
                   <Inclination>90.000</Inclination>
                </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="25" AssemblyNumber="" OrderNumber="25" Designation="Beam" Annotation="main" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="3000.020" Height="120.000" Width="120.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="e525" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{e5257df9-9b9f-4a27-a114-9b32145a81bf}">
-                  <Position>
-                     <ReferencePoint X="-0.010" Y="-1440.000" Z="-60.000"/>
-                     <XVector X="1.000" Y="0.000" Z="0.000"/>
-                     <YVector X="-0.000" Y="0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>1530.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>527.903</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -939,7 +1259,23 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>2940.010</StartX>
+                  <StartX>3000.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2556.669</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>2094.984</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -947,11 +1283,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="26" AssemblyNumber="" OrderNumber="26" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="48a4" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="26" AssemblyNumber="" OrderNumber="26" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="faee" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{48a463b4-4349-4fe3-a208-edcbab7f2733}">
+               <Transformation GUID="{faee9be6-610d-4c46-86d0-01c4d4609bb1}">
                   <Position>
-                     <ReferencePoint X="527.903" Y="0.010" Z="-60.000"/>
+                     <ReferencePoint X="527.903" Y="0.000" Z="-60.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -962,15 +1298,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>1440.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -978,7 +1306,15 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -986,50 +1322,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="27" AssemblyNumber="" OrderNumber="27" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="0527" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="27" AssemblyNumber="" OrderNumber="27" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1560.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="ffde" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{05277799-d70d-4466-befd-f6a30adf8d03}">
+               <Transformation GUID="{ffde3ca4-8413-4b8a-8a78-d36e230b7adf}">
                   <Position>
-                     <ReferencePoint X="1052.827" Y="0.010" Z="-60.000"/>
-                     <XVector X="0.000" Y="-1.000" Z="0.000"/>
-                     <YVector X="0.000" Y="0.000" Z="1.000"/>
-                  </Position>
-               </Transformation>
-            </Transformations>
-            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
-            <ReferenceSide Side="1" Align="no"/>
-            <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
-                  <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
-                  <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-            </Processings>
-         </Part>
-         <Part SingleMemberNumber="28" AssemblyNumber="" OrderNumber="28" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="ee33" Layer="0" ModuleNumber="">
-            <Transformations>
-               <Transformation GUID="{ee339475-50d6-45b1-93e4-571210697e3d}">
-                  <Position>
-                     <ReferencePoint X="1530.000" Y="0.010" Z="-60.000"/>
+                     <ReferencePoint X="1052.827" Y="60.000" Z="-60.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -1040,7 +1337,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
+                  <StartX>1500.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -1048,7 +1345,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -1056,7 +1353,7 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>120.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -1064,11 +1361,50 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="29" AssemblyNumber="" OrderNumber="29" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="208a" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="28" AssemblyNumber="" OrderNumber="28" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1560.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="503c" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{208aa970-5a39-4bd3-ab8c-ab27a30013be}">
+               <Transformation GUID="{503cf99d-5860-4e4e-a792-fab1d00a91ee}">
                   <Position>
-                     <ReferencePoint X="2034.984" Y="0.010" Z="-60.000"/>
+                     <ReferencePoint X="1530.000" Y="60.000" Z="-60.000"/>
+                     <XVector X="0.000" Y="-1.000" Z="0.000"/>
+                     <YVector X="0.000" Y="0.000" Z="1.000"/>
+                  </Position>
+               </Transformation>
+            </Transformations>
+            <GrainDirection X="1" Y="0" Z="0" Align="no"/>
+            <ReferenceSide Side="1" Align="no"/>
+            <Processings>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>end</Orientation>
+                  <StartX>1500.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="2">
+                  <Orientation>start</Orientation>
+                  <StartX>120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
+                  <Orientation>start</Orientation>
+                  <StartX>0.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+            </Processings>
+         </Part>
+         <Part SingleMemberNumber="29" AssemblyNumber="" OrderNumber="29" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1560.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="c8c6" Layer="0" ModuleNumber="">
+            <Transformations>
+               <Transformation GUID="{c8c6c5b4-a35c-4175-92e7-65c6fed4a00b}">
+                  <Position>
+                     <ReferencePoint X="2034.984" Y="60.000" Z="-60.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -1079,15 +1415,7 @@
             <Processings>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1440.010</StartX>
+                  <StartX>0.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -1095,7 +1423,15 @@
                </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
                   <Orientation>start</Orientation>
-                  <StartX>60.010</StartX>
+                  <StartX>120.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1500.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
@@ -1103,11 +1439,11 @@
                </JackRafterCut>
             </Processings>
          </Part>
-         <Part SingleMemberNumber="30" AssemblyNumber="" OrderNumber="30" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1560.020" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="07b7" Layer="0" ModuleNumber="">
+         <Part SingleMemberNumber="30" AssemblyNumber="" OrderNumber="30" Designation="Beam" Annotation="floor" Storey="" Group="" Package="" Material="" TimberGrade="" QualityGrade="" Count="1" Length="1500.000" Height="120.000" Width="60.000" Weight="0" ProcessingQuality="automatic" StoreyType="" ElementNumber="f4c0" Layer="0" ModuleNumber="">
             <Transformations>
-               <Transformation GUID="{07b73586-4f85-4423-be12-401d7dc211ac}">
+               <Transformation GUID="{f4c08ca9-60ea-48a3-a981-a4e587da6809}">
                   <Position>
-                     <ReferencePoint X="2496.669" Y="60.010" Z="-60.000"/>
+                     <ReferencePoint X="2496.669" Y="0.000" Z="-60.000"/>
                      <XVector X="0.000" Y="-1.000" Z="0.000"/>
                      <YVector X="0.000" Y="0.000" Z="1.000"/>
                   </Position>
@@ -1116,25 +1452,25 @@
             <GrainDirection X="1" Y="0" Z="0" Align="no"/>
             <ReferenceSide Side="1" Align="no"/>
             <Processings>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>end</Orientation>
-                  <StartX>1500.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
-               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
-                  <Orientation>start</Orientation>
-                  <StartX>120.010</StartX>
-                  <StartY>0.000</StartY>
-                  <StartDepth>0.000</StartDepth>
-                  <Angle>90.000</Angle>
-                  <Inclination>90.000</Inclination>
-               </JackRafterCut>
                <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="3">
                   <Orientation>start</Orientation>
-                  <StartX>0.010</StartX>
+                  <StartX>60.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>end</Orientation>
+                  <StartX>1440.000</StartX>
+                  <StartY>0.000</StartY>
+                  <StartDepth>0.000</StartDepth>
+                  <Angle>90.000</Angle>
+                  <Inclination>90.000</Inclination>
+               </JackRafterCut>
+               <JackRafterCut Name="JackRafterCut" Process="yes" Priority="0" ProcessID="0" ReferencePlaneID="4">
+                  <Orientation>start</Orientation>
+                  <StartX>60.000</StartX>
                   <StartY>0.000</StartY>
                   <StartDepth>0.000</StartDepth>
                   <Angle>90.000</Angle>
