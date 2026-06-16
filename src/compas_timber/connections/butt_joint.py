@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING
 from typing import Optional
 
 from compas.geometry import Plane
-from compas.geometry import Point
 from compas.geometry import Polyhedron
-from compas.geometry import intersection_plane_plane_plane
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
+from compas_timber.geometry import polyhedron_from_box_planes
 
 from .joint import Joint
 from .solver import JointTopology
@@ -21,7 +20,6 @@ from .utilities import plane_from_ref_side_angle_offset
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
-    from src.compas_timber.fabrication.btlx import BTLxProcessing
 
 
 class ButtJoint(Joint):
@@ -61,6 +59,8 @@ class ButtJoint(Joint):
         The main beam to be joined.
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
+    beams : list[:class:`~compas_timber.elements.Beam`]
+        A list containing the main beam and the cross beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
     modify_cross : bool, default False
@@ -74,6 +74,10 @@ class ButtJoint(Joint):
         If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
     features: list[BTLxProcessing]
         List of features to be applied to the cross beam and main beam.
+    cross_beam_ref_side_index : int
+        The index of the side of the cross beam relative to the main beam..
+    main_beam_ref_side_index : int
+        The index of the side of the main beam relative to the cross beam.
 
     """
 
@@ -156,47 +160,26 @@ class ButtJoint(Joint):
         assert self.main_beam and self.cross_beam
         # extend the main beam
         try:
-            if self.butt_plane:
-                cutting_plane_main = self.butt_plane
-                start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
-                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-                self.main_beam.add_blank_extension(
-                    start_main + extension_tolerance,
-                    end_main + extension_tolerance,
-                    self.guid,
-                )
-            else:
-                cutting_plane_main = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-                if self.mill_depth:
-                    cutting_plane_main.translate(-cutting_plane_main.normal * self.mill_depth)
-                start_main, end_main = self.main_beam.extension_to_plane(cutting_plane_main)
-
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-            self.main_beam.add_blank_extension(
-                start_main + extension_tolerance,
-                end_main + extension_tolerance,
-                self.guid,
-            )
+            start, end = self.main_beam.extension_to_plane(self.butt_plane)
+            extension_tolerance = 0
+            # extension_tolerance = 0.01 if TOL.unit == "M" else 10
+            joint_id = self.guid
+            self.main_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
         except AttributeError as ae:
-            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_main])
+            raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.butt_plane])
         except Exception as ex:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
+
         # extend the cross beam
         if self.modify_cross:
             try:
-                if self.back_plane:
-                    cutting_plane_cross = self.back_plane
-                else:
-                    cutting_plane_cross = self.main_beam.opp_side(self.main_beam_ref_side_index)
-                start_cross, end_cross = self.cross_beam.extension_to_plane(cutting_plane_cross)
+                start, end = self.cross_beam.extension_to_plane(self.back_plane)
+                extension_tolerance = 0
+                # extension_tolerance = 0.01 if TOL.unit == "M" else 10
+                joint_id = self.guid
+                self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
             except AttributeError as ae:
-                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane_cross])
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-            self.cross_beam.add_blank_extension(
-                start_cross + extension_tolerance,
-                end_cross + extension_tolerance,
-                self.guid,
-            )
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
 
     def add_features(self) -> None:
         """Removes this joint's previously generated features and adds new features to each beam."""
@@ -205,19 +188,11 @@ class ButtJoint(Joint):
         if self.features:
             self.main_beam.remove_features(self.features)
             self.cross_beam.remove_features(self.features)
-        # get the cutting plane for the main beam
-        if self.butt_plane:
-            cutting_plane = self.butt_plane
-        else:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.xaxis = -cutting_plane.xaxis
-            if self.mill_depth:
-                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-        # apply the cut on the main beam
-        main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
+
+        # apply cut on the main beam
+        main_feature = JackRafterCutProxy.from_plane_and_beam(self.butt_plane, self.main_beam, self.main_beam_ref_side_index)
         self.main_beam.add_features(main_feature)
-        # store the feature
-        self.features = [main_feature]
+        self.features.append(main_feature)
 
         if self.force_pocket:
             self._apply_pocket_to_cross_beam()
@@ -237,22 +212,23 @@ class ButtJoint(Joint):
                 ref_side_index=self.cross_beam_ref_side_index,
             )
             self.cross_beam.add_features(cross_feature)
-
             self.features.append(cross_feature)
 
-    def _apply_pocket_to_cross_beam(self):
-        cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        cutting_plane.xaxis = -cutting_plane.xaxis
-        if self.mill_depth:
-            cutting_plane.translate(cutting_plane.normal * self.mill_depth)
+        # apply a refinement cut on the cross beam
+        if self.modify_cross:
+            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            self.cross_beam.add_features(cross_refinement_feature)
+            self.features.append(cross_refinement_feature)
 
-        main_beam_ref_sides = list(self.main_beam.ref_sides)
-        plane_0 = Plane.from_frame(main_beam_ref_sides[0])
-        plane_1 = Plane.from_frame(main_beam_ref_sides[1])
-        plane_2 = Plane.from_frame(main_beam_ref_sides[2])
-        plane_3 = Plane.from_frame(main_beam_ref_sides[3])
-        cutting_plane = Plane.from_frame(cutting_plane)
+    def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
+        bottom_plane = self.butt_plane
+        side_a_plane = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index])
+        side_b_plane = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
+        end_a_plane = Plane.from_frame(self.main_beam.front_side(self.main_beam_ref_side_index))
+        end_b_plane = Plane.from_frame(self.main_beam.back_side(self.main_beam_ref_side_index))
+
+        return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
         vertices = [
             Point(*intersection_plane_plane_plane(plane_2, plane_3, cutting_plane)),  # v0
             Point(*intersection_plane_plane_plane(plane_0, plane_3, cutting_plane)),  # v1

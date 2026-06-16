@@ -8,9 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
+* Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` attribute to `ButtJoint`.
+* Added `force_pocket` and `conical_tool` flags to `TButtJoint`
+* Added `force_pocket` and `conical_tool` flags to `LButtJoint`
+
 * Added `create` overrides to `LMiterJoint`, `LButtJoint` and `ButtJoint` to handle transformation of planes to local space.
 
 ### Changed
+* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes. 
 * Changed `miter_plane` argument in `LMiterJoint` to `local_miter_plane` to ensure plane is kept and translated with joint elements.
 * Changed `back_plane` argument in `LButtJoint` to `local_back_plane` to ensure plane is kept and translated with joint elements.
 * Changed `butt_plane` argument in `LButtJoint` and `TButtJoint` to `local_butt_plane` to ensure plane is kept and translated with joint elements.

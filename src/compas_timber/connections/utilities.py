@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -9,6 +12,10 @@ from compas.geometry import angle_vectors_projected
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
+
+if TYPE_CHECKING:
+    from compas_timber.connections.joint import Joint
+    from compas_timber.elements.beam import Beam
 
 
 def beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True):
@@ -321,3 +328,29 @@ def decompose_plane_to_ref_side_angles(ref_side, plane):
     angle_y = math.atan2(tx, tz)
     offset = dot_vectors(Vector.from_start_end(ref_side.point, plane.point), plane.normal)
     return angle_x, angle_y, offset
+
+
+def angle_and_dot_product_beam_a_and_beam_b(beam_a: Beam, beam_b: Beam, joint: Joint) -> tuple[float, float]:
+    """
+    Computes the angle and dot product between the `beam_a` and the `beam_b` relative to their joint.
+    The angle and dot products are computed with the direction of the `beam_a` going towards the joint.
+
+    Parameters
+    ----------
+    beam_a : :class:`~compas_timber.elements.Beam`
+        The main beam of the joint.
+    beam_b : :class:`~compas_timber.elements.Beam`
+        The cross beam of the joint.
+    joint : :class:`~compas_timber.connections.joint.Joint`
+        The joint connecting the main beam and the cross beam.
+
+    Returns
+    -------
+    tuple[float, float]
+        A tuple containing the angle (in radians) and the dot product between the main beam and the cross beam relative to their joint.
+
+    """
+    main_beam_direction = joint.get_beam_direction_towards_joint(beam_a)
+    angle = angle_vectors(main_beam_direction, beam_b.centerline.direction)
+    dot = dot_vectors(main_beam_direction, beam_b.centerline.direction)
+    return angle, dot
