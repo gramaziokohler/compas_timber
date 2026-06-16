@@ -183,6 +183,7 @@ class ButtJoint(Joint):
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
 
         # extend the cross beam
+        # TODO: is this a thing? TButt should never modify cross except with a pocket or lap...
         if self.modify_cross:
             back_cutting_plane = self._back_cutting_plane()
             try:
