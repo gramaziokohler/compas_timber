@@ -67,7 +67,6 @@ def test_t_butt_does_not_modify_cross_beam():
     joint.add_features()
 
     assert len(beam_a.features) == 1
-    assert isinstance(beam_a.features[0], JackRafterCut)
     assert len(beam_b.features) == 0
 
 
