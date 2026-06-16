@@ -204,6 +204,15 @@ class Panel(Element):
         """list[:class:`~compas_timber.panel_features.PanelConnectionInterface`]: The interfaces associated with this panel."""
         return [f for f in self.features if f.panel_feature_type == PanelFeatureType.CONNECTION_INTERFACE]
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        self._modeltransformation = None
+        self._modelgeometry = None
+        self._aabb = None
+        self._obb = None
+        self._collision_mesh = None
+        self._planes = None
+
     @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
