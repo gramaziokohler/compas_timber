@@ -186,6 +186,15 @@ class Layer(Element):
         """Clear all cached properties so they recompute against the current model tree."""
         self._planes = None
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        self._modeltransformation = None
+        self._modelgeometry = None
+        self._aabb = None
+        self._obb = None
+        self._collision_mesh = None
+        self._planes = None
+
     def transformation_to_local(self):
         """Transformation from model space to this layer's local space."""
         return self.modeltransformation.inverse()

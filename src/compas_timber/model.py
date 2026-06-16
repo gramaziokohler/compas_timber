@@ -22,6 +22,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
+from compas_timber.elements import Layer
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
@@ -113,13 +114,13 @@ class TimberModel(Model):
         # type: () -> List[Panel]
         # ``Layer`` is a ``Panel`` subclass; exclude layers here so panel-level
         # operations (connection, top-level joinery) act on real panels only.
-        return [panel for panel in self.find_all_elements_of_type(Panel) if not panel.is_layer]
+        return self.find_all_elements_of_type(Panel)
 
     @property
     def layers(self):
         # type: () -> List[Panel]
         """All :class:`~compas_timber.panel_features.Layer` elements in the model."""
-        return [panel for panel in self.find_all_elements_of_type(Panel) if panel.is_layer]
+        return self.find_all_elements_of_type(Layer)
 
     @property
     def fasteners(self):
@@ -137,6 +138,16 @@ class TimberModel(Model):
         for edge in self._graph.edges():
             edge_candidate = self._graph.edge_attribute(edge, "candidates")
             if edge_candidate is not None:
+                candidates.add(edge_candidate)
+        return candidates
+
+    @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        candidates = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate and not joint:
                 candidates.add(edge_candidate)
         return candidates
 
