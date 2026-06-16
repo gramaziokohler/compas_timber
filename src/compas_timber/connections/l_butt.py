@@ -1,5 +1,8 @@
+from typing import Optional
+
+from compas.geometry import Plane
+
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
 from .solver import JointTopology
@@ -26,16 +29,11 @@ class LButtJoint(ButtJoint):
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane_ref_side_index : int, optional
-        The index of the cross beam's reference side that the user-defined `butt_plane` is anchored on. This is normally not
-        set directly: use :meth:`create` with a `butt_plane` argument instead.
-    butt_plane_angle : float, optional
-        Rotation angle, in radians, of `butt_plane` around the x-axis of the reference side at `butt_plane_ref_side_index`.
-    butt_plane_offset : float, optional
-        Signed distance, along the (rotated) normal, from the reference side at `butt_plane_ref_side_index` to `butt_plane`.
     back_plane_ref_side_index : int, optional
-        The index of the main beam's reference side that the user-defined `back_plane` is anchored on. This is normally not
-        set directly: use :meth:`create` with a `back_plane` argument instead.
+        The index of the main beam's reference side that `back_plane` is anchored on. If not provided, the side of the main
+        beam opposite the one facing the cross beam is used (see :attr:`back_plane`). This is normally not set directly: use
+        :meth:`create` with a `back_plane` argument, which derives this together with `back_plane_angle` and
+        `back_plane_offset` from a plane in world coordinates.
     back_plane_angle : float, optional
         Rotation angle, in radians, of `back_plane` around the x-axis of the reference side at `back_plane_ref_side_index`.
     back_plane_offset : float, optional
@@ -54,10 +52,11 @@ class LButtJoint(ButtJoint):
         The depth of the pocket to be milled in the cross beam.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam. If not provided, the back side of the main beam will be used.
+    butt_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the main beam. If not overridden, the closest side of the cross beam will be used.
+    back_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the cross beam, derived from `back_plane_ref_side_index`/`back_plane_angle`/
+        `back_plane_offset`. If not overridden, the back side of the main beam will be used.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
 
@@ -81,35 +80,27 @@ class LButtJoint(ButtJoint):
         mill_depth=None,
         modify_cross=True,
         reject_i=False,
-        butt_plane_ref_side_index=None,
-        butt_plane_angle=None,
-        butt_plane_offset=None,
-        back_plane_ref_side_index=None,
-        back_plane_angle=None,
-        back_plane_offset=None,
+        back_plane_ref_side_index: Optional[int] = None,
+        back_plane_angle: Optional[float] = None,
+        back_plane_offset: Optional[float] = None,
         **kwargs,
     ):
-        super(LButtJoint, self).__init__(
-            main_beam=main_beam,
-            cross_beam=cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            butt_plane_ref_side_index=butt_plane_ref_side_index,
-            butt_plane_angle=butt_plane_angle,
-            butt_plane_offset=butt_plane_offset,
-            **kwargs,
-        )
+        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, **kwargs)
         self.reject_i = reject_i
-        self.back_plane_ref_side_index = back_plane_ref_side_index
-        self.back_plane_angle = back_plane_angle if back_plane_angle is not None else 0.0
-        self.back_plane_offset = back_plane_offset if back_plane_offset is not None else 0.0
+        self.back_plane_ref_side_index: Optional[int] = back_plane_ref_side_index
+        self.back_plane_angle: float = back_plane_angle if back_plane_angle is not None else 0.0
+        self.back_plane_offset: float = back_plane_offset if back_plane_offset is not None else 0.0
 
     @property
-    def back_plane(self):
-        if self.back_plane_ref_side_index is None:
-            return None
-        ref_side = self.main_beam.ref_sides[self.back_plane_ref_side_index]
-        return plane_from_ref_side_angle_offset(ref_side, self.back_plane_angle, self.back_plane_offset)
+    def back_plane(self) -> Plane:
+        if self.back_plane_ref_side_index is not None:
+            ref_side = self.main_beam.ref_sides[self.back_plane_ref_side_index]
+            return plane_from_ref_side_angle_offset(ref_side, self.back_plane_angle, self.back_plane_offset)
+        # default: the side of the main beam opposite the one facing the cross beam, same as ButtJoint's default
+        return super(LButtJoint, self)._back_cutting_plane()
+
+    def _back_cutting_plane(self) -> Plane:
+        return self.back_plane
 
     @property
     def main_beam_ref_side_index(self):
@@ -121,6 +112,18 @@ class LButtJoint(ButtJoint):
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
 
         return ref_side_index
+
+    @staticmethod
+    def _set_back_plane_override(joint: "LButtJoint", back_plane: Optional[Plane]) -> None:
+        """Decomposes `back_plane` (world coordinates) and stores it on `joint` as a ref_side_index/angle/offset."""
+        if back_plane is None:
+            return
+        ref_side_index = (joint.main_beam_ref_side_index + 2) % 4
+        ref_side = joint.main_beam.ref_sides[ref_side_index]
+        angle, offset = decompose_plane_to_ref_side(ref_side, back_plane, plane_name="back_plane", reference_name="main_beam")
+        joint.back_plane_ref_side_index = ref_side_index
+        joint.back_plane_angle = angle
+        joint.back_plane_offset = offset
 
     @classmethod
     def create(
@@ -172,53 +175,7 @@ class LButtJoint(ButtJoint):
             reject_i=reject_i,
             **kwargs,
         )
-        if butt_plane is not None:
-            ref_side = cross_beam.ref_sides[joint.cross_beam_ref_side_index]
-            angle, offset = decompose_plane_to_ref_side(ref_side, butt_plane, plane_name="butt_plane", reference_name="cross_beam")
-            joint.butt_plane_ref_side_index = joint.cross_beam_ref_side_index
-            joint.butt_plane_angle = angle
-            joint.butt_plane_offset = offset
-        if back_plane is not None:
-            back_ref_side_index = (joint.main_beam_ref_side_index + 2) % 4
-            ref_side = main_beam.ref_sides[back_ref_side_index]
-            angle, offset = decompose_plane_to_ref_side(ref_side, back_plane, plane_name="back_plane", reference_name="main_beam")
-            joint.back_plane_ref_side_index = back_ref_side_index
-            joint.back_plane_angle = angle
-            joint.back_plane_offset = offset
+        cls._set_butt_plane_override(joint, butt_plane)
+        cls._set_back_plane_override(joint, back_plane)
         model.add_joint(joint)
         return joint
-
-    def add_features(self) -> None:
-        """Removes this joint's previously generated features and adds new features to each beam."""
-        assert self.main_beam and self.cross_beam
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
-        # get the cutting plane for the main beam
-        if self.butt_plane:
-            cutting_plane = self.butt_plane
-        else:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.xaxis = -cutting_plane.xaxis
-            if self.mill_depth:
-                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-        # apply the cut on the main beam
-        main_feature = JackRafterCutProxy.from_plane_and_beam(cutting_plane, self.main_beam, self.main_beam_ref_side_index)
-        self.main_beam.add_features(main_feature)
-        # store the feature
-        self.features = [main_feature]
-
-        if self.force_pocket:
-            self._apply_pocket_to_cross_beam()
-        else:
-            self._apply_lap_to_cross_beam()
-        # apply a refinement cut on the cross beam
-        if self.modify_cross:
-            if self.back_plane:
-                modification_plane = self.back_plane
-            else:
-                modification_plane = self.main_beam.opp_side(self.main_beam_ref_side_index)
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(modification_plane, self.cross_beam, self.cross_beam_ref_side_index)
-            self.cross_beam.add_features(cross_refinement_feature)
-            self.features.append(cross_refinement_feature)

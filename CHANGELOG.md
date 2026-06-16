@@ -11,17 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
 * Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
 * Added `allow_undercut` flag in `Pocket.from_volume_and_element`
-* Added `back_plane` attribute to `ButtJoint`.
+* Added `back_plane` attribute to `LButtJoint`.
 * Added `force_pocket` and `conical_tool` flags to `TButtJoint`
 * Added `force_pocket` and `conical_tool` flags to `LButtJoint`
-
-* Added `create` overrides to `LMiterJoint`, `LButtJoint` and `ButtJoint` to handle transformation of planes to local space.
+* Added `plane_from_ref_side_angle_offset`, `decompose_plane_to_ref_side`, `plane_from_ref_side_angles_offset` and `decompose_plane_to_ref_side_angles` functions in `compas_timber.connections.utilities`.
 
 ### Changed
-* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes. 
-* Changed `miter_plane` argument in `LMiterJoint` to `local_miter_plane` to ensure plane is kept and translated with joint elements.
-* Changed `back_plane` argument in `LButtJoint` to `local_back_plane` to ensure plane is kept and translated with joint elements.
-* Changed `butt_plane` argument in `LButtJoint` and `TButtJoint` to `local_butt_plane` to ensure plane is kept and translated with joint elements.
+* Refactored `ButtJoint` to calculate the main beam's trimming plane via the `butt_plane` attribute, and the cross beam's refinement plane (when `modify_cross` is True) via an overridable `_back_cutting_plane()` hook.
+* Changed `ButtJoint.butt_plane`, `LButtJoint.back_plane` and `LMiterJoint.miter_plane` to be stored internally as a `ref_side_index` plus rotation angle(s) and an offset, relative to a beam's reference side, instead of a frozen `Plane`. This keeps the plane tracking the beams' current geometry (e.g. after a model transform). `.create()` still accepts a `butt_plane`/`back_plane`/`miter_plane` `Plane` in world coordinates, which is decomposed into this representation.
 
 ### Removed
 
