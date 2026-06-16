@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Fixed `TButtJoint` errorneously cutting cross beam even though `modify_cross` is set to `False`.
+* Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
 
 ### Removed
 
