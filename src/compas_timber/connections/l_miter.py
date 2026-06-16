@@ -17,6 +17,8 @@ from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import decompose_plane_to_ref_side_angles
+from .utilities import plane_from_ref_side_angles_offset
 from .utilities import point_centerline_towards_joint
 
 
@@ -36,14 +38,20 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-    miter_plane : :class:`~compas.geometry.Plane`, optional
-        A plane that defines the miter cut location and orientation.
-        If not provided, it will be calculated automatically.
-        If provided, miter_type will be automatically set to `MiterType.USER_DEFINED`.
     ref_side_miter : :bool, optional
         If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.
     clean : bool, optional
         if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+    miter_plane_ref_side_index : int, optional
+        The index of beam_a's reference side that a user-defined `miter_plane` is anchored on. This is normally not set
+        directly: use :meth:`create` with a `miter_plane` argument instead.
+    miter_plane_angle_x : float, optional
+        Rotation angle, in radians, of `miter_plane` around the x-axis of the reference side at `miter_plane_ref_side_index`.
+    miter_plane_angle_y : float, optional
+        Rotation angle, in radians, of `miter_plane` around the y-axis of the reference side at `miter_plane_ref_side_index`,
+        applied after `miter_plane_angle_x`.
+    miter_plane_offset : float, optional
+        Signed distance, along the resulting normal, from the reference side at `miter_plane_ref_side_index` to `miter_plane`.
 
     Attributes
     ----------
@@ -53,8 +61,10 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-    miter_plane : :class:`~compas.geometry.Plane`
-        A user-defined plane that defines the miter cut location and orientation.
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A user-defined plane that defines the miter cut location and orientation, derived from `miter_plane_ref_side_index`/
+        `miter_plane_angle_x`/`miter_plane_angle_y`/`miter_plane_offset`. `None` if `miter_plane_ref_side_index` is not set,
+        in which case the miter plane is instead calculated automatically (see `ref_side_miter`).
     ref_side_miter : :bool
         If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.
     clean : bool
@@ -68,14 +78,32 @@ class LMiterJoint(Joint):
         data = super(LMiterJoint, self).__data__
         data["cutoff"] = self.cutoff
         data["ref_side_miter"] = self.ref_side_miter
-        data["local_miter_plane"] = self.local_miter_plane
+        data["miter_plane_ref_side_index"] = self.miter_plane_ref_side_index
+        data["miter_plane_angle_x"] = self.miter_plane_angle_x
+        data["miter_plane_angle_y"] = self.miter_plane_angle_y
+        data["miter_plane_offset"] = self.miter_plane_offset
         data["clean"] = self.clean
 
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, local_miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
+    def __init__(
+        self,
+        beam_a=None,
+        beam_b=None,
+        cutoff=None,
+        ref_side_miter=False,
+        clean=False,
+        miter_plane_ref_side_index=None,
+        miter_plane_angle_x=None,
+        miter_plane_angle_y=None,
+        miter_plane_offset=None,
+        **kwargs,
+    ):
         super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
-        self.local_miter_plane = local_miter_plane or None
+        self.miter_plane_ref_side_index = miter_plane_ref_side_index
+        self.miter_plane_angle_x = miter_plane_angle_x if miter_plane_angle_x is not None else 0.0
+        self.miter_plane_angle_y = miter_plane_angle_y if miter_plane_angle_y is not None else 0.0
+        self.miter_plane_offset = miter_plane_offset if miter_plane_offset is not None else 0.0
         self._cutting_planes = []
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
@@ -100,14 +128,52 @@ class LMiterJoint(Joint):
 
     @property
     def miter_plane(self):
-        if self.local_miter_plane:
-            return self.local_miter_plane.transformed(self.beam_a.modeltransformation)
-        return None
+        if self.miter_plane_ref_side_index is None:
+            return None
+        ref_side = self.beam_a.ref_sides[self.miter_plane_ref_side_index]
+        return plane_from_ref_side_angles_offset(ref_side, self.miter_plane_angle_x, self.miter_plane_angle_y, self.miter_plane_offset)
 
     @classmethod
     def create(cls, model, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
-        local_miter_plane = miter_plane.transformed(beam_a.modeltransformation.inverse()) if miter_plane else None
-        joint = cls(beam_a, beam_b, cutoff, local_miter_plane, ref_side_miter, clean, **kwargs)
+        """Creates an instance of this joint and adds it to the model.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joint belong.
+        beam_a : :class:`~compas_timber.elements.Beam`
+            First beam to be joined.
+        beam_b : :class:`~compas_timber.elements.Beam`
+            Second beam to be joined.
+        cutoff : bool, optional
+            If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
+        miter_plane : :class:`~compas.geometry.Plane`, optional
+            A user-defined plane, in world coordinates, that defines the miter cut location and orientation. Unlike
+            `ButtJoint.butt_plane`, this plane is not constrained to any particular orientation. Internally decomposed into
+            a ref_side_index/angle_x/angle_y/offset anchored on beam_a's side facing beam_b, so it keeps tracking the beams'
+            current geometry rather than a frozen plane.
+        ref_side_miter : bool, optional
+            If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.
+        clean : bool, optional
+            if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.LMiterJoint`
+
+        """
+        joint = cls(beam_a, beam_b, cutoff=cutoff, ref_side_miter=ref_side_miter, clean=clean, **kwargs)
+        if miter_plane is not None:
+            ref_side_dict = beam_ref_side_incidence(beam_b, beam_a, ignore_ends=True)
+            ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+            ref_side = beam_a.ref_sides[ref_side_index]
+            angle_x, angle_y, offset = decompose_plane_to_ref_side_angles(ref_side, miter_plane)
+            joint.miter_plane_ref_side_index = ref_side_index
+            joint.miter_plane_angle_x = angle_x
+            joint.miter_plane_angle_y = angle_y
+            joint.miter_plane_offset = offset
         model.add_joint(joint)
         return joint
 

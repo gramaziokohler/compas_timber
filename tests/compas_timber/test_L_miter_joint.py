@@ -2,6 +2,7 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import distance_point_plane_signed
 from compas_timber.elements import Beam
 from compas_timber.connections import LMiterJoint
 from compas_timber.model import TimberModel
@@ -124,8 +125,10 @@ def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
 
 
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
+    model = TimberModel()
+    model.add_elements([beam_a, angle_beam])
 
-    joint = LMiterJoint(beam_a, angle_beam, local_miter_plane=Plane([0, 0, 0], [1, 0, 0]).transformed(beam_a.modeltransformation))
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, 0, 0]))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 200)
@@ -133,7 +136,10 @@ def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 
 
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
-    joint = LMiterJoint(beam_a, angle_beam, local_miter_plane=Plane([0, 0, 0], [1, -1, 0]).transformed(beam_a.modeltransformation))
+    model = TimberModel()
+    model.add_elements([beam_a, angle_beam])
+
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=Plane([0, 0, 0], [1, -1, 0]))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 215)
@@ -242,4 +248,22 @@ def test_l_miter_joint_serialization_user_plane(beam_a, angle_beam):
 
     joint_copy = list(model_copy.joints)[0]
     joint_copy.restore_elements_from_keys(model_copy)
-    assert joint_copy.miter_plane == Plane([0, 0, 0], [1, 0, 0])
+    # the reconstructed plane's point need not be the exact point given (any point on the plane is valid),
+    # but it must be coplanar with, and share the normal of, the original plane.
+    original_plane = Plane([0, 0, 0], [1, 0, 0])
+    assert TOL.is_allclose(joint_copy.miter_plane.normal, original_plane.normal)
+    assert TOL.is_zero(distance_point_plane_signed(joint_copy.miter_plane.point, original_plane))
+
+
+def test_l_miter_joint_user_plane_with_offset(beam_a, angle_beam):
+    """miter_plane is not constrained to pass through the joint location; an arbitrary offset must round-trip too."""
+    model = TimberModel()
+    model.add_elements([beam_a, angle_beam])
+
+    # a plane perpendicular to beam_a's centerline, shifted away from the origin
+    miter_plane = Plane([30, 0, 0], [1, 0, 0])
+
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=miter_plane)
+
+    assert TOL.is_allclose(joint.miter_plane.normal, miter_plane.normal)
+    assert TOL.is_zero(distance_point_plane_signed(joint.miter_plane.point, miter_plane))

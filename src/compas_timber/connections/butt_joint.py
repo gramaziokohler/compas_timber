@@ -16,6 +16,8 @@ from compas_timber.fabrication import Pocket
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
+from .utilities import decompose_plane_to_ref_side
+from .utilities import plane_from_ref_side_angle_offset
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
@@ -36,11 +38,18 @@ class ButtJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane` is provided.
+        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane_ref_side_index` is set.
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    butt_plane_ref_side_index : int, optional
+        The index of the cross beam's reference side that the user-defined `butt_plane` is anchored on. If not provided, the
+        closest side of the cross beam will be used to cut the main beam (see :attr:`butt_plane`). This is normally not set
+        directly: use :meth:`create` with a `butt_plane` argument, which derives this together with `butt_plane_angle` and
+        `butt_plane_offset` from a plane in world coordinates.
+    butt_plane_angle : float, optional
+        Rotation angle, in radians, of `butt_plane` around the x-axis of the reference side at `butt_plane_ref_side_index`.
+    butt_plane_offset : float, optional
+        Signed distance, along the (rotated) normal, from the reference side at `butt_plane_ref_side_index` to `butt_plane`.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -57,7 +66,8 @@ class ButtJoint(Joint):
     modify_cross : bool, default False
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+        The plane used to cut the main beam, derived from `butt_plane_ref_side_index`/`butt_plane_angle`/`butt_plane_offset`.
+        If `butt_plane_ref_side_index` is not set, this is `None` and the closest side of the cross beam will be used instead.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -74,7 +84,9 @@ class ButtJoint(Joint):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
         data["modify_cross"] = self.modify_cross
-        data["local_butt_plane"] = self.local_butt_plane
+        data["butt_plane_ref_side_index"] = self.butt_plane_ref_side_index
+        data["butt_plane_angle"] = self.butt_plane_angle
+        data["butt_plane_offset"] = self.butt_plane_offset
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -85,7 +97,9 @@ class ButtJoint(Joint):
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
         modify_cross: bool = True,
-        local_butt_plane: Optional[Plane] = None,
+        butt_plane_ref_side_index: Optional[int] = None,
+        butt_plane_angle: Optional[float] = None,
+        butt_plane_offset: Optional[float] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
@@ -93,7 +107,9 @@ class ButtJoint(Joint):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth: float = mill_depth or 0.0
         self.modify_cross: bool = modify_cross
-        self.local_butt_plane: Optional[Plane] = local_butt_plane or None
+        self.butt_plane_ref_side_index: Optional[int] = butt_plane_ref_side_index
+        self.butt_plane_angle: float = butt_plane_angle if butt_plane_angle is not None else 0.0
+        self.butt_plane_offset: float = butt_plane_offset if butt_plane_offset is not None else 0.0
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features: list[BTLxProcessing] = []
@@ -124,22 +140,10 @@ class ButtJoint(Joint):
 
     @property
     def butt_plane(self):
-        if self.local_butt_plane:
-            return self.local_butt_plane.transformed(self.main_beam.modeltransformation.inverse())
-        return None
-
-    @classmethod
-    def create(cls, model, main_beam=None, cross_beam=None, mill_depth=None, modify_cross=True, butt_plane=None, **kwargs):
-        joint = cls(
-            main_beam,
-            cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            local_butt_plane=butt_plane.transformed(main_beam.modeltransformation) if butt_plane else None,
-            **kwargs,
-        )
-        model.add_joint(joint)
-        return joint
+        if self.butt_plane_ref_side_index is None:
+            return None
+        ref_side = self.cross_beam.ref_sides[self.butt_plane_ref_side_index]
+        return plane_from_ref_side_angle_offset(ref_side, self.butt_plane_angle, self.butt_plane_offset)
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -271,3 +275,46 @@ class ButtJoint(Joint):
         self.cross_beam.add_features(pocket)
         self.features.append(pocket)
         return cutout_volume
+
+    @classmethod
+    def create(
+        cls,
+        model,
+        main_beam: Beam = None,
+        cross_beam: Beam = None,
+        butt_plane: Optional[Plane] = None,
+        **kwargs,
+    ):
+        """Creates an instance of this joint and adds it to the model.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joint belong.
+        main_beam : :class:`~compas_timber.elements.Beam`
+            The main beam to be joined.
+        cross_beam : :class:`~compas_timber.elements.Beam`
+            The cross beam to be joined.
+        butt_plane : :class:`~compas.geometry.Plane`, optional
+            A user-defined plane, in world coordinates, used to cut the main beam instead of the closest side of the cross
+            beam. Must be parallel to the cross beam's centerline, i.e. its normal must be perpendicular to the cross beam's
+            length direction. Internally this is decomposed into `butt_plane_ref_side_index`, `butt_plane_angle` and
+            `butt_plane_offset`, anchored on the cross beam's side that is closest to the main beam, so that it keeps
+            tracking the beams' current geometry (e.g. after a transformation) rather than a frozen plane.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.ButtJoint`
+
+        """
+        joint = cls(main_beam, cross_beam, **kwargs)
+        if butt_plane is not None:
+            ref_side = cross_beam.ref_sides[joint.cross_beam_ref_side_index]
+            angle, offset = decompose_plane_to_ref_side(ref_side, butt_plane, plane_name="butt_plane", reference_name="cross_beam")
+            joint.butt_plane_ref_side_index = joint.cross_beam_ref_side_index
+            joint.butt_plane_angle = angle
+            joint.butt_plane_offset = offset
+        model.add_joint(joint)
+        return joint

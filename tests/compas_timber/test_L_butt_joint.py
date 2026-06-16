@@ -123,7 +123,9 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
     model.add_elements([planar_beam, cross_beam])
 
     butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
-    back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+    # back_plane must be parallel to planar_beam's (main_beam's) centerline, i.e. its normal must be perpendicular
+    # to planar_beam's xaxis (0.707, 0, 0.707)
+    back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
     joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
 
@@ -139,7 +141,9 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
     model.add_elements([planar_beam, cross_beam])
 
     butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
-    back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+    # back_plane must be parallel to planar_beam's (main_beam's) centerline, i.e. its normal must be perpendicular
+    # to planar_beam's xaxis (0.707, 0, 0.707)
+    back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
     joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
 
@@ -168,3 +172,45 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
 
     assert TOL.is_allclose([new_butt_point.x - orig_butt_point.x, new_butt_point.y - orig_butt_point.y, new_butt_point.z - orig_butt_point.z], [10.0, 5.0, -2.0])
     assert TOL.is_allclose([new_back_point.x - orig_back_point.x, new_back_point.y - orig_back_point.y, new_back_point.z - orig_back_point.z], [10.0, 5.0, -2.0])
+
+
+def test_L_butt_joint_butt_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
+    """butt_plane's normal must be perpendicular to the cross beam's centerline (x-axis)."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    # cross_beam's centerline runs along (1, 0, 0), so a plane with a normal that has a component
+    # along that axis is not parallel to the centerline and should be rejected.
+    invalid_butt_plane = Plane(Point(0, 0, 0), Vector(1, 1, 0))
+
+    with pytest.raises(ValueError):
+        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=invalid_butt_plane)
+
+
+def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
+    """back_plane's normal must be perpendicular to the main beam's centerline (x-axis)."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    # planar_beam's centerline runs along (0.707, 0, 0.707), which is not perpendicular to (0, 0, 1).
+    invalid_back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+
+    with pytest.raises(ValueError):
+        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, back_plane=invalid_back_plane)
+
+
+def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam):
+    """A butt_plane parallel to (but offset from) the default cross-beam side should round-trip exactly.
+
+    This is the degenerate case (no tilt) that a y-axis-line-intersection based decomposition cannot represent.
+    """
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    default_ref_side = cross_beam.ref_sides[2]  # opposite side from the default, picked arbitrarily but parallel to centerline
+    offset_plane = Plane(default_ref_side.point + default_ref_side.normal * 5.0, default_ref_side.normal)
+
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=offset_plane)
+
+    assert TOL.is_allclose(joint.butt_plane.normal, offset_plane.normal)
+    assert TOL.is_allclose(joint.butt_plane.point, offset_plane.point)
