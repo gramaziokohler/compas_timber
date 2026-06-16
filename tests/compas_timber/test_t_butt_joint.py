@@ -11,7 +11,6 @@ from compas_timber.elements import PlateFastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.fabrication.lap import Lap
-from compas_timber.fabrication.jack_cut import JackRafterCut
 
 
 def test_create():
