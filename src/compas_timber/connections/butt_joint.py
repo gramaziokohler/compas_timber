@@ -229,28 +229,7 @@ class ButtJoint(Joint):
         end_b_plane = Plane.from_frame(self.main_beam.back_side(self.main_beam_ref_side_index))
 
         return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
-        vertices = [
-            Point(*intersection_plane_plane_plane(plane_2, plane_3, cutting_plane)),  # v0
-            Point(*intersection_plane_plane_plane(plane_0, plane_3, cutting_plane)),  # v1
-            Point(*intersection_plane_plane_plane(plane_1, plane_0, cutting_plane)),  # v2
-            Point(*intersection_plane_plane_plane(plane_2, plane_1, cutting_plane)),  # v3
-            Point(*intersection_plane_plane_plane(plane_2, plane_3, top_plane)),  # v4
-            Point(*intersection_plane_plane_plane(plane_0, plane_3, top_plane)),  # v5
-            Point(*intersection_plane_plane_plane(plane_1, plane_0, top_plane)),  # v6
-            Point(*intersection_plane_plane_plane(plane_2, plane_1, top_plane)),  # v7
-        ]
-        faces = [[0, 3, 2, 1], [1, 2, 6, 5], [2, 3, 7, 6], [0, 4, 7, 3], [0, 1, 5, 4], [4, 5, 6, 7]]
-        cutout_volume = Polyhedron(vertices, faces)
-        # return cutout_volume
-        pocket = Pocket.from_volume_and_element(cutout_volume, self.cross_beam, ref_side_index=self.cross_beam_ref_side_index)
-        if not self.conical_tool:
-            pocket.tilt_start_side = 90 if pocket.tilt_start_side < 90 else pocket.tilt_start_side
-            pocket.tilt_end_side = 90 if pocket.tilt_end_side < 90 else pocket.tilt_end_side
-            pocket.tilt_ref_side = 90 if pocket.tilt_ref_side < 90 else pocket.tilt_ref_side
-            pocket.tilt_opp_side = 90 if pocket.tilt_opp_side < 90 else pocket.tilt_opp_side
-        self.cross_beam.add_features(pocket)
-        self.features.append(pocket)
-        return cutout_volume
+        
 
     @classmethod
     def create(
