@@ -35,12 +35,8 @@ class ButtJoint(Joint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane` is provided.
-    modify_cross : bool, default False
-        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam if `modify_cross` is True.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -56,12 +52,8 @@ class ButtJoint(Joint):
         A list containing the main beam and the cross beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    modify_cross : bool, default False
-        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
     butt_plane : :class:`~compas.geometry.Plane`, optional
         The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam if `modify_cross` is True.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -81,9 +73,7 @@ class ButtJoint(Joint):
     def __data__(self):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
-        data["modify_cross"] = self.modify_cross
         data["butt_plane"] = self.butt_plane
-        data["back_plane"] = self.back_plane
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -93,21 +83,17 @@ class ButtJoint(Joint):
         main_beam: Beam = None,
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
-        modify_cross: bool = True,
         butt_plane: Optional[Plane] = None,
-        back_plane: Optional[Plane] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
-        self.modify_cross = modify_cross
         self.force_pocket = force_pocket
         self.conical_tool = conical_tool
         self.features = []
         self._butt_plane = butt_plane
-        self._back_plane = back_plane
 
     @property
     def main_beam(self):
@@ -143,12 +129,6 @@ class ButtJoint(Joint):
             self._butt_plane = Plane.from_frame(cutting_plane)
         return self._butt_plane
 
-    @property
-    def back_plane(self) -> Plane:
-        if self._back_plane is None:
-            return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
-        return self._back_plane
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -169,17 +149,6 @@ class ButtJoint(Joint):
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.butt_plane])
         except Exception as ex:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
-
-        # extend the cross beam
-        if self.modify_cross:
-            try:
-                start, end = self.cross_beam.extension_to_plane(self.back_plane)
-                extension_tolerance = 0
-                # extension_tolerance = 0.01 if TOL.unit == "M" else 10
-                joint_id = self.guid
-                self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
-            except AttributeError as ae:
-                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
 
     def add_features(self) -> None:
         """Removes this joint's previously generated features and adds new features to each beam."""
@@ -216,12 +185,6 @@ class ButtJoint(Joint):
                 )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
-
-        # apply a refinement cut on the cross beam
-        if self.modify_cross:
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
-            self.cross_beam.add_features(cross_refinement_feature)
-            self.features.append(cross_refinement_feature)
 
     def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
