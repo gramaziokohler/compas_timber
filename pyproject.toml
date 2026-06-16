@@ -118,6 +118,7 @@ serialize = [
 [tool.bumpversion.parts.pre_l]
 values = ["dev", "rc", "final"]
 optional_value = "final"
+first_value = "final"
 
 [[tool.bumpversion.files]]
 filename = "src/compas_timber/__init__.py"
