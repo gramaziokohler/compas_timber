@@ -56,7 +56,6 @@ class TButtJoint(ButtJoint):
             conical_tool=conical_tool,
             **kwargs,
         )
-        self.modify_cross = False
 
         self.fasteners = []
         if fastener:

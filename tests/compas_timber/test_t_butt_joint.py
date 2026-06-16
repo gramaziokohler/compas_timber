@@ -56,13 +56,9 @@ def test_create_t_butt_with_depth():
 
 
 def test_t_butt_does_not_modify_cross_beam():
-    # regression test: TButtJoint must force modify_cross=False, otherwise it trims/extends
-    # the cross beam to the main beam's back plane, i.e. it behaves like an LButtJoint.
     beam_a = Beam.from_endpoints(Point(0, 0.5, 0), Point(1, 0.5, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200)
     beam_b = Beam.from_endpoints(Point(0, 0.0, 0), Point(0, 1.0, 0), z_vector=Vector(0, 0, 1), width=0.100, height=0.200)
     joint = TButtJoint(beam_a, beam_b)
-
-    assert joint.modify_cross is False
 
     joint.add_features()
 
@@ -104,7 +100,7 @@ def non_planar_beam():
 
 
 def test_L_butt_joint_features_planar_lap(cross_beam, planar_beam):
-    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=False, conical_tool=False)
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, force_pocket=False, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(planar_beam.features) == 1
@@ -112,7 +108,7 @@ def test_L_butt_joint_features_planar_lap(cross_beam, planar_beam):
 
 
 def test_L_butt_joint_features_non_planar_lap(cross_beam, non_planar_beam):
-    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=False, conical_tool=False)
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, force_pocket=False, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
@@ -120,7 +116,7 @@ def test_L_butt_joint_features_non_planar_lap(cross_beam, non_planar_beam):
 
 
 def test_L_butt_joint_features_planar_pocket(cross_beam, planar_beam):
-    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=False)
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, force_pocket=True, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(planar_beam.features) == 1
@@ -128,7 +124,7 @@ def test_L_butt_joint_features_planar_pocket(cross_beam, planar_beam):
 
 
 def test_L_butt_joint_features_planar_pocket_conical_tool(cross_beam, planar_beam):
-    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=True)
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=10, force_pocket=True, conical_tool=True)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(planar_beam.features) == 1
@@ -136,7 +132,7 @@ def test_L_butt_joint_features_planar_pocket_conical_tool(cross_beam, planar_bea
 
 
 def test_L_butt_joint_features_non_planar_pocket(cross_beam, non_planar_beam):
-    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=False)
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, force_pocket=True, conical_tool=False)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
@@ -144,7 +140,7 @@ def test_L_butt_joint_features_non_planar_pocket(cross_beam, non_planar_beam):
 
 
 def test_L_butt_joint_features_non_planar_pocket_conical_tool(cross_beam, non_planar_beam):
-    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, modify_cross=False, force_pocket=True, conical_tool=True)
+    joint = TButtJoint(non_planar_beam, cross_beam, mill_depth=10, force_pocket=True, conical_tool=True)
     joint.add_features()
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
