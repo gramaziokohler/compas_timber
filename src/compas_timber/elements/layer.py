@@ -112,7 +112,7 @@ class Layer(Element):
         self.panel = panel
         self.start_level = start_level
         self.end_level = end_level
-        self.sublayers = []
+        self._sublayers = []
         self._planes = None
 
     def __repr__(self):
@@ -124,6 +124,18 @@ class Layer(Element):
     # ------------------------------------------------------------------
     # Properties
     # ------------------------------------------------------------------
+
+    @property
+    def sublayers(self):
+        return self._sublayers
+
+    @sublayers.setter
+    def sublayers(self, value):
+        self._sublayers = value
+        if self.model:
+            for layer in self._sublayers:
+                if layer is not None:
+                    self.model.add_element(layer, parent=self)
 
     @property
     def thickness(self):
