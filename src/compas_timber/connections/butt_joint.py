@@ -43,8 +43,7 @@ class ButtJoint(Joint):
     butt_plane_ref_side_index : int, optional
         The index of the cross beam's reference side that `butt_plane` is anchored on. If not provided, the closest side of
         the cross beam to the main beam is used (see :attr:`butt_plane`). This is normally not set directly: use
-        :meth:`create` with a `butt_plane` argument, which derives this together with `butt_plane_angle` and
-        `butt_plane_offset` from a plane in world coordinates.
+        :meth:`butt_plane_args` to compute these from a world-coordinate plane and pass the result as keyword arguments.
     butt_plane_angle : float, optional
         Rotation angle, in radians, of `butt_plane` around the x-axis of the reference side at `butt_plane_ref_side_index`.
     butt_plane_offset : float, optional
@@ -146,6 +145,11 @@ class ButtJoint(Joint):
 
     @property
     def butt_plane(self) -> Plane:
+        """The plane used to cut the main beam.
+
+        Computed from `butt_plane_ref_side_index`/`butt_plane_angle`/`butt_plane_offset`. Always valid: if no override
+        is set, defaults to the cross beam's side closest to the main beam, offset outward by `mill_depth`.
+        """
         if self.butt_plane_ref_side_index is not None:
             ref_side = self.cross_beam.ref_sides[self.butt_plane_ref_side_index]
             return plane_from_ref_side_angle_offset(ref_side, self.butt_plane_angle, self.butt_plane_offset)
@@ -248,50 +252,31 @@ class ButtJoint(Joint):
         return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
 
     @staticmethod
-    def _set_butt_plane_override(joint: "ButtJoint", butt_plane: Optional[Plane]) -> None:
-        """Decomposes `butt_plane` (world coordinates) and stores it on `joint` as a ref_side_index/angle/offset."""
-        if butt_plane is None:
-            return
-        ref_side = joint.cross_beam.ref_sides[joint.cross_beam_ref_side_index]
-        angle, offset = decompose_plane_to_ref_side(ref_side, butt_plane, plane_name="butt_plane", reference_name="cross_beam")
-        joint.butt_plane_ref_side_index = joint.cross_beam_ref_side_index
-        joint.butt_plane_angle = angle
-        joint.butt_plane_offset = offset
+    def butt_plane_args(main_beam: "Beam", cross_beam: "Beam", butt_plane: Plane) -> dict:
+        """Returns kwargs encoding `butt_plane` (world coordinates) as `butt_plane_ref_side_index`/`butt_plane_angle`/`butt_plane_offset`.
 
-    @classmethod
-    def create(
-        cls,
-        model,
-        main_beam: Beam = None,
-        cross_beam: Beam = None,
-        butt_plane: Optional[Plane] = None,
-        **kwargs,
-    ):
-        """Creates an instance of this joint and adds it to the model.
+        Pass the returned dict as keyword arguments to :meth:`~compas_timber.connections.Joint.create`.
 
         Parameters
         ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joint belong.
         main_beam : :class:`~compas_timber.elements.Beam`
-            The main beam to be joined.
         cross_beam : :class:`~compas_timber.elements.Beam`
-            The cross beam to be joined.
-        butt_plane : :class:`~compas.geometry.Plane`, optional
-            A user-defined plane, in world coordinates, used to cut the main beam instead of the closest side of the cross
-            beam. Must be parallel to the cross beam's centerline, i.e. its normal must be perpendicular to the cross beam's
-            length direction. Internally this is decomposed into `butt_plane_ref_side_index`, `butt_plane_angle` and
-            `butt_plane_offset`, anchored on the cross beam's side that is closest to the main beam, so that it keeps
-            tracking the beams' current geometry (e.g. after a transformation) rather than a frozen plane.
-        **kwargs : dict
-            Additional keyword arguments passed to the joint's constructor.
+        butt_plane : :class:`~compas.geometry.Plane`
+            A plane in world coordinates used to cut the main beam. Must be parallel to the cross beam's centerline
+            (normal perpendicular to the cross beam's length direction).
 
         Returns
         -------
-        :class:`~compas_timber.connections.ButtJoint`
+        dict
+            Keys: ``butt_plane_ref_side_index``, ``butt_plane_angle``, ``butt_plane_offset``.
 
         """
-        joint = cls(main_beam, cross_beam, **kwargs)
-        cls._set_butt_plane_override(joint, butt_plane)
-        model.add_joint(joint)
-        return joint
+        ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        ref_side = cross_beam.ref_sides[ref_side_index]
+        angle, offset = decompose_plane_to_ref_side(ref_side, butt_plane, plane_name="butt_plane", reference_name="cross_beam")
+        return {
+            "butt_plane_ref_side_index": ref_side_index,
+            "butt_plane_angle": angle,
+            "butt_plane_offset": offset,
+        }

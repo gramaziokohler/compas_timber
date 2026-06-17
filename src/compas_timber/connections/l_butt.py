@@ -6,6 +6,7 @@ from compas_timber.errors import BeamJoiningError
 
 from .butt_joint import ButtJoint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
 from .utilities import decompose_plane_to_ref_side
 from .utilities import plane_from_ref_side_angle_offset
 
@@ -32,8 +33,7 @@ class LButtJoint(ButtJoint):
     back_plane_ref_side_index : int, optional
         The index of the main beam's reference side that `back_plane` is anchored on. If not provided, the side of the main
         beam opposite the one facing the cross beam is used (see :attr:`back_plane`). This is normally not set directly: use
-        :meth:`create` with a `back_plane` argument, which derives this together with `back_plane_angle` and
-        `back_plane_offset` from a plane in world coordinates.
+        :meth:`back_plane_args` to compute these from a world-coordinate plane and pass the result as keyword arguments.
     back_plane_angle : float, optional
         Rotation angle, in radians, of `back_plane` around the x-axis of the reference side at `back_plane_ref_side_index`.
     back_plane_offset : float, optional
@@ -93,6 +93,11 @@ class LButtJoint(ButtJoint):
 
     @property
     def back_plane(self) -> Plane:
+        """The plane used to cut the cross beam when `modify_cross` is True.
+
+        Computed from `back_plane_ref_side_index`/`back_plane_angle`/`back_plane_offset`. If no override is set, defaults
+        to the side of the main beam opposite the cross beam (same as `ButtJoint._back_cutting_plane`).
+        """
         if self.back_plane_ref_side_index is not None:
             ref_side = self.main_beam.ref_sides[self.back_plane_ref_side_index]
             return plane_from_ref_side_angle_offset(ref_side, self.back_plane_angle, self.back_plane_offset)
@@ -113,69 +118,44 @@ class LButtJoint(ButtJoint):
 
         return ref_side_index
 
-    @staticmethod
-    def _set_back_plane_override(joint: "LButtJoint", back_plane: Optional[Plane]) -> None:
-        """Decomposes `back_plane` (world coordinates) and stores it on `joint` as a ref_side_index/angle/offset."""
-        if back_plane is None:
-            return
-        ref_side_index = (joint.main_beam_ref_side_index + 2) % 4
-        ref_side = joint.main_beam.ref_sides[ref_side_index]
-        angle, offset = decompose_plane_to_ref_side(ref_side, back_plane, plane_name="back_plane", reference_name="main_beam")
-        joint.back_plane_ref_side_index = ref_side_index
-        joint.back_plane_angle = angle
-        joint.back_plane_offset = offset
-
     @classmethod
     def create(
         cls, model, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs
     ):
-        """Creates an instance of this joint and adds it to the model.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joint belong.
-        main_beam : :class:`~compas_timber.elements.Beam`
-            The main beam to be joined.
-        cross_beam : :class:`~compas_timber.elements.Beam`
-            The cross beam to be joined.
-        mill_depth : float, optional
-            The depth of the pocket to be milled in the cross beam.
-        small_beam_butts : bool, optional
-            If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
-        modify_cross : bool, optional
-            If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-        reject_i : bool, optional
-            If True, the joint will reject beams in I topology.
-        butt_plane : :class:`~compas.geometry.Plane`, optional
-            A user-defined plane, in world coordinates, used to cut the main beam instead of the closest side of the cross
-            beam. Must be parallel to the cross beam's centerline. Internally decomposed into a ref_side_index/angle/offset
-            anchored on the cross beam's side closest to the main beam, so it keeps tracking the beams' current geometry.
-        back_plane : :class:`~compas.geometry.Plane`, optional
-            A user-defined plane, in world coordinates, used to cut the cross beam instead of the back side of the main
-            beam. Must be parallel to the main beam's centerline. Internally decomposed into a ref_side_index/angle/offset
-            anchored on the main beam's side opposite the cross beam, so it keeps tracking the beams' current geometry.
-        **kwargs : dict
-            Additional keyword arguments passed to the joint's constructor.
-
-        Returns
-        -------
-        :class:`~compas_timber.connections.LButtJoint`
-
-        """
         if small_beam_butts:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
-
-        joint = cls(
-            main_beam,
-            cross_beam,
-            mill_depth=mill_depth,
-            modify_cross=modify_cross,
-            reject_i=reject_i,
-            **kwargs,
-        )
-        cls._set_butt_plane_override(joint, butt_plane)
-        cls._set_back_plane_override(joint, back_plane)
+        joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
         model.add_joint(joint)
         return joint
+
+    @staticmethod
+    def back_plane_args(main_beam, cross_beam, back_plane: Plane) -> dict:
+        """Returns kwargs encoding `back_plane` (world coordinates) as `back_plane_ref_side_index`/`back_plane_angle`/`back_plane_offset`.
+
+        Pass the returned dict as keyword arguments to :meth:`~compas_timber.connections.Joint.create`.
+
+        Parameters
+        ----------
+        main_beam : :class:`~compas_timber.elements.Beam`
+        cross_beam : :class:`~compas_timber.elements.Beam`
+        back_plane : :class:`~compas.geometry.Plane`
+            A plane in world coordinates used to cut the cross beam. Must be parallel to the main beam's centerline
+            (normal perpendicular to the main beam's length direction).
+
+        Returns
+        -------
+        dict
+            Keys: ``back_plane_ref_side_index``, ``back_plane_angle``, ``back_plane_offset``.
+
+        """
+        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
+        main_beam_ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
+        ref_side_index = (main_beam_ref_side_index + 2) % 4
+        ref_side = main_beam.ref_sides[ref_side_index]
+        angle, offset = decompose_plane_to_ref_side(ref_side, back_plane, plane_name="back_plane", reference_name="main_beam")
+        return {
+            "back_plane_ref_side_index": ref_side_index,
+            "back_plane_angle": angle,
+            "back_plane_offset": offset,
+        }
