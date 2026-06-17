@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+## [2.1.2] 2026-06-16
+
+### Added
+
+### Changed
+
+* Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
+
+### Removed
+
+## [2.1.1] 2026-06-16
+
+### Added
 * Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
 * Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
 * Added `allow_undercut` flag in `Pocket.from_volume_and_element`

@@ -165,6 +165,7 @@ class ButtJoint(Joint):
         """
         return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
 
+
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -234,12 +235,12 @@ class ButtJoint(Joint):
                 )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
-
         # apply a refinement cut on the cross beam
         if self.modify_cross:
             cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self._back_cutting_plane(), self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
+
 
     def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])

@@ -3,6 +3,7 @@ from typing import Optional
 from compas.geometry import Plane
 
 from compas_timber.errors import BeamJoiningError
+from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
 from .solver import JointTopology
@@ -108,6 +109,12 @@ class LButtJoint(ButtJoint):
         return self.back_plane
 
     @property
+    def back_plane(self):
+        if self._back_plane is None:
+            return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
+        return self._back_plane
+
+    @property
     def main_beam_ref_side_index(self):
         ref_side_index = super(LButtJoint, self).main_beam_ref_side_index
 
@@ -117,6 +124,35 @@ class LButtJoint(ButtJoint):
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info="Beams are in I topology and reject_i flag is True")
 
         return ref_side_index
+
+    def add_extensions(self):
+        """Calculates and adds the necessary extensions to the beams.
+
+        Raises
+        ------
+        BeamJoiningError
+            If the extension could not be calculated.
+        """
+        super(LButtJoint, self).add_extensions()
+
+        if self.modify_cross:
+            assert self.main_beam and self.cross_beam
+            try:
+                start, end = self.cross_beam.extension_to_plane(self.back_plane)
+                extension_tolerance = 0
+                joint_id = self.guid
+                self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
+            except AttributeError as ae:
+                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
+
+    def add_features(self):
+        """Removes this joint's previously generated features and adds new features to each beam."""
+        super(LButtJoint, self).add_features()
+
+        if self.modify_cross:
+            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            self.cross_beam.add_features(cross_refinement_feature)
+            self.features.append(cross_refinement_feature)
 
     @classmethod
     def create(
