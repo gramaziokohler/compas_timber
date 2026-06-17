@@ -6,6 +6,8 @@ from typing import Optional
 
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
+from compas.geometry import dot_vectors
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
@@ -165,7 +167,6 @@ class ButtJoint(Joint):
         """
         return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
 
-
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
@@ -241,7 +242,6 @@ class ButtJoint(Joint):
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 
-
     def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
         bottom_plane = self.butt_plane
@@ -272,6 +272,9 @@ class ButtJoint(Joint):
             Keys: ``butt_plane_ref_side_index``, ``butt_plane_angle``, ``butt_plane_offset``.
 
         """
+        if not TOL.is_zero(dot_vectors(cross_beam.frame.xaxis, butt_plane.normal)):
+            raise ValueError("butt_plane normal must be perpendicular to cross_beam centerline axis")
+
         ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=ref_side_dict.get)
         ref_side = cross_beam.ref_sides[ref_side_index]

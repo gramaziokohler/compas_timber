@@ -109,12 +109,6 @@ class LButtJoint(ButtJoint):
         return self.back_plane
 
     @property
-    def back_plane(self):
-        if self._back_plane is None:
-            return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
-        return self._back_plane
-
-    @property
     def main_beam_ref_side_index(self):
         ref_side_index = super(LButtJoint, self).main_beam_ref_side_index
 
@@ -155,13 +149,11 @@ class LButtJoint(ButtJoint):
             self.features.append(cross_refinement_feature)
 
     @classmethod
-    def create(
-        cls, model, main_beam=None, cross_beam=None, mill_depth=None, small_beam_butts=False, modify_cross=True, reject_i=False, butt_plane=None, back_plane=None, **kwargs
-    ):
+    def create(cls, model, main_beam=None, cross_beam=None, small_beam_butts=False, **kwargs):
         if small_beam_butts:
             if main_beam.width * main_beam.height > cross_beam.width * cross_beam.height:
                 main_beam, cross_beam = cross_beam, main_beam
-        joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
+        joint = cls(main_beam, cross_beam, **kwargs)
         model.add_joint(joint)
         return joint
 

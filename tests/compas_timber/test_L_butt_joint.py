@@ -127,7 +127,10 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
     # to planar_beam's xaxis (0.707, 0, 0.707)
     back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
-    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
+
+    kwargs = LButtJoint.butt_plane_args(planar_beam, cross_beam, butt_plane)
+    kwargs.update(LButtJoint.back_plane_args(planar_beam, cross_beam, back_plane))
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
 
     assert joint.butt_plane is not None
     assert joint.back_plane is not None
@@ -145,7 +148,9 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
     # to planar_beam's xaxis (0.707, 0, 0.707)
     back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
-    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=butt_plane, back_plane=back_plane)
+    kwargs = LButtJoint.butt_plane_args(planar_beam, cross_beam, butt_plane)
+    kwargs.update(LButtJoint.back_plane_args(planar_beam, cross_beam, back_plane))
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
 
     # copy the model via JSON round-trip
     model_copy = json_loads(json_dumps(model))
@@ -184,7 +189,8 @@ def test_L_butt_joint_butt_plane_rejects_non_parallel_plane(cross_beam, planar_b
     invalid_butt_plane = Plane(Point(0, 0, 0), Vector(1, 1, 0))
 
     with pytest.raises(ValueError):
-        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=invalid_butt_plane)
+        kwargs = LButtJoint.butt_plane_args(planar_beam, cross_beam, invalid_butt_plane)
+        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
 
 
 def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
@@ -196,7 +202,8 @@ def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_b
     invalid_back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
 
     with pytest.raises(ValueError):
-        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, back_plane=invalid_back_plane)
+        kwargs = LButtJoint.back_plane_args(planar_beam, cross_beam, invalid_back_plane)
+        LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
 
 
 def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam):
@@ -210,7 +217,8 @@ def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam)
     default_ref_side = cross_beam.ref_sides[2]  # opposite side from the default, picked arbitrarily but parallel to centerline
     offset_plane = Plane(default_ref_side.point + default_ref_side.normal * 5.0, default_ref_side.normal)
 
-    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane=offset_plane)
+    kwargs = LButtJoint.butt_plane_args(planar_beam, cross_beam, offset_plane)
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
 
     assert TOL.is_allclose(joint.butt_plane.normal, offset_plane.normal)
     assert TOL.is_allclose(joint.butt_plane.point, offset_plane.point)

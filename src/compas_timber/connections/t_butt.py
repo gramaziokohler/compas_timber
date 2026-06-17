@@ -37,8 +37,8 @@ class TButtJoint(ButtJoint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, **kwargs):
-        super(TButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, **kwargs)
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, modify_cross=False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, **kwargs)
         self.fasteners = []
         if fastener:
             if fastener.outline is None:
