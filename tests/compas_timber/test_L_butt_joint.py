@@ -127,7 +127,6 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
     # to planar_beam's xaxis (0.707, 0, 0.707)
     back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
-
     kwargs = LButtJoint.butt_plane_args(planar_beam, cross_beam, butt_plane)
     kwargs.update(LButtJoint.back_plane_args(planar_beam, cross_beam, back_plane))
     joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, **kwargs)
