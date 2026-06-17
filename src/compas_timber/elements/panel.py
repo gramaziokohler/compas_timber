@@ -173,31 +173,14 @@ class Panel(Element):
         already_in_model = self._model is model
         self._model = model
         if already_in_model:
-            # Setter already ran for this model; layers are attached.  Re-running
-            # would try to add them a second time and raise "Element already in
-            # the model".
             return
 
-        def add_layers_to_model(layers, parent):
-            for layer in layers:
-                if layer is None:
-                    continue
-                # Only attach layers that aren't already in this model, so the
-                # setter is idempotent even if triggered more than once.
-                if layer.model is not model:
-                    self._model.add_element(layer, parent=parent)
-                # A layer (sublayer) whose geometry was queried while standalone
-                # cached ``modeltransformation == transformation`` (model was None).
-                # That cache is stale now the layer is in the tree and is NOT
-                # invalidated by ``add_element`` — which would make
-                # ``transformation_to_local()`` (and hence ``set_extension_plane``)
-                # wrong.  Reset so it recomputes against the real tree.
-                layer.reset_computed_properties()
-                add_layers_to_model(layer.sublayers, layer)
-
-        add_layers_to_model([self.exterior_layer, self.core_layer, self.interior_layer], self)  # add layers to model when panel is added to model
-
-
+        for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
+            if layer is None:
+                continue
+            if layer.model is not model:
+                self._model.add_element(layer, parent=self)
+            layer.clear_model_dependent_cache()
 
     @property
     def geometry(self):

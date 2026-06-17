@@ -106,13 +106,8 @@ class Layer(Element):
         **kwargs,
     ):
         outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
-        args = PlateGeometry.get_args_from_outlines(outline_a, outline_b, orientation=panel.frame.yaxis)
-        super().__init__(transformation=args["frame"].to_transformation(), name=name, **kwargs)
-
-        self.plate_geometry = PlateGeometry(
-            local_outline_a=args["local_outline_a"],
-            local_outline_b=args["local_outline_b"],
-        )
+        self.plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b)
+        super().__init__(transformation=self.plate_geometry.frame.to_transformation(), name=name, **kwargs)
 
         self.panel = panel
         self.start_level = start_level
@@ -176,6 +171,28 @@ class Layer(Element):
     @geometry.setter
     def geometry(self, _):
         raise AttributeError("Geometry is a computed property and cannot be set directly.")
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        """when this Layer is added to a TimberModel, this adds this layer's sublayers to the model"""
+
+        if not model:
+            return
+        already_in_model = self._model is model
+        self._model = model
+        if already_in_model:
+            return
+
+        for layer in self.sublayers:
+            if layer is None:
+                continue
+            if layer.model is not model:
+                self._model.add_element(layer, parent=self)
+            layer.clear_model_dependent_cache()
 
     # ------------------------------------------------------------------
     # Methods

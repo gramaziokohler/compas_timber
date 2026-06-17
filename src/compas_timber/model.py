@@ -22,6 +22,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
+from compas_timber.elements import Layer
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
@@ -112,6 +113,11 @@ class TimberModel(Model):
     def panels(self):
         # type: () -> List[Panel]
         return self.find_all_elements_of_type(Panel)
+
+    @property
+    def layers(self):
+        # type: () -> List[Layer]
+        return self.find_all_elements_of_type(Layer)
 
     @property
     def fasteners(self):
