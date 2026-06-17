@@ -191,19 +191,11 @@ class Layer(Element):
     @model.setter
     def model(self, model):
         """when this Layer is added to a TimberModel, this adds this layer's sublayers to the model"""
-
-        if not model:
-            return
-        already_in_model = self._model is model
         self._model = model
-        if already_in_model:
-            return
-
         for layer in self.sublayers:
             if layer is None:
                 continue
-            if layer.model is not model:
-                self._model.add_element(layer, parent=self)
+            self._model.add_element(layer, parent=self)
             layer.clear_model_dependent_cache()
 
     # ------------------------------------------------------------------
