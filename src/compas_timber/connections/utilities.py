@@ -354,5 +354,3 @@ def angle_and_dot_product_beam_a_and_beam_b(beam_a: Beam, beam_b: Beam, joint: J
     angle = angle_vectors(main_beam_direction, beam_b.centerline.direction)
     dot = dot_vectors(main_beam_direction, beam_b.centerline.direction)
     return angle, dot
-
-
