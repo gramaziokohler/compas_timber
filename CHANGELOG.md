@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
 
 ### Removed
 
@@ -18,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-
 * Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
 
 ### Removed
