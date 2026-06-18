@@ -280,7 +280,7 @@ class Plate(TimberElement):
         return plate_geo
 
     @classmethod
-    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs):
+    def from_outlines(cls, outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from two polyline outlines.
 
@@ -293,8 +293,6 @@ class Plate(TimberElement):
             This should have the same number of points as outline_a.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of openings to be added to the plate geometry.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the plate's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -303,16 +301,14 @@ class Plate(TimberElement):
         :class:`~compas_timber.elements.Plate`
             A Plate object representing the plate geometry with the given outlines.
         """
-        plate = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
+        plate = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
         if openings:
             for opening in openings:
                 plate.add_feature(FreeContour.from_polyline_and_element(opening, plate, interior=True))
         return plate
 
     @classmethod
-    def from_outline_thickness(
-        cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs
-    ):
+    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
@@ -327,8 +323,6 @@ class Plate(TimberElement):
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of polyline openings to be added to the plate geometry.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the plate's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -344,10 +338,10 @@ class Plate(TimberElement):
         offset_vector = get_polyline_normal_vector(outline, vector)  # gets vector perpendicular to outline
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls.from_outlines(outline, outline_b, openings=openings, orientation=orientation, **kwargs)
+        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, orientation: Optional[Vector] = None, **kwargs):
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
         """Creates a plate from a single-face brep.
 
         Parameters
@@ -358,8 +352,6 @@ class Plate(TimberElement):
             The thickness of the plate.
         vector : :class:`~compas.geometry.Vector`, optional
             The vector in which the plate is extruded.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the plate's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Plate` constructor.
@@ -374,10 +366,10 @@ class Plate(TimberElement):
             raise ValueError("Can only use single-face breps to create a Plate. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, orientation=orientation, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, orientation: Optional[Vector] = None, **kwargs):
+    def from_brep(cls, brep: Brep, **kwargs):
         """Creates a plate from a brep by automatically detecting two parallel faces.
 
         This method identifies the two main faces of the brep using topological analysis
@@ -387,8 +379,6 @@ class Plate(TimberElement):
         ----------
         brep : :class:`~compas.geometry.Brep`
             The brep representing the plate geometry. Must have at least 5 faces.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the plate's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Plate` constructor.
@@ -401,4 +391,4 @@ class Plate(TimberElement):
         if len(brep.faces) < 5:
             raise ValueError("Brep must have at least 5 faces (2 main + 3 side for a triangular plate). This brep has {}".format(len(brep.faces)))
         outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
-        return cls.from_outlines(outline_a, outline_b, openings=openings, orientation=orientation, **kwargs)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)

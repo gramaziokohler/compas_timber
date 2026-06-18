@@ -128,7 +128,7 @@ class Panel(Element):
             if not all(x is not None for x in [frame, length, width, thickness]):
                 raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
             plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
-        # initialize layer refs before super().__init__ because Element sets self.model = None,
+        # initialize layer refs before super().__init__() because Element sets self.model = None,
         # which triggers Panel.model.setter, which reads these attributes
         self.exterior_layer = None
         self.core_layer = None
@@ -322,7 +322,6 @@ class Panel(Element):
             for idx, child in enumerate(getattr(layer, "sublayers", [])):
                 recurse(child, path + [idx])
 
-        # Collect root layers in a stable order if present
         roots = [getattr(self, name, None) for name in ("exterior_layer", "core_layer", "interior_layer")]
         roots = [r for r in roots if r is not None]
 
@@ -444,9 +443,7 @@ class Panel(Element):
         return plate_geo
 
     @classmethod
-    def from_outline_thickness(
-        cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs
-    ):
+    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
@@ -461,8 +458,6 @@ class Panel(Element):
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of polyline openings to be added to the plate geometry.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -478,10 +473,10 @@ class Panel(Element):
         offset_vector = get_polyline_normal_vector(outline, vector)  # gets vector perpendicular to outline
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls.from_outlines(outline, outline_b, openings=openings, orientation=orientation, **kwargs)
+        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, orientation: Optional[Vector] = None, **kwargs):
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
         """Creates a panel from a single-face brep.
 
         Parameters
@@ -492,8 +487,6 @@ class Panel(Element):
             The thickness of the panel.
         vector : :class:`~compas.geometry.Vector`, optional
             The vector in which the panel is extruded.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Panel` constructor.
@@ -508,10 +501,10 @@ class Panel(Element):
             raise ValueError("Can only use single-face breps to create a Panel. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, orientation=orientation, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, orientation: Optional[Vector] = None, **kwargs):
+    def from_brep(cls, brep: Brep, **kwargs):
         """Creates a panel from a brep by automatically detecting two parallel faces.
 
         This method identifies the two main faces of the brep using topological analysis
@@ -521,8 +514,6 @@ class Panel(Element):
         ----------
         brep : :class:`~compas.geometry.Brep`
             The brep representing the panel geometry. Must have at least 2 parallel faces.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Panel` constructor.
@@ -535,10 +526,10 @@ class Panel(Element):
         if len(brep.faces) < 2:
             raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
         outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
-        return cls.from_outlines(outline_a, outline_b, openings=openings, orientation=orientation, **kwargs)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, orientation: Optional[Vector] = None, **kwargs):
+    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
         """
         Constructs a Panel from two polyline outlines.
 
@@ -555,8 +546,6 @@ class Panel(Element):
             If True, door features will be extracted from the outlines and added as Openings to the Panel.
         horizontal_openings : bool
             If True, openings that are not vertical or horizontal will be extruded horizontally through the Panel.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -570,7 +559,7 @@ class Panel(Element):
         door_polylines = []
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
-        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
+        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
             panel.add_feature(opening)
