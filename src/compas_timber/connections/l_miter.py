@@ -150,7 +150,7 @@ class LMiterJoint(Joint):
         beam_a : :class:`~compas_timber.elements.Beam`
         beam_b : :class:`~compas_timber.elements.Beam`
         miter_plane : :class:`~compas.geometry.Plane`
-            A plane in world coordinates defining the miter cut. Unlike ``ButtJoint.butt_plane_args``, this plane is
+            A plane in world coordinates defining the miter cut. Unlike ``JointCutPlane.from_butt_plane``, this plane is
             unconstrained in orientation.
 
         Returns

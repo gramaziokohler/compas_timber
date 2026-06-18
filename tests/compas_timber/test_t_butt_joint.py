@@ -1,16 +1,21 @@
 import pytest
 
+from compas.data import json_dumps
+from compas.data import json_loads
+from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Frame
+from compas.tolerance import TOL
 
+from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.model import TimberModel
-from compas_timber.elements import PlateFastener
 from compas_timber.elements import FastenerTimberInterface
-from compas_timber.fabrication.pocket import Pocket
+from compas_timber.elements import PlateFastener
 from compas_timber.fabrication.lap import Lap
+from compas_timber.fabrication.pocket import Pocket
+from compas_timber.model import TimberModel
 
 
 def test_create():
@@ -144,3 +149,37 @@ def test_L_butt_joint_features_non_planar_pocket_conical_tool(cross_beam, non_pl
     assert len(cross_beam.features) == 1
     assert len(non_planar_beam.features) == 1
     assert isinstance(cross_beam.features[0], Pocket)
+
+
+def test_t_butt_joint_serialization_default_planes(cross_beam, planar_beam):
+    """Round-trip: joint with no butt_plane override survives JSON serialization."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+    joint = TButtJoint.create(model, planar_beam, cross_beam, mill_depth=10)
+
+    model_copy = json_loads(json_dumps(model))
+    copied_joint = list(model_copy.joints)[0]
+
+    assert isinstance(copied_joint, TButtJoint)
+    assert copied_joint._butt_plane is None
+    assert copied_joint.mill_depth == joint.mill_depth
+
+
+def test_t_butt_joint_serialization_with_butt_plane(cross_beam, planar_beam):
+    """Round-trip: JointCutPlane butt_plane survives JSON serialization."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+    # cross_beam runs along (1, 0, 0); normal must be perpendicular to that axis
+    butt_plane = Plane(Point(100, 0, 0), Vector(0, 1, 0))
+    TButtJoint.create(
+        model,
+        planar_beam,
+        cross_beam,
+        butt_plane=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+    )
+
+    model_copy = json_loads(json_dumps(model))
+    copied_joint = list(model_copy.joints)[0]
+
+    assert copied_joint.butt_plane is not None
+    assert TOL.is_allclose(copied_joint.butt_plane.normal, butt_plane.normal)

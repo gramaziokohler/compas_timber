@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `CutPlaneSpec` to `compas_timber.connections` — a serializable, beam-relative description of a cutting plane stored as `(ref_side_index, angle, offset)`. Build one from a world-coordinate `Plane` with `CutPlaneSpec.from_butt_plane()` or `CutPlaneSpec.from_back_plane()`; resolve it back to a `Plane` with `.to_plane(beam)`.
+* Added `LMiterJoint.miter_plane_args()` static method — converts a world-coordinate `Plane` to the `miter_plane_ref_side_index`/`miter_plane_angle_x`/`miter_plane_angle_y`/`miter_plane_offset` kwargs accepted by the constructor and `create()`.
+* Added `LMiterJoint.miter_plane` property — reconstructs the user-defined miter plane from the stored ref-side parameters, or returns `None` when no override is set.
+
 ### Changed
 
 ### Removed
+
+* **Breaking:** `ButtJoint.__init__` and `LButtJoint.__init__` no longer accept a raw `Plane` for `butt_plane` / `back_plane`. Pass a `CutPlaneSpec` instance instead (build with `CutPlaneSpec.from_butt_plane()` / `CutPlaneSpec.from_back_plane()`). Serialized models using the old format will not deserialize correctly.
+* **Breaking:** `LMiterJoint` no longer accepts a raw `Plane` for `miter_plane`. Use `LMiterJoint.miter_plane_args()` to obtain the equivalent ref-side kwargs and pass those to the constructor or `create()`.
+* **Breaking:** `LButtJoint.modify_cross` now defaults to `True` (was `False`).
 
 ## [2.1.2] 2026-06-16
 
