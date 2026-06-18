@@ -6,8 +6,8 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
-from .solver import JointTopology
 from .butt_joint import CutPlaneSpec
+from .solver import JointTopology
 
 
 class LButtJoint(ButtJoint):
