@@ -213,6 +213,11 @@ class PlateGeometry(Data):
         outline_b : :class:`~compas.geometry.Polyline`
             Associated outline of the plate in global space. Must be parallel to outline_a
             and offset in the plate's normal direction.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector that controls the direction of the local coordinate frame.
+            When provided, the vector is projected onto the outline plane and used to define
+            the local y-axis direction, overriding the frame derived automatically from the
+            outline geometry. If ``None``, the frame is determined from the outline.
 
         Returns
         -------
