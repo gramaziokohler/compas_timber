@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `__version__` to data when serializing `TimberModel` to allow for better handling of version compatibility in the future.
+* Added basic check on de-serialization of `TimberModel` to warn if the version of the data being loaded is different from the current package version.
+
 ### Changed
 
 ### Removed
