@@ -105,10 +105,18 @@ classDiagram
          +features : list[PanelFeature]
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
+         +is_layer : bool = False
+         +exterior_layer : Layer
+         +core_layer : Layer
+         +interior_layer : Layer
+         +layer_tree : dict[tuple, Layer]
+         +layers : Iterable[Layer]
+         +get_leaf_layers : list[Layer]
          +attributes : dict
          +from_outlines(outline_a, outline_b, openings, recognize_doors, horizontal_openings)
          +from_outline_thickness(outline, thickness, vector)
          +from_brep(brep, thickness, vector)
+         +define_core_layer(start, end)
          +compute_elementgeometry(include_features=True)
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
@@ -118,6 +126,29 @@ classDiagram
          +remove_blank_extension(edge_index=None)
          +reset()
          +remove_features(features=None)
+      }
+
+      class Layer {
+         +is_layer : bool = True
+         +panel : Panel
+         +start_level : float
+         +end_level : float
+         +thickness : float
+         +plate_geometry : PlateGeometry
+         +sublayers : list[Layer]
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +planes : tuple[Plane]
+         +normal : Vector
+         +edge_planes : dict[int, Plane]
+         +center_height : float
+         +get_outlines_from_panel_range(panel, range_a, range_b)$
+         +set_extension_plane(edge_index, plane)
+         +apply_edge_extensions()
+         +compute_aabb(inflate=0.0)
+         +compute_obb(inflate=0.0)
+         +compute_collision_mesh()
+         +clear_model_dependent_cache()
       }
 
       class PanelFeature {
@@ -148,12 +179,15 @@ classDiagram
       TimberElement <|-- Beam
       TimberElement <|-- Plate
       Element <|-- Panel
+      Element <|-- Layer
       Element <|-- Fastener
       PanelFeature <|-- Opening
 
       %% Composition relationships
       Fastener ..> FastenerTimberInterface : contains
       Panel ..> PanelFeature : contains
+      Panel "1" *-- "0..3" Layer : exterior/core/interior
+      Layer "1" *-- "0..*" Layer : sublayers
       Opening ..> OpeningType : uses
 ```
 
