@@ -26,11 +26,6 @@ class Layer(Element):
     once attached to the model its ``modeltransformation`` (and all
     world-space properties) compute correctly through the tree.
 
-    :attr:`is_layer` is ``True`` so
-    :class:`~compas_timber.model.TimberModel` keeps layers out of
-    :attr:`~compas_timber.model.TimberModel.panels` while exposing them via
-    :attr:`~compas_timber.model.TimberModel.layers`.
-
     Parameters
     ----------
     panel : :class:`~compas_timber.elements.Panel`
@@ -62,9 +57,6 @@ class Layer(Element):
     edge_planes : dict[int, :class:`~compas.geometry.Plane`]
         World-space edge planes by edge index.
     """
-
-    is_layer = True
-
     # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------

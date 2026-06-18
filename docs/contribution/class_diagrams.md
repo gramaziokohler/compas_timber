@@ -105,7 +105,6 @@ classDiagram
          +features : list[PanelFeature]
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
-         +is_layer : bool = False
          +exterior_layer : Layer
          +core_layer : Layer
          +interior_layer : Layer
@@ -129,7 +128,6 @@ classDiagram
       }
 
       class Layer {
-         +is_layer : bool = True
          +panel : Panel
          +start_level : float
          +end_level : float
