@@ -9,16 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added `CutPlaneSpec` to `compas_timber.connections` — a serializable, beam-relative description of a cutting plane stored as `(ref_side_index, angle, offset)`. Build one from a world-coordinate `Plane` with `CutPlaneSpec.from_butt_plane()` or `CutPlaneSpec.from_back_plane()`; resolve it back to a `Plane` with `.to_plane(beam)`.
-* Added `LMiterJoint.miter_plane_args()` static method — converts a world-coordinate `Plane` to the `miter_plane_ref_side_index`/`miter_plane_angle_x`/`miter_plane_angle_y`/`miter_plane_offset` kwargs accepted by the constructor and `create()`.
-* Added `LMiterJoint.miter_plane` property — reconstructs the user-defined miter plane from the stored ref-side parameters, or returns `None` when no override is set.
+* Added `CutPlaneSpec` — beam-relative cutting plane for butt/back cuts `(ref_side_index, angle, offset)`. Build with `from_butt_plane()` / `from_back_plane()`, resolve with `.to_plane(beam)`.
+* Added `MiterPlaneSpec` — beam-relative cutting plane for miter cuts `(ref_side_index, angle_x, angle_y, offset)`. Build with `from_plane(beam_a, beam_b, plane)`, resolve with `.to_plane(beam)`.
+* Added `LMiterJoint.miter_plane_args()` and `LMiterJoint.miter_plane` to support user-defined miter planes via `MiterPlaneSpec`.
 
 ### Changed
 
 ### Removed
 
-* **Breaking:** `ButtJoint.__init__` and `LButtJoint.__init__` no longer accept a raw `Plane` for `butt_plane` / `back_plane`. Pass a `CutPlaneSpec` instance instead (build with `CutPlaneSpec.from_butt_plane()` / `CutPlaneSpec.from_back_plane()`). Serialized models using the old format will not deserialize correctly.
-* **Breaking:** `LMiterJoint` no longer accepts a raw `Plane` for `miter_plane`. Use `LMiterJoint.miter_plane_args()` to obtain the equivalent ref-side kwargs and pass those to the constructor or `create()`.
+* **Breaking:** `ButtJoint` / `LButtJoint` `butt_plane` / `back_plane` now require a `CutPlaneSpec`, not a raw `Plane`. Old serialized models will not deserialize correctly.
+* **Breaking:** `LMiterJoint` flat params `miter_plane_ref_side_index` / `miter_plane_angle_x` / `miter_plane_angle_y` / `miter_plane_offset` replaced by a single `miter_plane: MiterPlaneSpec`. Use `miter_plane_args()` or `MiterPlaneSpec.from_plane()` to build one. Old serialized models will not deserialize correctly.
 * **Breaking:** `LButtJoint.modify_cross` now defaults to `True` (was `False`).
 
 ## [2.1.2] 2026-06-16

@@ -3,6 +3,7 @@ from .butt_joint import ButtJoint
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
+from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -24,7 +25,7 @@ from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
-from .utilities import CutPlaneSpec
+from .butt_joint import CutPlaneSpec
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
@@ -71,6 +72,7 @@ __all__ = [
     "YButtJoint",
     "TOliGinaJoint",
     "CutPlaneSpec",
+    "MiterPlaneSpec",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",

@@ -7,7 +7,7 @@ from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
 from .solver import JointTopology
-from .utilities import CutPlaneSpec
+from .butt_joint import CutPlaneSpec
 
 
 class LButtJoint(ButtJoint):
