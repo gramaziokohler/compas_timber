@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from compas.data import Data
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Rotation
@@ -357,78 +356,3 @@ def angle_and_dot_product_beam_a_and_beam_b(beam_a: Beam, beam_b: Beam, joint: J
     return angle, dot
 
 
-class CutPlaneSpec(Data):
-    """A cutting plane stored relative to a beam's reference side.
-
-    Encodes a world-coordinate plane as a ``(ref_side_index, angle, offset)`` triple, matching the
-    parameterisation of :func:`plane_from_ref_side_angle_offset`.  Use the named constructors
-    :meth:`from_butt_plane` and :meth:`from_back_plane` to build instances from world-coordinate planes,
-    and :meth:`to_plane` to reconstruct the plane at query time.
-
-    """
-
-    @property
-    def __data__(self):
-        return {"ref_side_index": self.ref_side_index, "angle": self.angle, "offset": self.offset}
-
-    def __init__(self, ref_side_index: int, angle: float = 0.0, offset: float = 0.0):
-        super().__init__()
-        self.ref_side_index = ref_side_index
-        self.angle = angle
-        self.offset = offset
-
-    def to_plane(self, beam: Beam) -> Plane:
-        """Reconstruct the world-coordinate plane relative to `beam`."""
-        ref_side = beam.ref_sides[self.ref_side_index]
-        return plane_from_ref_side_angle_offset(ref_side, self.angle, self.offset)
-
-    @classmethod
-    def from_butt_plane(cls, main_beam: Beam, cross_beam: Beam, plane: Plane) -> CutPlaneSpec:
-        """Encode `plane` relative to the cross beam's face that is closest to the main beam.
-
-        Use this when the plane is intended to cut the **main beam** (i.e. as
-        :attr:`~compas_timber.connections.ButtJoint.butt_plane`).
-
-        Parameters
-        ----------
-        main_beam
-            Main beam of the joint.
-        cross_beam
-            Cross beam of the joint.
-        plane
-            Cutting plane in world coordinates.  Its normal must be perpendicular to the cross beam's
-            centerline axis.
-
-        """
-        if not TOL.is_zero(dot_vectors(cross_beam.frame.xaxis, plane.normal)):
-            raise ValueError("plane normal must be perpendicular to cross_beam centerline axis")
-        ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
-        ref_side_index = min(ref_side_dict, key=lambda k: ref_side_dict[k])
-        ref_side = cross_beam.ref_sides[ref_side_index]
-        angle, offset = decompose_plane_to_ref_side(ref_side, plane, plane_name="butt_plane", reference_name="cross_beam")
-        return cls(ref_side_index, angle, offset)
-
-    @classmethod
-    def from_back_plane(cls, main_beam: Beam, cross_beam: Beam, plane: Plane) -> CutPlaneSpec:
-        """Encode `plane` relative to the back face of the main beam (the face opposite the cross beam).
-
-        Use this when the plane is intended to cut the **cross beam** from behind the main beam (i.e. as
-        :attr:`~compas_timber.connections.LButtJoint.back_plane`).
-
-        Parameters
-        ----------
-        main_beam
-            Main beam of the joint.
-        cross_beam
-            Cross beam of the joint.
-        plane
-            Cutting plane in world coordinates.  Its normal must be perpendicular to the main beam's
-            centerline axis.
-
-        """
-        ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
-        facing_side_index = min(ref_side_dict, key=lambda k: ref_side_dict[k])
-        back_side_index = (facing_side_index + 2) % 4  # opposite face of main_beam
-        ref_side = main_beam.ref_sides[back_side_index]
-        angle, offset = decompose_plane_to_ref_side(ref_side, plane, plane_name="back_plane", reference_name="main_beam")
-        return cls(back_side_index, angle, offset)
