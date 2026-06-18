@@ -389,6 +389,17 @@ classDiagram
       class PanelMiterJoint {
 
       }
+      
+      class KMiterJoint{
+        +cross_beam: Beam
+        +main_beams: list[Beam]
+        +mill_depth: float
+        +force_pocket: bool
+        +conical_tool: bool
+        +are_beams_coplanar()
+        +promote_cluster()
+        +beam_relative_side_to_beam()
+      }
 
       %% Inheritance relationships
       Interaction <|-- Joint
@@ -403,6 +414,7 @@ classDiagram
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
       Joint <|-- PlateJoint
+      Joint <|-- KMiterJoint
 
       PlateJoint <|-- PanelJoint
 
