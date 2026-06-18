@@ -15,7 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Panel.layers` property — iterates over all `Layer` objects attached to the panel.
 * Added `Panel.get_leaf_layers` property — returns all layers without sublayers as a flat ordered list.
 * Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
-* Added `Layer.define_sublayers(...)` — not yet implemented; reserved for future use.
 * Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
 
 ### Changed
