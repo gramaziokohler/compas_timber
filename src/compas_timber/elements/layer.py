@@ -81,6 +81,8 @@ class Layer(Element):
     @classmethod
     def __from_data__(cls, data):
         layer = cls.__new__(cls)
+        layer._sublayers = []  # needed before Element.__init__ triggers model.setter
+        layer._planes = None
         Element.__init__(layer, transformation=data["transformation"], name=data.get("name"))
         layer.plate_geometry = PlateGeometry(
             local_outline_a=data["local_outline_a"],
@@ -107,13 +109,14 @@ class Layer(Element):
     ):
         outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
         self.plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b)
+        # initialize before super().__init__() triggers model.setter which reads self.sublayers
+        self._sublayers = []
+        self._planes = None
         super().__init__(transformation=self.plate_geometry.frame.to_transformation(), name=name, **kwargs)
 
         self.panel = panel
         self.start_level = start_level
         self.end_level = end_level
-        self._sublayers = []
-        self._planes = None
 
     def __repr__(self):
         return "Layer(name={}, position={}, thickness={})".format(self.name, self.frame.point[2], self.thickness)
@@ -283,14 +286,10 @@ class Layer(Element):
         local_outline_b = panel.plate_geometry.outline_b
         if range_a:
             offset = range_a / panel.thickness
-            frame_outline_a = Polyline(
-                [pt_a * (1.0 - offset) + pt_b * offset for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)]
-            )
+            frame_outline_a = Polyline([pt_a * (1.0 - offset) + pt_b * offset for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
         else:
             frame_outline_a = local_outline_a
 
         offset = range_b / panel.thickness
-        frame_outline_b = Polyline(
-            [pt_a * (1.0 - offset) + pt_b * offset for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)]
-        )
+        frame_outline_b = Polyline([pt_a * (1.0 - offset) + pt_b * offset for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
         return frame_outline_a, frame_outline_b

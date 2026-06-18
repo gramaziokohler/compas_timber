@@ -20,9 +20,9 @@ from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
-from compas_timber.elements import Layer
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
@@ -45,6 +45,10 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
+    layers : list[:class:`~compas_timber.elements.Layer`]
+        All :class:`~compas_timber.elements.Layer` objects in the model (cross-section slices of panels).
+        Layers are created by calling :meth:`~compas_timber.elements.Panel.define_core_layer` on a panel;
+        they are then automatically registered as child elements when the panel is added to the model.
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)

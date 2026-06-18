@@ -128,6 +128,12 @@ class Panel(Element):
             if not all(x is not None for x in [frame, length, width, thickness]):
                 raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
             plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
+        # initialize layer refs before super().__init__ because Element sets self.model = None,
+        # which triggers Panel.model.setter, which reads these attributes
+        self.exterior_layer = None
+        self.core_layer = None
+        self.interior_layer = None
+        self._model = None
         super(Panel, self).__init__(transformation=plate_geometry.frame.to_transformation(), **kwargs)  # NOTE: Element wants a transformation, not a frame
         self.plate_geometry = plate_geometry
         self.length = plate_geometry.length
@@ -136,11 +142,7 @@ class Panel(Element):
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
-        self.exterior_layer=None
-        self.core_layer=None
-        self.interior_layer=None
         self._planes = None
-        self._model = None
 
     def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
@@ -266,7 +268,7 @@ class Panel(Element):
     def is_group_element(self):
         return True
 
-    def define_core_layer(self, start: float, end: float) -> "Layer":
+    def define_core_layer(self, start: float, end: float):
         """Slice the panel into ``exterior_layer``, ``core_layer``, and ``interior_layer``.
 
         The three layers cover ``[0, start]``, ``[start, end]``, and
@@ -342,13 +344,13 @@ class Panel(Element):
             if not layer.sublayers:
                 layer_list.append(layer)
             else:
-                for l in layer.sublayers:
-                    walk_sublayers(l)
+                for la in layer.sublayers:
+                    walk_sublayers(la)
 
         for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
-            walk_sublayers(layer)
+            if layer is not None:
+                walk_sublayers(layer)
         return layer_list
-
 
     # ==========================================================================
     #  Implementation of abstract methods
@@ -442,7 +444,9 @@ class Panel(Element):
         return plate_geo
 
     @classmethod
-    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs):
+    def from_outline_thickness(
+        cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs
+    ):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.

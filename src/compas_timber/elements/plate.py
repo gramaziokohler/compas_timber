@@ -310,7 +310,9 @@ class Plate(TimberElement):
         return plate
 
     @classmethod
-    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs):
+    def from_outline_thickness(
+        cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs
+    ):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
