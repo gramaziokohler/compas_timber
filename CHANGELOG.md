@@ -13,17 +13,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-## [2.1.1-rc1] 2026-04-22
+## [2.1.2] 2026-06-16
 
 ### Added
 
-* Added SimpleScarf Joint (i_simple_scarf.py) and BTLx processing (simple_scarf.py) for connecting paralell beams (TOPOLOGY I)
-* Added series of uni tests
-
 ### Changed
-* Changed BTLxProcessingParams._format_value(value) to return int as str as needed for the ScarfJoint
+
+* Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
 
 ### Removed
+
+## [2.1.1] 2026-06-16
+
+### Added
+* Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
+* Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` attribute to `ButtJoint`.
+* Added `force_pocket` and `conical_tool` flags to `TButtJoint`
+* Added `force_pocket` and `conical_tool` flags to `LButtJoint`
+* Added `clear_model_dependent_cache()` to all element classes (`TimberElement`, `Beam`, `Plate`, `Panel`, `Fastener`). Clears only the cached attributes that depend on the element's position in the model hierarchy (world-space geometry, bounding boxes, blank, ref_frame) while preserving model-independent caches such as `_elementgeometry`, features, and blank extensions.
+* Added `TimberModel.remove_element_subtree(element)` — removes all children and their descendants from the model while keeping *element* itself. Joints are cleaned up consistently.
+* Added `TimberModel.extract_model_from_parent(parent)` — moves *parent*'s entire child subtree (hierarchy and joints preserved) into a new standalone `TimberModel` and returns it.
+* Added `TimberModel.merge_model(model, parent=None)` — moves all elements and joints from *model* into this model, optionally re-rooting them under *parent*.
+* Added `clear_model_dependent_cache()` method to `TimberElement`, `Plate`, `Panel`, `Fastener`.
+
+* Added `Opening` panel feature class to `compas_timber.panel_features` for representing door and window cutouts in panels. Includes `Opening.from_outline_panel()` classmethod to create an opening from a single outline and a panel.
+* Added `OpeningType` constants class to `compas_timber.panel_features` with `DOOR` and `WINDOW` string constants.
+* Added `recognize_doors` and `horizontal_openings` parameters to `Panel.from_outlines()`. When `recognize_doors=True`, L-shaped door notches in the wall outline are automatically extracted and added as `Opening` features with `OpeningType.DOOR`.
+* Added `extract_door_openings(outline_a, outline_b)` module-level function in `compas_timber.elements.panel` that detects door cutouts from paired wall outlines by identifying interior segments and geometric constraints.
+
+### Changed
+* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes.
+
+* **Breaking:** `PlateGeometry.__init__` no longer accepts an `openings` parameter. The `openings` attribute has been removed from `PlateGeometry` entirely. Openings are now managed as features on the element, not as data on the geometry object.
+* **Breaking:** `Plate.__init__` no longer accepts an `openings` parameter. Pass openings via `Plate.from_outlines(openings=[...])`, which now adds each opening as a `FreeContour` feature, or add `FreeContour` features directly.
+* **Breaking:** `Panel.__init__` no longer accepts an `openings` parameter. Pass openings via `Panel.from_outlines(openings=[...])`, which now creates `Opening` panel features instead of storing raw polylines on the geometry.
+* `PlateGeometry.get_args_from_outlines()` no longer accepts or returns an `openings` key.
+* `Panel.from_outlines()` signature extended with `recognize_doors=False` and `horizontal_openings=False` keyword arguments.
+* `polyline_from_brep_loop()` now raises `ValueError` when the loop produces more than one polyline, rather than silently returning the first.
+
+### Removed
+
+* Removed unused `TimberModel.topologies` property and the internal `_topologies` list.
+
+* Removed `openings` attribute from `PlateGeometry` — serialization of `PlateGeometry` no longer includes opening data.
+* Removed opening-feature caching (`_opening_features`) from `Plate` — all features are now stored uniformly in `_features`.
+
 
 ## [2.1.1-rc1] 2026-04-01
 

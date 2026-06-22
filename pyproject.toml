@@ -96,7 +96,7 @@ where = ["src"]
 # ============================================================================
 
 [tool.bumpversion]
-current_version = "2.1.1-rc1"
+current_version = "2.1.2"
 message = "Bump version to {new_version}"
 commit = true
 tag = true
@@ -118,6 +118,7 @@ serialize = [
 [tool.bumpversion.parts.pre_l]
 values = ["dev", "rc", "final"]
 optional_value = "final"
+first_value = "final"
 
 [[tool.bumpversion.files]]
 filename = "src/compas_timber/__init__.py"
