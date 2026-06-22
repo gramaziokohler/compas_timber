@@ -1037,12 +1037,8 @@ class BTLxProcessingParams(object):
             return value  # Pass through unchanged for complex serialization
         elif isinstance(value, bool):
             return "yes" if value else "no"
-        # elif isinstance(value, (int, float)):
-        #     return "{:.{prec}f}".format(value, prec=3)
-        elif isinstance(value, (float)):
+        elif isinstance(value, (int, float)):
             return "{:.{prec}f}".format(value, prec=3)
-        elif isinstance(value, (int)):
-            return str(value)
         elif isinstance(value, str):
             return value
         elif isinstance(value, MachiningLimits):
