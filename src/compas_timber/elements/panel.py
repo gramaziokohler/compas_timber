@@ -7,7 +7,7 @@ from typing import Union
 
 if TYPE_CHECKING:
     from compas.datastructures import Mesh  # noqa: F401
-    from compas.geometry import Brep  # noqa: F401
+    from compas_brep import Brep  # noqa: F401
 
     from compas_timber.panel_features import PanelFeature  # noqa: F401
 

@@ -5,13 +5,15 @@ from typing import Union
 
 from compas.datastructures import Mesh  # noqa: F401
 from compas.geometry import Box
-from compas.geometry import Brep  # noqa: F401
 from compas.geometry import Frame  # noqa: F401
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import TOL
+
+# from compas_brep import Brep  # noqa: F401
+from compas_brep import Brep
 from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
