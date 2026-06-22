@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * Added `orientation` parameter to `PlateGeometry.from_global_outlines`, `Panel.from_outlines`, `Panel.from_outline_thickness`, `Panel.from_face_thickness`, `Panel.from_brep`, `Plate.from_outlines`, `Plate.from_outline_thickness`, `Plate.from_face_thickness`, and `Plate.from_brep`. When provided, the vector is projected onto the element's plane and used to control the direction of the local coordinate frame, overriding the frame determined automatically from the input outlines.
+* Added `SimpleScarf` BTLx processing class to `compas_timber.fabrication` for generating simple scarf joint machining operations, including optional drill holes (0, 1, or 2).
+* Added `ISimpleScarf` joint class to `compas_timber.connections` for joining two parallel beams (Topology I) with a simple scarf joint.
+* Added series of unit tests
 
 ### Changed
 
