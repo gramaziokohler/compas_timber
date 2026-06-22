@@ -589,7 +589,7 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = self.joints
+        joints = [j for j in self.joints if not isinstance(j, PanleJoint)]
 
         for joint in joints:
             try:
