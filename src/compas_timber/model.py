@@ -18,6 +18,7 @@ from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
+from compas_timber.base import TimberElement
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
@@ -129,6 +130,16 @@ class TimberModel(Model):
         for edge in self._graph.edges():
             edge_candidate = self._graph.edge_attribute(edge, "candidates")
             if edge_candidate is not None:
+                candidates.add(edge_candidate)
+        return candidates
+
+    @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        candidates = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate and not joint:
                 candidates.add(edge_candidate)
         return candidates
 
@@ -589,7 +600,7 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = [j for j in self.joints if not isinstance(j, PanleJoint)]
+        joints = [j for j in self.joints if not isinstance(j, PanelJoint)]
 
         for joint in joints:
             try:
@@ -722,6 +733,52 @@ class TimberModel(Model):
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
+    def process_panel_joinery(self, stop_on_first_error=False):
+        """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
+
+        The sequence is important here since the feature parameters must be calculated based on the extended blanks.
+        For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
+
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is False.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.BeamJoiningError`]
+            A list of errors that occurred during the joinery process.
+
+        """
+        errors = []
+        joints = [j for j in self.joints if isinstance(j, PanelJoint)]
+
+        for joint in joints:
+            try:
+                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
+                joint.add_extensions()
+            except BeamJoiningError as bje:
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+
+        for panel in self.panels:
+            panel.apply_edge_extensions()
+
+        for joint in joints:
+            try:
+                joint.add_features()
+            except BeamJoiningError as bje:
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+
+            except ValueError as ve:
+                bje = BeamJoiningError(joint.elements, joint, debug_info=str(ve))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+        return errors
     # =============================================================================
     # Model sub-tree surgery
     # =============================================================================
