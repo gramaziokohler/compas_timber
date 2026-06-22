@@ -360,3 +360,55 @@ def test_extract_door_openings_mismatched_interior_indices_no_error():
     # must not raise; directions don't match so no door is generated
     _, _, openings = extract_door_openings(outline_a, outline_b)
     assert openings == []
+
+
+# ---------------------------------------------------------------------------
+# orientation parameter
+# ---------------------------------------------------------------------------
+
+_FLAT_OUTLINE = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+_SLOPED_OUTLINE = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+
+def test_panel_orientation_does_not_change_normal_or_outlines():
+    panel_default = Panel.from_outline_thickness(_FLAT_OUTLINE, 1)
+    panel_oriented = Panel.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+
+    assert TOL.is_allclose(panel_default.normal, panel_oriented.normal)
+    assert TOL.is_close(panel_default.thickness, panel_oriented.thickness)
+    for pt_d, pt_o in zip(panel_default.outline_a.points, panel_oriented.outline_a.points):
+        assert TOL.is_allclose(pt_d, pt_o)
+    for pt_d, pt_o in zip(panel_default.outline_b.points, panel_oriented.outline_b.points):
+        assert TOL.is_allclose(pt_d, pt_o)
+
+
+def test_panel_orientation_changes_local_frame():
+    panel_default = Panel.from_outline_thickness(_FLAT_OUTLINE, 1)
+    panel_oriented = Panel.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+
+    assert not TOL.is_allclose(panel_default.frame.xaxis, panel_oriented.frame.xaxis)
+    assert not TOL.is_allclose(panel_default.frame.yaxis, panel_oriented.frame.yaxis)
+
+
+def test_panel_orientation_explicit_frame_flat():
+    # orientation=Y on this flat panel rotates the local frame 90° CW:
+    # xaxis becomes -world-Y, yaxis becomes +world-X
+    panel = Panel.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+    assert TOL.is_allclose(panel.frame.xaxis, [0, -1, 0])
+    assert TOL.is_allclose(panel.frame.yaxis, [1, 0, 0])
+
+
+def test_panel_orientation_explicit_frame_sloped():
+    # orientation=X on the sloped panel: yaxis aligns with the panel's slope direction
+    panel = Panel.from_outline_thickness(_SLOPED_OUTLINE, 1, orientation=Vector(1, 0, 0))
+    assert TOL.is_allclose(panel.frame.xaxis, [-1, 0, 0])
+    assert TOL.is_allclose(panel.frame.yaxis, [0, 0.7071067811865476, 0.7071067811865476])
+
+
+def test_panel_from_outlines_orientation():
+    outline_b = Polyline([pt.translated(Vector(0, 0, 1)) for pt in _FLAT_OUTLINE.points])
+    panel_default = Panel.from_outlines(_FLAT_OUTLINE, outline_b)
+    panel_oriented = Panel.from_outlines(_FLAT_OUTLINE, outline_b, orientation=Vector(0, 1, 0))
+
+    assert not TOL.is_allclose(panel_default.frame.xaxis, panel_oriented.frame.xaxis)
+    assert TOL.is_allclose(panel_default.normal, panel_oriented.normal)

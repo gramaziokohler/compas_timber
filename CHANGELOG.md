@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `orientation` parameter to `PlateGeometry.from_global_outlines`, `Panel.from_outlines`, `Panel.from_outline_thickness`, `Panel.from_face_thickness`, `Panel.from_brep`, `Plate.from_outlines`, `Plate.from_outline_thickness`, `Plate.from_face_thickness`, and `Plate.from_brep`. When provided, the vector is projected onto the element's plane and used to control the direction of the local coordinate frame, overriding the frame determined automatically from the input outlines.
+
 ### Changed
+
+* `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, replacing the previous hard-coded `outline_a[-2]` index which could fail on outlines where the second-to-last point is colinear with the first edge.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check (which ensures `outline_b` is in the positive-Z half of the local frame) was applied *after* computing `transform_to_world_xy`, producing an incorrect transform and malformed local coordinates for outlines whose natural frame normal pointed in the −Z direction.
 
 ### Removed
 
@@ -18,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
-
+* Added `**kwargs` passthrough to all `Beam` constructors.
 * Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
 
 ### Removed
