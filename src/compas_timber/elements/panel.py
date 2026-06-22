@@ -128,6 +128,12 @@ class Panel(Element):
             if not all(x is not None for x in [frame, length, width, thickness]):
                 raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
             plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
+        # initialize layer refs before super().__init__() because Element sets self.model = None,
+        # which triggers Panel.model.setter, which reads these attributes
+        self.exterior_layer = None
+        self.core_layer = None
+        self.interior_layer = None
+        self._model = None
         super(Panel, self).__init__(transformation=plate_geometry.frame.to_transformation(), **kwargs)  # NOTE: Element wants a transformation, not a frame
         self.plate_geometry = plate_geometry
         self.length = plate_geometry.length
@@ -143,6 +149,20 @@ class Panel(Element):
 
     def __str__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
+
+    @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        self._model = model
+        for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
+            if layer is None:
+                continue
+            if layer.model is not model:
+                self._model.add_element(layer, parent=self)
+            layer.clear_model_dependent_cache()
 
     @property
     def geometry(self):
@@ -186,12 +206,18 @@ class Panel(Element):
         return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
-        """Sets an extension plane for a specific edge of the plate. This is called by plate joints."""
+        """Sets an extension plane for a specific edge of the plate. This is called by PanelJoints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+        for layer in [self.interior_layer, self.core_layer, self.exterior_layer]:
+            if layer:
+                layer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
-        """adjusts segments of the outlines to lay on the edge planes created by plate joints."""
+        """adjusts segments of the outlines to lay on the edge planes created by PanelJoints."""
         self.plate_geometry.apply_edge_extensions()
+        for layer in (self.exterior_layer, self.core_layer, self.interior_layer):
+            if layer:
+                layer.apply_edge_extensions()
 
     def remove_blank_extension(self, edge_index: Optional[int] = None):
         """Removes any extension plane for the given edge index."""
@@ -241,8 +267,91 @@ class Panel(Element):
     @property
     def is_group_element(self):
         return True
-        # ==========================================================================
 
+    def define_core_layer(self, start: float, end: float):
+        """Slice the panel into ``exterior_layer``, ``core_layer``, and ``interior_layer``.
+
+        The three layers cover ``[0, start]``, ``[start, end]``, and
+        ``[end, thickness]`` respectively, where ``start`` and ``end`` are measured
+        from the panel's ``outline_a`` face.
+
+        Parameters
+        ----------
+        start : float
+            Through-thickness offset where the core layer begins.
+        end : float
+            Through-thickness offset where the core layer ends.
+        """
+        # import here to avoid circular import
+        from compas_timber.elements.layer import Layer
+
+        if start < 0 or end > self.thickness or start >= end:
+            raise ValueError("Invalid core layer range. Start and end must be within the panel thickness and start must be less than end.")
+
+        if self.model:
+            for old_layer in (self.exterior_layer, self.core_layer, self.interior_layer):
+                if old_layer is not None:
+                    self.model.remove_element_subtree(old_layer)
+
+        self.exterior_layer = Layer(self, 0, start, name="Exterior Layer") if start > 0 else None
+        self.core_layer = Layer(self, start, end, name="Core Layer")
+        self.interior_layer = Layer(self, end, self.thickness, name="Interior Layer") if end < self.thickness else None
+        if self.model:
+            for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
+                if layer is not None:
+                    self.model.add_element(layer, parent=self)
+
+    @property
+    def layer_tree(self):
+        """Return a mapping of hierarchical indices to Layer instances.
+
+        The method recursively traverses each top-level layer attached to
+        the panel (``exterior_layer``, ``core_layer``, ``interior_layer`` if
+        present) and their ``sublayers``. Keys are tuples of integers
+        describing the path from a root to the layer node.
+
+        Returns
+        -------
+        dict[tuple[int, ...], Layer]
+            Mapping from path tuples to Layer objects.
+        """
+        layers = {}
+
+        def recurse(layer, path):
+            layers[tuple(path)] = layer
+            for idx, child in enumerate(getattr(layer, "sublayers", [])):
+                recurse(child, path + [idx])
+
+        roots = [getattr(self, name, None) for name in ("exterior_layer", "core_layer", "interior_layer")]
+        roots = [r for r in roots if r is not None]
+
+        for root_index, root in enumerate(roots):
+            recurse(root, [root_index])
+
+        return layers
+
+    @property
+    def layers(self):
+        return self.layer_tree.values()
+
+    @property
+    def get_leaf_layers(self):
+        """get all layers that don't have *sublayers*. useful for making flat ordered list of layers"""
+        layer_list = []
+
+        def walk_sublayers(layer):
+            if not layer.sublayers:
+                layer_list.append(layer)
+            else:
+                for la in layer.sublayers:
+                    walk_sublayers(la)
+
+        for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
+            if layer is not None:
+                walk_sublayers(layer)
+        return layer_list
+
+    # ==========================================================================
     #  Implementation of abstract methods
     # ==========================================================================
 
