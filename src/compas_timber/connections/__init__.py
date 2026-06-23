@@ -1,5 +1,6 @@
 from .joint import Joint
 from .butt_joint import ButtJoint
+from .i_simple_scarf import ISimpleScarf
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
@@ -47,6 +48,7 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "ISimpleScarf",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
