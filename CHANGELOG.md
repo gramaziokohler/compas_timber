@@ -9,10 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, defined by `start_level` and `end_level` (in the panel's thickness direction). `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
+* Added `Panel.define_core_layer(start, end)` — slices a panel into `exterior_layer`, `core_layer`, and `interior_layer`. Layers are automatically registered in the model when the panel already belongs to one; calling `define_core_layer` again replaces any previously-defined layers.
+* Added `Panel.layer_tree` property — returns a `{tuple: Layer}` mapping that describes the full layer hierarchy including sublayers.
+* Added `Panel.layers` property — iterates over all `Layer` objects attached to the panel.
+* Added `Panel.get_leaf_layers` property — returns all layers without sublayers as a flat ordered list.
+* Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
+* Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
+
 * Added `TimberModel.unpromoted_joint_candidates` property — returns the subset of joint candidates that do not yet have a joint assigned on their edge.
 * Added `TimberModel.process_panel_joinery()` — processes only `PanelJoint` instances (extensions → `apply_edge_extensions` on panels → features), mirroring the existing `process_joinery` flow for beam joints.
 
 ### Changed
+
+* `Panel.set_extension_plane` and `Panel.apply_edge_extensions` now propagate to all attached layers.
+* `Panel.model` is now a property/setter pair; when a panel is added to the model, any pre-existing layers are automatically added as child elements.
 
 * `TimberModel.process_joinery()` now skips `PanelJoint` instances. Use `process_panel_joinery()` to process panel-specific joints.
 
