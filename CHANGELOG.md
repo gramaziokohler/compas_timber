@@ -34,7 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
 * Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
 * Added `allow_undercut` flag in `Pocket.from_volume_and_element`
-* Added `back_plane` attribute to `ButtJoint`.
+* Added `back_plane` property to `LButtJoint`, stored as `back_plane_ref_side_index`/`back_plane_angle`/`back_plane_offset`.
+* Added `ButtJoint.butt_plane_args()`, `LButtJoint.back_plane_args()`, and `LMiterJoint.miter_plane_args()` static methods that convert a world-coordinate `Plane` to the corresponding ref_side kwargs, for use with the constructor or `create()`.
 * Added `force_pocket` and `conical_tool` flags to `TButtJoint`
 * Added `force_pocket` and `conical_tool` flags to `LButtJoint`
 * Added `clear_model_dependent_cache()` to all element classes (`TimberElement`, `Beam`, `Plate`, `Panel`, `Fastener`). Clears only the cached attributes that depend on the element's position in the model hierarchy (world-space geometry, bounding boxes, blank, ref_frame) while preserving model-independent caches such as `_elementgeometry`, features, and blank extensions.
@@ -43,17 +44,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.merge_model(model, parent=None)` — moves all elements and joints from *model* into this model, optionally re-rooting them under *parent*.
 * Added `clear_model_dependent_cache()` method to `TimberElement`, `Plate`, `Panel`, `Fastener`.
 
+* Added `plane_from_ref_side_angle_offset`, `decompose_plane_to_ref_side`, `plane_from_ref_side_angles_offset` and `decompose_plane_to_ref_side_angles` functions in `compas_timber.connections.utilities`.
 * Added `Opening` panel feature class to `compas_timber.panel_features` for representing door and window cutouts in panels. Includes `Opening.from_outline_panel()` classmethod to create an opening from a single outline and a panel.
 * Added `OpeningType` constants class to `compas_timber.panel_features` with `DOOR` and `WINDOW` string constants.
 * Added `recognize_doors` and `horizontal_openings` parameters to `Panel.from_outlines()`. When `recognize_doors=True`, L-shaped door notches in the wall outline are automatically extracted and added as `Opening` features with `OpeningType.DOOR`.
 * Added `extract_door_openings(outline_a, outline_b)` module-level function in `compas_timber.elements.panel` that detects door cutouts from paired wall outlines by identifying interior segments and geometric constraints.
 
 ### Changed
-* Refactored `ButtJoint` to calculate trimming planes with the `butt_plane` and `back_plane` attributes.
-
 * **Breaking:** `PlateGeometry.__init__` no longer accepts an `openings` parameter. The `openings` attribute has been removed from `PlateGeometry` entirely. Openings are now managed as features on the element, not as data on the geometry object.
 * **Breaking:** `Plate.__init__` no longer accepts an `openings` parameter. Pass openings via `Plate.from_outlines(openings=[...])`, which now adds each opening as a `FreeContour` feature, or add `FreeContour` features directly.
 * **Breaking:** `Panel.__init__` no longer accepts an `openings` parameter. Pass openings via `Panel.from_outlines(openings=[...])`, which now creates `Opening` panel features instead of storing raw polylines on the geometry.
+* Refactored `ButtJoint` to calculate the main beam's trimming plane via the `butt_plane` attribute, and the cross beam's refinement plane (when `modify_cross` is True) via an overridable `_back_cutting_plane()` hook.
+* **Breaking:** `ButtJoint.butt_plane`, `LButtJoint.back_plane` and `LMiterJoint.miter_plane` are no longer stored as a frozen `Plane`. They are now stored as a `ref_side_index` plus rotation angle(s) and an offset relative to a beam's reference side, so they stay correct after `model.transform()` without special-casing. To supply a world-coordinate cutting plane, use the new `butt_plane_args()` / `back_plane_args()` / `miter_plane_args()` static methods to obtain the corresponding kwargs, then pass them to the constructor or `create()`.
 * `PlateGeometry.get_args_from_outlines()` no longer accepts or returns an `openings` key.
 * `Panel.from_outlines()` signature extended with `recognize_doors=False` and `horizontal_openings=False` keyword arguments.
 * `polyline_from_brep_loop()` now raises `ValueError` when the loop produces more than one polyline, rather than silently returning the first.

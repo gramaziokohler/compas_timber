@@ -18,8 +18,6 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
     fastener : :class:`~compas_timber.elements.Fastener`, optional
         The fastener to be used in the joint.
 
@@ -31,32 +29,16 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
+    butt_plane : :class:`~compas.geometry.Plane`, optional
+        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used. Use
+        :meth:`create` with a `butt_plane` argument to set this with a plane in world coordinates.
 
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    def __init__(
-        self,
-        main_beam=None,
-        cross_beam=None,
-        mill_depth=None,
-        butt_plane=None,
-        force_pocket=False,
-        conical_tool=False,
-        fastener=None,
-        **kwargs,
-    ):
-        super(TButtJoint, self).__init__(
-            main_beam=main_beam,
-            cross_beam=cross_beam,
-            mill_depth=mill_depth,
-            butt_plane=butt_plane,
-            force_pocket=force_pocket,
-            conical_tool=conical_tool,
-            **kwargs,
-        )
-
+    def __init__(self, main_beam=None, cross_beam=None, mill_depth=None, fastener=None, modify_cross=False, **kwargs):
+        super(TButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, **kwargs)
         self.fasteners = []
         if fastener:
             if fastener.outline is None:
