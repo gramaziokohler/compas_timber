@@ -205,6 +205,7 @@ class Layer(Element):
 
     def clear_model_dependent_cache(self):
         """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        self._model = None
         self._modeltransformation = None
         self._modelgeometry = None
         self._aabb = None

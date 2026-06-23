@@ -885,6 +885,8 @@ class TimberModel(Model):
         for tuple_parent, children in tuples:
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
+                if child in self.elements():
+                    continue
                 self.add_element(child, parent=target_parent)
                 child.clear_model_dependent_cache()
         if joints:
@@ -914,6 +916,7 @@ class TimberModel(Model):
             A new model containing *parent*'s former subtree.
         """
         tuples, joints = self._detach_subtree(parent)
+        print(tuples)
         new_model = TimberModel()
         new_model._attach_subtree(tuples, joints=joints)
         return new_model
