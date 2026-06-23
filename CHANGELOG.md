@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `CompositeJoint`, which is a Joint composed of a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `CompositeJointRule` in timber_design repo.
 
 * Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, defined by `start_level` and `end_level` (in the panel's thickness direction). `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
 * Added `Panel.define_core_layer(start, end)` — slices a panel into `exterior_layer`, `core_layer`, and `interior_layer`. Layers are automatically registered in the model when the panel already belongs to one; calling `define_core_layer` again replaces any previously-defined layers.
