@@ -15,8 +15,11 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
+from compas_timber.connections import PanelMiterJoint
+from compas_timber.connections import PlateConnectionSolver
 from compas.geometry import Line
 from compas_timber.elements import Beam
+from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -518,3 +521,100 @@ def test_element_by_guid_deprecated_warning(mocker):
     _ = model.element_by_guid(str(beam.guid))
 
     warn_spy.assert_called_once()
+
+
+# =============================================================================
+# unpromoted_joint_candidates
+# =============================================================================
+
+
+def _two_panel_model_with_miter_joint():
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    panel_a = Panel.from_outline_thickness(Polyline(list(polyline_a.points)), 1)
+    panel_b = Panel.from_outline_thickness(Polyline(list(polyline_b.points)), 1)
+    model = TimberModel()
+    model.add_elements([panel_a, panel_b])
+    cs = PlateConnectionSolver()
+    tr = cs.find_topology(panel_a, panel_b)
+    joint = PanelMiterJoint.create(model, tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index)
+    return model, panel_a, panel_b, joint
+
+
+def test_unpromoted_joint_candidates_empty():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    assert len(model.unpromoted_joint_candidates) == 0
+
+
+def test_unpromoted_joint_candidates_returns_candidate_without_joint():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    model.connect_adjacent_beams()
+    unpromoted = model.unpromoted_joint_candidates
+    assert len(unpromoted) == 1
+
+
+def test_unpromoted_joint_candidates_excludes_promoted():
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    b3 = Beam(Frame.worldZX(), length=1.0, width=0.1, height=0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    model.add_element(b3)
+
+    model.connect_adjacent_beams()
+    assert len(model.unpromoted_joint_candidates) == 3
+
+    LButtJoint.create(model, b1, b2)
+
+    assert len(model.unpromoted_joint_candidates) == 2
+
+
+# =============================================================================
+# process_joinery / process_panel_joinery separation
+# =============================================================================
+
+
+def test_process_joinery_skips_panel_joints(mocker):
+    model, _, _, _ = _two_panel_model_with_miter_joint()
+    mock_add_extensions = mocker.patch.object(PanelMiterJoint, "add_extensions")
+    mock_add_features = mocker.patch.object(PanelMiterJoint, "add_features")
+    model.process_joinery()
+    mock_add_extensions.assert_not_called()
+    mock_add_features.assert_not_called()
+
+
+def test_process_panel_joinery_returns_list():
+    model = TimberModel()
+    errors = model.process_panel_joinery()
+    assert isinstance(errors, list)
+    assert len(errors) == 0
+
+
+def test_process_panel_joinery_calls_extensions_and_features(mocker):
+    model, _, _, _ = _two_panel_model_with_miter_joint()
+    mock_add_extensions = mocker.patch.object(PanelMiterJoint, "add_extensions")
+    mock_add_features = mocker.patch.object(PanelMiterJoint, "add_features")
+    model.process_panel_joinery()
+    mock_add_extensions.assert_called_once()
+    mock_add_features.assert_called_once()
+
+
+def test_process_panel_joinery_skips_beam_joints(mocker):
+    model = TimberModel()
+    b1 = Beam(Frame.worldXY(), length=1.0, width=0.1, height=0.1)
+    b2 = Beam(Frame.worldYZ(), length=1.0, width=0.1, height=0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    LButtJoint.create(model, b1, b2)
+    mock_add_features = mocker.patch.object(LButtJoint, "add_features")
+    model.process_panel_joinery()
+    mock_add_features.assert_not_called()

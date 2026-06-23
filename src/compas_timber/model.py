@@ -18,7 +18,6 @@ from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
-from compas_timber.base import TimberElement
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
@@ -779,6 +778,7 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
     # =============================================================================
     # Model sub-tree surgery
     # =============================================================================

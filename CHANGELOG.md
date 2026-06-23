@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `TimberModel.unpromoted_joint_candidates` property — returns the subset of joint candidates that do not yet have a joint assigned on their edge.
+* Added `TimberModel.process_panel_joinery()` — processes only `PanelJoint` instances (extensions → `apply_edge_extensions` on panels → features), mirroring the existing `process_joinery` flow for beam joints.
+
 ### Changed
+
+* `TimberModel.process_joinery()` now skips `PanelJoint` instances. Use `process_panel_joinery()` to process panel-specific joints.
 
 ### Removed
 
