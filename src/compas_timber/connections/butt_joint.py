@@ -117,8 +117,8 @@ class ButtJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane` is provided.
-    butt_plane : :class:`~compas_timber.connections.JointCutPlane`, optional
+        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane_spec` is provided.
+    butt_plane_spec : :class:`~compas_timber.connections.JointCutPlane`, optional
         Overrides the plane used to cut the main beam. Build with
         :meth:`~compas_timber.connections.JointCutPlane.from_butt_plane`.
     force_pocket : bool
@@ -155,7 +155,7 @@ class ButtJoint(Joint):
     def __data__(self):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
-        data["butt_plane"] = self._butt_plane
+        data["butt_plane_spec"] = self._butt_plane_spec
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -165,14 +165,14 @@ class ButtJoint(Joint):
         main_beam: Beam = None,
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
-        butt_plane: Optional[CutPlaneSpec] = None,
+        butt_plane_spec: Optional[CutPlaneSpec] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth: float = mill_depth or 0.0
-        self._butt_plane: Optional[CutPlaneSpec] = butt_plane
+        self._butt_plane_spec: Optional[CutPlaneSpec] = butt_plane_spec
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
         self.features = []
@@ -208,8 +208,8 @@ class ButtJoint(Joint):
         If a :class:`~compas_timber.connections.JointCutPlane` override is set, it is resolved against the cross beam.
         Otherwise defaults to the cross beam's side closest to the main beam, offset outward by `mill_depth`.
         """
-        if self._butt_plane is not None:
-            return self._butt_plane.to_plane(self.cross_beam)
+        if self._butt_plane_spec is not None:
+            return self._butt_plane_spec.to_plane(self.cross_beam)
         # default: the cross beam's closest side, facing the main beam, offset by mill_depth
         ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
         return plane_from_ref_side_angle_offset(ref_side, math.pi, self.mill_depth)

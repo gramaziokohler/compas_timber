@@ -132,8 +132,8 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
         model,
         main_beam=planar_beam,
         cross_beam=cross_beam,
-        butt_plane=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
-        back_plane=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
     )
 
     assert joint.butt_plane is not None
@@ -156,8 +156,8 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
         model,
         main_beam=planar_beam,
         cross_beam=cross_beam,
-        butt_plane=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
-        back_plane=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
     )
 
     # copy the model via JSON round-trip
@@ -227,7 +227,7 @@ def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam)
         model,
         main_beam=planar_beam,
         cross_beam=cross_beam,
-        butt_plane=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, offset_plane),
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, offset_plane),
     )
 
     assert TOL.is_allclose(joint.butt_plane.normal, offset_plane.normal)

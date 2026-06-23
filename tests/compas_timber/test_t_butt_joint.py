@@ -161,7 +161,7 @@ def test_t_butt_joint_serialization_default_planes(cross_beam, planar_beam):
     copied_joint = list(model_copy.joints)[0]
 
     assert isinstance(copied_joint, TButtJoint)
-    assert copied_joint._butt_plane is None
+    assert copied_joint._butt_plane_spec is None
     assert copied_joint.mill_depth == joint.mill_depth
 
 
@@ -175,7 +175,7 @@ def test_t_butt_joint_serialization_with_butt_plane(cross_beam, planar_beam):
         model,
         planar_beam,
         cross_beam,
-        butt_plane=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
     )
 
     model_copy = json_loads(json_dumps(model))
