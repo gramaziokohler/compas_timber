@@ -5,6 +5,7 @@ from typing import Optional
 
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
+from compas.geometry import Vector
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
@@ -127,6 +128,7 @@ class ButtJoint(Joint):
             if self.mill_depth:
                 cutting_plane.translate(cutting_plane.normal * self.mill_depth)
             self._butt_plane = Plane.from_frame(cutting_plane)
+        print(self._butt_plane)
         return self._butt_plane
 
     def add_extensions(self):
@@ -189,9 +191,32 @@ class ButtJoint(Joint):
     def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])
         bottom_plane = self.butt_plane
+        print(bottom_plane)
         side_a_plane = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index])
         side_b_plane = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
         end_a_plane = Plane.from_frame(self.main_beam.front_side(self.main_beam_ref_side_index))
         end_b_plane = Plane.from_frame(self.main_beam.back_side(self.main_beam_ref_side_index))
 
         return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Butt joint.
+        
+        Returns a Plane representing the 2-DOF sliding freedom if there is a pocket/lap,
+        otherwise returns a Vector representing a 3-DOF half-space.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        if moving_element == self.cross_beam:
+            plane = self.butt_plane
+            normal = self.butt_plane.normal
+            
+        elif moving_element == self.main_beam:
+            plane = self.butt_plane.copy()
+            normal = plane.normal * -1
+            
+        if self.mill_depth:
+            return plane
+        else:
+            return normal

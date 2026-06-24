@@ -1,3 +1,4 @@
+from compas.geometry import Line
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import Lap
@@ -143,3 +144,18 @@ class TBirdsmouthJoint(Joint):
             # register cross features to beam and joint
             self.cross_beam.add_features([cross_feature_1, cross_feature_2])
             self.features.extend([cross_feature_1, cross_feature_2])
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the TBirdsmouth joint."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        plane_1 = self.cross_beam.ref_sides[self.cross_ref_side_indices[0]]
+        plane_2 = self.cross_beam.ref_sides[self.cross_ref_side_indices[1]]
+        escape_vector = plane_1.normal + plane_2.normal
+        escape_vector.unitize()
+        
+        if moving_element == self.main_beam:
+            return Line(self.location, self.location + escape_vector)
+        elif moving_element == self.cross_beam:
+            return Line(self.location, self.location - escape_vector)

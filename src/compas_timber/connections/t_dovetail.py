@@ -1,5 +1,6 @@
 import math
 
+from compas.geometry import Line
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
@@ -278,3 +279,21 @@ class TDovetailJoint(Joint):
         self._height = tool_height
         self._flank_angle = tool_angle
         self._shape_radius = tool_top_radius
+
+    def calculate_groove_axis(self):
+        """Placeholder for actual calculation."""
+        raise NotImplementedError("Groove axis calculation needs to be implemented for accurate 1-DOF constraint.")
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the 1-DOF strict linear escape constraint for a dovetail."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        # Assuming `calculate_groove_axis()` returns the Vector of the groove
+        groove_axis = self.calculate_groove_axis() 
+        
+        if moving_element == self.cross_beam:
+            return Line(self.location, self.location + groove_axis)
+            
+        elif moving_element == self.main_beam:
+            return Line(self.location, self.location + (groove_axis * -1))

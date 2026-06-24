@@ -1,5 +1,6 @@
 import warnings
 
+from compas.geometry import Line
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
@@ -260,3 +261,14 @@ class TStepJoint(Joint):
                 raise BeamJoiningError(elements, cls, debug_info="The the two beams are not aligned to create a Step joint.")
 
         return True
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the TStep joint."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        escape_vector = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+        if moving_element == self.main_beam:
+            return Line(self.location, self.location + escape_vector)
+        elif moving_element == self.cross_beam:
+            return Line(self.location, self.location - escape_vector)

@@ -204,3 +204,17 @@ class LapJoint(Joint):
         if self.flip_lap_side:
             return negative_polyhedron_beam_b, negative_polyhedron_beam_a
         return negative_polyhedron_beam_a, negative_polyhedron_beam_b
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Lap joint.
+        
+        Returns a Plane representing the 2-DOF sliding freedom along the lap plane.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        if moving_element == self.beam_a:
+            return self.cutting_plane_a 
+            
+        elif moving_element == self.beam_b:
+            return self.cutting_plane_b

@@ -5,6 +5,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.tolerance import TOL
 
@@ -292,3 +293,13 @@ class ISimpleScarf(Joint):
 
         if self.depth_opp_side is None:
             self.depth_opp_side = height * self.DEFAULT_DEPTH_TO_HEIGHT_RATIO
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the ISimpleScarf joint."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        if moving_element == self.main_beam:
+            return Line(self.location, self.location + self.main_beam.centerline.direction)
+        elif moving_element == self.cross_beam:
+            return Line(self.location, self.location + self.cross_beam.centerline.direction)

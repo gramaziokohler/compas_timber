@@ -280,3 +280,17 @@ class LMiterJoint(Joint):
             self.beam_b.add_features(clean_cuts_b)
             self.features.extend(clean_cuts_a)
             self.features.extend(clean_cuts_b)
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the LMiter joint."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+        try:
+            plane_a, plane_b = self.cutting_planes
+        except Exception:
+            return super(LMiterJoint, self).get_kinematic_constraint(moving_element)
+            
+        if moving_element == self.beam_a:
+            return plane_a
+        elif moving_element == self.beam_b:
+            return plane_b

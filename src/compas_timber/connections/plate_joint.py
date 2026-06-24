@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractmethod
 
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas.geometry import dot_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -179,3 +180,14 @@ class PlateJoint(Joint, ABC):
         if self.topology == JointTopology.TOPO_EDGE_EDGE:
             if dot_vectors(self.plate_a.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_b.outline_a, self.b_segment_index)) < 0:
                 self._reverse_a_planes = True
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Plate joint."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        # Fallback 3-DOF half-space vector for plates
+        if moving_element == self.plate_a:
+            return Vector.from_start_end(self.plate_b.frame.point, self.plate_a.frame.point)
+        elif moving_element == self.plate_b:
+            return Vector.from_start_end(self.plate_a.frame.point, self.plate_b.frame.point)

@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from compas.data import Data
 from compas.geometry import Point
 from compas.geometry import distance_point_line
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
@@ -14,8 +17,6 @@ from compas_timber.utils import distance_segment_segment_points
 from .solver import JointTopology
 
 if TYPE_CHECKING:
-    from compas.geometry import Vector
-
     from compas_timber.elements.beam import Beam
 
 
@@ -250,6 +251,31 @@ class Joint(Data):
 
         """
         pass
+
+    def get_kinematic_constraint(self, moving_element):
+        """Returns the geometric freedom to pull `moving_element` out of this joint.
+        
+        This assumes the other element in the joint is completely static/fixed.
+        
+        Parameters
+        ----------
+        moving_element : :class:`~compas_timber.elements.Beam`
+            The element being extracted from the joint.
+            
+        Returns
+        -------
+        compas.geometry.Line | compas.geometry.Plane | compas.geometry.Vector
+            The kinematic escape constraint.
+        """
+        if moving_element not in self.elements:
+            raise ValueError(f"Element {moving_element} is not part of {self.name}.")
+            
+        # Generic Fallback: 3-DOF Half-Space separating the two elements
+        static_element = self.element_a if moving_element == self.element_b else self.element_b
+        
+        v = Vector.from_start_end(static_element.centerline.midpoint, moving_element.centerline.midpoint)
+        v.unitize()
+        return v
 
     def get_beam_direction_towards_joint(self, beam: Beam) -> Vector:
         """Returns the direction of the beam towards the joint.
