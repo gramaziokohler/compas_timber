@@ -131,7 +131,6 @@ class TBirdsmouthJoint(Joint):
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
                 ref_side_index=self.cross_ref_side_indices[0],
             )
             cross_feature_2 = Lap.from_plane_and_beam(
@@ -139,7 +138,6 @@ class TBirdsmouthJoint(Joint):
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
                 ref_side_index=self.cross_ref_side_indices[1],
             )
 
