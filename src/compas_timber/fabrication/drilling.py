@@ -193,6 +193,11 @@ class Drilling(BTLxProcessing):
         if ref_side_index is None:
             ref_side_index, _ = cls._calculate_ref_side_index(line, element)
 
+        # check if the line intersects with the reference side, if not, raise an error
+        intersection = intersection_line_plane(line, Plane.from_frame(element.ref_sides[ref_side_index]))
+        if not intersection:
+            raise ValueError("The line does not intersect with the reference side.")
+
         ref_side = element.side_as_surface(ref_side_index)
         xy_point = Point(*intersection_line_plane(line, ref_side.to_plane()))
 
@@ -298,7 +303,6 @@ class Drilling(BTLxProcessing):
         # angle goes between -180 and 180 but we need it between 0 and 360
         if angle < 0:
             angle += 360
-
         return angle
 
     @staticmethod

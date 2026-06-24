@@ -406,10 +406,12 @@ class Beam(TimberElement):
     def _resolve_blank_extensions(self):
         # type: () -> tuple[float, float]
         """Returns the max amount by which to extend the beam at both ends."""
-        if not self._blank_extensions:
-            return 0.0, 0.0
-        starts, ends = zip(*self._blank_extensions.values())
-        return max(starts), max(ends)
+        start = 0.0
+        end = 0.0
+        for s, e in self._blank_extensions.values():
+            start = max(start, s)
+            end = max(end, e)
+        return start, end
 
     # ==========================================================================
     # Utility Methods
