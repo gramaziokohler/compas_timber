@@ -143,6 +143,16 @@ class TimberModel(Model):
         return candidates
 
     @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        candidates = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate and not joint:
+                candidates.add(edge_candidate)
+        return candidates
+
+    @property
     def topologies(self):
         return self._topologies
 
@@ -599,7 +609,7 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = self.joints
+        joints = list(self.joints)
 
         for joint in joints:
             try:
@@ -680,9 +690,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PlateJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = self.plates
@@ -731,6 +741,7 @@ class TimberModel(Model):
 
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
+
 
     # =============================================================================
     # Model sub-tree surgery
@@ -828,6 +839,8 @@ class TimberModel(Model):
         for tuple_parent, children in tuples:
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
+                if child in self.elements():
+                    continue
                 self.add_element(child, parent=target_parent)
                 child.clear_model_dependent_cache()
         if joints:

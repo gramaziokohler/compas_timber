@@ -120,6 +120,7 @@ class Panel(Element):
         thickness: Optional[float] = None,
         plate_geometry: Optional[PlateGeometry] = None,
         type: Optional[str] = None,
+        layers: Optional[list] = None,
         **kwargs,
     ):
         if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
@@ -128,12 +129,7 @@ class Panel(Element):
             if not all(x is not None for x in [frame, length, width, thickness]):
                 raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
             plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
-        # initialize layer refs before super().__init__() because Element sets self.model = None,
-        # which triggers Panel.model.setter, which reads these attributes
-        self.exterior_layer = None
-        self.core_layer = None
-        self.interior_layer = None
-        self._model = None
+
         super(Panel, self).__init__(transformation=plate_geometry.frame.to_transformation(), **kwargs)  # NOTE: Element wants a transformation, not a frame
         self.plate_geometry = plate_geometry
         self.length = plate_geometry.length
@@ -142,27 +138,20 @@ class Panel(Element):
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
+        self.exterior_layer = None
+        self.core_layer = None
+        self.interior_layer = None
+        self._root_layers = []
+        self._layer_path_dict = {}
         self._planes = None
+        if layers:
+            self.layers = layers
 
     def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
 
     def __str__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, model):
-        self._model = model
-        for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
-            if layer is None:
-                continue
-            if layer.model is not model:
-                self._model.add_element(layer, parent=self)
-            layer.clear_model_dependent_cache()
 
     @property
     def geometry(self):
@@ -208,16 +197,14 @@ class Panel(Element):
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by PanelJoints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
-        for layer in [self.interior_layer, self.core_layer, self.exterior_layer]:
-            if layer:
-                layer.set_extension_plane(edge_index, plane)
+        for layer in self._root_layers:
+            layer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """adjusts segments of the outlines to lay on the edge planes created by PanelJoints."""
         self.plate_geometry.apply_edge_extensions()
-        for layer in (self.exterior_layer, self.core_layer, self.interior_layer):
-            if layer:
-                layer.apply_edge_extensions()
+        for layer in self._root_layers:
+            layer.apply_edge_extensions()
 
     def remove_blank_extension(self, edge_index: Optional[int] = None):
         """Removes any extension plane for the given edge index."""
@@ -272,8 +259,8 @@ class Panel(Element):
         """Slice the panel into ``exterior_layer``, ``core_layer``, and ``interior_layer``.
 
         The three layers cover ``[0, start]``, ``[start, end]``, and
-        ``[end, thickness]`` respectively, where ``start`` and ``end`` are measured
-        from the panel's ``outline_a`` face.
+        ``[end, thickness]`` respectively.  Paths are fixed: exterior=(0,),
+        core=(1,), interior=(2,), regardless of which layers are present.
 
         Parameters
         ----------
@@ -282,59 +269,73 @@ class Panel(Element):
         end : float
             Through-thickness offset where the core layer ends.
         """
-        # import here to avoid circular import
         from compas_timber.elements.layer import Layer
 
         if start < 0 or end > self.thickness or start >= end:
             raise ValueError("Invalid core layer range. Start and end must be within the panel thickness and start must be less than end.")
 
-        if self.model:
-            for old_layer in (self.exterior_layer, self.core_layer, self.interior_layer):
-                if old_layer is not None:
-                    self.model.remove_element_subtree(old_layer)
+        root_layers = []
+        if start > 0:
+            root_layers.append(Layer(self, 0, start, name="Exterior Layer", layer_path=(0,)))
+        root_layers.append(Layer(self, start, end, name="Core Layer", layer_path=(1,)))
+        if end < self.thickness:
+            root_layers.append(Layer(self, end, self.thickness, name="Interior Layer", layer_path=(2,)))
+        self.layers = root_layers
 
-        self.exterior_layer = Layer(self, 0, start, name="Exterior Layer") if start > 0 else None
-        self.core_layer = Layer(self, start, end, name="Core Layer")
-        self.interior_layer = Layer(self, end, self.thickness, name="Interior Layer") if end < self.thickness else None
-        if self.model:
-            for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
-                if layer is not None:
-                    self.model.add_element(layer, parent=self)
+    def merge_layer_tree(self, model):
+        for layer in self._root_layers:
+            if layer not in model.elements():
+                model.add_element(layer, parent=self)
+            layer.merge_sublayer_tree(model)
+
+    def _rebuild_layer_path_dict(self):
+        """Rebuild ``_layer_path_dict`` by walking the entire layer tree.
+
+        Uses each layer's existing ``layer_path`` if set; falls back to the
+        index-based path so layers without an explicit path still get one.
+        """
+        self._layer_path_dict.clear()
+
+        def _register(layer, fallback_path):
+            path = layer.layer_path if layer.layer_path is not None else fallback_path
+            layer.layer_path = path
+            self._layer_path_dict[path] = layer
+            for i, sublayer in enumerate(layer.sublayers):
+                _register(sublayer, path + (i,))
+
+        for i, layer in enumerate(self._root_layers):
+            _register(layer, (i,))
 
     @property
     def layer_tree(self):
-        """Return a mapping of hierarchical indices to Layer instances.
+        """Mapping of hierarchical path tuples to :class:`~compas_timber.elements.Layer` instances.
 
-        The method recursively traverses each top-level layer attached to
-        the panel (``exterior_layer``, ``core_layer``, ``interior_layer`` if
-        present) and their ``sublayers``. Keys are tuples of integers
-        describing the path from a root to the layer node.
+        ``_layer_path_dict`` is the authoritative source; this property returns
+        it directly.
 
         Returns
         -------
-        dict[tuple[int, ...], Layer]
-            Mapping from path tuples to Layer objects.
+        dict[tuple[int, ...], :class:`~compas_timber.elements.Layer`]
         """
-        layers = {}
-
-        def recurse(layer, path):
-            layers[tuple(path)] = layer
-            for idx, child in enumerate(getattr(layer, "sublayers", [])):
-                recurse(child, path + [idx])
-
-        roots = [getattr(self, name, None) for name in ("exterior_layer", "core_layer", "interior_layer")]
-        roots = [r for r in roots if r is not None]
-
-        for root_index, root in enumerate(roots):
-            recurse(root, [root_index])
-
-        return layers
+        return self._layer_path_dict
 
     @property
     def layers(self):
-        return self.layer_tree.values()
+        """Root layers of this panel (direct children only)."""
+        return self._root_layers
 
-    @property
+    @layers.setter
+    def layers(self, layer_list):
+        for old in self._root_layers:
+            old._unregister()
+        self._root_layers = list(layer_list) if layer_list else []
+        for layer in self._root_layers:
+            layer._panel = self
+        self._rebuild_layer_path_dict()
+        self.exterior_layer = self._layer_path_dict.get((0,))
+        self.core_layer = self._layer_path_dict.get((1,))
+        self.interior_layer = self._layer_path_dict.get((2,))
+
     def get_leaf_layers(self):
         """get all layers that don't have *sublayers*. useful for making flat ordered list of layers"""
         layer_list = []
@@ -346,9 +347,8 @@ class Panel(Element):
                 for la in layer.sublayers:
                     walk_sublayers(la)
 
-        for layer in [self.exterior_layer, self.core_layer, self.interior_layer]:
-            if layer is not None:
-                walk_sublayers(layer)
+        for layer in self._root_layers:
+            walk_sublayers(layer)
         return layer_list
 
     # ==========================================================================
@@ -443,7 +443,9 @@ class Panel(Element):
         return plate_geo
 
     @classmethod
-    def from_outline_thickness(cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, **kwargs):
+    def from_outline_thickness(
+        cls, outline: Polyline, thickness: float, vector: Optional[Vector] = None, openings: Optional[list[Polyline]] = None, orientation: Optional[Vector] = None, **kwargs
+    ):
         """
         Constructs a Plate from a polyline outline and a thickness.
         The outline is the top face of the plate_geometry, and the thickness is the distance to the bottom face.
@@ -458,6 +460,8 @@ class Panel(Element):
             The direction of the thickness vector. If None, the thickness vector is determined from the outline.
         openings : list[:class:`~compas.geometry.Polyline`], optional
             A list of polyline openings to be added to the plate geometry.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -473,10 +477,10 @@ class Panel(Element):
         offset_vector = get_polyline_normal_vector(outline, vector)  # gets vector perpendicular to outline
         offset_vector *= thickness
         outline_b = Polyline(outline).translated(offset_vector)
-        return cls.from_outlines(outline, outline_b, openings=openings, **kwargs)
+        return cls.from_outlines(outline, outline_b, openings=openings, orientation=orientation, **kwargs)
 
     @classmethod
-    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, **kwargs):
+    def from_face_thickness(cls, brep: Brep, thickness: float, vector: Optional[Vector] = None, orientation: Optional[Vector] = None, **kwargs):
         """Creates a panel from a single-face brep.
 
         Parameters
@@ -487,6 +491,8 @@ class Panel(Element):
             The thickness of the panel.
         vector : :class:`~compas.geometry.Vector`, optional
             The vector in which the panel is extruded.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Panel` constructor.
@@ -501,10 +507,10 @@ class Panel(Element):
             raise ValueError("Can only use single-face breps to create a Panel. This brep has {}".format(len(brep.faces)))
         face = brep.faces[0]
         outer_polyline, inner_polylines = polylines_from_brep_face(face)
-        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, **kwargs)
+        return cls.from_outline_thickness(outer_polyline, thickness, vector=vector, openings=inner_polylines, orientation=orientation, **kwargs)
 
     @classmethod
-    def from_brep(cls, brep: Brep, **kwargs):
+    def from_brep(cls, brep: Brep, orientation: Optional[Vector] = None, **kwargs):
         """Creates a panel from a brep by automatically detecting two parallel faces.
 
         This method identifies the two main faces of the brep using topological analysis
@@ -514,6 +520,8 @@ class Panel(Element):
         ----------
         brep : :class:`~compas.geometry.Brep`
             The brep representing the panel geometry. Must have at least 2 parallel faces.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments.
             These are passed to the :class:`~compas_timber.elements.Panel` constructor.
@@ -526,10 +534,10 @@ class Panel(Element):
         if len(brep.faces) < 2:
             raise ValueError("Brep must have at least 2 faces. This brep has {}".format(len(brep.faces)))
         outline_a, outline_b, openings = get_plate_geometry_outlines_from_brep(brep)
-        return cls.from_outlines(outline_a, outline_b, openings=openings, **kwargs)
+        return cls.from_outlines(outline_a, outline_b, openings=openings, orientation=orientation, **kwargs)
 
     @classmethod
-    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, **kwargs):
+    def from_outlines(cls, outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, orientation: Optional[Vector] = None, **kwargs):
         """
         Constructs a Panel from two polyline outlines.
 
@@ -546,6 +554,8 @@ class Panel(Element):
             If True, door features will be extracted from the outlines and added as Openings to the Panel.
         horizontal_openings : bool
             If True, openings that are not vertical or horizontal will be extruded horizontally through the Panel.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.
         **kwargs : dict, optional
             Additional keyword arguments to be passed to the constructor.
 
@@ -559,7 +569,7 @@ class Panel(Element):
         door_polylines = []
         if recognize_doors:
             outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
-        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b), **kwargs)
+        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
             panel.add_feature(opening)
