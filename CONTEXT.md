@@ -79,8 +79,7 @@ Run these before submitting any change:
 2. `invoke lint`
 3. `invoke test`
 4. If the change touches any joint or fabrication feature: verify BTLx params in a test using `params.as_dict()` comparison against a known-good fixture.
-5. If the change adds or modifies any serializable type: add a **round-trip serialization test** (`__data__` → `__from_data__` → compare). This is a common pitfall.
-6. If the change touches `Plate`, `Panel`, `Fastener`, or panel features: explicitly describe potential cross-library leakage in the PR description.
+5. If the change adds or modifies any serializable type: add a **round-trip serialization test** (`json_loads(json_dumps(model))` → `model` → compare). This is a common pitfall.
 
 ## Dev environment setup
 
