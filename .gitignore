@@ -126,3 +126,6 @@ conda.recipe/
 tests/temp/
 
 src/*.btlx
+
+.agents/
+AGENTS.md
