@@ -194,7 +194,6 @@ class ButtJoint(Joint):
         side_b_plane = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
         end_a_plane = Plane.from_frame(self.main_beam.front_side(self.main_beam_ref_side_index))
         end_b_plane = Plane.from_frame(self.main_beam.back_side(self.main_beam_ref_side_index))
-
         return polyhedron_from_box_planes(bottom_plane, top_plane, side_a_plane, side_b_plane, end_a_plane, end_b_plane)
 
     def get_kinematic_constraint(self, moving_element):
@@ -207,14 +206,14 @@ class ButtJoint(Joint):
             raise ValueError("Element is not part of this joint.")
 
         if moving_element == self.cross_beam:
-            plane = self.butt_plane
             normal = self.butt_plane.normal
             
         elif moving_element == self.main_beam:
-            plane = self.butt_plane.copy()
-            normal = plane.normal * -1
+            normal = self.butt_plane.copy().normal * -1
             
         if self.mill_depth:
-            return plane
+            side_a_plane = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index]).normal * -1
+            side_b_plane = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index)).normal * -1
+            return [normal, side_a_plane, side_b_plane]
         else:
-            return normal
+            return [normal]
