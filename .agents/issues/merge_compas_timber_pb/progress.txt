@@ -178,3 +178,33 @@
 
 ### Commit
 - `864ad6570a` — PB-04: Add BuildingPlan + BuildingPlanModelContainer serializers
+
+---
+
+## PB-05: CI workflow upgrade — COMPLETED 2026-06-25
+
+### Work done this session
+- Updated `release.yml`: upgraded `compas-actions.build@v4` → `@v5` with `run_prebuild: true`;
+  upgraded `compas-actions.publish@v3` → `@prebuild_v2` with `run_prebuild: true`.
+- Updated `build.yml`: added explicit `invoke pre_build` step after dependency installation and
+  before `invoke lint` / `invoke test`, preserving the macos/windows × py3.9/3.12/3.14 matrix.
+- All 6 proto tests still pass after the workflow-file changes.
+- 4th criterion (CI dry-run end-to-end) left unchecked — requires pushing and watching a live CI run.
+
+### Commit
+- `84078d5fec` — PB-05: Upgrade CI workflows to run pre_build step
+
+---
+
+## PB-06: Round-trip verification — COMPLETED 2026-06-25
+
+### Work done this session
+- `invoke pre-build` confirmed working: regenerates `elements_pb2.py`, `processing_pb2.py`,
+  `building_plan_pb2.py` from the three `.proto` files without errors.
+- All 6 proto tests pass (`test_proto_beam.py`: 2, `test_proto_building_plan.py`: 4).
+- Full test suite: 826 passed, 0 failures, 0 regressions.
+- No `compas_timber_pb` references found anywhere under `src/compas_timber/` or `tests/`.
+- All 5 PB-06 acceptance criteria checked off.
+
+### Commit
+- (see below)
