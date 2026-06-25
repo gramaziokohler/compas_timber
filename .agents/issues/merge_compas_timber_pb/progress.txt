@@ -136,3 +136,45 @@
   `*_pb2.py` files and verify the acceptance criterion.
   The proto files may also need adjustment once `compas_pb` is available and its geometry proto
   types (Frame, Point, Vector) are confirmed.
+
+---
+
+## PB-03: Beam + BTLxProcessing serializers + entry point — COMPLETED 2026-06-25
+
+### Work done this session
+- Created `src/compas_timber/proto/data.py` with `pb_serializer`/`pb_deserializer` pairs for
+  `Beam`, `Element` (compas_model), and `BTLxProcessing`. Ported directly from
+  `compas_timber_pb/src/compas_timber_pb/data.py`; updated all `compas_timber_pb.generated`
+  imports to `compas_timber.proto`.
+- Registered `[project.entry-points.'compas_pb.plugins'] serializers = 'compas_timber.proto.data'`
+  in `pyproject.toml`.
+- Created `tests/compas_timber/test_proto_beam.py` with `test_beam_roundtrip` and
+  `test_processing_roundtrip` (JackRafterCut BTS). Both pass. 822 tests total pass.
+
+### Note
+- `data.py` includes only Beam/Element/BTLxProcessing for this slice.
+  BuildingPlan + BuildingPlanModelContainer serializers come in PB-04.
+- The autouse fixture `load_serializers` in the test file imports `compas_timber.proto.data`
+  explicitly since the entry point mechanism only fires after `pip install -e .`.
+
+### Commit
+- `1d1495074a` — PB-03: Add Beam/Element/BTLxProcessing serializers and entry point
+
+---
+
+## PB-04: BuildingPlan + BuildingPlanModelContainer serializers — COMPLETED 2026-06-25
+
+### Work done this session
+- Extended `src/compas_timber/proto/data.py` with serializers for `BuildingPlan`, `Step`, and
+  `BuildingPlanModelContainer`. Ported directly from `compas_timber_pb/src/compas_timber_pb/data.py`;
+  updated all `compas_timber_pb` imports to `compas_timber`.
+- Fixed `Actor` conversion: `step.actor` is an int; proto field is `string actor`. Added
+  `Actor.get_name(step.actor)` in serializer. Added `Actor` import from `compas_timber.planning`.
+- Added missing `sphere_to_pb` / `sphere_from_pb` imports from `compas_pb.conversions`.
+- Updated `src/compas_timber/proto/__init__.py` to add proto directory to `sys.path` so that
+  protoc-generated bare `import elements_pb2` resolves correctly inside the package.
+- Created `tests/compas_timber/test_proto_building_plan.py` with all four test cases.
+  All 4 pass. 826 tests total pass (no regressions).
+
+### Commit
+- TBD (committed in this session)
