@@ -81,6 +81,7 @@ def test_simple_scarf_scale(standard_beam):
 # Property setter validation
 # ---------------------------------------------------------------------------
 
+
 def test_start_x_validation():
     """start_x must be within [-100000, 100000]."""
     f = SimpleScarf()
@@ -139,6 +140,7 @@ def test_drill_hole_diam_2_validation():
 # num_drill_hole_str
 # ---------------------------------------------------------------------------
 
+
 def test_num_drill_hole_str_returns_string():
     """num_drill_hole_str must return a plain integer string, not a float string."""
     for n in [0, 1, 2]:
@@ -151,6 +153,7 @@ def test_num_drill_hole_str_returns_string():
 # ---------------------------------------------------------------------------
 # Serialization round-trip
 # ---------------------------------------------------------------------------
+
 
 def test_simple_scarf_data_roundtrip():
     """All fields must survive a json_dumps / json_loads round-trip."""
@@ -178,6 +181,7 @@ def test_simple_scarf_data_roundtrip():
 # ---------------------------------------------------------------------------
 # Alternative constructors
 # ---------------------------------------------------------------------------
+
 
 def test_define_orientation_invalid_side():
     """_define_orientation must raise for any side other than 'start' or 'end'."""
@@ -207,6 +211,7 @@ def test_calculate_start_x_start(standard_beam):
 # volume_from_params_and_beam
 # ---------------------------------------------------------------------------
 
+
 def test_volume_from_params_and_beam_start(standard_beam):
     """Volume for START orientation must be a Polyhedron with 12 vertices and 10 faces."""
     feature = SimpleScarf(orientation=OrientationType.START, start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
@@ -232,6 +237,7 @@ def test_volume_from_params_and_beam_end(standard_beam):
 # ---------------------------------------------------------------------------
 # drill_hole_volumes_from_params_and_beam
 # ---------------------------------------------------------------------------
+
 
 def test_drill_hole_volumes_zero(standard_beam):
     """Returns an empty list when num_drill_hole is 0."""
@@ -275,6 +281,7 @@ def test_drill_hole_volumes_two_end(standard_beam):
 # scale
 # ---------------------------------------------------------------------------
 
+
 def test_scale_includes_start_x():
     """scale() must also scale start_x."""
     f = SimpleScarf(start_x=100.0, length=200, depth_ref_side=50, depth_opp_side=50, drill_hole_diam_1=20, drill_hole_diam_2=20)
@@ -285,6 +292,7 @@ def test_scale_includes_start_x():
 # ---------------------------------------------------------------------------
 # apply() — all branches via mocks
 # ---------------------------------------------------------------------------
+
 
 def test_apply_raises_on_brep_conversion_error():
     """apply() must raise FeatureApplicationError when Brep.from_mesh fails."""
