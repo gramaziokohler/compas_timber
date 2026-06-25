@@ -1,3 +1,4 @@
+from .building_plan_container import BuildingPlanModelContainer
 from .sequencer import Actor
 from .sequencer import BuildingPlan
 from .sequencer import SimpleSequenceGenerator
@@ -16,6 +17,7 @@ from .nesting import NestedElementData
 
 __all__ = [
     "Actor",
+    "BuildingPlanModelContainer",
     "Instruction",
     "BuildingPlan",
     "BuildingPlanParser",
