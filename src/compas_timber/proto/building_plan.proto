@@ -2,10 +2,8 @@ syntax = "proto3";
 
 package compas_timber.proto;
 
-import "compas_pb/generated/mesh.proto";
-import "compas_pb/generated/box.proto";
-import "compas_pb/generated/cylinder.proto";
-import "compas_pb/generated/sphere.proto";
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/datastructures.proto";
 
 import "elements.proto";
 
@@ -16,7 +14,7 @@ message StepData {
     repeated string elementHeld = 4;
     bool isBuilt = 5;
     bool isPlanned = 6;
-    int32 actor = 7;
+    string actor = 7;
     int32 priority = 8;
 }
 

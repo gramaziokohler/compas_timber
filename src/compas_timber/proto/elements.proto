@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package compas_timber.proto;
 
-import "compas_pb/generated/frame.proto";
-import "compas_pb/generated/mesh.proto";
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/datastructures.proto";
 
 message ElementData {
   string guid = 1;

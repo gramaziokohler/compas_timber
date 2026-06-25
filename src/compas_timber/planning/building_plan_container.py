@@ -3,7 +3,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
-from compas_timber.planning import BuildingPlan
+from compas_timber.planning.sequencer import BuildingPlan
 
 if TYPE_CHECKING:
     pass

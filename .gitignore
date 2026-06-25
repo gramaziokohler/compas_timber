@@ -129,6 +129,7 @@ src/*.btlx
 
 # protobuf generated files
 src/compas_timber/proto/*_pb2.py
+src/compas_timber/proto/*_pb2.pyi
 src/compas_timber/proto/*_pb2_grpc.py
 
 .agents/
