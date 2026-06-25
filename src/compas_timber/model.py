@@ -46,9 +46,8 @@ class TimberModel(Model):
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
     layers : list[:class:`~compas_timber.elements.Layer`]
-        All :class:`~compas_timber.elements.Layer` objects in the model (cross-section slices of panels).
-        Layers are created by calling :meth:`~compas_timber.elements.Panel.define_core_layer` on a panel;
-        they are then automatically registered as child elements when the panel is added to the model.
+        A Generator object of all layers assigned to this model.
+
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -742,7 +741,6 @@ class TimberModel(Model):
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
-
     # =============================================================================
     # Model sub-tree surgery
     # =============================================================================
@@ -839,8 +837,6 @@ class TimberModel(Model):
         for tuple_parent, children in tuples:
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
-                if child in self.elements():
-                    continue
                 self.add_element(child, parent=target_parent)
                 child.clear_model_dependent_cache()
         if joints:
