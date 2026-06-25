@@ -82,6 +82,9 @@ viz = [
 Homepage = "https://gramaziokohler.github.io/compas_timber/latest/"
 Repository = "https://github.com/gramaziokohler/compas_timber"
 
+[project.entry-points.'compas_pb.plugins']
+serializers = 'compas_timber.proto.data'
+
 # ============================================================================
 # Setup and build
 # ============================================================================
