@@ -232,6 +232,13 @@ class Panel(Element):
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
+        self._features = []
+        self.debug_info = []
+
+    @reset_computed
+    def reset_joinery(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
 
@@ -568,7 +575,7 @@ class Panel(Element):
         window_polylines = [o for o in openings] if openings else []
         door_polylines = []
         if recognize_doors:
-            outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
+            outline_a, outline_b, door_polylines = extract_door_openings(outline_a, outline_b)
         panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)

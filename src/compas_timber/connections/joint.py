@@ -151,6 +151,9 @@ class Joint(Data):
             raise TypeError("Location must be a Point.")
         self._location = value
 
+    def reset_location(self):
+        self._location = None
+
     @property
     def generated_elements(self):
         return []

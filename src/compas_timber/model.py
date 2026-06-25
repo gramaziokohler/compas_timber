@@ -610,6 +610,8 @@ class TimberModel(Model):
         """
         errors = []
         joints = list(self.joints)
+        for e in self.elements():
+            e.reset_joinery()
 
         for joint in joints:
             try:
@@ -810,6 +812,7 @@ class TimberModel(Model):
             elements_in_joint = [e in elements_children_first for e in j.elements]
             if all(elements_in_joint):
                 joints.append(j)
+                j.reset_location()
                 self.remove_joint(j)
             elif any(elements_in_joint):
                 self.remove_joint(j)

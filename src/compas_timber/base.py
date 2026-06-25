@@ -178,6 +178,12 @@ class TimberElement(Element, abc.ABC):
         self.remove_blank_extension()
         self.debug_info = []
 
+    def reset_joinery(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.remove_features([f for f in self.features if f.is_joinery])
+        self.remove_blank_extension()
+        self.debug_info = []
+
     @reset_computed
     @reset_timber_attrs
     def add_feature(self, feature):

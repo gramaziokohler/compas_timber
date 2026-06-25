@@ -251,6 +251,17 @@ class Layer(Element):
     # ------------------------------------------------------------------
     # Methods
     # ------------------------------------------------------------------
+    @reset_computed
+    def reset(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.plate_geometry.reset()  # reset outline_a and outline_b
+        self.debug_info = []
+
+    @reset_computed
+    def reset_joinery(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.plate_geometry.reset()  # reset outline_a and outline_b
+        self.debug_info = []
 
     def regenerate_plate_geometry(self):
         outline_a, outline_b = Layer.get_outlines_from_panel_range(self._panel, self.start_level, self.end_level)
@@ -355,7 +366,7 @@ class Layer(Element):
 
     def clear_model_dependent_cache(self):
         """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        self.model = None
+        # self.model = None
         self._modeltransformation = None
         self._modelgeometry = None
         self._aabb = None
@@ -406,6 +417,7 @@ class Layer(Element):
 
     def compute_modelgeometry(self):
         if not self.model:
+            print("layer has no self.model")
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 

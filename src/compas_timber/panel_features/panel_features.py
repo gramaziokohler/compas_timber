@@ -28,6 +28,8 @@ class PanelFeatureType(StrEnum):
 
 
 class PanelFeature(Element, ABC):
+    IS_JOINERY=False
+
     def __init__(self, frame: Frame, panel_feature_type: Union[PanelFeatureType, str] = PanelFeatureType.NONE, **kwargs) -> None:
         super(PanelFeature, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)
         self.panel_feature_type = panel_feature_type
@@ -40,7 +42,7 @@ class PanelFeature(Element, ABC):
 
     @property
     def is_joinery(self):
-        return False
+        return self.IS_JOINERY
 
     @property
     def geometry(self) -> Geometry:

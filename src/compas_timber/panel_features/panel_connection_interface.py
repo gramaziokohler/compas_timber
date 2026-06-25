@@ -31,6 +31,8 @@ class InterfaceRole(StrEnum):
 
 
 class PanelConnectionInterface(PanelFeature):
+    IS_JOINERY=True
+
     def __init__(
         self,
         polyline: Polyline,
@@ -44,6 +46,7 @@ class PanelConnectionInterface(PanelFeature):
         self._polyline = polyline
         self.edge_index = edge_index  # index of the edge in the plate outline where the interface is located
         self.interface_role = interface_role if interface_role else InterfaceRole.NONE
+
 
     @property
     def __data__(self) -> dict:
