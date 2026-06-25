@@ -18,8 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
-* `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, replacing the previous hard-coded `outline_a[-2]` index which could fail on outlines where the second-to-last point is colinear with the first edge.
-* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check (which ensures `outline_b` is in the positive-Z half of the local frame) was applied *after* computing `transform_to_world_xy`, producing an incorrect transform and malformed local coordinates for outlines whose natural frame normal pointed in the −Z direction.
+
+* `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, fixing a failure on outlines where the second-to-last point is colinear with the first edge.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check was applied after computing `transform_to_world_xy`, producing an incorrect transform for outlines whose natural frame normal pointed in the −Z direction.
 * Replaced `compas.geometry.Brep` with drop-in `compas_brep.Brep`.
 
 ### Removed
