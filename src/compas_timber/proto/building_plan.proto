@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/mesh.proto";
+import "compas_pb/generated/box.proto";
+import "compas_pb/generated/cylinder.proto";
+import "compas_pb/generated/sphere.proto";
+
+import "elements.proto";
+
+message StepData {
+    string guid = 1;
+    string name = 2;
+    repeated string elementGuids = 3;
+    repeated string elementHeld = 4;
+    bool isBuilt = 5;
+    bool isPlanned = 6;
+    int32 actor = 7;
+    int32 priority = 8;
+}
+
+message BuildingPlanData {
+    string guid = 1;
+    string name = 2;
+    repeated StepData steps = 3;
+}
+
+message Element {
+  oneof kind {
+    BeamData beam = 1;
+    ElementData element = 2;
+  }
+}
+
+message ElementGeometry {
+  oneof kind {
+    string firebaseFilename = 1;
+    compas_pb.data.MeshData mesh = 2;
+    compas_pb.data.BoxData box = 3;
+    compas_pb.data.CylinderData cylinder = 4;
+    compas_pb.data.SphereData sphere = 5;
+  }
+}
+
+message BuildingPlanModelContainerData {
+  BuildingPlanData plan = 1;
+  map<string, Element> elements = 2;
+  map<string, ElementGeometry> geometries = 3;
+}

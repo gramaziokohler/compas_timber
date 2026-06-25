@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/frame.proto";
+import "compas_pb/generated/mesh.proto";
+
+message ElementData {
+  string guid = 1;
+  string name = 2;
+  compas_pb.data.FrameData frame = 3;
+  compas_pb.data.MeshData geometry = 4;
+}
+
+message BeamData {
+  string guid = 1;
+  string name = 2;
+  float length = 3;
+  float width = 4;
+  float height = 5;
+  compas_pb.data.FrameData frame = 6;
+}
