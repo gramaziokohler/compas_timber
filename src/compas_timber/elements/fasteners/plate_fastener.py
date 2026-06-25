@@ -1,6 +1,5 @@
 import math
 
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -12,6 +11,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
+from compas_brep import Brep
 
 from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
