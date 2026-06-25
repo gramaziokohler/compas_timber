@@ -609,7 +609,7 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = [j for j in self.joints if not isinstance(j, PanelJoint)]
+        joints = list(self.joints)
 
         for joint in joints:
             try:
@@ -690,9 +690,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PlateJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = self.plates
@@ -742,52 +742,6 @@ class TimberModel(Model):
             candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
             self.add_joint_candidate(candidate)
 
-    def process_panel_joinery(self, stop_on_first_error=False):
-        """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
-
-        The sequence is important here since the feature parameters must be calculated based on the extended blanks.
-        For this reason, the first iteration will only extend the beams, and the second iteration will add the features.
-
-        Parameters
-        ----------
-        stop_on_first_error : bool, optional
-            If True, the method will raise an exception on the first error it encounters. Default is False.
-
-        Returns
-        -------
-        list[:class:`~compas_timber.errors.BeamJoiningError`]
-            A list of errors that occurred during the joinery process.
-
-        """
-        errors = []
-        joints = [j for j in self.joints if isinstance(j, PanelJoint)]
-
-        for joint in joints:
-            try:
-                joint.check_elements_compatibility(joint.elements)  # TODO: is this necessary here? This should be done at joint creation.
-                joint.add_extensions()
-            except BeamJoiningError as bje:
-                errors.append(bje)
-                if stop_on_first_error:
-                    raise bje
-
-        for panel in self.panels:
-            panel.apply_edge_extensions()
-
-        for joint in joints:
-            try:
-                joint.add_features()
-            except BeamJoiningError as bje:
-                errors.append(bje)
-                if stop_on_first_error:
-                    raise bje
-
-            except ValueError as ve:
-                bje = BeamJoiningError(joint.elements, joint, debug_info=str(ve))
-                errors.append(bje)
-                if stop_on_first_error:
-                    raise bje
-        return errors
 
     # =============================================================================
     # Model sub-tree surgery
@@ -916,7 +870,6 @@ class TimberModel(Model):
             A new model containing *parent*'s former subtree.
         """
         tuples, joints = self._detach_subtree(parent)
-        print(tuples)
         new_model = TimberModel()
         new_model._attach_subtree(tuples, joints=joints)
         return new_model

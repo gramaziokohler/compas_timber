@@ -73,6 +73,7 @@ class JointTopology(object):
     TOPO_K = 6
     TOPO_EDGE_EDGE = 7
     TOPO_EDGE_FACE = 8
+    TOPO_FACE_FACE = 9
 
     @classmethod
     def get_name(cls, value):
@@ -263,7 +264,10 @@ class PlateConnectionSolver(ConnectionSolver):
             max_distance = min(main_plate.thickness, cross_plate.thickness)
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
             for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
-                line = Line(*intersection_plane_plane(plane_a, plane_b))
+                intersection = intersection_plane_plane(plane_a, plane_b)
+                if not intersection:
+                    return None, None, None
+                line = Line(*intersection)
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     seg_a_midpt = seg_a.point_at(0.5)
                     dist = distance_point_line(seg_a_midpt, line)

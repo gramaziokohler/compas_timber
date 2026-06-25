@@ -35,7 +35,9 @@ except ImportError:
     from enum import Enum
 
     class StrEnum(str, Enum):
-        pass
+        @staticmethod
+        def _generate_next_value_(name, start, count, last_values):
+            return name.lower()
 
 
 def intersection_line_line_param(line1, line2, max_distance=1e-6, limit_to_segments=True, tol=1e-6):
