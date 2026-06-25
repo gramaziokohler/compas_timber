@@ -177,4 +177,4 @@
   All 4 pass. 826 tests total pass (no regressions).
 
 ### Commit
-- TBD (committed in this session)
+- `864ad6570a` — PB-04: Add BuildingPlan + BuildingPlanModelContainer serializers
