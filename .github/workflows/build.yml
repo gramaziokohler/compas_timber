@@ -29,6 +29,10 @@ jobs:
         run: |
           uv pip install -e ".[dev]"
 
+      - name: Run pre-build
+        run: |
+          invoke pre_build
+
       - name: Run tests
         run: |
           invoke lint

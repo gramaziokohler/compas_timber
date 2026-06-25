@@ -14,21 +14,23 @@ jobs:
         python: ['3.12']
 
     steps:
-      - uses: compas-dev/compas-actions.build@v4
+      - uses: compas-dev/compas-actions.build@v5
         with:
           invoke_lint: true
           check_import: false
           use_conda: false
           invoke_test: true
           python: ${{ matrix.python }}
+          run_prebuild: true
 
   Publish:
     needs: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: compas-dev/compas-actions.publish@v3
+      - uses: compas-dev/compas-actions.publish@prebuild_v2
         with:
           publish_to_pypi: true
           pypi_token: ${{ secrets.PYPI }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           python: '3.12'
+          run_prebuild: true
