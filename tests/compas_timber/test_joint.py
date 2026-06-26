@@ -16,6 +16,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
+from compas_timber.connections import ILapJoint
 from compas_timber.connections import LLapJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import TLapJoint
@@ -67,6 +68,17 @@ def x_topo_beams():
     lines = [
         Line(Point(x=3.0, y=1.0, z=0.0), Point(x=4.0, y=0.0, z=0.0)),
         Line(Point(x=3.0, y=0.0, z=0.0), Point(x=4.0, y=1.0, z=0.0)),
+    ]
+    return [Beam.from_centerline(line, w, h) for line in lines]
+
+
+@pytest.fixture
+def i_topo_beams():
+    w = 0.2
+    h = 0.2
+    lines = [
+        Line(Point(x=0.0, y=1.0, z=0.0), Point(x=1.0, y=1.0, z=0.0)),
+        Line(Point(x=1.0, y=1.0, z=0.0), Point(x=2.0, y=1.0, z=0.0)),
     ]
     return [Beam.from_centerline(line, w, h) for line in lines]
 
@@ -160,6 +172,18 @@ def test_joint_create_l_lap(l_topo_beams):
 
     assert joint.beam_a is main_beam
     assert joint.beam_b is cross_beam
+    assert joint.elements
+
+
+def test_joint_create_i_lap(i_topo_beams):
+    model = TimberModel()
+    beam_a, beam_b = i_topo_beams
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+    joint = ILapJoint.create(model, beam_a, beam_b)
+
+    assert joint.beam_a is beam_a
+    assert joint.beam_b is beam_b
     assert joint.elements
 
 
