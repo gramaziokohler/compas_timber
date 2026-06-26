@@ -227,38 +227,52 @@ classDiagram
          +element_b_guid : str
       }
 
-      class ButtJoint {
-	    +main_beam : Beam
-	    +cross_beam : Beam
-	    +mill_depth : float
-	    +modify_cross : bool
-	    +butt_plane_ref_side_index : int
-	    +butt_plane_angle : float
-	    +butt_plane_offset : float
-	    +butt_plane : Plane
-		+force_pocket: bool
-		+conical_tool: bool
-	    +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
-	    +butt_plane_args()
-	    +_back_cutting_plane()
+      class CutPlaneSpec {
+         +ref_side_index : int
+         +angle : float
+         +offset : float
+         +to_plane(beam) Plane
+         +from_butt_plane(main_beam, cross_beam, plane) CutPlaneSpec
+         +from_back_plane(main_beam, cross_beam, plane) CutPlaneSpec
+      }
 
+      class MiterPlaneSpec {
+         +ref_side_index : int
+         +angle_x : float
+         +angle_y : float
+         +offset : float
+         +to_plane(beam) Plane
+         +from_plane(beam_a, beam_b, plane) MiterPlaneSpec
+      }
+
+      class ButtJoint {
+         +main_beam : Beam
+         +cross_beam : Beam
+         +mill_depth : float
+         +modify_cross : bool
+         +butt_plane_spec : CutPlaneSpec
+         +butt_plane : Plane
+         +force_pocket : bool
+         +conical_tool : bool
+         +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+         +butt_plane_args()
+         +_back_cutting_plane()
       }
 
       class LButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_L
          +reject_i : bool
-         +back_plane_ref_side_index : int
-         +back_plane_angle : float
-         +back_plane_offset : float
+         +butt_plane_spec : CutPlaneSpec
+         +back_plane_spec : CutPlaneSpec
          +back_plane : Plane
          +back_plane_args()
       }
 
       class TButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_T
+         +butt_plane_spec : CutPlaneSpec
          +fasteners : list[Fastener]
          +base_fastener : Fastener
-         +fasteners : list
       }
 
       class TBirdsmouthJoint {
