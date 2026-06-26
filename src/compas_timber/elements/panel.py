@@ -109,6 +109,7 @@ class Panel(Element):
         data["plate_geometry"] = self.plate_geometry
         data["type"] = self.type
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data["layers"] = [l for l in self.layers]
         data.update(self.attributes)
         return data
 
@@ -304,8 +305,10 @@ class Panel(Element):
         self._layer_path_dict.clear()
 
         def _register(layer, fallback_path):
+            print("LP", layer.layer_path)
             path = layer.layer_path if layer.layer_path is not None else fallback_path
             layer.layer_path = path
+            print(path)
             self._layer_path_dict[path] = layer
             for i, sublayer in enumerate(layer.sublayers):
                 _register(sublayer, path + (i,))

@@ -97,27 +97,7 @@ class Layer(Element):
             data["local_outline_b"] = None
         return data
 
-    @classmethod
-    def __from_data__(cls, data):
-        layer = cls.__new__(cls)
-        layer._sublayers = []  # before Element.__init__ which may read sublayers
-        layer._planes = None
-        layer._panel = None
-        layer._plate_geometry = None
-        Element.__init__(layer, transformation=data["transformation"], name=data.get("name"))
-        local_outline_a = data.get("local_outline_a")
-        local_outline_b = data.get("local_outline_b")
-        if local_outline_a is not None and local_outline_b is not None:
-            layer._plate_geometry = PlateGeometry(
-                local_outline_a=local_outline_a,
-                local_outline_b=local_outline_b,
-            )
-        layer.start_level = data["start_level"]
-        layer.end_level = data.get("end_level")
-        layer._planes = None
-        layer.parent_layer = None
-        layer.layer_path = data.get("layer_path")
-        return layer
+
 
     # ------------------------------------------------------------------
     # Constructor
@@ -147,11 +127,11 @@ class Layer(Element):
         if panel is not None and end_level is not None:
             outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
             self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
-            transformation = Transformation.from_frame(self._plate_geometry.frame)
+            kwargs["transformation"] = Transformation.from_frame(self._plate_geometry.frame)
         else:
-            transformation = Transformation()
+            kwargs["transformation"] = Transformation()
 
-        super(Layer, self).__init__(transformation=transformation, name=name, **kwargs)
+        super(Layer, self).__init__(name=name, **kwargs)
         self._panel = panel
 
         if sublayers:
