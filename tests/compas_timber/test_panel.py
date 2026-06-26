@@ -94,14 +94,16 @@ def test_panel_addition_to_model(model):
     panels = model.panels
     assert panels[0].modeltransformation == panels[0].transformation, "Expected panel model transformation to match panel transformation"
     assert panels[1].modeltransformation == panels[1].transformation, "Expected panel model transformation to match panel transformation"
-    assert len(list(model.elements())) == 2, "Expected model to contain two panels"
-    assert all(isinstance(element, Panel) for element in model.elements()), "Expected all elements in the model to be panels"
+    # 2 panels + 1 default core layer per panel = 4 elements
+    assert len(list(model.elements())) == 4, "Expected model to contain two panels and their default core layers"
+    assert len(model.panels) == 2, "Expected model to contain two panels"
 
 
 def test_add_beam_to_panel(model):
     beam = Beam(Frame.worldXY(), length=5, width=0.3, height=0.5, name="Beam 1")
     model.add_element(beam, parent=model.panels[1])
-    assert len(list(model.elements())) == 3, "Expected model to contain two panels"
+    # 2 panels + 2 core layers + 1 beam = 5 elements
+    assert len(list(model.elements())) == 5, "Expected model to contain two panels, their layers, and a beam"
     assert beam in model.panels[1].children, "Expected beam to be a child of the panel"
     assert beam.modeltransformation == model.panels[1].transformation, "Expected beam model transformation to match panel transformation"
 

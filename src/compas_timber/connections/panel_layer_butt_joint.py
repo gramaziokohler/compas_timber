@@ -26,36 +26,32 @@ class PanelLLayerButtJoint(PanelJoint, PlateLButtJoint):
         return "PanelLButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
 
     def add_extensions(self):
-        if not (self.main_panel.interior_layer and
-                self.main_panel.core_layer and
-                self.main_panel.interior_layer and
-                self.cross_panel.exterior_layer and
-                self.cross_panel.core_layer and
-                self.cross_panel.exterior_layer
-                ):
-            raise NotImplementedError("Extensions can only be added to joints between panels with interior, core, and exterior layers. Use method Panel.define_core_layer.")
-        interior_butt = PanelLButtJoint(
-            panel_a=self.cross_panel.interior_layer,
-            panel_b=self.main_panel.interior_layer,
-            topology=self.topology,
-            a_segment_index=self.b_segment_index,
-            b_segment_index=self.a_segment_index
-        )
-        core_butt = PanelLButtJoint(
-            panel_a=self.main_panel.core_layer,
-            panel_b=self.cross_panel.core_layer,
-            topology=self.topology,
-            a_segment_index=self.a_segment_index,
-            b_segment_index=self.b_segment_index
-        )
-        exterior_butt = PanelLButtJoint(
-            panel_a=self.cross_panel.exterior_layer,
-            panel_b=self.main_panel.exterior_layer,
-            topology=self.topology,
-            a_segment_index=self.b_segment_index,
-            b_segment_index=self.a_segment_index
-        )
-        for butt in [interior_butt, core_butt, exterior_butt]:
+        butts = []
+        if self.cross_panel.interior_layer and self.main_panel.interior_layer:
+            butts.append(PanelLButtJoint(
+                panel_a=self.cross_panel.interior_layer,
+                panel_b=self.main_panel.interior_layer,
+                topology=self.topology,
+                a_segment_index=self.b_segment_index,
+                b_segment_index=self.a_segment_index,
+            ))
+        if self.main_panel.core_layer and self.cross_panel.core_layer:
+            butts.append(PanelLButtJoint(
+                panel_a=self.main_panel.core_layer,
+                panel_b=self.cross_panel.core_layer,
+                topology=self.topology,
+                a_segment_index=self.a_segment_index,
+                b_segment_index=self.b_segment_index,
+            ))
+        if self.cross_panel.exterior_layer and self.main_panel.exterior_layer:
+            butts.append(PanelLButtJoint(
+                panel_a=self.cross_panel.exterior_layer,
+                panel_b=self.main_panel.exterior_layer,
+                topology=self.topology,
+                a_segment_index=self.b_segment_index,
+                b_segment_index=self.a_segment_index,
+            ))
+        for butt in butts:
             butt.add_extensions()
 
 

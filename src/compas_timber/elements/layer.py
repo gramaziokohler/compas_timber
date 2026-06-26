@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from compas.data import Data
 from compas.geometry import Box, Transformation
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -30,9 +31,8 @@ class Layer(Element):
     When no *panel* is supplied at construction time the layer is in a
     *deferred* state: :attr:`plate_geometry` is ``None`` and
     :attr:`transformation` is the identity.  Geometry is created the first
-    time :meth:`_attach` is called (triggered by assigning the layer to a
-    :class:`~compas_timber.elements.Panel` via ``panel.layers = [...]`` or
-    via :meth:`~compas_timber.elements.Panel.define_core_layer`).
+    time :meth:`_attach` is called (triggered by setting
+    :attr:`~compas_timber.elements.Panel.layer_structure`).
 
     Parameters
     ----------
@@ -180,6 +180,8 @@ class Layer(Element):
         if self._panel is not None and self.layer_path is not None:
             for i, sublayer in enumerate(self._sublayers):
                 sublayer._attach(self._panel, self.layer_path + (i,))
+        if self.model is not None:
+            self.merge_sublayer_tree(self.model)
 
     @property
     def thickness(self):
@@ -438,42 +440,72 @@ class Layer(Element):
         return layer_outline_a, layer_outline_b
 
 
-def build_layers_from_defs(panel, layer_defs, panel_thickness=None):
-    """Create bound Layer instances from panel-free layer definitions.
+class LayerStructure(Data):
+    """Panel-agnostic cross-section definition. Shared across panels; :meth:`attach` creates bound :class:`Layer` instances per panel.
 
-    Creates one Layer per def bound to *panel*, resolving ``end_level=None``
-    to *panel_thickness* (or ``panel.thickness``).  Sublayer relationships are
-    wired via ``Layer._sublayers`` so the returned roots can be passed directly
-    to ``panel.layers``.
-
-    Parameters
-    ----------
-    panel : Panel
-        The panel to bind layers to.
-    layer_defs : list[Layer]
-        Layer definitions with ``layer_path`` set and ``panel=None``.
-    panel_thickness : float, optional
-        Override for the panel thickness; defaults to ``panel.thickness``.
-
-    Returns
-    -------
-    list[Layer]
-        Root layers (path depth 1) with sublayers already wired.
+    When *sublayers* are absent this object defines a single layer spanning the full panel thickness.
+    When *sublayers* are present they become the panel's root layers.
+    Use ``"core"``, ``"exterior"``, ``"interior"`` as names to enable the matching properties on :class:`~compas_timber.elements.Panel`.
+    A sibling with ``thickness=None`` absorbs remaining thickness; at most one sibling may do so.
     """
-    thickness = panel_thickness if panel_thickness is not None else panel.thickness
-    sorted_defs = sorted(
-        (d for d in layer_defs if d.layer_path is not None),
-        key=lambda d: (len(d.layer_path), d.layer_path),
-    )
-    bound_by_path = {}
-    for layer_def in sorted_defs:
-        path = layer_def.layer_path
-        end = layer_def.end_level if layer_def.end_level is not None else thickness
-        bound = Layer(panel, layer_def.start_level, end, name=layer_def.name, layer_path=path)
-        bound_by_path[path] = bound
-        if len(path) > 1:
-            parent = bound_by_path.get(path[:-1])
-            if parent is not None:
-                parent._sublayers.append(bound)
-                bound.parent_layer = parent
-    return [bound_by_path[p] for p in sorted(p for p in bound_by_path if len(p) == 1)]
+
+    def __init__(self, name="core", thickness=None, sublayers=None):
+        super().__init__()
+        self.name = name
+        self.thickness = thickness
+        self.sublayers = list(sublayers) if sublayers else []
+
+    def __repr__(self):
+        return "LayerStructure(name={!r}, thickness={}, sublayers={!r})".format(
+            self.name, self.thickness, self.sublayers
+        )
+
+    @property
+    def __data__(self):
+        return {"name": self.name, "thickness": self.thickness, "sublayers": self.sublayers}
+
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(name=data["name"], thickness=data["thickness"], sublayers=data.get("sublayers", []))
+
+    def attach(self, panel):
+        """Create and return bound :class:`Layer` instances for *panel*."""
+        defs = self.sublayers if self.sublayers else [self]
+        return self._create_layers(panel, defs, 0.0, panel.thickness)
+
+    def _create_layers(self, panel, defs, start, total):
+        none_count = sum(1 for d in defs if d.thickness is None)
+        if none_count > 1:
+            raise ValueError("At most one LayerStructure sibling may have thickness=None.")
+        fixed_sum = sum(d.thickness for d in defs if d.thickness is not None)
+        if fixed_sum > total + 1e-6:
+            raise ValueError(
+                "Defined thicknesses ({:.4f}) exceed available thickness ({:.4f}).".format(fixed_sum, total)
+            )
+        fill = total - fixed_sum
+
+        current = start
+        layers = []
+        for def_ in defs:
+            t = fill if def_.thickness is None else def_.thickness
+            sublayers = self._create_layers(panel, def_.sublayers, current, t) if def_.sublayers else []
+            layer = Layer(panel=panel, start_level=current, end_level=current + t, name=def_.name, sublayers=sublayers)
+            layers.append(layer)
+            current += t
+        return layers
+
+    def get_path_for_name(self, name):
+        """Return the layer path tuple of the first definition matching *name*, or ``None``."""
+        defs = self.sublayers if self.sublayers else [self]
+        return self._find_path(defs, name, ())
+
+    def _find_path(self, defs, name, prefix):
+        for i, def_ in enumerate(defs):
+            path = prefix + (i,)
+            if def_.name == name:
+                return path
+            if def_.sublayers:
+                result = self._find_path(def_.sublayers, name, path)
+                if result is not None:
+                    return result
+        return None
