@@ -38,15 +38,13 @@ class Layer(Element):
     ----------
     panel : :class:`~compas_timber.elements.Panel`, optional
         The parent panel.  When omitted geometry creation is deferred until
-        the layer is attached to a panel.
+        the layer is attached to a panel via :meth:`~compas_timber.elements.Panel.merge_layer_structure`.
     start_level : float
         Starting offset from ``outline_a``, measured in the panel's thickness direction.
     end_level : float
         Ending offset from ``outline_a``, measured in the panel's thickness direction.
     name : str, optional
         Human-readable identifier (e.g. ``"core"``, ``"exterior"``).
-    parent_layer : :class:`Layer`, optional
-        The containing layer when this is a sublayer.  ``None`` for root-level layers.
     sublayers : list[:class:`Layer`], optional
         Child layers to attach immediately.  Equivalent to setting :attr:`sublayers`
         after construction.
@@ -54,19 +52,22 @@ class Layer(Element):
     Attributes
     ----------
     panel : :class:`~compas_timber.elements.Panel` or None
-        The parent panel.  ``None`` when deferred or after deserialization.
+        The parent panel.  Derived from the model tree when in a model; falls back to
+        the stored reference when standalone.
     plate_geometry : :class:`~compas_timber.elements.PlateGeometry` or None
-        Geometry of this layer slice.  ``None`` while deferred.
+        Geometry of this layer slice.  Created lazily on first access.
     start_level, end_level : float
         Range of this layer through the parent panel's thickness.
-    parent_layer : :class:`Layer` or None
-        The parent layer, or ``None`` if this is a root-level layer of the panel.
-    layer_path : tuple[int, ...] or None
-        Hierarchical path key matching the corresponding entry in ``Panel._layer_path_dict``.
-        Set automatically when the layer is registered.
     sublayers : list[:class:`Layer`]
-        Ordered child layers.  Assign a new list to rewire the subtree; use
+        Ordered child layers.  Derived from the model tree when in a model; falls back
+        to the stored list when standalone.  Assign a new list to rewire the subtree; use
         :meth:`define_sublayers` to build sublayers from thickness values.
+    layer_path : tuple[int, ...] or None
+        Position in the parent panel's layer tree, e.g. ``(1,)`` for the second root
+        layer or ``(1, 0)`` for its first child.  Set from the originating
+        :attr:`~LayerDef.layer_path` when created by a :class:`LayerStructure`.
+        Serialized and preserved through model round-trips.  ``None`` for layers
+        created manually (not from a :class:`LayerStructure`).
     thickness : float
         Layer thickness (``end_level - start_level``).
     outline_a, outline_b : :class:`~compas.geometry.Polyline`
@@ -88,13 +89,7 @@ class Layer(Element):
         data = super().__data__
         data["start_level"] = self.start_level
         data["end_level"] = self.end_level
-        data["layer_path"] = self.layer_path
-        if self._plate_geometry is not None:
-            data["local_outline_a"] = self._plate_geometry.outline_a
-            data["local_outline_b"] = self._plate_geometry.outline_b
-        else:
-            data["local_outline_a"] = None
-            data["local_outline_b"] = None
+        data["layer_path"] = list(self.layer_path) if self.layer_path is not None else None
         return data
 
 
@@ -109,20 +104,19 @@ class Layer(Element):
         start_level: float = 0.0,
         end_level: Optional[float] = None,
         name: Optional[str] = None,
-        parent_layer: Optional["Layer"] = None,
         sublayers: Optional[list] = None,
         layer_path: Optional[tuple] = None,
         **kwargs,
     ):
         self._panel = None
         self._plate_geometry = None
-        self._sublayers = []  # before super().__init__() which may read sublayers
+        self._sublayers = []
         self._planes = None
+        self.layer_path = tuple(layer_path) if layer_path is not None else None
+        self.layer_def = None
 
         self.start_level = start_level
         self.end_level = end_level
-        self.parent_layer = parent_layer
-        self.layer_path = tuple(layer_path) if layer_path is not None else None
 
         if panel is not None and end_level is not None:
             outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
@@ -139,11 +133,11 @@ class Layer(Element):
 
     def __repr__(self):
         thickness = (self.end_level - self.start_level) if self.end_level is not None else None
-        return "Layer(name={}, path={}, thickness={})".format(self.name, self.layer_path, thickness)
+        return "Layer(name={}, thickness={})".format(self.name, thickness)
 
     def __str__(self):
         thickness = (self.end_level - self.start_level) if self.end_level is not None else None
-        return "Layer(name={}, path={}, thickness={})".format(self.name, self.layer_path, thickness)
+        return "Layer(name={}, thickness={})".format(self.name, thickness)
 
     # ------------------------------------------------------------------
     # Properties
@@ -151,6 +145,12 @@ class Layer(Element):
 
     @property
     def plate_geometry(self):
+        if not self._plate_geometry:
+            if not self.panel:
+                raise AttributeError("No panel has been set, no geometry could be generated")
+            outline_a, outline_b = Layer.get_outlines_from_panel_range(self.panel, self.start_level, self.end_level)
+            self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
+            self.transformation = Transformation.from_frame(self._plate_geometry.frame)
         return self._plate_geometry
 
     @plate_geometry.setter
@@ -159,6 +159,14 @@ class Layer(Element):
 
     @property
     def panel(self):
+        if self.treenode is not None:
+            from compas_timber.elements.panel import Panel
+            parent = self.parent
+            while parent is not None:
+                if isinstance(parent, Panel):
+                    return parent
+                parent = parent.parent
+            return None
         return self._panel
 
     @panel.setter
@@ -167,19 +175,17 @@ class Layer(Element):
 
     @property
     def sublayers(self):
+        if self.model is not None:
+            return [c for c in self.children if isinstance(c, Layer)]
         return self._sublayers
 
     @sublayers.setter
     def sublayers(self, layers):
-        """Replace child layers, wiring them up if this layer is already attached."""
-        for old in self._sublayers:
-            old._unregister()
         self._sublayers = list(layers) if layers else []
-        for sublayer in self._sublayers:
-            sublayer.parent_layer = self
-        if self._panel is not None and self.layer_path is not None:
-            for i, sublayer in enumerate(self._sublayers):
-                sublayer._attach(self._panel, self.layer_path + (i,))
+        panel = self.panel
+        if panel is not None:
+            for sublayer in self._sublayers:
+                sublayer._attach(panel)
         if self.model is not None:
             self.merge_sublayer_tree(self.model)
 
@@ -189,11 +195,11 @@ class Layer(Element):
 
     @property
     def outline_a(self):
-        return self._plate_geometry.outline_a.transformed(self.modeltransformation)
+        return self.plate_geometry.outline_a.transformed(self.modeltransformation)
 
     @property
     def outline_b(self):
-        return self._plate_geometry.outline_b.transformed(self.modeltransformation)
+        return self.plate_geometry.outline_b.transformed(self.modeltransformation)
 
     @property
     def outlines(self):
@@ -215,7 +221,7 @@ class Layer(Element):
 
     @property
     def edge_planes(self):
-        return {i: plane.transformed(self.modeltransformation) for i, plane in self._plate_geometry.edge_planes.items()}
+        return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     @property
     def center_height(self):
@@ -245,35 +251,15 @@ class Layer(Element):
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self.debug_info = []
 
-    def regenerate_plate_geometry(self):
-        outline_a, outline_b = Layer.get_outlines_from_panel_range(self._panel, self.start_level, self.end_level)
-        self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
-
-    def _attach(self, panel, path):
-        """Register this layer with *panel* at *path*, creating geometry if deferred, then recurse.
-
-        This is called automatically when a layer is assigned to a panel or
-        to another already-attached layer.  Do not call it directly unless
-        manually rebuilding the layer tree.
-        """
+    def _attach(self, panel):
+        """Set the panel reference and create geometry if deferred, then recurse into sublayers."""
         if self._plate_geometry is None:
             outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, self.start_level, self.end_level)
             self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
             self.transformation = Transformation.from_frame(self._plate_geometry.frame)
         self._panel = panel
-        self.layer_path = path
-        panel._layer_path_dict[path] = self
-        for i, sublayer in enumerate(self._sublayers):
-            sublayer.parent_layer = self
-            sublayer._attach(panel, path + (i,))
-
-    def _unregister(self):
-        """Remove this layer and all descendants from the panel's ``_layer_path_dict``."""
         for sublayer in self._sublayers:
-            sublayer._unregister()
-        if self._panel is not None and self.layer_path is not None:
-            self._panel._layer_path_dict.pop(self.layer_path, None)
-        self.layer_path = None
+            sublayer._attach(panel)
 
     def define_sublayers(self, thicknesses: list, names: Optional[list] = None) -> list:
         """Subdivide this layer into child layers by thickness.
@@ -302,8 +288,8 @@ class Layer(Element):
             raise ValueError("At most one None is allowed in thicknesses.")
         if names is not None and len(names) != len(thicknesses):
             raise ValueError("Length of names ({}) must match length of thicknesses ({}).".format(len(names), len(thicknesses)))
-        if self.layer_path is None:
-            raise RuntimeError("Layer must be registered with a panel (have a layer_path) before calling define_sublayers.")
+        if self.panel is None:
+            raise RuntimeError("Layer must be attached to a panel before calling define_sublayers.")
 
         sum_defined = sum(t for t in thicknesses if t is not None)
         remaining = self.thickness - sum_defined
@@ -325,7 +311,6 @@ class Layer(Element):
                     start_level=current_level,
                     end_level=current_level + t,
                     name=names[i] if names is not None else None,
-                    parent_layer=self,
                 )
             )
             current_level += t
@@ -362,14 +347,14 @@ class Layer(Element):
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Set an extension plane for an edge.  Propagates to all sublayers."""
-        self._plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
-        for sublayer in self._sublayers:
+        self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+        for sublayer in self.sublayers:
             sublayer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """Move edge vertices onto the extension planes, then recurse to sublayers."""
-        self._plate_geometry.apply_edge_extensions()
-        for sublayer in self._sublayers:
+        self.plate_geometry.apply_edge_extensions()
+        for sublayer in self.sublayers:
             sublayer.apply_edge_extensions()
 
     # ------------------------------------------------------------------
@@ -385,7 +370,7 @@ class Layer(Element):
         return box
 
     def compute_obb(self, inflate: float = 0.0) -> Box:
-        obb = self._plate_geometry.compute_aabb(inflate)
+        obb = self.plate_geometry.compute_aabb(inflate)
         obb.transform(self.modeltransformation)
         return obb
 
@@ -440,43 +425,96 @@ class Layer(Element):
         return layer_outline_a, layer_outline_b
 
 
-class LayerStructure(Data):
-    """Panel-agnostic cross-section definition. Shared across panels; :meth:`attach` creates bound :class:`Layer` instances per panel.
+class LayerDef(Data):
+    """Definition of a single layer slot within a :class:`LayerStructure`.
 
-    When *sublayers* are absent this object defines a single layer spanning the full panel thickness.
-    When *sublayers* are present they become the panel's root layers.
-    Use ``"core"``, ``"exterior"``, ``"interior"`` as names to enable the matching properties on :class:`~compas_timber.elements.Panel`.
-    A sibling with ``thickness=None`` absorbs remaining thickness; at most one sibling may do so.
+    ``LayerDef`` is the panel-agnostic description of one layer: its name, thickness
+    fraction, and optional children.  A :class:`LayerStructure` holds a tree of
+    ``LayerDef`` objects; when applied to a :class:`~compas_timber.elements.Panel`
+    each ``LayerDef`` produces one geometry-bearing :class:`Layer` instance.
+
+    Parameters
+    ----------
+    name : str, optional
+        Human-readable identifier (e.g. ``"core"``, ``"exterior"``).
+    thickness : float, optional
+        Absolute thickness of this slot measured along the panel's thickness direction.
+        When ``None`` the slot absorbs whatever thickness remains after all fixed siblings
+        are summed.  At most one sibling at the same level may have ``thickness=None``.
+    sublayer_defs : list[:class:`LayerDef`], optional
+        Child slot definitions for nested layers.
+
+    Attributes
+    ----------
+    name : str or None
+    thickness : float or None
+    sublayer_defs : list[:class:`LayerDef`]
+    layer_path : tuple[int, ...]
+        Position in the :class:`LayerStructure` tree, e.g. ``(1,)`` for the second root
+        slot or ``(1, 0)`` for its first child.  Set automatically by
+        :class:`LayerStructure` when the structure is built.  Not serialized.
     """
-
-    def __init__(self, name="core", thickness=None, sublayers=None):
-        super().__init__()
-        self.name = name
-        self.thickness = thickness
-        self.sublayers = list(sublayers) if sublayers else []
-
-    def __repr__(self):
-        return "LayerStructure(name={!r}, thickness={}, sublayers={!r})".format(
-            self.name, self.thickness, self.sublayers
-        )
 
     @property
     def __data__(self):
-        return {"name": self.name, "thickness": self.thickness, "sublayers": self.sublayers}
+        return {"name": self.name, "thickness": self.thickness, "sublayer_defs": self.sublayer_defs}
 
-    @classmethod
-    def __from_data__(cls, data):
-        return cls(name=data["name"], thickness=data["thickness"], sublayers=data.get("sublayers", []))
+    def __init__(self, name=None, thickness=None, sublayer_defs=None):
+        super().__init__()
+        self.name = name
+        self.thickness = thickness
+        self.sublayer_defs = list(sublayer_defs) if sublayer_defs else []
+        self.layer_path = ()
+
+    def __repr__(self):
+        return "LayerDef(name={!r}, thickness={}, path={})".format(self.name, self.thickness, self.layer_path)
+
+
+class LayerStructure(Data):
+    """Panel-agnostic cross-section definition.
+
+    A ``LayerStructure`` holds a tree of :class:`LayerDef` objects describing
+    the layer slots.  It is shared across panels; :meth:`attach` creates bound
+    :class:`Layer` instances for each specific panel.
+
+    Use ``"core"``, ``"exterior"``, ``"interior"`` as :class:`LayerDef` names to
+    enable the matching properties on :class:`~compas_timber.elements.Panel`.
+    A sibling with ``thickness=None`` absorbs remaining thickness; at most one
+    sibling at the same level may do so.
+
+    Parameters
+    ----------
+    layer_defs : list[:class:`LayerDef`], optional
+        Root-level layer definitions.  Defaults to a single ``"core"`` slot spanning
+        the full panel thickness.
+    """
+
+    @property
+    def __data__(self):
+        return {"layer_defs": self.layer_defs}
+
+    def __init__(self, layer_defs=None):
+        super().__init__()
+        self.layer_defs = list(layer_defs) if layer_defs else [LayerDef(name="core")]
+        self._assign_paths(self.layer_defs, ())
+
+    def __repr__(self):
+        return "LayerStructure(layer_defs={!r})".format(self.layer_defs)
+
+    def _assign_paths(self, defs, prefix):
+        for i, def_ in enumerate(defs):
+            def_.layer_path = prefix + (i,)
+            if def_.sublayer_defs:
+                self._assign_paths(def_.sublayer_defs, prefix + (i,))
 
     def attach(self, panel):
         """Create and return bound :class:`Layer` instances for *panel*."""
-        defs = self.sublayers if self.sublayers else [self]
-        return self._create_layers(panel, defs, 0.0, panel.thickness)
+        return self._create_layers(panel, self.layer_defs, 0.0, panel.thickness)
 
     def _create_layers(self, panel, defs, start, total):
         none_count = sum(1 for d in defs if d.thickness is None)
         if none_count > 1:
-            raise ValueError("At most one LayerStructure sibling may have thickness=None.")
+            raise ValueError("At most one LayerDef sibling may have thickness=None.")
         fixed_sum = sum(d.thickness for d in defs if d.thickness is not None)
         if fixed_sum > total + 1e-6:
             raise ValueError(
@@ -488,24 +526,24 @@ class LayerStructure(Data):
         layers = []
         for def_ in defs:
             t = fill if def_.thickness is None else def_.thickness
-            sublayers = self._create_layers(panel, def_.sublayers, current, t) if def_.sublayers else []
-            layer = Layer(panel=panel, start_level=current, end_level=current + t, name=def_.name, sublayers=sublayers)
+            sublayers = self._create_layers(panel, def_.sublayer_defs, current, t) if def_.sublayer_defs else []
+            layer = Layer(panel=panel, start_level=current, end_level=current + t, name=def_.name, sublayers=sublayers, layer_path=def_.layer_path)
+            layer.layer_def = def_
             layers.append(layer)
             current += t
         return layers
 
     def get_path_for_name(self, name):
-        """Return the layer path tuple of the first definition matching *name*, or ``None``."""
-        defs = self.sublayers if self.sublayers else [self]
-        return self._find_path(defs, name, ())
+        """Return the :attr:`~LayerDef.layer_path` of the first definition matching *name*, or ``None``."""
+        return self._find_path(self.layer_defs, name, ())
 
     def _find_path(self, defs, name, prefix):
         for i, def_ in enumerate(defs):
             path = prefix + (i,)
             if def_.name == name:
                 return path
-            if def_.sublayers:
-                result = self._find_path(def_.sublayers, name, path)
+            if def_.sublayer_defs:
+                result = self._find_path(def_.sublayer_defs, name, path)
                 if result is not None:
                     return result
         return None

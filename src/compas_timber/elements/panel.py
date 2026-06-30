@@ -34,6 +34,8 @@ from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import polylines_from_brep_face
 
+from .layer import Layer
+from .layer import LayerDef  # noqa: F401
 from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
 
@@ -111,7 +113,6 @@ class Panel(Element):
         data["type"] = self.type
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
         data["layer_structure"] = self._layer_structure
-        data["layers"] = list(self._root_layers)
         data.update(self.attributes)
         return data
 
@@ -124,7 +125,6 @@ class Panel(Element):
         plate_geometry: Optional[PlateGeometry] = None,
         type: Optional[str] = None,
         layer_structure: Optional[LayerStructure] = None,
-        layers: Optional[list] = None,
         **kwargs,
     ):
         if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
@@ -144,16 +144,8 @@ class Panel(Element):
         self.attributes.update(kwargs)
         self._layer_structure = layer_structure or LayerStructure()
         self._root_layers = []
-        self._layer_path_dict = {}
         self._planes = None
-        if layers:
-            # deserialization path: restore saved bound Layer objects directly
-            self._root_layers = list(layers)
-            for layer in self._root_layers:
-                layer._panel = self
-            self._rebuild_layer_path_dict()
-        else:
-            self._attach_layer_structure()
+        self._attach_layer_structure()
 
     def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
@@ -205,13 +197,13 @@ class Panel(Element):
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by PanelJoints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
-        for layer in self._root_layers:
+        for layer in self.layers:
             layer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """adjusts segments of the outlines to lay on the edge planes created by PanelJoints."""
         self.plate_geometry.apply_edge_extensions()
-        for layer in self._root_layers:
+        for layer in self.layers:
             layer.apply_edge_extensions()
 
     def remove_blank_extension(self, edge_index: Optional[int] = None):
@@ -281,53 +273,46 @@ class Panel(Element):
         self._attach_layer_structure()
 
     def _attach_layer_structure(self):
-        """Create bound Layer instances from ``_layer_structure`` and rebuild the path dict."""
+        """Create bound Layer instances from ``_layer_structure``."""
         for old in self._root_layers:
             old._panel = None
         self._root_layers = self._layer_structure.attach(self)
-        self._rebuild_layer_path_dict()
-
-    def _rebuild_layer_path_dict(self):
-        """Rebuild ``_layer_path_dict`` by walking the layer tree, assigning index-based paths."""
-        self._layer_path_dict = {}
-
-        def _register(layer, path):
-            layer.layer_path = path
-            self._layer_path_dict[path] = layer
-            for i, sublayer in enumerate(layer.sublayers):
-                sublayer.parent_layer = layer
-                _register(sublayer, path + (i,))
-
-        for i, layer in enumerate(self._root_layers):
-            _register(layer, (i,))
 
     @property
     def layers(self):
         """Root layers of this panel (direct children only)."""
+        if self.model is not None:
+            return [c for c in self.children if isinstance(c, Layer)]
         return self._root_layers
-
-    @property
-    def layer_tree(self):
-        """Flat mapping of path tuples to :class:`~compas_timber.elements.Layer` instances (all levels)."""
-        return self._layer_path_dict
 
     @property
     def exterior_layer(self):
         """The layer named ``"exterior"`` in this panel's :attr:`layer_structure`, or ``None``."""
         path = self._layer_structure.get_path_for_name("exterior")
-        return self._layer_path_dict.get(path) if path is not None else None
+        return self._get_layer_at_path(path) if path is not None else None
 
     @property
     def core_layer(self):
         """The layer named ``"core"`` in this panel's :attr:`layer_structure`, or ``None``."""
         path = self._layer_structure.get_path_for_name("core")
-        return self._layer_path_dict.get(path) if path is not None else None
+        return self._get_layer_at_path(path) if path is not None else None
 
     @property
     def interior_layer(self):
         """The layer named ``"interior"`` in this panel's :attr:`layer_structure`, or ``None``."""
         path = self._layer_structure.get_path_for_name("interior")
-        return self._layer_path_dict.get(path) if path is not None else None
+        return self._get_layer_at_path(path) if path is not None else None
+
+    def _get_layer_at_path(self, path):
+        """Navigate the layer tree by index tuple and return the matching layer."""
+        layers = self.layers
+        layer = None
+        for idx in path:
+            if idx >= len(layers):
+                return None
+            layer = layers[idx]
+            layers = layer.sublayers
+        return layer
 
     def get_leaf_layers(self):
         """Return all layers with no sublayers, in order from outline_a to outline_b."""
@@ -340,12 +325,12 @@ class Panel(Element):
                 for sub in layer.sublayers:
                     _walk(sub)
 
-        for layer in self._root_layers:
+        for layer in self.layers:
             _walk(layer)
         return leaf_layers
 
-    def merge_layer_tree(self, model):
-        """Add all layers in this panel's tree to *model* as children of this panel."""
+    def merge_layer_structure(self, model):
+        """Add all layers in this panel's layer structure to *model* as children of this panel."""
         for layer in self._root_layers:
             if layer not in model.elements():
                 model.add_element(layer, parent=self)

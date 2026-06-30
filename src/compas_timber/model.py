@@ -79,7 +79,6 @@ class TimberModel(Model):
 
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
-
         return model
 
     def __init__(self, tolerance=None, **kwargs):
@@ -178,12 +177,6 @@ class TimberModel(Model):
     # =============================================================================
     # Elements
     # =============================================================================
-
-    def add_element(self, element, parent=None, material=None):
-        result = super().add_element(element, parent=parent, material=material)
-        if isinstance(element, Panel):
-            element.merge_layer_tree(self)
-        return result
 
     def get_element(self, guid):
         # type: (str) -> Element | None
