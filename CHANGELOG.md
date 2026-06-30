@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `orientation` parameter to `PlateGeometry.from_global_outlines`, `Panel.from_outlines`, `Panel.from_outline_thickness`, `Panel.from_face_thickness`, `Panel.from_brep`, `Plate.from_outlines`, `Plate.from_outline_thickness`, `Plate.from_face_thickness`, and `Plate.from_brep`. When provided, the vector is projected onto the element's plane and used to control the direction of the local coordinate frame, overriding the frame determined automatically from the input outlines.* Added `SimpleScarf` BTLx processing class to `compas_timber.fabrication` for generating simple scarf joint machining operations, including optional drill holes (0, 1, or 2).
 * Added `ISimpleScarf` joint class to `compas_timber.connections` for joining two parallel beams (Topology I) with a simple scarf joint.
 * Added unit tests for `ISimpleScarf`, `SimpleScarf`, `LButtJoint`, `LMiterJoint`, `TButtJoint`, `Panel`, and `Plate`.
+* Added `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
@@ -91,7 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Added `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
 * Added new `compas_timber.btlx` package with `BTLxReader` class for reading BTLx XML files into a `TimberModel`.
 * Added `BTLxParsingError` to `compas_timber.errors` — a non-fatal exception with `part_id` and `processing_type` fields, collected during BTLx parsing without aborting the process.
 * Added `BTLxProcessing.HEADER_ATTRIBUTE_MAP` class attribute mapping BTLx XML header attributes (e.g. `ReferencePlaneID`, `ProcessID`, `CounterSink`) to Python parameter names with type converters, used by the reader.

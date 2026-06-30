@@ -349,10 +349,10 @@ class PlateStock(Stock):
 
     def is_compatible_with(self, plate):
         """
-        Check if this stock can accommodate the plate type and dimensions.
+        Check if this stock can accommodate the plate type.
 
-        For 2D nesting, plates must have matching thickness.
-        The plate's 2D outline must fit within the stock dimensions.
+        For 2D nesting, plates must have matching thickness. Dimension/fit checks are handled
+        during candidate placement and geometry validation in the nesting algorithms.
 
         Parameters
         ----------
@@ -1002,6 +1002,7 @@ class PlateNester(object):
 
         return NestingResult(
             nesting_stocks,
+            tolerance=self.model.tolerance,
             unplaced_elements=unplaced_plate_guids,
             seed=self.seed,
             unplaced_reasons=unplaced_reasons,

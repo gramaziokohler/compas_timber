@@ -667,10 +667,6 @@ def test_plate_stock_add_element_stores_btlx_partref_frame_mapping():
     target = Frame(Point(750, 250, 0), Vector(0, 1, 0), Vector(-1, 0, 0))
     transformation = Transformation.from_frame_to_frame(Frame.worldXY(), target)
 
-    plate_outline = plate.plate_geometry.outline_a.transformed(transformation)
-    print("Transformed plate outline points:", [p for p in plate_outline.points])
-    print("Stock boundary points:", [p for p in stock._remaining_boundary.points])
-
     stock.add_element(plate, transformation)
 
     placement_frame = stock.placement_data[str(plate.guid)]
