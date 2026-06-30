@@ -95,6 +95,21 @@ class TimberElement(Element, abc.ABC):
         """Reset all computed/cached properties."""
         self._reset_computed_dummy()
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy.
+
+        Preserves model-independent caches such as ``_elementgeometry``, features,
+        and blank extensions.
+        """
+        self._modeltransformation = None
+        self._modelgeometry = None
+        self._aabb = None
+        self._obb = None
+        self._collision_mesh = None
+        self._blank = None
+        self._ref_frame = None
+        self._geometry = None
+
     @property
     def is_beam(self):
         return False

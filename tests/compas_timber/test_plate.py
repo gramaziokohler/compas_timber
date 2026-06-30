@@ -257,7 +257,7 @@ def test_from_outline_with_openings():
 
     assert plate is not None
     assert TOL.is_close(plate.thickness, thickness)
-    assert len(plate.plate_geometry.openings) == 1
+    assert len(plate._features) == 1
 
 
 def test_from_brep_rectangular_box():
@@ -355,3 +355,55 @@ def test_from_outlines_alignment():
     for dist in distances:
         assert TOL.is_close(dist, avg_distance, atol=0.1)
     assert TOL.is_close(avg_distance, thickness, atol=0.1)
+
+
+# ---------------------------------------------------------------------------
+# orientation parameter
+# ---------------------------------------------------------------------------
+
+_FLAT_OUTLINE = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+_SLOPED_OUTLINE = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+
+def test_plate_orientation_does_not_change_normal_or_outlines():
+    plate_default = Plate.from_outline_thickness(_FLAT_OUTLINE, 1)
+    plate_oriented = Plate.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+
+    assert TOL.is_allclose(plate_default.normal, plate_oriented.normal)
+    assert TOL.is_close(plate_default.thickness, plate_oriented.thickness)
+    for pt_d, pt_o in zip(plate_default.outline_a.points, plate_oriented.outline_a.points):
+        assert TOL.is_allclose(pt_d, pt_o)
+    for pt_d, pt_o in zip(plate_default.outline_b.points, plate_oriented.outline_b.points):
+        assert TOL.is_allclose(pt_d, pt_o)
+
+
+def test_plate_orientation_changes_local_frame():
+    plate_default = Plate.from_outline_thickness(_FLAT_OUTLINE, 1)
+    plate_oriented = Plate.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+
+    assert not TOL.is_allclose(plate_default.frame.xaxis, plate_oriented.frame.xaxis)
+    assert not TOL.is_allclose(plate_default.frame.yaxis, plate_oriented.frame.yaxis)
+
+
+def test_plate_orientation_explicit_frame_flat():
+    # orientation=Y on this flat plate rotates the local frame 90° CW:
+    # xaxis becomes -world-Y, yaxis becomes +world-X
+    plate = Plate.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
+    assert TOL.is_allclose(plate.frame.xaxis, [0, -1, 0])
+    assert TOL.is_allclose(plate.frame.yaxis, [1, 0, 0])
+
+
+def test_plate_orientation_explicit_frame_sloped():
+    # orientation=X on the sloped plate: yaxis aligns with the panel's slope direction
+    plate = Plate.from_outline_thickness(_SLOPED_OUTLINE, 1, orientation=Vector(1, 0, 0))
+    assert TOL.is_allclose(plate.frame.xaxis, [-1, 0, 0])
+    assert TOL.is_allclose(plate.frame.yaxis, [0, 0.7071067811865476, 0.7071067811865476])
+
+
+def test_plate_from_outlines_orientation():
+    outline_b = Polyline([Point(pt[0], pt[1], pt[2] + 1) for pt in _FLAT_OUTLINE.points])
+    plate_default = Plate.from_outlines(_FLAT_OUTLINE, outline_b)
+    plate_oriented = Plate.from_outlines(_FLAT_OUTLINE, outline_b, orientation=Vector(0, 1, 0))
+
+    assert not TOL.is_allclose(plate_default.frame.xaxis, plate_oriented.frame.xaxis)
+    assert TOL.is_allclose(plate_default.normal, plate_oriented.normal)

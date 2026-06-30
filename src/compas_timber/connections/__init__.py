@@ -1,8 +1,10 @@
 from .joint import Joint
 from .butt_joint import ButtJoint
+from .i_simple_scarf import ISimpleScarf
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
+from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -24,9 +26,11 @@ from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
+from .butt_joint import CutPlaneSpec
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
+from .utilities import angle_and_dot_product_beam_a_and_beam_b
 from .plate_joint import PlateJoint
 from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
@@ -45,6 +49,7 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "ISimpleScarf",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
@@ -68,9 +73,13 @@ __all__ = [
     "LTenonMortiseJoint",
     "YButtJoint",
     "TOliGinaJoint",
+    "CutPlaneSpec",
+    "MiterPlaneSpec",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
+    "angle_and_dot_product_beam_a_and_beam_b",
+    "angle_and_dot_product_beam_a_and_beam_b",
     "PlateJoint",
     "PanelJoint",
     "PlateButtJoint",

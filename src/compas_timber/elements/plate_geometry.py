@@ -10,6 +10,7 @@ from compas.geometry import Polygon
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 
@@ -25,53 +26,71 @@ class PlateGeometry(Data):
     Parameters
     ----------
     local_outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate. This should be declared in the local frame of the plate, aka projected on worldXY.
+        The principal outline of the plate in local space (projected on worldXY, starting at origin).
     local_outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate. This should be declared in the local frame of the plate and have the same number of points as outline_a.
-        Must be parallel to outline_a. Must be in the +Z direction of the frame.
-    openings : list[:class:`~compas.geometry.Polyline`], optional
-        A list of Polyline objects representing openings in this plate.
+        The associated outline of the plate in local space. Must have the same number of points as outline_a,
+        be parallel to outline_a, and be offset in the +Z direction.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The local coordinate frame of the plate in global space. Defaults to worldXY.
 
     Attributes
     ----------
+    frame : :class:`~compas.geometry.Frame`
+        The local coordinate frame of the plate in global space.
+    length : float
+        Length of the plate along the local x-axis.
+    width : float
+        Width of the plate along the local y-axis.
+    thickness : float
+        Thickness of the plate along the local z-axis.
     outline_a : :class:`~compas.geometry.Polyline`
-        A line representing the principal outline of this plate in local space.
+        The principal outline of the plate in local space (mutable, affected by edge extensions).
     outline_b : :class:`~compas.geometry.Polyline`
-        A line representing the associated outline of this plate in local space.
+        The associated outline of the plate in local space (mutable, affected by edge extensions).
     outlines : tuple[:class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
         A tuple containing both outline_a and outline_b.
     edge_planes : list[:class:`~compas.geometry.Frame`]
         Frames representing the edge planes of the plate.
     shape : :class:`~compas.geometry.Brep`
         The geometry of the Plate before other machining features are applied.
-    openings : list[:class:`~compas.geometry.Polyline`]
-        A list of Polyline objects representing openings in this plate.
 
     """
 
     @property
     def __data__(self):
-        data = {}
-        data["local_outline_a"] = self._original_outlines[0]
-        data["local_outline_b"] = self._original_outlines[1]
-        data["openings"] = self.openings
-        return data
+        return {
+            "local_outline_a": self._original_outlines[0],
+            "local_outline_b": self._original_outlines[1],
+            "frame": self.frame,
+            "length": self.length,
+            "width": self.width,
+            "thickness": self.thickness,
+        }
 
-    def __init__(self, local_outline_a, local_outline_b, openings=None, **kwargs):
+    @classmethod
+    def __from_data__(cls, data):
+        return cls(data["local_outline_a"], data["local_outline_b"], data["frame"])
+
+    def __init__(self, local_outline_a: Polyline, local_outline_b: Polyline, frame: Optional[Frame] = None, **kwargs):
         super().__init__(**kwargs)
+        self._check_outlines(local_outline_a, local_outline_b)
+        box = Box.from_points(local_outline_a.points + local_outline_b.points)
+        self.frame = frame if frame is not None else Frame.worldXY()
+        self.length = box.xsize
+        self.width = box.ysize
+        self.thickness = box.zsize
         self._original_outlines = None
         self._mutable_outlines = None
         self._original_edge_planes = {}
         self._set_original_attributes(local_outline_a, local_outline_b)
-        self.openings = openings or []
         self._extension_planes = {}
 
     def __repr__(self):
         # type: () -> str
-        return "Plate(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
+        return "PlateGeometry(outline_a={!r}, outline_b={!r})".format(self.outline_a, self.outline_b)
 
     def __str__(self):
-        return "Plate {}, {} ".format(self.outline_a, self.outline_b)
+        return "PlateGeometry {}, {} ".format(self.outline_a, self.outline_b)
 
     # ==========================================================================
     # Computed attributes
@@ -175,76 +194,95 @@ class PlateGeometry(Data):
         outline_b = correct_polyline_direction(self.outline_b, Vector(0, 0, 1), clockwise=True)
         plate_geo = brep_from_outlines(outline_a, outline_b)
 
-        for opening in self.openings:
-            if not TOL.is_allclose(opening[0], opening[-1]):
-                raise ValueError("Opening polyline is not closed.", opening[0], opening[-1])
-            polyline_a = correct_polyline_direction(opening, Vector(0, 0, 1), clockwise=True)
-            # z-value of opening_b should be the same as outline_b to make sure the opening goes through the whole plate
-            polyline_b = Polyline([Point(pt[0], pt[1], self.outline_b[0][2]) for pt in polyline_a.points])
-            opening_brep = brep_from_outlines(polyline_a, polyline_b)
-            plate_geo -= opening_brep
         return plate_geo
 
     # ==========================================================================
-    #  static methods
+    #  class methods
     # ==========================================================================
 
-    @staticmethod
-    def get_args_from_outlines(outline_a: Polyline, outline_b: Polyline, openings: Optional[list[Polyline]] = None):
-        """
-        Get constructor arguments for the PlateGeometry and subclasses from outlines.
-        Outlines and openings are transformed to the local frame of the plate.
+    @classmethod
+    def from_global_outlines(cls, outline_a: Polyline, outline_b: Polyline, orientation: Optional[Vector] = None) -> "PlateGeometry":
+        """Creates a PlateGeometry from two polylines in global (world) space.
+
+        Computes the local frame and transforms the outlines into the plate's local coordinate system.
 
         Parameters
         ----------
         outline_a : :class:`~compas.geometry.Polyline`
-            Principal outline of the plate.
+            Principal outline of the plate in global space.
         outline_b : :class:`~compas.geometry.Polyline`
-            Associated outline of the plate.
-        openings : list[:class:`~compas.geometry.Polyline`], optional
-            List of opening polylines.
+            Associated outline of the plate in global space. Must be parallel to outline_a
+            and offset in the plate's normal direction.
+        orientation : :class:`~compas.geometry.Vector`, optional
+            A vector that controls the direction of the local coordinate frame.
+            When provided, the vector is projected onto the outline plane and used to define
+            the local y-axis direction, overriding the frame derived automatically from the
+            outline geometry. If ``None``, the frame is determined from the outline.
 
         Returns
         -------
-        dict
-            Dictionary of constructor arguments containing:
-            - local_outline_a (:class:`~compas.geometry.Polyline`)
-            - local_outline_b (:class:`~compas.geometry.Polyline`)
-            - openings (list[:class:`~compas.geometry.Polyline`]|None)
-            - frame (:class:`~compas.geometry.Frame`)
-            - length (float)
-            - width (float)
-            - thickness (float)
+        :class:`PlateGeometry`
         """
-        # get frame from outline_a
-        frame = Frame.from_points(outline_a[0], outline_a[1], outline_a[-2])
-        # flip frame so that outline_b is in the +Z direction
+        # get 3 non-colinear points
+        pt_c = None
+        vector_a = Vector.from_start_end(outline_a[0], outline_a[1])
+        for pt in outline_a.points[-1:1:-1]:  # walk bakwards along outline_a.points
+            vector_b = Vector.from_start_end(outline_a[0], pt)
+            if not TOL.is_allclose(cross_vectors(vector_a, vector_b), [0, 0, 0]):  # cross_vectors returns [0,0,0] for parallel vectors
+                pt_c = pt
+        if not pt_c:
+            raise ValueError("outline_a appears to only have colinear points")
+
+        # get initial frame for rebasing to XY-plane
+        frame = Frame.from_points(outline_a[0], outline_a[1], pt_c)
+
+        if orientation:
+            orientation = cross_vectors(cross_vectors(orientation, frame.normal), frame.normal)  # project to `frame`
+            frame = Frame(outline_a[0], cross_vectors(orientation, frame.normal), orientation)  # create new frame based on orientation
+
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
-            frame = Frame.from_points(outline_a[0], outline_a[-2], outline_a[1])
-        # transform outlines to worldXY
+            frame = Frame(frame.point, frame.yaxis, frame.xaxis)  # flip frame if outline_b in -z space
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+
+        # move polylines to XY
         rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
         rebased_pline_b = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_b.points])
-        # get bounding box to define new frame
+        # TODO: rebasing to positive XY space (code below) shouldn't be strictly necessary.
         box = Box.from_points(rebased_pline_a.points + rebased_pline_b.points)
-        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))
-        # transform frame back to global space
+        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))  # frame at bounding box corner
         frame.transform(transform_to_world_xy.inverse())
-        # move outlines to +XY
         vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
+        # move polylines to positive XY space
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
-        PlateGeometry._check_outlines(local_outline_a, local_outline_b)
-        openings = [o.transformed(Transformation.from_frame(frame).inverse()) for o in openings] if openings else None
-        return {
-            "local_outline_a": local_outline_a,
-            "local_outline_b": local_outline_b,
-            "openings": openings,
-            "frame": frame,
-            "length": box.xsize,
-            "width": box.ysize,
-            "thickness": box.zsize,
-        }
+        return cls(local_outline_a, local_outline_b, frame)
+
+    @classmethod
+    def from_frame_and_dims(cls, frame: Frame, length: float, width: float, thickness: float) -> "PlateGeometry":
+        """Creates a PlateGeometry with a rectangular outline from a frame and dimensions.
+
+        Parameters
+        ----------
+        frame : :class:`~compas.geometry.Frame`
+            The local coordinate frame of the plate in global space.
+        length : float
+            Length of the plate along the frame's x-axis.
+        width : float
+            Width of the plate along the frame's y-axis.
+        thickness : float
+            Thickness of the plate along the frame's z-axis.
+
+        Returns
+        -------
+        :class:`PlateGeometry`
+        """
+        local_outline_a = Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
+        local_outline_b = Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
+        return cls(local_outline_a, local_outline_b, frame)
+
+    # ==========================================================================
+    #  static methods
+    # ==========================================================================
 
     @staticmethod
     def _check_outlines(outline_a: Polyline, outline_b: Polyline) -> None:
