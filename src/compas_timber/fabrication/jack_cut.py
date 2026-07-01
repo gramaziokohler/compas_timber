@@ -412,9 +412,10 @@ class JackRafterCutProxy(object):
         try:
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
+            world_plane = self.plane.transformed(self.beam.modeltransformation)
             raise FeatureApplicationError(
-                self.plane,
-                geometry,
+                self.plane.transformed(self.beam.modeltransformation),
+                geometry.transformed(self.beam.modeltransformation),
                 "The cutting plane does not intersect with beam geometry.",
             )
 

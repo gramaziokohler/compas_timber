@@ -1,6 +1,7 @@
 import abc
 from functools import wraps
 
+from compas import json_loads, json_dumps
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -109,6 +110,7 @@ class TimberElement(Element, abc.ABC):
         self._blank = None
         self._ref_frame = None
         self._geometry = None
+        
 
     @property
     def is_beam(self):

@@ -3,7 +3,7 @@ from typing import Optional
 from compas.geometry import Plane
 
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication import JackRafterCut
 
 from .butt_joint import ButtJoint
 from .butt_joint import CutPlaneSpec
@@ -135,7 +135,7 @@ class LButtJoint(ButtJoint):
         super(LButtJoint, self).add_features()
 
         if self.modify_cross:
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            cross_refinement_feature = JackRafterCut.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 

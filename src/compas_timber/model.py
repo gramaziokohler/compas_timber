@@ -844,7 +844,6 @@ class TimberModel(Model):
                 if child in self.elements():
                     continue
                 self.add_element(child, parent=target_parent)
-                child.clear_model_dependent_cache()
         if joints:
             for joint in joints:
                 self.add_joint(joint)

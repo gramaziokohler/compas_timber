@@ -10,7 +10,7 @@ from compas.geometry import Polyhedron
 from compas.geometry import dot_vectors
 
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCutProxy
+from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Lap
 from compas_timber.fabrication import Pocket
 from compas_timber.geometry import polyhedron_from_box_planes
@@ -252,7 +252,7 @@ class ButtJoint(Joint):
             self.cross_beam.remove_features(self.features)
 
         # apply cut on the main beam
-        main_feature = JackRafterCutProxy.from_plane_and_beam(self.butt_plane, self.main_beam, self.main_beam_ref_side_index)
+        main_feature = JackRafterCut.from_plane_and_beam(self.butt_plane, self.main_beam, self.main_beam_ref_side_index)
         self.main_beam.add_features(main_feature)
         self.features.append(main_feature)
 

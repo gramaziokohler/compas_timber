@@ -1,5 +1,8 @@
 import math
 
+from compas import json_loads, json_dumps
+
+
 from compas.geometry import Box
 from compas.geometry import Brep
 from compas.geometry import Frame
@@ -171,6 +174,7 @@ class Beam(TimberElement):
                 try:
                     geometry = feature.apply(geometry, self)
                 except FeatureApplicationError as error:
+                    print(f"[compute_elementgeometry] FeatureApplicationError on {self!r}: {error}")
                     self.debug_info.append(error)
         return geometry
 
@@ -359,6 +363,14 @@ class Beam(TimberElement):
             self._blank_extensions = {}
         else:
             del self._blank_extensions[joint_key]
+
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        for feature in self.features:
+            if getattr(feature, "_processing", None):
+                feature = json_loads(json_dumps(feature)) #force deproxificaiton
+        super().clear_model_dependent_cache()
+
 
     def extension_to_plane(self, plane):
         # type: (Frame) -> tuple[float, float]
