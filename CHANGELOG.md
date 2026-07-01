@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `orientation` parameter to `PlateGeometry.from_global_outlines`, `Panel.from_outlines`, `Panel.from_outline_thickness`, `Panel.from_face_thickness`, `Panel.from_brep`, `Plate.from_outlines`, `Plate.from_outline_thickness`, `Plate.from_face_thickness`, and `Plate.from_brep`. When provided, the vector is projected onto the element's plane and used to control the direction of the local coordinate frame, overriding the frame determined automatically from the input outlines.* Added `SimpleScarf` BTLx processing class to `compas_timber.fabrication` for generating simple scarf joint machining operations, including optional drill holes (0, 1, or 2).
 * Added `ISimpleScarf` joint class to `compas_timber.connections` for joining two parallel beams (Topology I) with a simple scarf joint.
 * Added unit tests for `ISimpleScarf`, `SimpleScarf`, `LButtJoint`, `LMiterJoint`, `TButtJoint`, `Panel`, and `Plate`.
+* Added `PlateNester` main implementation with improved skyline-based placement flow, deterministic ordering support, and seeded variant generation.
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
@@ -90,11 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.1-rc0] 2026-03-25
 
 ### Added
-* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
-* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
-* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
-* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
-* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
+
 * Added new `compas_timber.btlx` package with `BTLxReader` class for reading BTLx XML files into a `TimberModel`.
 * Added `BTLxParsingError` to `compas_timber.errors` — a non-fatal exception with `part_id` and `processing_type` fields, collected during BTLx parsing without aborting the process.
 * Added `BTLxProcessing.HEADER_ATTRIBUTE_MAP` class attribute mapping BTLx XML header attributes (e.g. `ReferencePlaneID`, `ProcessID`, `CounterSink`) to Python parameter names with type converters, used by the reader.
@@ -106,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Changed minimum required `compas` version to `2.15.1` due to bugfix.
+* Improved `PlateStock`/`NestingResult` reporting integration for plate nesting, including robust unplaced-element handling and per-stock utilization/report payload consistency.
 * Fixed `Plate.geometry` is `None`.
 * Fixed `FreeContour` BTLx file creation failing with assertion `processident != 0`; `process_id` now defaults to `1` instead of the base class default of `0`.
 * Fixed circular import between `compas_timber.connections.analyzers` and `compas_timber.model` by moving `analyzers` module to `compas_timber.analyzers`.
@@ -132,7 +129,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.1.0-dev0] 2026-03-16
 
 ### Added
-
+* Added new multi-face brep support via the `Plate.from_brep()` class method, which automatically creates plates from multi-face breps by detecting parallel faces.
+* Added `Plate.from_face_thickness()` class method for creating plates from single-face breps (replacing the previous single-face `Plate.from_brep()` behavior).
+* Added `Panel.from_brep()` class method to create panels from multi-face breps, parallel to `Plate.from_brep()`.
+* Added `Panel.from_face_thickness()` class method to create panels from single-face breps with an explicit thickness, parallel to `Plate.from_face_thickness()`.
+* Added `get_plate_geometry_outlines_from_brep` to `compas_timber.utils` — a shared utility used by both `Plate.from_brep()` and `Panel.from_brep()` to extract the two main outlines and openings from a multi-face brep using mesh-based face identification.
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
@@ -146,6 +147,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_clusters_from_joint_candidates` function to `compas_timber.connections`.
 
 ### Changed
+* Changed minimum required `compas` version to `2.15.1` due to bugfix.
 * Breaking change: the previous single-face `Plate.from_brep()` constructor behavior has been replaced, and `Plate.from_brep()` is now used exclusively to construct plates from multi-face breps. Existing code that called `Plate.from_brep()` with a single-face brep should be updated to call `Plate.from_face_thickness()` for plates, or `Panel.from_face_thickness()` for panels, instead.
 * `Plate.from_brep()` now delegates all brep parsing logic to `get_plate_geometry_outlines_from_brep`, which uses `mesh_from_brep_simple` to convert the brep into a `Mesh` datastructure. Face identification and vertex correspondence are resolved through mesh topology instead of directly iterating the brep API.
 * Rewrote `polyline_from_brep_loop` to use `join_polyline_segments` internally; curved edges are no longer sampled (curved breps must be pre-tessellated before use).
