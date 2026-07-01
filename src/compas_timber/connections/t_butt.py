@@ -80,3 +80,25 @@ class TButtJoint(ButtJoint):
     @property
     def generated_elements(self):
         return self.fasteners
+    
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Butt joint.
+        
+        Returns a Plane representing the 2-DOF sliding freedom if there is a pocket/lap,
+        otherwise returns a Vector representing a 3-DOF half-space.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        if moving_element == self.cross_beam:
+            normal = self.butt_plane.normal
+            
+        elif moving_element == self.main_beam:
+            normal = self.butt_plane.copy().normal * -1
+            
+        if self.mill_depth:
+            side_a_normal = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index]).normal * -1
+            side_b_normal = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index)).normal * -1
+            return [normal, side_a_normal, side_b_normal]
+        else:
+            return [normal]

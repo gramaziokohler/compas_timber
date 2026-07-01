@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import List
 from typing import Optional
@@ -298,8 +299,31 @@ class ISimpleScarf(Joint):
         """Calculates the escape constraint for the ISimpleScarf joint."""
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
+        
+        width, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+        scarf_depth = height - (self.depth_ref_side + self.depth_opp_side)
+        scarf_angle = math.atan((scarf_depth/self.length))
             
         if moving_element == self.main_beam:
-            return Line(self.location, self.location + self.main_beam.centerline.direction)
+            beam_side = self._get_beam_side(self.main_beam)
+            if beam_side == "start":
+                end_vector = self.main_beam.centerline.direction
+                opp_frame = self.main_beam.opp_side(self.main_beam_ref_side_index)
+                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal
+            else:
+                end_vector = self.main_beam.centerline.direction * -1
+                opp_frame = self.main_beam.opp_side(self.main_beam_ref_side_index)
+                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal
+            
         elif moving_element == self.cross_beam:
-            return Line(self.location, self.location + self.cross_beam.centerline.direction)
+            beam_side = self._get_beam_side(self.cross_beam)
+            if beam_side == "start":
+                end_vector = self.cross_beam.centerline.direction
+                opp_frame = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
+                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal
+            else:
+                end_vector = self.cross_beam.centerline.direction * -1
+                opp_frame = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
+                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal
+
+        return [scarf_normal, end_vector]

@@ -291,6 +291,6 @@ class LMiterJoint(Joint):
             return super(LMiterJoint, self).get_kinematic_constraint(moving_element)
             
         if moving_element == self.beam_a:
-            return plane_a
+            return plane_a.normal
         elif moving_element == self.beam_b:
-            return plane_b
+            return plane_b.normal

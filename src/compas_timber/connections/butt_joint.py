@@ -212,8 +212,9 @@ class ButtJoint(Joint):
             normal = self.butt_plane.copy().normal * -1
             
         if self.mill_depth:
-            side_a_plane = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index]).normal * -1
-            side_b_plane = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index)).normal * -1
-            return [normal, side_a_plane, side_b_plane]
+            side_a_normal = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index]).normal * -1
+            side_b_normal = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index)).normal * -1
+            
+            return [normal, side_a_normal, side_b_normal]
         else:
             return [normal]
