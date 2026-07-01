@@ -613,6 +613,33 @@ class NestingResult(Data):
                 lines.append("Waste({}): {:.{prec}f}".format(self.tolerance.unit, waste, prec=self.tolerance.precision))
                 lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
                 lines.append("--------")
+            elif isinstance(stock, PlateStock):
+                lines.append(
+                    "Dimensions({}): {:.{prec}f}x{:.{prec}f}x{:.{prec}f}".format(
+                        self.tolerance.unit,
+                        float(stock.dimensions[0]),
+                        float(stock.dimensions[1]),
+                        float(stock.thickness),
+                        prec=self.tolerance.precision,
+                    )
+                )
+                plate_keys = [data.key for data in stock.element_data.values()]
+                lines.append(f"PlateKeys: {plate_keys}")
+                lines.append("PlateCount: {}".format(len(plate_keys)))
+
+                capacity = float(stock.dimensions[0] * stock.dimensions[1])
+                used_area = getattr(stock, "_used_area", None)
+                if used_area is not None:
+                    used_area = max(0.0, min(capacity, float(used_area)))
+                    waste_area = max(0.0, capacity - used_area)
+                    lines.append("UsedArea({}2): {:.{prec}f}".format(self.tolerance.unit, used_area, prec=self.tolerance.precision))
+                    lines.append("WasteArea({}2): {:.{prec}f}".format(self.tolerance.unit, waste_area, prec=self.tolerance.precision))
+                else:
+                    lines.append("UsedArea({}2): n/a".format(self.tolerance.unit))
+                    lines.append("WasteArea({}2): n/a".format(self.tolerance.unit))
+
+                lines.append("Spacing({}): {:.{prec}f}".format(self.tolerance.unit, float(stock.spacing), prec=self.tolerance.precision))
+                lines.append("--------")
             else:
                 raise NotImplementedError("Formatted summary not implemented for this stock type yet.")
         return "\n".join(lines)

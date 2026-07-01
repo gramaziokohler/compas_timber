@@ -943,6 +943,25 @@ def test_nesting_result_summary_output():
     assert "Spacing(MM): 5.000" in summary
 
 
+def test_nesting_result_plate_summary_output():
+    """Test the output format of the NestingResult summary property for plates."""
+    stock = PlateStock((1000, 1000), 18, spacing=2.0)
+    plate = Plate(Frame.worldXY(), 500, 500, 18)
+    plate.name = "P1"
+    stock.add_element(plate)
+
+    result = NestingResult([stock])
+    summary = result.summary
+
+    assert "PlateStock_0:" in summary
+    assert "Dimensions(MM): 1000.000x1000.000x18.000" in summary
+    assert "PlateKeys: ['P1-{}']".format(str(plate.guid)[:4]) in summary
+    assert "PlateCount: 1" in summary
+    assert "UsedArea(MM2): 250000.000" in summary
+    assert "WasteArea(MM2): 750000.000" in summary
+    assert "Spacing(MM): 2.000" in summary
+
+
 def test_nesting_result_properties():
     """Test NestingResult summary properties."""
     stock1 = BeamStock(6000, (120.000, 60.000))
