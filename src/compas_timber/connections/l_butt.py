@@ -3,7 +3,7 @@ from typing import Optional
 from compas.geometry import Plane
 
 from compas_timber.errors import BeamJoiningError
-from compas_timber.fabrication import JackRafterCut
+from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
 from .butt_joint import CutPlaneSpec
@@ -83,6 +83,8 @@ class LButtJoint(ButtJoint):
         self.modify_cross = modify_cross
         self.reject_i = reject_i
         self._back_plane_spec: Optional[CutPlaneSpec] = back_plane_spec
+        if back_plane_spec:
+            print(back_plane_spec.angle, back_plane_spec.offset, back_plane_spec.ref_side_index)
 
     @property
     def back_plane(self) -> Plane:
@@ -92,6 +94,7 @@ class LButtJoint(ButtJoint):
         back face (opposite the cross beam).  Otherwise defaults to the same plane as :meth:`ButtJoint._back_cutting_plane`.
         """
         if self._back_plane_spec is not None:
+            print("getting back plane from spec", self._back_plane_spec.to_plane(self.main_beam))
             return self._back_plane_spec.to_plane(self.main_beam)
         # default: the side of the main beam opposite the one facing the cross beam, same as ButtJoint's default
         return super(LButtJoint, self)._back_cutting_plane()
@@ -135,7 +138,8 @@ class LButtJoint(ButtJoint):
         super(LButtJoint, self).add_features()
 
         if self.modify_cross:
-            cross_refinement_feature = JackRafterCut.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
+            print("adding cross beam feature")
+            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
             self.cross_beam.add_features(cross_refinement_feature)
             self.features.append(cross_refinement_feature)
 

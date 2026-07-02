@@ -8,6 +8,7 @@ from compas.data import Data
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
 from compas.geometry import dot_vectors
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCut
@@ -69,7 +70,7 @@ class CutPlaneSpec(Data):
             centerline axis.
 
         """
-        if not dot_vectors(cross_beam.frame.xaxis, plane.normal) == 0:
+        if not TOL.is_zero(dot_vectors(cross_beam.frame.xaxis, plane.normal)):
             raise ValueError("plane normal must be perpendicular to cross_beam centerline axis")
         ref_side_dict = beam_ref_side_incidence(main_beam, cross_beam, ignore_ends=True)
         ref_side_index = min(ref_side_dict, key=lambda k: ref_side_dict[k])
@@ -95,6 +96,8 @@ class CutPlaneSpec(Data):
             centerline axis.
 
         """
+        if not TOL.is_zero(dot_vectors(main_beam.frame.xaxis, plane.normal)):
+            raise ValueError("plane normal must be perpendicular to main_beam centerline axis")
         ref_side_dict = beam_ref_side_incidence(cross_beam, main_beam, ignore_ends=True)
         facing_side_index = min(ref_side_dict, key=lambda k: ref_side_dict[k])
         back_side_index = (facing_side_index + 2) % 4  # opposite face of main_beam

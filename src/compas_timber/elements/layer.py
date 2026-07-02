@@ -30,9 +30,8 @@ class Layer(Element):
 
     When no *panel* is supplied at construction time the layer is in a
     *deferred* state: :attr:`plate_geometry` is ``None`` and
-    :attr:`transformation` is the identity.  Geometry is created the first
-    time :meth:`_attach` is called (triggered by setting
-    :attr:`~compas_timber.elements.Panel.layer_structure`).
+    :attr:`transformation` is the identity.  Geometry is created lazily the
+    first time :attr:`plate_geometry` is accessed.
 
     Parameters
     ----------
@@ -92,15 +91,13 @@ class Layer(Element):
         data["layer_path"] = list(self.layer_path) if self.layer_path is not None else None
         return data
 
-
-
     # ------------------------------------------------------------------
     # Constructor
     # ------------------------------------------------------------------
 
     def __init__(
         self,
-        panel=None,
+        parent=None,
         start_level: float = 0.0,
         end_level: Optional[float] = None,
         name: Optional[str] = None,
@@ -108,25 +105,28 @@ class Layer(Element):
         layer_path: Optional[tuple] = None,
         **kwargs,
     ):
+        from compas_timber.elements.panel import Panel
+
+        self._parent_ref = None
         self._panel = None
         self._plate_geometry = None
         self._sublayers = []
         self._planes = None
         self.layer_path = tuple(layer_path) if layer_path is not None else None
-        self.layer_def = None
 
         self.start_level = start_level
         self.end_level = end_level
 
-        if panel is not None and end_level is not None:
-            outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, start_level, end_level)
+        if parent is not None and end_level is not None:
+            self._parent_ref = parent
+            self._panel = parent if isinstance(parent, Panel) else parent._panel
+            outline_a, outline_b = Layer.get_outlines_from_parent(parent, start_level, end_level)
             self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
             kwargs["transformation"] = Transformation.from_frame(self._plate_geometry.frame)
         else:
             kwargs["transformation"] = Transformation()
 
         super(Layer, self).__init__(name=name, **kwargs)
-        self._panel = panel
 
         if sublayers:
             self.sublayers = sublayers
@@ -146,9 +146,10 @@ class Layer(Element):
     @property
     def plate_geometry(self):
         if not self._plate_geometry:
-            if not self.panel:
-                raise AttributeError("No panel has been set, no geometry could be generated")
-            outline_a, outline_b = Layer.get_outlines_from_panel_range(self.panel, self.start_level, self.end_level)
+            parent = self.parent if self.treenode is not None else self._parent_ref
+            if parent is None:
+                raise AttributeError("No parent has been set, no geometry could be generated")
+            outline_a, outline_b = Layer.get_outlines_from_parent(parent, self.start_level, self.end_level)
             self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
             self.transformation = Transformation.from_frame(self._plate_geometry.frame)
         return self._plate_geometry
@@ -183,9 +184,10 @@ class Layer(Element):
     def sublayers(self, layers):
         self._sublayers = list(layers) if layers else []
         panel = self.panel
-        if panel is not None:
-            for sublayer in self._sublayers:
-                sublayer._attach(panel)
+        for sublayer in self._sublayers:
+            sublayer._parent_ref = self
+            if panel is not None:
+                sublayer._panel = panel
         if self.model is not None:
             self.merge_sublayer_tree(self.model)
 
@@ -248,18 +250,7 @@ class Layer(Element):
     @reset_computed
     def reset_joinery(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        self.plate_geometry.reset()  # reset outline_a and outline_b
-        self.debug_info = []
-
-    def _attach(self, panel):
-        """Set the panel reference and create geometry if deferred, then recurse into sublayers."""
-        if self._plate_geometry is None:
-            outline_a, outline_b = Layer.get_outlines_from_panel_range(panel, self.start_level, self.end_level)
-            self._plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
-            self.transformation = Transformation.from_frame(self._plate_geometry.frame)
-        self._panel = panel
-        for sublayer in self._sublayers:
-            sublayer._attach(panel)
+        self.reset()
 
     def define_sublayers(self, thicknesses: list, names: Optional[list] = None) -> list:
         """Subdivide this layer into child layers by thickness.
@@ -322,18 +313,15 @@ class Layer(Element):
         for element in self._sublayers:
             if element not in model.elements():
                 model.add_element(element, parent=self)
-            if isinstance(element, Layer):
-                element.merge_sublayer_tree(model)
+            element.merge_sublayer_tree(model)
 
-    @reset_computed
     def reset_computed_properties(self):
         """Clear all cached properties so they recompute against the current model tree."""
-        self._plate_geometry.reset()
         self._planes = None
+        super().reset_computed_properties()
 
     def clear_model_dependent_cache(self):
         """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        # self.model = None
         self._modeltransformation = None
         self._modelgeometry = None
         self._aabb = None
@@ -384,7 +372,6 @@ class Layer(Element):
 
     def compute_modelgeometry(self):
         if not self.model:
-            print("layer has no self.model")
             return self.elementgeometry.transformed(self.transformation)
         return super().compute_modelgeometry()
 
@@ -404,23 +391,31 @@ class Layer(Element):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def get_outlines_from_panel_range(panel, range_a: float, range_b: float):
-        """Interpolate the parent panel's outlines at *range_a* and *range_b*.
+    def get_outlines_from_parent(parent, start_level: float, end_level: float):
+        """Interpolate *parent*'s local outlines at the given panel-absolute levels.
 
-        Returns outlines in panel-local space so the resulting Layer's
-        ``transformation`` is relative to the parent panel.  Once attached
-        to the model as a child of the panel its ``modeltransformation``
-        lands in the correct world location.
+        *parent* is either the :class:`~compas_timber.elements.Panel` (for root
+        layers) or the enclosing :class:`Layer` (for sublayers).  The levels are
+        converted to a fraction of the parent's own thickness before interpolating,
+        so the returned outlines are in the parent's local coordinate space and the
+        resulting ``transformation`` chains correctly through the model tree.
         """
-        local_outline_a = panel.plate_geometry.outline_a
-        local_outline_b = panel.plate_geometry.outline_b
-        offset_a = range_a / panel.thickness
+        from compas_timber.elements.panel import Panel
+
+        parent_start = 0.0 if isinstance(parent, Panel) else parent.start_level
+        relative_start = start_level - parent_start
+        relative_end = end_level - parent_start
+
+        local_outline_a = parent.plate_geometry.outline_a
+        local_outline_b = parent.plate_geometry.outline_b
+
+        offset_a = relative_start / parent.thickness
         if offset_a:
             layer_outline_a = Polyline([pt_a * (1.0 - offset_a) + pt_b * offset_a for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
         else:
             layer_outline_a = local_outline_a
 
-        offset_b = range_b / panel.thickness
+        offset_b = relative_end / parent.thickness
         layer_outline_b = Polyline([pt_a * (1.0 - offset_b) + pt_b * offset_b for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
         return layer_outline_a, layer_outline_b
 
@@ -511,7 +506,7 @@ class LayerStructure(Data):
         """Create and return bound :class:`Layer` instances for *panel*."""
         return self._create_layers(panel, self.layer_defs, 0.0, panel.thickness)
 
-    def _create_layers(self, panel, defs, start, total):
+    def _create_layers(self, parent, defs, start, total):
         none_count = sum(1 for d in defs if d.thickness is None)
         if none_count > 1:
             raise ValueError("At most one LayerDef sibling may have thickness=None.")
@@ -526,9 +521,9 @@ class LayerStructure(Data):
         layers = []
         for def_ in defs:
             t = fill if def_.thickness is None else def_.thickness
-            sublayers = self._create_layers(panel, def_.sublayer_defs, current, t) if def_.sublayer_defs else []
-            layer = Layer(panel=panel, start_level=current, end_level=current + t, name=def_.name, sublayers=sublayers, layer_path=def_.layer_path)
-            layer.layer_def = def_
+            layer = Layer(parent=parent, start_level=current, end_level=current + t, name=def_.name, layer_path=def_.layer_path)
+            if def_.sublayer_defs:
+                layer.sublayers = self._create_layers(layer, def_.sublayer_defs, current, t)
             layers.append(layer)
             current += t
         return layers

@@ -191,7 +191,6 @@ class Panel(Element):
 
     @property
     def edge_planes(self):
-        # TODO: transform to global?
         return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
@@ -276,6 +275,7 @@ class Panel(Element):
         """Create bound Layer instances from ``_layer_structure``."""
         for old in self._root_layers:
             old._panel = None
+            old._parent_ref = None
         self._root_layers = self._layer_structure.attach(self)
 
     @property
@@ -417,7 +417,6 @@ class Panel(Element):
 
         """
 
-        # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.plate_geometry.compute_shape()
         if include_features:
             for feature in self._features:
