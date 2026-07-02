@@ -349,7 +349,6 @@ class JackRafterCutProxy(object):
 
     def __init__(self, plane, beam, ref_side_index=0, **kwargs):
         self.plane = plane.transformed(beam.transformation_to_local())
-        print("init JRC Proxy with plane", self.plane)
         self.beam = beam
         self.ref_side_index = ref_side_index
         self._processing = None
@@ -363,7 +362,6 @@ class JackRafterCutProxy(object):
         :class:`~compas_timber.fabrication.JackRafterCut`
 
         """
-        print("unproxifying")
         if not self._processing:
             plane = self.plane.transformed(self.beam.modeltransformation)
             self._processing = JackRafterCut.from_plane_and_beam(plane, self.beam, self.ref_side_index, **self.kwargs)
