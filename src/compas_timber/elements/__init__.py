@@ -11,6 +11,8 @@ from .fasteners.ball_node_fastener import BallNodeFastener
 from .fasteners.plate_fastener import PlateFastener
 from .plate_geometry import PlateGeometry
 from .layer import Layer
+from .layer import LayerDef
+from .layer import LayerStructure
 
 __all__ = [
     "Beam",
@@ -26,4 +28,6 @@ __all__ = [
     "Panel",
     "PlateGeometry",
     "Layer",
+    "LayerDef",
+    "LayerStructure",
 ]

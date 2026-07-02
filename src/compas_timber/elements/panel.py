@@ -34,6 +34,9 @@ from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import polylines_from_brep_face
 
+from .layer import Layer
+from .layer import LayerDef  # noqa: F401
+from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
 
 
@@ -109,6 +112,7 @@ class Panel(Element):
         data["plate_geometry"] = self.plate_geometry
         data["type"] = self.type
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
+        data["layer_structure"] = self._layer_structure
         data.update(self.attributes)
         return data
 
@@ -120,7 +124,7 @@ class Panel(Element):
         thickness: Optional[float] = None,
         plate_geometry: Optional[PlateGeometry] = None,
         type: Optional[str] = None,
-        layers: Optional[list] = None,
+        layer_structure: Optional[LayerStructure] = None,
         **kwargs,
     ):
         if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
@@ -138,14 +142,10 @@ class Panel(Element):
         self.type = type or PanelType.GENERIC
         self.attributes = {}
         self.attributes.update(kwargs)
-        self.exterior_layer = None
-        self.core_layer = None
-        self.interior_layer = None
+        self._layer_structure = layer_structure or LayerStructure()
         self._root_layers = []
-        self._layer_path_dict = {}
         self._planes = None
-        if layers:
-            self.layers = layers
+        self._attach_layer_structure()
 
     def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
@@ -191,19 +191,18 @@ class Panel(Element):
 
     @property
     def edge_planes(self):
-        # TODO: transform to global?
         return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Sets an extension plane for a specific edge of the plate. This is called by PanelJoints."""
         self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
-        for layer in self._root_layers:
+        for layer in self.layers:
             layer.set_extension_plane(edge_index, plane)
 
     def apply_edge_extensions(self):
         """adjusts segments of the outlines to lay on the edge planes created by PanelJoints."""
         self.plate_geometry.apply_edge_extensions()
-        for layer in self._root_layers:
+        for layer in self.layers:
             layer.apply_edge_extensions()
 
     def remove_blank_extension(self, edge_index: Optional[int] = None):
@@ -232,6 +231,13 @@ class Panel(Element):
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
+        self._features = []
+        self.debug_info = []
+
+    @reset_computed
+    def reset_joinery(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
 
@@ -255,101 +261,80 @@ class Panel(Element):
     def is_group_element(self):
         return True
 
-    def define_core_layer(self, start: float, end: float):
-        """Slice the panel into ``exterior_layer``, ``core_layer``, and ``interior_layer``.
-
-        The three layers cover ``[0, start]``, ``[start, end]``, and
-        ``[end, thickness]`` respectively.  Paths are fixed: exterior=(0,),
-        core=(1,), interior=(2,), regardless of which layers are present.
-
-        Parameters
-        ----------
-        start : float
-            Through-thickness offset where the core layer begins.
-        end : float
-            Through-thickness offset where the core layer ends.
-        """
-        from compas_timber.elements.layer import Layer
-
-        if start < 0 or end > self.thickness or start >= end:
-            raise ValueError("Invalid core layer range. Start and end must be within the panel thickness and start must be less than end.")
-
-        root_layers = []
-        if start > 0:
-            root_layers.append(Layer(self, 0, start, name="Exterior Layer", layer_path=(0,)))
-        root_layers.append(Layer(self, start, end, name="Core Layer", layer_path=(1,)))
-        if end < self.thickness:
-            root_layers.append(Layer(self, end, self.thickness, name="Interior Layer", layer_path=(2,)))
-        self.layers = root_layers
-
-    def merge_layer_tree(self, model):
-        for layer in self._root_layers:
-            if layer not in model.elements():
-                model.add_element(layer, parent=self)
-            layer.merge_sublayer_tree(model)
-
-    def _rebuild_layer_path_dict(self):
-        """Rebuild ``_layer_path_dict`` by walking the entire layer tree.
-
-        Uses each layer's existing ``layer_path`` if set; falls back to the
-        index-based path so layers without an explicit path still get one.
-        """
-        self._layer_path_dict.clear()
-
-        def _register(layer, fallback_path):
-            path = layer.layer_path if layer.layer_path is not None else fallback_path
-            layer.layer_path = path
-            self._layer_path_dict[path] = layer
-            for i, sublayer in enumerate(layer.sublayers):
-                _register(sublayer, path + (i,))
-
-        for i, layer in enumerate(self._root_layers):
-            _register(layer, (i,))
-
     @property
-    def layer_tree(self):
-        """Mapping of hierarchical path tuples to :class:`~compas_timber.elements.Layer` instances.
+    def layer_structure(self):
+        """The :class:`~compas_timber.elements.LayerStructure` definition for this panel."""
+        return self._layer_structure
 
-        ``_layer_path_dict`` is the authoritative source; this property returns
-        it directly.
+    @layer_structure.setter
+    def layer_structure(self, value):
+        self._layer_structure = value
+        self._attach_layer_structure()
 
-        Returns
-        -------
-        dict[tuple[int, ...], :class:`~compas_timber.elements.Layer`]
-        """
-        return self._layer_path_dict
+    def _attach_layer_structure(self):
+        """Create bound Layer instances from ``_layer_structure``."""
+        for old in self._root_layers:
+            old._panel = None
+            old._parent_ref = None
+        self._root_layers = self._layer_structure.attach(self)
 
     @property
     def layers(self):
         """Root layers of this panel (direct children only)."""
+        if self.model is not None:
+            return [c for c in self.children if isinstance(c, Layer)]
         return self._root_layers
 
-    @layers.setter
-    def layers(self, layer_list):
-        for old in self._root_layers:
-            old._unregister()
-        self._root_layers = list(layer_list) if layer_list else []
-        for layer in self._root_layers:
-            layer._panel = self
-        self._rebuild_layer_path_dict()
-        self.exterior_layer = self._layer_path_dict.get((0,))
-        self.core_layer = self._layer_path_dict.get((1,))
-        self.interior_layer = self._layer_path_dict.get((2,))
+    @property
+    def exterior_layer(self):
+        """The layer named ``"exterior"`` in this panel's :attr:`layer_structure`, or ``None``."""
+        path = self._layer_structure.get_path_for_name("exterior")
+        return self._get_layer_at_path(path) if path is not None else None
+
+    @property
+    def core_layer(self):
+        """The layer named ``"core"`` in this panel's :attr:`layer_structure`, or ``None``."""
+        path = self._layer_structure.get_path_for_name("core")
+        return self._get_layer_at_path(path) if path is not None else None
+
+    @property
+    def interior_layer(self):
+        """The layer named ``"interior"`` in this panel's :attr:`layer_structure`, or ``None``."""
+        path = self._layer_structure.get_path_for_name("interior")
+        return self._get_layer_at_path(path) if path is not None else None
+
+    def _get_layer_at_path(self, path):
+        """Navigate the layer tree by index tuple and return the matching layer."""
+        layers = self.layers
+        layer = None
+        for idx in path:
+            if idx >= len(layers):
+                return None
+            layer = layers[idx]
+            layers = layer.sublayers
+        return layer
 
     def get_leaf_layers(self):
-        """get all layers that don't have *sublayers*. useful for making flat ordered list of layers"""
-        layer_list = []
+        """Return all layers with no sublayers, in order from outline_a to outline_b."""
+        leaf_layers = []
 
-        def walk_sublayers(layer):
+        def _walk(layer):
             if not layer.sublayers:
-                layer_list.append(layer)
+                leaf_layers.append(layer)
             else:
-                for la in layer.sublayers:
-                    walk_sublayers(la)
+                for sub in layer.sublayers:
+                    _walk(sub)
 
+        for layer in self.layers:
+            _walk(layer)
+        return leaf_layers
+
+    def merge_layer_structure(self, model):
+        """Add all layers in this panel's layer structure to *model* as children of this panel."""
         for layer in self._root_layers:
-            walk_sublayers(layer)
-        return layer_list
+            if layer not in model.elements():
+                model.add_element(layer, parent=self)
+            layer.merge_sublayer_tree(model)
 
     # ==========================================================================
     #  Implementation of abstract methods
@@ -432,7 +417,6 @@ class Panel(Element):
 
         """
 
-        # TODO: consider if Brep.from_curves(curves) is faster/better
         plate_geo = self.plate_geometry.compute_shape()
         if include_features:
             for feature in self._features:
@@ -568,7 +552,7 @@ class Panel(Element):
         window_polylines = [o for o in openings] if openings else []
         door_polylines = []
         if recognize_doors:
-            outline_a, outline_b, door_openings = extract_door_openings(outline_a, outline_b)
+            outline_a, outline_b, door_polylines = extract_door_openings(outline_a, outline_b)
         panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
