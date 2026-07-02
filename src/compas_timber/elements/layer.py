@@ -35,13 +35,16 @@ class Layer(Element):
 
     Parameters
     ----------
-    panel : :class:`~compas_timber.elements.Panel`, optional
-        The parent panel.  When omitted geometry creation is deferred until
-        the layer is attached to a panel via :meth:`~compas_timber.elements.Panel.merge_layer_structure`.
+    parent : :class:`~compas_timber.elements.Panel` or :class:`Layer`, optional
+        The parent element.  Pass a :class:`~compas_timber.elements.Panel` for root
+        layers or another :class:`Layer` for sublayers.  When omitted, geometry
+        creation is deferred until :attr:`plate_geometry` is first accessed.
     start_level : float
-        Starting offset from ``outline_a``, measured in the panel's thickness direction.
+        Starting offset from the panel's ``outline_a`` face, measured along the
+        panel's thickness direction.
     end_level : float
-        Ending offset from ``outline_a``, measured in the panel's thickness direction.
+        Ending offset from the panel's ``outline_a`` face, measured along the
+        panel's thickness direction.
     name : str, optional
         Human-readable identifier (e.g. ``"core"``, ``"exterior"``).
     sublayers : list[:class:`Layer`], optional
