@@ -472,16 +472,18 @@ class Pocket(BTLxProcessing):
     @staticmethod
     def _sort_planes(planes, ref_side) -> list[Plane]:
         # Sort planes based on the dot product of face normals with the x-axis
-        planes.sort(key=lambda plane: plane.normal.dot(ref_side.xaxis))
-        start_plane, end_plane = planes[0], planes[-1]
+        by_x = sorted(planes, key=lambda plane: plane.normal.dot(ref_side.xaxis))
+        start_plane, end_plane = by_x[0], by_x[-1]
+        remaining = by_x[1:-1]
 
         # Sort planes based on the dot product of face normals with the y-axis
-        planes.sort(key=lambda plane: plane.normal.dot(ref_side.yaxis))
-        front_plane, back_plane = planes[0], planes[-1]
+        by_y = sorted(remaining, key=lambda plane: plane.normal.dot(ref_side.yaxis))
+        front_plane, back_plane = by_y[0], by_y[-1]
+        remaining = by_y[1:-1]
 
         # Sort planes based on the dot product of face normals with the z-axis
-        planes.sort(key=lambda plane: plane.normal.dot(ref_side.zaxis))
-        bottom_plane, top_plane = planes[0], planes[-1]
+        by_z = sorted(remaining, key=lambda plane: plane.normal.dot(ref_side.zaxis))
+        bottom_plane, top_plane = by_z[0], by_z[-1]
 
         return start_plane, end_plane, front_plane, back_plane, bottom_plane, top_plane
 
