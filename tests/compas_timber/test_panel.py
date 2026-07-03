@@ -44,14 +44,15 @@ def test_flat_panel_creation():
     expected_edge_planes = [([0, 0, 0], [-1, 0, 0]), ([0, 20, 0], [0, 1, 0]), ([10, 20, 0], [1, 0, 0]), ([10, 0, 0], [0, -1, 0])]
     assert all([panel_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(panel_a.outline_a.points))]), "Expected panel to match input polyline"
     assert panel_a.thickness == 1, "Expected panel thickness to match input thickness"
-    assert panel_a.length == 10, "Expected panel length to be 10"
-    assert panel_a.width == 20, "Expected panel width to be 20"
+    assert panel_a.length == 20, "Expected panel length to be 20"
+    assert panel_a.width == 10, "Expected panel width to be 10"
     assert TOL.is_allclose(panel_a.normal, [0, 0, 1]), "Expected the normal to be the world Z-axis"
     for expected, plane in zip(expected_edge_planes, panel_a.edge_planes.values()):
         assert TOL.is_allclose(expected[0], plane[0])
         assert TOL.is_allclose(expected[1], plane[1])
-    for obb_pt, expected_pt in zip(panel_a.obb.points, Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points):
-        assert TOL.is_allclose(obb_pt, expected_pt)
+    obb_pts = set(tuple(round(c, 6) for c in pt) for pt in panel_a.obb.points)
+    expected_pts = set(tuple(round(c, 6) for c in pt) for pt in Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points)
+    assert obb_pts == expected_pts
 
 
 def test_sloped_panel_creation():
@@ -65,19 +66,19 @@ def test_sloped_panel_creation():
     ]
 
     expected_obb = Box(
-        xsize=14.142135623730951,
-        ysize=20.0,
+        xsize=20.0,
+        ysize=14.142135623730951,
         zsize=1.0,
         frame=Frame(
-            point=Point(x=10.0, y=15.353553390593273, z=4.646446609406729), xaxis=Vector(x=0.0, y=0.7071067811865475, z=0.7071067811865476), yaxis=Vector(x=1.0, y=0.0, z=0.0)
+            point=Point(x=10.0, y=15.353553390593273, z=4.646446609406729), xaxis=Vector(x=-1.0, y=0.0, z=0.0), yaxis=Vector(x=0.0, y=0.7071067811865475, z=0.7071067811865476)
         ),
     )
 
-    assert panel_a.frame.point == Point(0, 10, 0), "Expected panel frame to match input polyline"
+    assert panel_a.frame.point == Point(20, 10, 0), "Expected panel frame to match input polyline"
     assert all([TOL.is_allclose(panel_a.outline_a.points[i], polyline_a.points[i]) for i in range(len(panel_a.outline_a.points))]), "Expected panel to match input polyline"
     assert TOL.is_close(panel_a.thickness, 1), "Expected panel thickness to match input thickness"
-    assert TOL.is_close(panel_a.length, 14.1421356237), "Expected panel length to be 10*sqrt(2)"
-    assert TOL.is_close(panel_a.width, 20), "Expected panel width to be 20"
+    assert TOL.is_close(panel_a.length, 20), "Expected panel length to be 20"
+    assert TOL.is_close(panel_a.width, 14.1421356237), "Expected panel width to be 10*sqrt(2)"
     assert TOL.is_allclose(panel_a.normal, [0, 0.707106781, -0.707106781]), "Expected the normal to be at 45 degrees"
     for expected, plane in zip(expected_edge_planes, panel_a.edge_planes.values()):
         assert TOL.is_allclose(expected[0], plane[0])
@@ -128,8 +129,8 @@ def test_panel_serialization_with_attributes_kwargs():
     deserialized = json_loads(json_dumps(panel_a))
 
     assert deserialized.thickness == 1
-    assert deserialized.length == 10
-    assert deserialized.width == 20
+    assert deserialized.length == 20
+    assert deserialized.width == 10
     assert deserialized.attributes["custom_attribute"] == "custom_value"
     assert deserialized.attributes["another_attribute"] == 42
 
@@ -144,8 +145,8 @@ def test_panel_serialization_with_attributes():
     deserialized = json_loads(json_dumps(panel_a))
 
     assert deserialized.thickness == 1
-    assert deserialized.length == 10
-    assert deserialized.width == 20
+    assert deserialized.length == 20
+    assert deserialized.width == 10
     assert deserialized.attributes["custom_attribute"] == "custom_value"
     assert deserialized.attributes["another_attribute"] == 42
 
@@ -391,18 +392,17 @@ def test_panel_orientation_changes_local_frame():
 
 
 def test_panel_orientation_explicit_frame_flat():
-    # orientation=Y on this flat panel rotates the local frame 90° CW:
-    # xaxis becomes -world-Y, yaxis becomes +world-X
+    # orientation=Y on this flat panel: yaxis aligns with +world-Y, xaxis becomes +world-X
     panel = Panel.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
-    assert TOL.is_allclose(panel.frame.xaxis, [0, -1, 0])
-    assert TOL.is_allclose(panel.frame.yaxis, [1, 0, 0])
+    assert TOL.is_allclose(panel.frame.xaxis, [1, 0, 0])
+    assert TOL.is_allclose(panel.frame.yaxis, [0, 1, 0])
 
 
 def test_panel_orientation_explicit_frame_sloped():
-    # orientation=X on the sloped panel: yaxis aligns with the panel's slope direction
+    # orientation=X on the sloped panel: yaxis aligns with +world-X, xaxis is slope direction
     panel = Panel.from_outline_thickness(_SLOPED_OUTLINE, 1, orientation=Vector(1, 0, 0))
-    assert TOL.is_allclose(panel.frame.xaxis, [-1, 0, 0])
-    assert TOL.is_allclose(panel.frame.yaxis, [0, 0.7071067811865476, 0.7071067811865476])
+    assert TOL.is_allclose(panel.frame.xaxis, [0, 0.7071067811865476, 0.7071067811865476])
+    assert TOL.is_allclose(panel.frame.yaxis, [1, 0, 0])
 
 
 def test_panel_from_outlines_orientation():
