@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `LapPlaneSpec` — beam-relative cutting plane for lap joints `(ref_side_index, angle_x, angle_y, offset)`. Build with `from_plane(beam_a, beam_b, plane)`, resolve with `.to_plane(beam)`.
+* Added `lap_plane_spec` parameter to `LapJoint` (inherited by `XLapJoint`, `LLapJoint`, `TLapJoint`, `LFrenchRidgeLapJoint`) to override the lap interface plane's orientation and depth from a world-coordinate plane; falls back to `cut_plane_bias` when not set. Extension, cutoff, and face selection are unchanged.
+* Added a unit test for `LapPlaneSpec` serialization round-trip on `LLapJoint`.
+
 ### Changed
 
 ### Removed

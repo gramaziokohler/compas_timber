@@ -4,9 +4,11 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Point
 from compas.geometry import Line
+from compas.geometry import Plane
 
 from compas_timber.elements import Beam
 from compas_timber.connections import LLapJoint
+from compas_timber.connections import LapPlaneSpec
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.connections import LFrenchRidgeLapJoint
@@ -52,6 +54,29 @@ def test_create_lap_serialize(beam_a, beam_b):
     assert isinstance(deserialized_joint, LLapJoint)
     assert deserialized_joint.beam_a is not None
     assert deserialized_joint.beam_b is not None
+
+
+def test_lap_joint_plane_spec_serialization(beam_a, beam_b):
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    plane = Plane(beam_a.ref_sides[0].point, beam_a.ref_sides[0].normal)
+    lap_plane_spec = LapPlaneSpec.from_plane(beam_a, beam_b, plane)
+
+    joint = LLapJoint.create(model, beam_a, beam_b, flip_lap_side=True, lap_plane_spec=lap_plane_spec)
+
+    assert joint.cutting_plane_a is not None
+    assert joint.cutting_plane_b is not None
+    assert joint.__data__["lap_plane_spec"] == lap_plane_spec
+
+    serialized_model = json_loads(json_dumps(model))
+    deserialized_joint = list(serialized_model.joints)[0]
+
+    assert isinstance(deserialized_joint, LLapJoint)
+    assert deserialized_joint.lap_plane_spec is not None
+    assert deserialized_joint.cutting_plane_a is not None
+    assert deserialized_joint.cutting_plane_b is not None
 
 
 def test_standard_lap_joint_cut_plane_bias_serialization(beam_a, beam_b):
