@@ -145,3 +145,39 @@ class LButtJoint(ButtJoint):
         joint = cls(main_beam, cross_beam, mill_depth, modify_cross, reject_i, butt_plane, back_plane, **kwargs)
         model.add_joint(joint)
         return joint
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Butt joint.
+        
+        Returns a Plane representing the 2-DOF sliding freedom if there is a pocket/lap,
+        otherwise returns a Vector representing a 3-DOF half-space.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        if moving_element == self.cross_beam:
+            normal = self.butt_plane.normal
+            endpoint, point = self.cross_beam.endpoint_closest_to_point(self.location)
+            centerline_dir = self.main_beam.centerline.direction
+            
+        elif moving_element == self.main_beam:
+            normal = self.butt_plane.copy().normal * -1
+            endpoint, point = self.main_beam.endpoint_closest_to_point(self.location)
+            centerline_dir = self.cross_beam.centerline.direction
+            
+        if self.mill_depth:
+            side_a_normal = Plane.from_frame(self.main_beam.ref_sides[self.main_beam_ref_side_index]).normal * -1
+            slide_a_dot = side_a_normal.dot(centerline_dir)
+            side_b_normal = Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index)).normal * -1
+            if endpoint == "start":
+                if slide_a_dot < 0:
+                    return [normal, side_a_normal]
+                else:
+                    return [normal, side_b_normal]
+            else:
+                if slide_a_dot > 0:
+                    return [normal, side_a_normal]
+                else:
+                    return [normal, side_b_normal]
+        else:
+            return [normal]
