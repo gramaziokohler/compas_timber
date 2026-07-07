@@ -160,6 +160,10 @@ class PlateJoint(Joint, ABC):
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
+            if self.a_segment_index:
+               self.plate_a.remove_blank_extension(self.a_segment_index)
+            if self.b_segment_index:
+               self.plate_b.remove_blank_extension(self.b_segment_index)
             self._reorder_planes_and_outlines()
             self._set_edge_planes()
 

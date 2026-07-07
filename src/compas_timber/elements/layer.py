@@ -250,11 +250,6 @@ class Layer(Element):
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self.debug_info = []
 
-    @reset_computed
-    def reset_joinery(self):
-        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
-        self.reset()
-
     def define_sublayers(self, thicknesses: list, names: Optional[list] = None) -> list:
         """Subdivide this layer into child layers by thickness.
 

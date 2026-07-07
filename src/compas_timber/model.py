@@ -142,16 +142,6 @@ class TimberModel(Model):
         return candidates
 
     @property
-    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
-        candidates = set()
-        for edge in self._graph.edges():
-            edge_candidate = self._graph.edge_attribute(edge, "candidates")
-            joint = self._graph.edge_attribute(edge, "joints")
-            if edge_candidate and not joint:
-                candidates.add(edge_candidate)
-        return candidates
-
-    @property
     def topologies(self):
         return self._topologies
 
@@ -609,9 +599,7 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = list(self.joints)
-        for e in self.elements():
-            e.reset_joinery()
+        joints = self.joints
 
         for joint in joints:
             try:
@@ -692,9 +680,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        to_remove = [joint for joint in self.joints if isinstance(joint, PlateJoint)]
-        for joint in to_remove:
-            self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        for joint in self.joints:
+            if isinstance(joint, PlateJoint):
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         plates = self.plates
@@ -720,11 +708,11 @@ class TimberModel(Model):
         Parameters
         ----------
         max_distance : float, optional
-            The maximum distance between panels to consider them adjacent. Default is 0.0.
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        to_remove = [joint for joint in self.joints if isinstance(joint, PanelJoint)]
-        for joint in to_remove:
-            self.remove_joint(joint)  # TODO do we want to remove panel joints?
+        for joint in self.joints:
+            if isinstance(joint, PanelJoint):
+                self.remove_joint(joint)  # TODO do we want to remove plate joints?
 
         max_distance = max_distance or TOL.absolute
         panels = self.panels
@@ -841,6 +829,7 @@ class TimberModel(Model):
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
                 self.add_element(child, parent=target_parent)
+                child.clear_model_dependent_cache()
         if joints:
             for joint in joints:
                 self.add_joint(joint)
