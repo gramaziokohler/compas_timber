@@ -1,7 +1,7 @@
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Vector
 from compas.geometry import intersection_line_line
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import PocketProxy

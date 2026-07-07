@@ -4,13 +4,13 @@ import math
 from typing import TYPE_CHECKING
 from typing import List
 
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 
