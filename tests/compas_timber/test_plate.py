@@ -19,6 +19,9 @@ from brep_mocks import make_single_face_brep
 
 
 def test_flat_plate_creation():
+    # this outline's point order triggers the frame flip in `PlateGeometry.from_global_outlines` (see
+    # test_plate_frame). Local x stays aligned with outline_a[0]->outline_a[1] = (0, 20, 0), so `length`
+    # (the extent along local x) now tracks the 20-long edge and `width` the 10-long edge.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     expected_edge_planes = [([0, 0, 0], [-1, 0, 0]), ([0, 20, 0], [0, 1, 0]), ([10, 20, 0], [1, 0, 0]), ([10, 0, 0], [0, -1, 0])]
@@ -30,12 +33,17 @@ def test_flat_plate_creation():
     for expected, plane in zip(expected_edge_planes, plate_a.edge_planes.values()):
         assert TOL.is_allclose(expected[0], plane[0])
         assert TOL.is_allclose(expected[1], plane[1])
-    obb_pts = set(tuple(round(c, 6) for c in pt) for pt in plate_a.obb.points)
-    expected_pts = set(tuple(round(c, 6) for c in pt) for pt in Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points)
-    assert obb_pts == expected_pts
+    # compare as sets: the OBB's local frame is rotated 90 degrees vs. before the fix, so `Box.points`
+    # visits the same 8 corners in a different order.
+    obb_points = {tuple(round(c, 6) for c in pt) for pt in plate_a.obb.points}
+    expected_points = {tuple(round(c, 6) for c in pt) for pt in Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points}
+    assert obb_points == expected_points
 
 
 def test_sloped_plate_creation():
+    # this outline also triggers the frame flip (see test_plate_frame). Local x stays aligned with
+    # outline_a[0]->outline_a[1] = (10, 0, 0), so `length` now tracks that 10-long edge, extended by the
+    # slope to 20, and `width` tracks the 10*sqrt(2) diagonal edge; the frame origin and OBB rotate to match.
     polyline_a = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     expected_edge_planes = [
@@ -72,24 +80,32 @@ def test_sloped_plate_creation():
 
 
 def test_plate_frame():
+    # this polyline winds clockwise around +Z (its "natural" normal derived from point order is -Z), while its
+    # default thickness offset goes to +Z, so `from_global_outlines` flips the frame. The fix negates the local
+    # x-axis on flip instead of swapping x/y, so local x stays aligned with outline_a[0]->outline_a[1] (0, 20, 0),
+    # i.e. -world-Y here, and local y ends up along +world-X. The frame origin moves to the matching box corner.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
-    assert plate_a.frame.point == Point(0, 20, 0), "Expected plate frame point at (0,20,0)"
-    assert TOL.is_allclose(plate_a.frame.xaxis, [0, -1, 0]), "Expected plate frame xaxis to be along -Y"
-    assert TOL.is_allclose(plate_a.frame.yaxis, [1, 0, 0]), "Expected plate frame yaxis to be along +X"
-    assert TOL.is_allclose(plate_a.frame.zaxis, [0, 0, 1]), "Expected plate frame zaxis to be along global z axis"
+    assert plate_a.frame.point == Point(0, 20, 0)
+    assert plate_a.frame.xaxis == Vector(0, -1, 0)
+    assert plate_a.frame.yaxis == Vector(1, 0, 0)
+    assert plate_a.frame.zaxis == Vector(0, 0, 1), "Expected plate frame zaxis to be along global z axis"
 
 
 def test_plate_frame_flipped_vector():
+    # explicit vector=(0, 0, -1) forces the flip branch (outline_b offset opposite the outline's natural normal).
+    # Local x stays aligned with outline_a[0]->outline_a[1] = (10, 0, 0), i.e. -world-X after the flip negates it.
     polyline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 20, 0), Point(0, 20, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1, vector=Vector(0, 0, -1))
-    assert plate_a.frame.point == Point(10, 0, 0), "Expected plate frame point at (10,0,0)"
-    assert TOL.is_allclose(plate_a.frame.xaxis, [-1, 0, 0]), "Expected plate frame xaxis to be along -X"
-    assert TOL.is_allclose(plate_a.frame.yaxis, [0, 1, 0]), "Expected plate frame yaxis to be along +Y"
-    assert TOL.is_allclose(plate_a.frame.zaxis, [0, 0, -1]), "Expected plate frame zaxis to be along -Z"
+    assert plate_a.frame.point == Point(10, 0, 0)
+    assert plate_a.frame.xaxis == Vector(-1, 0, 0)
+    assert plate_a.frame.yaxis == Vector(0, 1, 0)
+    assert plate_a.frame.zaxis == Vector(0, 0, -1), "Expected plate frame zaxis to be along global z axis"
 
 
 def test_plate_blank():
+    # this outline triggers the frame flip (see test_plate_frame): local x follows outline_a[0]->outline_a[1]
+    # (the 20-long edge, extended to 21 by outline_b), so length/xsize and width/ysize are swapped vs. before the fix.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(1, 1, 1), Point(1, 21, 1), Point(11, 21, 1), Point(11, 1, 1), Point(1, 1, 1)])
     plate_a = Plate.from_outlines(polyline_a, polyline_b)
@@ -387,14 +403,14 @@ def test_plate_orientation_changes_local_frame():
 
 
 def test_plate_orientation_explicit_frame_flat():
-    # orientation=Y on this flat plate: yaxis aligns with +world-Y, xaxis becomes +world-X
+    # orientation=Y on this flat plate forces the plate's local yaxis to align with the world Y axis, and the xaxis to be perpendicular to it
     plate = Plate.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
     assert TOL.is_allclose(plate.frame.xaxis, [1, 0, 0])
     assert TOL.is_allclose(plate.frame.yaxis, [0, 1, 0])
 
 
 def test_plate_orientation_explicit_frame_sloped():
-    # orientation=X on the sloped plate: yaxis aligns with +world-X, xaxis is slope direction
+    # orientation=X on the sloped plate: yaxis aligns with the plate's slope direction
     plate = Plate.from_outline_thickness(_SLOPED_OUTLINE, 1, orientation=Vector(1, 0, 0))
     assert TOL.is_allclose(plate.frame.xaxis, [0, 0.7071067811865476, 0.7071067811865476])
     assert TOL.is_allclose(plate.frame.yaxis, [1, 0, 0])
