@@ -204,6 +204,13 @@ class Plate(TimberElement):
         self._outline_feature = None
         self.debug_info = []
 
+    @reset_computed
+    def reset_joinery(self):
+        """Resets the element to its pre-joinery state by removing all joinery features, extensions, and debug_info."""
+        self.plate_geometry.reset()  # reset outline_a and outline_b
+        self._features = [f for f in self._features if not f.is_joinery]
+        self.debug_info = []
+
     # ==========================================================================
     #  Implementation of abstract methods
     # ==========================================================================

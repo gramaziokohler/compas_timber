@@ -591,6 +591,8 @@ class TimberModel(Model):
         """
         errors = []
         joints = self.joints
+        for e in self.elements():
+            e.reset_joinery()
 
         for joint in joints:
             try:
@@ -671,9 +673,9 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PlateJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)  # TODO do we want to remove plate joints? remove candidates?
 
         max_distance = max_distance or TOL.absolute
         plates = self.plates
@@ -699,11 +701,11 @@ class TimberModel(Model):
         Parameters
         ----------
         max_distance : float, optional
-            The maximum distance between plates to consider them adjacent. Default is 0.0.
+            The maximum distance between panels to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PanelJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PanelJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)  # TODO do we want to remove panel joints? remove candidates?
 
         max_distance = max_distance or TOL.absolute
         panels = self.panels

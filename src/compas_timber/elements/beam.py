@@ -360,6 +360,14 @@ class Beam(TimberElement):
         else:
             del self._blank_extensions[joint_key]
 
+    @reset_computed
+    @reset_timber_attrs
+    def reset_joinery(self):
+        """Resets the element to its initial state by removing all features, extensions, and debug_info."""
+        self.remove_features([f for f in self.features if f.is_joinery])
+        self.remove_blank_extension()
+        self.debug_info = []
+
     def extension_to_plane(self, plane):
         # type: (Frame) -> tuple[float, float]
         """Returns the amount by which to extend the beam in each direction using metric units.
