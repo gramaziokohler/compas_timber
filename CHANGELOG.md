@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 
 ### Changed
+* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
 
 ### Removed
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, fixing a failure on outlines where the second-to-last point is colinear with the first edge.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check was applied after computing `transform_to_world_xy`, producing an incorrect transform for outlines whose natural frame normal pointed in the −Z direction.
+* Replaced `compas.geometry.Brep` with drop-in `compas_brep.Brep`.
 
 ### Removed
 
