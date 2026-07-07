@@ -230,8 +230,8 @@ class FrenchRidgeLap(BTLxProcessing):
     def _calculate_ref_position(beam, other_beam, ref_side, plane, angle):
         # determine if the position of the ridge lap is on the reference edge or the opposite edge
         angle_vector = Vector.cross(ref_side.normal, plane.normal)
-        # condition for orthogonal connection
-        if angle == 90.0:
+        # condition for orthogonal connection — use TOL.is_close to guard against floating-point drift
+        if TOL.is_close(angle, 90.0):
             intersection_pt = intersection_line_line(other_beam.centerline, beam.centerline)[0]
             angle_vector = other_beam.centerline.direction
             # make sure the direction of the other beam's centerline is facing outwards
@@ -240,12 +240,12 @@ class FrenchRidgeLap(BTLxProcessing):
 
         # calculate the angle between angle vector and the reference side's x-axis
         signed_angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
-        if angle > 90.0:
-            is_ref_edge = abs(signed_angle) < 90
-        elif angle < 90.0:
-            is_ref_edge = abs(signed_angle) > 90
-        else:
+        if TOL.is_close(angle, 90.0):
             is_ref_edge = signed_angle < 0
+        elif angle > 90.0:
+            is_ref_edge = abs(signed_angle) < 90
+        else:
+            is_ref_edge = abs(signed_angle) > 90
         if is_ref_edge:
             return EdgePositionType.REFEDGE
         return EdgePositionType.OPPEDGE

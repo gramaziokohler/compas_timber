@@ -5,10 +5,8 @@ from typing import TYPE_CHECKING
 
 from compas.data import Data
 from compas.geometry import Point
-from compas.geometry import distance_point_line
-from compas.geometry import Line
-from compas.geometry import Plane
 from compas.geometry import Vector
+from compas.geometry import distance_point_line
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError

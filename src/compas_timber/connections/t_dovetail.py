@@ -1,6 +1,7 @@
 import math
 
 from compas.geometry import Line
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon

@@ -6,7 +6,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.tolerance import TOL
 

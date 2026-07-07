@@ -1,4 +1,8 @@
-from compas.geometry import cross_vectors, Vector, Plane, Line
+from compas.geometry import Line
+from compas.geometry import Plane
+from compas.geometry import Vector
+from compas.geometry import cross_vectors
+
 
 class InsertionSolver:
     def __init__(self, model):

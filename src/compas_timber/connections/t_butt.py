@@ -1,6 +1,7 @@
+from compas.geometry import Plane
+
 from .butt_joint import ButtJoint
 from .solver import JointTopology
-from compas.geometry import Plane
 
 
 class TButtJoint(ButtJoint):
