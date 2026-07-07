@@ -74,8 +74,8 @@ class LFrenchRidgeLapJoint(LapJoint):
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        self.beam_a.add_blank_extension(start_a, end_a, self.beam_a_guid)
-        self.beam_b.add_blank_extension(start_b, end_b, self.beam_b_guid)
+        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
     def add_features(self):
         """Adds the necessary features to the beams.

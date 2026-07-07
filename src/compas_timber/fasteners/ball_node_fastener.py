@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane

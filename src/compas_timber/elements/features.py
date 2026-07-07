@@ -1,10 +1,10 @@
 from compas.data import Data
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
 

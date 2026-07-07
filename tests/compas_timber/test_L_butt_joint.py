@@ -2,12 +2,17 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Frame
 from compas_timber.elements import Beam
+from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.fabrication.lap import Lap
 from compas_timber.model import TimberModel
 
 import pytest
+from compas.geometry import Plane
+from compas.geometry import Translation
+from compas.data import json_dumps, json_loads
+from compas.tolerance import TOL
 
 
 def test_L_butt_joint_create():
@@ -111,3 +116,119 @@ def test_small_beam_butts():
     assert small_beam == joint.cross_beam, "small_beam_butts is False, Order stays the same"
     assert big_beam == joint_sbb.cross_beam, "small_beam_butts is True, Order changes"
     assert small_beam == joint_sbb.main_beam, "small_beam_butts is False, Order changes"
+
+
+def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
+    """Ensure butt_plane and back_plane passed to create() are stored and exposed."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
+    # back_plane must be parallel to planar_beam's (main_beam's) centerline, i.e. its normal must be perpendicular
+    # to planar_beam's xaxis (0.707, 0, 0.707)
+    back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
+
+    joint = LButtJoint.create(
+        model,
+        main_beam=planar_beam,
+        cross_beam=cross_beam,
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+    )
+
+    assert joint.butt_plane is not None
+    assert joint.back_plane is not None
+    assert TOL.is_allclose(joint.butt_plane.normal, butt_plane.normal)
+    assert TOL.is_allclose(joint.back_plane.normal, back_plane.normal)
+
+
+def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam):
+    """Test that butt/back planes survive model serialization and model transforms."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    butt_plane = Plane(Point(0, 0, 0), Vector(0, 1, 0))
+    # back_plane must be parallel to planar_beam's (main_beam's) centerline, i.e. its normal must be perpendicular
+    # to planar_beam's xaxis (0.707, 0, 0.707)
+    back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
+
+    joint = LButtJoint.create(
+        model,
+        main_beam=planar_beam,
+        cross_beam=cross_beam,
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
+        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+    )
+
+    # copy the model via JSON round-trip
+    model_copy = json_loads(json_dumps(model))
+    copied_joints = list(model_copy.joints)
+    assert len(copied_joints) == 1
+    copied_joint = copied_joints[0]
+
+    assert copied_joint.butt_plane is not None
+    assert copied_joint.back_plane is not None
+    assert TOL.is_allclose(copied_joint.butt_plane.normal, butt_plane.normal)
+    assert TOL.is_allclose(copied_joint.back_plane.normal, back_plane.normal)
+
+    # transform the original model and ensure planes follow the transform
+    translation = Translation.from_vector([10.0, 5.0, -2.0])
+    # capture original plane points
+    orig_butt_point = joint.butt_plane.point
+    orig_back_point = joint.back_plane.point
+
+    model.transform(translation)
+
+    # after transform, the joint's planes points should have been transformed by same translation
+    new_butt_point = joint.butt_plane.point
+    new_back_point = joint.back_plane.point
+
+    assert TOL.is_allclose([new_butt_point.x - orig_butt_point.x, new_butt_point.y - orig_butt_point.y, new_butt_point.z - orig_butt_point.z], [10.0, 5.0, -2.0])
+    assert TOL.is_allclose([new_back_point.x - orig_back_point.x, new_back_point.y - orig_back_point.y, new_back_point.z - orig_back_point.z], [10.0, 5.0, -2.0])
+
+
+def test_L_butt_joint_butt_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
+    """butt_plane's normal must be perpendicular to the cross beam's centerline (x-axis)."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    # cross_beam's centerline runs along (1, 0, 0), so a plane with a normal that has a component
+    # along that axis is not parallel to the centerline and should be rejected.
+    invalid_butt_plane = Plane(Point(0, 0, 0), Vector(1, 1, 0))
+
+    with pytest.raises(ValueError):
+        CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, invalid_butt_plane)
+
+
+def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
+    """back_plane's normal must be perpendicular to the main beam's centerline (x-axis)."""
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    # planar_beam's centerline runs along (0.707, 0, 0.707), which is not perpendicular to (0, 0, 1).
+    invalid_back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+
+    with pytest.raises(ValueError):
+        CutPlaneSpec.from_back_plane(planar_beam, cross_beam, invalid_back_plane)
+
+
+def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam):
+    """A butt_plane parallel to (but offset from) the default cross-beam side should round-trip exactly.
+
+    This is the degenerate case (no tilt) that a y-axis-line-intersection based decomposition cannot represent.
+    """
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    default_ref_side = cross_beam.ref_sides[2]  # opposite side from the default, picked arbitrarily but parallel to centerline
+    offset_plane = Plane(default_ref_side.point + default_ref_side.normal * 5.0, default_ref_side.normal)
+
+    joint = LButtJoint.create(
+        model,
+        main_beam=planar_beam,
+        cross_beam=cross_beam,
+        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, offset_plane),
+    )
+
+    assert TOL.is_allclose(joint.butt_plane.normal, offset_plane.normal)
+    assert TOL.is_allclose(joint.butt_plane.point, offset_plane.point)

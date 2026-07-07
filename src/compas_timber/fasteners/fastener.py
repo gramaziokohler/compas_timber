@@ -3,9 +3,9 @@ from __future__ import annotations
 import uuid
 from typing import Optional
 
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Transformation
+from compas_brep import Brep
 
 from .part import Part
 

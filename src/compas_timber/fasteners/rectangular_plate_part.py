@@ -3,10 +3,10 @@ from __future__ import annotations
 import uuid
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Transformation
+from compas_brep import Brep
 
 from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import Pocket
