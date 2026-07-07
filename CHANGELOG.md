@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+* `model.remove_joint()` now calls `joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 
 ### Removed
 
