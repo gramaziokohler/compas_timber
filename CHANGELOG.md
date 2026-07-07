@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 
 ### Changed
-* `TimbberModel.remove_joint()` now calls `Joint.reset_location()`.
+* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 
 ### Removed
 
