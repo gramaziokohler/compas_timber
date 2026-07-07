@@ -542,6 +542,8 @@ class TimberModel(Model):
             self.remove_interaction(element_a, element_b)
         for element in joint.generated_elements:
             self.remove_element(element)
+        joint.reset_location()
+
 
     def remove_interaction(self, a, b, _=None):
         """Remove the interaction between two elements.
@@ -719,11 +721,11 @@ class TimberModel(Model):
         Parameters
         ----------
         max_distance : float, optional
-            The maximum distance between plates to consider them adjacent. Default is 0.0.
+            The maximum distance between panels to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PanelJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        to_remove = [joint for joint in self.joints if isinstance(joint, PanelJoint)]
+        for joint in to_remove:
+            self.remove_joint(joint)  # TODO do we want to remove panel joints?
 
         max_distance = max_distance or TOL.absolute
         panels = self.panels
@@ -810,7 +812,6 @@ class TimberModel(Model):
             elements_in_joint = [e in elements_children_first for e in j.elements]
             if all(elements_in_joint):
                 joints.append(j)
-                j.reset_location()
                 self.remove_joint(j)
             elif any(elements_in_joint):
                 self.remove_joint(j)
@@ -840,8 +841,6 @@ class TimberModel(Model):
         for tuple_parent, children in tuples:
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
-                if child in self.elements():
-                    continue
                 self.add_element(child, parent=target_parent)
         if joints:
             for joint in joints:
