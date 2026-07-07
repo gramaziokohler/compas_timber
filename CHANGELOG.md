@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 
 * Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, defined by `start_level` and `end_level` (in the panel's thickness direction). `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
 * Added `Panel.define_core_layer(start, end)` — slices a panel into `exterior_layer`, `core_layer`, and `interior_layer`. Layers are automatically registered in the model when the panel already belongs to one; calling `define_core_layer` again replaces any previously-defined layers.
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Changed
+* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 
 ### Removed
 
@@ -45,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, fixing a failure on outlines where the second-to-last point is colinear with the first edge.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check was applied after computing `transform_to_world_xy`, producing an incorrect transform for outlines whose natural frame normal pointed in the −Z direction.
+* Replaced `compas.geometry.Brep` with drop-in `compas_brep.Brep`.
 
 ### Removed
 

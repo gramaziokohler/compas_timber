@@ -544,7 +544,6 @@ class TimberModel(Model):
             self.remove_element(element)
         joint.reset_location()
 
-
     def remove_interaction(self, a, b, _=None):
         """Remove the interaction between two elements.
 
