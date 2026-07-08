@@ -14,9 +14,7 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
-from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
-from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
@@ -25,6 +23,44 @@ from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
+
+
+def _beam_connection_candidate(beam_a, beam_b, max_distance):
+    """Builds a :class:`JointCandidate` for a pair of adjacent beams, or ``None`` if their topology is unknown."""
+    result = ConnectionSolver().find_topology(beam_a, beam_b, max_distance=max_distance)
+    if result.topology == JointTopology.TOPO_UNKNOWN:
+        return None
+    # use the beam order determined by find_topology to keep main, cross relationship
+    return JointCandidate(result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
+
+
+def _plate_connection_candidate(element_a, element_b, max_distance):
+    """Builds a :class:`PlateJointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
+    result = PlateConnectionSolver().find_topology(element_a, element_b, tol=TOL.relative, max_distance=max_distance)
+    if result.topology is JointTopology.TOPO_UNKNOWN:
+        return None
+    kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
+    if result.topology == JointTopology.TOPO_EDGE_EDGE:
+        kwargs["b_segment_index"] = result.b_segment_index
+    return PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
+
+
+# Registered as (type_a, type_b) -> handler; order-independent (both (a, b) and (b, a) pairs match).
+# To support a new type combination (e.g. beam-to-plate, for a future BeamPlateJoint), add a row here
+# once the corresponding topology-detection geometry exists.
+_CONNECTION_HANDLERS = [
+    ((Beam, Beam), _beam_connection_candidate),
+    ((Plate, Plate), _plate_connection_candidate),
+    ((Panel, Panel), _plate_connection_candidate),
+]
+
+
+def _find_connection_handler(element_a, element_b):
+    """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
+    for (type_a, type_b), handler in _CONNECTION_HANDLERS:
+        if (isinstance(element_a, type_a) and isinstance(element_b, type_b)) or (isinstance(element_a, type_b) and isinstance(element_b, type_a)):
+            return handler
+    return None
 
 
 class TimberModel(Model):
@@ -641,27 +677,46 @@ class TimberModel(Model):
         _, joints_traversed = solver.add_structural_segments(model=self)
         solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
-    def connect_adjacent_beams(self, max_distance=None):
-        # Clear existing joint candidates
+    def connect_adjacent_elements(self, elements=None, max_distance=None):
+        """Detects adjacent elements and creates joint candidates for them.
+
+        Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
+        plate-plate, and panel-panel are supported today). Additional type combinations (e.g.
+        beam-to-plate) can be supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered
+        combinations are silently skipped.
+
+        Parameters
+        ----------
+        elements : list[:class:`~compas_model.elements.Element`], optional
+            The elements to connect. If not provided, defaults to all beams, plates, and panels in the model.
+        max_distance : float, optional
+            The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
+
+        """
+        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
+        involved_types = tuple({type(e) for e in elements})
+
+        for joint in list(self.joints):
+            if joint.elements and isinstance(joint.elements[0], involved_types):
+                self.remove_joint(joint)  # TODO do we want to remove existing joints here?
         for candidate in list(self.joint_candidates):
-            self.remove_joint_candidate(candidate)
+            if candidate.elements and isinstance(candidate.elements[0], involved_types):
+                self.remove_joint_candidate(candidate)
 
-        max_distance = max_distance or TOL.relative
-        beams = self.beams
-        solver = ConnectionSolver()
-        pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        max_distance = max_distance or TOL.absolute
+        pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
         for pair in pairs:
-            beam_a, beam_b = pair
-            result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-            if result.topology == JointTopology.TOPO_UNKNOWN:
+            element_a, element_b = tuple(pair)
+            handler = _find_connection_handler(element_a, element_b)
+            if handler is None:
                 continue
-            assert beam_a and beam_b
+            candidate = handler(element_a, element_b, max_distance)
+            if candidate is not None:
+                self.add_joint_candidate(candidate)
 
-            # Create candidate and add it to the model
-            candidate = JointCandidate(
-                result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location
-            )  # use the beam order determined by find_topology to keep main, cross relationship
-            self.add_joint_candidate(candidate)
+    def connect_adjacent_beams(self, max_distance=None):
+        """Connects adjacent beams in the model."""
+        self.connect_adjacent_elements(self.beams, max_distance)
 
     def connect_adjacent_plates(self, max_distance=None):
         """Connects adjacent plates in the model.
@@ -671,57 +726,17 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
-
-        max_distance = max_distance or TOL.absolute
-        plates = self.plates
-        solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            plate_a, plate_b = pair
-            result = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
-
-            if result.topology is JointTopology.TOPO_UNKNOWN:
-                continue
-            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
-
-            if result.topology == JointTopology.TOPO_EDGE_EDGE:
-                kwargs["b_segment_index"] = result.b_segment_index
-
-            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
-            self.add_joint_candidate(candidate)
+        self.connect_adjacent_elements(self.plates, max_distance)
 
     def connect_adjacent_panels(self, max_distance=None):
-        """Connects adjacent plates in the model.
+        """Connects adjacent panels in the model.
 
         Parameters
         ----------
         max_distance : float, optional
-            The maximum distance between plates to consider them adjacent. Default is 0.0.
+            The maximum distance between panels to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PanelJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
-
-        max_distance = max_distance or TOL.absolute
-        panels = self.panels
-        solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(panels, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            panel_a, panel_b = pair
-            result = solver.find_topology(panel_a, panel_b, tol=TOL.relative, max_distance=max_distance)
-
-            if result.topology is JointTopology.TOPO_UNKNOWN:
-                continue
-            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
-
-            if result.topology == JointTopology.TOPO_EDGE_EDGE:
-                kwargs["b_segment_index"] = result.b_segment_index
-
-            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
-            self.add_joint_candidate(candidate)
+        self.connect_adjacent_elements(self.panels, max_distance)
 
     # =============================================================================
     # Model sub-tree surgery
