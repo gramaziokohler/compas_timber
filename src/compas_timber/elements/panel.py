@@ -35,7 +35,6 @@ from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import polylines_from_brep_face
 
 from .layer import Layer
-from .layer import LayerDef  # noqa: F401
 from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
 

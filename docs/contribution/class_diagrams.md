@@ -105,17 +105,17 @@ classDiagram
          +features : list[PanelFeature]
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
+         +layer_structure : LayerStructure
          +exterior_layer : Layer
          +core_layer : Layer
          +interior_layer : Layer
-         +layer_tree : dict[tuple, Layer]
-         +layers : Iterable[Layer]
-         +get_leaf_layers : list[Layer]
+         +layers : list[Layer]
          +attributes : dict
          +from_outlines(outline_a, outline_b, openings, recognize_doors, horizontal_openings)
          +from_outline_thickness(outline, thickness, vector)
          +from_brep(brep, thickness, vector)
-         +define_core_layer(start, end)
+         +get_leaf_layers()
+         +merge_layer_structure(model)
          +compute_elementgeometry(include_features=True)
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
@@ -140,7 +140,7 @@ classDiagram
          +normal : Vector
          +edge_planes : dict[int, Plane]
          +center_height : float
-         +get_outlines_from_panel_range(panel, range_a, range_b)$
+         +get_outlines_from_parent(parent, start_level, end_level)$
          +set_extension_plane(edge_index, plane)
          +apply_edge_extensions()
          +compute_aabb(inflate=0.0)

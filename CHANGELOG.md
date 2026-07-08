@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, defined by `start_level` and `end_level` (in the panel's thickness direction). `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
-* Added `Panel.define_core_layer(start, end)` — slices a panel into `exterior_layer`, `core_layer`, and `interior_layer`. Layers are automatically registered in the model when the panel already belongs to one; calling `define_core_layer` again replaces any previously-defined layers.
-* Added `Panel.layer_tree` property — returns a `{tuple: Layer}` mapping that describes the full layer hierarchy including sublayers.
-* Added `Panel.layers` property — iterates over all `Layer` objects attached to the panel.
-* Added `Panel.get_leaf_layers` property — returns all layers without sublayers as a flat ordered list.
+* Added `LayerDef` and `LayerStructure` classes (`compas_timber.elements.LayerDef`, `compas_timber.elements.LayerStructure`) — panel-agnostic tree definitions of layer slots (name, thickness, sublayer defs) that can be shared across panels and attached to a specific panel via `LayerStructure.attach(panel)`.
+* Added `Panel.layer_structure` property/setter — assigns a `LayerStructure` to a panel, creating bound `Layer` instances. Layers are automatically registered in the model when the panel already belongs to one; setting `layer_structure` again replaces any previously-attached layers.
+* Added `Panel.layers` property — the panel's root `Layer` instances (direct children only).
+* Added `Panel.exterior_layer`, `Panel.core_layer`, `Panel.interior_layer` properties — look up the layer named `"exterior"`/`"core"`/`"interior"` in the panel's `layer_structure`, or `None` if not defined.
+* Added `Panel.get_leaf_layers()` — returns all layers without sublayers as a flat ordered list, from `outline_a` to `outline_b`.
+* Added `Panel.merge_layer_structure(model)` — adds all layers in the panel's layer structure to `model` as children of the panel.
 * Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
 * Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
 

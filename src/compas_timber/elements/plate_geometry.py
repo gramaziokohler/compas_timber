@@ -193,10 +193,7 @@ class PlateGeometry(Data):
         outline_a = correct_polyline_direction(self.outline_a, Vector(0, 0, 1))
         outline_b = correct_polyline_direction(self.outline_b, Vector(0, 0, 1))
         plate_geo = brep_from_outlines(outline_a, outline_b)
-        print(f"PlateGeometry.compute_shape: plate_geo volume = {plate_geo.volume}")
-        if plate_geo.volume < 0:
-            plate_geo.flip()
-        print(f"PlateGeometry.compute_shape: plate_geo volume after flip = {plate_geo.volume}")
+
         return plate_geo
 
     # ==========================================================================
