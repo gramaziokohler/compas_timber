@@ -1,3 +1,5 @@
+import math
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import FrenchRidgeLap
 
@@ -151,17 +153,46 @@ class LFrenchRidgeLapJoint(LapJoint):
         return True
 
     def get_kinematic_constraint(self, moving_element):
-            """Calculates the escape constraint for the Lap joint.
-            
-            Returns a Plane representing the 2-DOF sliding freedom along the lap plane.
-            """
-            if moving_element not in self.elements:
-                raise ValueError("Element is not part of this joint.")
+        """Calculates the escape constraint for the Lap joint.
 
-            if moving_element == self.beam_a:
-                # return [(self.cutting_plane_a.normal * -1), self.cutting_plane_b.normal, (self.beam_a.ref_sides[self.ref_side_index_a].normal * -1)]
-                
-                return [self.cutting_plane_a, self.cutting_plane_b]
-                
-            elif moving_element == self.beam_b:
-                return [self.cutting_plane_a.normal, (self.cutting_plane_b.normal * -1), (self.beam_b.ref_sides[self.ref_side_index_b].normal * -1)]
+        Returns a Plane representing the 2-DOF sliding freedom along the lap plane.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        beam_a_vec = self.beam_a.centerline.direction.unitized()
+        beam_b_vec = self.beam_b.centerline.direction.unitized()
+        side_a, _ = self.beam_a.endpoint_closest_to_point(self.location)
+        side_b, _ = self.beam_b.endpoint_closest_to_point(self.location)
+
+        # flip the other beam's vector when the two beams approach the joint from opposite endpoint types
+        multiplier = -1 if side_a != side_b else 1
+
+        if moving_element == self.beam_a:
+            moving_beam, other_beam = self.beam_a, self.beam_b
+            moving_vec = beam_a_vec
+            other_vec = beam_b_vec * multiplier
+            ref_side_index = self.ref_side_index_a
+            other_ref_side_index = self.ref_side_index_b
+            h_diff_sign = -1 if side_b == "start" else 1
+        else:
+            moving_beam, other_beam = self.beam_b, self.beam_a
+            moving_vec = beam_b_vec
+            other_vec = beam_a_vec * multiplier
+            ref_side_index = self.ref_side_index_b
+            other_ref_side_index = self.ref_side_index_a
+            h_diff_sign = -1 if side_a == "start" else 1
+
+        rot_vec = (moving_vec + other_vec).unitized()
+        w, h = moving_beam.get_dimensions_relative_to_side(ref_side_index)
+        h_diff = h_diff_sign * h / 3
+        cos_half_beta = moving_vec.dot(rot_vec)
+        diag_diff = w / cos_half_beta
+        frl_angle = math.atan(h_diff / diag_diff)
+        ref_frame = other_beam.ref_sides[other_ref_side_index]
+        frl_frame = ref_frame.rotated(-frl_angle, rot_vec, ref_frame.point)
+
+        if moving_element == self.beam_a:
+            return [(self.cutting_plane_a.normal * -1), self.cutting_plane_b.normal, frl_frame.normal]
+        else:
+            return [self.cutting_plane_a.normal, (self.cutting_plane_b.normal * -1), frl_frame.normal]
