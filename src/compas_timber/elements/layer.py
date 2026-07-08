@@ -119,6 +119,7 @@ class Layer(Element):
 
         self.start_level = start_level
         self.end_level = end_level
+        self.debug_info = []
 
         if parent is not None and end_level is not None:
             self._parent_ref = parent
