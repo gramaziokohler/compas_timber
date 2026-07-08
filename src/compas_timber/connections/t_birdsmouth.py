@@ -65,7 +65,7 @@ class TBirdsmouthJoint(Joint):
     def _get_cutting_planes(self):
         cutting_planes = [self.cross_beam.ref_sides[index] for index in self.cross_ref_side_indices]
         if self.mill_depth:
-            cutting_planes = [plane.translated(-plane.normal * self.mill_depth) for plane in cutting_planes]
+            cutting_planes[0].translate(-cutting_planes[0].normal * self.mill_depth)
         return cutting_planes
 
     def add_extensions(self):
@@ -119,30 +119,21 @@ class TBirdsmouthJoint(Joint):
         self.main_beam.add_features(main_feature)
         self.features.append(main_feature)
 
+
         if self.mill_depth:
             main_ref_side_index = main_feature.ref_side_index
             lap_cutting_plane = self.main_beam.ref_sides[main_ref_side_index]
             lap_length = self.main_beam.get_dimensions_relative_to_side(main_ref_side_index)[1]
+            pocket_ref_side_index = self.cross_ref_side_indices[0]
 
             # generate lap feature for each side of the cross beam that intersects the main beam
-            # TODO: replace with Pocket once implemented in order to get a better fit
-            cross_feature_1 = Lap.from_plane_and_beam(
+            cross_feature = Lap.from_plane_and_beam(
                 lap_cutting_plane,
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
-                ref_side_index=self.cross_ref_side_indices[0],
-            )
-            cross_feature_2 = Lap.from_plane_and_beam(
-                lap_cutting_plane,
-                self.cross_beam,
-                lap_length,
-                self.mill_depth,
-                is_pocket=True,
-                ref_side_index=self.cross_ref_side_indices[1],
+                ref_side_index=pocket_ref_side_index,
             )
 
-            # register cross features to beam and joint
-            self.cross_beam.add_features([cross_feature_1, cross_feature_2])
-            self.features.extend([cross_feature_1, cross_feature_2])
+            self.cross_beam.add_features(cross_feature)
+            self.features.append(cross_feature)
