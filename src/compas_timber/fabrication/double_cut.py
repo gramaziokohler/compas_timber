@@ -203,8 +203,8 @@ class DoubleCut(BTLxProcessing):
         dot = ux * math.cos(a) + uy * math.sin(a)
         return math.degrees(math.acos(max(-1.0, min(1.0, dot))))
 
-    def _ridge_angle_and_length(self, face_depth, face_width=None, face_length=None, plane_index=2):
-        """Angle between the ridge and the top edge of a cutting plane, and the 3D ridge length within the beam.
+    def _ridge_angles_and_length(self, face_depth, face_width=None, face_length=None):
+        """Angles between the ridge and the top edge of each cutting plane, and the 3D ridge length within the beam.
 
         The ridge is treated as a parametric ray starting at ``(start_x, start_y, 0)`` in local
         ref_side coordinates. The beam is a box; the exit face is determined by finding the minimum
@@ -218,15 +218,15 @@ class DoubleCut(BTLxProcessing):
             Y-extent of the ref_side face (in-plane cross-section dimension).
         face_length : float, optional
             X-extent of the ref_side face (beam length along its axis).
-        plane_index : int, optional
-            Which cutting plane's top edge to measure the angle against. 1 or 2. Default is 2.
 
         Returns
         -------
-        tuple(float, float)
-            ``(angle_deg, length)`` — angle in degrees and 3D ridge length in model units.
+        tuple(tuple(float, float), float)
+            ``((angle_1_deg, angle_2_deg), length)`` — angle to each cutting plane's top edge in degrees,
+            and the 3D ridge length in model units (shared by both, since it's the same ray).
         """
-        angle = self._ridge_angle(plane_index)
+        angle_1 = self._ridge_angle(1)
+        angle_2 = self._ridge_angle(2)
         ux, uy, uz = self._ridge_unit_vector()
 
         # Analytical: parametric ray (start_x, start_y, 0) + t*(ux, uy, uz).
@@ -248,7 +248,7 @@ class DoubleCut(BTLxProcessing):
                 if t > 0:
                     candidates.append(t)
         length = min(candidates) if candidates else None
-        return angle, length
+        return (angle_1, angle_2), length
 
     def set_ridge_attributes(self, beam):
         """Compute ridge angle and length and store them in user_attributes.
@@ -259,8 +259,9 @@ class DoubleCut(BTLxProcessing):
             The beam this processing is applied to.
         """
         face_width, face_depth = beam.get_dimensions_relative_to_side(self.ref_side_index)
-        ridge_angle, ridge_length = self._ridge_angle_and_length(face_depth, face_width, beam.blank_length)
-        self.user_attributes["ridge_angle"] = ridge_angle
+        (ridge_angle_1, ridge_angle_2), ridge_length = self._ridge_angles_and_length(face_depth, face_width, beam.blank_length)
+        self.user_attributes["ridge_angle_1"] = ridge_angle_1
+        self.user_attributes["ridge_angle_2"] = ridge_angle_2
         self.user_attributes["ridge_length"] = ridge_length
         self.user_attributes["strategy"] = "pocketing"
 
