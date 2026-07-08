@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Optional
 
 from compas.data import Data
-from compas.geometry import Box, Transformation
+from compas.geometry import Box
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
@@ -166,6 +167,7 @@ class Layer(Element):
     def panel(self):
         if self.treenode is not None:
             from compas_timber.elements.panel import Panel
+
             parent = self.parent
             while parent is not None:
                 if isinstance(parent, Panel):
@@ -511,9 +513,7 @@ class LayerStructure(Data):
             raise ValueError("At most one LayerDef sibling may have thickness=None.")
         fixed_sum = sum(d.thickness for d in defs if d.thickness is not None)
         if fixed_sum > total + 1e-6:
-            raise ValueError(
-                "Defined thicknesses ({:.4f}) exceed available thickness ({:.4f}).".format(fixed_sum, total)
-            )
+            raise ValueError("Defined thicknesses ({:.4f}) exceed available thickness ({:.4f}).".format(fixed_sum, total))
         fill = total - fixed_sum
 
         current = start
