@@ -94,8 +94,6 @@ zip-safe = false
 
 [tool.setuptools.dynamic]
 version = { attr = "compas_timber.__version__" }
-dependencies = { file = "requirements.txt" }
-optional-dependencies = { dev = { file = "requirements-dev.txt" } }
 
 [tool.setuptools.packages.find]
 where = ["src"]
