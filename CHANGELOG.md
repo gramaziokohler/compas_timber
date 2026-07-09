@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
 * Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robus solid generation.
+* Fixed plate geometry created with inconsistent face orientation.
 
 ### Removed
 
