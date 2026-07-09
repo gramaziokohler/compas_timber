@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
+* Added `BeamPlateConnectionSolver` for classifying beam-to-plate/panel topology (`TOPO_FACE_FACE`, `TOPO_END_FACE`, `TOPO_END_EDGE`, `TOPO_MIDDLE_EDGE`, `TOPO_THROUGH_FACE`, `TOPO_ALONG_EDGE`), wired into `TimberModel.compute_topologies()` via a new `BeamPlateJointCandidate`.
+* Added a plate-to-plate/panel `TOPO_FACE_FACE` topology to `PlateConnectionSolver`, for plates whose main faces lie flush against each other.
+* Added `ref_side_index_a`/`ref_side_index_b` fields to `BeamSolverResult` and `PlateSolverResult`, and `beam_ref_side_index`/`plate_ref_side_index` fields to `BeamPlateSolverResult`, identifying which face(s) matched a `TOPO_FACE_FACE`/`TOPO_END_FACE`/`TOPO_EDGE_FACE` topology.
 
 ### Changed
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
 * `PlateJoint.distance` is no longer hardcoded to `0.0`; it now reflects the distance measured by `PlateConnectionSolver`, the same way `topology` and `location` already did.
+* Fixed `PlateConnectionSolver` raising a `TypeError` when testing two plates whose faces are parallel (no intersection line between them).
 
 ### Removed
 
