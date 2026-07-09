@@ -3,19 +3,25 @@ import math
 
 from compas.data import Data
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import distance_point_line
+from compas.geometry import distance_point_plane
 from compas.geometry import distance_point_point
 from compas.geometry import dot_vectors
+from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
-from compas.geometry import intersection_segment_polyline
 from compas.geometry import is_parallel_line_line
 from compas.plugins import pluggable
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
 from compas_timber.utils import distance_segment_segment_points
+from compas_timber.utils import do_segments_overlap
+from compas_timber.utils import does_segment_overlap_outline
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
 
@@ -61,6 +67,12 @@ class JointTopology(object):
     TOPO_K - joint between three or more beams where at least one beam meet in the middle
     TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned
     TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other
+    TOPO_FACE_FACE  - joint between a beam and a plate/panel where a beam face lies flush on a main face of the plate/panel
+    TOPO_END_FACE  - joint between a beam and a plate/panel where the beam's end butts into a main face of the plate/panel
+    TOPO_END_EDGE  - joint between a beam and a plate/panel where the beam's end meets an edge of the plate/panel
+    TOPO_MIDDLE_EDGE  - joint between a beam and a plate/panel where an edge of the plate/panel meets the beam's side, mid-span
+    TOPO_THROUGH_FACE  - joint between a beam and a plate/panel where the beam passes through both main faces of the plate/panel
+    TOPO_ALONG_EDGE  - joint between a beam and a plate/panel where the beam lies along and parallel to an edge of the plate/panel
 
     """
 
@@ -73,6 +85,12 @@ class JointTopology(object):
     TOPO_K = 6
     TOPO_EDGE_EDGE = 7
     TOPO_EDGE_FACE = 8
+    TOPO_FACE_FACE = 9
+    TOPO_END_FACE = 10
+    TOPO_END_EDGE = 11
+    TOPO_MIDDLE_EDGE = 12
+    TOPO_THROUGH_FACE = 13
+    TOPO_ALONG_EDGE = 14
 
     @classmethod
     def get_name(cls, value):
@@ -150,6 +168,12 @@ class ConnectionSolver(object):
         max_distance = max_distance or TOL.absolute  # TODO: change to a unit-sensitive value
         dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         if dist > max_distance:
+            # centerlines are too far apart for I/L/T/X, but the beams might still be flush face-to-face
+            # (e.g. sistered/stacked beams), which centerline distance alone can't detect.
+            result = self._test_face_face(beam_a, beam_b, max_distance)
+            if result is not None:
+                distance, location = result
+                return BeamSolverResult(JointTopology.TOPO_FACE_FACE, beam_a, beam_b, distance, location)
             return BeamSolverResult(JointTopology.TOPO_UNKNOWN, beam_a, beam_b, None, None)
         point_a = Point(*point_a)
         point_b = Point(*point_b)
@@ -185,6 +209,47 @@ class ConnectionSolver(object):
         if b_end:
             return BeamSolverResult(JointTopology.TOPO_T, beam_b, beam_a, dist, location)
         return BeamSolverResult(JointTopology.TOPO_X, beam_a, beam_b, dist, location)
+
+    def _test_face_face(self, beam_a, beam_b, tol):
+        """Checks whether a long face of `beam_a` lies coplanar, anti-parallel, and overlapping with a long face of `beam_b`."""
+        for i in range(4):
+            face_a = beam_a.ref_sides[i]
+            corners_a = self._surface_corners(beam_a.side_as_surface(i))
+            for j in range(4):
+                face_b = beam_b.ref_sides[j]
+                if dot_vectors(face_a.zaxis, face_b.zaxis) > -1 + tol:
+                    continue  # not anti-parallel
+                distance = dot_vectors(Vector.from_start_end(face_b.point, face_a.point), face_b.zaxis)
+                if abs(distance) > tol:
+                    continue  # not coplanar
+                corners_b = self._surface_corners(beam_b.side_as_surface(j))
+                outline_b = Polyline(corners_b + [corners_b[0]])
+                if self._rectangle_overlaps_outline(corners_a, outline_b, tol):
+                    centroid = Point(*[sum(c[axis] for c in corners_a) / 4.0 for axis in range(3)])
+                    return distance, centroid
+        return None
+
+    @staticmethod
+    def _surface_corners(surface):
+        """Returns the 4 corner points of a `PlanarSurface`, in order."""
+        frame = surface.frame
+        x, y = surface.xsize, surface.ysize
+        return [
+            frame.point,
+            frame.point + frame.xaxis * x,
+            frame.point + frame.xaxis * x + frame.yaxis * y,
+            frame.point + frame.yaxis * y,
+        ]
+
+    @staticmethod
+    def _rectangle_overlaps_outline(corners, outline, tol):
+        """Checks whether a coplanar rectangle (given by its 4 `corners`) overlaps `outline` (partial overlap counts)."""
+        tol_obj = Tolerance(absolute=tol)
+        for i in range(4):
+            edge = Line(corners[i], corners[(i + 1) % 4])
+            if does_segment_overlap_outline(edge, outline, tol=tol_obj):
+                return True
+        return False
 
 
 class PlateConnectionSolver(ConnectionSolver):
@@ -250,7 +315,7 @@ class PlateConnectionSolver(ConnectionSolver):
                     dist = distance_point_line(seg_a_midpt, seg_b)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
-                            if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
+                            if do_segments_overlap(seg_a, seg_b):
                                 return i, j, dist, seg_a_midpt
         return None, None, None, None
 
@@ -269,60 +334,235 @@ class PlateConnectionSolver(ConnectionSolver):
                     dist = distance_point_line(seg_a_midpt, line)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
-                            if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
+                            if does_segment_overlap_outline(seg_a, pline_b):
                                 return i, dist, seg_a_midpt
         return None, None, None
 
-    @staticmethod
-    def do_segments_overlap(segment_a, segment_b):
-        """Checks if two segments overlap.
+
+class BeamPlateConnectionSolver(ConnectionSolver):
+    """Provides tools for detecting beam-to-plate/panel intersections and joint topologies.
+
+    Classifies a beam/plate (or beam/panel) pair into one of six topologies (`TOPO_FACE_FACE`,
+    `TOPO_END_FACE`, `TOPO_END_EDGE`, `TOPO_MIDDLE_EDGE`, `TOPO_THROUGH_FACE`, `TOPO_ALONG_EDGE`) by
+    first classifying the beam centerline's two endpoints against the plate's main-face depth range,
+    then resolving the remaining ambiguity with a small set of per-segment geometric tests. Edge-related
+    topologies are always attempted before face-related ones; the first matching plate outline segment
+    wins.
+
+    """
+
+    TOLERANCE = 1e-6
+
+    def find_topology(self, beam, plate, max_distance=None, tol=None):
+        """Classifies the topology of the intersection between a beam and a plate/panel.
 
         Parameters
         ----------
-        segment_a : :class:`~compas.geometry.Segment`
-            The first segment.
-        segment_b : :class:`~compas.geometry.Segment`
-            The second segment.
-
-        Returns
-        -------
-        bool
-            True if the segments overlap, False otherwise.
-        """
-        for pt_a in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
-            dot_start = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt_a))
-            dot_end = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.end, pt_a))
-            if dot_start > 0 and dot_end < 0:
-                return True
-        for pt_b in [segment_b.start, segment_b.end, segment_b.point_at(0.5)]:
-            dot_start = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.start, pt_b))
-            dot_end = dot_vectors(segment_a.direction, Vector.from_start_end(segment_a.end, pt_b))
-            if dot_start > 0 and dot_end < 0:
-                return True
-        return False
-
-    @staticmethod
-    def does_segment_intersect_outline(segment, polyline, tol=TOL):
-        """Checks if a segment intersects with the outline of a polyline.
-
-        Parameters
-        ----------
-        segment : :class:`~compas.geometry.Segment`
-            The segment to check for intersection.
-        polyline : :class:`~compas.geometry.Polyline`
-            The polyline whose outline is checked for intersection.
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam to test.
+        plate : :class:`~compas_timber.elements.Plate` or :class:`~compas_timber.elements.Panel`
+            The plate or panel to test.
+        max_distance : float, optional
+            Maximum distance, in design units, at which the beam and plate/panel are considered intersecting.
         tol : float, optional
-            Tolerance for intersection check.
+            General tolerance used for the underlying geometric checks.
 
         Returns
         -------
-        bool
-            True if the segment intersects with the outline of the polyline, False otherwise.
-        """
-        if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
-            return True
-        return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
+        :class:`~compas_timber.connections.BeamPlateSolverResult`
 
+        """
+        max_distance = max_distance if max_distance is not None else self.TOLERANCE
+        tol = tol if tol is not None else self.TOLERANCE
+
+        centerline = beam.centerline
+        thickness = plate.thickness
+        depth_start = self._endpoint_depth(centerline.start, plate)
+        depth_end = self._endpoint_depth(centerline.end, plate)
+        side_start = self._classify_depth(depth_start, thickness, max_distance)
+        side_end = self._classify_depth(depth_end, thickness, max_distance)
+
+        if side_start != 0 and side_end != 0:
+            if side_start == side_end:
+                # both endpoints on the same side: beam-face possibly flush against a main face
+                result = self._test_face_face(beam, plate, tol)
+                if result is not None:
+                    distance, location = result
+                    return BeamPlateSolverResult(JointTopology.TOPO_FACE_FACE, beam, plate, distance=distance, location=location)
+                return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
+
+            # endpoints on opposite sides: beam crosses the slab's depth range somewhere along its length
+            n_segments = len(plate.outline_a.points) - 1
+            for i in range(n_segments):
+                result = self._test_middle_edge(beam, plate, i, tol)
+                if result is not None:
+                    distance, location = result
+                    return BeamPlateSolverResult(JointTopology.TOPO_MIDDLE_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
+            result = self._test_through_face(beam, plate, tol)
+            if result is not None:
+                distance, location = result
+                return BeamPlateSolverResult(JointTopology.TOPO_THROUGH_FACE, beam, plate, distance=distance, location=location)
+            return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
+
+        if side_start == 0 and side_end == 0:
+            # both endpoints within the slab's depth range: try ALONG_EDGE first (both endpoints
+            # close to the same segment's edge plane).
+            n_segments = len(plate.outline_a.points) - 1
+            for i in range(n_segments):
+                edge_plane = plate.edge_planes[i]
+                d_start = distance_point_plane(centerline.start, edge_plane)
+                d_end = distance_point_plane(centerline.end, edge_plane)
+                if d_start <= tol and d_end <= tol:
+                    result = self._test_along_edge(beam, plate, i, tol)
+                    if result is not None:
+                        distance, location = result
+                        return BeamPlateSolverResult(JointTopology.TOPO_ALONG_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
+
+            # otherwise, END_EDGE requires exactly one endpoint to land in an edge quad, and the
+            # other to land in none — if each endpoint hits a (possibly different) edge, the beam
+            # doesn't have a single, unambiguous edge relationship.
+            start_match = None
+            end_match = None
+            for i in range(n_segments):
+                if start_match is None:
+                    start_match = self._test_end_edge_at_point(centerline.start, plate, i, tol)
+                    if start_match is not None:
+                        start_match = (i,) + start_match
+                if end_match is None:
+                    end_match = self._test_end_edge_at_point(centerline.end, plate, i, tol)
+                    if end_match is not None:
+                        end_match = (i,) + end_match
+                if start_match is not None and end_match is not None:
+                    break
+
+            if start_match is not None and end_match is None:
+                i, distance, location = start_match
+                return BeamPlateSolverResult(JointTopology.TOPO_END_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
+            if end_match is not None and start_match is None:
+                i, distance, location = end_match
+                return BeamPlateSolverResult(JointTopology.TOPO_END_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
+            return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
+
+        # asymmetric: exactly one endpoint is within the slab's depth range
+        between_point = centerline.start if side_start == 0 else centerline.end
+        n_segments = len(plate.outline_a.points) - 1
+        for i in range(n_segments):
+            result = self._test_end_edge_at_point(between_point, plate, i, tol)
+            if result is not None:
+                distance, location = result
+                return BeamPlateSolverResult(JointTopology.TOPO_END_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
+        result = self._test_end_face(between_point, plate, tol)
+        if result is not None:
+            distance, location = result
+            return BeamPlateSolverResult(JointTopology.TOPO_END_FACE, beam, plate, distance=distance, location=location)
+        return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
+
+    # ------------------------------------------------------------------
+    # shared geometric primitives
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _endpoint_depth(point, plate):
+        """Signed depth of `point` along the plate's main-face axis: 0 at `ref_sides[0]`, `thickness` at `ref_sides[2]`."""
+        ref = plate.ref_sides[0]
+        axis = ref.zaxis * -1
+        return dot_vectors(Vector.from_start_end(ref.point, point), axis)
+
+    @staticmethod
+    def _classify_depth(depth, thickness, tol):
+        """Classifies a depth value as below (-1), within (0), or above (1) the plate's main-face range."""
+        if depth < -tol:
+            return -1
+        if depth > thickness + tol:
+            return 1
+        return 0
+
+    @staticmethod
+    def _edge_quad(plate, i):
+        """Returns the closed, planar quad spanning outline segment `i`'s full length and thickness."""
+        oa = plate.outline_a.points
+        ob = plate.outline_b.points
+        return Polyline([oa[i], oa[i + 1], ob[i + 1], ob[i], oa[i]])
+
+    # `_surface_corners` and `_rectangle_overlaps_outline` are inherited from `ConnectionSolver`.
+
+    # ------------------------------------------------------------------
+    # per-topology tests
+    # ------------------------------------------------------------------
+
+    def _test_face_face(self, beam, plate, tol):
+        """Checks whether a beam long-face lies coplanar, anti-parallel, and overlapping with a plate main face."""
+        for plate_face, outline in ((plate.ref_sides[0], plate.outline_a), (plate.ref_sides[2], plate.outline_b)):
+            for i in range(4):
+                beam_face = beam.ref_sides[i]
+                if dot_vectors(beam_face.zaxis, plate_face.zaxis) > -1 + tol:
+                    continue  # not anti-parallel
+                distance = dot_vectors(Vector.from_start_end(plate_face.point, beam_face.point), plate_face.zaxis)
+                if abs(distance) > tol:
+                    continue  # not coplanar
+                corners = self._surface_corners(beam.side_as_surface(i))
+                if self._rectangle_overlaps_outline(corners, outline, tol):
+                    centroid = Point(*[sum(c[axis] for c in corners) / 4.0 for axis in range(3)])
+                    return distance, centroid
+        return None
+
+    def _test_end_face(self, point, plate, tol):
+        """Checks whether `point` (already confirmed within the slab's depth range) falls inside the plate's outline."""
+        if not is_point_in_polyline(point, plate.outline_a, in_plane=False, tol=Tolerance(absolute=tol)):
+            return None
+        depth = self._endpoint_depth(point, plate)
+        distance = min(abs(depth), abs(plate.thickness - depth))
+        return distance, point
+
+    def _test_end_edge_at_point(self, point, plate, i, tol):
+        """Checks whether `point` falls inside outline segment `i`'s bounded edge quad."""
+        if not is_point_in_polyline(point, self._edge_quad(plate, i), in_plane=True, tol=Tolerance(absolute=tol)):
+            return None
+        distance = distance_point_plane(point, plate.edge_planes[i])
+        return distance, point
+
+    def _test_along_edge(self, beam, plate, i, tol):
+        """Checks whether the beam's centerline is parallel to and overlaps outline segment `i` (both endpoints already confirmed close to `edge_planes[i]`)."""
+        seg_a = Line(plate.outline_a.points[i], plate.outline_a.points[i + 1])
+        seg_b = Line(plate.outline_b.points[i], plate.outline_b.points[i + 1])
+        if not is_parallel_line_line(seg_a, seg_b, tol=tol):
+            return None  # segment is not well-defined as a planar edge
+        centerline = beam.centerline
+        if not is_parallel_line_line(centerline, seg_a, tol=tol):
+            return None
+        if get_segment_overlap(seg_a, centerline) is None:
+            return None
+        distance = distance_point_plane(centerline.start, plate.edge_planes[i])
+        location = (centerline.start + centerline.end) / 2.0
+        return distance, location
+
+    def _test_middle_edge(self, beam, plate, i, tol):
+        """Checks whether the beam's centerline crosses outline segment `i`'s edge plane at a point that isn't near either beam endpoint."""
+        centerline = beam.centerline
+        crossing = intersection_line_plane(centerline, plate.edge_planes[i])
+        if crossing is None:
+            return None
+        crossing = Point(*crossing)
+        if distance_point_point(crossing, centerline.start) <= tol or distance_point_point(crossing, centerline.end) <= tol:
+            return None  # too close to an endpoint: this is END_EDGE's territory, not a mid-span crossing
+        if not is_point_in_polyline(crossing, self._edge_quad(plate, i), in_plane=True, tol=Tolerance(absolute=tol)):
+            return None
+        return 0.0, crossing
+
+    def _test_through_face(self, beam, plate, tol):
+        """Checks whether the beam's centerline crosses both main faces of the plate within its outline (endpoints already confirmed on opposite sides)."""
+        centerline = beam.centerline
+        crossings = []
+        for plate_face, outline in ((plate.ref_sides[0], plate.outline_a), (plate.ref_sides[2], plate.outline_b)):
+            crossing = intersection_line_plane(centerline, Plane(plate_face.point, plate_face.zaxis))
+            if crossing is None:
+                return None
+            crossing = Point(*crossing)
+            if not is_point_in_polyline(crossing, outline, in_plane=True, tol=Tolerance(absolute=tol)):
+                return None
+            crossings.append(crossing)
+        location = (crossings[0] + crossings[1]) / 2.0
+        return 0.0, location
 
 class BeamSolverResult(Data):
     """Data structure to hold the results of beam connection topology analysis.
@@ -452,3 +692,70 @@ class PlateSolverResult(Data):
             self.distance,
             self.location,
         )
+
+
+class BeamPlateSolverResult(Data):
+    """Data structure to hold the results of beam-to-plate/panel connection topology analysis.
+
+    Parameters
+    ----------
+    topology : :class:`~compas_timber.connections.JointTopology`
+        The topology of the intersection.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam involved in the intersection.
+    plate : :class:`~compas_timber.elements.Plate` or :class:`~compas_timber.elements.Panel`
+        The plate or panel involved in the intersection.
+    segment_index : int, optional
+        The index of the outline segment in `plate` where the intersection occurs. Only set for the
+        edge-related topologies (`TOPO_END_EDGE`, `TOPO_MIDDLE_EDGE`, `TOPO_ALONG_EDGE`); `None` otherwise.
+    distance : float, optional
+        The raw geometric gap/coplanarity distance found by whichever check matched.
+    location : :class:`~compas.geometry.Point`, optional
+        The location of the intersection.
+
+    Attributes
+    ----------
+    topology : :class:`~compas_timber.connections.JointTopology`
+        The topology of the intersection.
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam involved in the intersection.
+    plate : :class:`~compas_timber.elements.Plate` or :class:`~compas_timber.elements.Panel`
+        The plate or panel involved in the intersection.
+    segment_index : int, optional
+        The index of the outline segment in `plate` where the intersection occurs.
+    distance : float, optional
+        The raw geometric gap/coplanarity distance found by whichever check matched.
+    location : :class:`~compas.geometry.Point`, optional
+        The location of the intersection.
+    """
+
+    def __init__(self, topology, beam, plate, segment_index=None, distance=None, location=None):
+        super(BeamPlateSolverResult, self).__init__()
+        self.topology = topology
+        self.beam = beam
+        self.plate = plate
+        self.segment_index = segment_index
+        self.distance = distance
+        self.location = location
+
+    @property
+    def __data__(self):
+        return {
+            "topology": self.topology,
+            "beam": self.beam,
+            "plate": self.plate,
+            "segment_index": self.segment_index,
+            "distance": self.distance,
+            "location": self.location,
+        }
+
+    def __repr__(self):
+        return "BeamPlateSolverResult(topology={}, beam={}, plate={}, segment_index={}, distance={}, location={})".format(
+            self.topology,
+            self.beam.name,
+            self.plate.name,
+            self.segment_index,
+            self.distance,
+            self.location,
+        )
+

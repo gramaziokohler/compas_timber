@@ -11,7 +11,11 @@ from .joint_candidate import JointCandidate
 from .joint_candidate import PlateJointCandidate
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
+from .solver import BeamPlateConnectionSolver
 from .solver import JointTopology
+from .solver import BeamSolverResult
+from .solver import PlateSolverResult
+from .solver import BeamPlateSolverResult
 from .solver import find_neighboring_elements
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
@@ -65,6 +69,10 @@ __all__ = [
     "JointTopology",
     "ConnectionSolver",
     "PlateConnectionSolver",
+    "BeamPlateConnectionSolver",
+    "BeamSolverResult",
+    "PlateSolverResult",
+    "BeamPlateSolverResult",
     "find_neighboring_elements",
     "TDovetailJoint",
     "MortiseTenonJoint",
