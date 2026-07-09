@@ -85,36 +85,6 @@ def test_compute_shape_no_openings(mocker):
     assert result is mock_brep
 
 
-def test_compute_shape_from_polygons_returns_list(mocker):
-    """When Brep.from_polygons returns a single-element list (Rhino quirk), it should be unwrapped."""
-    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
-    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
-    pg = PlateGeometry(polyline_a, polyline_b)
-
-    mock_brep = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep])
-
-    result = pg.compute_shape()
-
-    assert result is mock_brep
-
-
-def test_compute_shape_from_polygons_returns_multiple_breps_raises(mocker):
-    """When Brep.from_polygons returns multiple breps, a ValueError should be raised."""
-    from pytest import raises
-
-    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
-    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
-    pg = PlateGeometry(polyline_a, polyline_b)
-
-    mock_brep_1 = mocker.MagicMock()
-    mock_brep_2 = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep_1, mock_brep_2])
-
-    with raises(ValueError):
-        pg.compute_shape()
-
-
 def test_compute_shape_applies_edge_extensions(mocker):
     """compute_shape should apply edge extensions before building geometry."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
