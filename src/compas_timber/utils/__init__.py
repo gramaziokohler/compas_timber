@@ -25,6 +25,8 @@ from compas.geometry import Transformation
 from compas.geometry import intersection_line_plane
 from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
+from compas.geometry import intersection_segment_polyline
+
 
 from compas.tolerance import TOL
 
@@ -912,6 +914,27 @@ def get_leaf_subclasses(cls):
     return subclasses
 
 
+def does_segment_overlap_outline(segment, polyline, tol=TOL):
+    """Checks if a segment overlaps with the outline of a polyline.
+
+    Parameters
+    ----------
+    segment : :class:`~compas.geometry.Segment`
+        The segment to check for overlap.
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline whose outline is checked for overlap.
+    tol : float, optional
+        Tolerance for overlap check.
+    Returns
+    -------
+    bool
+        True if the segment intersects or is contained within a closed polyline, False otherwise.
+    """
+    if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
+        return True
+    return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
+
+
 __all__ = [
     "intersection_line_line_param",
     "intersection_line_beam_param",
@@ -941,4 +964,6 @@ __all__ = [
     "extend_line_segments",
     "get_interior_corner_indices",
     "get_interior_segment_indices",
+    "does_segment_overlap_outline",
+
 ]

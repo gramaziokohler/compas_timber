@@ -336,3 +336,51 @@ def test_three_plate_mixed_topology():
 
     assert len(actual_topologies) == 3, "Expected three topology results"
     assert actual_topologies == expected_topologies, f"Expected {expected_topologies}, got {actual_topologies}"
+
+
+def test_beam_face_face():
+    """Two parallel beams stacked directly on top of each other (touching face-to-face) should
+    resolve to TOPO_FACE_FACE, even though their centerlines are too far apart for I/L/T/X."""
+    beam_a = Beam.from_endpoints(Point(0, 0, 0), Point(10, 0, 0), width=0.1, height=0.1)
+    beam_b = Beam.from_endpoints(Point(2, 0, 0.1), Point(8, 0, 0.1), width=0.1, height=0.1)
+
+    cs = ConnectionSolver()
+    result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
+
+    assert result.topology == JointTopology.TOPO_FACE_FACE
+    assert TOL.is_close(result.distance, 0.0)
+
+
+def test_beam_face_face_partial_overlap():
+    """FACE_FACE should still be detected when the beams only partially overlap along their length."""
+    beam_a = Beam.from_endpoints(Point(0, 0, 0), Point(10, 0, 0), width=0.1, height=0.1)
+    beam_b = Beam.from_endpoints(Point(8, 0, 0.1), Point(15, 0, 0.1), width=0.1, height=0.1)
+
+    cs = ConnectionSolver()
+    result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
+
+    assert result.topology == JointTopology.TOPO_FACE_FACE
+
+
+def test_beam_face_face_no_overlap_is_unknown():
+    """Beams that are coplanar and anti-parallel-faced but don't overlap along their length at all
+    should not be classified as FACE_FACE."""
+    beam_a = Beam.from_endpoints(Point(0, 0, 0), Point(10, 0, 0), width=0.1, height=0.1)
+    beam_b = Beam.from_endpoints(Point(20, 0, 0.1), Point(30, 0, 0.1), width=0.1, height=0.1)
+
+    cs = ConnectionSolver()
+    result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
+
+    assert result.topology == JointTopology.TOPO_UNKNOWN
+
+
+def test_beam_face_face_does_not_override_existing_topologies():
+    """Beams close enough for the existing centerline-based classification should keep resolving
+    to their usual topology (FACE_FACE is only attempted as a fallback when centerlines are too far apart)."""
+    beam_a = Beam.from_endpoints(Point(0, 0, 0), Point(10, 0, 0), width=0.1, height=0.1)
+    beam_b = Beam.from_endpoints(Point(5, -5, 0), Point(5, 5, 0), width=0.1, height=0.1)
+
+    cs = ConnectionSolver()
+    result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
+
+    assert result.topology == JointTopology.TOPO_X
