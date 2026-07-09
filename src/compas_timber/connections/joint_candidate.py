@@ -1,5 +1,6 @@
+from compas.geometry import Point
+
 from .joint import Joint
-from .plate_joint import PlateJoint
 
 
 class JointCandidate(Joint):
@@ -49,16 +50,21 @@ class JointCandidate(Joint):
         pass
 
 
-class PlateJointCandidate(PlateJoint):
+class PlateJointCandidate(JointCandidate):
     """A PlateJointCandidate is an information-only joint for plate connections.
 
     It is used to create a first-pass joinery information which can be later used to create concrete joints.
+
     Parameters
     ----------
     plate_a : :class:`~compas_timber.elements.Plate`
         First plate to be joined.
     plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
+    a_segment_index : int | None
+        Index of the outline segment in `plate_a` where the intersection occurs.
+    b_segment_index : int | None
+        Index of the outline segment in `plate_b` where the intersection occurs.
 
     Attributes
     ----------
@@ -66,6 +72,10 @@ class PlateJointCandidate(PlateJoint):
         First plate to be joined.
     plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
+    a_segment_index : int | None
+        Index of the outline segment in `plate_a` where the intersection occurs.
+    b_segment_index : int | None
+        Index of the outline segment in `plate_b` where the intersection occurs.
     ref_side_index_a : int | None
         Index of `plate_a`'s matched main face, for `TOPO_FACE_FACE`. `None` otherwise.
     ref_side_index_b : int | None
@@ -73,15 +83,30 @@ class PlateJointCandidate(PlateJoint):
 
     """
 
-    def __init__(self, plate_a=None, plate_b=None, ref_side_index_a=None, ref_side_index_b=None, **kwargs):
-        super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
-        # PlateJoint doesn't have a ref_side_index_a/b slot yet, so these are stored here directly
-        # (formalized onto the shared JointCandidate base in a follow-up).
-        self.ref_side_index_a = ref_side_index_a
-        self.ref_side_index_b = ref_side_index_b
+    def __init__(self, plate_a=None, plate_b=None, a_segment_index=None, b_segment_index=None, **kwargs):
+        super(PlateJointCandidate, self).__init__(element_a=plate_a, element_b=plate_b, **kwargs)
+        self.a_segment_index = a_segment_index
+        self.b_segment_index = b_segment_index
 
-    def _set_edge_planes(self):
-        pass
+    @property
+    def plate_a(self):
+        return self.element_a
+
+    @property
+    def plate_b(self):
+        return self.element_b
+
+    @property
+    def location(self):
+        # plates have no `.centerline`, so unlike the base `Joint.location`, this can't fall back to
+        # a centerline-based computation — default to the origin instead.
+        if self._location is None:
+            self._location = Point(0, 0, 0)
+        return self._location
+
+    @location.setter
+    def location(self, value):
+        self._location = value
 
 
 class BeamPlateJointCandidate(JointCandidate):

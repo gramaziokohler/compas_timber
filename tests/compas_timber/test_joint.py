@@ -14,6 +14,7 @@ from compas.tolerance import TOL
 
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import PlateJointCandidate
+from compas_timber.connections import BeamPlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -288,6 +289,60 @@ def test_plate_joint_candidate():
     assert isinstance(edge_face_joints[0], PlateJointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joint_candidates)[0].elements[0] == plate_b
+
+
+def test_plate_joint_candidate_is_a_joint_candidate_not_a_plate_joint():
+    """PlateJointCandidate is a JointCandidate (information-only, store-only), not a PlateJoint —
+    it must not auto-compute its topology on construction, and its location must default to the
+    origin rather than attempt a centerline-based computation (plates have no `.centerline`)."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    candidate = PlateJointCandidate(plate_a=plate_a, plate_b=plate_b)
+
+    assert isinstance(candidate, JointCandidate)
+    assert candidate.topology == JointTopology.TOPO_UNKNOWN  # not auto-computed
+    assert candidate.a_segment_index is None
+    assert candidate.b_segment_index is None
+    assert TOL.is_allclose(candidate.location, Point(0, 0, 0))
+
+
+def test_plate_joint_candidate_stores_ref_side_index():
+    """PlateJointCandidate carries ref_side_index_a/b, inherited from the shared JointCandidate base."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    polyline_b = Polyline([Point(3, 3, 1), Point(3, 7, 1), Point(7, 7, 1), Point(7, 3, 1), Point(3, 3, 1)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    candidate = PlateJointCandidate(
+        plate_a=plate_a, plate_b=plate_b, topology=JointTopology.TOPO_FACE_FACE, ref_side_index_a=2, ref_side_index_b=0
+    )
+
+    assert candidate.plate_a == plate_a
+    assert candidate.plate_b == plate_b
+    assert candidate.ref_side_index_a == 2
+    assert candidate.ref_side_index_b == 0
+
+
+def test_beam_plate_joint_candidate_direct_construction():
+    """BeamPlateJointCandidate stores beam/plate, segment_index, and both ref_side_index fields."""
+    polyline = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(polyline, 1)
+    beam = Beam.from_centerline(Line(Point(2, 5, 1.05), Point(8, 5, 1.05)), width=0.1, height=0.1)
+
+    candidate = BeamPlateJointCandidate(
+        beam=beam, plate=plate, topology=JointTopology.TOPO_FACE_FACE, beam_ref_side_index=1, plate_ref_side_index=2
+    )
+
+    assert isinstance(candidate, JointCandidate)
+    assert candidate.beam == beam
+    assert candidate.plate == plate
+    assert set(candidate.elements) == {beam, plate}
+    assert candidate.segment_index is None
+    assert candidate.beam_ref_side_index == 1
+    assert candidate.plate_ref_side_index == 2
 
 
 def test_joint_candidate_create_still_works():
