@@ -220,11 +220,12 @@ class PlateGeometry(Data):
         frame = Frame.from_points(outline_a[0], outline_a[1], pt_c)
 
         if orientation:
-            orientation = cross_vectors(cross_vectors(orientation, frame.normal), frame.normal)  # project to `frame`
-            frame = Frame(outline_a[0], cross_vectors(orientation, frame.normal), orientation)  # create new frame based on orientation
+            frame_x = cross_vectors(orientation, frame.normal)
+            frame_y = cross_vectors(frame.normal, frame_x)
+            frame = Frame(outline_a[0], frame_x, frame_y)  # create new frame based on orientation
 
         if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
-            frame = Frame(frame.point, frame.yaxis, frame.xaxis)  # flip frame if outline_b in -z space
+            frame = Frame(frame.point, -frame.xaxis, frame.yaxis)  # flip frame if outline_b in -z space
         transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
 
         # move polylines to XY
