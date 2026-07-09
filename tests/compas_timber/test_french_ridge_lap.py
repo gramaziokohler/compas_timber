@@ -128,9 +128,7 @@ def test_acute_angle_ref_position():
     """
     a = math.radians(60)
     beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000, 0, 0)), width=60, height=100)
-    beam_b = Beam.from_centerline(
-        Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100
-    )
+    beam_b = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100)
     model = TimberModel()
     model.add_element(beam_a)
     model.add_element(beam_b)
@@ -153,9 +151,7 @@ def test_obtuse_angle_ref_position():
     """
     a = math.radians(120)
     beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000, 0, 0)), width=60, height=100)
-    beam_b = Beam.from_centerline(
-        Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100
-    )
+    beam_b = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100)
     model = TimberModel()
     model.add_element(beam_a)
     model.add_element(beam_b)

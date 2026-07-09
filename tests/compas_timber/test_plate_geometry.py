@@ -125,3 +125,30 @@ def test_compute_shape_applies_edge_extensions(mocker):
     pg.compute_shape()
 
     mock_apply.assert_called_once()
+
+
+def test_compute_shape_produces_solid_with_correct_volume():
+    """compute_shape should produce a closed solid with the expected volume (OCC backend).
+
+    Regression test: the old side-polygon point order
+    [outline_a[i], outline_a[i+1], outline_b[i+1], outline_b[i]]
+    produced an inside-out solid on some backends. The corrected order
+    [outline_a[i], outline_b[i], outline_b[i+1], outline_a[i+1]]
+    ensures outward-facing normals and a valid solid.
+
+    Note: this test exercises the real OCC Brep backend without mocking.
+    On the OCC backend the volume property returns abs(mass), so a negative raw
+    volume (inside-out solid) is masked.  The is_solid / is_closed assertions
+    additionally guard against the sewing step silently failing to produce a
+    proper solid.
+    """
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 5, 0), Point(0, 5, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 1), Point(0, 5, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(outline_a, outline_b)
+
+    brep = pg.compute_shape()
+
+    expected_volume = 10 * 5 * 1  # length * width * thickness
+    assert TOL.is_close(brep.volume, expected_volume)
+    assert brep.is_solid
+    assert brep.is_closed
