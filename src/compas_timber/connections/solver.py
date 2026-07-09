@@ -966,7 +966,7 @@ _CONNECTION_HANDLERS = [
 ]
 
 
-def _find_connection_handler(element_a, element_b):
+def find_connection_handler(element_a, element_b):
     """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
     for (type_a, type_b), handler in _CONNECTION_HANDLERS:
         if (isinstance(element_a, type_a) and isinstance(element_b, type_b)) or (isinstance(element_a, type_b) and isinstance(element_b, type_a)):
