@@ -67,37 +67,33 @@ def test_apply_and_remove_exensions_with_index():
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
 
 
-def test_compute_shape_no_openings(mocker):
-    """compute_shape builds polygons from outlines and calls Brep.from_polygons."""
+def test_compute_shape_no_openings():
+    """compute_shape builds a closed solid with one face per polygon (2 caps + 4 sides for a rectangular plate)."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
     pg = PlateGeometry(polyline_a, polyline_b)
 
-    mock_brep = mocker.MagicMock()
-    mock_from_polygons = mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+    brep = pg.compute_shape()
 
-    result = pg.compute_shape()
-
-    mock_from_polygons.assert_called_once()
-    polygons = mock_from_polygons.call_args[0][0]
-    # 2 cap polygons + 4 side polygons for a rectangular plate
-    assert len(polygons) == 6
-    assert result is mock_brep
+    assert len(brep.faces) == 6
+    assert brep.is_solid
+    assert brep.is_closed
 
 
-def test_compute_shape_applies_edge_extensions(mocker):
+def test_compute_shape_applies_edge_extensions():
     """compute_shape should apply edge extensions before building geometry."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
     pg = PlateGeometry(polyline_a, polyline_b)
+    unextended_volume = pg.compute_shape().volume
 
-    mock_apply = mocker.patch.object(pg, "apply_edge_extensions")
-    mock_brep = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+    pg.set_extension_plane(3, Plane([0, 0, 0], [0, -1, -1]))
+    extended_brep = pg.compute_shape()
 
-    pg.compute_shape()
-
-    mock_apply.assert_called_once()
+    # the extension enlarges outline_b, so if apply_edge_extensions ran, the solid must be bigger
+    assert extended_brep.volume > unextended_volume
+    assert extended_brep.is_solid
+    assert extended_brep.is_closed
 
 
 def test_compute_shape_produces_solid_with_correct_volume():
