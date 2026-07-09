@@ -1,3 +1,4 @@
+import pytest
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -144,3 +145,36 @@ def test_brep_from_outlines_default_normal_is_world_z():
     brep_explicit = brep_from_outlines(outline_a, outline_b, normal=Vector(0, 0, 1))
 
     assert TOL.is_close(brep_default.volume, brep_explicit.volume)
+
+
+def test_brep_from_outlines_raises_if_outline_a_not_closed():
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 5, 0), Point(0, 5, 0)])  # not closed
+    outline_b = _rectangle(z=1)
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)
+
+
+def test_brep_from_outlines_raises_if_outline_b_not_closed():
+    outline_a = _rectangle(z=0)
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 1), Point(0, 5, 1)])  # not closed
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)
+
+
+def test_brep_from_outlines_raises_on_mismatched_vertex_count():
+    outline_a = _rectangle(z=0)  # 4 unique vertices
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(5, 5, 1), Point(0, 0, 1)])  # 3 unique vertices
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)
+
+
+def test_brep_from_outlines_raises_if_outlines_not_parallel():
+    outline_a = _rectangle(z=0)
+    # outline_b is tilted relative to outline_a's plane, not just offset along Z
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 2), Point(0, 5, 0), Point(0, 0, 1)])
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)

@@ -6,8 +6,10 @@ from compas.geometry import Polygon
 from compas.geometry import Polyhedron
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
+from compas.tolerance import TOL
 from compas_brep import Brep
 from scipy.spatial import KDTree as _ScipyKDTree
 
@@ -179,9 +181,26 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     Returns
     -------
         A Brep representing the solid defined by the two outlines.
+
+    Raises
+    ------
+    ValueError
+        If either outline is not closed, if the outlines don't have the same
+        number of vertices, or if the outlines are not parallel to each other.
     """
-    # TODO: check that outlines are closed and have the same number of vertices
-    # TODO: check that outlines are parallel to each other
+    if not TOL.is_allclose(outline_a[0], outline_a[-1]):
+        raise ValueError("outline_a is not closed: its first and last points must coincide.")
+    if not TOL.is_allclose(outline_b[0], outline_b[-1]):
+        raise ValueError("outline_b is not closed: its first and last points must coincide.")
+    if len(outline_a) != len(outline_b):
+        raise ValueError("outline_a and outline_b must have the same number of vertices.")
+
+    normal_a = Polygon(outline_a.points[:-1]).normal
+    normal_b = Polygon(outline_b.points[:-1]).normal
+    angle = angle_vectors(normal_a, normal_b)
+    if not (TOL.is_zero(angle, tol=TOL.angular) or TOL.is_zero(angle - math.pi, tol=TOL.angular)):
+        raise ValueError("outline_a and outline_b are not parallel to each other.")
+
     normal = normal or Vector(0, 0, 1)
     outline_a = correct_polyline_direction(outline_a, normal, clockwise=True)
     outline_b = correct_polyline_direction(outline_b, normal, clockwise=True)
