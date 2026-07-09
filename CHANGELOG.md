@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
+* Added Python 3.12, 3.13 and 3.14 trove classifiers to `pyproject.toml`, matching the versions tested in CI.
 
 ### Removed
 
