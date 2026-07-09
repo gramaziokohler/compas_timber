@@ -1,3 +1,6 @@
+import sys
+
+import pytest
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Plane
@@ -9,6 +12,8 @@ from compas.data import json_loads
 from compas.tolerance import TOL
 
 from compas_timber.elements import PlateGeometry
+
+requires_occ = pytest.mark.skipif(sys.version_info < (3, 10), reason="OCC Brep backend is not available on Python 3.9")
 
 
 def test_plate_geometry_serialization():
@@ -67,6 +72,7 @@ def test_apply_and_remove_exensions_with_index():
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
 
 
+@requires_occ
 def test_compute_shape_no_openings():
     """compute_shape builds a closed solid with one face per polygon (2 caps + 4 sides for a rectangular plate)."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -80,6 +86,7 @@ def test_compute_shape_no_openings():
     assert brep.is_closed
 
 
+@requires_occ
 def test_compute_shape_applies_edge_extensions():
     """compute_shape should apply edge extensions before building geometry."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -96,6 +103,7 @@ def test_compute_shape_applies_edge_extensions():
     assert extended_brep.is_closed
 
 
+@requires_occ
 def test_compute_shape_produces_solid_with_correct_volume():
     """compute_shape should produce a closed solid with the expected volume (OCC backend).
 
