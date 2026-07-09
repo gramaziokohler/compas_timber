@@ -200,3 +200,6 @@ python_files = [
 addopts = "-ra --strict --doctest-modules --doctest-glob=*.rst --tb=short"
 doctest_optionflags= "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES NUMBER"
 filterwarnings = "ignore::DeprecationWarning"
+markers = [
+    "requires_occ: marks tests that need the OCC Brep backend, which is not available on Python 3.9",
+]

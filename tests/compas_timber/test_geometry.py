@@ -1,5 +1,3 @@
-import sys
-
 import pytest
 from compas.geometry import Frame
 from compas.geometry import Plane
@@ -10,8 +8,6 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.geometry import brep_from_outlines
-
-requires_occ = pytest.mark.skipif(sys.version_info < (3, 10), reason="OCC Brep backend is not available on Python 3.9")
 
 
 def _rectangle(z, width=10, height=5):
@@ -33,7 +29,7 @@ def _assert_valid_solid(brep, expected_volume):
     assert TOL.is_close(brep.volume, expected_volume)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_outline_a_below_outline_b():
     outline_a = _rectangle(z=0)
     outline_b = _rectangle(z=1)
@@ -43,7 +39,7 @@ def test_brep_from_outlines_outline_a_below_outline_b():
     _assert_valid_solid(brep, expected_volume=10 * 5 * 1)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_outline_a_above_outline_b():
     # outline_a is physically above outline_b even though it's passed first
     outline_a = _rectangle(z=1)
@@ -54,7 +50,7 @@ def test_brep_from_outlines_outline_a_above_outline_b():
     _assert_valid_solid(brep, expected_volume=10 * 5 * 1)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_mismatched_winding_direction():
     # outline_a wound clockwise, outline_b wound counter-clockwise (viewed from +Z)
     outline_a = Polyline([Point(0, 0, 0), Point(0, 5, 0), Point(10, 5, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -65,7 +61,7 @@ def test_brep_from_outlines_mismatched_winding_direction():
     _assert_valid_solid(brep, expected_volume=10 * 5 * 1)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_triangular_profile():
     outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(0, 6, 0), Point(0, 0, 0)])
     outline_b = Polyline([Point(0, 0, 2), Point(10, 0, 2), Point(0, 6, 2), Point(0, 0, 2)])
@@ -76,7 +72,7 @@ def test_brep_from_outlines_triangular_profile():
     _assert_valid_solid(brep, expected_volume=triangle_area * 2)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_convex_pentagon_profile():
     points = [(0, 0), (4, 0), (6, 3), (2, 6), (-2, 3)]
     outline_a = Polyline([Point(x, y, 0) for x, y in points] + [Point(*points[0], 0)])
@@ -88,7 +84,7 @@ def test_brep_from_outlines_convex_pentagon_profile():
     _assert_valid_solid(brep, expected_volume=pentagon_area * 0.5)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_non_convex_l_shape_profile():
     points = [(0, 0), (6, 0), (6, 3), (3, 3), (3, 6), (0, 6)]
     outline_a = Polyline([Point(x, y, 0) for x, y in points] + [Point(*points[0], 0)])
@@ -100,7 +96,7 @@ def test_brep_from_outlines_non_convex_l_shape_profile():
     _assert_valid_solid(brep, expected_volume=l_shape_area * 1.5)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_not_parallel_to_world_xy():
     # profile lives in a tilted plane, offset along its own (non world-Z) normal
     normal = Vector(1, 1, 1).unitized()
@@ -119,7 +115,7 @@ def test_brep_from_outlines_not_parallel_to_world_xy():
     _assert_valid_solid(brep, expected_volume=10 * 5 * 2)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_not_parallel_to_world_xy_outline_a_above_outline_b():
     normal = Vector(1, 1, 1).unitized()
     frame = Frame.from_plane(Plane(Point(0, 0, 0), normal))
@@ -137,7 +133,7 @@ def test_brep_from_outlines_not_parallel_to_world_xy_outline_a_above_outline_b()
     _assert_valid_solid(brep, expected_volume=10 * 5 * 2)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_with_negative_z_normal():
     # explicit normal pointing opposite to world Z: outline_a (z=0) is "below" in world
     # terms but "above" relative to the given (0, 0, -1) normal.
@@ -150,7 +146,7 @@ def test_brep_from_outlines_with_negative_z_normal():
     _assert_valid_solid(brep, expected_volume=10 * 5 * 1)
 
 
-@requires_occ
+@pytest.mark.requires_occ
 def test_brep_from_outlines_default_normal_is_world_z():
     outline_a = _rectangle(z=0)
     outline_b = _rectangle(z=1)
