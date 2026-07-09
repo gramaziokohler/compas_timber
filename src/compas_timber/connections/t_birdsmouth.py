@@ -130,7 +130,7 @@ class TBirdsmouthJoint(Joint):
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
+                # is_pocket=True,
                 ref_side_index=self.cross_ref_side_indices[0],
             )
             cross_feature_2 = Lap.from_plane_and_beam(
@@ -138,7 +138,7 @@ class TBirdsmouthJoint(Joint):
                 self.cross_beam,
                 lap_length,
                 self.mill_depth,
-                is_pocket=True,
+                # is_pocket=True,
                 ref_side_index=self.cross_ref_side_indices[1],
             )
 
@@ -147,15 +147,16 @@ class TBirdsmouthJoint(Joint):
             self.features.extend([cross_feature_1, cross_feature_2])
 
     def get_kinematic_constraint(self, moving_element):
-        """Calculates the escape constraint for the TBirdsmouth joint."""
+        """
+        Calculates the escape constraint for the TBirdsmouth joint.
+        Does not yet work with the mill depth.
+        """
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
 
         cps = self._get_cutting_planes()
         
         if moving_element == self.main_beam:
-            return cps
-            # return [cps[0].normal, cps[1].normal]
+            return [cps[0].normal, cps[1].normal]
         elif moving_element == self.cross_beam:
-            return cps
-            # return [cps[0].normal * -1, cps[3].normal * -1]
+            return [cps[0].normal * -1, cps[3].normal * -1]
