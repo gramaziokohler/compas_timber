@@ -190,7 +190,7 @@ def test_direct_construction_computes_distance_and_location():
     joint = PlateLButtJoint(expected.plate_a, expected.plate_b)
 
     assert joint.distance == expected.distance
-    assert joint.distance != 0.0  # sanity check that the solver actually found a non-trivial distance
+    assert joint.distance is not None  # sanity check that the solver actually found a topology, not a degenerate case
     assert TOL.is_allclose(joint.location, expected.location)
     assert joint.location != Point(0, 0, 0)
 

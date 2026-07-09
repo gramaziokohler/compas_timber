@@ -14,11 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `ref_side_index_a`/`ref_side_index_b` fields to `BeamSolverResult` and `PlateSolverResult`, and `beam_ref_side_index`/`plate_ref_side_index` fields to `BeamPlateSolverResult`, identifying which face(s) matched a `TOPO_FACE_FACE`/`TOPO_END_FACE`/`TOPO_EDGE_FACE` topology.
 
 ### Changed
+* Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
 * `PlateJoint.distance` is no longer hardcoded to `0.0`; it now reflects the distance measured by `PlateConnectionSolver`, the same way `topology` and `location` already did.
 * Fixed `PlateConnectionSolver` raising a `TypeError` when testing two plates whose faces are parallel (no intersection line between them).
 * `PlateJointCandidate` now extends `JointCandidate` instead of `PlateJoint`.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
+* Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
 
 ### Removed
 
