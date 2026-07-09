@@ -1,5 +1,16 @@
+import sys
+
 from compas.tolerance import TOL
 import pytest
+
+
+def pytest_collection_modifyitems(items):
+    if sys.version_info >= (3, 10):
+        return
+    skip_occ = pytest.mark.skip(reason="OCC Brep backend is not available on Python 3.9")
+    for item in items:
+        if "requires_occ" in item.keywords:
+            item.add_marker(skip_occ)
 
 
 @pytest.fixture(autouse=True, scope="session")
