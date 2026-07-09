@@ -26,8 +26,10 @@ def test_plate_blank():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 100.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 200.0)
+    # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`, which here is (0, 200, 0):
+    # local x follows that direction (not necessarily world x), so xsize tracks the 200-long edge.
+    assert TOL.is_zero(plate.blank.xsize - 200.0)
+    assert TOL.is_zero(plate.blank.ysize - 100.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -37,8 +39,9 @@ def test_plate_blank_reversed():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 200.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 100.0)
+    # outline[0]->outline[1] is now (100, 0, 0), the 100-long edge, so xsize/ysize swap vs. test_plate_blank
+    assert TOL.is_zero(plate.blank.xsize - 100.0)
+    assert TOL.is_zero(plate.blank.ysize - 200.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -49,8 +52,9 @@ def test_plate_blank_extension():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 110.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 210.0)
+    # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`, i.e. the 200-long edge
+    assert TOL.is_zero(plate.blank.xsize - 210.0)
+    assert TOL.is_zero(plate.blank.ysize - 110.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -142,8 +146,9 @@ def test_double_contour_plate():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 120.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 220.0)
+    # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`, i.e. the 200-long edge (extended to 220 by outline_b)
+    assert TOL.is_zero(plate.blank.xsize - 220.0)
+    assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -154,8 +159,9 @@ def test_contour_plate_blank():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 120.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 220.0)
+    # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`, i.e. the 200-long edge (extended to 220 by outline_b)
+    assert TOL.is_zero(plate.blank.xsize - 220.0)
+    assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
 
 
@@ -166,8 +172,9 @@ def test_contour_plate_simple_inclination():
 
     assert len(plate.features) == 1
     assert isinstance(plate.features[0], FreeContour)
-    assert TOL.is_zero(plate.blank.xsize - 120.0)  # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`
-    assert TOL.is_zero(plate.blank.ysize - 220.0)
+    # x-axis is the vector from `plate.outline[0]` to `plate.outline[1]`, i.e. the 200-long edge (extended to 220 by outline_b)
+    assert TOL.is_zero(plate.blank.xsize - 220.0)
+    assert TOL.is_zero(plate.blank.ysize - 120.0)
     assert TOL.is_zero(plate.blank.zsize - 10.0)
     assert TOL.is_close(plate.features[0].params.as_dict()["Contour"].inclination[0], -45.0)
 
