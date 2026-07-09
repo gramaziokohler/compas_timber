@@ -1,13 +1,16 @@
 import math
 
 from compas.geometry import Point
+from compas.geometry import Polygon
 from compas.geometry import Polyhedron
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
+from compas_brep import Brep
 from scipy.spatial import KDTree as _ScipyKDTree
 
+from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 
@@ -155,3 +158,43 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     polyhedron.faces = new_faces
     return polyhedron
+
+
+def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Vector = None) -> Brep:
+    """Create a solid brep from two closed outlines.
+
+    Parameters
+    ----------
+    outline_a :
+        The first closed outline.
+    outline_b :
+        The second closed outline.
+    normal :
+        The normal vector around which the outlines are oriented.
+
+    Returns
+    -------
+        A Brep representing the solid defined by the two outlines.
+    """
+    # assumes outline_a and outline_b are closed polylines with the same number of vertices
+    # assumes outline_a and outline_b are parallel to worldXY
+    normal = normal or Vector(0, 0, 1)
+    outline_a = correct_polyline_direction(outline_a, normal, clockwise=True)
+    outline_b = correct_polyline_direction(outline_b, normal, clockwise=True)
+
+    vector_a = Vector.from_start_end(outline_a[0], outline_b[0])
+    if vector_a.dot(normal) < 0:
+        # make sure that outline_b is above (Z+) outline_a
+        outline_a, outline_b = outline_b, outline_a
+
+    polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
+    for i in range(len(outline_a) - 1):
+        polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
+    brep = Brep.from_polygons(polygons)
+
+    # NOTE: compas Brep.from_polygons says it returns a brep, but Rhino's implementation returns a list of breps
+    if isinstance(brep, list):
+        if len(brep) > 1:
+            raise ValueError("Brep from outlines resulted in multiple breps. This should not happen for valid input.")
+        brep = brep[0]
+    return brep
