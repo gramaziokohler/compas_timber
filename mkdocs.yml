@@ -76,6 +76,7 @@ markdown_extensions:
       check_paths: true
   - toc:
       permalink: "¤"
+      toc_depth: 3
   - pymdownx.superfences:
         # make exceptions to highlighting of code:
       custom_fences:
@@ -96,7 +97,6 @@ plugins:
             - https://compas.dev/compas/latest/objects.inv
           options:
             allow_inspection: true
-            backlinks: tree
             docstring_options:
               ignore_init_summary: true
               trim_doctest_flags: true
@@ -104,7 +104,7 @@ plugins:
             docstring_section_style: list
             filters: public
             group_by_category: true
-            heading_level: 2
+            heading_level: 1
             inheritance_diagram_direction: TD
             inherited_members: false
             line_length: 88
@@ -127,7 +127,7 @@ plugins:
             show_signature: true
             show_signature_annotations: true
             show_signature_type_parameters: true
-            show_source: false
+            show_source: true
             show_submodules: false
             show_symbol_type_heading: true
             show_symbol_type_toc: true
@@ -151,6 +151,7 @@ nav:
       - rhino: api/compas_timber.rhino.md
       - base: api/compas_timber.base.md
       - structural: api/compas_timber.structural.md
+      - geometry: api/compas_timber.geometry.md
       - panel_features: api/compas_timber.panel_features.md
   - Developer Guide:
       - Class Diagrams: contribution/class_diagrams.md
