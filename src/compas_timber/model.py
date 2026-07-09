@@ -46,8 +46,8 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
 
 
 # Registered as (type_a, type_b) -> handler; order-independent (both (a, b) and (b, a) pairs match).
-# To support a new type combination (e.g. beam-to-plate, for a future BeamPlateJoint), add a row here
-# once the corresponding topology-detection geometry exists.
+# To support a new type combination (e.g. beam-to-plate), add a row here once the corresponding
+# topology-detection geometry exists.
 _CONNECTION_HANDLERS = [
     ((Beam, Beam), _beam_connection_candidate),
     ((Plate, Plate), _plate_connection_candidate),
@@ -677,13 +677,16 @@ class TimberModel(Model):
         _, joints_traversed = solver.add_structural_segments(model=self)
         solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
-    def connect_adjacent_elements(self, elements=None, max_distance=None):
+    def compute_topologies(self, elements=None, max_distance=None):
         """Detects adjacent elements and creates joint candidates for them.
 
         Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
-        plate-plate, and panel-panel are supported today). Additional type combinations (e.g.
-        beam-to-plate) can be supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered
+        plate-plate, panel-panel, and beam-plate/beam-panel are supported today). Additional type
+        combinations can be supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered
         combinations are silently skipped.
+
+        Clears all existing joint candidates before recomputing, regardless of the element types
+        involved. Concrete (already promoted) joints are left untouched.
 
         Parameters
         ----------
@@ -694,14 +697,9 @@ class TimberModel(Model):
 
         """
         elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
-        involved_types = tuple({type(e) for e in elements})
 
-        for joint in list(self.joints):
-            if joint.elements and isinstance(joint.elements[0], involved_types):
-                self.remove_joint(joint)  # TODO do we want to remove existing joints here?
         for candidate in list(self.joint_candidates):
-            if candidate.elements and isinstance(candidate.elements[0], involved_types):
-                self.remove_joint_candidate(candidate)
+            self.remove_joint_candidate(candidate)
 
         max_distance = max_distance or TOL.absolute
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
@@ -716,7 +714,7 @@ class TimberModel(Model):
 
     def connect_adjacent_beams(self, max_distance=None):
         """Connects adjacent beams in the model."""
-        self.connect_adjacent_elements(self.beams, max_distance)
+        self.compute_topologies(self.beams, max_distance)
 
     def connect_adjacent_plates(self, max_distance=None):
         """Connects adjacent plates in the model.
@@ -726,7 +724,7 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        self.connect_adjacent_elements(self.plates, max_distance)
+        self.compute_topologies(self.plates, max_distance)
 
     def connect_adjacent_panels(self, max_distance=None):
         """Connects adjacent panels in the model.
@@ -736,7 +734,7 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between panels to consider them adjacent. Default is 0.0.
         """
-        self.connect_adjacent_elements(self.panels, max_distance)
+        self.compute_topologies(self.panels, max_distance)
 
     # =============================================================================
     # Model sub-tree surgery

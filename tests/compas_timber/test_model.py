@@ -520,9 +520,10 @@ def test_element_by_guid_deprecated_warning(mocker):
     warn_spy.assert_called_once()
 
 
-def test_connect_adjacent_elements_mixed_beams_and_plates():
-    """connect_adjacent_elements(), called with no `elements` arg, should dispatch beam-beam and
-    plate-plate pairs to their respective handlers, and skip the (unsupported) beam-plate combination."""
+def test_compute_topologies_mixed_beams_and_plates():
+    """compute_topologies(), called with no `elements` arg, should dispatch beam-beam and
+    plate-plate pairs to their respective handlers. Beam-to-plate pairs aren't a registered
+    combination yet, so they're silently skipped regardless of proximity."""
     model = TimberModel()
 
     line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
@@ -539,7 +540,7 @@ def test_connect_adjacent_elements_mixed_beams_and_plates():
     model.add_element(plate_a)
     model.add_element(plate_b)
 
-    model.connect_adjacent_elements()
+    model.compute_topologies()
 
     candidates = list(model.joint_candidates)
     assert len(candidates) == 2
@@ -548,6 +549,29 @@ def test_connect_adjacent_elements_mixed_beams_and_plates():
     plate_candidates = [c for c in candidates if set(c.elements) == {plate_a, plate_b}]
     assert len(beam_candidates) == 1
     assert len(plate_candidates) == 1
+
+
+def test_compute_topologies_clears_all_candidates_regardless_of_scope():
+    """compute_topologies() clears every existing joint candidate before recomputing, even when
+    called with a narrower `elements` scope (e.g. via connect_adjacent_plates())."""
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    polyline_a = Polyline([Point(0, 0, 10), Point(0, 20, 10), Point(10, 20, 10), Point(10, 0, 10), Point(0, 0, 10)])
+    polyline_b = Polyline([Point(0, 10, 10), Point(10, 10, 10), Point(20, 20, 20), Point(0, 20, 20), Point(0, 10, 10)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    model = TimberModel()
+    model.add_elements([beam1, beam2, plate_a, plate_b])
+
+    model.connect_adjacent_beams()
+    assert len(model.joint_candidates) == 1
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1  # the beam candidate was cleared, only the plate candidate remains
 
 
 def test_connect_adjacent_plates_and_panels_equivalent():
