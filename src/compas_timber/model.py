@@ -673,7 +673,12 @@ class TimberModel(Model):
                 self.add_joint_candidate(candidate)
 
     def connect_adjacent_beams(self, max_distance=None):
-        """Connects adjacent beams in the model."""
+        """Connects adjacent beams in the model.
+        Parameters
+        ----------
+        max_distance : float, optional
+            The maximum distance between plates to consider them adjacent. Default is 0.0.
+        """
         self.compute_topologies(self.beams, max_distance)
 
     def connect_adjacent_plates(self, max_distance=None):
