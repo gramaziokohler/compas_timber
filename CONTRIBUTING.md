@@ -8,6 +8,7 @@ We accept code contributions through pull requests.
 In short, this is how that works.
 
 1. Fork [the repository](https://github.com/gramaziokohler/compas_timber) and clone the fork.
+   (Members of the `gramaziokohler` organization have write access and can skip the fork: clone the repository directly and work on a branch.)
 2. Create a virtual environment and install development dependencies. Using [uv](https://docs.astral.sh/uv/) (recommended — uses the committed `uv.lock`):
 
    ```bash
