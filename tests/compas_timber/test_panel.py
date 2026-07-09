@@ -44,17 +44,21 @@ def test_flat_panel_creation():
     expected_edge_planes = [([0, 0, 0], [-1, 0, 0]), ([0, 20, 0], [0, 1, 0]), ([10, 20, 0], [1, 0, 0]), ([10, 0, 0], [0, -1, 0])]
     assert all([panel_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(panel_a.outline_a.points))]), "Expected panel to match input polyline"
     assert panel_a.thickness == 1, "Expected panel thickness to match input thickness"
-    assert panel_a.length == 10, "Expected panel length to be 10"
-    assert panel_a.width == 20, "Expected panel width to be 20"
+    assert panel_a.length == 20, "Expected panel length to be 10"
+    assert panel_a.width == 10, "Expected panel width to be 20"
     assert TOL.is_allclose(panel_a.normal, [0, 0, 1]), "Expected the normal to be the world Z-axis"
     for expected, plane in zip(expected_edge_planes, panel_a.edge_planes.values()):
         assert TOL.is_allclose(expected[0], plane[0])
         assert TOL.is_allclose(expected[1], plane[1])
-    for obb_pt, expected_pt in zip(panel_a.obb.points, Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points):
+    for obb_pt, expected_pt in zip(panel_a.aabb.points, Box.from_points([Point(0, 0, 0), Point(10, 20, 1)]).points):
         assert TOL.is_allclose(obb_pt, expected_pt)
 
 
 def test_sloped_panel_creation():
+    # this outline triggers the frame flip in `PlateGeometry.from_global_outlines` (natural normal derived from
+    # point order opposes the default thickness offset). The fix negates the local x-axis on flip instead of
+    # swapping x/y, so local x stays aligned with outline_a[0]->outline_a[1] = (10, 0, 0): `length` tracks that
+    # 10-long edge (extended by the slope to 20) and `width` tracks the 10*sqrt(2) diagonal edge.
     polyline_a = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     panel_a = Panel.from_outline_thickness(polyline_a, 1)
     expected_edge_planes = [
@@ -65,19 +69,19 @@ def test_sloped_panel_creation():
     ]
 
     expected_obb = Box(
-        xsize=14.142135623730951,
-        ysize=20.0,
+        xsize=20.0,
+        ysize=14.142135623730951,
         zsize=1.0,
         frame=Frame(
-            point=Point(x=10.0, y=15.353553390593273, z=4.646446609406729), xaxis=Vector(x=0.0, y=0.7071067811865475, z=0.7071067811865476), yaxis=Vector(x=1.0, y=0.0, z=0.0)
+            point=Point(x=10.0, y=15.353553390593273, z=4.646446609406729), xaxis=Vector(x=-1.0, y=0.0, z=0.0), yaxis=Vector(x=0.0, y=0.7071067811865475, z=0.7071067811865476)
         ),
     )
 
-    assert panel_a.frame.point == Point(0, 10, 0), "Expected panel frame to match input polyline"
+    assert panel_a.frame.point == Point(20, 10, 0), "Expected panel frame to match input polyline"
     assert all([TOL.is_allclose(panel_a.outline_a.points[i], polyline_a.points[i]) for i in range(len(panel_a.outline_a.points))]), "Expected panel to match input polyline"
     assert TOL.is_close(panel_a.thickness, 1), "Expected panel thickness to match input thickness"
-    assert TOL.is_close(panel_a.length, 14.1421356237), "Expected panel length to be 10*sqrt(2)"
-    assert TOL.is_close(panel_a.width, 20), "Expected panel width to be 20"
+    assert TOL.is_close(panel_a.length, 20), "Expected panel length to be 20"
+    assert TOL.is_close(panel_a.width, 14.1421356237), "Expected panel width to be 10*sqrt(2)"
     assert TOL.is_allclose(panel_a.normal, [0, 0.707106781, -0.707106781]), "Expected the normal to be at 45 degrees"
     for expected, plane in zip(expected_edge_planes, panel_a.edge_planes.values()):
         assert TOL.is_allclose(expected[0], plane[0])
@@ -121,6 +125,8 @@ def test_copy_panel_model(model):
 
 
 def test_panel_serialization_with_attributes_kwargs():
+    # this outline triggers the frame flip (see test_sloped_panel_creation): local x follows
+    # outline_a[0]->outline_a[1], the 20-long edge, so length=20 and width=10.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
     panel_a = Panel.from_outline_thickness(polyline_a, 1, custom_attribute="custom_value", another_attribute=42)
@@ -128,13 +134,15 @@ def test_panel_serialization_with_attributes_kwargs():
     deserialized = json_loads(json_dumps(panel_a))
 
     assert deserialized.thickness == 1
-    assert deserialized.length == 10
-    assert deserialized.width == 20
+    assert deserialized.length == 20
+    assert deserialized.width == 10
     assert deserialized.attributes["custom_attribute"] == "custom_value"
     assert deserialized.attributes["another_attribute"] == 42
 
 
 def test_panel_serialization_with_attributes():
+    # this outline triggers the frame flip (see test_sloped_panel_creation): local x follows
+    # outline_a[0]->outline_a[1], the 20-long edge, so length=20 and width=10.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
     panel_a = Panel.from_outline_thickness(polyline_a, 1)
@@ -144,8 +152,8 @@ def test_panel_serialization_with_attributes():
     deserialized = json_loads(json_dumps(panel_a))
 
     assert deserialized.thickness == 1
-    assert deserialized.length == 10
-    assert deserialized.width == 20
+    assert deserialized.length == 20
+    assert deserialized.width == 10
     assert deserialized.attributes["custom_attribute"] == "custom_value"
     assert deserialized.attributes["another_attribute"] == 42
 
@@ -391,18 +399,17 @@ def test_panel_orientation_changes_local_frame():
 
 
 def test_panel_orientation_explicit_frame_flat():
-    # orientation=Y on this flat panel rotates the local frame 90° CW:
-    # xaxis becomes -world-Y, yaxis becomes +world-X
+    # orientation=Y on this flat panel forces the panel's local yaxis to align with the world Y axis, and the xaxis to be perpendicular to it
     panel = Panel.from_outline_thickness(_FLAT_OUTLINE, 1, orientation=Vector(0, 1, 0))
-    assert TOL.is_allclose(panel.frame.xaxis, [0, -1, 0])
-    assert TOL.is_allclose(panel.frame.yaxis, [1, 0, 0])
+    assert TOL.is_allclose(panel.frame.xaxis, [1, 0, 0])
+    assert TOL.is_allclose(panel.frame.yaxis, [0, 1, 0])
 
 
 def test_panel_orientation_explicit_frame_sloped():
     # orientation=X on the sloped panel: yaxis aligns with the panel's slope direction
     panel = Panel.from_outline_thickness(_SLOPED_OUTLINE, 1, orientation=Vector(1, 0, 0))
-    assert TOL.is_allclose(panel.frame.xaxis, [-1, 0, 0])
-    assert TOL.is_allclose(panel.frame.yaxis, [0, 0.7071067811865476, 0.7071067811865476])
+    assert TOL.is_allclose(panel.frame.xaxis, [0, 0.7071067811865476, 0.7071067811865476])
+    assert TOL.is_allclose(panel.frame.yaxis, [1, 0, 0])
 
 
 def test_panel_from_outlines_orientation():

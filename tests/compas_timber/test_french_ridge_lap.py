@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from compas.data import json_dumps
@@ -7,13 +9,15 @@ from compas.geometry import Point
 from compas.geometry import Plane
 from compas.geometry import Vector
 from compas.geometry import is_point_on_plane
+from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 
+from compas_timber.connections import LFrenchRidgeLapJoint
 from compas_timber.elements import Beam
+from compas_timber.fabrication import EdgePositionType
 from compas_timber.fabrication import FrenchRidgeLap
 from compas_timber.fabrication import OrientationType
-from compas_timber.fabrication import EdgePositionType
-
-from compas.tolerance import Tolerance
+from compas_timber.model import TimberModel
 
 
 @pytest.fixture
@@ -115,3 +119,53 @@ def test_french_ridge_scaled():
     assert scaled_instance.drillhole == instance.drillhole
     assert scaled_instance.drillhole_diam == instance.drillhole_diam * 2.0
     assert scaled_instance.ref_side_index == instance.ref_side_index
+
+
+def test_acute_angle_ref_position():
+    """60° L-joint: FRL features produced by from_beam_beam_and_plane have angle=60° and RefPosition=REFEDGE.
+
+    Exercises the ``else`` branch (angle < 90°) of ``_calculate_ref_position``.
+    """
+    a = math.radians(60)
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000, 0, 0)), width=60, height=100)
+    beam_b = Beam.from_centerline(
+        Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100
+    )
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+    LFrenchRidgeLapJoint.create(model, beam_a, beam_b)
+    model.process_joinery()
+
+    frl_a = next(f for f in beam_a.features if isinstance(f, FrenchRidgeLap))
+    frl_b = next(f for f in beam_b.features if isinstance(f, FrenchRidgeLap))
+
+    assert TOL.is_close(frl_a.angle, 60.0, rtol=1e-3)
+    assert TOL.is_close(frl_b.angle, 60.0, rtol=1e-3)
+    assert frl_a.ref_position == EdgePositionType.REFEDGE
+    assert frl_b.ref_position == EdgePositionType.REFEDGE
+
+
+def test_obtuse_angle_ref_position():
+    """120° L-joint: FRL features produced by from_beam_beam_and_plane have angle=120° and RefPosition=REFEDGE.
+
+    Exercises the ``elif angle > 90.0`` branch of ``_calculate_ref_position``.
+    """
+    a = math.radians(120)
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000, 0, 0)), width=60, height=100)
+    beam_b = Beam.from_centerline(
+        Line(Point(0, 0, 0), Point(2000 * math.cos(a), 2000 * math.sin(a), 0)), width=60, height=100
+    )
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+    LFrenchRidgeLapJoint.create(model, beam_a, beam_b)
+    model.process_joinery()
+
+    frl_a = next(f for f in beam_a.features if isinstance(f, FrenchRidgeLap))
+    frl_b = next(f for f in beam_b.features if isinstance(f, FrenchRidgeLap))
+
+    assert TOL.is_close(frl_a.angle, 120.0, rtol=1e-3)
+    assert TOL.is_close(frl_b.angle, 120.0, rtol=1e-3)
+    assert frl_a.ref_position == EdgePositionType.REFEDGE
+    assert frl_b.ref_position == EdgePositionType.REFEDGE
