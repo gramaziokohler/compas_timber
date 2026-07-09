@@ -150,13 +150,12 @@ class TBirdsmouthJoint(Joint):
         """Calculates the escape constraint for the TBirdsmouth joint."""
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
-            
-        plane_1 = self.cross_beam.ref_sides[self.cross_ref_side_indices[0]]
-        plane_2 = self.cross_beam.ref_sides[self.cross_ref_side_indices[1]]
-        escape_vector = plane_1.normal + plane_2.normal
-        escape_vector.unitize()
+
+        cps = self._get_cutting_planes()
         
         if moving_element == self.main_beam:
-            return Line(self.location, self.location + escape_vector)
+            return cps
+            # return [cps[0].normal, cps[1].normal]
         elif moving_element == self.cross_beam:
-            return Line(self.location, self.location - escape_vector)
+            return cps
+            # return [cps[0].normal * -1, cps[3].normal * -1]
