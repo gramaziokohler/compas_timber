@@ -1,4 +1,5 @@
 import math
+from typing import Optional
 
 from compas.geometry import Point
 from compas.geometry import Polygon
@@ -160,8 +161,11 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
     return polyhedron
 
 
-def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Vector = None) -> Brep:
+def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optional[Vector] = None) -> Brep:
     """Create a solid brep from two closed outlines.
+
+    Assumes outline_a and outline_b are closed polylines with the same number of vertices.
+    Assumes outlines are parallel to each other.
 
     Parameters
     ----------
@@ -176,8 +180,8 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Vector 
     -------
         A Brep representing the solid defined by the two outlines.
     """
-    # assumes outline_a and outline_b are closed polylines with the same number of vertices
-    # assumes outline_a and outline_b are parallel to worldXY
+    # TODO: check that outlines are closed and have the same number of vertices
+    # TODO: check that outlines are parallel to each other
     normal = normal or Vector(0, 0, 1)
     outline_a = correct_polyline_direction(outline_a, normal, clockwise=True)
     outline_b = correct_polyline_direction(outline_b, normal, clockwise=True)
@@ -190,11 +194,4 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Vector 
     polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
     for i in range(len(outline_a) - 1):
         polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
-    brep = Brep.from_polygons(polygons)
-
-    # NOTE: compas Brep.from_polygons says it returns a brep, but Rhino's implementation returns a list of breps
-    if isinstance(brep, list):
-        if len(brep) > 1:
-            raise ValueError("Brep from outlines resulted in multiple breps. This should not happen for valid input.")
-        brep = brep[0]
-    return brep
+    return Brep.from_polygons(polygons)
