@@ -14,6 +14,7 @@ from compas.tolerance import TOL
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import JointCandidate
+from compas_timber.connections import BeamPlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas.geometry import Line
 from compas_timber.elements import Beam
@@ -549,6 +550,58 @@ def test_compute_topologies_mixed_beams_and_plates():
     plate_candidates = [c for c in candidates if set(c.elements) == {plate_a, plate_b}]
     assert len(beam_candidates) == 1
     assert len(plate_candidates) == 1
+
+
+def test_compute_topologies_beam_plate_pair():
+    """compute_topologies() should dispatch an adjacent beam/plate pair to the beam-plate handler
+    and produce a BeamPlateJointCandidate carrying the topology and ref_side_index fields from
+    BeamPlateConnectionSolver."""
+    model = TimberModel()
+
+    outline = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(outline, 1)
+    # beam resting flush on top of the plate: its bottom face (offset by half its own height) touches z=1
+    beam = Beam.from_centerline(Line(Point(2, 5, 1.05), Point(8, 5, 1.05)), width=0.1, height=0.1)
+    model.add_element(plate)
+    model.add_element(beam)
+
+    model.compute_topologies(max_distance=0.001)
+
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert isinstance(candidate, BeamPlateJointCandidate)
+    assert set(candidate.elements) == {beam, plate}
+    assert candidate.beam == beam
+    assert candidate.plate == plate
+    assert candidate.topology == JointTopology.TOPO_FACE_FACE
+    assert candidate.segment_index is None
+    assert candidate.plate_ref_side_index == 2
+
+
+def test_compute_topologies_plate_face_face_pair():
+    """compute_topologies() should dispatch an adjacent plate/plate pair whose main faces lie flush
+    against each other to the plate handler and produce a PlateJointCandidate with TOPO_FACE_FACE
+    and its ref_side_index_a/b fields populated."""
+    model = TimberModel()
+
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    polyline_b = Polyline([Point(3, 3, 1), Point(3, 7, 1), Point(7, 7, 1), Point(7, 3, 1), Point(3, 3, 1)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    model.add_element(plate_a)
+    model.add_element(plate_b)
+
+    model.compute_topologies()
+
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert set(candidate.elements) == {plate_a, plate_b}
+    assert candidate.topology == JointTopology.TOPO_FACE_FACE
+    # `find_intersecting_pairs` doesn't guarantee element order, so only assert both matched faces
+    # are present, not which one landed in ref_side_index_a vs. _b.
+    assert {candidate.ref_side_index_a, candidate.ref_side_index_b} == {0, 2}
 
 
 def test_compute_topologies_clears_all_candidates_regardless_of_scope():

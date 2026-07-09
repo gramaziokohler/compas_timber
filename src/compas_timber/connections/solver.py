@@ -67,7 +67,9 @@ class JointTopology(object):
     TOPO_K - joint between three or more beams where at least one beam meet in the middle
     TOPO_EDGE_EDGE  - joint between two plates where the edges of both plates are aligned
     TOPO_EDGE_FACE  - joint between two plates where one plate is aligned with the face of the other
-    TOPO_FACE_FACE  - joint between a beam and a plate/panel where a beam face lies flush on a main face of the plate/panel
+    TOPO_FACE_FACE  - joint where a main/long face of one element lies flush on a main/long face of the
+                       other; used for beam-beam (sistered/stacked beams), beam-to-plate/panel, and
+                       plate/panel-to-plate/panel pairs
     TOPO_END_FACE  - joint between a beam and a plate/panel where the beam's end butts into a main face of the plate/panel
     TOPO_END_EDGE  - joint between a beam and a plate/panel where the beam's end meets an edge of the plate/panel
     TOPO_MIDDLE_EDGE  - joint between a beam and a plate/panel where an edge of the plate/panel meets the beam's side, mid-span
@@ -172,8 +174,10 @@ class ConnectionSolver(object):
             # (e.g. sistered/stacked beams), which centerline distance alone can't detect.
             result = self._test_face_face(beam_a, beam_b, max_distance)
             if result is not None:
-                distance, location = result
-                return BeamSolverResult(JointTopology.TOPO_FACE_FACE, beam_a, beam_b, distance, location)
+                distance, location, ref_side_index_a, ref_side_index_b = result
+                return BeamSolverResult(
+                    JointTopology.TOPO_FACE_FACE, beam_a, beam_b, distance, location, ref_side_index_a=ref_side_index_a, ref_side_index_b=ref_side_index_b
+                )
             return BeamSolverResult(JointTopology.TOPO_UNKNOWN, beam_a, beam_b, None, None)
         point_a = Point(*point_a)
         point_b = Point(*point_b)
@@ -224,9 +228,9 @@ class ConnectionSolver(object):
                     continue  # not coplanar
                 corners_b = self._surface_corners(beam_b.side_as_surface(j))
                 outline_b = Polyline(corners_b + [corners_b[0]])
-                if self._rectangle_overlaps_outline(corners_a, outline_b, tol):
+                if self._polygon_overlaps_outline(corners_a, outline_b, tol):
                     centroid = Point(*[sum(c[axis] for c in corners_a) / 4.0 for axis in range(3)])
-                    return distance, centroid
+                    return distance, centroid, i, j
         return None
 
     @staticmethod
@@ -242,11 +246,12 @@ class ConnectionSolver(object):
         ]
 
     @staticmethod
-    def _rectangle_overlaps_outline(corners, outline, tol):
-        """Checks whether a coplanar rectangle (given by its 4 `corners`) overlaps `outline` (partial overlap counts)."""
+    def _polygon_overlaps_outline(points, outline, tol):
+        """Checks whether a coplanar polygon (given by its `points`, in order) overlaps `outline` (partial overlap counts)."""
         tol_obj = Tolerance(absolute=tol)
-        for i in range(4):
-            edge = Line(corners[i], corners[(i + 1) % 4])
+        n = len(points)
+        for i in range(n):
+            edge = Line(points[i], points[(i + 1) % n])
             if does_segment_overlap_outline(edge, outline, tol=tol_obj):
                 return True
         return False
@@ -258,7 +263,8 @@ class PlateConnectionSolver(ConnectionSolver):
     TOLERANCE = 1e-6
 
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
-        """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
+        """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate,
+        or that a main face of one plate lies flush on a main face of the other.
         When TOPOLOGY_EDGE_FACE is found, the plates are returned in reverse order, with the main plate first and the cross plate second.
 
         parameters
@@ -276,13 +282,31 @@ class PlateConnectionSolver(ConnectionSolver):
         -------
         :class:`~compas_timber.connections.PlateSolverResult`
         """
-        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        plate_a_segment_index, plate_b_segment_index, dist, pt, ref_side_index = self._find_plate_segment_indices(
+            plate_a, plate_b, max_distance=max_distance, tol=tol
+        )
         if plate_a_segment_index is None and plate_b_segment_index is None:
+            face_result = self._test_face_face(plate_a, plate_b, tol)
+            if face_result is not None:
+                distance, location, ref_side_index_a, ref_side_index_b = face_result
+                return PlateSolverResult(
+                    JointTopology.TOPO_FACE_FACE,
+                    plate_a,
+                    plate_b,
+                    distance=distance,
+                    location=location,
+                    ref_side_index_a=ref_side_index_a,
+                    ref_side_index_b=ref_side_index_b,
+                )
             return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
+            return PlateSolverResult(
+                JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt, ref_side_index_b=ref_side_index
+            )
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index, dist, pt)
+            return PlateSolverResult(
+                JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index, dist, pt, ref_side_index_b=ref_side_index
+            )
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
             return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
 
@@ -292,14 +316,39 @@ class PlateConnectionSolver(ConnectionSolver):
 
         i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if i_a is not None:
-            return i_a, i_b, dist, pt
-        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+            return i_a, i_b, dist, pt, None
+        i_a, dist, pt, ref_side_index = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if i_a is not None:
-            return i_a, None, dist, pt
-        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+            return i_a, None, dist, pt, ref_side_index
+        i_b, dist, pt, ref_side_index = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
         if i_b is not None:
-            return None, i_b, dist, pt
-        return None, None, None, None
+            return None, i_b, dist, pt, ref_side_index
+        return None, None, None, None, None
+
+    def _test_face_face(self, plate_a, plate_b, tol):
+        """Checks whether a main face of `plate_a` lies coplanar, anti-parallel, and overlapping with a main face of `plate_b`.
+
+        Uses `ref_sides[0]`/`ref_sides[2]` (not `.planes`) for the normal/coplanarity checks: unlike
+        `.planes`, whose two entries share the same normal direction, `ref_sides[0]` and `ref_sides[2]`
+        are genuinely opposite faces, matching the convention `BeamPlateConnectionSolver` already uses.
+        """
+        faces_a = ((0, plate_a.ref_sides[0], plate_a.outline_a), (2, plate_a.ref_sides[2], plate_a.outline_b))
+        faces_b = ((0, plate_b.ref_sides[0], plate_b.outline_a), (2, plate_b.ref_sides[2], plate_b.outline_b))
+        for ref_side_index_a, face_a, outline_a in faces_a:
+            for ref_side_index_b, face_b, outline_b in faces_b:
+                if dot_vectors(face_a.zaxis, face_b.zaxis) > -1 + tol:
+                    continue  # not anti-parallel
+                distance = dot_vectors(Vector.from_start_end(face_b.point, face_a.point), face_b.zaxis)
+                if abs(distance) > tol:
+                    continue  # not coplanar
+                # check both directions: neither polygon's edges cross into the other when one fully
+                # contains the other (e.g. a smaller plate centered on a larger one), so a single
+                # direction can miss that case.
+                if self._polygon_overlaps_outline(outline_a.points[:-1], outline_b, tol) or self._polygon_overlaps_outline(outline_b.points[:-1], outline_a, tol):
+                    points = outline_a.points[:-1]
+                    centroid = Point(*[sum(p[axis] for p in points) / len(points) for axis in range(3)])
+                    return distance, centroid, ref_side_index_a, ref_side_index_b
+        return None
 
     @staticmethod
     def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -327,16 +376,19 @@ class PlateConnectionSolver(ConnectionSolver):
         if max_distance is None:
             max_distance = min(main_plate.thickness, cross_plate.thickness)
         for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
-            for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
-                line = Line(*intersection_plane_plane(plane_a, plane_b))
+            for j, (pline_b, plane_b) in enumerate(zip(cross_plate.outlines, cross_plate.planes)):
+                intersection = intersection_plane_plane(plane_a, plane_b)
+                if intersection is None:
+                    continue  # planes are parallel (e.g. two flat, stacked plates): no intersection line
+                line = Line(*intersection)
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     seg_a_midpt = seg_a.point_at(0.5)
                     dist = distance_point_line(seg_a_midpt, line)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if does_segment_overlap_outline(seg_a, pline_b):
-                                return i, dist, seg_a_midpt
-        return None, None, None
+                                return i, dist, seg_a_midpt, (0 if j == 0 else 2)
+        return None, None, None, None
 
 
 class BeamPlateConnectionSolver(ConnectionSolver):
@@ -387,8 +439,16 @@ class BeamPlateConnectionSolver(ConnectionSolver):
                 # both endpoints on the same side: beam-face possibly flush against a main face
                 result = self._test_face_face(beam, plate, tol)
                 if result is not None:
-                    distance, location = result
-                    return BeamPlateSolverResult(JointTopology.TOPO_FACE_FACE, beam, plate, distance=distance, location=location)
+                    distance, location, beam_ref_side_index, plate_ref_side_index = result
+                    return BeamPlateSolverResult(
+                        JointTopology.TOPO_FACE_FACE,
+                        beam,
+                        plate,
+                        distance=distance,
+                        location=location,
+                        beam_ref_side_index=beam_ref_side_index,
+                        plate_ref_side_index=plate_ref_side_index,
+                    )
                 return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
 
             # endpoints on opposite sides: beam crosses the slab's depth range somewhere along its length
@@ -453,8 +513,10 @@ class BeamPlateConnectionSolver(ConnectionSolver):
                 return BeamPlateSolverResult(JointTopology.TOPO_END_EDGE, beam, plate, segment_index=i, distance=distance, location=location)
         result = self._test_end_face(between_point, plate, tol)
         if result is not None:
-            distance, location = result
-            return BeamPlateSolverResult(JointTopology.TOPO_END_FACE, beam, plate, distance=distance, location=location)
+            distance, location, plate_ref_side_index = result
+            return BeamPlateSolverResult(
+                JointTopology.TOPO_END_FACE, beam, plate, distance=distance, location=location, plate_ref_side_index=plate_ref_side_index
+            )
         return BeamPlateSolverResult(JointTopology.TOPO_UNKNOWN, beam, plate)
 
     # ------------------------------------------------------------------
@@ -484,7 +546,7 @@ class BeamPlateConnectionSolver(ConnectionSolver):
         ob = plate.outline_b.points
         return Polyline([oa[i], oa[i + 1], ob[i + 1], ob[i], oa[i]])
 
-    # `_surface_corners` and `_rectangle_overlaps_outline` are inherited from `ConnectionSolver`.
+    # `_surface_corners` and `_polygon_overlaps_outline` are inherited from `ConnectionSolver`.
 
     # ------------------------------------------------------------------
     # per-topology tests
@@ -492,7 +554,8 @@ class BeamPlateConnectionSolver(ConnectionSolver):
 
     def _test_face_face(self, beam, plate, tol):
         """Checks whether a beam long-face lies coplanar, anti-parallel, and overlapping with a plate main face."""
-        for plate_face, outline in ((plate.ref_sides[0], plate.outline_a), (plate.ref_sides[2], plate.outline_b)):
+        plate_faces = ((0, plate.ref_sides[0], plate.outline_a), (2, plate.ref_sides[2], plate.outline_b))
+        for plate_ref_side_index, plate_face, outline in plate_faces:
             for i in range(4):
                 beam_face = beam.ref_sides[i]
                 if dot_vectors(beam_face.zaxis, plate_face.zaxis) > -1 + tol:
@@ -501,9 +564,9 @@ class BeamPlateConnectionSolver(ConnectionSolver):
                 if abs(distance) > tol:
                     continue  # not coplanar
                 corners = self._surface_corners(beam.side_as_surface(i))
-                if self._rectangle_overlaps_outline(corners, outline, tol):
+                if self._polygon_overlaps_outline(corners, outline, tol):
                     centroid = Point(*[sum(c[axis] for c in corners) / 4.0 for axis in range(3)])
-                    return distance, centroid
+                    return distance, centroid, i, plate_ref_side_index
         return None
 
     def _test_end_face(self, point, plate, tol):
@@ -512,7 +575,8 @@ class BeamPlateConnectionSolver(ConnectionSolver):
             return None
         depth = self._endpoint_depth(point, plate)
         distance = min(abs(depth), abs(plate.thickness - depth))
-        return distance, point
+        plate_ref_side_index = 0 if abs(depth) <= abs(plate.thickness - depth) else 2
+        return distance, point, plate_ref_side_index
 
     def _test_end_edge_at_point(self, point, plate, i, tol):
         """Checks whether `point` falls inside outline segment `i`'s bounded edge quad."""
@@ -579,6 +643,10 @@ class BeamSolverResult(Data):
         The distance between the closest points of the two beams.
     location : :class:`~compas.geometry.Point`
         The location of the intersection.
+    ref_side_index_a : int, optional
+        The index of `beam_a`'s matched long face. Only set for `TOPO_FACE_FACE`; `None` otherwise.
+    ref_side_index_b : int, optional
+        The index of `beam_b`'s matched long face. Only set for `TOPO_FACE_FACE`; `None` otherwise.
 
     Attributes
     ----------
@@ -592,16 +660,22 @@ class BeamSolverResult(Data):
         The distance between the closest points of the two beams.
     location : :class:`~compas.geometry.Point`
         The location of the intersection.
+    ref_side_index_a : int, optional
+        The index of `beam_a`'s matched long face.
+    ref_side_index_b : int, optional
+        The index of `beam_b`'s matched long face.
 
     """
 
-    def __init__(self, topology, beam_a, beam_b, distance=None, location=None):
+    def __init__(self, topology, beam_a, beam_b, distance=None, location=None, ref_side_index_a=None, ref_side_index_b=None):
         super(BeamSolverResult, self).__init__()
         self.topology = topology
         self.beam_a = beam_a
         self.beam_b = beam_b
         self.distance = distance
         self.location = location
+        self.ref_side_index_a = ref_side_index_a
+        self.ref_side_index_b = ref_side_index_b
 
     @property
     def __data__(self):
@@ -611,11 +685,13 @@ class BeamSolverResult(Data):
             "beam_b": self.beam_b,
             "distance": self.distance,
             "location": self.location,
+            "ref_side_index_a": self.ref_side_index_a,
+            "ref_side_index_b": self.ref_side_index_b,
         }
 
     def __repr__(self):
-        return "BeamSolverResult(topology={}, beam_a={}, beam_b={}, distance={}, location={})".format(
-            self.topology, self.beam_a.name, self.beam_b.name, self.distance, self.location
+        return "BeamSolverResult(topology={}, beam_a={}, beam_b={}, distance={}, location={}, ref_side_index_a={}, ref_side_index_b={})".format(
+            self.topology, self.beam_a.name, self.beam_b.name, self.distance, self.location, self.ref_side_index_a, self.ref_side_index_b
         )
 
 
@@ -637,6 +713,11 @@ class PlateSolverResult(Data):
         The calculated distance between the location points of the two plates.
     location : :class:`~compas.geometry.Point`, optional
         The location of the intersection.
+    ref_side_index_a : int, optional
+        The index of `plate_a`'s matched main face (0 or 2). Only set for `TOPO_FACE_FACE`; `None` otherwise.
+    ref_side_index_b : int, optional
+        The index of `plate_b`'s matched main face (0 or 2). Set for `TOPO_FACE_FACE` and `TOPO_EDGE_FACE`
+        (where `plate_b` is always the face-plate); `None` otherwise.
 
     Attributes
     ----------
@@ -654,9 +735,24 @@ class PlateSolverResult(Data):
         The calculated distance between the location points of the two plates.
     location : :class:`~compas.geometry.Point`, optional
         The location of the intersection.
+    ref_side_index_a : int, optional
+        The index of `plate_a`'s matched main face.
+    ref_side_index_b : int, optional
+        The index of `plate_b`'s matched main face.
     """
 
-    def __init__(self, topology, plate_a, plate_b, a_segment_index=None, b_segment_index=None, distance=None, location=None):
+    def __init__(
+        self,
+        topology,
+        plate_a,
+        plate_b,
+        a_segment_index=None,
+        b_segment_index=None,
+        distance=None,
+        location=None,
+        ref_side_index_a=None,
+        ref_side_index_b=None,
+    ):
         """Initializes the PlateSolverResult with the given parameters."""
 
         super(PlateSolverResult, self).__init__()
@@ -667,6 +763,8 @@ class PlateSolverResult(Data):
         self.b_segment_index = b_segment_index
         self.distance = distance
         self.location = location
+        self.ref_side_index_a = ref_side_index_a
+        self.ref_side_index_b = ref_side_index_b
 
     @property
     def __data__(self):
@@ -679,11 +777,16 @@ class PlateSolverResult(Data):
             "b_segment_index": self.b_segment_index,
             "distance": self.distance,
             "location": self.location,
+            "ref_side_index_a": self.ref_side_index_a,
+            "ref_side_index_b": self.ref_side_index_b,
         }
 
     def __repr__(self):
         """Returns a string representation of the PlateSolverResult."""
-        return "PlateSolverResult(topology={}, plate_a={}, plate_b={}, a_segment_index={}, b_segment_index={}, distance={}, location={})".format(
+        return (
+            "PlateSolverResult(topology={}, plate_a={}, plate_b={}, a_segment_index={}, b_segment_index={}, "
+            "distance={}, location={}, ref_side_index_a={}, ref_side_index_b={})"
+        ).format(
             self.topology,
             self.plate_a.name,
             self.plate_b.name,
@@ -691,6 +794,8 @@ class PlateSolverResult(Data):
             self.b_segment_index,
             self.distance,
             self.location,
+            self.ref_side_index_a,
+            self.ref_side_index_b,
         )
 
 
@@ -712,6 +817,11 @@ class BeamPlateSolverResult(Data):
         The raw geometric gap/coplanarity distance found by whichever check matched.
     location : :class:`~compas.geometry.Point`, optional
         The location of the intersection.
+    beam_ref_side_index : int, optional
+        The index of the beam's matched long face (0-3). Only set for `TOPO_FACE_FACE`; `None` otherwise.
+    plate_ref_side_index : int, optional
+        The index of the plate's matched main face (0 or 2). Set for `TOPO_FACE_FACE` and `TOPO_END_FACE`;
+        `None` otherwise (in particular, `TOPO_THROUGH_FACE` crosses both faces, so it's ambiguous).
 
     Attributes
     ----------
@@ -727,9 +837,13 @@ class BeamPlateSolverResult(Data):
         The raw geometric gap/coplanarity distance found by whichever check matched.
     location : :class:`~compas.geometry.Point`, optional
         The location of the intersection.
+    beam_ref_side_index : int, optional
+        The index of the beam's matched long face.
+    plate_ref_side_index : int, optional
+        The index of the plate's matched main face.
     """
 
-    def __init__(self, topology, beam, plate, segment_index=None, distance=None, location=None):
+    def __init__(self, topology, beam, plate, segment_index=None, distance=None, location=None, beam_ref_side_index=None, plate_ref_side_index=None):
         super(BeamPlateSolverResult, self).__init__()
         self.topology = topology
         self.beam = beam
@@ -737,6 +851,8 @@ class BeamPlateSolverResult(Data):
         self.segment_index = segment_index
         self.distance = distance
         self.location = location
+        self.beam_ref_side_index = beam_ref_side_index
+        self.plate_ref_side_index = plate_ref_side_index
 
     @property
     def __data__(self):
@@ -747,15 +863,22 @@ class BeamPlateSolverResult(Data):
             "segment_index": self.segment_index,
             "distance": self.distance,
             "location": self.location,
+            "beam_ref_side_index": self.beam_ref_side_index,
+            "plate_ref_side_index": self.plate_ref_side_index,
         }
 
     def __repr__(self):
-        return "BeamPlateSolverResult(topology={}, beam={}, plate={}, segment_index={}, distance={}, location={})".format(
+        return (
+            "BeamPlateSolverResult(topology={}, beam={}, plate={}, segment_index={}, distance={}, location={}, "
+            "beam_ref_side_index={}, plate_ref_side_index={})"
+        ).format(
             self.topology,
             self.beam.name,
             self.plate.name,
             self.segment_index,
             self.distance,
             self.location,
+            self.beam_ref_side_index,
+            self.plate_ref_side_index,
         )
 

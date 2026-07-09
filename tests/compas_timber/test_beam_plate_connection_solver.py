@@ -30,6 +30,8 @@ def test_face_face(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_FACE_FACE
     assert result.segment_index is None
+    assert result.beam_ref_side_index in range(4)
+    assert result.plate_ref_side_index == 2
 
 
 def test_end_face(plate):
@@ -38,6 +40,8 @@ def test_end_face(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_END_FACE
     assert result.segment_index is None
+    assert result.beam_ref_side_index is None
+    assert result.plate_ref_side_index == 2
 
 
 def test_end_edge(plate):
@@ -46,6 +50,8 @@ def test_end_edge(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_END_EDGE
     assert result.segment_index == 0
+    assert result.beam_ref_side_index is None
+    assert result.plate_ref_side_index is None
 
 
 def test_unknown_when_each_end_hits_a_different_edge(plate):
@@ -62,6 +68,8 @@ def test_middle_edge(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_MIDDLE_EDGE
     assert result.segment_index == 0
+    assert result.beam_ref_side_index is None
+    assert result.plate_ref_side_index is None
 
 
 def test_through_face(plate):
@@ -70,6 +78,8 @@ def test_through_face(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_THROUGH_FACE
     assert result.segment_index is None
+    assert result.beam_ref_side_index is None
+    assert result.plate_ref_side_index is None  # ambiguous: crosses both main faces
 
 
 def test_along_edge(plate):
@@ -78,6 +88,8 @@ def test_along_edge(plate):
     result = find_topology(beam, plate)
     assert result.topology == JointTopology.TOPO_ALONG_EDGE
     assert result.segment_index == 0
+    assert result.beam_ref_side_index is None
+    assert result.plate_ref_side_index is None
 
 
 def test_unknown_when_not_adjacent(plate):

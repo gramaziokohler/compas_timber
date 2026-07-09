@@ -9,6 +9,7 @@ from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
 from .joint_candidate import PlateJointCandidate
+from .joint_candidate import BeamPlateJointCandidate
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import BeamPlateConnectionSolver
@@ -65,6 +66,7 @@ __all__ = [
     "LLapJoint",
     "JointCandidate",
     "PlateJointCandidate",
+    "BeamPlateJointCandidate",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",

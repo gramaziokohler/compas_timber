@@ -249,10 +249,14 @@ def test_plate_topology(plate_config, expected_topology, expected_segments, requ
         assert topo_results.plate_b == plate_b, "Expected plate_b as second plate"
         assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
         assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
+        assert topo_results.ref_side_index_a is None
+        assert topo_results.ref_side_index_b is None
     elif expected_topology == JointTopology.TOPO_EDGE_FACE:
         # For T-joints, the roles may be swapped
         assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
         assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
+        assert topo_results.ref_side_index_a is None
+        assert topo_results.ref_side_index_b in (0, 2)
 
 
 @pytest.fixture
@@ -338,6 +342,56 @@ def test_three_plate_mixed_topology():
     assert actual_topologies == expected_topologies, f"Expected {expected_topologies}, got {actual_topologies}"
 
 
+def test_plate_face_face():
+    """A smaller plate stacked flush on top of a larger one, fully contained within its footprint
+    (no outline edges coincide), should resolve to TOPO_FACE_FACE."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(3, 3, 1), Point(3, 7, 1), Point(7, 7, 1), Point(7, 3, 1), Point(3, 3, 1)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    cs = PlateConnectionSolver()
+    result = cs.find_topology(plate_a, plate_b)
+
+    assert result.topology == JointTopology.TOPO_FACE_FACE
+    assert TOL.is_close(result.distance, 0.0)
+    assert result.ref_side_index_a == 2
+    assert result.ref_side_index_b == 0
+
+
+def test_plate_face_face_partial_overlap():
+    """FACE_FACE should still be detected when the plates only partially overlap in footprint
+    (a corner overlap, chosen so no outline edges are coincident)."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(8, 8, 1), Point(8, 15, 1), Point(15, 15, 1), Point(15, 8, 1), Point(8, 8, 1)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    cs = PlateConnectionSolver()
+    result = cs.find_topology(plate_a, plate_b)
+
+    assert result.topology == JointTopology.TOPO_FACE_FACE
+
+
+def test_plate_face_face_no_overlap_is_unknown():
+    """Plates that are coplanar and anti-parallel-faced but don't overlap in footprint at all
+    should not be classified as FACE_FACE."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(20, 0, 1), Point(20, 10, 1), Point(30, 10, 1), Point(30, 0, 1), Point(20, 0, 1)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    cs = PlateConnectionSolver()
+    result = cs.find_topology(plate_a, plate_b)
+
+    assert result.topology == JointTopology.TOPO_UNKNOWN
+    assert result.ref_side_index_a is None
+    assert result.ref_side_index_b is None
+
+
 def test_beam_face_face():
     """Two parallel beams stacked directly on top of each other (touching face-to-face) should
     resolve to TOPO_FACE_FACE, even though their centerlines are too far apart for I/L/T/X."""
@@ -349,6 +403,8 @@ def test_beam_face_face():
 
     assert result.topology == JointTopology.TOPO_FACE_FACE
     assert TOL.is_close(result.distance, 0.0)
+    assert result.ref_side_index_a in range(4)
+    assert result.ref_side_index_b in range(4)
 
 
 def test_beam_face_face_partial_overlap():
@@ -360,6 +416,8 @@ def test_beam_face_face_partial_overlap():
     result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
 
     assert result.topology == JointTopology.TOPO_FACE_FACE
+    assert result.ref_side_index_a in range(4)
+    assert result.ref_side_index_b in range(4)
 
 
 def test_beam_face_face_no_overlap_is_unknown():
@@ -372,6 +430,8 @@ def test_beam_face_face_no_overlap_is_unknown():
     result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
 
     assert result.topology == JointTopology.TOPO_UNKNOWN
+    assert result.ref_side_index_a is None
+    assert result.ref_side_index_b is None
 
 
 def test_beam_face_face_does_not_override_existing_topologies():
@@ -384,3 +444,5 @@ def test_beam_face_face_does_not_override_existing_topologies():
     result = cs.find_topology(beam_a, beam_b, max_distance=0.001)
 
     assert result.topology == JointTopology.TOPO_X
+    assert result.ref_side_index_a is None
+    assert result.ref_side_index_b is None

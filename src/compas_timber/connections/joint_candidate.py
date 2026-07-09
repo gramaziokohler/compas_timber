@@ -17,6 +17,10 @@ class JointCandidate(Joint):
         Second element to be joined.
     distance : float | None
         Distance between the elements.
+    ref_side_index_a : int | None
+        Index of `element_a`'s matched long/main face, for `TOPO_FACE_FACE`. `None` otherwise.
+    ref_side_index_b : int | None
+        Index of `element_b`'s matched long/main face, for `TOPO_FACE_FACE`. `None` otherwise.
 
     Attributes
     ----------
@@ -26,13 +30,19 @@ class JointCandidate(Joint):
         Second element to be joined.
     distance : float | None
         Distance between the elements.
+    ref_side_index_a : int | None
+        Index of `element_a`'s matched long/main face.
+    ref_side_index_b : int | None
+        Index of `element_b`'s matched long/main face.
 
     """
 
-    def __init__(self, element_a=None, element_b=None, distance=None, **kwargs):
+    def __init__(self, element_a=None, element_b=None, distance=None, ref_side_index_a=None, ref_side_index_b=None, **kwargs):
         super(JointCandidate, self).__init__(elements=(element_a, element_b), **kwargs)
         # TODO: make distance a property of `Joint`?
         self.distance = distance if distance is not None else None
+        self.ref_side_index_a = ref_side_index_a
+        self.ref_side_index_b = ref_side_index_b
 
     def add_features(self):
         """This joint does not add any features."""
@@ -56,11 +66,68 @@ class PlateJointCandidate(PlateJoint):
         First plate to be joined.
     plate_b : :class:`~compas_timber.elements.Plate`
         Second plate to be joined.
+    ref_side_index_a : int | None
+        Index of `plate_a`'s matched main face, for `TOPO_FACE_FACE`. `None` otherwise.
+    ref_side_index_b : int | None
+        Index of `plate_b`'s matched main face, for `TOPO_FACE_FACE`/`TOPO_EDGE_FACE`. `None` otherwise.
 
     """
 
-    def __init__(self, plate_a=None, plate_b=None, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, ref_side_index_a=None, ref_side_index_b=None, **kwargs):
         super(PlateJointCandidate, self).__init__(plate_a=plate_a, plate_b=plate_b, **kwargs)
+        # PlateJoint doesn't have a ref_side_index_a/b slot yet, so these are stored here directly
+        # (formalized onto the shared JointCandidate base in a follow-up).
+        self.ref_side_index_a = ref_side_index_a
+        self.ref_side_index_b = ref_side_index_b
 
     def _set_edge_planes(self):
         pass
+
+
+class BeamPlateJointCandidate(JointCandidate):
+    """A BeamPlateJointCandidate is an information-only joint for beam-to-plate/panel connections.
+
+    It is used to create a first-pass joinery information which can be later used to create concrete joints.
+
+    Parameters
+    ----------
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam to be joined.
+    plate : :class:`~compas_timber.elements.Plate` or :class:`~compas_timber.elements.Panel`
+        The plate or panel to be joined.
+    segment_index : int | None
+        Index of the outline segment involved in the intersection, for edge-related topologies
+        (`TOPO_END_EDGE`, `TOPO_MIDDLE_EDGE`, `TOPO_ALONG_EDGE`). `None` otherwise.
+    beam_ref_side_index : int | None
+        Index of the beam's matched long face, for `TOPO_FACE_FACE`. `None` otherwise.
+    plate_ref_side_index : int | None
+        Index of the plate's matched main face, for `TOPO_FACE_FACE`/`TOPO_END_FACE`. `None` otherwise.
+
+    Attributes
+    ----------
+    beam : :class:`~compas_timber.elements.Beam`
+        The beam involved in the connection.
+    plate : :class:`~compas_timber.elements.Plate` or :class:`~compas_timber.elements.Panel`
+        The plate or panel involved in the connection.
+    segment_index : int | None
+        Index of the outline segment involved in the intersection.
+    beam_ref_side_index : int | None
+        Index of the beam's matched long face.
+    plate_ref_side_index : int | None
+        Index of the plate's matched main face.
+
+    """
+
+    def __init__(self, beam=None, plate=None, segment_index=None, beam_ref_side_index=None, plate_ref_side_index=None, **kwargs):
+        super(BeamPlateJointCandidate, self).__init__(element_a=beam, element_b=plate, **kwargs)
+        self.segment_index = segment_index
+        self.beam_ref_side_index = beam_ref_side_index
+        self.plate_ref_side_index = plate_ref_side_index
+
+    @property
+    def beam(self):
+        return self.element_a
+
+    @property
+    def plate(self):
+        return self.element_b
