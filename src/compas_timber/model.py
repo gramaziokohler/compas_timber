@@ -13,9 +13,7 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import JointTopology
-from compas_timber.connections import PlateConnectionSolver
-from compas_timber.connections import PlateJointCandidate
+from compas_timber.connections.solver import _find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
@@ -23,44 +21,6 @@ from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
-
-
-def _beam_connection_candidate(beam_a, beam_b, max_distance):
-    """Builds a :class:`JointCandidate` for a pair of adjacent beams, or ``None`` if their topology is unknown."""
-    result = ConnectionSolver().find_topology(beam_a, beam_b, max_distance=max_distance)
-    if result.topology == JointTopology.TOPO_UNKNOWN:
-        return None
-    # use the beam order determined by find_topology to keep main, cross relationship
-    return JointCandidate(result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
-
-
-def _plate_connection_candidate(element_a, element_b, max_distance):
-    """Builds a :class:`PlateJointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
-    result = PlateConnectionSolver().find_topology(element_a, element_b, tol=TOL.relative, max_distance=max_distance)
-    if result.topology is JointTopology.TOPO_UNKNOWN:
-        return None
-    kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
-    if result.topology == JointTopology.TOPO_EDGE_EDGE:
-        kwargs["b_segment_index"] = result.b_segment_index
-    return PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
-
-
-# Registered as (type_a, type_b) -> handler; order-independent (both (a, b) and (b, a) pairs match).
-# To support a new type combination (e.g. beam-to-plate), add a row here once the corresponding
-# topology-detection geometry exists.
-_CONNECTION_HANDLERS = [
-    ((Beam, Beam), _beam_connection_candidate),
-    ((Plate, Plate), _plate_connection_candidate),
-    ((Panel, Panel), _plate_connection_candidate),
-]
-
-
-def _find_connection_handler(element_a, element_b):
-    """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
-    for (type_a, type_b), handler in _CONNECTION_HANDLERS:
-        if (isinstance(element_a, type_a) and isinstance(element_b, type_b)) or (isinstance(element_a, type_b) and isinstance(element_b, type_a)):
-            return handler
-    return None
 
 
 class TimberModel(Model):
@@ -681,9 +641,9 @@ class TimberModel(Model):
         """Detects adjacent elements and creates joint candidates for them.
 
         Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
-        plate-plate, panel-panel, and beam-plate/beam-panel are supported today). Additional type
-        combinations can be supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered
-        combinations are silently skipped.
+        plate-plate, and panel-panel are supported today). Additional type combinations can be
+        supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered combinations are
+        silently skipped.
 
         Clears all existing joint candidates before recomputing, regardless of the element types
         involved. Concrete (already promoted) joints are left untouched.
