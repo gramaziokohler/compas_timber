@@ -18,6 +18,7 @@ from compas_timber.connections import PanelJoint
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import PlateJoint
 from compas_timber.connections import PlateJointCandidate
+from compas_timber.data import DataVersionMixin
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel
@@ -27,7 +28,7 @@ from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
 
-class TimberModel(Model):
+class TimberModel(DataVersionMixin, Model):
     """Represents a timber model containing different elements such as panels, beams and joints.
 
     The timber model allows expressing the hierarchy and interactions between the different elements it contains.
