@@ -1,9 +1,11 @@
 from compas.data import json_dumps, json_loads
+from compas.tolerance import TOL
 
 from compas_timber.model import TimberModel
 
 from compas_timber.elements import Plate
 from compas_timber.connections import PlateConnectionSolver
+from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import PlateLButtJoint
@@ -170,3 +172,53 @@ def test_copy_three_plate_joints_mix_topo():
 
     assert len(copy_joints) == 3, "Expected three joints"
     assert set(j.__class__ for j in copy_joints) == {PlateTButtJoint, PlateMiterJoint}, "Expected joints to be PlateButtJoint and PlateMiterJoint"
+
+
+def test_direct_construction_computes_distance_and_location():
+    """A PlateJoint constructed directly (topology unset) should pick up `distance`/`location`
+    from the solver via `calculate_topology()`, instead of falling back to placeholder defaults."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    expected = PlateConnectionSolver().find_topology(plate_a, plate_b)
+
+    # construct using the solver's own (possibly reordered) plate order so `calculate_topology()`,
+    # called internally since topology is unset, doesn't reject a mismatched order.
+    joint = PlateLButtJoint(expected.plate_a, expected.plate_b)
+
+    assert joint.distance == expected.distance
+    assert joint.distance is not None  # sanity check that the solver actually found a topology, not a degenerate case
+    assert TOL.is_allclose(joint.location, expected.location)
+    assert joint.location != Point(0, 0, 0)
+
+
+def test_promote_joint_candidate_preserves_distance():
+    """`distance` should survive promotion from a PlateJointCandidate to a concrete PlateJoint,
+    the same way `topology`/`location` already do."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    model = TimberModel()
+    model.add_elements([plate_a, plate_b])
+
+    result = PlateConnectionSolver().find_topology(plate_a, plate_b)
+    candidate = PlateJointCandidate(
+        result.plate_a,
+        result.plate_b,
+        topology=result.topology,
+        a_segment_index=result.a_segment_index,
+        distance=result.distance,
+        location=result.location,
+    )
+    model.add_joint_candidate(candidate)
+
+    joint = PlateLButtJoint.promote_joint_candidate(model, candidate)
+
+    assert joint.distance == candidate.distance
+    assert joint.distance is not None
