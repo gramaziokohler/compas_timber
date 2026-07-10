@@ -22,7 +22,7 @@ class PanelLLayerButtJoint(PanelJoint, PlateLButtJoint):
         return self.plate_b
 
     def __repr__(self) -> str:
-        return "PanelLButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
+        return "PanelLLayerButtJoint({0}, {1}, {2})".format(self.main_panel, self.cross_panel, JointTopology.get_name(self.topology))
 
     def add_extensions(self):
         butts = []

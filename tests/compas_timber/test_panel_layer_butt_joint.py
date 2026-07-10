@@ -53,11 +53,11 @@ def test_main_and_cross_panel_properties():
     assert joint.cross_panel is panel_b
 
 
-def test_repr_does_not_raise_and_mentions_topology():
+def test_repr_names_the_correct_class_and_topology():
     panel_a, panel_b = _corner_panels()
     joint = _make_joint(panel_a, panel_b)
     text = repr(joint)
-    assert isinstance(text, str)
+    assert text.startswith("PanelLLayerButtJoint(")
     assert "TOPO_EDGE_EDGE" in text
 
 
