@@ -9,9 +9,11 @@ from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
+
 
 
 class TDovetailJoint(Joint):
@@ -282,19 +284,32 @@ class TDovetailJoint(Joint):
         self._shape_radius = tool_top_radius
 
     def calculate_groove_axis(self):
-        """Placeholder for actual calculation."""
-        raise NotImplementedError("Groove axis calculation needs to be implemented for accurate 1-DOF constraint.")
+        """Calculates the axis direction of the dovetail groove in the cross beam.
+
+        The groove runs along the cross beam's length on the mortise face.  The direction matches
+        the tenon frame's x-axis, which is the negative of the ref side's x-axis (``normal × yaxis``).
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            Unit vector along the groove direction.
+
+        """
+        crs_normal = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+        mrs_normal_neg = self.main_beam.ref_sides[self.main_beam_ref_side_index].normal
+        z_component = crs_normal * mrs_normal_neg.dot(crs_normal)
+        projected_vector = mrs_normal_neg - z_component
+        return projected_vector
 
     def get_kinematic_constraint(self, moving_element):
         """Calculates the 1-DOF strict linear escape constraint for a dovetail."""
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
             
-        # Assuming `calculate_groove_axis()` returns the Vector of the groove
-        groove_axis = self.calculate_groove_axis() 
-        
+        groove_axis = self.calculate_groove_axis()
+
         if moving_element == self.cross_beam:
-            return Line(self.location, self.location + groove_axis)
+            return Line(self.location, self.location + (groove_axis * -1))
             
         elif moving_element == self.main_beam:
-            return Line(self.location, self.location + (groove_axis * -1))
+            return Line(self.location, self.location + groove_axis)
