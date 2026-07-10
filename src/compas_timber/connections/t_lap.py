@@ -4,6 +4,7 @@ from compas_timber.fabrication import LapProxy
 
 from .lap_joint import LapJoint
 from .solver import JointTopology
+from .utilities import beam_ref_side_incidence
 
 
 class TLapJoint(LapJoint):
@@ -106,3 +107,21 @@ class TLapJoint(LapJoint):
 
         # register processings to the joint
         self.features.extend([cross_lap_feature, main_lap_feature, main_cut_feature])
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the escape constraint for the Lap joint.
+        
+        Returns a Plane representing the 2-DOF sliding freedom along the lap plane.
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+        
+        ref_side_dict = beam_ref_side_incidence(self.main_beam, self.cross_beam, ignore_ends=True)
+        cis_index = min(ref_side_dict, key=ref_side_dict.get)
+        kc_vectors = [self.cross_beam.ref_sides[cis_index].normal, self.main_beam.ref_sides[self.ref_side_index_a].normal * -1, self.main_beam.ref_sides[(self.ref_side_index_a+1)%4].normal, self.main_beam.ref_sides[(self.ref_side_index_a-1)%4].normal]
+
+        if moving_element == self.main_beam:
+            return kc_vectors
+        
+        elif moving_element == self.cross_beam:
+            return [v * -1 for v in kc_vectors]

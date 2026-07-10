@@ -283,7 +283,7 @@ class TDovetailJoint(Joint):
         self._flank_angle = tool_angle
         self._shape_radius = tool_top_radius
 
-    def calculate_joint_axis(self):
+    def calculate_dovetail_axis(self):
         """Calculates the axis direction of the dovetail groove in the cross beam.
 
         The groove runs along the cross beam's length on the mortise face.  The direction matches
@@ -308,10 +308,10 @@ class TDovetailJoint(Joint):
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
             
-        joint_axis = self.calculate_joint_axis()
+        dovetail_axis = self.calculate_dovetail_axis()
 
         if moving_element == self.cross_beam:
-            return Line(self.location, self.location + (joint_axis * -1))
+            return Line(self.location, self.location + (dovetail_axis * -1))
             
         elif moving_element == self.main_beam:
-            return Line(self.location, self.location + joint_axis)
+            return Line(self.location, self.location + dovetail_axis)
