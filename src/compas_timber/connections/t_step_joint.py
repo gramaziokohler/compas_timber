@@ -1,6 +1,9 @@
+import math
 import warnings
 
 from compas.geometry import Line
+from compas.geometry import Vector
+from compas.geometry import angle_vectors_signed
 from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
@@ -266,9 +269,38 @@ class TStepJoint(Joint):
         """Calculates the escape constraint for the TStep joint."""
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
-            
-        escape_vector = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+        
+        mbrs = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+        cbrs = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        
+        # vector rotation direction of the plane's normal in the vertical direction
+        strut_inclination_vector = Vector.cross(mbrs.zaxis, cbrs.normal)
+        strut_inclination = 180 - abs(
+            angle_vectors_signed(mbrs.zaxis, cbrs.normal, strut_inclination_vector, deg=True)
+        )
+
+        if strut_inclination < 90:
+            rot_ang = (180 - strut_inclination) / 2
+        else:
+            rot_ang = strut_inclination - 180
+
+        if self.step_shape == StepShapeType.STEP:
+            vector_a = cbrs.rotated(math.radians(-rot_ang), mbrs.yaxis, cbrs.point).normal
+            vector_b = cbrs.normal
+            kc_vectors = [vector_a, vector_b]
+
+
+        # elif self.step_shape in (StepShapeType.HEEL, StepShapeType.TAPERED_HEEL):
+        #     self.step_depth = 0.0
+        #     self.heel_depth = self.heel_depth or self.cross_beam.height / 4
+
+        # elif self.step_shape == StepShapeType.DOUBLE:
+        #     self.step_depth = self.step_depth or self.cross_beam.height / 6
+        #     self.heel_depth = self.heel_depth or self.cross_beam.height / 4
+
+        print(strut_inclination, rot_ang)
+        escape_vector = cbrs.normal
         if moving_element == self.main_beam:
-            return Line(self.location, self.location + escape_vector)
+            return Line(self.location, self.location + vector_a)
         elif moving_element == self.cross_beam:
             return Line(self.location, self.location - escape_vector)
