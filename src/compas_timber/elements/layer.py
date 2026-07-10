@@ -350,6 +350,12 @@ class Layer(Element):
         for sublayer in self.sublayers:
             sublayer.apply_edge_extensions()
 
+    def remove_blank_extension(self, edge_index: Optional[int] = None):
+        """Remove any extension plane for the given edge index.  Propagates to all sublayers."""
+        self.plate_geometry.remove_blank_extension(edge_index)
+        for sublayer in self.sublayers:
+            sublayer.remove_blank_extension(edge_index)
+
     # ------------------------------------------------------------------
     # compas_model.elements.Element abstract method implementations
     # ------------------------------------------------------------------
