@@ -52,16 +52,16 @@ class PlateJoint(Joint, ABC):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, distance=None, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(elements=(plate_a, plate_b), topology=topology, **kwargs)
         self.a_segment_index = a_segment_index
         self.b_segment_index = b_segment_index
-        self.distance = distance
-        self._reverse_a_planes = False
-        self._reverse_b_planes = False
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
+        self._reverse_a_planes = False
+        self._reverse_b_planes = False
+        self.distance = 0.0  # HACK: to pass joint rules that expect a distance attribute
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -125,9 +125,6 @@ class PlateJoint(Joint, ABC):
         self.topology = topo_results.topology
         self.a_segment_index = topo_results.a_segment_index
         self.b_segment_index = topo_results.b_segment_index
-        self.distance = topo_results.distance
-        if topo_results.location is not None:
-            self.location = topo_results.location
         return topo_results
 
     @classmethod
@@ -156,7 +153,6 @@ class PlateJoint(Joint, ABC):
             kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
         else:
             kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
-        kwargs.setdefault("distance", candidate.distance)
         return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_extensions(self):
