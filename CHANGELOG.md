@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
+* Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, defined by `start_level` and `end_level` (in the panel's thickness direction). `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
 * Added `LayerDef` and `LayerStructure` classes (`compas_timber.elements.LayerDef`, `compas_timber.elements.LayerStructure`) — panel-agnostic tree definitions of layer slots (name, thickness, sublayer defs) that can be shared across panels and attached to a specific panel via `LayerStructure.attach(panel)`.
 * Added `Panel.layer_structure` property/setter — assigns a `LayerStructure` to a panel, creating bound `Layer` instances. Layers are automatically registered in the model when the panel already belongs to one; setting `layer_structure` again replaces any previously-attached layers.
@@ -24,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
+* Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
+* Fixed plate geometry created with inconsistent face orientation.
 
 ### Removed
 

@@ -1,3 +1,4 @@
+import pytest
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Plane
@@ -67,67 +68,63 @@ def test_apply_and_remove_exensions_with_index():
     assert all([TOL.is_allclose(pg.outline_b[i], polyline_b[i]) for i in range(len(polyline_b))])
 
 
-def test_compute_shape_no_openings(mocker):
-    """compute_shape builds polygons from outlines and calls Brep.from_polygons."""
+@pytest.mark.requires_occ
+def test_compute_shape_no_openings():
+    """compute_shape builds a closed solid with one face per polygon (2 caps + 4 sides for a rectangular plate)."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
     pg = PlateGeometry(polyline_a, polyline_b)
 
-    mock_brep = mocker.MagicMock()
-    mock_from_polygons = mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+    brep = pg.compute_shape()
 
-    result = pg.compute_shape()
-
-    mock_from_polygons.assert_called_once()
-    polygons = mock_from_polygons.call_args[0][0]
-    # 2 cap polygons + 4 side polygons for a rectangular plate
-    assert len(polygons) == 6
-    assert result is mock_brep
+    assert len(brep.faces) == 6
+    assert brep.is_solid
+    assert brep.is_closed
 
 
-def test_compute_shape_from_polygons_returns_list(mocker):
-    """When Brep.from_polygons returns a single-element list (Rhino quirk), it should be unwrapped."""
-    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
-    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
-    pg = PlateGeometry(polyline_a, polyline_b)
-
-    mock_brep = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep])
-
-    result = pg.compute_shape()
-
-    assert result is mock_brep
-
-
-def test_compute_shape_from_polygons_returns_multiple_breps_raises(mocker):
-    """When Brep.from_polygons returns multiple breps, a ValueError should be raised."""
-    from pytest import raises
-
-    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
-    polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
-    pg = PlateGeometry(polyline_a, polyline_b)
-
-    mock_brep_1 = mocker.MagicMock()
-    mock_brep_2 = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=[mock_brep_1, mock_brep_2])
-
-    with raises(ValueError):
-        pg.compute_shape()
-
-
-def test_compute_shape_applies_edge_extensions(mocker):
+@pytest.mark.requires_occ
+def test_compute_shape_applies_edge_extensions():
     """compute_shape should apply edge extensions before building geometry."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     polyline_b = Polyline([Point(0, 0, 1), Point(0, 20, 1), Point(10, 20, 1), Point(10, 0, 1), Point(0, 0, 1)])
     pg = PlateGeometry(polyline_a, polyline_b)
+    unextended_volume = pg.compute_shape().volume
 
-    mock_apply = mocker.patch.object(pg, "apply_edge_extensions")
-    mock_brep = mocker.MagicMock()
-    mocker.patch("compas_timber.elements.plate_geometry.Brep.from_polygons", return_value=mock_brep)
+    pg.set_extension_plane(3, Plane([0, 0, 0], [0, -1, -1]))
+    extended_brep = pg.compute_shape()
 
-    pg.compute_shape()
+    # the extension enlarges outline_b, so if apply_edge_extensions ran, the solid must be bigger
+    assert extended_brep.volume > unextended_volume
+    assert extended_brep.is_solid
+    assert extended_brep.is_closed
 
-    mock_apply.assert_called_once()
+
+@pytest.mark.requires_occ
+def test_compute_shape_produces_solid_with_correct_volume():
+    """compute_shape should produce a closed solid with the expected volume (OCC backend).
+
+    Regression test: the old side-polygon point order
+    [outline_a[i], outline_a[i+1], outline_b[i+1], outline_b[i]]
+    produced an inside-out solid on some backends. The corrected order
+    [outline_a[i], outline_b[i], outline_b[i+1], outline_a[i+1]]
+    ensures outward-facing normals and a valid solid.
+
+    Note: this test exercises the real OCC Brep backend without mocking.
+    On the OCC backend the volume property returns abs(mass), so a negative raw
+    volume (inside-out solid) is masked.  The is_solid / is_closed assertions
+    additionally guard against the sewing step silently failing to produce a
+    proper solid.
+    """
+    outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 5, 0), Point(0, 5, 0), Point(0, 0, 0)])
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 1), Point(0, 5, 1), Point(0, 0, 1)])
+    pg = PlateGeometry(outline_a, outline_b)
+
+    brep = pg.compute_shape()
+
+    expected_volume = 10 * 5 * 1  # length * width * thickness
+    assert TOL.is_close(brep.volume, expected_volume)
+    assert brep.is_solid
+    assert brep.is_closed
 
 
 def test_from_global_outlines_orientation_sets_local_yaxis():
