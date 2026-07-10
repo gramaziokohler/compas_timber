@@ -3,6 +3,7 @@
 import pytest
 
 from compas.data import json_dumps, json_loads
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -13,7 +14,9 @@ from compas_timber.elements import Layer
 from compas_timber.elements import LayerDef
 from compas_timber.elements import LayerStructure
 from compas_timber.elements import Panel
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.model import TimberModel
+from compas_timber.panel_features import PanelFeature
 
 
 # ---------------------------------------------------------------------------
@@ -693,3 +696,448 @@ def test_layer_path_survives_standalone_panel_roundtrip(panel_with_layers):
     assert restored.layers[0].layer_path == (0,)
     assert restored.layers[1].layer_path == (1,)
     assert restored.layers[2].layer_path == (2,)
+
+
+# ---------------------------------------------------------------------------
+# 25. __repr__ / __str__
+# ---------------------------------------------------------------------------
+
+
+def test_layer_repr_and_str(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5, name="core")
+    assert repr(layer) == "Layer(name=core, thickness=0.5)"
+    assert str(layer) == "Layer(name=core, thickness=0.5)"
+
+
+def test_layer_repr_deferred_has_no_thickness():
+    """A deferred Layer (no end_level) reports thickness=None in its repr."""
+    layer = Layer(name="deferred")
+    assert repr(layer) == "Layer(name=deferred, thickness=None)"
+
+
+# ---------------------------------------------------------------------------
+# 26. sublayers passed directly to the constructor
+# ---------------------------------------------------------------------------
+
+
+def test_layer_constructor_sublayers_argument(flat_panel):
+    sub = Layer(start_level=0.0, end_level=0.5, name="sub")
+    layer = Layer(flat_panel, 0.0, 1.0, sublayers=[sub])
+    assert layer.sublayers == [sub]
+    assert sub._parent_ref is layer
+
+
+# ---------------------------------------------------------------------------
+# 27. plate_geometry getter/setter edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_plate_geometry_setter_overrides_lazy_computation(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    original = layer.plate_geometry
+    sentinel = object()
+    layer.plate_geometry = sentinel
+    assert layer.plate_geometry is sentinel
+    assert layer.plate_geometry is not original
+
+
+def test_plate_geometry_raises_without_any_parent():
+    """A fully deferred Layer with no parent reference cannot compute geometry."""
+    layer = Layer(start_level=0.0, end_level=0.5)
+    with pytest.raises(AttributeError):
+        layer.plate_geometry
+
+
+def test_plate_geometry_lazy_computation_via_sublayers_wiring(flat_panel):
+    """A deferred Layer wired as a sublayer computes its geometry lazily from its parent."""
+    core = Layer(flat_panel, 0.0, 1.0)
+    deferred = Layer(start_level=0.2, end_level=0.7, name="deferred")
+    core.sublayers = [deferred]
+
+    assert deferred._plate_geometry is None
+    plate_geometry = deferred.plate_geometry
+    assert plate_geometry is not None
+    for pt in deferred.outline_a.points:
+        assert TOL.is_close(pt[2], 0.2)
+    for pt in deferred.outline_b.points:
+        assert TOL.is_close(pt[2], 0.7)
+
+
+# ---------------------------------------------------------------------------
+# 28. panel property/setter
+# ---------------------------------------------------------------------------
+
+
+def test_panel_setter_standalone():
+    layer = Layer(name="standalone")
+    panel = object()
+    layer.panel = panel
+    assert layer.panel is panel
+
+
+def test_panel_property_no_panel_ancestor_in_model(flat_panel):
+    """A Layer added to the model tree without a Panel ancestor resolves .panel to None."""
+    core = Layer(flat_panel, 0.0, 1.0)
+    model = TimberModel()
+    model.add_element(core)  # root element, no Panel ancestor
+    sub = Layer(core, 0.0, 0.5)
+    model.add_element(sub, parent=core)
+
+    assert core.panel is None
+    assert sub.panel is None
+
+
+# ---------------------------------------------------------------------------
+# 29. outlines / planes / edge_planes / center_height
+# ---------------------------------------------------------------------------
+
+
+def test_layer_outlines_tuple(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    assert layer.outlines == (layer.outline_a, layer.outline_b)
+
+
+def test_layer_planes(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    plane_a, plane_b = layer.planes
+    assert TOL.is_close(plane_a.point[2], 0.0)
+    assert TOL.is_close(plane_b.point[2], 0.5)
+    assert TOL.is_allclose(plane_a.normal, Vector(0, 0, 1))
+    assert TOL.is_allclose(plane_b.normal, Vector(0, 0, 1))
+
+
+def test_layer_edge_planes(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    edge_planes = layer.edge_planes
+    assert set(edge_planes.keys()) == set(layer.plate_geometry.edge_planes.keys())
+    for plane in edge_planes.values():
+        assert isinstance(plane, Plane)
+
+
+def test_layer_center_height(flat_panel):
+    layer = Layer(flat_panel, 0.2, 0.6)
+    assert TOL.is_close(layer.center_height, 0.4)
+
+
+# ---------------------------------------------------------------------------
+# 30. geometry property
+# ---------------------------------------------------------------------------
+
+
+def test_layer_geometry_getter_standalone(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    assert layer.model is None
+    geometry = layer.geometry
+    assert geometry is layer.modelgeometry
+
+
+def test_layer_geometry_setter_raises(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    with pytest.raises(AttributeError):
+        layer.geometry = object()
+
+
+# ---------------------------------------------------------------------------
+# 31. reset()
+# ---------------------------------------------------------------------------
+
+
+def test_layer_reset_clears_debug_info_and_geometry(panel_with_layers):
+    model = TimberModel()
+    model.add_element(panel_with_layers)
+    panel_with_layers.merge_layer_structure(model)
+
+    layer = panel_with_layers.exterior_layer
+    plane = Plane(Point(0, -1, 0), Vector(0, -1, 0))
+    layer.set_extension_plane(3, plane)
+    layer.apply_edge_extensions()
+    layer.debug_info.append("some debug info")
+
+    layer.reset()
+
+    assert layer.debug_info == []
+    assert layer.plate_geometry._extension_planes == {}
+
+
+# ---------------------------------------------------------------------------
+# 32. define_sublayers
+# ---------------------------------------------------------------------------
+
+
+def test_define_sublayers_exact_thicknesses(panel_with_layers):
+    core = panel_with_layers.core_layer
+    subs = core.define_sublayers([0.3, 0.3])
+    assert len(subs) == 2
+    assert TOL.is_close(subs[0].thickness, 0.3)
+    assert TOL.is_close(subs[1].thickness, 0.3)
+    assert TOL.is_close(subs[0].start_level, core.start_level)
+    assert core.sublayers == subs
+
+
+def test_define_sublayers_with_none_absorbs_remainder(panel_with_layers):
+    core = panel_with_layers.core_layer  # thickness 0.6
+    subs = core.define_sublayers([0.2, None, 0.1])
+    assert len(subs) == 3
+    assert TOL.is_close(subs[0].thickness, 0.2)
+    assert TOL.is_close(subs[1].thickness, 0.3)
+    assert TOL.is_close(subs[2].thickness, 0.1)
+
+
+def test_define_sublayers_names(panel_with_layers):
+    core = panel_with_layers.core_layer
+    subs = core.define_sublayers([0.3, 0.3], names=["a", "b"])
+    assert subs[0].name == "a"
+    assert subs[1].name == "b"
+
+
+def test_define_sublayers_appends_remainder_layer(panel_with_layers):
+    """When no None is present and thicknesses don't fill the layer, an extra layer absorbs the remainder."""
+    core = panel_with_layers.core_layer  # thickness 0.6
+    subs = core.define_sublayers([0.2])
+    assert len(subs) == 2
+    assert TOL.is_close(subs[0].thickness, 0.2)
+    assert TOL.is_close(subs[1].thickness, 0.4)
+
+
+def test_define_sublayers_appends_remainder_layer_with_names(panel_with_layers):
+    """The auto-appended remainder layer gets a None name when explicit names are given."""
+    core = panel_with_layers.core_layer  # thickness 0.6
+    subs = core.define_sublayers([0.2], names=["named"])
+    assert len(subs) == 2
+    assert subs[0].name == "named"
+    assert subs[1].name != "named"
+    assert TOL.is_close(subs[1].thickness, 0.4)
+
+
+def test_define_sublayers_multiple_none_raises(panel_with_layers):
+    core = panel_with_layers.core_layer
+    with pytest.raises(ValueError):
+        core.define_sublayers([None, None])
+
+
+def test_define_sublayers_names_length_mismatch_raises(panel_with_layers):
+    core = panel_with_layers.core_layer
+    with pytest.raises(ValueError):
+        core.define_sublayers([0.3, 0.3], names=["only_one"])
+
+
+def test_define_sublayers_thicknesses_exceed_layer_raises(panel_with_layers):
+    core = panel_with_layers.core_layer  # thickness 0.6
+    with pytest.raises(ValueError):
+        core.define_sublayers([0.5, 0.5])
+
+
+def test_define_sublayers_without_panel_raises():
+    layer = Layer(name="orphan", start_level=0.0, end_level=0.5)
+    with pytest.raises(RuntimeError):
+        layer.define_sublayers([0.5])
+
+
+# ---------------------------------------------------------------------------
+# 33. set_extension_plane / apply_edge_extensions recurse through sublayers
+# ---------------------------------------------------------------------------
+
+
+def test_set_extension_plane_recurses_through_nested_sublayers(panel_with_layers):
+    model = TimberModel()
+    model.add_element(panel_with_layers)
+    panel_with_layers.merge_layer_structure(model)
+
+    core = panel_with_layers.core_layer
+    grandchildren = core.define_sublayers([0.3, None])
+
+    plane = Plane(Point(0, -1, 0), Vector(0, -1, 0))
+    core.set_extension_plane(3, plane)
+
+    for child in grandchildren:
+        assert 3 in child.plate_geometry._extension_planes
+
+
+def test_apply_edge_extensions_recurses_through_nested_sublayers(panel_with_layers):
+    model = TimberModel()
+    model.add_element(panel_with_layers)
+    panel_with_layers.merge_layer_structure(model)
+
+    core = panel_with_layers.core_layer
+    grandchildren = core.define_sublayers([0.3, None])
+
+    plane = Plane(Point(0, -1, 0), Vector(0, -1, 0))
+    core.set_extension_plane(3, plane)
+
+    before = [list(pt) for pt in grandchildren[0].outline_b.points]
+    core.apply_edge_extensions()
+    after = [list(pt) for pt in grandchildren[0].outline_b.points]
+
+    moved = any(not TOL.is_allclose(a, b) for a, b in zip(before, after))
+    assert moved
+
+
+# ---------------------------------------------------------------------------
+# 34. reset_computed_properties / clear_model_dependent_cache
+# ---------------------------------------------------------------------------
+
+
+def test_reset_computed_properties_clears_planes_and_computed_caches(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    layer.planes  # populate cache
+    layer.aabb  # populate cache
+    assert layer._planes is not None
+
+    layer.reset_computed_properties()
+
+    assert layer._planes is None
+    assert layer._aabb is None
+
+
+def test_clear_model_dependent_cache(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    layer.planes
+    layer.aabb
+    layer.obb
+    layer.collision_mesh
+
+    layer.clear_model_dependent_cache()
+
+    assert layer._modeltransformation is None
+    assert layer._modelgeometry is None
+    assert layer._aabb is None
+    assert layer._obb is None
+    assert layer._collision_mesh is None
+    assert layer._planes is None
+
+
+# ---------------------------------------------------------------------------
+# 35. compute_aabb / compute_obb / compute_collision_mesh
+# ---------------------------------------------------------------------------
+
+
+def test_compute_aabb(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    box = layer.compute_aabb()
+    assert TOL.is_close(box.zsize, 0.5)
+    assert sorted([round(box.xsize, 6), round(box.ysize, 6)]) == [10.0, 20.0]
+
+
+def test_compute_aabb_inflate(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    box = layer.compute_aabb(inflate=1.0)
+    assert TOL.is_close(box.zsize, 1.5)
+    assert sorted([round(box.xsize, 6), round(box.ysize, 6)]) == [11.0, 21.0]
+
+
+def test_compute_obb(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    obb = layer.compute_obb()
+    assert TOL.is_close(obb.zsize, 0.5)
+
+
+def test_compute_collision_mesh(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    mesh = layer.compute_collision_mesh()
+    assert mesh.number_of_faces() > 0
+
+
+# ---------------------------------------------------------------------------
+# 36. compute_modelgeometry — standalone vs. in-model
+# ---------------------------------------------------------------------------
+
+
+def test_compute_modelgeometry_standalone_uses_transformation(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    assert layer.model is None
+    geometry = layer.compute_modelgeometry()
+    expected = layer.elementgeometry.transformed(layer.transformation)
+    assert geometry.volume == pytest.approx(expected.volume)
+
+
+def test_compute_modelgeometry_in_model_uses_modeltransformation(panel_with_layers):
+    model = TimberModel()
+    model.add_element(panel_with_layers)
+    panel_with_layers.merge_layer_structure(model)
+
+    layer = panel_with_layers.core_layer
+    assert layer.model is not None
+    geometry = layer.compute_modelgeometry()
+    assert geometry is not None
+
+
+# ---------------------------------------------------------------------------
+# 37. compute_elementgeometry — feature application and error handling
+# ---------------------------------------------------------------------------
+
+
+class _RaisingFeature(PanelFeature):
+    def apply(self, geometry, panel):
+        raise FeatureApplicationError(None, geometry, "boom")
+
+
+def test_compute_elementgeometry_without_features(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    geometry = layer.compute_elementgeometry(include_features=False)
+    assert geometry is not None
+    assert layer.debug_info == []
+
+
+def test_compute_elementgeometry_collects_feature_application_errors(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
+
+    geometry = layer.compute_elementgeometry(include_features=True)
+
+    assert geometry is not None
+    assert len(layer.debug_info) == 1
+    assert isinstance(layer.debug_info[0], FeatureApplicationError)
+
+
+def test_compute_elementgeometry_include_features_false_skips_panel_features(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
+
+    layer.compute_elementgeometry(include_features=False)
+
+    assert layer.debug_info == []
+
+
+# ---------------------------------------------------------------------------
+# 38. LayerDef / LayerStructure __repr__
+# ---------------------------------------------------------------------------
+
+
+def test_layer_def_repr():
+    layer_def = LayerDef(name="core", thickness=0.5)
+    assert repr(layer_def) == "LayerDef(name='core', thickness=0.5, path=())"
+
+
+def test_layer_structure_repr():
+    ls = LayerStructure(layer_defs=[LayerDef("core")])
+    assert repr(ls) == "LayerStructure(layer_defs=[LayerDef(name='core', thickness=None, path=(0,))])"
+
+
+# ---------------------------------------------------------------------------
+# 39. LayerStructure.attach with nested sublayer_defs
+# ---------------------------------------------------------------------------
+
+
+def test_layer_structure_attach_with_nested_sublayer_defs(flat_panel):
+    ls = LayerStructure(
+        layer_defs=[
+            LayerDef("exterior", 0.2),
+            LayerDef(
+                "frame",
+                sublayer_defs=[
+                    LayerDef("service_void", 0.1),
+                    LayerDef("insulation"),
+                ],
+            ),
+            LayerDef("interior", 0.1),
+        ]
+    )
+    flat_panel.layer_structure = ls
+
+    frame_layer = next(layer for layer in flat_panel.layers if layer.name == "frame")
+    assert len(frame_layer.sublayers) == 2
+    service_void, insulation = frame_layer.sublayers
+    assert service_void.name == "service_void"
+    assert TOL.is_close(service_void.thickness, 0.1)
+    assert insulation.name == "insulation"
+    assert TOL.is_close(insulation.thickness, 0.6)

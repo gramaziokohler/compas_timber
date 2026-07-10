@@ -316,10 +316,14 @@ class Layer(Element):
                 model.add_element(element, parent=self)
             element.merge_sublayer_tree(model)
 
+    @reset_computed
+    def _reset_all_computed(self):
+        pass
+
     def reset_computed_properties(self):
         """Clear all cached properties so they recompute against the current model tree."""
         self._planes = None
-        super().reset_computed_properties()
+        self._reset_all_computed()
 
     def clear_model_dependent_cache(self):
         """Clear cached attributes that depend on the element's position in the model hierarchy."""
