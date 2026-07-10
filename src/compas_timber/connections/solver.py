@@ -462,6 +462,7 @@ class PlateSolverResult(Data):
 # `compas_timber.elements` imports `JointTopology` from this module (e.g. `PlateFastener`), so this
 # import is placed here (after `JointTopology` is already defined above) rather than with the other
 # top-of-file imports, to avoid a circular import.
+# TODO: figure out why `compas_timber.elements` imports `JointTopology`
 from compas_timber.elements import Beam  # noqa: E402
 from compas_timber.elements import Panel  # noqa: E402
 from compas_timber.elements import Plate  # noqa: E402
