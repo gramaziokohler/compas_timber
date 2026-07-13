@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
+* Added `brep_from_outlines` to `compas_timber.geometry`.
+
+### Changed
+* Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
+* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
+* Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
+* Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
+* Fixed plate geometry created with inconsistent face orientation.
+
+### Removed
+
+
+## [2.2.0] 2026-07-02
+
+### Added
 
 * Added `CutPlaneSpec` — beam-relative cutting plane for butt/back cuts `(ref_side_index, angle, offset)`. Build with `from_butt_plane()` / `from_back_plane()`, resolve with `.to_plane(beam)`.
 * Added `MiterPlaneSpec` — beam-relative cutting plane for miter cuts `(ref_side_index, angle_x, angle_y, offset)`. Build with `from_plane(beam_a, beam_b, plane)`, resolve with `.to_plane(beam)`.
@@ -18,9 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
+* Fixed `Lap.from_shapes_and_element` calling a non-existent method; it now correctly defers to `LapProxy.from_volume_and_beam`.
+* Fixed `XNotchJoint.add_features` referencing non-existent `main_beam` / `cross_beam` attributes instead of `notch_beam` / `solid_beam`.
+* Fixed `Lap.from_volume_and_beam` reusing the same plane for two roles (e.g. `start_plane` and `front_plane`) when a plane had the minimum dot product on two axes, causing it to fail for non-axis-aligned volumes.
 
 * `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, fixing a failure on outlines where the second-to-last point is colinear with the first edge.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check was applied after computing `transform_to_world_xy`, producing an incorrect transform for outlines whose natural frame normal pointed in the −Z direction.
+* Replaced `compas.geometry.Brep` with drop-in `compas_brep.Brep`.
 
 ### Removed
 

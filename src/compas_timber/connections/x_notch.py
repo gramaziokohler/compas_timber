@@ -1,7 +1,7 @@
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Vector
 from compas.geometry import intersection_line_line
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import PocketProxy
@@ -105,18 +105,18 @@ class XNotchJoint(Joint):
         This method is automatically called when joint is created by the call to `Joint.create()`.
 
         """
-        assert self.main_beam and self.cross_beam
+        assert self.notch_beam and self.solid_beam
 
         if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
+            self.notch_beam.remove_features(self.features)
+            self.solid_beam.remove_features(self.features)
 
         # create pocket features
         negative_volume = self._create_negative_volume()
-        pocket_feature = PocketProxy.from_volume_and_element(negative_volume, self.main_beam, ref_side_index=self.main_ref_side_index)
+        pocket_feature = PocketProxy.from_volume_and_element(negative_volume, self.notch_beam, ref_side_index=self.main_ref_side_index)
 
         # add features to the beams
-        self.main_beam.add_features(pocket_feature)
+        self.notch_beam.add_features(pocket_feature)
 
         # register processings to the joint
         self.features.append(pocket_feature)
