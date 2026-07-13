@@ -5,7 +5,6 @@ from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Polygon
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
@@ -14,7 +13,7 @@ from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 from compas_brep import Brep
 
-from compas_timber.utils import correct_polyline_direction
+from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -175,24 +174,8 @@ class PlateGeometry(Data):
             The shape of the element.
 
         """
-
-        def brep_from_outlines(outline_a, outline_b):
-            polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
-            for i in range(len(outline_a) - 1):
-                polygons.append(Polygon([outline_a[i], outline_a[i + 1], outline_b[i + 1], outline_b[i]]))
-            brep = Brep.from_polygons(polygons)
-
-            # NOTE: compas Brep.from_polygons says it returns a brep, but Rhino's implementation returns a list of breps
-            if isinstance(brep, list):
-                if len(brep) > 1:
-                    raise ValueError("Brep from outlines resulted in multiple breps. This should not happen for valid input.")
-                brep = brep[0]
-            return brep
-
         self.apply_edge_extensions()
-        outline_a = correct_polyline_direction(self.outline_a, Vector(0, 0, 1), clockwise=True)
-        outline_b = correct_polyline_direction(self.outline_b, Vector(0, 0, 1), clockwise=True)
-        plate_geo = brep_from_outlines(outline_a, outline_b)
+        plate_geo = brep_from_outlines(self.outline_a, self.outline_b)
 
         return plate_geo
 

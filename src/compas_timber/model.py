@@ -13,7 +13,7 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections.solver import find_connection_handler
+from compas_timber.connections import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Panel

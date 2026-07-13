@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
+* Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `BeamPlateConnectionSolver` for classifying beam-to-plate/panel topology (`TOPO_FACE_FACE`, `TOPO_END_FACE`, `TOPO_END_EDGE`, `TOPO_MIDDLE_EDGE`, `TOPO_THROUGH_FACE`, `TOPO_ALONG_EDGE`), wired into `TimberModel.compute_topologies()` via a new `BeamPlateJointCandidate`.
 * Added a plate-to-plate/panel `TOPO_FACE_FACE` topology to `PlateConnectionSolver`, for plates whose main faces lie flush against each other.
 * Added `ref_side_index_a`/`ref_side_index_b` fields to `BeamSolverResult` and `PlateSolverResult`, and `beam_ref_side_index`/`plate_ref_side_index` fields to `BeamPlateSolverResult`, identifying which face(s) matched a `TOPO_FACE_FACE`/`TOPO_END_FACE`/`TOPO_EDGE_FACE` topology.
@@ -21,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `PlateConnectionSolver` raising a `TypeError` when testing two plates whose faces are parallel (no intersection line between them).
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
+* Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
+* Fixed plate geometry created with inconsistent face orientation.
 
 ### Removed
 

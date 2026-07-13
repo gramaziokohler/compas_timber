@@ -18,6 +18,7 @@ from .solver import BeamSolverResult
 from .solver import PlateSolverResult
 from .solver import BeamPlateSolverResult
 from .solver import find_neighboring_elements
+from .solver import find_connection_handler
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -76,6 +77,7 @@ __all__ = [
     "PlateSolverResult",
     "BeamPlateSolverResult",
     "find_neighboring_elements",
+    "find_connection_handler",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "BallNodeJoint",
