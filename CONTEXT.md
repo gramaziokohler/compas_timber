@@ -60,6 +60,12 @@ compas_timber/
 
 When touching these, explicitly flag potential cross-library leakage before making structural changes.
 
+## Code style guide
+
+- Docstrings: use numpy style without type hints.
+- Type hints: use python3 type hints.
+- Imports: use up to 2nd level imports (e.g. `from compas_timber.elements import Beam`, not `from compas_timber.elements.beam import Beam`). Only one import per line. Top-of-module imports only. Prefer absolute imports over relative imports.
+
 ## Adding a new joint type
 
 Follow the contribution guide at `docs/contribution/joints_contribution_guide.md`. The pattern: subclass `Joint`, implement `add_features()` to apply fabrication operations to each connected element, and register the topology. Use an existing clean implementation as reference.
