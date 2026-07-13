@@ -1041,24 +1041,24 @@ def test_compute_collision_mesh(flat_panel):
 # 36. compute_modelgeometry — standalone vs. in-model
 # ---------------------------------------------------------------------------
 
+@pytest.mark.requires_occ
+def test_compute_modelgeometry_standalone_uses_transformation(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    assert layer.model is None
+    geometry = layer.compute_modelgeometry()
+    expected = layer.elementgeometry.transformed(layer.transformation)
+    assert geometry.volume == pytest.approx(expected.volume)
 
-# def test_compute_modelgeometry_standalone_uses_transformation(flat_panel):
-#     layer = Layer(flat_panel, 0.0, 0.5)
-#     assert layer.model is None
-#     geometry = layer.compute_modelgeometry()
-#     expected = layer.elementgeometry.transformed(layer.transformation)
-#     assert geometry.volume == pytest.approx(expected.volume)
+@pytest.mark.requires_occ
+def test_compute_modelgeometry_in_model_uses_modeltransformation(panel_with_layers):
+    model = TimberModel()
+    model.add_element(panel_with_layers)
+    panel_with_layers.merge_layer_structure(model)
 
-
-# def test_compute_modelgeometry_in_model_uses_modeltransformation(panel_with_layers):
-#     model = TimberModel()
-#     model.add_element(panel_with_layers)
-#     panel_with_layers.merge_layer_structure(model)
-
-#     layer = panel_with_layers.core_layer
-#     assert layer.model is not None
-#     geometry = layer.compute_modelgeometry()
-#     assert geometry is not None
+    layer = panel_with_layers.core_layer
+    assert layer.model is not None
+    geometry = layer.compute_modelgeometry()
+    assert geometry is not None
 
 
 # ---------------------------------------------------------------------------
@@ -1070,32 +1070,32 @@ class _RaisingFeature(PanelFeature):
     def apply(self, geometry, panel):
         raise FeatureApplicationError(None, geometry, "boom")
 
+@pytest.mark.requires_occ
+def test_compute_elementgeometry_without_features(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    geometry = layer.compute_elementgeometry(include_features=False)
+    assert geometry is not None
+    assert layer.debug_info == []
 
-# def test_compute_elementgeometry_without_features(flat_panel):
-#     layer = Layer(flat_panel, 0.0, 0.5)
-#     geometry = layer.compute_elementgeometry(include_features=False)
-#     assert geometry is not None
-#     assert layer.debug_info == []
+@pytest.mark.requires_occ
+def test_compute_elementgeometry_collects_feature_application_errors(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
 
+    geometry = layer.compute_elementgeometry(include_features=True)
 
-# def test_compute_elementgeometry_collects_feature_application_errors(flat_panel):
-#     layer = Layer(flat_panel, 0.0, 0.5)
-#     flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
+    assert geometry is not None
+    assert len(layer.debug_info) == 1
+    assert isinstance(layer.debug_info[0], FeatureApplicationError)
 
-#     geometry = layer.compute_elementgeometry(include_features=True)
+@pytest.mark.requires_occ
+def test_compute_elementgeometry_include_features_false_skips_panel_features(flat_panel):
+    layer = Layer(flat_panel, 0.0, 0.5)
+    flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
 
-#     assert geometry is not None
-#     assert len(layer.debug_info) == 1
-#     assert isinstance(layer.debug_info[0], FeatureApplicationError)
+    layer.compute_elementgeometry(include_features=False)
 
-
-# def test_compute_elementgeometry_include_features_false_skips_panel_features(flat_panel):
-#     layer = Layer(flat_panel, 0.0, 0.5)
-#     flat_panel.add_feature(_RaisingFeature(Frame.worldXY()))
-
-#     layer.compute_elementgeometry(include_features=False)
-
-#     assert layer.debug_info == []
+    assert layer.debug_info == []
 
 
 # ---------------------------------------------------------------------------
