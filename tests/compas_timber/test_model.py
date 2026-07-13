@@ -17,6 +17,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas.geometry import Line
 from compas_timber.elements import Beam
+from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -516,5 +517,101 @@ def test_element_by_guid_deprecated_warning(mocker):
     warn_spy = mocker.spy(model, "element_by_guid")
 
     _ = model.element_by_guid(str(beam.guid))
-
     warn_spy.assert_called_once()
+
+
+def test_compute_topologies_mixed_beams_and_plates():
+    """compute_topologies(), called with no `elements` arg, should dispatch beam-beam and
+    plate-plate pairs to their respective handlers. Beam-to-plate pairs aren't a registered
+    combination yet, so they're silently skipped regardless of proximity."""
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    polyline_a = Polyline([Point(0, 0, 10), Point(0, 20, 10), Point(10, 20, 10), Point(10, 0, 10), Point(0, 0, 10)])
+    polyline_b = Polyline([Point(0, 10, 10), Point(10, 10, 10), Point(20, 20, 20), Point(0, 20, 20), Point(0, 10, 10)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    model.add_element(plate_a)
+    model.add_element(plate_b)
+
+    model.compute_topologies()
+
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 2
+
+    beam_candidates = [c for c in candidates if set(c.elements) == {beam1, beam2}]
+    plate_candidates = [c for c in candidates if set(c.elements) == {plate_a, plate_b}]
+    assert len(beam_candidates) == 1
+    assert len(plate_candidates) == 1
+
+
+def test_compute_topologies_clears_all_candidates_regardless_of_scope():
+    """compute_topologies() clears every existing joint candidate before recomputing, even when
+    called with a narrower `elements` scope (e.g. via connect_adjacent_plates())."""
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    polyline_a = Polyline([Point(0, 0, 10), Point(0, 20, 10), Point(10, 20, 10), Point(10, 0, 10), Point(0, 0, 10)])
+    polyline_b = Polyline([Point(0, 10, 10), Point(10, 10, 10), Point(20, 20, 20), Point(0, 20, 20), Point(0, 10, 10)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    model = TimberModel()
+    model.add_elements([beam1, beam2, plate_a, plate_b])
+
+    model.connect_adjacent_beams()
+    assert len(model.joint_candidates) == 1
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1  # the beam candidate was cleared, only the plate candidate remains
+
+
+def test_connect_adjacent_plates_and_panels_equivalent():
+    """connect_adjacent_plates() and connect_adjacent_panels() should produce equivalent candidates
+    for equivalent geometry, since both dispatch through the same plate/panel handler."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+    plate_model = TimberModel()
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    plate_model.add_elements([plate_a, plate_b])
+    plate_model.connect_adjacent_plates()
+
+    panel_model = TimberModel()
+    panel_a = Panel.from_outline_thickness(polyline_a, 1)
+    panel_b = Panel.from_outline_thickness(polyline_b, 1)
+    panel_model.add_elements([panel_a, panel_b])
+    panel_model.connect_adjacent_panels()
+
+    plate_candidates = list(plate_model.joint_candidates)
+    panel_candidates = list(panel_model.joint_candidates)
+    assert len(plate_candidates) == len(panel_candidates) == 1
+    assert plate_candidates[0].topology == panel_candidates[0].topology
+    assert plate_candidates[0].a_segment_index == panel_candidates[0].a_segment_index
+
+
+def test_connect_adjacent_plates_repeated_call_no_duplicate_candidates():
+    """Calling connect_adjacent_plates() twice without an intervening process_joinery() should not
+    accumulate duplicate candidates."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+    model = TimberModel()
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    model.add_elements([plate_a, plate_b])
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1
