@@ -495,16 +495,14 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
 # Registered as (type_a, type_b) -> handler; order-independent (both (a, b) and (b, a) pairs match).
 # To support a new type combination (e.g. beam-to-plate), add a row here once the corresponding
 # topology-detection geometry exists.
-_CONNECTION_HANDLERS = [
-    ((Beam, Beam), _beam_connection_candidate),
-    ((Plate, Plate), _plate_connection_candidate),
-    ((Panel, Panel), _plate_connection_candidate),
-]
+_CONNECTION_HANDLERS = {
+    frozenset((Beam, Beam)): _beam_connection_candidate,
+    frozenset((Plate, Plate)): _plate_connection_candidate,
+    frozenset((Panel, Panel)): _plate_connection_candidate,
+}
 
 
 def find_connection_handler(element_a, element_b):
     """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
-    for (type_a, type_b), handler in _CONNECTION_HANDLERS:
-        if (isinstance(element_a, type_a) and isinstance(element_b, type_b)) or (isinstance(element_a, type_b) and isinstance(element_b, type_a)):
-            return handler
-    return None
+    key = frozenset((type(element_a), type(element_b)))
+    return _CONNECTION_HANDLERS.get(key, None)
