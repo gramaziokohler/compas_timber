@@ -102,6 +102,7 @@ class Joint(Data):
         else:
             raise ValueError("Joint requires either elements or element_guids.")
 
+        self.features = []
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location
 
@@ -207,6 +208,18 @@ class Joint(Data):
         """
         raise NotImplementedError
 
+    def clear_features(self):
+        """Removes the features defined by this joint from affected beam(s).
+        Raises
+        ------
+        :class:`~compas_timber.connections.BeamJoiningError`
+            Should be raised whenever the joint was not able to remove the features from the beams.
+        """
+        if self.features:
+            for e in self.elements:
+                e.remove_features(self.features)
+        self.features = []
+
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
@@ -222,6 +235,10 @@ class Joint(Data):
 
         """
         pass
+
+    def clear_extensions(self):
+        for e in self.elements:
+            e.remove_blank_extension(self.guid)
 
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.

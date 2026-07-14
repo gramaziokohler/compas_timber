@@ -88,10 +88,6 @@ class TLapJoint(LapJoint):
         """
         assert self.main_beam and self.cross_beam
 
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
-
         # create lap features
         negative_volume_main, negative_volume_cross = self._create_negative_volumes(self.cut_plane_bias)
         main_lap_feature = LapProxy.from_volume_and_beam(negative_volume_main, self.main_beam, ref_side_index=self.ref_side_index_a)

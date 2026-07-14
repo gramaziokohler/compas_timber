@@ -208,16 +208,16 @@ def test_beam_length_consistency_after_add_blank_extension(beam):
     """Test that length remains consistent after adding blank extensions."""
     length_before = beam.length
     blank_length_before = beam.blank_length
-    beam.add_blank_extension(0.1, 0.2, joint_key=1)
+    beam.add_blank_extension(0.1, 0.2, joint_guid=1)
 
     assert length_before == blank_length_before  # those should be the same without extensions
     assert beam.length == length_before  # this should not change after adding extensions
     assert beam.blank_length != blank_length_before  # this should change after adding extensions
 
 
-def test_add_blank_extension_with_joint_key(beam):
-    """Test adding extension with joint_key."""
-    beam.add_blank_extension(0.1, 0.2, joint_key=1)
+def test_add_blank_extension_with_joint_guid(beam):
+    """Test adding extension with joint_guid."""
+    beam.add_blank_extension(0.1, 0.2, joint_guid=1)
 
     assert beam._blank_extensions[1] == (0.1, 0.2)
     start, end = beam._resolve_blank_extensions()
@@ -225,17 +225,17 @@ def test_add_blank_extension_with_joint_key(beam):
     assert end == 0.2
 
 
-def test_add_extension_with_joint_key_none(beam):
-    """Test adding extension with joint_key=None."""
+def test_add_extension_with_joint_guid_none(beam):
+    """Test adding extension with joint_guid=None."""
     beam.add_blank_extension(0.1, 0.2)
 
     assert beam._blank_extensions[None] == (0.1, 0.2)
 
 
-def test_add_multiple_extensions_different_joint_keys(beam):
-    """Test adding multiple extensions with different joint_keys."""
-    beam.add_blank_extension(0.1, 0.2, joint_key=1)
-    beam.add_blank_extension(0.15, 0.05, joint_key=2)
+def test_add_multiple_extensions_different_joint_guids(beam):
+    """Test adding multiple extensions with different joint_guids."""
+    beam.add_blank_extension(0.1, 0.2, joint_guid=1)
+    beam.add_blank_extension(0.15, 0.05, joint_guid=2)
 
     assert beam._blank_extensions[1] == (0.1, 0.2)
     assert beam._blank_extensions[2] == (0.15, 0.05)
@@ -244,21 +244,21 @@ def test_add_multiple_extensions_different_joint_keys(beam):
     assert end == 0.2  # max of 0.2 and 0.05
 
 
-def test_remove_specific_extension_by_joint_key(beam):
-    """Test removing specific extension by joint_key."""
-    beam.add_blank_extension(0.1, 0.2, joint_key=1)
-    beam.add_blank_extension(0.15, 0.05, joint_key=2)
+def test_remove_specific_extension_by_joint_guid(beam):
+    """Test removing specific extension by joint_guid."""
+    beam.add_blank_extension(0.1, 0.2, joint_guid=1)
+    beam.add_blank_extension(0.15, 0.05, joint_guid=2)
 
-    beam.remove_blank_extension(joint_key=1)
+    beam.remove_blank_extension(joint_guid=1)
 
     assert 1 not in beam._blank_extensions
     assert beam._blank_extensions[2] == (0.15, 0.05)
 
 
 def test_remove_all_extensions(beam):
-    """Test removing all extensions with joint_key=None."""
-    beam.add_blank_extension(0.1, 0.2, joint_key=1)
-    beam.add_blank_extension(0.15, 0.05, joint_key=2)
+    """Test removing all extensions with joint_guid=None."""
+    beam.add_blank_extension(0.1, 0.2, joint_guid=1)
+    beam.add_blank_extension(0.15, 0.05, joint_guid=2)
 
     beam.remove_blank_extension()
 
@@ -278,7 +278,7 @@ def test_start_blank_extension_updates_blank(beam):
     blank_before = beam.blank.copy()
     extension_amount = 50.0
 
-    beam.add_blank_extension(extension_amount, 0.0, joint_key=1)
+    beam.add_blank_extension(extension_amount, 0.0, joint_guid=1)
     blank_after = beam.blank.copy()
 
     # The blank length should increase by the extension amount
@@ -307,11 +307,11 @@ def test_transformation_when_removing_extensions(beam):
     transformation_before = beam.transformation
 
     # Add extension
-    beam.add_blank_extension(0.1, 0.0, joint_key=1)
+    beam.add_blank_extension(0.1, 0.0, joint_guid=1)
     transformation_with_extension = beam.transformation
 
     # Remove extension
-    beam.remove_blank_extension(joint_key=1)
+    beam.remove_blank_extension(joint_guid=1)
     transformation_without_extension = beam.transformation
 
     # Should be back to original
@@ -325,7 +325,7 @@ def test_extension_to_plane(beam):
 
     plane = Plane(Point(0, 0, 0), Vector(-1.000, 0.000, 0.000))
     start, end = beam.extension_to_plane(plane)
-    beam.add_blank_extension(start, end, joint_key=0)
+    beam.add_blank_extension(start, end, joint_guid=0)
     extension_start, extension_end = beam._blank_extensions.get(0)
 
     assert extension_start == beam.frame.xaxis.dot(Vector.from_start_end(plane.point, beam.frame.point))
@@ -340,7 +340,7 @@ def test_extension_to_frame(beam):
 
     plane = Frame.from_plane(Plane(Point(0, 0, 0), Vector(-1.000, 0.000, 0.000)))
     start, end = beam.extension_to_plane(plane)
-    beam.add_blank_extension(start, end, joint_key=0)
+    beam.add_blank_extension(start, end, joint_guid=0)
     extension_start, extension_end = beam._blank_extensions.get(0)
 
     assert extension_start == beam.frame.xaxis.dot(Vector.from_start_end(plane.point, beam.frame.point))
@@ -384,8 +384,8 @@ def test_frame_unchanged_by_blank_extensions(beam):
     original_transformation = beam.transformation.copy()
 
     # Add blank extensions (simulating joining operations)
-    beam.add_blank_extension(50.0, 30.0, joint_key=1)
-    beam.add_blank_extension(25.0, 15.0, joint_key=2)
+    beam.add_blank_extension(50.0, 30.0, joint_guid=1)
+    beam.add_blank_extension(25.0, 15.0, joint_guid=2)
 
     start, _ = beam._resolve_blank_extensions()
 
