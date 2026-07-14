@@ -209,12 +209,7 @@ class Joint(Data):
         raise NotImplementedError
 
     def clear_features(self):
-        """Removes the features defined by this joint from affected beam(s).
-        Raises
-        ------
-        :class:`~compas_timber.connections.BeamJoiningError`
-            Should be raised whenever the joint was not able to remove the features from the beams.
-        """
+        """Removes the features defined by this joint from affected element(s)."""
         if self.features:
             for e in self.elements:
                 e.remove_features(self.features)
@@ -237,6 +232,7 @@ class Joint(Data):
         pass
 
     def clear_extensions(self):
+        """Removes the extensions defined by this joint from affected element(s)."""
         for e in self.elements:
             e.remove_blank_extension(self.guid)
 

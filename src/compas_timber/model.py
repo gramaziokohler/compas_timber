@@ -366,10 +366,10 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
-        # explicitly remove old joint instances between the same elements. 
-        # This ensures that the joint being removed clears its features from the elements 
+        # explicitly remove old joint instances between the same elements.
+        # This ensures that the joint being removed clears its features from the elements
         # before the new is added, which will add its own features to the elements.
-        # NOTE: in the case where a 2 element joint is added between elements previously in a 3+ element joint, one or more elements will be left unconnected. 
+        # NOTE: in the case where a 2 element joint is added between elements previously in a 3+ element joint, one or more elements will be left unconnected.
         for pair in combinations(joint.elements, 2):
             old = self.get_joint(pair[0], pair[1])
             if old:
@@ -583,10 +583,11 @@ class TimberModel(Model):
             super().remove_interaction(a, b)
 
     def remove_element(self, element):
-        # comaps_model.model removes the interactions and edges connected ot element, but we have to remove the joints from the model as well, since they are stored in a separate dict
+        # compas_model.Model removes the interactions and edges connected to the element,
+        # but joints are stored in a separate dict, so we remove those explicitly first.
         for joint in self.get_joints_for_element(element):
             self.remove_joint(joint)
-        return super().remove_element(element)  
+        return super().remove_element(element)
 
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
