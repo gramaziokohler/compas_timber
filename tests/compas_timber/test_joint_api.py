@@ -728,6 +728,81 @@ def test_process_joinery_stop_on_first_error_respects_subset(miter_beam_triplet,
 
 
 # =============================================================================
+# process_joinery() is idempotent
+# =============================================================================
+
+
+def test_process_joinery_repeated_full_run_is_idempotent(miter_beam_triplet):
+    """Running process_joinery() more than once must not change the resulting extensions or feature counts.
+
+    Beam.add_blank_extension() accumulates onto any existing entry for the same joint guid, so without
+    clearing extensions before recomputing them, a second process_joinery() call would silently double
+    the extension amount on every re-run. This asserts the exact (start, end) values, not just presence,
+    so that kind of drift would be caught.
+    """
+    model, b1, b2, b3 = miter_beam_triplet
+    LMiterJoint.create(model, b1, b2)
+    LMiterJoint.create(model, b2, b3)
+
+    model.process_joinery()
+    extensions_after_first_run = {b: dict(b._blank_extensions) for b in (b1, b2, b3)}
+    feature_counts_after_first_run = {b: len(b.features) for b in (b1, b2, b3)}
+    assert any(extensions_after_first_run[b] for b in (b1, b2, b3)), "sanity check: something should have been extended"
+
+    model.process_joinery()
+    model.process_joinery()  # a third time, for good measure
+
+    for b in (b1, b2, b3):
+        assert b._blank_extensions == extensions_after_first_run[b]
+        assert len(b.features) == feature_counts_after_first_run[b]
+
+
+def test_process_joinery_repeated_subset_run_is_idempotent(miter_beam_pair):
+    """Same as above, but for the joints_to_process subset path specifically."""
+    model, b1, b2 = miter_beam_pair
+    joint = LMiterJoint.create(model, b1, b2)
+
+    model.process_joinery(joints_to_process=[joint])
+    extensions_after_first_run = dict(b1._blank_extensions)
+    feature_count_after_first_run = len(b1.features)
+    assert extensions_after_first_run, "sanity check: something should have been extended"
+
+    model.process_joinery(joints_to_process=[joint])
+    model.process_joinery(joints_to_process=[joint])
+
+    assert b1._blank_extensions == extensions_after_first_run
+    assert len(b1.features) == feature_count_after_first_run
+
+
+def test_process_joinery_subset_result_matches_full_run_result():
+    """Processing a joint through joints_to_process must produce the same result as a full process_joinery() run.
+
+    Two independent, geometrically identical models: one processes its single joint through the
+    joints_to_process subset path, the other through the default full-model path. The resulting
+    extension amounts and feature counts must match -- which path a joint is processed through
+    shouldn't change what it computes.
+    """
+    model_subset = TimberModel()
+    s1 = Beam(frame=Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=30.0, height=30.0, length=200.0)
+    s2 = Beam(frame=Frame(Point(0, 0, 0), Vector(0, 1, 0), Vector(-1, 0, 0)), width=30.0, height=30.0, length=200.0)
+    model_subset.add_element(s1)
+    model_subset.add_element(s2)
+    joint_subset = LMiterJoint.create(model_subset, s1, s2)
+    model_subset.process_joinery(joints_to_process=[joint_subset])
+
+    model_full = TimberModel()
+    f1 = Beam(frame=Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=30.0, height=30.0, length=200.0)
+    f2 = Beam(frame=Frame(Point(0, 0, 0), Vector(0, 1, 0), Vector(-1, 0, 0)), width=30.0, height=30.0, length=200.0)
+    model_full.add_element(f1)
+    model_full.add_element(f2)
+    LMiterJoint.create(model_full, f1, f2)
+    model_full.process_joinery()
+
+    assert set(s1._blank_extensions.values()) == set(f1._blank_extensions.values())
+    assert len(s1.features) == len(f1.features)
+
+
+# =============================================================================
 # Joint identity and consistency
 # =============================================================================
 
