@@ -299,8 +299,8 @@ class FrenchRidgeLap(BTLxProcessing):
                 geometry.trim(trimming_frame)
             except BrepTrimmingError:
                 raise FeatureApplicationError(
-                    trimming_frame,
-                    geometry,
+                    trimming_frame.transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
                     "Could not trim the beam geometry with the cutting frame.",
                 )
         # subtract the lap volume from the beam geometry
@@ -310,8 +310,8 @@ class FrenchRidgeLap(BTLxProcessing):
             return geometry - subtracting_volume
         except IndexError:
             raise FeatureApplicationError(
-                subtracting_volume,
-                geometry,
+                subtracting_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "Could not subtract the cutting volume from the beam geometry.",
             )
 

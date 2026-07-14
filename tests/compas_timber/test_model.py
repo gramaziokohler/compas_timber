@@ -275,7 +275,42 @@ def test_error_deepcopy_joint():
     assert error.beams == "mama"
     assert error.joint == "papa"
     assert error.debug_info == "dog"
-    assert error.debug_geometries == "cucumber"
+    assert error.debug_geometries == ["cucumber"]
+
+
+def test_feature_application_error_geometry_is_in_model_space():
+    """A FeatureApplicationError caught by compute_elementgeometry() must carry geometry in
+    model space, not the local/element space `apply()` operates in."""
+    from compas.geometry import bounding_box
+
+    from compas_timber.errors import FeatureApplicationError
+
+    class _FailingFeature(object):
+        """Mimics a real BTLxProcessing.apply(): receives local-space geometry and raises a
+        FeatureApplicationError with geometry already transformed to model space, exactly as
+        production code does."""
+
+        def apply(self, geometry, beam):
+            raise FeatureApplicationError(None, geometry.transformed(beam.modeltransformation), "boom")
+
+    frame = Frame(Point(1000, 2000, 300), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame=frame, width=100, height=200, length=1000)
+    beam.add_features(_FailingFeature())
+
+    beam.geometry  # triggers compute_elementgeometry(), which catches the error into debug_info
+
+    assert len(beam.debug_info) == 1
+    error = beam.debug_info[0]
+    assert isinstance(error, FeatureApplicationError)
+
+    error_bbox = bounding_box([v.point for v in error.element_geometry.vertices])
+    blank_bbox = bounding_box(beam.blank.points)
+    for error_point, blank_point in zip(error_bbox, blank_bbox):
+        assert Point(*error_point).distance_to_point(Point(*blank_point)) < 1e-6
+
+    # sanity check: local-space geometry would sit near the origin, far from the beam's actual position
+    origin_distance = min(v.point.distance_to_point(Point(0, 0, 0)) for v in error.element_geometry.vertices)
+    assert origin_distance > 900
 
 
 def test_beam_graph_node_available_after_serialization():
