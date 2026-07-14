@@ -153,7 +153,7 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        polyline : list of :class:`compas.geometry.Point`
+        polyline : :class:`compas.geometry.Polyline`
             The polyline of the contour.
         element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
             The element.
@@ -161,7 +161,7 @@ class FreeContour(BTLxProcessing):
             The depth of the contour. Default is the thickness of the element.
         interior : bool, optional
             If True, the contour is an interior contour. Default is False.
-        tool_position : BTLx.AlignmentType, optional
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
             The position of the tool. Default is "left".
         ref_side_index : int, optional
             The reference side index. If none is given, the function will try to find the reference side index based on the polyline and element.
@@ -175,6 +175,42 @@ class FreeContour(BTLxProcessing):
         depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[1]
         transformed_polyline = polyline.transformed(Transformation.from_frame(ref_side).inverse())
         contour = Contour(transformed_polyline, depth=depth, inclination=[0.0])
+        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
+
+    @classmethod
+    def from_polyline_ref_plane_and_beam(
+        cls,
+        polyline: Polyline,
+        element: TimberElement,
+        user_ref_plane: Frame,
+        depth: Optional[float] = 0.0,
+        interior: Optional[bool] = False,
+        tool_position: Optional[AlignmentType] = AlignmentType.LEFT,
+        **kwargs,
+    ):
+        """Construct a FreeContour processing from a polyline, a custom reference plane and an element.
+
+        The reference plane is registered on the element as a user reference plane and referenced
+        in the BTLx output via ``ReferencePlaneID``.
+
+        Parameters
+        ----------
+        polyline : :class:`compas.geometry.Polyline`
+            The polyline of the contour.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element.
+        user_ref_plane : :class:`compas.geometry.Frame`
+            The custom reference plane in model (world) coordinates.
+        depth : float, optional
+            The depth of the contour. Default is 0.0.
+        interior : bool, optional
+            If True, the contour is an interior contour. Default is False.
+        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+            The position of the tool. Default is derived from the polyline winding direction.
+        """
+        ref_side_index = element.add_user_ref_plane(user_ref_plane)
+        transformed_polyline = polyline.transformed(Transformation.from_frame(user_ref_plane).inverse())
+        contour = Contour(transformed_polyline, depth=depth)
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @classmethod
@@ -305,9 +341,14 @@ class FreeContour(BTLxProcessing):
         """
 
         vol = self.contour_param_object.to_brep()
-        # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
-        transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
-        vol.transform(transformation_ref_side_to_local)
+        if self.ref_side_index >= 100:
+            ref_frame = element.get_user_ref_plane(self.ref_side_index)
+        else:
+            ref_frame = element.ref_sides[self.ref_side_index]
+        # contour is in ref_frame local space; transform to world then to element local (where geometry lives)
+        transformation = element.modeltransformation.inverse() * Transformation.from_frame(ref_frame)
+        vol.transform(transformation)
+
         if self.counter_sink:  # contour should remove material inside of the contour
             return geometry - vol
         else:

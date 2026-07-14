@@ -231,7 +231,12 @@ class BTLxWriter(object):
         # Add part references if any beams are assigned to this stock
         if stock.element_data:
             for beam_guid, data in stock.element_data.items():
-                position_frame = data.frame
+                if isinstance(data, dict):
+                    position_frame = data.get("frame")
+                else:
+                    position_frame = getattr(data, "frame", None)
+                if position_frame is None:
+                    raise AttributeError("Element data for GUID {} is missing a frame.".format(beam_guid))
                 # Apply scale factor to the frame
                 if scale_factor != 1.0:
                     position_frame = position_frame.scaled(scale_factor)
@@ -263,6 +268,9 @@ class BTLxWriter(object):
 
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
+        # add user reference planes if there are any on the element.
+        if element.user_ref_planes:
+            part_element.append(part.et_user_reference_planes)
         # create processings element for the part if there are any
         if element.features:
             processings_element = ET.Element("Processings")
@@ -629,11 +637,44 @@ class BTLxPart(BTLxGenericPart):
         raise ValueError("Given element face does not match any of the reference surfaces.")
 
     @property
+    def et_user_reference_planes(self):
+        """Create the UserReferencePlanes XML element from planes stored on the element.
+
+        Each plane is transformed from model (world) coordinates into the part's
+        local ref_frame coordinate system before being written, scaled by the
+        writer's unit scale factor.
+
+        The ``ID`` attribute is taken directly from each plane's ``ID`` field,
+        which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
+
+        Returns
+        -------
+        :class:`xml.etree.ElementTree.Element`
+        """
+        user_ref_planes = ET.Element("UserReferencePlanes")
+        T = Transformation.from_frame(self.frame).inverted()
+        for plane in self.element.user_ref_planes:
+            local_frame = plane.frame.transformed(T)
+            local_frame.point.scale(self._scale_factor)
+            plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(plane.ID))
+            position = ET.SubElement(plane_el, "Position")
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(local_frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(local_frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(local_frame.yaxis)))
+        return user_ref_planes
+
+    @property
     def et_shape(self):
         shape = ET.Element("Shape")
         indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
         indexed_face_set.append(ET.Element("Coordinate", {"point": self.shape_strings[1]}))
         return shape
+
+    @property
+    def et_reference_side(self):
+        """Create the reference side XML element."""
+        index = self.element.attributes.get("ref_side_index", 0)  # default to 0 if not set, which corresponds to RS1
+        return ET.Element("ReferenceSide", Side=str(index + 1), Align="yes")
 
     @property
     def shape_strings(self):
@@ -802,6 +843,25 @@ class AttributeSpec(object):
 class BTLxProcessing(Data, ABC):
     """Abstract base class for BTLx Processing.
 
+    Parameters
+    ----------
+    ref_side_index : int, optional
+        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
+    priority : int, optional
+        The priority of the process. Defaults to 0.
+    process_id : int, optional
+        The process ID. Defaults to 0.
+    tool_id : int, optional
+        The tool ID for the processing. Only used by specific processing types.
+    counter_sink : bool, optional
+        If True, the processing creates a counter sink. Only used by specific processing types.
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    user_plane_id : int, optional
+        The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
+    is_joinery : bool, optional
+        If True, the process is a result of joinery process. Defaults to True.
+
     Attributes
     ----------
     ref_side_index : int
@@ -816,14 +876,16 @@ class BTLxProcessing(Data, ABC):
         If True, the processing creates a counter sink. Only used by specific processing types.
     tool_position : :class:`~compas_timber.fabrication.AlignmentType`
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    user_plane_id : int, optional
+        The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
+    is_joinery : bool
+        If True, the process is a result of joinery process.
     PROCESSING_NAME : str
         The name of the process.
     ATTRIBUTE_MAP : dict
         Mapping of BTLx XML attribute names to Python attribute names.
     HEADER_ATTRIBUTE_MAP : dict
         Mapping of BTLx XML header attribute names (in XML attributes) to Python parameter names with converters.
-    is_joinery : bool
-        If True, the process is a result of joinery process.
     params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
         The BTLx processing parameters for serialization.
 
@@ -831,7 +893,7 @@ class BTLxProcessing(Data, ABC):
 
     # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
     HEADER_ATTRIBUTE_MAP = {
-        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
+        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1 if int(v) < 100 else int(v)),  # Convert 1-based to 0-based; user planes (>=100) pass through
         "Priority": ("priority", int),
         "ProcessID": ("process_id", int),
         "ToolID": ("tool_id", int),
@@ -843,14 +905,15 @@ class BTLxProcessing(Data, ABC):
 
     @property
     def __data__(self):
-        return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+        data = {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
+        data.update(self.user_attributes)
+        return data
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True, **kwargs):
         super(BTLxProcessing, self).__init__()
-        self._ref_side_index = None
         self._priority = priority
         self._process_id = process_id
-        self.ref_side_index = ref_side_index or 0
+        self.ref_side_index = ref_side_index
         self.subprocessings = None
         self._is_joinery = is_joinery
         self._name = name
@@ -859,6 +922,8 @@ class BTLxProcessing(Data, ABC):
         self._tool_id = tool_id
         self._counter_sink = counter_sink
         self._tool_position = tool_position
+        self.user_attributes = {}
+        self.user_attributes.update(kwargs)
 
     def __init_subclass__(cls, **kwargs):
         super(BTLxProcessing, cls).__init_subclass__(**kwargs)
@@ -878,8 +943,8 @@ class BTLxProcessing(Data, ABC):
     @ref_side_index.setter
     def ref_side_index(self, value):
         value_ = int(value)
-        if value_ < 0 or value_ > 5:
-            raise ValueError("Reference side index must be between 0 and 5, inclusive.")
+        if not (0 <= value_ <= 5 or value_ >= 100):
+            raise ValueError("Reference side index must be 0-5 (standard sides) or >= 100 (user reference plane ID). Got: {}".format(value))
         self._ref_side_index = value_
 
     @property
@@ -984,7 +1049,10 @@ class BTLxProcessingParams(object):
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        if self._instance.ref_side_index >= 100:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index)
+        else:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
 
         # Add optional header attributes if set
         if self._instance.tool_id is not None:
@@ -1012,6 +1080,8 @@ class BTLxProcessingParams(object):
             The processing parameters as a dictionary.
         """
         result = OrderedDict()
+        if self._instance.user_attributes:
+            result["UserAttributes"] = UserAttributesParam(self._instance.user_attributes)
         for btlx_name, attr_spec in self.attribute_map.items():
             value = getattr(self._instance, attr_spec.python_name)
             result[btlx_name] = self._format_value(value)
@@ -1234,6 +1304,46 @@ class EdgePositionType(object):
     OPPEDGE = "oppedge"
 
 
+class UserReferencePlane(Data):
+    """A reference plane attached to a timber element for use in BTLx processings.
+
+    ``UserReferencePlane`` objects are registered on a
+    :class:`~compas_timber.base.TimberElement` via
+    :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
+
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane expressed in model (world) coordinates.
+    ID : int
+        The BTLx integer ID for this plane. Must be an integer >= 100.
+
+    Attributes
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane in model coordinates.
+    ID : int
+        The BTLx integer ID of this plane.
+
+    """
+
+    def __init__(self, frame: Frame, ID: int):
+        super(UserReferencePlane, self).__init__()
+        if type(ID) is not int:
+            raise TypeError("BTLx reference plane IDs must be integers.")
+        if ID < 100:
+            raise ValueError("BTLx reference plane IDs must be >= 100.")
+        self.frame = frame
+        self.ID = ID
+
+    def __repr__(self):
+        return "UserReferencePlane(ID={!r}, frame={!r})".format(self.ID, self.frame)
+
+    @property
+    def __data__(self):
+        return {"frame": self.frame, "ID": self.ID}
+
+
 class AlignmentType(object):
     """Enum for the alignment of the cut.
     Attributes
@@ -1410,6 +1520,43 @@ class DualContour(Data):
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
+
+
+class UserAttributesParam(object):
+    """Container for user-defined key-value attributes attached to a BTLx processing.
+
+    Parameters
+    ----------
+    attributes : dict
+        A dict mapping attribute names (str) to attribute values (str).
+
+    """
+
+    def __init__(self, attributes):
+        self.attributes = attributes
+
+
+def user_attributes_to_xml(param):
+    """Converts a :class:`UserAttributesParam` to an XML element.
+
+    Parameters
+    ----------
+    param : :class:`UserAttributesParam`
+        The user attributes to be serialized.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The ``<UserAttributes>`` XML element.
+
+    """
+    root = ET.Element("UserAttributes")
+    for name, value in param.attributes.items():
+        ET.SubElement(root, "UserAttribute", Name=str(name), Value=str(value), Type="string")
+    return root
+
+
+BTLxWriter.register_type_serializer(UserAttributesParam.__name__, user_attributes_to_xml)
 
 
 class BTLxFromGeometryDefinition(Data):

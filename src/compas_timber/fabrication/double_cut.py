@@ -9,7 +9,6 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
-from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 
 from compas_timber.errors import FeatureApplicationError
@@ -187,7 +186,7 @@ class DoubleCut(BTLxProcessing):
         Parameters
         ----------
         planes : list of :class:`~compas.geometry.Plane` or :class:`~compas.geometry.Frame`
-            The two cutting planes that define the double cut.
+            The two cutting planes that define the double cut. Order does not matter.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
         ref_side_index : int, optional
@@ -216,8 +215,16 @@ class DoubleCut(BTLxProcessing):
             raise ValueError("Planes do not intersect with beam.")
         if not ref_side_index:
             ref_side_index = face_indices[0]
-            ref_side = beam.ref_sides[ref_side_index]
             point_start_xy = intersection_points[0]
+            if ref_side_index in [0, 2]:
+                #try the next intersecting face
+                try:
+                    ref_side_index = face_indices[1]
+                    point_start_xy = intersection_points[1]
+                except IndexError:
+                    pass
+            ref_side = beam.ref_sides[ref_side_index]
+
 
         else:
             if ref_side_index not in face_indices:
@@ -227,26 +234,22 @@ class DoubleCut(BTLxProcessing):
                 index = face_indices.index(ref_side_index)
                 point_start_xy = intersection_points[index]
 
-        planes = cls._reorder_planes(planes, line, ref_side)
         orientation = cls._calculate_orientation(beam, planes)
+
         start_x, start_y = cls._calculate_start_x_y(ref_side, point_start_xy)
         angle_1, angle_2 = cls._calculate_angle(ref_side, planes, orientation)
         inclination_1, inclination_2 = cls._calculate_inclination(ref_side, planes)
 
-        # TODO: evaluate if the planes should be cached for use in geometry creation.
+        # define concavity based on the average normal of the planes and the ref_side orientation.
+        is_concave = cls._define_concavity(ref_side, planes, orientation)
+
+        # enforce BTLx convention: concave → angle_1 < angle_2, convex → angle_1 > angle_2
+        if is_concave != (angle_1 < angle_2):
+            angle_1, angle_2 = angle_2, angle_1
+            inclination_1, inclination_2 = inclination_2, inclination_1
+
         return cls(orientation, start_x, start_y, angle_1, inclination_1, angle_2, inclination_2, ref_side_index=ref_side_index, **kwargs)
 
-
-    @staticmethod
-    def _reorder_planes(planes, intersection_line, ref_side):
-        """this makes sure that plane[0] is the one that is closest to the ref_side yaxis"""
-        lines = [Line.from_point_and_vector(plane.point, intersection_line.direction) for plane in planes]
-        points = [Point(*intersection_line_plane(line, Plane.from_frame(ref_side))) for line in lines]
-        dots = [dot_vectors(point, ref_side.yaxis) for point in points]
-        if dots[0] > dots[1]:
-            return [planes[1],planes[0]]
-        else:
-            return planes
 
     @classmethod
     def from_shapes_and_element(cls, plane_a, plane_b, element, **kwargs):
@@ -296,6 +299,9 @@ class DoubleCut(BTLxProcessing):
                 angle = angle_vectors(ref_side.xaxis, angle_vector, deg=True)
             else:
                 angle = angle_vectors(ref_side.xaxis, -angle_vector, deg=True)
+            # HACK: if the angle is equal to 0 or 180, override with 0.1 to avoid failure
+            if angle < 0.1 or angle > 179.9:
+                angle = 0.1
             angles.append(angle)
         return angles
 
@@ -307,6 +313,14 @@ class DoubleCut(BTLxProcessing):
             inclination = angle_vectors(ref_side.normal, plane.normal, deg=True)
             inclinations.append(inclination)
         return inclinations
+
+    @staticmethod
+    def _define_concavity(ref_side, planes, orientation):
+        # define concavity based on the average normal of the planes and the ref_side orientation.
+        average_normal = planes[0].normal + planes[1].normal
+        if orientation == OrientationType.END:
+            average_normal = -average_normal
+        return dot_vectors(average_normal, ref_side.xaxis) > 0
 
     ########################################################################
     # Methods
@@ -345,15 +359,25 @@ class DoubleCut(BTLxProcessing):
         cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
         if self.is_concave:
-            trim_volume = geometry.copy()
-            for cutting_plane in cutting_planes:
-                trim_volume.trim(cutting_plane)
-            return geometry - trim_volume
+            try:
+                trim_volume = beam.compute_elementgeometry(include_features=False)
+                for cutting_plane in cutting_planes:
+                    trim_volume.trim(cutting_plane)
+                return geometry - trim_volume
+            except Exception as e:
+                raise FeatureApplicationError(
+                    trim_volume, geometry, "Failed to apply concave double cut: {}".format(str(e))
+                )
         else:
-            for cutting_plane in cutting_planes:
-                plane = Plane(cutting_plane.point, -cutting_plane.normal)
-                geometry.trim(plane)
-            return geometry
+            try:
+                for cutting_plane in cutting_planes:
+                    plane = Plane(cutting_plane.point, -cutting_plane.normal)
+                    geometry.trim(plane)
+                return geometry
+            except Exception as e:
+                raise FeatureApplicationError(
+                    cutting_planes, geometry, "Failed to apply convex double cut: {}".format(str(e))
+                )
 
 
     def planes_from_params_and_beam(self, beam):

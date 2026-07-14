@@ -339,7 +339,23 @@ class Joint(Data):
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
         else:
             elements = reordered_elements or list(cluster.elements)
-        return cls.create(model, *elements, **kwargs)
+
+            # find the average location of the candidates to set the joint's location
+            locations = [candidate.location for candidate in cluster.joints if candidate.location is not None]
+            if locations:
+                avg_x = sum(loc.x for loc in locations) / len(locations)
+                avg_y = sum(loc.y for loc in locations) / len(locations)
+                avg_z = sum(loc.z for loc in locations) / len(locations)
+                location = Point(avg_x, avg_y, avg_z)
+            else:
+                location = None
+
+            kwargs.update({"topology": cluster.topology, "location": location})  # pass topology and location from cluster
+            joint = cls.create(model, *elements, **kwargs)
+
+            for candidate in cluster.joints:
+                candidate.is_promoted = True  # flag the candidate that constitute this cluster as promoted, so they won't be promoted again.
+            return joint
 
     @classmethod
     def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
@@ -370,6 +386,7 @@ class Joint(Data):
             elements = candidate.elements
         kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
         joint = cls.create(model, *elements, **kwargs)
+        candidate.is_promoted = True
         return joint
 
     @classmethod

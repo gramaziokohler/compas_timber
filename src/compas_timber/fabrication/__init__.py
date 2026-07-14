@@ -32,8 +32,10 @@ from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
+from .btlx import UserReferencePlane
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
+from .birds_mouth import BirdsMouth
 from .simple_scarf import SimpleScarf
 
 __all__ = [
@@ -70,8 +72,10 @@ __all__ = [
     "BTLxFromGeometryDefinition",
     "Contour",
     "DualContour",
+    "UserReferencePlane",
     "LongitudinalCut",
     "BTLxRawpart",
     "SimpleScarf",
     "LongitudinalCutProxy",
+    "BirdsMouth",
 ]

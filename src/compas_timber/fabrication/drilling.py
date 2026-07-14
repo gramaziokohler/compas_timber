@@ -168,7 +168,7 @@ class Drilling(BTLxProcessing):
     ########################################################################
 
     @classmethod
-    def from_line_and_element(cls, line, element, diameter):
+    def from_line_and_element(cls, line, element, diameter, ref_side_index=None, **kwargs):
         """Construct a drilling process from a line and diameter.
 
         TODO: change this to point + vector instead of line. line is too fragile, it can be flipped and cause issues.
@@ -189,16 +189,26 @@ class Drilling(BTLxProcessing):
             The constructed drilling processing.
 
         """
-        ref_side_index, xy_point = cls._calculate_ref_side_index(line, element)
+
+        if ref_side_index is None:
+            ref_side_index, _ = cls._calculate_ref_side_index(line, element)
+
+        # check if the line intersects with the reference side, if not, raise an error
+        intersection = intersection_line_plane(line, Plane.from_frame(element.ref_sides[ref_side_index]))
+        if not intersection:
+            raise ValueError("The line does not intersect with the reference side.")
+
+        ref_side = element.side_as_surface(ref_side_index)
+        xy_point = Point(*intersection_line_plane(line, ref_side.to_plane()))
+
         line = cls._flip_line_if_start_inside(line, element, ref_side_index)
         depth_limited = cls._is_depth_limited(line, element)
-        ref_surface = element.side_as_surface(ref_side_index)
-        depth = cls._calculate_depth(line, ref_surface) if depth_limited else 0.0
-        x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_surface)
-        angle = cls._calculate_angle(ref_surface, line, xy_point)
-        inclination = cls._calculate_inclination(ref_surface.frame, line, angle, xy_point)
+        depth = cls._calculate_depth(line, ref_side)
+        x_start, y_start = cls._xy_to_ref_side_space(xy_point, ref_side)
+        angle = cls._calculate_angle(ref_side, line, xy_point)
+        inclination = cls._calculate_inclination(ref_side.frame, line, angle, xy_point)
         try:
-            return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index)
+            return cls(x_start, y_start, angle, inclination, depth_limited, depth, diameter, ref_side_index=ref_side_index, **kwargs)
         except ValueError as e:
             raise FeatureApplicationError(
                 message=str(e),
@@ -293,7 +303,6 @@ class Drilling(BTLxProcessing):
         # angle goes between -180 and 180 but we need it between 0 and 360
         if angle < 0:
             angle += 360
-
         return angle
 
     @staticmethod
@@ -332,15 +341,15 @@ class Drilling(BTLxProcessing):
 
         try:
             return geometry - drill_geometry
-        except IndexError:
+        except Exception as e:
             raise FeatureApplicationError(
                 drill_geometry,
                 geometry,
-                "The drill geometry does not intersect with element geometry.",
+                "The drill geometry does not intersect with element geometry." + str(e),
             )
 
-    def cylinder_from_params_and_element(self, element):
-        """Construct the geometry of the drilling using the parameters in this instance and the element object.
+    def line_from_params_and_element(self, element):
+        """Construct the line of the drilling using the parameters in this instance and the element object.
 
         Parameters
         ----------
@@ -349,11 +358,10 @@ class Drilling(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Cylinder`
-            The constructed cylinder.
+        :class:`compas.geometry.Line`
+            The constructed line.
 
         """
-        assert self.diameter is not None
         assert self.angle is not None
         assert self.inclination is not None
         assert self.depth is not None
@@ -371,6 +379,24 @@ class Drilling(BTLxProcessing):
         # scale both ends so is protrudes nicely from the surface
         # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
         drill_line = self._scaled_line_by_factor(drill_line, 1.2)
+        return drill_line
+
+    def cylinder_from_params_and_element(self, element):
+        """Construct the geometry of the drilling using the parameters in this instance and the element object.
+
+        Parameters
+        ----------
+        element : :class:`compas_timber.elements.Element`
+            The element to drill.
+
+        Returns
+        -------
+        :class:`compas.geometry.Cylinder`
+            The constructed cylinder.
+
+        """
+        assert self.diameter is not None
+        drill_line = self.line_from_params_and_element(element)
         return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
 
     def _scaled_line_by_factor(self, line, factor):

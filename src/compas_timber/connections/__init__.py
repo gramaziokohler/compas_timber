@@ -41,6 +41,8 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .t_multi_step_joint import TMultiStepJoint
+from .k_birdsmouth import KBirdsmouthJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 
@@ -93,4 +95,6 @@ __all__ = [
     "PanelMiterJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
+    "TMultiStepJoint",
+    "KBirdsmouthJoint",
 ]

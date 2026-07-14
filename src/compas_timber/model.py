@@ -7,6 +7,7 @@ from typing import cast
 
 from compas.geometry import Point
 from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 from compas_model.elements import Element
 from compas_model.models import Model
 
@@ -58,12 +59,14 @@ class TimberModel(Model):
     @property
     def __data__(self):
         data = super().__data__
+        data["tolerance"] = self._tolerance
         data["joints"] = self._joints
         return data
 
     @classmethod
     def __from_data__(cls, data):
         model = super().__from_data__(data)
+        model._tolerance = data.get("tolerance", TOL)
         joints_data = data["joints"]
         for guid_str, joint in joints_data.items():
             model._joints[guid_str] = joint
@@ -77,7 +80,7 @@ class TimberModel(Model):
         super(TimberModel, self).__init__()
         self._joints = {}
         self._topologies = []  # added to avoid calculating multiple times
-        self._tolerance = tolerance or TOL
+        self._tolerance = tolerance or Tolerance()
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
         self._graph.update_default_node_attributes(**self._TIMBER_GRAPH_NODE_ATTRIBUTES)
 
