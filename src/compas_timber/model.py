@@ -632,6 +632,7 @@ class TimberModel(Model):
         joints = joints_to_process if joints_to_process is not None else self.joints
 
         for joint in joints:
+            joint.clear_extensions()
             joint.clear_features()
 
         for joint in joints:
