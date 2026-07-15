@@ -679,8 +679,8 @@ class Lap(BTLxProcessing):
             lap_volume = Brep.from_mesh(lap_volume.to_mesh())
         except Exception:
             raise FeatureApplicationError(
-                lap_volume,
-                geometry,
+                lap_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "Could not convert the lap volume to a Brep.",
             )
 
@@ -689,8 +689,8 @@ class Lap(BTLxProcessing):
             return geometry - lap_volume
         except IndexError:
             raise FeatureApplicationError(
-                lap_volume,
-                geometry,
+                lap_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The lap volume does not intersect with the beam geometry.",
             )
 
@@ -953,8 +953,8 @@ class LapProxy(object):
             return geometry - inflated_brep
         except IndexError:
             raise FeatureApplicationError(
-                self.volume,
-                geometry,
+                self.volume.transformed(self.beam.modeltransformation),
+                geometry.transformed(self.beam.modeltransformation),
                 "The volume to subtract does not intersect with beam geometry.",
             )
 
