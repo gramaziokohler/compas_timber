@@ -17,7 +17,6 @@ import math
 
 from compas.colors import Color
 from compas.geometry import Box
-from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
@@ -117,24 +116,15 @@ def draw_real_model(viewer, model):
     viewer.scene.add(Tag("the real model", Point(0.0, 0.0, -1.35), color=TITLE_COLOR, height=18, horizontal_align="center"))
 
     for beam in model.beams:
-        try:
-            viewer.scene.add(beam.geometry, facecolor=BEAM_COLOR, opacity=0.55, name="beam")
-        except Exception:
-            viewer.scene.add(beam.centerline, linecolor=BEAM_COLOR, linewidth=4)
+        viewer.scene.add(beam.geometry, facecolor=BEAM_COLOR, opacity=0.55, name="beam")
 
+    # the fastener's geometry comes straight from its part-elements (each part contributes its own Brep(s))
     for fastener in model.fasteners:
-        node_point = fastener.frame.point
         for part in fastener.parts:
-            if isinstance(part, BallNode):
-                viewer.scene.add(Sphere(part.radius, Frame(node_point, [1, 0, 0], [0, 1, 0])), facecolor=BALL_COLOR, show_lines=False)
-            elif isinstance(part, BallNodeRod):
-                cylinder = Cylinder(part.diameter / 2, part.length, part.frame.copy())
-                cylinder.frame.point += part.frame.zaxis * part.length / 2
-                viewer.scene.add(cylinder, facecolor=ROD_COLOR, show_lines=False)
-            elif isinstance(part, BallNodePlate):
-                box = Box(part.x_size, part.y_size, part.thickness, part.frame.copy())
-                box.frame.point += part.frame.zaxis * part.thickness / 2
-                viewer.scene.add(box, facecolor=PLATE_COLOR, show_lines=False)
+            color, _ = classify(part)
+            part_geometry = part.geometry
+            for geometry in part_geometry if isinstance(part_geometry, (list, tuple)) else [part_geometry]:
+                viewer.scene.add(geometry, facecolor=color, show_lines=False, name="fastener")
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -261,31 +251,61 @@ def visualize_model(model):
     cx = (min(xs) + max(xs)) / 2
     size = max(max(xs) - min(xs), max(ys) - min(ys), max(zs) - min(zs), 0.5)
 
-    y_panel = min(ys) - 0.6 * size
-    z0 = max(zs) + 0.25 * size
-    board_h = 1.1 * size
-    board_w = 1.1 * size
-    gap = 0.35 * size
+    y_panel = min(ys) - 0.5 * size
+    z0 = max(zs) + 0.15 * size  # the boards float just above the real model
+    board_h = 1.0 * size
+    board_w = 1.0 * size
+    gap = 0.3 * size
     tree_cx = cx - (board_w + gap) / 2
     graph_cx = cx + (board_w + gap) / 2
     tree_rect = (tree_cx - board_w / 2, tree_cx + board_w / 2, z0, z0 + board_h)
     graph_rect = (graph_cx - board_w / 2, graph_cx + board_w / 2, z0, z0 + board_h)
-    marker_unit = 0.03 * size
+    marker_unit = 0.04 * size
+    legend_top = z0 + board_h - 0.05
 
     n_parts = len(model.find_all_elements_of_type(FastenerPart))
     label_parts = n_parts <= 6  # keep dense scenes legible: let the coloured clouds speak instead
 
     viewer = Viewer()
-    viewer.renderer.camera.position = [cx, y_panel - 1.6 * size, z0 + board_h * 0.5]
-    viewer.renderer.camera.target = [cx, (min(ys) + y_panel) / 2, (max(zs) + z0 + board_h / 2) / 2]
     viewer.renderer.rendermode = "ghosted"
+    _frame_camera(viewer, model, tree_rect, graph_rect, y_panel, legend_top)
 
     draw_real_model(viewer, model)
     draw_tree(viewer, model, y_panel, tree_rect, marker_unit, label_parts)
     draw_graph(viewer, model, y_panel, graph_rect, marker_unit, label_parts)
-    draw_legend(viewer, y_panel, (tree_rect[0], z0 + board_h - 0.05))
+    draw_legend(viewer, y_panel, (tree_rect[0], legend_top))
 
     viewer.show()
+
+
+def _frame_camera(viewer, model, tree_rect, graph_rect, y_panel, legend_top):
+    """Point the camera so the whole composition -- the real model and both boards -- is in view by default.
+
+    Tag labels are drawn at a constant screen size, so pulling the camera back to fit everything keeps them readable.
+    """
+    content = []
+    for beam in model.beams:
+        content.append(beam.centerline.start)
+        content.append(beam.centerline.end)
+    for rect in (tree_rect, graph_rect):
+        xmin, xmax, zmin, zmax = rect
+        content.append(Point(xmin, y_panel, zmin))
+        content.append(Point(xmax, y_panel, zmax + 0.2))  # include the titles sitting above each board
+    content.append(Point(tree_rect[0], y_panel, legend_top - 7 * 0.16))  # include the legend column
+
+    ux = [p[0] for p in content]
+    uy = [p[1] for p in content]
+    uz = [p[2] for p in content]
+    center = [(min(ux) + max(ux)) / 2, (min(uy) + max(uy)) / 2, (min(uz) + max(uz)) / 2]
+
+    half_fov = math.radians(45.0 / 2)
+    aspect = 1.4  # a rough default window aspect ratio
+    dist_v = (max(uz) - min(uz)) / 2 / math.tan(half_fov)
+    dist_h = (max(ux) - min(ux)) / 2 / (math.tan(half_fov) * aspect)
+    distance = max(dist_v, dist_h) * 1.3 + 0.5
+
+    viewer.renderer.camera.position = [center[0], center[1] - distance, center[2] + 0.18 * distance]
+    viewer.renderer.camera.target = center
 
 
 # ---------------------------------------------------------------------------------------------------------------------

@@ -7,6 +7,7 @@ from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Sphere
+from compas_brep import Brep
 
 from compas_timber.fabrication import JackRafterCut
 from compas_timber.fabrication import Slot
@@ -51,7 +52,7 @@ class BallNode(FastenerPart):
 
     def compute_elementgeometry(self, include_features: bool = False):
         sphere = Sphere(self.radius, Frame.worldXY())
-        return sphere.to_brep()
+        return Brep.from_sphere(sphere)
 
 
 class BallNodeRod(FastenerPart):
@@ -96,7 +97,7 @@ class BallNodeRod(FastenerPart):
         local = Frame.worldXY()
         cylinder = Cylinder(radius=self.diameter / 2, height=self.length, frame=local)
         cylinder.frame.point += local.zaxis * self.length / 2
-        return cylinder.to_brep()
+        return Brep.from_cylinder(cylinder)
 
 
 class BallNodePlate(FastenerPart):
@@ -154,13 +155,13 @@ class BallNodePlate(FastenerPart):
         # cap plate
         box = Box(self.x_size, self.y_size, self.thickness, frame=local.copy())
         box.frame.point += local.zaxis * self.thickness / 2
-        box_brep = box.to_brep()
+        box_brep = Brep.from_box(box)
 
         # slot plate
         slot_plate_frame = local.copy()
         slot_plate_frame.translate(slot_plate_frame.zaxis * (self.thickness + self.plate_depth / 2))
         slot_box = Box(self.thickness, self.y_size, self.plate_depth, frame=slot_plate_frame)
-        slot_brep = slot_box.to_brep()
+        slot_brep = Brep.from_box(slot_box)
 
         return [box_brep, slot_brep]
 
