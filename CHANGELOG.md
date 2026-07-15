@@ -21,7 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed plate geometry created with inconsistent face orientation.
 
 ### Removed
-
+* Removed depricated `features.py` module and related imports.
+* Removed `test_features.py` and moved extension tests to `test_beam.py`.
 
 ## [2.2.0] 2026-07-02
 
