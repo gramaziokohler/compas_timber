@@ -452,8 +452,12 @@ class BirdsMouth(BTLxProcessing):
         if face_limited_back:
             back_side_plane.translate(ref_side.yaxis * (element_width - start_y - width))
 
-        apex = Point(*intersection_plane_plane_plane(planes[0], planes[1], front_side_plane))
-        rear = Point(*intersection_plane_plane_plane(planes[0], planes[1], back_side_plane))
+        apex_coords = intersection_plane_plane_plane(planes[0], planes[1], front_side_plane)
+        rear_coords = intersection_plane_plane_plane(planes[0], planes[1], back_side_plane)
+        if apex_coords is None or rear_coords is None:
+            raise ValueError("Cutting planes do not intersect with the element side planes; cannot compute birds mouth ridge line.")
+        apex = Point(*apex_coords)
+        rear = Point(*rear_coords)
         ridge_line = Line(apex, rear)
 
         # orientation — which end of the element the notch faces
