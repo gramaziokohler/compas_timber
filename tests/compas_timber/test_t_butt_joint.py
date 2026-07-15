@@ -11,6 +11,7 @@ from compas.tolerance import TOL
 from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+
 # from compas_timber.fasteners import PlateFastener
 # from compas_timber.fasteners import FastenerTimberInterface
 from compas_timber.fabrication.lap import Lap

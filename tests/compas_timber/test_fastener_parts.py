@@ -1,13 +1,16 @@
-from compas.geometry import Point
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Point
+from compas.geometry import Transformation
 
-from compas_timber.model import TimberModel
-from compas_timber.elements import Beam
 from compas_timber.connections import TButtJoint
-from compas_timber.fasteners import RectangularPlate
-from compas_timber.fasteners import PlateHole
+from compas_timber.elements import Beam
 from compas_timber.fasteners import Fastener
+from compas_timber.fasteners import PlateHole
+from compas_timber.fasteners import RectangularPlate
+from compas_timber.model import TimberModel
 
 
 def test_rectangular_plate():
@@ -21,7 +24,7 @@ def test_rectangular_plate():
 
 def test_rectangular_plate_copy():
     plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
-    hole = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
+    hole = PlateHole(diameter=5, height=2, frame=plate.placement_frame.copy())
     plate.add_hole(hole)
     plate.add_hole_point_diameter(Point(2, 3, 0), diameter=3)
 
@@ -36,24 +39,19 @@ def test_rectangular_plate_copy():
     assert plate.holes[0].diameter == plate_copy.holes[0].diameter
     assert plate.holes[0].height == plate_copy.holes[0].height
     assert plate.holes[0].frame.point == plate_copy.holes[0].frame.point
-    assert plate.holes[0].frame.xaxis == plate_copy.holes[0].frame.xaxis
-    assert plate.holes[0].frame.yaxis == plate_copy.holes[0].frame.yaxis
     assert plate.holes[1].diameter == plate_copy.holes[1].diameter
     assert plate.holes[1].height == plate_copy.holes[1].height
     assert plate.holes[1].frame.point == plate_copy.holes[1].frame.point
-    assert plate.holes[1].frame.xaxis == plate_copy.holes[1].frame.xaxis
-    assert plate.holes[1].frame.yaxis == plate_copy.holes[1].frame.yaxis
 
 
 def test_rectangular_plate_deserialization():
     plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
-    hole = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
+    hole = PlateHole(diameter=5, height=2, frame=plate.placement_frame.copy())
     plate.add_hole(hole)
     plate.add_hole_point_diameter(Point(2, 3, 0), diameter=3)
 
-    data = plate.__data__
+    rec_plate = json_loads(json_dumps(plate))
 
-    rec_plate = RectangularPlate.from_data(data)
     assert plate.width == rec_plate.width
     assert plate.height == rec_plate.height
     assert plate.thickness == rec_plate.thickness
@@ -63,13 +61,9 @@ def test_rectangular_plate_deserialization():
     assert plate.holes[0].diameter == rec_plate.holes[0].diameter
     assert plate.holes[0].height == rec_plate.holes[0].height
     assert plate.holes[0].frame.point == rec_plate.holes[0].frame.point
-    assert plate.holes[0].frame.xaxis == rec_plate.holes[0].frame.xaxis
-    assert plate.holes[0].frame.yaxis == rec_plate.holes[0].frame.yaxis
     assert plate.holes[1].diameter == rec_plate.holes[1].diameter
     assert plate.holes[1].height == rec_plate.holes[1].height
     assert plate.holes[1].frame.point == rec_plate.holes[1].frame.point
-    assert plate.holes[1].frame.xaxis == rec_plate.holes[1].frame.xaxis
-    assert plate.holes[1].frame.yaxis == rec_plate.holes[1].frame.yaxis
 
 
 def test_rectangular_plate_grid_holes():
@@ -99,15 +93,13 @@ def test_rect_plate_features():
 
     _ = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
-    plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
-    hole1 = PlateHole(diameter=5, height=2, frame=plate.frame.copy())
-    plate.add_hole(hole1)
+    # two plate parts, one per placement frame (formerly two "target frames")
     fastener = Fastener()
-    fastener.add_part(plate)
-    fastener.target_frames = [
-        Frame(Point(0, -5, 20), [1, 0, 0], [0, 0, 1]),
-        Frame(Point(0, 5, 20), [-1, 0, 0], [0, 0, 1]),
-    ]
+    for frame in [Frame(Point(0, -5, 20), [1, 0, 0], [0, 0, 1]), Frame(Point(0, 5, 20), [-1, 0, 0], [0, 0, 1])]:
+        plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
+        plate.add_hole(PlateHole(diameter=5, height=2, frame=Frame.worldXY()))
+        plate.transformation = Transformation.from_frame(frame)
+        fastener.add_part(plate)
 
     model.add_fastener(fastener, [main_beam, cross_beam])
 

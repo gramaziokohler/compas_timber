@@ -7,10 +7,10 @@ from compas.geometry import Vector
 from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
+from compas_timber.fasteners import BallNode
+from compas_timber.fasteners import BallNodePlate
+from compas_timber.fasteners import BallNodeRod
 from compas_timber.fasteners import Fastener
-from compas_timber.fasteners.ball_node_fastener import BallNode
-from compas_timber.fasteners.ball_node_fastener import BallNodePlate
-from compas_timber.fasteners.ball_node_fastener import BallNodeRod
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
@@ -135,8 +135,9 @@ class BallNodeJoint(Joint):
         :class:`~compas_timber.elements.Fastener`
             The fastener created for this joint.
         """
-        # Crete the fastener
-        fastener = Fastener()
+        # Create the fastener. Its placement frame sits at the node point; all parts are built relative to it, so their
+        # model placement follows from the fastener's transformation (the parent in the model tree).
+        fastener = Fastener(frame=Frame(self.node_point, [1, 0, 0], [0, 1, 0]))
         ball_node = BallNode(diameter=self.ball_diameter)
         fastener.add_part(ball_node)
 
@@ -168,10 +169,8 @@ class BallNodeJoint(Joint):
             self.ball_plates.append(plate)
 
             fastener.add_part(rod)
-            fastener.add_child_part(plate, rod)
+            fastener.add_part(plate)
 
-        # Set the target frame
-        fastener.target_frames = [Frame(self.node_point, [1, 0, 0], [0, 1, 0])]
         return fastener
 
     def _is_beam_pointing_outwards(self, beam):

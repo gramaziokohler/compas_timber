@@ -1,3 +1,5 @@
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Line
 
 from compas_timber.model import TimberModel
@@ -51,13 +53,9 @@ def test_parts_deserialization():
     assert isinstance(rod, BallNodeRod)
     assert isinstance(plate, BallNodePlate)
 
-    ball_node_data = ball_node.__data__
-    rod_data = rod.__data__
-    plate_data = plate.__data__
-
-    reconstructed_ball_node = BallNode.from_data(ball_node_data)
-    reconstructed_rod = BallNodeRod.from_data(rod_data)
-    reconstructed_plate = BallNodePlate.from_data(plate_data)
+    reconstructed_ball_node = json_loads(json_dumps(ball_node))
+    reconstructed_rod = json_loads(json_dumps(rod))
+    reconstructed_plate = json_loads(json_dumps(plate))
 
     assert isinstance(reconstructed_ball_node, BallNode)
     assert isinstance(reconstructed_rod, BallNodeRod)

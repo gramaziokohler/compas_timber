@@ -64,11 +64,7 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
-        fasteners_data = {}
-        for guid_str, fastener in self._fasteners.items():
-            fasteners_data[guid_str] = fastener.__data__
-        data["fasteners"] = fasteners_data
-
+        # Fasteners are now regular elements in the model tree, so they serialize with the rest of the elements.
         return data
 
     @classmethod
@@ -81,17 +77,11 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
-        if data.get("fasteners") is not None:
-            fasteners_data = data["fasteners"]
-            for guid_str, fastener_data in fasteners_data.items():
-                model._fasteners[guid_str] = Fastener.from_data(fastener_data)
-
         return model
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._joints = {}
-        self._fasteners = {}
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
@@ -127,7 +117,8 @@ class TimberModel(Model):
 
     @property
     def fasteners(self):
-        return self._fasteners.values()
+        # type: () -> List[Fastener]
+        return self.find_all_elements_of_type(Fastener)
 
     @property
     def joints(self) -> Iterable[Joint]:
@@ -392,31 +383,29 @@ class TimberModel(Model):
         """
         Adds a fastener to the model.
 
-        This method adds the "fasteners" attribute to the edge connecting the specified elements.
-        If the two elements are not yet connected by an edge, a new edge will be created between them.
-
-        The fasteners added to the model are copies of the specified fastener instance, with one copy created per target frame.
-
+        The fastener is added to the model as a regular element. Its parts are added as children of the fastener in the
+        model tree. A reference to the fastener (its guid) is stored under the "fasteners" attribute on the edge(s)
+        connecting the specified elements. If two elements are not yet connected by an edge, a new edge is created.
 
         Parameters
         ----------
 
-        fastener : :class:`~compas_timber.fasteners.Fastener`
+        fastener : :class:`~compas_timber.elements.Fastener`
             The fastener to be added to the model and connecting the elements.
         elements : list[:class:`~compas_timber.elements.Element`]
             The elements to be connected by the fastener.
 
         """
-        # 1: place all fastener parts to the target_frames
-        fastener_instances = fastener.get_fastener_instances()
-        fasteners_guids = []
-        for fastener in fastener_instances:
-            guid = str(fastener.guid)
-            self._fasteners[guid] = fastener
-            fasteners_guids.append(guid)
+        # 1: add the fastener and its (staged) parts to the model tree
+        staged_parts = list(fastener.parts)
+        self.add_element(fastener)
+        for part in staged_parts:
+            self.add_element(part, parent=fastener)
 
-        # 2: check if the elements are already connected by a joint
-        # and add the fastener as an attribute to the edge
+        fastener_guid = str(fastener.guid)
+
+        # 2: reference the fastener on the edge(s) connecting the elements it fastens
+        # (this is how the fastener sits on the beam-beam edge alongside the joint)
         for ia, element_a in enumerate(elements):
             for ib, element_b in enumerate(elements):
                 if element_a is element_b or ia < ib:
@@ -430,7 +419,9 @@ class TimberModel(Model):
                 else:
                     edge = self.add_interaction(element_a, element_b)
 
-                self._graph.edge_attribute(edge, "fasteners", value=fasteners_guids)
+                edge_fasteners = list(self._graph.edge_attribute(edge, "fasteners") or [])
+                edge_fasteners.append(fastener_guid)
+                self._graph.edge_attribute(edge, "fasteners", value=edge_fasteners)
 
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.
@@ -688,25 +679,11 @@ class TimberModel(Model):
             A list of errors that occurred during the fastener application process.
         """
         errors = []
-        fasteners = self.fasteners
 
-        for fastener in fasteners:
-            elements = []
-            for edge in self._graph.edges():
-                edge_fasteners = self._graph.edge_attribute(edge, "fasteners")
-                if not edge_fasteners:
-                    continue
-                ele_a_guid = self._graph.node_attribute(edge[0], "element")
-                ele_b_guid = self._graph.node_attribute(edge[1], "element")
-                element_a = self._elements[ele_a_guid]
-                element_b = self._elements[ele_b_guid]
-
-                if element_a not in elements:
-                    elements.append(element_a)
-                if element_b not in elements:
-                    elements.append(element_b)
+        for fastener in self.fasteners:
+            elements = self._elements_connected_by_fastener(fastener)
             try:
-                fastener.apply_features(elements)
+                fastener.apply_fastening_features(elements)
             except ValueError as ve:
                 bje = FastenerApplicationError(elements, fastener, message=str(ve))
                 errors.append(bje)
@@ -714,6 +691,21 @@ class TimberModel(Model):
                     raise bje
 
         return errors
+
+    def _elements_connected_by_fastener(self, fastener):
+        """Return the timber elements referenced by the given fastener on the interaction graph."""
+        fastener_guid = str(fastener.guid)
+        elements = []
+        for edge in self._graph.edges():
+            edge_fasteners = self._graph.edge_attribute(edge, "fasteners")
+            if not edge_fasteners or fastener_guid not in edge_fasteners:
+                continue
+            for node in edge:
+                element_guid = self._graph.node_attribute(node, "element")
+                element = self._elements[element_guid]
+                if element not in elements:
+                    elements.append(element)
+        return elements
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.

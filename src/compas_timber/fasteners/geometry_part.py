@@ -1,72 +1,42 @@
+from __future__ import annotations
+
+from typing import Optional
+
 from compas.geometry import Frame
-from compas.geometry import Transformation
 
-from .part import Part
+from .fastener import FastenerPart
 
 
-class GeometryPart(Part):
+# TODO: This perhaps is solvable directly with Element (because it takes arbitrary geometry)
+# TODO: however, there's a more complex issue with set-geometry fasteners: they're visualizable only and do not provide any parameterization for the fabrication. to rethink.
+class GeometryPart(FastenerPart):
     """
-    Describes a fastener part defined by a geometry. Can be used to add a custom fastener or coming from a library of fasteners.
+    Describes a fastener part defined by an explicit geometry. Can be used to add a custom fastener or a fastener coming
+    from a library of fasteners.
 
+    The geometry is defined in the part's local coordinate system; its placement in the model is expressed by the
+    element ``transformation``.
 
     Parameters
     ----------
     geometry : Geometry
-        The geometry of the part.
+        The geometry of the part, in the part's local coordinate system.
     frame : Frame, optional
-        The frame of the part, by default Frame.worldXY().
+        The placement frame of the part. Defaults to the world XY frame.
 
     Attributes
     ----------
     geometry : Geometry
-        The geometry of the part, transformed to the part's frame.
-    frame : Frame
-        The frame of the part.
-
+        The geometry of the part in model coordinates.
     """
-
-    def __init__(self, geometry, frame=None):
-        super().__init__()
-        self.frame = frame or Frame.worldXY()
-        self._geometry = geometry
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["type"] = "GeometryPart"
-        data["geometry"] = self._geometry
-        data["frame"] = self.frame.__data__
-        return data
+        return {"geometry": self._raw_geometry, "frame": self.placement_frame}
 
-    @property
-    def frame(self) -> Frame:
-        return self._frame
+    def __init__(self, geometry, frame: Optional[Frame] = None, **kwargs):
+        super().__init__(frame=frame, **kwargs)
+        self._raw_geometry = geometry
 
-    @frame.setter
-    def frame(self, value: Frame):
-        if not isinstance(value, Frame):
-            raise ValueError("Frame should be a Frame.")
-        self._frame = value
-
-    @property
-    def geometry(self):
-        geometry = self._geometry.copy()
-        transformation = Transformation.from_frame_to_frame(Frame.worldXY(), self.frame)
-        geometry.transform(transformation)
-        return geometry
-
-    @classmethod
-    def from_data(cls, data):
-        geometry = data["geometry"]
-        frame_data = data["frame"]
-        frame = Frame(frame_data["point"], frame_data["xaxis"], frame_data["yaxis"])
-        part = cls(geometry, frame)
-        guid = data["guid"]
-        part.guid = guid
-        return part
-
-    def copy(self):
-        return GeometryPart(self._geometry.copy(), self.frame.copy())
-
-    def apply_features(self, elements):
-        pass
+    def compute_elementgeometry(self, include_features: bool = False):
+        return self._raw_geometry.copy()
