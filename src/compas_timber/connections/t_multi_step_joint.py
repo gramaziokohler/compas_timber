@@ -21,11 +21,12 @@ from .solver import JointTopology
 from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
+from .utilities import point_centerline_towards_joint
 
 
 class TMultiStepJoint(Joint):
     """Represents an T-MultiStep type joint which joins two beams, one of them at it's end (main) and the other one along it's centerline (cross).
-    Two or more cuts are is made on the main beam and a notch is made on the cross beam to fit the main beam.
+    Two or more cuts are made on the main beam and a notch is made on the cross beam to fit the main beam.
 
     This joint type is compatible with beams in T topology.
 
@@ -110,7 +111,7 @@ class TMultiStepJoint(Joint):
                 "riser_angle is always 90° for HEEL shape by geometric definition. "
                 "The provided value ({:.1f}°) will be ignored.".format(riser_angle)
             )
-        # user input attributes, resolved ones are stored in private attributes
+        # user input attributes (the resolved ones are stored in private attributes)
         self.riser_angle = riser_angle
         self.step_count = step_count
         self.do_refine_cut = do_refine_cut
@@ -184,7 +185,7 @@ class TMultiStepJoint(Joint):
         if TOL.is_positive(dot_vectors(main_ref_side.normal, strut_vector)):
             strut_vector = -strut_vector
 
-        self._strut_inclination =  angle_vectors(self.point_centerline_towards_joint(self.main_beam), strut_vector, deg=True)
+        self._strut_inclination =  angle_vectors(point_centerline_towards_joint(self.main_beam), strut_vector, deg=True)
         strut_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)[1]
         strut_length = strut_height / math.sin(math.radians(self._strut_inclination))
 
@@ -357,18 +358,15 @@ class TMultiStepJoint(Joint):
 
         riser_length, tread_length = self._compute_riser_and_tread_lengths() # compute riser and tread lengths for feature dimensions and debug info
 
-        if self.main_beam.attributes.get("ref_side_index") is None:
-                self.main_beam.attributes["ref_side_index"] = (self.main_beam_ref_side_index-1)%4
-
         # -- butt cut on main beam end face --
         butt_plane = self._get_butt_plane()
-        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam, ref_side_index = self.main_beam.attributes["ref_side_index"], name="Roughing_Cut")
+        cut = JackRafterCut.from_plane_and_beam(butt_plane, self.main_beam)
         self.main_beam.add_features(cut)
         self.features.append(cut)
 
         # -- single endpoint cuts --
         for plane in cut_planes:
-            cut = JackRafterCut.from_plane_and_beam(plane, self.main_beam, ref_side_index = self.main_beam.attributes["ref_side_index"])
+            cut = JackRafterCut.from_plane_and_beam(plane, self.main_beam)
             self.main_beam.add_features(cut)
             self.features.append(cut)
 
@@ -388,7 +386,6 @@ class TMultiStepJoint(Joint):
                 next_step.start_y += i * step_dy  # shift across face (non-zero for skewed joints)
                 self.main_beam.add_features(next_step)
                 self.features.append(next_step)
-
 
         # -- N BirdsMouth notches on cross beam --
         # First notch is computed from geometry; the rest are copies shifted by one step interval each.
@@ -410,7 +407,7 @@ class TMultiStepJoint(Joint):
         if self.do_refine_cut:
             if not are_beams_aligned_with_cross_vector(self.main_beam, self.cross_beam):
                 refine_cut_plane = self._get_refine_cut_plane()
-                cut = JackRafterCut.from_plane_and_beam(refine_cut_plane, self.main_beam, name="Refinement_Cut")
+                cut = JackRafterCut.from_plane_and_beam(refine_cut_plane, self.main_beam)
                 self.main_beam.add_features(cut)
                 self.features.append(cut)
 
