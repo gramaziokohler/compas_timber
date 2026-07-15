@@ -24,7 +24,6 @@ from .t_dovetail import TDovetailJoint
 from .mortise_tenon import MortiseTenonJoint
 from .t_tenon_mortise import TTenonMortiseJoint
 from .l_tenon_mortise import LTenonMortiseJoint
-from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
 from .butt_joint import CutPlaneSpec
@@ -43,6 +42,7 @@ from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
+from .ball_node import BallNodeJoint
 
 
 __all__ = [
@@ -70,7 +70,6 @@ __all__ = [
     "find_connection_handler",
     "TDovetailJoint",
     "MortiseTenonJoint",
-    "BallNodeJoint",
     "TTenonMortiseJoint",
     "LTenonMortiseJoint",
     "YButtJoint",
@@ -92,5 +91,6 @@ __all__ = [
     "PanelTButtJoint",
     "PanelMiterJoint",
     "Cluster",
+    "BallNodeJoint",
     "get_clusters_from_joint_candidates",
 ]

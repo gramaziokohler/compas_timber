@@ -18,8 +18,6 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    fastener : :class:`~compas_timber.elements.Fastener`, optional
-        The fastener to be used in the joint.
 
     Attributes
     ----------
@@ -44,7 +42,6 @@ class TButtJoint(ButtJoint):
         butt_plane_spec=None,
         force_pocket=False,
         conical_tool=False,
-        fastener=None,
         **kwargs,
     ):
         super(TButtJoint, self).__init__(
@@ -57,26 +54,6 @@ class TButtJoint(ButtJoint):
             **kwargs,
         )
 
-        self.fasteners = []
-        if fastener:
-            if fastener.outline is None:
-                fastener = fastener.copy()  # make a copy to avoid modifying the original fastener
-                fastener.set_default(joint=self)
-            self.base_fastener = fastener
-            if self.base_fastener:
-                self.base_fastener.place_instances(self)
-
     @property
-    def interactions(self):
-        """Returns interactions between elements used by this joint."""
-        interactions = []
-        interactions.append((self.main_beam, self.cross_beam))
-        for fastener in self.fasteners:
-            for interface in fastener.interfaces:
-                if interface is not None:
-                    interactions.append((interface.element, fastener))
-        return interactions
-
-    @property
-    def generated_elements(self):
-        return self.fasteners
+    def elements(self):
+        return self.beams
