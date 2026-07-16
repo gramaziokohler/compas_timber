@@ -21,15 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
 
 ### Changed
+* `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
+* Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
+* `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
 * Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
 * Fixed plate geometry created with inconsistent face orientation.
 
 ### Removed
-
+* Removed depricated `features.py` module and related imports.
+* Removed `test_features.py` and moved extension tests to `test_beam.py`.
 
 ## [2.2.0] 2026-07-02
 
