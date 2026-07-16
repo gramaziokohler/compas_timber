@@ -46,7 +46,7 @@ class Cluster:
 
     @property
     def location(self) -> Point:
-        return self.joints[0].location
+        return sum([j.location for j in self.joints[1:]], self.joints[0].location) / len(self.joints)
 
     @property
     def topology(self):

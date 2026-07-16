@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from .joint import Joint
 from .solver import JointTopology
+from .cluster import Cluster
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
@@ -34,10 +35,11 @@ class CompositeJoint(Joint):
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = None
 
-    def __init__(self, joints=None, **kwargs):
-        self.joints = joints or []
+    def __init__(self, joints, name=None, cluster=None,  **kwargs):
+        self.joints = joints
+        self._cluster = cluster 
         elements = list(set([e for j in joints for e in j.elements]))
-        super(CompositeJoint, self).__init__(elements=elements, **kwargs)
+        super(CompositeJoint, self).__init__(elements=elements, name=name, **kwargs)
 
     @property
     def __data__(self):
@@ -51,9 +53,19 @@ class CompositeJoint(Joint):
     @property
     def location(self):
         """The approximate location of the joint, taken from the first sub-joint."""
-        if self._location is None and self.joints:
-            return self.joints[0].location
-        return super().location
+        return self.cluster.location
+
+    @property
+    def topology(self):
+        """Returns the topology of the joint if there is only one joint, otherwise TOPO_UNKNOWN."""
+        return self.cluster.topology
+
+    @property
+    def cluster(self):
+        """The cluster of elements connected by this joint."""
+        if self._cluster is None:
+            self._cluster = Cluster(self.joints)
+        return self._cluster
 
     @classmethod
     def create(cls, model, joints=None, **kwargs):
