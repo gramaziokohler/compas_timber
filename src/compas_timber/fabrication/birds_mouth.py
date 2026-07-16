@@ -596,7 +596,7 @@ class BirdsMouth(BTLxProcessing):
         """
         try:
             cutting_planes = self.planes_from_params_and_element(element)
-        except ValueError as e:
+        except Exception as e:
             raise FeatureApplicationError(
                 None, geometry, "Failed to generate cutting planes from parameters and element: {}".format(str(e))
             )
