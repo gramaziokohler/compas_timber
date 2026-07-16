@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .cluster import Cluster
 from .joint import Joint
 from .solver import JointTopology
-from .cluster import Cluster
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
@@ -45,9 +45,9 @@ class CompositeJoint(Joint):
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = None
 
-    def __init__(self, joints, name=None, cluster=None,  **kwargs):
+    def __init__(self, joints, name=None, cluster=None, **kwargs):
         self.joints = joints
-        self._cluster = cluster 
+        self._cluster = cluster
         elements = list(set([e for j in joints for e in j.elements]))
         super(CompositeJoint, self).__init__(elements=elements, name=name, **kwargs)
 
