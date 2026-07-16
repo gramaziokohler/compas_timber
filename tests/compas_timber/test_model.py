@@ -278,6 +278,7 @@ def test_error_deepcopy_joint():
     assert error.debug_info == "dog"
     assert error.debug_geometries == ["cucumber"]
 
+
 @pytest.mark.requires_occ
 def test_feature_application_error_geometry_is_in_model_space():
     """A FeatureApplicationError caught by compute_elementgeometry() must carry geometry in
