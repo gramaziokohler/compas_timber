@@ -8,8 +8,10 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import is_point_on_plane
 from compas.tolerance import Tolerance
+from compas_brep import Brep
 
 from compas_timber.elements import Beam
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication.birds_mouth import BirdsMouth
 from compas_timber.fabrication.btlx import OrientationType
 
@@ -130,3 +132,77 @@ def test_birds_mouth_scaled(tol, beam, notch_planes):
 def test_birds_mouth_requires_two_planes(beam, notch_planes):
     with pytest.raises(ValueError):
         BirdsMouth.from_planes_and_element([notch_planes[0]], beam)
+
+
+@pytest.mark.requires_occ
+def test_birds_mouth_apply_produces_expected_geometry(tol, beam, notch_planes):
+    """Golden values captured from a verified `apply()` run against this fixture."""
+    expected_volume = 15847187.529211264
+    expected_area = 591624.2676432179
+    expected_face_count = 9
+
+    bm = BirdsMouth.from_planes_and_element(notch_planes, beam)
+    blank = beam.compute_elementgeometry(False)
+
+    result = bm.apply(blank, beam)
+
+    assert isinstance(result, Brep)
+    assert result.is_solid
+    assert result.is_closed
+    assert not result.is_compound
+    assert len(result.faces) == expected_face_count
+    assert tol.is_close(result.volume, expected_volume)
+    assert tol.is_close(result.area, expected_area)
+
+
+def test_birds_mouth_apply_raises_on_degenerate_ridge_line(beam):
+    """A zero-length ridge line (width=0, start_depth == depth) makes the apex and rear
+    points coincide, which fails when planes_from_params_and_element rotates a cutting
+    plane about the (now zero-length) ridge direction. apply() must wrap that failure.
+    """
+    bm = BirdsMouth(
+        orientation=OrientationType.START,
+        start_x=500.0,
+        start_y=0.0,
+        start_depth=30.0,
+        angle=45.0,
+        inclination_1=45.0,
+        inclination_2=135.0,
+        depth=30.0,
+        width=0.0,
+        ref_side_index=1,
+    )
+    mock_geometry = object()
+
+    with pytest.raises(FeatureApplicationError) as excinfo:
+        bm.apply(mock_geometry, beam)
+
+    assert excinfo.value.feature_geometry is None
+    assert excinfo.value.element_geometry is mock_geometry
+
+
+def test_birds_mouth_apply_raises_when_trim_fails(beam, notch_planes, mocker):
+    bm = BirdsMouth.from_planes_and_element(notch_planes, beam)
+    mock_trim_volume = mocker.MagicMock()
+    mock_trim_volume.trim.side_effect = Exception("trim failed")
+    mocker.patch.object(beam, "compute_elementgeometry", return_value=mock_trim_volume)
+    mock_geometry = mocker.MagicMock()
+
+    with pytest.raises(FeatureApplicationError) as excinfo:
+        bm.apply(mock_geometry, beam)
+
+    assert excinfo.value.element_geometry is mock_trim_volume
+
+
+def test_birds_mouth_apply_raises_when_boolean_difference_fails(beam, notch_planes, mocker):
+    bm = BirdsMouth.from_planes_and_element(notch_planes, beam)
+    mock_trim_volume = mocker.MagicMock()
+    mocker.patch.object(beam, "compute_elementgeometry", return_value=mock_trim_volume)
+    mock_geometry = mocker.MagicMock()
+    mock_geometry.__sub__ = mocker.MagicMock(side_effect=Exception("subtraction failed"))
+
+    with pytest.raises(FeatureApplicationError) as excinfo:
+        bm.apply(mock_geometry, beam)
+
+    assert excinfo.value.feature_geometry is mock_trim_volume
+    assert excinfo.value.element_geometry is mock_geometry
