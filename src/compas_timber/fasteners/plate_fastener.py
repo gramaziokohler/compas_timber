@@ -133,6 +133,7 @@ class RectangularPlate(FastenerPart):
         box = self.blank_geometry
         box_brep = Brep.from_mesh(box.to_mesh())
         for hole in self.holes:
+            # box_brep = Brep.from_boolean_difference(box_brep, hole.geometry)
             box_brep -= hole.geometry
         if self.recess > 0:
             box_brep.translate(self._local_frame.zaxis * -self.recess)
@@ -316,7 +317,7 @@ class PlateHole(Data):
     def geometry(self):
         cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.frame)
         cylinder.frame.point += cylinder.frame.zaxis * self.height / 2
-        cylinder_brep = cylinder.to_brep()
+        cylinder_brep = Brep.from_mesh(cylinder.to_mesh())
         return cylinder_brep
 
     @property
