@@ -1,11 +1,13 @@
 """Ball-node fastener on a group of 6 beams, with the same tree/graph visualization as ``plate_fasteners.py``.
 
-Six beams radiate from a common node (the +x/+y/+z/-x/-y/-z directions). A ``BallNodeJoint`` builds one fastener for the
-whole node: a central ball plus a rod and a plate per beam -- 13 part-elements in total.
+Six beams radiate from a common node (the +x/+y/+z/-x/-y/-z directions). A ``BallNodeJoint`` publishes a single POINT
+anchor at the node; a joint-agnostic ``BallNodeFastener`` binds to it and builds one fastener for the whole node: a
+central ball plus a rod and a plate per beam -- 13 part-elements in total.
 
 The two floating boards make visible how much the model's two data structures grow:
 
-* HIERARCHY TREE    -- root owns the 6 beams and the single Fastener; the Fastener owns all 13 parts as children.
+* HIERARCHY TREE    -- root owns the 6 beams and the single Fastener; the Fastener owns the central ball (the *core*),
+  the core owns the 6 rods, and each rod owns its plate. Every part's placement is relative to its parent.
 * INTERACTION GRAPH -- the 6 beams form a fully connected cluster (every beam pair shares an edge carrying the joint and
   the fastener guid), while the Fastener and its 13 parts sit as *isolated nodes* -- the fastener only rides on the
   beam<->beam edges by guid reference (dashed blue).
@@ -28,7 +30,8 @@ from compas_viewer.viewer import Viewer
 
 from compas_timber.connections import BallNodeJoint
 from compas_timber.elements import Beam
-from compas_timber.fasteners import BallNode
+from compas_timber.fasteners import BallNodeCore
+from compas_timber.fasteners import BallNodeFastenerParameters
 from compas_timber.fasteners import BallNodePlate
 from compas_timber.fasteners import BallNodeRod
 from compas_timber.fasteners import Fastener
@@ -56,7 +59,7 @@ def classify(element):
     """Return the (colour, shape) visual style for an element, keyed on its role and (for parts) its subtype."""
     if isinstance(element, Beam):
         return BEAM_COLOR, "sphere"
-    if isinstance(element, BallNode):
+    if isinstance(element, BallNodeCore):
         return BALL_COLOR, "box"
     if isinstance(element, BallNodeRod):
         return ROD_COLOR, "box"
@@ -103,7 +106,7 @@ def element_anchor(element):
     if isinstance(element, FastenerPart):
         return element.frame.point
     if isinstance(element, Fastener):
-        parts = list(element.parts)
+        parts = list(element.all_parts)
         if parts:
             return midpoint(*[p.frame.point for p in parts])
     return None
@@ -120,7 +123,7 @@ def draw_real_model(viewer, model):
 
     # the fastener's geometry comes straight from its part-elements (each part contributes its own Brep(s))
     for fastener in model.fasteners:
-        for part in fastener.parts:
+        for part in fastener.all_parts:
             color, _ = classify(part)
             part_geometry = part.geometry
             for geometry in part_geometry if isinstance(part_geometry, (list, tuple)) else [part_geometry]:
@@ -320,7 +323,9 @@ beams = [Beam.from_centerline(Line([0, 0, 0], [d[0] * LENGTH, d[1] * LENGTH, d[2
 model = TimberModel()
 model.add_elements(beams)
 
-BallNodeJoint.create(model, *beams, ball_diameter=0.12, rods_length=0.15, plate_thickness=0.02, plate_depth=0.1)
+# the joint creates its ball-node fastener; internally it publishes a POINT anchor at the node and the (joint-agnostic)
+# fastener binds to it and stages its core/rods/plates hierarchy. Pass parameters to shape the fastener.
+joint = BallNodeJoint.create(model, *beams, parameters=BallNodeFastenerParameters(ball_diameter=0.12, rods_length=0.15, plate_thickness=0.02, plate_depth=0.1))
 
 model.process_joinery()
 model.process_fasteners()

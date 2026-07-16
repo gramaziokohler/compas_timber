@@ -317,7 +317,7 @@ class PlateHole(Data):
     def geometry(self):
         cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.frame)
         cylinder.frame.point += cylinder.frame.zaxis * self.height / 2
-        cylinder_brep = Brep.from_mesh(cylinder.to_mesh())
+        cylinder_brep = Brep.from_cylinder(cylinder)
         return cylinder_brep
 
     @property

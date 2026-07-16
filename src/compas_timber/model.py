@@ -396,11 +396,13 @@ class TimberModel(Model):
             The elements to be connected by the fastener.
 
         """
-        # 1: add the fastener and its (staged) parts to the model tree
+        # 1: add the fastener and its (staged) part subtree to the model tree
+        # parts may be nested (a part can own child parts), so the staged subtree is added depth-first, each part
+        # becoming a child of its parent.
         staged_parts = list(fastener.parts)
         self.add_element(fastener)
         for part in staged_parts:
-            self.add_element(part, parent=fastener)
+            self._add_staged_part_subtree(part, fastener)
 
         fastener_guid = str(fastener.guid)
 
@@ -422,6 +424,17 @@ class TimberModel(Model):
                 edge_fasteners = list(self._graph.edge_attribute(edge, "fasteners") or [])
                 edge_fasteners.append(fastener_guid)
                 self._graph.edge_attribute(edge, "fasteners", value=edge_fasteners)
+
+    def _add_staged_part_subtree(self, part, parent):
+        """Recursively add a staged fastener part and its staged children to the model tree.
+
+        The staged children must be captured before ``part`` is added to the model, because adding it flips
+        ``part.parts`` from the staging list to the (still empty) tree children.
+        """
+        staged_children = list(part.parts)
+        self.add_element(part, parent=parent)
+        for child in staged_children:
+            self._add_staged_part_subtree(child, part)
 
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.

@@ -1,16 +1,15 @@
 from __future__ import annotations
 
 from compas.geometry import Frame
-from compas.geometry import Plane
 from compas.geometry import Point
-from compas.geometry import Vector
 from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
-from compas_timber.fasteners import BallNode
-from compas_timber.fasteners import BallNodePlate
-from compas_timber.fasteners import BallNodeRod
-from compas_timber.fasteners import Fastener
+from compas_timber.fasteners import AnchorKind
+from compas_timber.fasteners import BallNodeFastener
+from compas_timber.fasteners import BallNodeFastenerParameters
+from compas_timber.fasteners import FastenerAnchor
+from compas_timber.fasteners import FastenerAnchors
 from compas_timber.utils import intersection_line_line_param
 
 from .joint import Joint
@@ -22,35 +21,27 @@ class BallNodeJoint(Joint):
 
     Please use `BallNodeJoint.create()` to properly create an instance of this class and associate it with an model.
 
+    The joint only describes *where* the beams meet; it does not build the fastener. It publishes a single ``POINT``
+    anchor at the node (see :attr:`fastener_anchors`) that a joint-agnostic fastener (e.g.
+    :class:`~compas_timber.fasteners.BallNodeFastener`) binds to. This keeps the joint decoupled from any particular
+    fastener implementation.
+
     Parameters
     ----------
-    beams : list(:class:`~compas_timber.elements.Beam`)
+    elements : list(:class:`~compas_timber.elements.Beam`)
         A list of beams to be joined together by this joint.
-    ball_diameter : float, optional
-        The diameter of the ball node, by default 8.
-    rods_length : float, optional
-        The length of the rods connecting the ball node to the beams, by default 10.
-    plate_thickness : float, optional
-        The thickness of the plates connecting the rods to the beams, by default 2.
-    plate_depth : float, optional
-        The depth of the slot connecting the rods to the beams, by default 10.
+    parameters : :class:`~compas_timber.fasteners.BallNodeFastenerParameters`, optional
+        The parameters that shape the ball-node fastener this joint creates. Defaults to an instance with all default
+        values.
 
     Attributes
     ----------
-    beams : list(:class:`~compas_timber.elements.Beam`)
+    elements : list(:class:`~compas_timber.elements.Beam`)
         The beams joined by this joint.
-    ball_diameter : float
-        The diameter of the ball node.
-    rods_length : float
-        The length of the rods connecting the ball node to the beams.
-    plate_thickness : float
-        The thickness of the plates connecting the rods to the beams.
-    plate_depth : float
-        The depth of the slot connecting the rods to the beams.
-    elements : list(:class:`~compas_timber.elements.Element`)
-        The elements that make up this joint, which include the beams and the generated fastener parts
+    parameters : :class:`~compas_timber.fasteners.BallNodeFastenerParameters`
+        The parameters that shape the ball-node fastener this joint creates.
     location : Point
-        The location of the joint, which is the average of the endpoints of the beams.
+        The location of the joint, the intersection of the first two beams' centerlines.
     node_point : Point
         The point at which the beams are joined, essentially the average of their intersection points.
 
@@ -61,20 +52,46 @@ class BallNodeJoint(Joint):
 
     @property
     def __data__(self):
-        data = super(BallNodeJoint, self).__data__
-        data["ball_diameter"] = self.ball_diameter
-        data["rods_length"] = self.rods_length
-        data["plate_thickness"] = self.plate_thickness
-        data["plate_depth"] = self.plate_depth
-
+        data = super().__data__
+        data["parameters"] = self.parameters
         return data
 
-    def __init__(self, *beams: Beam, ball_diameter: float = 8, rods_length: float = 10, plate_thickness=2, plate_depth=10, **kwargs):
-        super().__init__(elements=beams, **kwargs)
-        self.ball_diameter = ball_diameter
-        self.rods_length = rods_length
-        self.plate_thickness = plate_thickness
-        self.plate_depth = plate_depth
+    def __init__(self, *elements: Beam, parameters=None, **kwargs):
+        super().__init__(elements=elements, **kwargs)
+        self.parameters = parameters if parameters is not None else BallNodeFastenerParameters()
+
+    @classmethod
+    def create(cls, model, *elements, parameters=None, **kwargs):
+        """Create the joint in ``model`` together with its ball-node fastener.
+
+        A ball node joint only makes sense with a ball-node fastener, so ``create`` always builds and attaches one. The
+        joint stays decoupled from the fastener's internals: it hands the fastener its published anchors and lets the
+        fastener build itself from the given ``parameters``.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joint belong.
+        *elements : :class:`~compas_timber.elements.Beam`
+            The beams to be joined together.
+        parameters : :class:`~compas_timber.fasteners.BallNodeFastenerParameters`, optional
+            The parameters that shape the ball-node fastener. Defaults to an instance with all default values.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.BallNodeJoint`
+            The instance of the created joint.
+
+        """
+        joint = cls(*elements, parameters=parameters, **kwargs)
+        model.add_joint(joint)
+
+        fastener = BallNodeFastener(parameters=joint.parameters)
+        fastener.bind(joint.fastener_anchors.of_kind(fastener.ACCEPTS))
+        model.add_fastener(fastener, joint.beams)
+        return joint
 
     @property
     def beams(self):
@@ -101,89 +118,24 @@ class BallNodeJoint(Joint):
         self._node_point = cpt * (1.0 / count)
         return self._node_point
 
-    @classmethod
-    def create(cls, model, *elements, **kwargs):
-        """
-        Creates an instance of the BallNodeJont and create the new connections in the `model`.
-        It also builds and adds to the model the fastener relative to this joint.
+    @property
+    def fastener_anchors(self):
+        """Publish the place on this joint where a fastener may attach.
 
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the beams and this joing belong.
-        elements : list(:class:`~compas_timber.elements.Beam`)
-            A list containing beams that whould be joined together
+        A ball node exposes a single ``POINT`` anchor at the node where the beams meet. The anchor references all the
+        joined beams, so a fastener bound here can build its parts (rods, plates, ...) from the beams' geometry.
 
         Returns
         -------
-        :class:`compas_timber.connections.Joint`
-            The instance of the created joint.
-
+        :class:`~compas_timber.fasteners.FastenerAnchors`
+            The anchors available on this joint.
         """
-        joint = cls(*elements, **kwargs)
-        model.add_joint(joint)
-        fastener = joint.create_fastener()
-        model.add_fastener(fastener, list(elements))
-        return joint
-
-    def create_fastener(self):
-        """
-        Create the fastener specific for this joint.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.Fastener`
-            The fastener created for this joint.
-        """
-        # Create the fastener. Its placement frame sits at the node point; all parts are built relative to it, so their
-        # model placement follows from the fastener's transformation (the parent in the model tree).
-        fastener = Fastener(frame=Frame(self.node_point, [1, 0, 0], [0, 1, 0]))
-        ball_node = BallNode(diameter=self.ball_diameter)
-        fastener.add_part(ball_node)
-
-        # Build the rods and plates
-        self.ball_rods = []
-        self.ball_plates = []
-
-        for beam in self.beams:
-            rod_direction = beam.centerline.direction
-
-            if not self._is_beam_pointing_outwards(beam):
-                rod_direction *= -1
-
-            plane = Plane(Point(0, 0, 0), rod_direction)
-            rod_frame = Frame.from_plane(plane)
-            rod_frame.xaxis = beam.frame.yaxis
-            rod_frame.yaxis = beam.frame.zaxis
-
-            if not self._is_beam_pointing_outwards(beam):
-                rod_frame.yaxis *= -1
-
-            rod_frame.translate(rod_frame.zaxis * self.ball_diameter / 2)
-            rod = BallNodeRod(length=self.rods_length, diameter=self.ball_diameter / 3, beam=beam, frame=rod_frame)
-            self.ball_rods.append(rod)
-
-            plate_frame = rod.frame.copy()
-            plate_frame.translate(plate_frame.zaxis * rod.length)
-            plate = BallNodePlate(beam.width, beam.height, self.plate_thickness, plate_frame, plate_depth=self.plate_depth, rod=rod, ball=ball_node)
-            self.ball_plates.append(plate)
-
-            fastener.add_part(rod)
-            fastener.add_part(plate)
-
-        return fastener
-
-    def _is_beam_pointing_outwards(self, beam):
-        """Check if the beam is pointing outwards from the node point."""
-        beam_direction = beam.centerline.direction
-        return beam_direction.dot(Vector.from_start_end(self.location, beam.centerline.midpoint)) > 0
+        frame = Frame(self.node_point, [1, 0, 0], [0, 1, 0])
+        anchor = FastenerAnchor(frame=frame, kind=AnchorKind.POINT, elements=list(self.beams), role="node")
+        return FastenerAnchors([anchor])
 
     def add_extensions(self):
         pass
 
     def add_features(self):
-        """Adds the features of the joint as generated by `FastenerTimberInterface` to the timber elements.
-        In this joint, the fastener adapt to the beams, therefore, the joint creates the FastenerTimberInterface
-        and adds it to the fastener.
-        """
         pass
