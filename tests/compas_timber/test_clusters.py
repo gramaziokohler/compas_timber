@@ -296,3 +296,25 @@ def test_empty_cluster_topology():
     """Test topology behavior with empty cluster."""
     cluster = Cluster([])
     assert cluster.topology == JointTopology.TOPO_UNKNOWN
+
+
+def test_cluster_location_is_average_of_joint_locations():
+    """Test that Cluster.location returns the average of the locations of its joints."""
+    locations = [
+        Point(1.0, 2.0, 3.0),
+        Point(10.0, 0.0, 0.0),
+        Point(0.0, 20.0, 0.0),
+        Point(0.0, 0.0, 30.0),
+    ]
+
+    joints = []
+    for location in locations:
+        joint = Mock(spec=JointCandidate)
+        joint.location = location
+        joints.append(joint)
+
+    cluster = Cluster(joints)
+
+    expected = Point(*[sum(coords) / len(locations) for coords in zip(*locations)])
+
+    assert cluster.location == expected

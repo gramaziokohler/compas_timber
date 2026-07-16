@@ -20,8 +20,12 @@ class CompositeJoint(Joint):
 
     Parameters
     ----------
-    joints : list[:class:`~compas_timber.connections.Joint`], optional
-        The pairwise sub-joints that make up this composite connection.
+    joints : list[:class:`~compas_timber.connections.Joint`]
+        The pairwise sub-joints that make up this composite connection. These joints must not be added to model.
+    name : str, optional
+        The name of the joint.
+    cluster : :class:`~compas_timber.connections.Cluster`, optional
+        The cluster of elements connected by this joint. If not provided, it will be created from `joints`.
 
     Attributes
     ----------
@@ -29,6 +33,12 @@ class CompositeJoint(Joint):
         The pairwise sub-joints.
     elements : tuple[:class:`~compas_timber.elements.Element`]
         The unique elements connected by this joint, derived from the sub-joints.
+    cluster : :class:`~compas_timber.connections.Cluster`
+        The cluster of elements connected by this joint.
+    location : :class:`~compas.geometry.Point`
+        The approximate location of the joint, taken from the `cluster.location`.
+    topology : :class:`~compas_timber.connections.JointTopology`
+        The topology of the joint, taken from the `cluster.topology`.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_UNKNOWN
@@ -67,6 +77,14 @@ class CompositeJoint(Joint):
             self._cluster = Cluster(self.joints)
         return self._cluster
 
+    @property
+    def features(self):
+        """Delegates feature calculation to each sub-joint and returns a combined list of features."""
+        features = []
+        for joint in self.joints:
+            features.extend(joint.features)
+        return features
+
     @classmethod
     def create(cls, model, joints=None, **kwargs):
         """Creates a CompositeJoint and registers it in the model.
@@ -80,7 +98,7 @@ class CompositeJoint(Joint):
 
         Returns
         -------
-        :class:`~timber_design.composite_joint.CompositeJoint`
+        :class:`~compas_timber.connections.CompositeJoint`
         """
         joint = cls(joints=joints, **kwargs)
         model.add_joint(joint)
