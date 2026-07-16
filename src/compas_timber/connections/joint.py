@@ -152,6 +152,10 @@ class Joint(Data):
             raise TypeError("Location must be a Point.")
         self._location = value
 
+    def reset_location(self):
+        """Reset cached joint.location value to None so that it will be recalculated from the beam centerlines on next access."""
+        self._location = None
+
     @property
     def generated_elements(self):
         return []

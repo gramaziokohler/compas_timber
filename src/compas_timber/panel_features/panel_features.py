@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Union
 
 if TYPE_CHECKING:
-    from compas.geometry import Brep  # noqa: F401
+    from compas_brep import Brep  # noqa: F401
 
     from compas_timber.elements import Panel  # noqa: F401
 
