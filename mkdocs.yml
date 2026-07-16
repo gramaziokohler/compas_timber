@@ -87,6 +87,8 @@ markdown_extensions:
 plugins:
   - search
   - mermaid2
+  - panzoom:
+      full_screen: true
   - mkdocstrings:
       default_handler: python
       handlers:
