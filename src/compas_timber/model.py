@@ -129,9 +129,7 @@ class TimberModel(Model):
         return candidates
 
     @property
-    def unpromoted_joint_candidates(self):
-        """returns JointCandidates that lie on edges that don't also have a Joint instance on them."""
-        # type: () -> set[JointCandidate]
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
         unpromoted = set()
         for edge in self._graph.edges():
             edge_candidate = self._graph.edge_attribute(edge, "candidates")
