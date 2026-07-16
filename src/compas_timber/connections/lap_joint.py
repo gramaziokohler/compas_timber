@@ -1,3 +1,4 @@
+from compas.data import Data
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -7,10 +8,51 @@ from compas.geometry import angle_vectors
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane_plane
+from compas.tolerance import TOL
+
+from compas_timber.errors import BeamJoiningError
 
 from .joint import Joint
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
+from .utilities import decompose_plane_to_ref_side_angles
+from .utilities import plane_from_ref_side_angles_offset
+
+
+class LapPlaneSpec(Data):
+    """A lap cutting plane stored relative to a beam's reference side.
+
+    Translates a world-coordinate (Rhino) plane into the beam's reference-side
+    coordinate system. Uses the same UNCONSTRAINED two-angle parameterisation as
+    ``LMiterJoint``'s ``MiterPlaneSpec`` (``ref_side_index, angle_x, angle_y, offset``)
+    so ANY plane orientation is preserved -- a lap interface may tilt in two directions,
+    unlike a butt cut. Use :meth:`from_plane` to encode and :meth:`to_plane` to reconstruct.
+    """
+
+    @property
+    def __data__(self):
+        return {"ref_side_index": self.ref_side_index, "angle_x": self.angle_x, "angle_y": self.angle_y, "offset": self.offset}
+
+    def __init__(self, ref_side_index, angle_x=0.0, angle_y=0.0, offset=0.0):
+        super().__init__()
+        self.ref_side_index = ref_side_index
+        self.angle_x = angle_x
+        self.angle_y = angle_y
+        self.offset = offset
+
+    def to_plane(self, beam):
+        """Reconstruct the world-coordinate plane relative to ``beam``."""
+        ref_side = beam.ref_sides[self.ref_side_index]
+        return plane_from_ref_side_angles_offset(ref_side, self.angle_x, self.angle_y, self.offset)
+
+    @classmethod
+    def from_plane(cls, beam_a, beam_b, plane):
+        """Encode ``plane`` relative to the face of ``beam_a`` closest to ``beam_b``. Any orientation allowed."""
+        ref_side_dict = beam_ref_side_incidence(beam_a, beam_b, ignore_ends=True)
+        ref_side_index = min(ref_side_dict, key=lambda k: ref_side_dict[k])
+        ref_side = beam_a.ref_sides[ref_side_index]
+        angle_x, angle_y, offset = decompose_plane_to_ref_side_angles(ref_side, plane)
+        return cls(ref_side_index, angle_x, angle_y, offset)
 
 
 class LapJoint(Joint):
@@ -45,12 +87,14 @@ class LapJoint(Joint):
         data = super(LapJoint, self).__data__
         data["flip_lap_side"] = self.flip_lap_side
         data["cut_plane_bias"] = self.cut_plane_bias
+        data["lap_plane_spec"] = self._lap_plane_spec
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, **kwargs):
+    def __init__(self, beam_a=None, beam_b=None, flip_lap_side=False, cut_plane_bias=0.5, lap_plane_spec=None, **kwargs):
         super(LapJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
+        self._lap_plane_spec = lap_plane_spec
         self.features = []
 
         self._ref_side_index_a = None
@@ -65,6 +109,33 @@ class LapJoint(Joint):
     @property
     def beam_b(self):
         return self.element_b
+
+    @property
+    def lap_plane_spec(self):
+        """The optional LapPlaneSpec override (world plane translated to beam coords)."""
+        return self._lap_plane_spec
+
+    @property
+    def cut_plane_normal(self):
+        """Normal that orients the lap interface (depth) plane, derived from the LapPlaneSpec.
+
+        The world (Rhino) plane is stored beam-relative (like ButtJoint/Miter); here it is
+        reconstructed and its normal is used to tilt the lap's interface plane. Returns
+        ``None`` if no spec is set (default beam-derived stacking direction). Only the
+        normal is used; face selection stays beam-derived. Raises if the normal is
+        parallel to a beam centerline.
+        """
+        if self._lap_plane_spec is None:
+            return None
+        normal = self._lap_plane_spec.to_plane(self.beam_a).normal
+        for beam in (self.beam_a, self.beam_b):
+            if beam is not None and TOL.is_zero(normal.cross(beam.centerline.direction).length):
+                raise BeamJoiningError(
+                    self.elements,
+                    self,
+                    debug_info="lap_plane_spec normal is parallel to a beam centerline; cannot orient the lap cut.",
+                )
+        return normal
 
     @property
     def ref_side_index_a(self):
@@ -82,14 +153,19 @@ class LapJoint(Joint):
 
     @property
     def cutting_plane_a(self):
-        """The face of the beam_b that cuts the beam_a, as a plane."""
+        """The face of the beam_b that cuts the beam_a, as a plane.
+
+        Always the default face. The lap-plane-spec override applies only to the
+        notch volume (see `_create_negative_volumes`), NOT to extension/cutoff,
+        so trimming stays as in the original joint.
+        """
         if self._cutting_plane_a is None:
             self._cutting_plane_a = self._get_cutting_plane(self.beam_b, self.beam_a)
         return self._cutting_plane_a
 
     @property
     def cutting_plane_b(self):
-        """The face of the beam_a that cuts the beam_b, as a plane."""
+        """The face of the beam_a that cuts the beam_b, as a plane. Default face (see cutting_plane_a)."""
         if self._cutting_plane_b is None:
             self._cutting_plane_b = self._get_cutting_plane(self.beam_a, self.beam_b)
         return self._cutting_plane_b
@@ -124,17 +200,37 @@ class LapJoint(Joint):
         return planes
 
     @staticmethod
-    def _create_polyhedron(plane_a, lines, bias):  # Hexahedron from 2 Planes and 4 Lines
+    def _create_polyhedron(plane_a, lines, bias, cut_plane=None, top_extension=0.0):  # Hexahedron from 2 Planes and 4 Lines
         # Step 1: Get 8 Intersection Points from 2 Planes and 4 Lines
         int_points = []
         # Find the line with the biggest length
         longest_line = max(lines, key=lambda line: line.length)
-        plane = Plane(longest_line.point_at(bias), longest_line.direction)
+        # Interface (depth) plane. When a cut_plane override is given, use it DIRECTLY:
+        # it defines BOTH the orientation AND the height/position of the lap interface,
+        # so cut_plane_bias is ignored. Otherwise fall back to the default: the stacking
+        # direction positioned at the bias point along the corner line.
+        if cut_plane is not None:
+            plane = cut_plane
+        else:
+            plane = Plane(longest_line.point_at(bias), longest_line.direction)
         for i in lines:
             point_top = intersection_line_plane(i, plane_a)
             point_bottom = intersection_line_plane(i, plane)
+            if point_top is None or point_bottom is None:
+                raise ValueError(
+                    "The lap cut plane does not intersect the lap region. "
+                    "Use a cut plane closer to the beams' overlap / stacking direction."
+                )
             point_top = Point(*point_top)
             point_bottom = Point(*point_bottom)
+            # Push the top cap outward along the depth axis so the negative volume
+            # always cuts fully through the beam. The excess sits outside the beam
+            # (harmless) and leaves the interface (bottom) plane untouched.
+            if top_extension:
+                direction = Vector.from_start_end(point_bottom, point_top)
+                if direction.length:
+                    direction.unitize()
+                    point_top = point_top + direction * top_extension
             int_points.append(point_top)
             int_points.append(point_bottom)
 
@@ -172,14 +268,22 @@ class LapJoint(Joint):
         if plane_cut_vector.dot(offset_vector) >= 0:
             plane_cut_vector = -plane_cut_vector
 
-        # Get Beam Faces (Planes) in right order
+        # Interface (depth) plane override from the LapPlaneSpec. When set, it defines
+        # the cut orientation AND height (cut_plane_bias is ignored); else None ->
+        # _create_polyhedron uses the default bias-positioned stacking plane.
+        interface_plane = None
+        if self._lap_plane_spec is not None and self.cut_plane_normal is not None:
+            interface_plane = self._lap_plane_spec.to_plane(beam_a)
+
+        # Get Beam Faces (Planes) in right order -- ALWAYS the original beam faces,
+        # so face selection and the footprint stay robust regardless of any override.
         planes_a = self._sort_beam_planes(beam_a, plane_cut_vector)
         plane_a0, plane_a1, plane_a2, plane_a3 = planes_a
 
         planes_b = self._sort_beam_planes(beam_b, -plane_cut_vector)
         plane_b0, plane_b1, plane_b2, plane_b3 = planes_b
 
-        # Lines as Frame Intersections
+        # Lines as Frame Intersections (footprint always from the ORIGINAL beam faces)
         lines = []
         pt_a = intersection_plane_plane_plane(plane_a1, plane_b1, plane_a0)
         pt_b = intersection_plane_plane_plane(plane_a1, plane_b1, plane_b0)
@@ -197,9 +301,14 @@ class LapJoint(Joint):
         pt_b = intersection_plane_plane_plane(plane_a2, plane_b1, plane_b0)
         lines.append(Line(pt_a, pt_b))
 
-        # Create Polyhedrons
-        negative_polyhedron_beam_a = self._create_polyhedron(plane_b0, lines, cut_plane_bias)
-        negative_polyhedron_beam_b = self._create_polyhedron(plane_a0, lines, cut_plane_bias)
+        # Push the top caps through the beam so tilted cuts always cut clean.
+        top_extension = 2.0 * max(beam_a.height, beam_a.width, beam_b.height, beam_b.width)
+
+        # Create Polyhedrons. The LapPlaneSpec override (if set) replaces ONLY the
+        # interface (depth) plane inside _create_polyhedron; the top faces
+        # (plane_a0/plane_b0) and footprint stay original -> no trimming change.
+        negative_polyhedron_beam_a = self._create_polyhedron(plane_b0, lines, cut_plane_bias, interface_plane, top_extension)
+        negative_polyhedron_beam_b = self._create_polyhedron(plane_a0, lines, cut_plane_bias, interface_plane, top_extension)
 
         if self.flip_lap_side:
             return negative_polyhedron_beam_b, negative_polyhedron_beam_a

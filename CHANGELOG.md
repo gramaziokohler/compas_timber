@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
 
+* Added `LapPlaneSpec` — beam-relative cutting plane for lap joints `(ref_side_index, angle_x, angle_y, offset)`. Build with `from_plane(beam_a, beam_b, plane)`, resolve with `.to_plane(beam)`.
+* Added `lap_plane_spec` parameter to `LapJoint` (inherited by `XLapJoint`, `LLapJoint`, `TLapJoint`, `LFrenchRidgeLapJoint`) to override the lap interface plane's orientation and depth from a world-coordinate plane; falls back to `cut_plane_bias` when not set. Extension, cutoff, and face selection are unchanged.
+* Added a unit test for `LapPlaneSpec` serialization round-trip on `LLapJoint`.
+
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
 * Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.

@@ -7,6 +7,7 @@ from .l_miter import LMiterJoint
 from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
+from .lap_joint import LapPlaneSpec
 from .joint_candidate import JointCandidate
 from .joint_candidate import PlateJointCandidate
 from .solver import ConnectionSolver
@@ -48,6 +49,7 @@ from .cluster import get_clusters_from_joint_candidates
 __all__ = [
     "Joint",
     "LapJoint",
+    "LapPlaneSpec",
     "ButtJoint",
     "TButtJoint",
     "ISimpleScarf",
