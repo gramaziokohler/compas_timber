@@ -13,6 +13,7 @@ from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
+from .solver import find_connection_handler
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -67,6 +68,7 @@ __all__ = [
     "ConnectionSolver",
     "PlateConnectionSolver",
     "find_neighboring_elements",
+    "find_connection_handler",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "BallNodeJoint",

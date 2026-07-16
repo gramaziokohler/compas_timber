@@ -19,7 +19,8 @@ authors = [
     { name = "Beverly Lytle", email = "lytle@arch.ethz.ch" },
     { name = "Eric Gozzi", email = "eric.gozzi@arch.ethz.ch" },
     { name = "Rodrigo Arca Zimmermann", email = "rodrigo.arca@gmail.com" },
-    { name = "Nicolas Benjamin Boscoboinik", email = "boscoboinik@arch.ethz.ch" }
+    { name = "Nicolas Benjamin Boscoboinik", email = "boscoboinik@arch.ethz.ch" },
+    { name = "Paul Jaeggi", email = "jaeggipa@ethz.ch" }
 ]
 license = "MIT"
 readme = "README.md"
@@ -33,6 +34,9 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
 dependencies = [
@@ -40,7 +44,7 @@ dependencies = [
     "compas >=2.15.1, <3.0",
     "compas_model == 0.9.2", # pin until first release
     "scipy >= 1.1",
-    "compas_brep"
+    "compas_brep >= 0.1.3"
 ]
 
 [project.optional-dependencies]
@@ -90,8 +94,6 @@ zip-safe = false
 
 [tool.setuptools.dynamic]
 version = { attr = "compas_timber.__version__" }
-dependencies = { file = "requirements.txt" }
-optional-dependencies = { dev = { file = "requirements-dev.txt" } }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -199,3 +201,6 @@ python_files = [
 addopts = "-ra --strict --doctest-modules --doctest-glob=*.rst --tb=short"
 doctest_optionflags= "NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL ALLOW_UNICODE ALLOW_BYTES NUMBER"
 filterwarnings = "ignore::DeprecationWarning"
+markers = [
+    "requires_occ: marks tests that need the OCC Brep backend, which is not available on Python 3.9",
+]
