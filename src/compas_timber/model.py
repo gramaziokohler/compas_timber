@@ -587,8 +587,6 @@ class TimberModel(Model):
         """
         errors = []
         joints = self.joints
-        for element in self.elements():
-            element.reset()  # TODO: add a `reset_joinery()` method to reset joinery-specific cache.  # noqa: E501
 
         for joint in joints:
             try:
