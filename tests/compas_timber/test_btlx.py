@@ -7,6 +7,7 @@ from compas.tolerance import Tolerance
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Vector
 
 import xml.etree.ElementTree as ET
 
@@ -493,6 +494,31 @@ def test_btlx_transformation_roundtrip():
     # If centerline frame is preserved, ref_frame should also match
     assert TOL.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
     assert TOL.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
+
+
+def test_btlx_user_ref_plane_roundtrip():
+    """Test that a user reference plane survives a BTLx write/read roundtrip."""
+    model = TimberModel()
+    beam = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam.name = "test_beam"
+
+    plane_frame = Frame(Point(2050, -20, 1010), Vector(-1, 0, 0), Vector(0, 0, 1))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+    model.add_element(beam)
+
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    beam_read = model_read.beams[0]
+    resolved_plane = beam_read.get_user_ref_plane(plane_id)
+
+    assert resolved_plane is not None
+    assert TOL.is_allclose(resolved_plane.point, plane_frame.point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
 
 
 def test_btlx_reader_beam_and_plate():

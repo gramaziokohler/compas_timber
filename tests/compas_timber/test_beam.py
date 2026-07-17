@@ -509,3 +509,78 @@ def test_transform_invalidates_cached_timber_attributes(beam):
     assert new_blank.frame != original_blank.frame
     assert new_ref_frame.point != original_ref_frame.point
     assert not TOL.is_close(new_blank.frame.point.distance_to_point(original_blank.frame.point), 0.0)
+
+
+def test_user_ref_plane_follows_beam_transform():
+    """A user reference plane, stored in the beam's local space, should track the beam under transform()."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    translation = Translation.from_vector([100.0, 50.0, -20.0])
+    beam.transform(translation)
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+    expected_point = plane_frame.point.transformed(translation)
+
+    assert TOL.is_allclose(resolved_plane.point, expected_point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
+
+
+def test_user_ref_plane_add_get_remove():
+    """Cover the basic user_ref_plane API: auto ID assignment, ID collisions, missing lookups, removal."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    frame_a = Frame(Point(100, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    frame_b = Frame(Point(200, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+
+    id_a = beam.add_user_ref_plane(frame_a)
+    id_b = beam.add_user_ref_plane(frame_b)
+
+    # auto-assigned IDs start at 100 and increment
+    assert id_a == 100
+    assert id_b == 101
+    assert len(beam.user_ref_planes) == 2
+
+    # explicit ID collision raises
+    with pytest.raises(ValueError):
+        beam.add_user_ref_plane(frame_a, ID=id_a)
+
+    # explicit ID is honored when not colliding
+    id_c = beam.add_user_ref_plane(frame_a, ID=200)
+    assert id_c == 200
+
+    # missing ID resolves to None
+    assert beam.get_user_ref_plane(999) is None
+
+    # removal drops just the targeted plane
+    beam.remove_user_ref_plane(id_a)
+    assert len(beam.user_ref_planes) == 2
+    assert beam.get_user_ref_plane(id_a) is None
+    assert beam.get_user_ref_plane(id_b) is not None
+
+
+def test_user_ref_plane_follows_model_transform():
+    """A user reference plane should track the beam correctly after a whole-model transform.
+
+    TimberModel.transform() resets every element's computed properties (including the ref_frame
+    cache the plane is stored relative to), unlike transforming an individual element.
+    """
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    model.add_element(beam)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    translation = Translation.from_vector([100.0, 50.0, -20.0])
+    model.transform(translation)
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+    expected_point = plane_frame.point.transformed(translation)
+
+    assert TOL.is_allclose(resolved_plane.point, expected_point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
