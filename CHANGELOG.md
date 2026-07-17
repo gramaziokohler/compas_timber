@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added `TimberElement.user_ref_planes`, `TimberElement.add_user_ref_plane()`, `TimberElement.get_user_ref_plane()`, and `TimberElement.remove_user_ref_plane()` for attaching arbitrary named reference planes (BTLx `UserReferencePlane`, integer ID >= 100) to a beam or plate.
+* Added `UserReferencePlane` data class representing a single registered reference plane.
+* Added `BTLxPart.et_user_reference_planes` and wired `BTLxWriter` to emit a part's `UserReferencePlanes` XML element when any are registered on its element.
+* Added mechanism in `BTLxReader` to read `UserReferencePlanes` back from BTLx XML and add them to the corresponding element.
+* Added `FreeContour.from_polyline_ref_plane_and_beam()` classmethod to build a `FreeContour` processing cut relative to a custom, user-supplied reference plane instead of one of the element's standard reference sides.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
@@ -43,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
+* `BTLxProcessing`'s `ReferencePlaneID` header attribute (read via `HEADER_ATTRIBUTE_MAP` and written via `BTLxProcessingParams.header_attributes`) now passes user reference plane IDs (>= 100) through as-is, instead of always applying the standard side's 1-based/0-based conversion.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
