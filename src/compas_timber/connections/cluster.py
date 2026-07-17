@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from compas.data import Data
 from compas.geometry import Point
 from compas.tolerance import TOL
 from compas_model.elements import Element
@@ -8,7 +9,7 @@ from compas_timber.connections import JointTopology
 from compas_timber.geometry import KDTree
 
 
-class Cluster:
+class Cluster(Data):
     """Groups together the clustered joints and offers access to the beams
 
     Parameters
@@ -25,8 +26,12 @@ class Cluster:
     location : :class:`~compas.geometry.Point`
         The approximated location of the cluster, effectively the location of the first joint.
     """
+    @property
+    def __data__(self):
+        return {"joints": self.joints}
 
     def __init__(self, joints):
+        super(Cluster, self).__init__()
         self.joints = joints
         self._elements = None
 
