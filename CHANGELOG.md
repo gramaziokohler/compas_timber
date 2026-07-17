@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
+* Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
+* Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, constructed directly from a `PlateGeometry` (like `Panel`/`Plate`) plus a `start_offset` (in the panel's thickness direction); use `Layer.from_parent_start_end(host, start_offset, end_offset)` to build one by interpolating a parent `Panel`/`Layer`'s outlines. `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
+* Added `LayerDefinition` and `LayerStructure` classes (`compas_timber.elements.LayerDefinition`, `compas_timber.elements.LayerStructure`) — panel-agnostic tree definitions of layer slots (name, thickness, sublayer defs) that can be shared across panels and attached to a specific panel via `LayerStructure.attach(panel)`.
+* Added `Panel.layer_structure` property/setter — assigns a `LayerStructure` to a panel, creating bound `Layer` instances. Layers are automatically registered in the model when the panel already belongs to one; setting `layer_structure` again replaces any previously-attached layers.
+* Added `Panel.layers` property — the panel's root `Layer` instances (direct children only).
+* Added `Panel.exterior_layer`, `Panel.core_layer`, `Panel.interior_layer` properties — look up the layer named `"exterior"`/`"core"`/`"interior"` in the panel's `layer_structure`, or `None` if not defined.
+* Added `Panel.get_leaf_layers()` — returns all layers without sublayers as a flat ordered list, from `outline_a` to `outline_b`.
+* Added `Panel.merge_layer_structure(model)` — adds all layers in the panel's layer structure to `model` as children of the panel.
+* Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
+* Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
+* `Panel.set_extension_plane` and `Panel.apply_edge_extensions` now propagate to all attached layers.
+* `Panel.model` is now a property/setter pair; when a panel is added to the model, any pre-existing layers are automatically added as child elements.
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.

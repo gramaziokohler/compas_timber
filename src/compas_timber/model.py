@@ -17,6 +17,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
@@ -41,6 +42,9 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
+    layers : list[:class:`~compas_timber.elements.Layer`]
+        A Generator object of all layers assigned to this model.
+
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -111,6 +115,11 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Panel)
 
     @property
+    def layers(self):
+        # type: () -> List[Layer]
+        return self.find_all_elements_of_type(Layer)
+
+    @property
     def fasteners(self):
         # type: () -> List[Fastener]
         return self.find_all_elements_of_type(Fastener)
@@ -128,6 +137,16 @@ class TimberModel(Model):
             if edge_candidate is not None:
                 candidates.add(edge_candidate)
         return candidates
+
+    @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        unpromoted = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            edge_joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate is not None and edge_joint is None:
+                unpromoted.add(edge_candidate)
+        return unpromoted
 
     @property
     def topologies(self):

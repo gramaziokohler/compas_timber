@@ -278,6 +278,7 @@ def test_error_deepcopy_joint():
     assert error.debug_info == "dog"
     assert error.debug_geometries == ["cucumber"]
 
+
 @pytest.mark.requires_occ
 def test_feature_application_error_geometry_is_in_model_space():
     """A FeatureApplicationError caught by compute_elementgeometry() must carry geometry in
@@ -414,6 +415,32 @@ def test_joint_candidates_and_joints_separate():
     # Verify the joint is between beam1 and beam3
     assert beam1 in joint.elements
     assert beam3 in joint.elements
+
+
+def test_unpromoted_joint_candidates_excludes_promoted():
+    """Test that a candidate promoted to a joint on the same edge drops out of unpromoted_joint_candidates but stays in joint_candidates."""
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    model.connect_adjacent_beams()
+
+    assert len(model.joint_candidates) == 1
+    assert len(model.unpromoted_joint_candidates) == 1
+
+    candidate = list(model.joint_candidates)[0]
+    LButtJoint.promote_joint_candidate(model, candidate)
+
+    # promoting doesn't remove the candidate: it now coexists with the joint on the same edge
+    assert len(model.joint_candidates) == 1
+    assert len(model.unpromoted_joint_candidates) == 0
 
 
 def test_remove_joint_candidates():
