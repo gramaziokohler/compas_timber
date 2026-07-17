@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from itertools import combinations
 from typing import Iterable
 from typing import List
 from typing import cast
@@ -16,6 +17,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
@@ -40,6 +42,9 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
+    layers : list[:class:`~compas_timber.elements.Layer`]
+        A Generator object of all layers assigned to this model.
+
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -110,6 +115,11 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Panel)
 
     @property
+    def layers(self):
+        # type: () -> List[Layer]
+        return self.find_all_elements_of_type(Layer)
+
+    @property
     def fasteners(self):
         # type: () -> List[Fastener]
         return self.find_all_elements_of_type(Fastener)
@@ -127,6 +137,16 @@ class TimberModel(Model):
             if edge_candidate is not None:
                 candidates.add(edge_candidate)
         return candidates
+
+    @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        unpromoted = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            edge_joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate is not None and edge_joint is None:
+                unpromoted.add(edge_candidate)
+        return unpromoted
 
     @property
     def topologies(self):
@@ -276,6 +296,28 @@ class TimberModel(Model):
             pass
         return results
 
+    def get_joint(self, element_a, element_b):
+        # type: (Element, Element) -> Joint | None
+        """Get the joint instance that joins two given elements, if any.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_model.elements.Element`
+            The first element.
+        element_b : :class:`~compas_model.elements.Element`
+            The second element.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.Joint` or None
+            The joint connecting the two elements, or None if they are not joined.
+        """
+        joint_guids = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "joints")
+        for guid in joint_guids:
+            if guid in self._joints:
+                return self._joints[guid]
+        return None
+
     def get_joints_for_element(self, element) -> List[Joint]:
         """Get all joints for a given element.
 
@@ -343,6 +385,15 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        # explicitly remove old joint instances between the same elements.
+        # This ensures that the joint being removed clears its features from the elements
+        # before the new is added, which will add its own features to the elements.
+        # NOTE: in the case where a 2 element joint is added between elements previously in a 3+ element joint, one or more elements will be left unconnected.
+        for pair in combinations(joint.elements, 2):
+            old = self.get_joint(pair[0], pair[1])
+            if old:
+                self.remove_joint(old)
+
         joint_guid = str(joint.guid)
         self._joints[joint_guid] = joint
         self.add_elements(joint.generated_elements)
@@ -513,6 +564,10 @@ class TimberModel(Model):
             The joint to remove.
 
         """
+        # clear the features of the joint before removing it from the model, to avoid leaving any features on the elements that are no longer part of a joint
+        joint.clear_features()
+        joint.clear_extensions()
+
         self._joints.pop(str(joint.guid), None)
         for interaction in joint.interactions:
             element_a, element_b = interaction
@@ -546,6 +601,13 @@ class TimberModel(Model):
             # if there's no other timber related attributes on that edge, then remove the edge as well
             super().remove_interaction(a, b)
 
+    def remove_element(self, element):
+        # compas_model.Model removes the interactions and edges connected to the element,
+        # but joints are stored in a separate dict, so we remove those explicitly first.
+        for joint in self.get_joints_for_element(element):
+            self.remove_joint(joint)
+        return super().remove_element(element)
+
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
         for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
@@ -568,7 +630,7 @@ class TimberModel(Model):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
 
-    def process_joinery(self, stop_on_first_error=False):
+    def process_joinery(self, joints_to_process=None, stop_on_first_error=False):
         """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
@@ -586,7 +648,11 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = self.joints
+        joints = joints_to_process if joints_to_process is not None else self.joints
+
+        for joint in joints:
+            joint.clear_extensions()
+            joint.clear_features()
 
         for joint in joints:
             try:

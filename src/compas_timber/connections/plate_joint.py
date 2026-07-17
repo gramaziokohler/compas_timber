@@ -176,6 +176,13 @@ class PlateJoint(Joint, ABC):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
         pass
 
+    def clear_extensions(self):
+        """Clears features from the plates based on the joint."""
+        if self.a_segment_index is not None:
+            self.element_a.remove_blank_extension(self.a_segment_index)
+        if self.b_segment_index is not None:
+            self.element_b.remove_blank_extension(self.b_segment_index)
+
     def _reorder_planes_and_outlines(self):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:
             self._reverse_b_planes = True
