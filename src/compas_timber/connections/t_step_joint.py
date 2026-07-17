@@ -170,14 +170,15 @@ class TStepJoint(Joint):
         """
         assert self.cross_beam and self.main_beam
         start_a = None
+        plane_a = None
         try:
             plane_a = self.main_extension_plane
             start_a, end_a = self.main_beam.extension_to_plane(plane_a)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            raise BeamJoiningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
+            raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=[plane_a] if plane_a else [])
         except Exception as ex:
-            raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex), debug_geometries=[plane_a] if plane_a else [])
         self.main_beam.add_blank_extension(start_a, end_a, self.guid)
 
     def add_features(self):

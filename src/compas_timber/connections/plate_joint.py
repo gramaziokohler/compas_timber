@@ -121,7 +121,11 @@ class PlateJoint(Joint, ABC):
             if allow_reordering:
                 self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
             else:
-                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
+                raise BeamJoiningError(
+                    beams=[self.plate_a, self.plate_b],
+                    joint=self,
+                    debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
+                )
         self.topology = topo_results.topology
         self.a_segment_index = topo_results.a_segment_index
         self.b_segment_index = topo_results.b_segment_index

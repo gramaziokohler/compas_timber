@@ -258,8 +258,8 @@ class SimpleScarf(BTLxProcessing):
             drill_volumes = [Brep.from_cylinder(dv) for dv in drill_volumes]
         except Exception:
             raise FeatureApplicationError(
-                scarf_volume,
-                geometry,
+                scarf_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "Could not convert the scarf volume mesh to a Brep."
             )
 
@@ -273,13 +273,13 @@ class SimpleScarf(BTLxProcessing):
                     return b
         except IndexError:
             raise FeatureApplicationError(
-                scarf_volume,
-                geometry,
+                scarf_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The scarf volume does not intersect with the beam geometry."
             )
         raise FeatureApplicationError(
-            scarf_volume,
-            geometry,
+            scarf_volume.transformed(beam.modeltransformation),
+            geometry.transformed(beam.modeltransformation),
             "No valid result solid found after boolean difference: the beam midpoint is not contained in any result Brep.",
         )
 

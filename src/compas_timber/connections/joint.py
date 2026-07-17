@@ -346,7 +346,12 @@ class Joint(Data):
         """
         if reordered_elements:
             if set(reordered_elements) != cluster.elements:
-                raise BeamJoiningError(cls, "Elements of the joint candidate must match the provided elements.", [e.blank for e in reordered_elements])
+                raise BeamJoiningError(
+                    beams=reordered_elements,
+                    joint=cls,
+                    debug_info="Elements of the joint candidate must match the provided elements.",
+                    debug_geometries=[e.blank for e in reordered_elements],
+                )
         if len(cluster.joints) == 1:
             elements = reordered_elements or cluster.joints[0].elements
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)
