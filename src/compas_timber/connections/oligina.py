@@ -52,8 +52,6 @@ class TOliGinaJoint(MortiseTenonJoint):
     def add_features(self):
         assert self.main_beam and self.cross_beam  # should never happen
 
-        self._clear_features()
-
         main_feature = self._create_tenon_feature()
         cross_feature = self._create_mortise_feature(main_feature)
 
@@ -63,9 +61,13 @@ class TOliGinaJoint(MortiseTenonJoint):
         # add features to joint
         self.features = [cross_feature, main_feature]
 
-        self.cross_beam.add_feature(self._make_oli_text())
-        self.cross_beam.add_feature(self._make_date_text())
-        self.main_beam.add_feature(self._make_gina_text())
+        oli_text = self._make_oli_text()
+        date_text = self._make_date_text()
+        gina_text = self._make_gina_text()
+        self.cross_beam.add_feature(oli_text)
+        self.cross_beam.add_feature(date_text)
+        self.main_beam.add_feature(gina_text)
+        self.features.extend([oli_text, date_text, gina_text])
 
     def _make_oli_text(self):
         # on cross beam

@@ -1,7 +1,5 @@
 import math
 
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -13,6 +11,8 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
@@ -421,7 +421,11 @@ class LongitudinalCut(BTLxProcessing):
             try:
                 return geometry.trimmed(cutting_plane)
             except BrepTrimmingError:
-                raise FeatureApplicationError(cutting_plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")
+                raise FeatureApplicationError(
+                    cutting_plane.transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
+                    "The trimming operation failed. The cutting plane does not intersect with beam geometry.",
+                )
         else:
             # if the cut is limited, calculate the negative volume representing the cut and subtract it from the geometry
             neg_vol = self.volume_from_params_and_beam(beam)
@@ -429,7 +433,11 @@ class LongitudinalCut(BTLxProcessing):
             try:
                 return geometry - neg_vol
             except IndexError:
-                raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
+                raise FeatureApplicationError(
+                    neg_vol.transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
+                    "The boolean difference between the cutting volume and the beam geometry failed.",
+                )
 
     def plane_from_params_and_beam(self, beam):
         """Calculates the cutting plane from the machining parameters in this instance and the given beam
@@ -664,7 +672,11 @@ class LongitudinalCutProxy(object):
             # TODO: add geometry implementation for cuts that don't go full length of beam
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
-            raise FeatureApplicationError(self.plane, geometry, "The trimming operation failed. The cutting plane does not intersect with beam geometry.")
+            raise FeatureApplicationError(
+                self.plane.transformed(self.beam.modeltransformation),
+                geometry.transformed(self.beam.modeltransformation),
+                "The trimming operation failed. The cutting plane does not intersect with beam geometry.",
+            )
 
     def __getattr__(self, attr):
         # any unknown calls are passed through to the processing instance

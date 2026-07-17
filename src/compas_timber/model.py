@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import warnings
+from itertools import combinations
 from typing import Iterable
 from typing import List
 from typing import cast
@@ -13,13 +14,10 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import JointTopology
-from compas_timber.connections import PanelJoint
-from compas_timber.connections import PlateConnectionSolver
-from compas_timber.connections import PlateJoint
-from compas_timber.connections import PlateJointCandidate
+from compas_timber.connections import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
@@ -44,6 +42,9 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
+    layers : list[:class:`~compas_timber.elements.Layer`]
+        A Generator object of all layers assigned to this model.
+
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -114,6 +115,11 @@ class TimberModel(Model):
         return self.find_all_elements_of_type(Panel)
 
     @property
+    def layers(self):
+        # type: () -> List[Layer]
+        return self.find_all_elements_of_type(Layer)
+
+    @property
     def fasteners(self):
         # type: () -> List[Fastener]
         return self.find_all_elements_of_type(Fastener)
@@ -131,6 +137,16 @@ class TimberModel(Model):
             if edge_candidate is not None:
                 candidates.add(edge_candidate)
         return candidates
+
+    @property
+    def unpromoted_joint_candidates(self) -> set[JointCandidate]:
+        unpromoted = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            edge_joint = self._graph.edge_attribute(edge, "joints")
+            if edge_candidate is not None and edge_joint is None:
+                unpromoted.add(edge_candidate)
+        return unpromoted
 
     @property
     def topologies(self):
@@ -280,6 +296,28 @@ class TimberModel(Model):
             pass
         return results
 
+    def get_joint(self, element_a, element_b):
+        # type: (Element, Element) -> Joint | None
+        """Get the joint instance that joins two given elements, if any.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_model.elements.Element`
+            The first element.
+        element_b : :class:`~compas_model.elements.Element`
+            The second element.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.Joint` or None
+            The joint connecting the two elements, or None if they are not joined.
+        """
+        joint_guids = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "joints")
+        for guid in joint_guids:
+            if guid in self._joints:
+                return self._joints[guid]
+        return None
+
     def get_joints_for_element(self, element) -> List[Joint]:
         """Get all joints for a given element.
 
@@ -347,6 +385,15 @@ class TimberModel(Model):
         joint : :class:`~compas_timber.connections.joint`
             An instance of a Joint class.
         """
+        # explicitly remove old joint instances between the same elements.
+        # This ensures that the joint being removed clears its features from the elements
+        # before the new is added, which will add its own features to the elements.
+        # NOTE: in the case where a 2 element joint is added between elements previously in a 3+ element joint, one or more elements will be left unconnected.
+        for pair in combinations(joint.elements, 2):
+            old = self.get_joint(pair[0], pair[1])
+            if old:
+                self.remove_joint(old)
+
         joint_guid = str(joint.guid)
         self._joints[joint_guid] = joint
         self.add_elements(joint.generated_elements)
@@ -517,12 +564,17 @@ class TimberModel(Model):
             The joint to remove.
 
         """
+        # clear the features of the joint before removing it from the model, to avoid leaving any features on the elements that are no longer part of a joint
+        joint.clear_features()
+        joint.clear_extensions()
+
         self._joints.pop(str(joint.guid), None)
         for interaction in joint.interactions:
             element_a, element_b = interaction
             self.remove_interaction(element_a, element_b)
         for element in joint.generated_elements:
             self.remove_element(element)
+        joint.reset_location()
 
     def remove_interaction(self, a, b, _=None):
         """Remove the interaction between two elements.
@@ -549,6 +601,13 @@ class TimberModel(Model):
             # if there's no other timber related attributes on that edge, then remove the edge as well
             super().remove_interaction(a, b)
 
+    def remove_element(self, element):
+        # compas_model.Model removes the interactions and edges connected to the element,
+        # but joints are stored in a separate dict, so we remove those explicitly first.
+        for joint in self.get_joints_for_element(element):
+            self.remove_joint(joint)
+        return super().remove_element(element)
+
     def _is_remaining_attrs_on_edge(self, edge):
         # returns True if any TimeberModel attributes are left on edge
         for attr in self._TIMBER_GRAPH_EDGE_ATTRIBUTES:
@@ -571,7 +630,7 @@ class TimberModel(Model):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
         self._topologies = topologies
 
-    def process_joinery(self, stop_on_first_error=False):
+    def process_joinery(self, joints_to_process=None, stop_on_first_error=False):
         """Process the joinery of the model. This methods checks the feasibility of the joints and instructs all joints to add their extensions and features.
 
         The sequence is important here since the feature parameters must be calculated based on the extended blanks.
@@ -589,7 +648,11 @@ class TimberModel(Model):
 
         """
         errors = []
-        joints = self.joints
+        joints = joints_to_process if joints_to_process is not None else self.joints
+
+        for joint in joints:
+            joint.clear_extensions()
+            joint.clear_features()
 
         for joint in joints:
             try:
@@ -640,27 +703,44 @@ class TimberModel(Model):
         _, joints_traversed = solver.add_structural_segments(model=self)
         solver.add_joint_structural_segments(model=self, joints=joints_traversed)
 
-    def connect_adjacent_beams(self, max_distance=None):
-        # Clear existing joint candidates
+    def compute_topologies(self, elements=None, max_distance=None):
+        """Detects adjacent elements and creates joint candidates for them.
+
+        Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
+        plate-plate, and panel-panel are supported today). Additional type combinations can be
+        supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered combinations are
+        silently skipped.
+
+        Clears all existing joint candidates before recomputing, regardless of the element types
+        involved. Concrete (already promoted) joints are left untouched.
+
+        Parameters
+        ----------
+        elements : list[:class:`~compas_model.elements.Element`], optional
+            The elements to connect. If not provided, defaults to all beams, plates, and panels in the model.
+        max_distance : float, optional
+            The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
+
+        """
+        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
+
         for candidate in list(self.joint_candidates):
             self.remove_joint_candidate(candidate)
 
-        max_distance = max_distance or TOL.relative
-        beams = self.beams
-        solver = ConnectionSolver()
-        pairs = solver.find_intersecting_pairs(beams, rtree=True, max_distance=max_distance)
+        max_distance = max_distance or TOL.absolute
+        pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
         for pair in pairs:
-            beam_a, beam_b = pair
-            result = solver.find_topology(beam_a, beam_b, max_distance=max_distance)
-            if result.topology == JointTopology.TOPO_UNKNOWN:
+            element_a, element_b = tuple(pair)
+            handler = find_connection_handler(element_a, element_b)
+            if handler is None:
                 continue
-            assert beam_a and beam_b
+            candidate = handler(element_a, element_b, max_distance)
+            if candidate is not None:
+                self.add_joint_candidate(candidate)
 
-            # Create candidate and add it to the model
-            candidate = JointCandidate(
-                result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location
-            )  # use the beam order determined by find_topology to keep main, cross relationship
-            self.add_joint_candidate(candidate)
+    def connect_adjacent_beams(self, max_distance=None):
+        """Connects adjacent beams in the model."""
+        self.compute_topologies(self.beams, max_distance)
 
     def connect_adjacent_plates(self, max_distance=None):
         """Connects adjacent plates in the model.
@@ -670,54 +750,165 @@ class TimberModel(Model):
         max_distance : float, optional
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PlateJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
-
-        max_distance = max_distance or TOL.absolute
-        plates = self.plates
-        solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(plates, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            plate_a, plate_b = pair
-            result = solver.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance)
-
-            if result.topology is JointTopology.TOPO_UNKNOWN:
-                continue
-            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
-
-            if result.topology == JointTopology.TOPO_EDGE_EDGE:
-                kwargs["b_segment_index"] = result.b_segment_index
-
-            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
-            self.add_joint_candidate(candidate)
+        self.compute_topologies(self.plates, max_distance)
 
     def connect_adjacent_panels(self, max_distance=None):
-        """Connects adjacent plates in the model.
+        """Connects adjacent panels in the model.
 
         Parameters
         ----------
         max_distance : float, optional
-            The maximum distance between plates to consider them adjacent. Default is 0.0.
+            The maximum distance between panels to consider them adjacent. Default is 0.0.
         """
-        for joint in self.joints:
-            if isinstance(joint, PanelJoint):
-                self.remove_joint(joint)  # TODO do we want to remove plate joints?
+        self.compute_topologies(self.panels, max_distance)
 
-        max_distance = max_distance or TOL.absolute
-        panels = self.panels
-        solver = PlateConnectionSolver()
-        pairs = solver.find_intersecting_pairs(panels, rtree=True, max_distance=max_distance)
-        for pair in pairs:
-            panel_a, panel_b = pair
-            result = solver.find_topology(panel_a, panel_b, tol=TOL.relative, max_distance=max_distance)
+    # =============================================================================
+    # Model sub-tree surgery
+    # =============================================================================
 
-            if result.topology is JointTopology.TOPO_UNKNOWN:
-                continue
-            kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
+    def remove_element_subtree(self, element):
+        """Remove all children (and their descendants) of *element* from the model.
 
-            if result.topology == JointTopology.TOPO_EDGE_EDGE:
-                kwargs["b_segment_index"] = result.b_segment_index
+        *element* itself is kept in the model as a childless leaf.  Any joints
+        whose both elements are among the removed descendants are also removed;
+        joints that span a removed element and an element outside the subtree are
+        removed as well.
 
-            candidate = PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
-            self.add_joint_candidate(candidate)
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element whose descendants are removed.  Must already be in the model.
+        """
+        _, _ = self._detach_subtree(element)
+
+    def _detach_subtree(self, parent=None):
+        # type: (Element | None) -> tuple[list, list]
+        """Remove elements from the model and return the information needed to re-attach them.
+
+        Parameters
+        ----------
+        parent : :class:`~compas_model.elements.Element`, optional
+            When given, *parent* is **kept** in the model and only its descendants
+            are removed.  The direct children are recorded under ``None`` in the
+            returned tuples so they can be re-rooted under a different parent on
+            re-insertion.
+            When ``None``, every element in the model is removed.
+
+        Returns
+        -------
+        tuple(list, list)
+            * ``tuples`` — list of ``(parent_element_or_None, [children])`` pairs,
+              ordered parents-before-children so ``_attach_subtree`` can re-insert
+              them in a single pass while preserving hierarchy.
+            * ``joints`` — list of joints that were removed because all their
+              elements were part of the detached subtree.  Joints that spanned a
+              removed element and a kept element are dropped entirely.
+        """
+        tuples = []
+        elements_children_first = []
+
+        def walk(element, is_kept_root):
+            children = list(element.children)
+            if children:
+                tuples.append((None if is_kept_root else element, children))
+                for child in children:
+                    walk(child, is_kept_root=False)
+            if not is_kept_root:
+                elements_children_first.append(element)
+
+        if parent:
+            walk(parent, is_kept_root=True)
+        else:
+            tops = [element for element in self.elements() if element.parent is None]
+            tuples.append((None, tops))
+            for top in tops:
+                walk(top, is_kept_root=False)
+
+        joints = []
+        for j in list(self.joints):
+            elements_in_joint = [e in elements_children_first for e in j.elements]
+            if all(elements_in_joint):
+                joints.append(j)
+                self.remove_joint(j)
+            elif any(elements_in_joint):
+                self.remove_joint(j)
+
+        for e in elements_children_first:
+            self.remove_element(e)
+            e.clear_model_dependent_cache()
+
+        return tuples, joints
+
+    def _attach_subtree(self, tuples, joints=None, parent=None):
+        # type: (list, list | None, Element | None) -> None
+        """Re-add elements described by *tuples* into this model.
+
+        Parameters
+        ----------
+        tuples : list
+            ``(tuple_parent, [children])`` pairs as returned by :meth:`_detach_subtree`.
+            Pairs whose ``tuple_parent`` is ``None`` are rooted under *parent*
+            (or at the model root when *parent* is also ``None``).
+        joints : list, optional
+            Joints to restore after all elements have been re-added.
+        parent : :class:`~compas_model.elements.Element`, optional
+            Default parent for top-level elements (those recorded under ``None``).
+            When ``None``, they are added as model-root elements.
+        """
+        for tuple_parent, children in tuples:
+            target_parent = tuple_parent if tuple_parent is not None else parent
+            for child in children:
+                self.add_element(child, parent=target_parent)
+                child.clear_model_dependent_cache()
+        if joints:
+            for joint in joints:
+                self.add_joint(joint)
+
+    def extract_model_from_parent(self, parent):
+        # type: (Element) -> TimberModel
+        """Detach *parent*'s child subtree into a new, standalone :class:`TimberModel`.
+
+        The *parent* element itself stays in its current model; its descendants are
+        removed from that model and re-rooted (hierarchy preserved) in a fresh
+        :class:`TimberModel`, which is returned.
+
+        A child element detached from its parent reports its geometry in the
+        parent's local frame — convenient for operating on, e.g., a panel's layers
+        in isolation, then merging them back with :func:`merge_model_into_model`.
+
+        Parameters
+        ----------
+        parent : :class:`~compas_model.elements.Element`
+            The element whose children are extracted.  Must be in a model.
+
+        Returns
+        -------
+        :class:`TimberModel`
+            A new model containing *parent*'s former subtree.
+        """
+        tuples, joints = self._detach_subtree(parent)
+        new_model = TimberModel()
+        new_model._attach_subtree(tuples, joints=joints)
+        return new_model
+
+    def merge_model(self, model, parent=None):
+        # type: (TimberModel, TimberModel, Element | None) -> None
+        """Move every element (and joints) of *model* into *target_model* under *parent*.
+
+        All of *model*'s top-level elements and their subtrees are detached and
+        re-added beneath *parent* in *target_model* (or under the root when *parent*
+        is ``None``), preserving the hierarchy and resetting each moved element's
+        computed properties.  Joints defined on *model* are copied across.
+
+        Parameters
+        ----------
+        model : :class:`TimberModel`
+            The source model whose contents are moved out.
+        target_model : :class:`TimberModel`
+            The model to merge *model*'s elements into.
+        parent : :class:`~compas_model.elements.Element`, optional
+            The element under which the moved elements are re-rooted.  ``None``
+            attaches them under the target model's root.
+        """
+        tuples, joints = model._detach_subtree()
+        self._attach_subtree(tuples, joints=joints, parent=parent)

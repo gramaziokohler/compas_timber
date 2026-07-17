@@ -53,7 +53,6 @@ classDiagram
          +plate_geometry : PlateGeometry
          +outline_a : Polyline
          +outline_b : Polyline
-         +openings : list[Polyline]
          +planes : tuple[Plane]
          +blank : Box
          +blank_length : float
@@ -61,7 +60,7 @@ classDiagram
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
          +compute_collision_mesh()
-         +from_outlines(outline_a, outline_b)
+         +from_outlines(outline_a, outline_b, openings)
          +from_outline_thickness(outline, thickness)
          +from_brep(brep, thickness)
          +set_extension_plane(edge_index, plane)
@@ -106,10 +105,17 @@ classDiagram
          +features : list[PanelFeature]
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
+         +layer_structure : LayerStructure
+         +exterior_layer : Layer
+         +core_layer : Layer
+         +interior_layer : Layer
+         +layers : list[Layer]
          +attributes : dict
-         +from_outlines(outline_a, outline_b, openings)
+         +from_outlines(outline_a, outline_b, openings, recognize_doors, horizontal_openings)
          +from_outline_thickness(outline, thickness, vector)
          +from_brep(brep, thickness, vector)
+         +get_leaf_layers()
+         +merge_layer_structure(model)
          +compute_elementgeometry(include_features=True)
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
@@ -121,15 +127,67 @@ classDiagram
          +remove_features(features=None)
       }
 
+      class Layer {
+         +start_offset : float
+         +thickness : float
+         +plate_geometry : PlateGeometry
+         +sublayers : list[Layer]
+         +layer_path : tuple[int]
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +planes : tuple[Plane]
+         +normal : Vector
+         +edge_planes : dict[int, Plane]
+         +center_height : float
+         +from_parent_start_end(host, start_offset, end_offset)$
+         +get_outlines_from_parent(parent, start_offset, end_offset)$
+         +define_sublayers(thicknesses, names)
+         +set_extension_plane(edge_index, plane)
+         +apply_edge_extensions()
+         +compute_aabb(inflate=0.0)
+         +compute_obb(inflate=0.0)
+         +compute_collision_mesh()
+         +clear_model_dependent_cache()
+      }
+
+      class PanelFeature {
+         <<abstract>>
+         +frame : Frame
+         +name : str
+         +transformation : Transformation
+         +geometry : list[Geometry]
+         +apply(panel_geometry, panel)
+      }
+
+      class Opening {
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +opening_type : str
+         +shape : Brep
+         +from_outline_panel(outline, panel, opening_type, project_horizontal)
+         +apply(panel_geometry, panel)
+      }
+
+      class OpeningType {
+         +DOOR : str = "door"
+         +WINDOW : str = "window"
+      }
+
       %% Inheritance relationships
       Element <|-- TimberElement
       TimberElement <|-- Beam
       TimberElement <|-- Plate
       Element <|-- Panel
+      Element <|-- Layer
       Element <|-- Fastener
+      PanelFeature <|-- Opening
 
       %% Composition relationships
       Fastener ..> FastenerTimberInterface : contains
+      Panel ..> PanelFeature : contains
+      Panel "1" *-- "0..3" Layer : exterior/core/interior
+      Layer "1" *-- "0..*" Layer : sublayers
+      Opening ..> OpeningType : uses
 ```
 
 ## Connections Subsystem
@@ -144,6 +202,7 @@ classDiagram
       }
 
       class Joint {
+
          <<abstract>>
          +topology : JointTopology
          +location : Point
@@ -158,6 +217,7 @@ classDiagram
          +add_extensions()
          +check_elements_compatibility()
          +restore_beams_from_keys(model)
+         +get_beam_direction_towards_joint()
          +create(model, elements)
       }
 
@@ -168,33 +228,52 @@ classDiagram
          +element_b_guid : str
       }
 
+      class CutPlaneSpec {
+         +ref_side_index : int
+         +angle : float
+         +offset : float
+         +to_plane(beam) Plane
+         +from_butt_plane(main_beam, cross_beam, plane) CutPlaneSpec
+         +from_back_plane(main_beam, cross_beam, plane) CutPlaneSpec
+      }
+
+      class MiterPlaneSpec {
+         +ref_side_index : int
+         +angle_x : float
+         +angle_y : float
+         +offset : float
+         +to_plane(beam) Plane
+         +from_plane(beam_a, beam_b, plane) MiterPlaneSpec
+      }
+
       class ButtJoint {
-         <<abstract>>
          +main_beam : Beam
          +cross_beam : Beam
-         +main_beam_guid : str
-         +cross_beam_guid : str
          +mill_depth : float
          +modify_cross : bool
+         +butt_plane_spec : CutPlaneSpec
          +butt_plane : Plane
+         +force_pocket : bool
+         +conical_tool : bool
+         +SUPPORTED_TOPOLOGY = TOPO_L | TOPO_T
+         +butt_plane_args()
+         +_back_cutting_plane()
       }
 
       class LButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_L
-         +start_y : float
-         +strut_inclination : float
-         +small_beam_butts : bool
-         +back_plane : Plane
          +reject_i : bool
+         +butt_plane_spec : CutPlaneSpec
+         +back_plane_spec : CutPlaneSpec
+         +back_plane : Plane
+         +back_plane_args()
       }
 
       class TButtJoint {
          +SUPPORTED_TOPOLOGY = TOPO_T
-         +modify_cross = False
+         +butt_plane_spec : CutPlaneSpec
          +fasteners : list[Fastener]
          +base_fastener : Fastener
-         +fasteners : list
-         +base_fastener : object
       }
 
       class TBirdsmouthJoint {
@@ -209,15 +288,20 @@ classDiagram
       }
 
       class LMiterJoint {
-         +main_beam : Beam
-         +cross_beam : Beam
+         +beam_a : Beam
+         +beam_b : Beam
          +beam_a_guid : str
          +beam_b_guid : str
          +cutoff : bool
+         +miter_plane_ref_side_index : int
+         +miter_plane_angle_x : float
+         +miter_plane_angle_y : float
+         +miter_plane_offset : float
          +miter_plane : Plane
          +ref_side_miter : bool
          +clean : bool
          +SUPPORTED_TOPOLOGY = TOPO_L
+         +miter_plane_args()
          +get_cutting_planes()
          +get_cutoff_plane()
       }
@@ -364,7 +448,7 @@ classDiagram
       }
 
       class PanelMiterJoint {
-         
+
       }
 
       %% Inheritance relationships
@@ -380,6 +464,7 @@ classDiagram
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
       Joint <|-- PlateJoint
+
       PlateJoint <|-- PanelJoint
 
       ButtJoint <|-- LButtJoint

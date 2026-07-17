@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,6 +10,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
@@ -464,7 +464,7 @@ class StepJointNotch(BTLxProcessing):
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
 
         [plane.transform(beam.transformation_to_local()) for plane in cutting_planes]
@@ -479,8 +479,8 @@ class StepJointNotch(BTLxProcessing):
                     subtraction_volume.trim(cutting_plane)
             except Exception as e:
                 raise FeatureApplicationError(
-                    cutting_planes[-1],
-                    subtraction_volume,
+                    cutting_planes[-1].transformed(beam.modeltransformation),
+                    subtraction_volume.transformed(beam.modeltransformation),
                     "Failed to trim geometry with cutting plane: {}".format(str(e)),
                 )
             # trim geometry with two middle cutting planes
@@ -491,8 +491,8 @@ class StepJointNotch(BTLxProcessing):
                     trimmed_geometies.append(subtraction_volume.trimmed(cutting_plane))
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_plane,
-                        subtraction_volume,
+                        cutting_plane.transformed(beam.modeltransformation),
+                        subtraction_volume.transformed(beam.modeltransformation),
                         "Failed to trim geometry with cutting plane: {}".format(str(e)),
                     )
             subtraction_volume = trimmed_geometies
@@ -504,8 +504,8 @@ class StepJointNotch(BTLxProcessing):
                     subtraction_volume.trim(cutting_plane)
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_plane,
-                        subtraction_volume,
+                        cutting_plane.transformed(beam.modeltransformation),
+                        subtraction_volume.transformed(beam.modeltransformation),
                         "Failed to trim geometry with cutting planes: {}".format(str(e)),
                     )
         ## subtract volume from geometry
@@ -515,7 +515,9 @@ class StepJointNotch(BTLxProcessing):
                     geometry -= sub_vol
                 except Exception as e:
                     raise FeatureApplicationError(
-                        sub_vol, geometry, "Failed to subtract volume from geometry: {}".format(str(e))
+                        sub_vol.transformed(beam.modeltransformation),
+                        geometry.transformed(beam.modeltransformation),
+                        "Failed to subtract volume from geometry: {}".format(str(e)),
                     )
         else:
             geometry -= subtraction_volume
@@ -537,16 +539,16 @@ class StepJointNotch(BTLxProcessing):
                 mortise_volume.trim(cutting_plane_step)
             except Exception as e:
                 raise FeatureApplicationError(
-                    cutting_plane_step,
-                    mortise_volume,
+                    cutting_plane_step.transformed(beam.modeltransformation),
+                    mortise_volume.transformed(beam.modeltransformation),
                     "Failed to trim mortise volume with step cutting plane: {}".format(str(e)),
                 )
             try:
                 geometry -= mortise_volume
             except Exception as e:
                 raise FeatureApplicationError(
-                    mortise_volume,
-                    subtraction_volume,
+                    mortise_volume.transformed(beam.modeltransformation),
+                    subtraction_volume.transformed(beam.modeltransformation),
                     "Failed to subtract mortise volume from geometry: {}".format(str(e)),
                 )
         return geometry

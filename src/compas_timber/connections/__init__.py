@@ -1,8 +1,10 @@
 from .joint import Joint
 from .butt_joint import ButtJoint
+from .i_simple_scarf import ISimpleScarf
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
+from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -11,6 +13,7 @@ from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
+from .solver import find_connection_handler
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -24,9 +27,11 @@ from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
+from .butt_joint import CutPlaneSpec
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
+from .utilities import angle_and_dot_product_beam_a_and_beam_b
 from .plate_joint import PlateJoint
 from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
@@ -36,12 +41,17 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .panel_layer_butt_joint import PanelLLayerButtJoint
+from .cluster import Cluster
+from .cluster import get_clusters_from_joint_candidates
+
 
 __all__ = [
     "Joint",
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "ISimpleScarf",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
@@ -58,6 +68,7 @@ __all__ = [
     "ConnectionSolver",
     "PlateConnectionSolver",
     "find_neighboring_elements",
+    "find_connection_handler",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "BallNodeJoint",
@@ -65,9 +76,13 @@ __all__ = [
     "LTenonMortiseJoint",
     "YButtJoint",
     "TOliGinaJoint",
+    "CutPlaneSpec",
+    "MiterPlaneSpec",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
+    "angle_and_dot_product_beam_a_and_beam_b",
+    "angle_and_dot_product_beam_a_and_beam_b",
     "PlateJoint",
     "PanelJoint",
     "PlateButtJoint",
@@ -77,4 +92,7 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "PanelLLayerButtJoint",
+    "Cluster",
+    "get_clusters_from_joint_candidates",
 ]

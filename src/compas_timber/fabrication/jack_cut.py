@@ -1,6 +1,5 @@
 import math
 
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -10,6 +9,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.tolerance import TOL
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
@@ -257,8 +257,8 @@ class JackRafterCut(BTLxProcessing):
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                cutting_plane,
-                geometry,
+                cutting_plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The cutting plane does not intersect with beam geometry.",
             )
 
@@ -412,8 +412,8 @@ class JackRafterCutProxy(object):
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                self.plane,
-                geometry,
+                self.plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The cutting plane does not intersect with beam geometry.",
             )
 

@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from itertools import combinations
+from typing import TYPE_CHECKING
 
 from compas.data import Data
 from compas.geometry import Point
@@ -9,6 +12,11 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.utils import distance_segment_segment_points
 
 from .solver import JointTopology
+
+if TYPE_CHECKING:
+    from compas.geometry import Vector
+
+    from compas_timber.elements.beam import Beam
 
 
 def location_from_centerlines(beams):
@@ -94,6 +102,7 @@ class Joint(Data):
         else:
             raise ValueError("Joint requires either elements or element_guids.")
 
+        self.features = []
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location
 
@@ -142,6 +151,10 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
+
+    def reset_location(self):
+        """Reset cached joint.location value to None so that it will be recalculated from the beam centerlines on next access."""
+        self._location = None
 
     @property
     def generated_elements(self):
@@ -195,6 +208,13 @@ class Joint(Data):
         """
         raise NotImplementedError
 
+    def clear_features(self):
+        """Removes the features defined by this joint from affected element(s)."""
+        if self.features:
+            for e in self.elements:
+                e.remove_features(self.features)
+        self.features = []
+
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
@@ -210,6 +230,11 @@ class Joint(Data):
 
         """
         pass
+
+    def clear_extensions(self):
+        """Removes the extensions defined by this joint from affected element(s)."""
+        for e in self.elements:
+            e.remove_blank_extension(self.guid)
 
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
@@ -242,6 +267,30 @@ class Joint(Data):
 
         """
         pass
+
+    def get_beam_direction_towards_joint(self, beam: Beam) -> Vector:
+        """Returns the direction of the beam towards the joint.
+
+        This is used to determine the orientation of the beam for feature calculation.
+
+        Parameters
+        ----------
+        beam : :class:`~compas_timber.elements.Beam`
+            The beam for which to calculate the direction towards the joint.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            The direction of the beam towards the joint.
+
+        """
+        end, _ = beam.endpoint_closest_to_point(self.location)
+        if end == "start":
+            beam_direction = beam.centerline.vector
+        else:
+            beam_direction = beam.centerline.vector * -1
+        beam_direction.unitize()
+        return beam_direction
 
     @classmethod
     def create(cls, model, *elements, **kwargs):
@@ -297,7 +346,12 @@ class Joint(Data):
         """
         if reordered_elements:
             if set(reordered_elements) != cluster.elements:
-                raise BeamJoiningError(cls, "Elements of the joint candidate must match the provided elements.", [e.blank for e in reordered_elements])
+                raise BeamJoiningError(
+                    beams=reordered_elements,
+                    joint=cls,
+                    debug_info="Elements of the joint candidate must match the provided elements.",
+                    debug_geometries=[e.blank for e in reordered_elements],
+                )
         if len(cluster.joints) == 1:
             elements = reordered_elements or cluster.joints[0].elements
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)

@@ -14,9 +14,7 @@ from warnings import warn
 
 import compas
 from compas.data import Data
-from compas.geometry import Brep
 from compas.geometry import Frame
-from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
@@ -24,6 +22,7 @@ from compas.tolerance import TOL
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -1391,11 +1390,7 @@ class Contour(Data):
         pline_a.translate([0, 0, 0.001])
         pline_b.translate([0, 0, -0.001])
 
-        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
-        vol.cap_planar_holes()
-        if vol.volume < 0:
-            vol.flip()
-        return vol
+        return brep_from_outlines(pline_a, pline_b)
 
 
 BTLxWriter.register_type_serializer(Contour.__name__, contour_to_xml)
@@ -1463,11 +1458,7 @@ class DualContour(Data):
         pline_a = self.principal_contour.translated([0, 0, 0.001])
         pline_b = self.associated_contour.translated([0, 0, -0.001])
 
-        vol = Brep.from_loft([NurbsCurve.from_points(pts, degree=1) for pts in (pline_a, pline_b)])
-        vol.cap_planar_holes()
-        if vol.volume < 0:
-            vol.flip()
-        return vol
+        return brep_from_outlines(pline_a, pline_b)
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)

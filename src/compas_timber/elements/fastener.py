@@ -78,6 +78,14 @@ class Fastener(Element):
             "interfaces": self.interfaces,
         }
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy."""
+        self._modeltransformation = None
+        self._modelgeometry = None
+        self._aabb = None
+        self._obb = None
+        self._collision_mesh = None
+
     def compute_elementgeometry(self):
         """Returns the geometry of the fastener in the model.
 

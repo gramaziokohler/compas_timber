@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -10,6 +9,7 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
@@ -436,7 +436,7 @@ class Mortise(BTLxProcessing):
             mortise_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate mortise mortise volume from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate mortise volume from parameters and beam: {}".format(str(e))
             )
 
         # fillet the edges of the mortise volume based on the shape
@@ -445,9 +445,10 @@ class Mortise(BTLxProcessing):
                 edges = mortise_volume.edges[:8]
                 mortise_volume.fillet(self.shape_radius, edges)
             except Exception as e:
+                # mortise_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
                     mortise_volume,
-                    geometry,
+                    geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
         # transform mortise volume to local coordinates of the beam
@@ -458,7 +459,9 @@ class Mortise(BTLxProcessing):
             return geometry - mortise_volume
         except Exception as e:
             raise FeatureApplicationError(
-                mortise_volume, geometry, "Failed to remove mortise volume from geometry: {}".format(str(e))
+                mortise_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to remove mortise volume from geometry: {}".format(str(e)),
             )
 
     def frame_from_params_and_beam(self, beam):

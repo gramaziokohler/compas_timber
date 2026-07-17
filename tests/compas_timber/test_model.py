@@ -1,3 +1,4 @@
+import pytest
 from pytest import raises
 
 from copy import deepcopy
@@ -17,6 +18,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas.geometry import Line
 from compas_timber.elements import Beam
+from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -81,7 +83,7 @@ def test_get_joint_from_interaction():
 def test_copy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -97,7 +99,7 @@ def test_copy(mocker):
 def test_deepcopy(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -128,7 +130,7 @@ def test_beams_have_keys_after_serialization():
 def test_serialization_with_l_butt_joints(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
-    F2 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
     B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
     B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
     A = TimberModel()
@@ -274,7 +276,43 @@ def test_error_deepcopy_joint():
     assert error.beams == "mama"
     assert error.joint == "papa"
     assert error.debug_info == "dog"
-    assert error.debug_geometries == "cucumber"
+    assert error.debug_geometries == ["cucumber"]
+
+
+@pytest.mark.requires_occ
+def test_feature_application_error_geometry_is_in_model_space():
+    """A FeatureApplicationError caught by compute_elementgeometry() must carry geometry in
+    model space, not the local/element space `apply()` operates in."""
+    from compas.geometry import bounding_box
+
+    from compas_timber.errors import FeatureApplicationError
+
+    class _FailingFeature(object):
+        """Mimics a real BTLxProcessing.apply(): receives local-space geometry and raises a
+        FeatureApplicationError with geometry already transformed to model space, exactly as
+        production code does."""
+
+        def apply(self, geometry, beam):
+            raise FeatureApplicationError(None, geometry.transformed(beam.modeltransformation), "boom")
+
+    frame = Frame(Point(1000, 2000, 300), Vector(1, 0, 0), Vector(0, 1, 0))
+    beam = Beam(frame=frame, width=100, height=200, length=1000)
+    beam.add_features(_FailingFeature())
+
+    beam.geometry  # triggers compute_elementgeometry(), which catches the error into debug_info
+
+    assert len(beam.debug_info) == 1
+    error = beam.debug_info[0]
+    assert isinstance(error, FeatureApplicationError)
+
+    error_bbox = bounding_box([v.point for v in error.element_geometry.vertices])
+    blank_bbox = bounding_box(beam.blank.points)
+    for error_point, blank_point in zip(error_bbox, blank_bbox):
+        assert Point(*error_point).distance_to_point(Point(*blank_point)) < 1e-6
+
+    # sanity check: local-space geometry would sit near the origin, far from the beam's actual position
+    origin_distance = min(v.point.distance_to_point(Point(0, 0, 0)) for v in error.element_geometry.vertices)
+    assert origin_distance > 900
 
 
 def test_beam_graph_node_available_after_serialization():
@@ -377,6 +415,32 @@ def test_joint_candidates_and_joints_separate():
     # Verify the joint is between beam1 and beam3
     assert beam1 in joint.elements
     assert beam3 in joint.elements
+
+
+def test_unpromoted_joint_candidates_excludes_promoted():
+    """Test that a candidate promoted to a joint on the same edge drops out of unpromoted_joint_candidates but stays in joint_candidates."""
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    model.connect_adjacent_beams()
+
+    assert len(model.joint_candidates) == 1
+    assert len(model.unpromoted_joint_candidates) == 1
+
+    candidate = list(model.joint_candidates)[0]
+    LButtJoint.promote_joint_candidate(model, candidate)
+
+    # promoting doesn't remove the candidate: it now coexists with the joint on the same edge
+    assert len(model.joint_candidates) == 1
+    assert len(model.unpromoted_joint_candidates) == 0
 
 
 def test_remove_joint_candidates():
@@ -516,5 +580,101 @@ def test_element_by_guid_deprecated_warning(mocker):
     warn_spy = mocker.spy(model, "element_by_guid")
 
     _ = model.element_by_guid(str(beam.guid))
-
     warn_spy.assert_called_once()
+
+
+def test_compute_topologies_mixed_beams_and_plates():
+    """compute_topologies(), called with no `elements` arg, should dispatch beam-beam and
+    plate-plate pairs to their respective handlers. Beam-to-plate pairs aren't a registered
+    combination yet, so they're silently skipped regardless of proximity."""
+    model = TimberModel()
+
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+    model.add_element(beam1)
+    model.add_element(beam2)
+
+    polyline_a = Polyline([Point(0, 0, 10), Point(0, 20, 10), Point(10, 20, 10), Point(10, 0, 10), Point(0, 0, 10)])
+    polyline_b = Polyline([Point(0, 10, 10), Point(10, 10, 10), Point(20, 20, 20), Point(0, 20, 20), Point(0, 10, 10)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    model.add_element(plate_a)
+    model.add_element(plate_b)
+
+    model.compute_topologies()
+
+    candidates = list(model.joint_candidates)
+    assert len(candidates) == 2
+
+    beam_candidates = [c for c in candidates if set(c.elements) == {beam1, beam2}]
+    plate_candidates = [c for c in candidates if set(c.elements) == {plate_a, plate_b}]
+    assert len(beam_candidates) == 1
+    assert len(plate_candidates) == 1
+
+
+def test_compute_topologies_clears_all_candidates_regardless_of_scope():
+    """compute_topologies() clears every existing joint candidate before recomputing, even when
+    called with a narrower `elements` scope (e.g. via connect_adjacent_plates())."""
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    beam1 = Beam.from_centerline(line1, 0.1, 0.1)
+    beam2 = Beam.from_centerline(line2, 0.1, 0.1)
+
+    polyline_a = Polyline([Point(0, 0, 10), Point(0, 20, 10), Point(10, 20, 10), Point(10, 0, 10), Point(0, 0, 10)])
+    polyline_b = Polyline([Point(0, 10, 10), Point(10, 10, 10), Point(20, 20, 20), Point(0, 20, 20), Point(0, 10, 10)])
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+
+    model = TimberModel()
+    model.add_elements([beam1, beam2, plate_a, plate_b])
+
+    model.connect_adjacent_beams()
+    assert len(model.joint_candidates) == 1
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1  # the beam candidate was cleared, only the plate candidate remains
+
+
+def test_connect_adjacent_plates_and_panels_equivalent():
+    """connect_adjacent_plates() and connect_adjacent_panels() should produce equivalent candidates
+    for equivalent geometry, since both dispatch through the same plate/panel handler."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+    plate_model = TimberModel()
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    plate_model.add_elements([plate_a, plate_b])
+    plate_model.connect_adjacent_plates()
+
+    panel_model = TimberModel()
+    panel_a = Panel.from_outline_thickness(polyline_a, 1)
+    panel_b = Panel.from_outline_thickness(polyline_b, 1)
+    panel_model.add_elements([panel_a, panel_b])
+    panel_model.connect_adjacent_panels()
+
+    plate_candidates = list(plate_model.joint_candidates)
+    panel_candidates = list(panel_model.joint_candidates)
+    assert len(plate_candidates) == len(panel_candidates) == 1
+    assert plate_candidates[0].topology == panel_candidates[0].topology
+    assert plate_candidates[0].a_segment_index == panel_candidates[0].a_segment_index
+
+
+def test_connect_adjacent_plates_repeated_call_no_duplicate_candidates():
+    """Calling connect_adjacent_plates() twice without an intervening process_joinery() should not
+    accumulate duplicate candidates."""
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
+
+    model = TimberModel()
+    plate_a = Plate.from_outline_thickness(polyline_a, 1)
+    plate_b = Plate.from_outline_thickness(polyline_b, 1)
+    model.add_elements([plate_a, plate_b])
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1
+
+    model.connect_adjacent_plates()
+    assert len(model.joint_candidates) == 1

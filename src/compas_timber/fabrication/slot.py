@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 import typing
 
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -16,6 +15,7 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import planar_surface_point_at
@@ -392,8 +392,8 @@ class Slot(BTLxProcessing):
 
         except Exception:
             raise FeatureApplicationError(
-                subtraction_volume,
-                geometry,
+                subtraction_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The slot subtracting volume does not intersect with the beam geometry."
                 )
 
