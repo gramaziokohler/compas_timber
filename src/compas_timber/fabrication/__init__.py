@@ -32,7 +32,6 @@ from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
-from .btlx import UserReferencePlane
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
 
@@ -70,7 +69,6 @@ __all__ = [
     "BTLxFromGeometryDefinition",
     "Contour",
     "DualContour",
-    "UserReferencePlane",
     "LongitudinalCut",
     "LongitudinalCutProxy",
     "BTLxRawpart",

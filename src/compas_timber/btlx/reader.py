@@ -5,7 +5,6 @@ from warnings import warn
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
-from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.tolerance import Tolerance
 
@@ -303,9 +302,9 @@ class BTLxReader(object):
     def _parse_user_reference_planes(self, part_elem, element):
         """Parse the UserReferencePlanes XML element and add planes to the element.
 
-        Planes are stored in local ref_frame coordinates in the BTLx file.
-        They are transformed back to world (model) coordinates using the
-        element's ref_frame before being added to the element.
+        Planes are stored in ref_frame-local coordinates in the BTLx file, which is the same
+        coordinate system :class:`~compas_timber.base.TimberElement` stores them in, so they are
+        registered directly without converting to world coordinates and back.
         """
         planes_elem = part_elem.find("{*}UserReferencePlanes")
         if planes_elem is None:
@@ -336,11 +335,7 @@ class BTLxReader(object):
                 )
 
                 local_frame = Frame(local_point, xaxis, yaxis)
-                # Planes in the BTLx are in local ref_frame space; transform back to world
-                T = Transformation.from_frame(element.ref_frame)
-                world_frame = local_frame.transformed(T)
-
-                element.add_user_ref_plane(world_frame, ID=plane_id)
+                element._register_user_ref_plane(local_frame, ID=plane_id)
             except Exception as e:
                 self._errors.append(
                     BTLxParsingError(

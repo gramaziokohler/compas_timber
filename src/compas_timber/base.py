@@ -2,6 +2,7 @@ import abc
 from functools import wraps
 from typing import Optional
 
+from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -9,6 +10,47 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+
+
+class UserReferencePlane(Data):
+    """A reference plane attached to a timber element for use in BTLx processings.
+
+    ``UserReferencePlane`` objects are registered on a :class:`TimberElement` via
+    :meth:`TimberElement.add_user_ref_plane`, which stores this ``frame`` relative
+    to the element's ``ref_frame`` (BTLx's ``PartRef``: "The ReferencePlane refers to the PartRef").
+    Use :meth:`TimberElement.get_user_ref_plane` to resolve it to model (world) coordinates.
+
+    Parameters
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane expressed relative to the owning element's ``ref_frame``.
+    ID : int
+        The BTLx integer ID for this plane. Must be an integer >= 100.
+
+    Attributes
+    ----------
+    frame : :class:`compas.geometry.Frame`
+        The plane relative to the owning element's ``ref_frame``.
+    ID : int
+        The BTLx integer ID of this plane.
+
+    """
+
+    def __init__(self, frame: Frame, ID: int):
+        super(UserReferencePlane, self).__init__()
+        if type(ID) is not int:
+            raise TypeError("BTLx reference plane IDs must be integers.")
+        if ID < 100:
+            raise ValueError("BTLx reference plane IDs must be >= 100.")
+        self.frame = frame
+        self.ID = ID
+
+    def __repr__(self):
+        return "UserReferencePlane(ID={!r}, frame={!r})".format(self.ID, self.frame)
+
+    @property
+    def __data__(self):
+        return {"frame": self.frame, "ID": self.ID}
 
 
 def reset_timber_attrs(f):
@@ -33,7 +75,7 @@ class TimberElement(Element, abc.ABC):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`, optional
-        The frame representing the beam's local coordinate system in its hierarchical context.
+        The frame representing the elements's local coordinate system in its hierarchical context.
         Defaults to ``None``, in which case the world coordinate system is used.
     length : float
         Length of the timber element.
@@ -382,11 +424,47 @@ class TimberElement(Element, abc.ABC):
         integer ``ID`` is the zero-based insertion index of the plane plus 100,
         so the first plane gets ID 100, second 101, and so on.
 
+        Each plane's ``frame`` is stored relative to :attr:`ref_frame` (BTLx's ``PartRef``,
+        per the BTLx spec: "The ReferencePlane refers to the PartRef"), the same coordinate
+        system BTLx processing parameters are defined in when a custom reference plane is declared.
+
+        Use :meth:`add_user_ref_plane` to add a plane in model (world) coordinates, and
+        :meth:`get_user_ref_plane` to resolve a plane back to model (world) coordinates.
+
         Returns
         -------
-        list[:class:`~compas_timber.fabrication.UserReferencePlane`]
+        list[:class:`UserReferencePlane`]
         """
         return self.attributes.get("user_ref_planes", [])
+
+    def _register_user_ref_plane(self, local_frame: Frame, ID: int = None) -> int:
+        """Store a reference plane already expressed relative to :attr:`ref_frame`.
+
+        Used internally by :meth:`add_user_ref_plane` (which converts from model coordinates first)
+        and by the BTLx reader (which parses planes already in ref_frame-local coordinates, so it can
+        register them directly without a needless local -> world -> local round trip).
+
+        Parameters
+        ----------
+        local_frame : :class:`compas.geometry.Frame`
+            The plane expressed relative to :attr:`ref_frame`.
+        ID : int, optional
+            The BTLx integer ID to assign to this plane. See :meth:`add_user_ref_plane`.
+
+        Returns
+        -------
+        int
+            The BTLx integer ID assigned to this plane (>= 100).
+
+        """
+        if ID is not None:
+            if any(ID == p.ID for p in self.attributes.get("user_ref_planes", [])):
+                raise ValueError("A reference plane with ID {} already exists. Call remove_user_ref_plane first.".format(ID))
+        else:
+            ID = len(self.attributes.get("user_ref_planes", [])) + 100
+
+        self.attributes.setdefault("user_ref_planes", []).append(UserReferencePlane(frame=local_frame, ID=ID))
+        return ID
 
     def add_user_ref_plane(self, frame: Frame, ID: int = None) -> int:
         """Add a named reference plane to this element.
@@ -397,7 +475,9 @@ class TimberElement(Element, abc.ABC):
         Parameters
         ----------
         frame : :class:`compas.geometry.Frame`
-            The plane expressed in model (world) coordinates.
+            The plane expressed in model (world) coordinates. It is converted to and stored relative
+            to :attr:`ref_frame` (BTLx's ``PartRef``), matching how BTLx itself defines a custom
+            reference plane.
         ID : int, optional
             The BTLx integer ID to assign to this plane. This should be a unique integer >= 100.
             If None, the ID will be assigned as the current number of registered planes plus 100 (first plane → 100, second → 101, …).
@@ -408,19 +488,13 @@ class TimberElement(Element, abc.ABC):
             The BTLx integer ID assigned to this plane (>= 100).
 
         """
-        from compas_timber.fabrication.btlx import UserReferencePlane  # TODO: this is temporary. Should by any cost avoid circular import.
-
-        if ID is not None:
-            if any(ID == p.ID for p in self.attributes.get("user_ref_planes", [])):
-                raise ValueError("A reference plane with ID {} already exists. Call remove_user_ref_plane first.".format(ID))
-        else:
-            ID = len(self.attributes.get("user_ref_planes", [])) + 100
-
-        self.attributes.setdefault("user_ref_planes", []).append(UserReferencePlane(frame=frame, ID=ID))
-        return ID
+        local_frame = frame.transformed(Transformation.from_frame(self.ref_frame).inverted())
+        return self._register_user_ref_plane(local_frame, ID)
 
     def get_user_ref_plane(self, ID: int) -> Optional[Frame]:
-        """Return the :class:`~compas.geometry.Frame` stored under ``ID``, or ``None``.
+        """Retrieve the frame of a reference plane stored under ``ID``.
+
+        The returned frame is transformed to model coordinates, so it can be used directly in the model space.
 
         Parameters
         ----------
@@ -430,12 +504,13 @@ class TimberElement(Element, abc.ABC):
         Returns
         -------
         :class:`compas.geometry.Frame` or None
-            The frame of the reference plane with the given ID, or None if no such plane exists.
+            The frame of the reference plane with the given ID, transformed to model coordinates,
+            or None if no such plane exists.
         """
         planes = self.attributes.get("user_ref_planes", [])
         for plane in planes:
             if plane.ID == ID:
-                return plane.frame
+                return plane.frame.transformed(Transformation.from_frame(self.ref_frame))
         return None
 
     def remove_user_ref_plane(self, ID: int):

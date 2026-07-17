@@ -636,9 +636,10 @@ class BTLxPart(BTLxGenericPart):
     def et_user_reference_planes(self):
         """Create the UserReferencePlanes XML element from planes stored on the element.
 
-        Each plane is transformed from model (world) coordinates into the part's
-        local ref_frame coordinate system before being written, scaled by the
-        writer's unit scale factor.
+        Planes are already stored relative to `ref_frame` (BTLx's ``PartRef``, see
+        :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`), the same coordinate system
+        this part's own ``Position`` (`self.frame`) is defined in, so no further transform is needed
+        here beyond scaling for the writer's unit scale factor.
 
         The ``ID`` attribute is taken directly from each plane's ``ID`` field,
         which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
@@ -648,10 +649,8 @@ class BTLxPart(BTLxGenericPart):
         :class:`xml.etree.ElementTree.Element`
         """
         user_ref_planes = ET.Element("UserReferencePlanes")
-        T = Transformation.from_frame(self.frame).inverted()
         for plane in self.element.user_ref_planes:
-            local_frame = plane.frame.transformed(T)
-            local_frame.point.scale(self._scale_factor)
+            local_frame = plane.frame.scaled(self._scale_factor)  # scale the frame for BTLx units
             plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(plane.ID))
             position = ET.SubElement(plane_el, "Position")
             position.append(ET.Element("ReferencePoint", self.et_point_vals(local_frame.point)))
@@ -1286,46 +1285,6 @@ class EdgePositionType(object):
 
     REFEDGE = "refedge"
     OPPEDGE = "oppedge"
-
-
-class UserReferencePlane(Data):
-    """A reference plane attached to a timber element for use in BTLx processings.
-
-    ``UserReferencePlane`` objects are registered on a
-    :class:`~compas_timber.base.TimberElement` via
-    :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
-
-    Parameters
-    ----------
-    frame : :class:`compas.geometry.Frame`
-        The plane expressed in model (world) coordinates.
-    ID : int
-        The BTLx integer ID for this plane. Must be an integer >= 100.
-
-    Attributes
-    ----------
-    frame : :class:`compas.geometry.Frame`
-        The plane in model coordinates.
-    ID : int
-        The BTLx integer ID of this plane.
-
-    """
-
-    def __init__(self, frame: Frame, ID: int):
-        super(UserReferencePlane, self).__init__()
-        if type(ID) is not int:
-            raise TypeError("BTLx reference plane IDs must be integers.")
-        if ID < 100:
-            raise ValueError("BTLx reference plane IDs must be >= 100.")
-        self.frame = frame
-        self.ID = ID
-
-    def __repr__(self):
-        return "UserReferencePlane(ID={!r}, frame={!r})".format(self.ID, self.frame)
-
-    @property
-    def __data__(self):
-        return {"frame": self.frame, "ID": self.ID}
 
 
 class AlignmentType(object):
