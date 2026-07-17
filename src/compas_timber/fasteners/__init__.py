@@ -12,6 +12,8 @@ from .anchor import FastenerAnchor
 from .anchor import FastenerAnchors
 from .anchor import AnchorKind
 from .plate_fastener import PlateFastener
+from .dowel import Dowel
+from .dowel import DowelFastener
 
 __all__ = [
     "Fastener",
@@ -28,4 +30,6 @@ __all__ = [
     "FastenerAnchors",
     "AnchorKind",
     "PlateFastener",
+    "Dowel",
+    "DowelFastener",
 ]
