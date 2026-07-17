@@ -324,41 +324,44 @@ class Beam(TimberElement):
 
     @reset_computed
     @reset_timber_attrs
-    def add_blank_extension(self, start, end, joint_guid=None):
+    def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
+        # TODO: rename `joint_key` to `joint_guid` for CT 3.0
         """Adds a blank extension to the beam.
 
         start : float
             The amount by which the start of the beam should be extended.
         end : float
             The amount by which the end of the beam should be extended.
-        joint_guid : int
+        joint_key : int
             The key of the joint which required this extension. When the joint is removed,
             this extension will be removed as well.
 
         """
-        if joint_guid is not None and joint_guid in self._blank_extensions:
-            s, e = self._blank_extensions[joint_guid]
+        if joint_key is not None and joint_key in self._blank_extensions:
+            s, e = self._blank_extensions[joint_key]
             start += s
             end += e
-        self._blank_extensions[joint_guid] = (start, end)
+        self._blank_extensions[joint_key] = (start, end)
 
     @reset_computed
     @reset_timber_attrs
-    def remove_blank_extension(self, joint_guid=None):
+    def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
+        # TODO: rename `joint_key` to `joint_guid` for CT 3.0
+
         """Removes a blank extension from the beam.
 
         Parameters
         ----------
-        joint_guid : int
+        joint_key : int
             The key of the joint which required this extension.
 
         """
-        if joint_guid is None:
+        if joint_key is None:
             self._blank_extensions = {}
         else:
-            self._blank_extensions.pop(joint_guid, None)
+            self._blank_extensions.pop(joint_key, None)
 
     def extension_to_plane(self, plane):
         # type: (Frame) -> tuple[float, float]
