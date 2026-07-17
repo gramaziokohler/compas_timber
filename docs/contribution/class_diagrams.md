@@ -128,19 +128,20 @@ classDiagram
       }
 
       class Layer {
-         +panel : Panel
-         +start_level : float
-         +end_level : float
+         +start_offset : float
          +thickness : float
          +plate_geometry : PlateGeometry
          +sublayers : list[Layer]
+         +layer_path : tuple[int]
          +outline_a : Polyline
          +outline_b : Polyline
          +planes : tuple[Plane]
          +normal : Vector
          +edge_planes : dict[int, Plane]
          +center_height : float
-         +get_outlines_from_parent(parent, start_level, end_level)$
+         +from_parent_start_end(host, start_offset, end_offset)$
+         +get_outlines_from_parent(parent, start_offset, end_offset)$
+         +define_sublayers(thicknesses, names)
          +set_extension_plane(edge_index, plane)
          +apply_edge_extensions()
          +compute_aabb(inflate=0.0)

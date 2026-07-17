@@ -230,7 +230,7 @@ class Panel(Element):
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
-        self._features = []
+        self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
 
     @reset_computed
@@ -265,9 +265,6 @@ class Panel(Element):
 
     def _attach_layer_structure(self):
         """Create bound Layer instances from ``_layer_structure``."""
-        for old in self._root_layers:
-            old._panel = None
-            old._parent_ref = None
         self._root_layers = self._layer_structure.attach(self)
 
     @property

@@ -1,12 +1,14 @@
 """Tests for PanelLLayerButtJoint (connections/panel_layer_butt_joint.py)."""
 
+import pytest
+
 from compas.geometry import Point
 from compas.geometry import Polyline
 
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PanelLButtJoint
 from compas_timber.connections import PanelLLayerButtJoint
-from compas_timber.elements import LayerDef
+from compas_timber.elements import LayerDefinition
 from compas_timber.elements import LayerStructure
 from compas_timber.elements import Panel
 from compas_timber.model import TimberModel
@@ -30,9 +32,9 @@ def _corner_panels():
 def _three_layer_structure():
     return LayerStructure(
         layer_defs=[
-            LayerDef("exterior", 0.2),
-            LayerDef("core"),
-            LayerDef("interior", 0.2),
+            LayerDefinition("exterior", 0.2),
+            LayerDefinition("core"),
+            LayerDefinition("interior", 0.2),
         ]
     )
 
@@ -117,12 +119,12 @@ def test_add_extensions_applies_and_moves_layer_outlines():
 
 
 # ---------------------------------------------------------------------------
-# add_extensions — only the default core layer is present
+# add_extensions — requires interior, core, and exterior layers on both panels
 # ---------------------------------------------------------------------------
 
 
-def test_add_extensions_default_layer_structure_only_core():
-    """With the default LayerStructure (single 'core', no exterior/interior), only the core pair is joined."""
+def test_add_extensions_raises_when_default_layer_structure_only_core():
+    """With the default LayerStructure (single 'core', no exterior/interior), add_extensions raises."""
     panel_a, panel_b = _corner_panels()
     assert panel_a.exterior_layer is None
     assert panel_a.interior_layer is None
@@ -130,39 +132,25 @@ def test_add_extensions_default_layer_structure_only_core():
     assert panel_b.interior_layer is None
 
     joint = _make_joint(panel_a, panel_b)
-    joint.add_extensions()
-
-    assert 1 in panel_a.core_layer.plate_geometry._extension_planes
-    assert 0 in panel_b.core_layer.plate_geometry._extension_planes
+    with pytest.raises(ValueError):
+        joint.add_extensions()
 
 
-# ---------------------------------------------------------------------------
-# add_extensions — asymmetric layer structures (one panel missing exterior)
-# ---------------------------------------------------------------------------
-
-
-def test_add_extensions_skips_layer_missing_on_either_panel():
+def test_add_extensions_raises_when_layer_missing_on_either_panel():
+    """If either panel is missing any of interior/core/exterior, add_extensions raises."""
     panel_a, panel_b = _corner_panels()
     panel_a.layer_structure = _three_layer_structure()
     panel_b.layer_structure = LayerStructure(
         layer_defs=[
-            LayerDef("core", 0.8),
-            LayerDef("interior", 0.2),
+            LayerDefinition("core", 0.8),
+            LayerDefinition("interior", 0.2),
         ]
     )
     assert panel_b.exterior_layer is None
 
     joint = _make_joint(panel_a, panel_b)
-    joint.add_extensions()
-
-    # core and interior are present on both panels -> extended
-    assert 1 in panel_a.core_layer.plate_geometry._extension_planes
-    assert 0 in panel_b.core_layer.plate_geometry._extension_planes
-    assert 1 in panel_a.interior_layer.plate_geometry._extension_planes
-    assert 0 in panel_b.interior_layer.plate_geometry._extension_planes
-
-    # exterior is missing on panel_b -> panel_a's exterior layer is left untouched
-    assert panel_a.exterior_layer.plate_geometry._extension_planes == {}
+    with pytest.raises(ValueError):
+        joint.add_extensions()
 
 
 # ---------------------------------------------------------------------------
