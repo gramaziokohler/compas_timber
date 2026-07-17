@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
 * Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
+* `ButtJoint` / `LButtJoint` / `TButtJoint` no longer use `butt_plane_spec` / `back_plane_spec`. They now take `butt_plane_id` (and `back_plane_id` on `LButtJoint`) that reference beam `user_ref_plane` entries.
+* `LMiterJoint` no longer uses `miter_plane: MiterPlaneSpec`. It now takes `miter_plane_id`, referencing a `user_ref_plane` on `beam_a`.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
@@ -53,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `CutPlaneSpec` and `MiterPlaneSpec` APIs from the joint plane-override workflow since the `UserReferencePlane` mechanism serves for encoding arbitrary planes relative to a beam.
 
 ## [2.2.0] 2026-07-02
 
