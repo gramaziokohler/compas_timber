@@ -146,7 +146,7 @@ class BallNodePlate(FastenerPart):
     def __data__(self):
         return {"x_size": self.x_size, "y_size": self.y_size, "thickness": self.thickness, "frame": self.placement_frame, "plate_depth": self.plate_depth}
 
-    def __init__(self, x_size, y_size, thickness, frame: Optional[Frame] = None, plate_depth=0, rod=None, ball=None, **kwargs):
+    def __init__(self, x_size: float, y_size: float, thickness: float, frame: Optional[Frame] = None, plate_depth: float = 0, rod=None, ball=None, **kwargs):
         # TODO: narrow down the interface, if all we need is rod length and ball radius, we can just pass those instead of the whole objects
         super().__init__(frame=frame, **kwargs)
         self.x_size = x_size

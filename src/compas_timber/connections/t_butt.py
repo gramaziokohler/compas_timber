@@ -1,6 +1,8 @@
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Vector
 
+from compas_timber.elements.beam import Beam
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.fasteners import FastenerAnchors
@@ -84,8 +86,10 @@ class TButtJoint(ButtJoint):
         ValueError
             If the two beams do not share the same parent, i.e. no common coordinate system is defined.
         """
-        cross_beam = self.cross_beam
-        main_beam = self.main_beam
+        assert self.cross_beam is not None, "cross_beam must be defined to compute fastener anchors"
+        assert self.main_beam is not None, "main_beam must be defined to compute fastener anchors"
+        cross_beam: Beam = self.cross_beam
+        main_beam: Beam = self.main_beam
 
         # the fastener is defined in the frame shared by both beams; for now only beams with a common parent are supported
         if main_beam.parent is not cross_beam.parent:
@@ -93,18 +97,31 @@ class TButtJoint(ButtJoint):
 
         # centered on the intersection of the two centerlines
         (cross_point, _), (main_point, _) = intersection_line_line_param(cross_beam.centerline, main_beam.centerline)
+        assert cross_point and main_point
         intersection_point = (main_point + cross_point) * 0.5
 
+        # building the two side anchor, one on the front_side, one on the back_side accordig to Timber Frame
         # the plate straddles the joint on the two cross beam faces flanking the face the main beam butts into
-        butt_index = self.cross_beam_ref_side_index
-        anchors = []
-        for face_index in [(butt_index + 1) % 4, (butt_index - 1) % 4]:
-            face = cross_beam.ref_sides[face_index]
-            point = Plane.from_frame(face).closest_point(intersection_point)
-            frame = Frame(point, face.xaxis, face.yaxis)
+        ref_side_index = self.cross_beam_ref_side_index
+        fron_side_frame = cross_beam.front_side(ref_side_index)
+        back_side_frame = cross_beam.back_side(ref_side_index)
+        opp_side_frame = cross_beam.opp_side(ref_side_index)
 
-            # TODO: the anchor frames need to be with respect to the parent coordinate system, but this requires properly structuring fasteners as Elements in the model
-            # to get the right transformation, we should do that in the end.
-            anchors.append(FastenerAnchor(frame, AnchorKind.FACE, [cross_beam, main_beam], ref_side_index=face_index, role="side_face"))
+        # front anchor
+        point = Plane.from_frame(fron_side_frame).closest_point(intersection_point)
+        frame = Frame(point, fron_side_frame.xaxis, fron_side_frame.yaxis)
+        anchor_front = FastenerAnchor(frame, AnchorKind.FACE, [main_beam, cross_beam], ref_side_index=(ref_side_index + 1) % 4, role="front_face")
 
+        # back anchor
+        point = Plane.from_frame(back_side_frame).closest_point(intersection_point)
+        frame = Frame(point, back_side_frame.xaxis, back_side_frame.yaxis)
+        anchor_back = FastenerAnchor(frame, AnchorKind.FACE, [main_beam, cross_beam], ref_side_index=(ref_side_index - 1) % 4, role="back_face")
+
+        # opp anchor
+        point = Plane.from_frame(opp_side_frame).intersection_with_line(self.main_beam.centerline)
+        frame = Frame(point, opp_side_frame.xaxis, opp_side_frame.yaxis)
+        frame = Frame.from_plane(Plane(point, Vector.from_start_end(main_beam.centerline.midpoint, point)))
+        anchor_opp = FastenerAnchor(frame, AnchorKind.AXIS, [main_beam, cross_beam], ref_side_index=(ref_side_index + 2) % 4, role="opposite_face")
+
+        anchors = [anchor_front, anchor_back, anchor_opp]
         return FastenerAnchors(anchors)
