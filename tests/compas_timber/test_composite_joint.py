@@ -272,6 +272,57 @@ def test_mixed_sub_joint_types(beam_a, beam_b, beam_c):
     assert len(set(joint.elements)) == 3  # beam_a, beam_b, beam_t (3 unique)
 
 
+# ---------------------------------------------------------------------------
+# 7. clear_features / clear_extensions delegation
+# ---------------------------------------------------------------------------
+
+
+def test_clear_features_removes_features_from_elements(model, beam_a, beam_b, beam_c, composite):
+    model.process_joinery()
+    assert len(beam_a.features) > 0
+    assert len(beam_b.features) > 0
+    assert len(beam_c.features) > 0
+
+    composite.clear_features()
+
+    assert beam_a.features == []
+    assert beam_b.features == []
+    assert beam_c.features == []
+
+
+def test_clear_features_delegates_to_sub_joints(model, composite):
+    model.process_joinery()
+    assert any(sub.features for sub in composite.joints)
+
+    composite.clear_features()
+
+    assert all(sub.features == [] for sub in composite.joints)
+    assert composite.features == []
+
+
+def test_clear_features_without_prior_processing_does_not_raise(composite):
+    # No process_joinery has run yet, so there are no features to clear.
+    composite.clear_features()
+    assert composite.features == []
+
+
+def test_clear_extensions_removes_blank_extensions_from_cross_beams(model, beam_b, beam_c, sub_joints, composite):
+    model.process_joinery()
+    j1, j2 = sub_joints
+    assert j1.guid in beam_b._blank_extensions
+    assert j2.guid in beam_c._blank_extensions
+
+    composite.clear_extensions()
+
+    assert j1.guid not in beam_b._blank_extensions
+    assert j2.guid not in beam_c._blank_extensions
+
+
+def test_clear_extensions_without_prior_processing_does_not_raise(composite):
+    # No process_joinery has run yet, so there are no extensions to clear.
+    composite.clear_extensions()
+
+
 def test_mixed_sub_joints_json_roundtrip(beam_a, beam_b, beam_c):
     j_l = LButtJoint(main_beam=beam_a, cross_beam=beam_b)
     beam_t = Beam.from_centerline(Line(Point(500, -500, 0), Point(500, 500, 0)), width=60, height=100)

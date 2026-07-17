@@ -85,6 +85,11 @@ class CompositeJoint(Joint):
             features.extend(joint.features)
         return features
 
+    @features.setter
+    def features(self, value):
+        # feature storage is delegated to the sub-joints, nothing to store here.
+        pass
+
     @classmethod
     def create(cls, model, joints=None, **kwargs):
         """Creates a CompositeJoint and registers it in the model.
@@ -113,6 +118,16 @@ class CompositeJoint(Joint):
         """Delegates extension calculation to each sub-joint."""
         for joint in self.joints:
             joint.add_extensions()
+
+    def clear_features(self):
+        """Delegates feature removal to each sub-joint."""
+        for joint in self.joints:
+            joint.clear_features()
+
+    def clear_extensions(self):
+        """Delegates feature removal to each sub-joint."""
+        for joint in self.joints:
+            joint.clear_extensions()
 
     def restore_elements_from_keys(self, model: TimberModel):
         """Restores element references by delegating to each sub-joint, then rebuilds elements.
