@@ -2,8 +2,8 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Frame
 from compas_timber.elements import Beam
-from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
+from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication.pocket import Pocket
 from compas_timber.fabrication.lap import Lap
 from compas_timber.model import TimberModel
@@ -128,12 +128,15 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
     # to planar_beam's xaxis (0.707, 0, 0.707)
     back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(butt_plane))
+    back_plane_id = planar_beam.add_user_ref_plane(Frame.from_plane(back_plane))
+
     joint = LButtJoint.create(
         model,
         main_beam=planar_beam,
         cross_beam=cross_beam,
-        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
-        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+        butt_plane_id=butt_plane_id,
+        back_plane_id=back_plane_id,
     )
 
     assert joint.butt_plane is not None
@@ -152,12 +155,15 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
     # to planar_beam's xaxis (0.707, 0, 0.707)
     back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
 
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(butt_plane))
+    back_plane_id = planar_beam.add_user_ref_plane(Frame.from_plane(back_plane))
+
     joint = LButtJoint.create(
         model,
         main_beam=planar_beam,
         cross_beam=cross_beam,
-        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
-        back_plane_spec=CutPlaneSpec.from_back_plane(planar_beam, cross_beam, back_plane),
+        butt_plane_id=butt_plane_id,
+        back_plane_id=back_plane_id,
     )
 
     # copy the model via JSON round-trip
@@ -188,47 +194,108 @@ def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam
 
 
 def test_L_butt_joint_butt_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
-    """butt_plane's normal must be perpendicular to the cross beam's centerline (x-axis)."""
+    """butt_plane's normal must be perpendicular to the cross beam's centerline (x-axis).
+
+    Unlike `CutPlaneSpec`, `add_user_ref_plane` doesn't validate anything at registration time -
+    any frame can be registered. The perpendicularity check now happens lazily, when the joint
+    actually resolves `butt_plane_id` into a plane.
+    """
     model = TimberModel()
     model.add_elements([planar_beam, cross_beam])
 
     # cross_beam's centerline runs along (1, 0, 0), so a plane with a normal that has a component
     # along that axis is not parallel to the centerline and should be rejected.
     invalid_butt_plane = Plane(Point(0, 0, 0), Vector(1, 1, 0))
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(invalid_butt_plane))
+    joint = LButtJoint(planar_beam, cross_beam, butt_plane_id=butt_plane_id)
 
-    with pytest.raises(ValueError):
-        CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, invalid_butt_plane)
+    with pytest.raises(BeamJoiningError):
+        joint.butt_plane
 
 
 def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_beam):
-    """back_plane's normal must be perpendicular to the main beam's centerline (x-axis)."""
+    """back_plane's normal must be perpendicular to the main beam's centerline (x-axis).
+
+    Validated lazily on `back_plane` resolution, same as `butt_plane` above.
+    """
     model = TimberModel()
     model.add_elements([planar_beam, cross_beam])
 
     # planar_beam's centerline runs along (0.707, 0, 0.707), which is not perpendicular to (0, 0, 1).
     invalid_back_plane = Plane(Point(0, 0, 0), Vector(0, 0, 1))
+    back_plane_id = planar_beam.add_user_ref_plane(Frame.from_plane(invalid_back_plane))
+    joint = LButtJoint(planar_beam, cross_beam, back_plane_id=back_plane_id)
 
-    with pytest.raises(ValueError):
-        CutPlaneSpec.from_back_plane(planar_beam, cross_beam, invalid_back_plane)
+    with pytest.raises(BeamJoiningError):
+        joint.back_plane
+
+
+def test_L_butt_joint_butt_plane_recess_without_mill_depth_adds_no_feature(cross_beam, planar_beam):
+    """A butt_plane_id that recesses into the cross beam should NOT add any feature without an explicit mill_depth.
+
+    There's no auto-detection of a recess from the plane's position - the caller must say how deep to mill.
+    """
+    default_joint = LButtJoint(planar_beam, cross_beam, modify_cross=False)
+    ref_side = cross_beam.ref_sides[default_joint.cross_beam_ref_side_index]
+    recessed_plane = Plane(ref_side.point - ref_side.normal * 8.0, ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(recessed_plane))
+
+    joint = LButtJoint(planar_beam, cross_beam, modify_cross=False, butt_plane_id=butt_plane_id)
+    joint.add_features()
+
+    assert len(cross_beam.features) == 0
+    assert len(planar_beam.features) == 1
+
+
+def test_L_butt_joint_butt_plane_flush_without_mill_depth_adds_no_feature(cross_beam, planar_beam):
+    """A butt_plane_id flush with the cross beam's face and no mill_depth should not add any cross-beam feature."""
+    default_joint = LButtJoint(planar_beam, cross_beam, modify_cross=False)
+    ref_side = cross_beam.ref_sides[default_joint.cross_beam_ref_side_index]
+    flush_plane = Plane(ref_side.point, ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(flush_plane))
+
+    joint = LButtJoint(planar_beam, cross_beam, modify_cross=False, butt_plane_id=butt_plane_id)
+    joint.add_features()
+
+    assert len(cross_beam.features) == 0
+    assert len(planar_beam.features) == 1
+
+
+def test_L_butt_joint_butt_plane_mill_depth_offsets_along_main_beam_centerline(cross_beam, planar_beam):
+    """mill_depth should push the pocket's bottom past butt_plane, along the main beam's centerline direction."""
+    default_joint = LButtJoint(planar_beam, cross_beam, modify_cross=False)
+    ref_side = cross_beam.ref_sides[default_joint.cross_beam_ref_side_index]
+    recessed_plane = Plane(ref_side.point - ref_side.normal * 8.0, ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(recessed_plane))
+
+    joint_shallow = LButtJoint(planar_beam, cross_beam, modify_cross=False, mill_depth=4.0, butt_plane_id=butt_plane_id)
+    joint_deep = LButtJoint(planar_beam, cross_beam, modify_cross=False, mill_depth=8.0, butt_plane_id=butt_plane_id)
+
+    # vertex 4 of the hexahedron is always a bottom_plane / side_a / end_a intersection (see polyhedron_from_box_planes)
+    bottom_shallow = joint_shallow._get_milling_volume_for_pocket().vertices[4]
+    bottom_deep = joint_deep._get_milling_volume_for_pocket().vertices[4]
+
+    # the bottom face moved exactly by the mill_depth delta, parallel to the main beam's centerline
+    assert TOL.is_close(bottom_shallow.distance_to_point(bottom_deep), 4.0)
+    direction = Vector.from_start_end(bottom_shallow, bottom_deep).unitized()
+    centerline_direction = planar_beam.centerline.direction.unitized()
+    assert TOL.is_allclose(direction, centerline_direction) or TOL.is_allclose(direction, -centerline_direction)
+
+    joint_deep.add_features()
+    assert len(cross_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Pocket)
 
 
 def test_L_butt_joint_butt_plane_zero_angle_pure_offset(cross_beam, planar_beam):
-    """A butt_plane parallel to (but offset from) the default cross-beam side should round-trip exactly.
-
-    This is the degenerate case (no tilt) that a y-axis-line-intersection based decomposition cannot represent.
-    """
+    """A butt_plane parallel to (but offset from) the default cross-beam side should round-trip exactly."""
     model = TimberModel()
     model.add_elements([planar_beam, cross_beam])
 
     default_ref_side = cross_beam.ref_sides[2]  # opposite side from the default, picked arbitrarily but parallel to centerline
     offset_plane = Plane(default_ref_side.point + default_ref_side.normal * 5.0, default_ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(offset_plane))
 
-    joint = LButtJoint.create(
-        model,
-        main_beam=planar_beam,
-        cross_beam=cross_beam,
-        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, offset_plane),
-    )
+    joint = LButtJoint.create(model, main_beam=planar_beam, cross_beam=cross_beam, butt_plane_id=butt_plane_id)
 
     assert TOL.is_allclose(joint.butt_plane.normal, offset_plane.normal)
     assert TOL.is_allclose(joint.butt_plane.point, offset_plane.point)
