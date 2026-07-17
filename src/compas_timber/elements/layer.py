@@ -382,7 +382,7 @@ class Layer(Element):
         """Interpolate *parent*'s local outlines at the given panel-absolute levels.
 
         *parent* is either the :class:`~compas_timber.elements.Panel` (for root
-        layers) or the enclosing :class:`Layer` (for sublayers).  
+        layers) or the enclosing :class:`Layer` (for sublayers).
         """
         parent_start = getattr(parent, "start_offset", 0.0)  # Panel has no start_offset: it starts at 0.
         relative_start = start_offset - parent_start
