@@ -108,7 +108,7 @@ class ClusterJoint(Joint):
         return joint
 
     @classmethod
-    def promote_cluster(cls, model, cluster, reordered_elements=None, **kwargs):
+    def promote_cluster(cls, model, cluster, **kwargs):
         """Creates an instance of this joint from a cluster of elements.
 
         Parameters
@@ -117,9 +117,6 @@ class ClusterJoint(Joint):
             The model to which the elements and this joint belong.
         cluster : :class:`~compas_model.clusters.Cluster`
             The cluster containing the elements to be connected by this joint.
-        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
-            The elements to be connected by this joint. If not provided, the elements of the cluster will be used.
-            This is used to explicitly define the element order.
         **kwargs : dict
             Additional keyword arguments that are passed to the joint's constructor.
 
@@ -129,14 +126,6 @@ class ClusterJoint(Joint):
             The instance of the created joint.
 
         """
-        if reordered_elements:
-            if set(reordered_elements) != cluster.elements:
-                raise BeamJoiningError(
-                    beams=reordered_elements,
-                    joint=cls,
-                    debug_info="Elements of the joint candidate must match the provided elements.",
-                    debug_geometries=[e.blank for e in reordered_elements],
-                )
         return cls.create(model, cluster, **kwargs)
 
     def add_features(self):
