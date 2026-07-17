@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
 * `Panel.set_extension_plane` and `Panel.apply_edge_extensions` now propagate to all attached layers.
 * `Panel.model` is now a property/setter pair; when a panel is added to the model, any pre-existing layers are automatically added as child elements.
+* Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
+* Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
+* Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
@@ -33,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
 * Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
 * Fixed plate geometry created with inconsistent face orientation.
+* `TimberModel.remove_joint()` now clears the joint's features and extensions from its elements before removing it, instead of leaving them stuck on the remaining elements.
+* `TimberModel.add_joint()` now removes any existing joint between the same elements before adding the new one, preventing a stale joint from leaking its features/extensions while becoming unreachable from the model.
+* `TimberModel.remove_element()` now also removes any joints connected to the removed element (previously only `compas_model`'s interaction/edge cleanup ran, leaving stale entries in `TimberModel`'s own joints registry and orphaned features on the surviving elements).
+* `TimberModel.process_joinery()` now clears every processed joint's extensions and features before recomputing them, so individual joints no longer need to clear their own previous state at the start of `add_extensions()`/`add_features()`, and repeated calls (full or via `joints_to_process`) are idempotent instead of accumulating (e.g. `Beam.add_blank_extension()` adds onto any existing entry for the same joint, so without the upfront clear a second run would silently double the extension amount).
+* Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
+* Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
+* Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

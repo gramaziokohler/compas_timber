@@ -86,7 +86,6 @@ class TStepJoint(Joint):
         self.heel_depth = heel_depth
         self.tenon_mortise_height = tenon_mortise_height
 
-        self.features = []
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()  # resolve defaults at init if beams are provided
 
@@ -189,10 +188,6 @@ class TStepJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # get dimensions for main and cross beams
         main_width, main_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)

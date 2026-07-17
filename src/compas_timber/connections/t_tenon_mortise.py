@@ -97,8 +97,6 @@ class TTenonMortiseJoint(MortiseTenonJoint):
         """
         assert self.main_beam and self.cross_beam  # should never happen
 
-        self._clear_features()
-
         main_feature = self._create_tenon_feature()
         cross_feature = self._create_mortise_feature(main_feature)
 
