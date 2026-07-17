@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .cluster import Cluster
 from .joint import Joint
 from .solver import JointTopology
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
-from compas_timber.errors import BeamJoiningError
 
 
 class ClusterJoint(Joint):

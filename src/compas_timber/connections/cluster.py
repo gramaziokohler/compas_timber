@@ -26,6 +26,7 @@ class Cluster(Data):
     location : :class:`~compas.geometry.Point`
         The approximated location of the cluster, effectively the location of the first joint.
     """
+
     @property
     def __data__(self):
         return {"joints": self.joints}
