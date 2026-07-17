@@ -16,6 +16,7 @@ from compas_timber.connections import JointCandidate
 from compas_timber.connections import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
+from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
@@ -40,6 +41,9 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     panels : Generator[:class:`~compas_timber.elements.Panel`]
         A Generator object of all panels assigned to this model.
+    layers : list[:class:`~compas_timber.elements.Layer`]
+        A Generator object of all layers assigned to this model.
+
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
     topologies :  list(dict)
@@ -108,6 +112,11 @@ class TimberModel(Model):
     def panels(self):
         # type: () -> List[Panel]
         return self.find_all_elements_of_type(Panel)
+
+    @property
+    def layers(self):
+        # type: () -> List[Layer]
+        return self.find_all_elements_of_type(Layer)
 
     @property
     def fasteners(self):
