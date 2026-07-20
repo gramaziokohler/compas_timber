@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from .joint import Joint
 from .solver import JointTopology
+from .cluster import Cluster
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
@@ -158,3 +159,8 @@ class ClusterJoint(Joint):
             joint.restore_elements_from_keys(model)
             joint._set_unset_attributes()
         self._elements = tuple(set([e for j in self.joints for e in j.elements]))
+
+    @classmethod
+    def from_joints(cls, joints: list[Joint])->ClusterJoint:
+        cluster = Cluster(joints)
+        return cls(cluster=cluster)

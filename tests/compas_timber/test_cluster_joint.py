@@ -334,3 +334,71 @@ def test_mixed_sub_joints_json_roundtrip(beam_a, beam_b, beam_c):
     sub_types = {type(s) for s in rj.joints}
     assert LButtJoint in sub_types
     assert TButtJoint in sub_types
+
+
+# ---------------------------------------------------------------------------
+# 8. from_joints — cluster-derived properties
+# ---------------------------------------------------------------------------
+
+
+def test_from_joint_list_returns_cluster_joint(sub_joints):
+    joint = ClusterJoint.from_joints(sub_joints)
+    assert isinstance(joint, ClusterJoint)
+
+
+def test_from_joint_list_builds_cluster_from_joints(sub_joints):
+    joint = ClusterJoint.from_joints(sub_joints)
+    assert isinstance(joint.cluster, Cluster)
+    assert joint.cluster.joints == sub_joints
+
+
+def test_from_joint_list_joints_property_matches_input(sub_joints):
+    joint = ClusterJoint.from_joints(sub_joints)
+    assert list(joint.joints) == sub_joints
+
+
+def test_from_joint_list_elements_are_union_of_sub_joint_elements(sub_joints, beam_a, beam_b, beam_c):
+    joint = ClusterJoint.from_joints(sub_joints)
+    all_elements = set(joint.elements)
+    assert all_elements == {beam_a, beam_b, beam_c}
+
+
+def test_from_joint_list_location_matches_cluster_location(sub_joints):
+    joint = ClusterJoint.from_joints(sub_joints)
+    assert joint.location == joint.cluster.location
+
+
+def test_from_joint_list_topology_matches_cluster_topology(beam_a, beam_b, beam_c):
+    """Two L-topology sub-joints, none T/X, should collapse to TOPO_Y at the cluster level."""
+    j1 = LButtJoint(main_beam=beam_a, cross_beam=beam_b, topology=JointTopology.TOPO_L)
+    j2 = LButtJoint(main_beam=beam_a, cross_beam=beam_c, topology=JointTopology.TOPO_L)
+
+    joint = ClusterJoint.from_joints([j1, j2])
+
+    assert joint.cluster.topology == JointTopology.TOPO_Y
+    assert joint.topology == JointTopology.TOPO_Y
+
+
+def test_from_joint_list_topology_reflects_t_sub_joint(beam_a, beam_b, beam_c):
+    """A T-topology sub-joint in the mix should promote the cluster topology to TOPO_K."""
+    j_l = LButtJoint(main_beam=beam_a, cross_beam=beam_b, topology=JointTopology.TOPO_L)
+    beam_t = Beam.from_centerline(Line(Point(500, -500, 0), Point(500, 500, 0)), width=60, height=100)
+    j_t = TButtJoint(main_beam=beam_a, cross_beam=beam_t, topology=JointTopology.TOPO_T)
+
+    joint = ClusterJoint.from_joints([j_l, j_t])
+
+    assert joint.topology == JointTopology.TOPO_K
+
+
+def test_from_joint_list_not_registered_in_model(sub_joints, model):
+    """from_joints builds the joint standalone; it is not added to any model."""
+    ClusterJoint.from_joints(sub_joints)
+    assert len(list(model.joints)) == 0
+
+
+def test_from_joint_list_features_delegate_to_sub_joints(sub_joints):
+    joint = ClusterJoint.from_joints(sub_joints)
+    for sub in joint.joints:
+        sub.add_extensions()
+        sub.add_features()
+    assert joint.features == [f for sub in sub_joints for f in sub.features]
