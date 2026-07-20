@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added new `compas_timber.fabrication.BirdsMouth`.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
