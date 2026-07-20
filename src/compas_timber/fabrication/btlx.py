@@ -640,7 +640,7 @@ class BTLxPart(BTLxGenericPart):
         this part's own ``Position`` (`self.frame`) is defined in, so no further transform is needed
         here beyond scaling for the writer's unit scale factor.
 
-        The ``ID`` attribute is taken directly from each plane's ``ID`` field,
+        The ``ID`` XML attribute is taken directly from each plane's ``id_``,
         which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
 
         Returns
@@ -648,9 +648,9 @@ class BTLxPart(BTLxGenericPart):
         :class:`xml.etree.ElementTree.Element`
         """
         user_ref_planes = ET.Element("UserReferencePlanes")
-        for plane in self.element.user_ref_planes:
-            local_frame = plane.frame.scaled(self._scale_factor)  # scale the frame for BTLx units
-            plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(plane.ID))
+        for id_, frame in self.element.user_ref_planes:
+            local_frame = frame.scaled(self._scale_factor)  # scale the frame for BTLx units
+            plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(id_))
             position = ET.SubElement(plane_el, "Position")
             position.append(ET.Element("ReferencePoint", self.et_point_vals(local_frame.point)))
             position.append(ET.Element("XVector", self.et_point_vals(local_frame.xaxis)))

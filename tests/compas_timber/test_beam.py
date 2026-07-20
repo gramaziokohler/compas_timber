@@ -580,7 +580,7 @@ def test_user_ref_plane_follows_beam_transform():
 
 
 def test_user_ref_plane_add_get_remove():
-    """Cover the basic user_ref_plane API: auto ID assignment, ID collisions, missing lookups, removal."""
+    """Cover the basic user_ref_plane API: auto ID assignment, ID collisions, missing lookups, removal, ID non-reissue."""
     beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
 
     frame_a = Frame(Point(100, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
@@ -594,12 +594,12 @@ def test_user_ref_plane_add_get_remove():
     assert id_b == 101
     assert len(beam.user_ref_planes) == 2
 
-    # explicit ID collision raises
+    # explicit id collision raises
     with pytest.raises(ValueError):
-        beam.add_user_ref_plane(frame_a, ID=id_a)
+        beam.add_user_ref_plane(frame_a, id_=id_a)
 
-    # explicit ID is honored when not colliding
-    id_c = beam.add_user_ref_plane(frame_a, ID=200)
+    # explicit id is honored when not colliding
+    id_c = beam.add_user_ref_plane(frame_a, id_=200)
     assert id_c == 200
 
     # missing ID resolves to None
@@ -610,6 +610,11 @@ def test_user_ref_plane_add_get_remove():
     assert len(beam.user_ref_planes) == 2
     assert beam.get_user_ref_plane(id_a) is None
     assert beam.get_user_ref_plane(id_b) is not None
+
+    # a removed ID is never reissued, even though it's now free: the next auto-assigned ID
+    # continues from the counter (201) instead of reusing id_a (100)
+    id_d = beam.add_user_ref_plane(frame_b)
+    assert id_d == 201
 
 
 def test_user_ref_plane_follows_model_transform():
