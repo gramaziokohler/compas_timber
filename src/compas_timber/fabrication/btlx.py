@@ -872,7 +872,8 @@ class BTLxProcessing(Data, ABC):
     PROCESSING_NAME : str
         The name of the process.
     ATTRIBUTE_MAP : dict
-        Mapping of BTLx XML attribute names to Python attribute names.
+        Mapping of BTLx XML attribute names to :class:`AttributeSpec` instances, each specifying the
+        corresponding Python attribute name and its deserialization type.
     HEADER_ATTRIBUTE_MAP : dict
         Mapping of BTLx XML header attribute names (in XML attributes) to Python parameter names with converters.
     params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
@@ -1019,7 +1020,7 @@ class BTLxProcessingParams(object):
     header_attributes : OrderedDict
         The header attributes for BTLx serialization.
     attribute_map : dict
-        Mapping of BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        Mapping of BTLx XML child element tag names (keys) to :class:`AttributeSpec` instances (values).
         Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
 
     """

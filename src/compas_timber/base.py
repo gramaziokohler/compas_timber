@@ -20,8 +20,11 @@ class UserReferencePlaneCollection(Data):
     spec), each mapping to a :class:`compas.geometry.Frame` expressed relative to the owning
     element's ``ref_frame`` (BTLx's ``PartRef``: "The ReferencePlane refers to the PartRef").
 
-    This collection should not be queried or modified directly. Use the owning `TimberElement`'s
-    `add_user_ref_plane()`, `get_user_ref_plane()`, and `remove_user_ref_plane()` instead.
+    :meth:`add`, :meth:`get`, and :meth:`remove` should not be called directly; use the owning
+    :class:`TimberElement`'s :meth:`~TimberElement.add_user_ref_plane`,
+    :meth:`~TimberElement.get_user_ref_plane`, and :meth:`~TimberElement.remove_user_ref_plane` instead.
+    Iterating the collection directly (``for id_, frame in element.user_ref_planes``) or calling
+    ``len()`` on it is fine and gives the raw, ``ref_frame``-local planes, e.g. for BTLx serialization.
 
     ``id_`` values handed out by :meth:`add` come from a counter that only ever moves forward, so a
     removed ``id_`` is never reissued, even if planes are added and removed repeatedly.
@@ -73,6 +76,8 @@ class UserReferencePlaneCollection(Data):
         int
             The id assigned to this plane.
 
+        Use :meth:`TimberElement.add_user_ref_plane` instead of calling this directly.
+
         """
         if isinstance(local_frame, Plane):
             local_frame = Frame.from_plane(local_frame)
@@ -94,12 +99,15 @@ class UserReferencePlaneCollection(Data):
     def get(self, id_: int) -> Optional[Frame]:
         """Return the frame stored under ``id_``, or None if no such plane exists.
 
-        Use `TimberElement.get_user_ref_plane()` instead of calling this directly.
+        Use :meth:`TimberElement.get_user_ref_plane` instead of calling this directly.
         """
         return self._frames_by_id.get(id_)
 
     def remove(self, id_: int) -> None:
-        """Remove the plane stored under ``id_``, if any."""
+        """Remove the plane stored under ``id_``, if any.
+
+        Use :meth:`TimberElement.remove_user_ref_plane` instead of calling this directly.
+        """
         self._frames_by_id.pop(id_, None)
 
 
@@ -490,8 +498,10 @@ class TimberElement(Element, abc.ABC):
     def user_ref_planes(self):
         """The BTLx user reference planes attached to this element.
 
-        This collection should not be queried or modified directly. Use `add_user_ref_plane()`,
-        `get_user_ref_plane()`, and `remove_user_ref_plane()` instead.
+        Use :meth:`add_user_ref_plane`, :meth:`get_user_ref_plane`, and :meth:`remove_user_ref_plane`
+        instead of calling :meth:`UserReferencePlaneCollection.add`/:meth:`~UserReferencePlaneCollection.get`/
+        :meth:`~UserReferencePlaneCollection.remove` on this collection directly. Iterating it directly
+        or calling ``len()`` on it is fine.
 
         Returns
         -------
