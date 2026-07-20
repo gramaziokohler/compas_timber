@@ -75,7 +75,7 @@ class TimberElement(Element, abc.ABC):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`, optional
-        The frame representing the elements's local coordinate system in its hierarchical context.
+        The frame representing the element's local coordinate system in its hierarchical context.
         Defaults to ``None``, in which case the world coordinate system is used.
     length : float
         Length of the timber element.
