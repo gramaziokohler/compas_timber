@@ -10,9 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
+* Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
+* Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, constructed directly from a `PlateGeometry` (like `Panel`/`Plate`) plus a `start_offset` (in the panel's thickness direction); use `Layer.from_parent_start_end(host, start_offset, end_offset)` to build one by interpolating a parent `Panel`/`Layer`'s outlines. `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
+* Added `LayerDefinition` and `LayerStructure` classes (`compas_timber.elements.LayerDefinition`, `compas_timber.elements.LayerStructure`) — panel-agnostic tree definitions of layer slots (name, thickness, sublayer defs) that can be shared across panels and attached to a specific panel via `LayerStructure.attach(panel)`.
+* Added `Panel.layer_structure` property/setter — assigns a `LayerStructure` to a panel, creating bound `Layer` instances. Layers are automatically registered in the model when the panel already belongs to one; setting `layer_structure` again replaces any previously-attached layers.
+* Added `Panel.layers` property — the panel's root `Layer` instances (direct children only).
+* Added `Panel.exterior_layer`, `Panel.core_layer`, `Panel.interior_layer` properties — look up the layer named `"exterior"`/`"core"`/`"interior"` in the panel's `layer_structure`, or `None` if not defined.
+* Added `Panel.get_leaf_layers()` — returns all layers without sublayers as a flat ordered list, from `outline_a` to `outline_b`.
+* Added `Panel.merge_layer_structure(model)` — adds all layers in the panel's layer structure to `model` as children of the panel.
+* Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
+* Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
+* `Panel.set_extension_plane` and `Panel.apply_edge_extensions` now propagate to all attached layers.
+* `Panel.model` is now a property/setter pair; when a panel is added to the model, any pre-existing layers are automatically added as child elements.
+* Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
+* Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
+* Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 
 ### Changed
+* `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
+* Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
@@ -20,9 +37,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
 * Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
 * Fixed plate geometry created with inconsistent face orientation.
+* `TimberModel.remove_joint()` now clears the joint's features and extensions from its elements before removing it, instead of leaving them stuck on the remaining elements.
+* `TimberModel.add_joint()` now removes any existing joint between the same elements before adding the new one, preventing a stale joint from leaking its features/extensions while becoming unreachable from the model.
+* `TimberModel.remove_element()` now also removes any joints connected to the removed element (previously only `compas_model`'s interaction/edge cleanup ran, leaving stale entries in `TimberModel`'s own joints registry and orphaned features on the surviving elements).
+* `TimberModel.process_joinery()` now clears every processed joint's extensions and features before recomputing them, so individual joints no longer need to clear their own previous state at the start of `add_extensions()`/`add_features()`, and repeated calls (full or via `joints_to_process`) are idempotent instead of accumulating (e.g. `Beam.add_blank_extension()` adds onto any existing entry for the same joint, so without the upfront clear a second run would silently double the extension amount).
+* Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
+* Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
+* Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
 
 ### Removed
-
+* Removed depricated `features.py` module and related imports.
+* Removed `test_features.py` and moved extension tests to `test_beam.py`.
 
 ## [2.2.0] 2026-07-02
 

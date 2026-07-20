@@ -3,12 +3,18 @@ class FeatureApplicationError(Exception):
 
     TODO: perhaps should be renamed to ProcessingVisualizationError or something similar.
 
+    `feature_geometry` and `element_geometry` are always expected to be in the model's global
+    coordinate system, regardless of the coordinate system the failure was detected in. Callers
+    raising this error from a context where the geometry is in local/element space (e.g. inside
+    `BTLxProcessing.apply()`) are responsible for transforming the geometry to model space
+    themselves (e.g. via `geometry.transformed(beam.modeltransformation)`) before passing it in.
+
     Attributes
     ----------
     feature_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the feature that could not be applied.
+        The geometry of the feature that could not be applied, in model space.
     element_geometry : :class:`~compas.geometry.Geometry`
-        The geometry of the element that could not be modified.
+        The geometry of the element that could not be modified, in model space.
     message : str
         The error message.
 
@@ -31,12 +37,16 @@ class BeamJoiningError(Exception):
     This error should indicate that an error has occurred while calculating the features which
     should be applied by this joint.
 
+    `debug_geometries` is always expected to be in the model's global coordinate system, e.g. the
+    planes/boxes involved are typically taken directly from beam properties such as `ref_sides` or
+    `blank`, which are already expressed in model space.
+
     Attributes
     ----------
     beams : list(:class:`~compas_timber.parts.Beam`)
         The beams that were supposed to be joined.
     debug_geometries : list(:class:`~compas.geometry.Geometry`)
-        A list of geometries that can be used to visualize the error.
+        A list of geometries, in model space, that can be used to visualize the error.
     debug_info : str
         A string containing debug information about the error.
     joint : :class:`~compas_timber.connections.Joint`
@@ -49,6 +59,8 @@ class BeamJoiningError(Exception):
         self.beams = beams
         self.joint = joint
         self.debug_info = debug_info
+        if debug_geometries and not isinstance(debug_geometries, list):
+            debug_geometries = [debug_geometries]
         self.debug_geometries = debug_geometries or []
 
     def __reduce__(self):

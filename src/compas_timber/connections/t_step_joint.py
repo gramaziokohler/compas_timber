@@ -86,7 +86,6 @@ class TStepJoint(Joint):
         self.heel_depth = heel_depth
         self.tenon_mortise_height = tenon_mortise_height
 
-        self.features = []
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()  # resolve defaults at init if beams are provided
 
@@ -171,14 +170,15 @@ class TStepJoint(Joint):
         """
         assert self.cross_beam and self.main_beam
         start_a = None
+        plane_a = None
         try:
             plane_a = self.main_extension_plane
             start_a, end_a = self.main_beam.extension_to_plane(plane_a)
         except AttributeError as ae:
             # I want here just the plane that caused the error
-            raise BeamJoiningError(self.main_beam, self, debug_info=str(ae), debug_geometries=plane_a)
+            raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=[plane_a] if plane_a else [])
         except Exception as ex:
-            raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex), debug_geometries=[plane_a] if plane_a else [])
         self.main_beam.add_blank_extension(start_a, end_a, self.guid)
 
     def add_features(self):
@@ -188,10 +188,6 @@ class TStepJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # get dimensions for main and cross beams
         main_width, main_height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)

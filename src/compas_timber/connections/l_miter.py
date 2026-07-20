@@ -146,7 +146,6 @@ class LMiterJoint(Joint):
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
         self.clean = clean
-        self.features = []
         self._back_a_index = None
         self._back_b_index = None
 
@@ -315,10 +314,6 @@ class LMiterJoint(Joint):
 
         """
         assert self.beam_a and self.beam_b
-
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
 
         try:
             miter_plane_a, miter_plane_b = self.cutting_planes
