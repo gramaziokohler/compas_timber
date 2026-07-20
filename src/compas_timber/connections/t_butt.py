@@ -19,7 +19,7 @@ class TButtJoint(ButtJoint):
     mill_depth : float
         The depth of the pocket/lap to be milled in the cross beam.
         If `butt_plane_id` is provided, the pocket/lap's depth direction will be along the main beam's centerline direction.
-        Otherwise, the pocket/lap'
+        Otherwise, the pocket/lap's depth direction will be along the normal of the butt_plane.
     butt_plane_id : int, optional
         The BTLx integer ID (>= 100) of a `user_ref_plane` registered on `cross_beam` via :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
         Overrides the automatic calculation of the closest butt plane to the main_beam.
