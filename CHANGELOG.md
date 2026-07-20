@@ -27,10 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added `TimberElement.user_ref_planes`, `TimberElement.add_user_ref_plane()`, `TimberElement.get_user_ref_plane()`, and `TimberElement.remove_user_ref_plane()` for attaching arbitrary named reference planes (BTLx `UserReferencePlane`, integer ID >= 100) to a beam or plate.
-* Added `UserReferencePlane` data class representing a single registered reference plane.
+* Added `UserReferencePlaneCollection` data class holding all of an element's registered reference planes, keyed by BTLx `id_`. IDs are auto-assigned from a monotonically increasing counter starting at 100; a removed `id_` is never reissued.
 * Added `BTLxPart.et_user_reference_planes` and wired `BTLxWriter` to emit a part's `UserReferencePlanes` XML element when any are registered on its element.
 * Added mechanism in `BTLxReader` to read `UserReferencePlanes` back from BTLx XML and add them to the corresponding element.
-* Added `FreeContour.from_polyline_ref_plane_and_beam()` classmethod to build a `FreeContour` processing cut relative to a custom, user-supplied reference plane instead of one of the element's standard reference sides.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
