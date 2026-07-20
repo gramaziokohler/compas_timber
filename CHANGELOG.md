@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added new `compas_timber.fabrication.BirdsMouth`.
 * Added `TimberElement.user_ref_planes`, `TimberElement.add_user_ref_plane()`, `TimberElement.get_user_ref_plane()`, and `TimberElement.remove_user_ref_plane()` for attaching arbitrary named reference planes (BTLx `UserReferencePlane`, integer ID >= 100) to a beam or plate.
 * Added `UserReferencePlane` data class representing a single registered reference plane.
 * Added `BTLxPart.et_user_reference_planes` and wired `BTLxWriter` to emit a part's `UserReferencePlanes` XML element when any are registered on its element.
