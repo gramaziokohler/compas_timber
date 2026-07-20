@@ -150,7 +150,7 @@ class ButtJoint(Joint):
 
         If `butt_plane_id` is set, it is resolved from the corresponding `user_ref_plane` registered on the  cross beam.
         Otherwise defaults to the cross beam's side closest to the main beam.
-        In case `mill_depth` is set, the plane is offset accordingly to accomodate a pocket/lap of the specified depth.
+        In case `mill_depth` is set, the plane is offset accordingly to accommodate a pocket/lap of the specified depth.
         """
         if self.butt_plane_id is not None:
             user_plane = self._resolve_user_ref_plane(self.cross_beam, self.butt_plane_id, "butt_plane")
