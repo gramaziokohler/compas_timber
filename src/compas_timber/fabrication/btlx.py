@@ -856,7 +856,7 @@ class BTLxProcessing(Data, ABC):
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
+        The reference side index of the element to be cut. 0-5 correspond to RS1-RS6 (zero-based). Values >= 100 refer to user reference planes. Defaults to 0 (RS1).
     priority : int
         The priority of the process.
     process_id : int
@@ -867,8 +867,6 @@ class BTLxProcessing(Data, ABC):
         If True, the processing creates a counter sink. Only used by specific processing types.
     tool_position : :class:`~compas_timber.fabrication.AlignmentType`
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
-    user_plane_id : int, optional
-        The ID of the user reference plane to use as the reference plane for the processing. If not set, the ref_side_index will be used to determine the reference plane.
     is_joinery : bool
         If True, the process is a result of joinery process.
     PROCESSING_NAME : str
