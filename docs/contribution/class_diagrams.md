@@ -407,7 +407,7 @@ classDiagram
          +beams : list
       }
 
-      class CompositeJoint {
+      class ClusterJoint {
          +joints : list[Joint]
          +elements : tuple[Element]
          +location : Point
@@ -476,8 +476,8 @@ classDiagram
       Joint <|-- TDovetailJoint
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
-      Joint <|-- CompositeJoint
-      CompositeJoint "1" *-- "1..*" Joint : sub-joints
+      Joint <|-- ClusterJoint
+      ClusterJoint "1" *-- "1..*" Joint : sub-joints
 
       Joint <|-- PlateJoint
 

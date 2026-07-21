@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .cluster import Cluster
 from .joint import Joint
 from .solver import JointTopology
+from .cluster import Cluster
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
 
 
-class CompositeJoint(Joint):
+class ClusterJoint(Joint):
     """A joint composed of multiple pairwise sub-joints acting on a cluster of 3 or more elements.
 
     Instead of defining a single fabrication strategy for the whole cluster, this joint
     delegates all feature and extension calculations to a list of pairwise sub-joints.
     The sub-joints are instantiated without being registered in the model; only the
-    CompositeJoint itself is added.
+    ClusterJoint itself is added.
 
     Parameters
     ----------
@@ -45,16 +45,15 @@ class CompositeJoint(Joint):
     MIN_ELEMENT_COUNT = 3
     MAX_ELEMENT_COUNT = None
 
-    def __init__(self, joints, name=None, cluster=None, **kwargs):
-        self.joints = joints
-        self._cluster = cluster
-        elements = list(set([e for j in joints for e in j.elements]))
-        super(CompositeJoint, self).__init__(elements=elements, name=name, **kwargs)
+    def __init__(self, cluster, name=None, **kwargs):
+        self.cluster = cluster
+        elements = cluster.elements
+        super(ClusterJoint, self).__init__(elements=elements, name=name, **kwargs)
 
     @property
     def __data__(self):
         data = super().__data__
-        data["joints"] = self.joints
+        data["cluster"] = self.cluster
         return data
 
     def __repr__(self):
@@ -71,11 +70,9 @@ class CompositeJoint(Joint):
         return self.cluster.topology
 
     @property
-    def cluster(self):
+    def joints(self):
         """The cluster of elements connected by this joint."""
-        if self._cluster is None:
-            self._cluster = Cluster(self.joints)
-        return self._cluster
+        return self.cluster.joints
 
     @property
     def features(self):
@@ -91,8 +88,8 @@ class CompositeJoint(Joint):
         pass
 
     @classmethod
-    def create(cls, model, joints=None, **kwargs):
-        """Creates a CompositeJoint and registers it in the model.
+    def create(cls, model, cluster=None, **kwargs):
+        """Creates a ClusterJoint and registers it in the model.
 
         Parameters
         ----------
@@ -103,11 +100,32 @@ class CompositeJoint(Joint):
 
         Returns
         -------
-        :class:`~compas_timber.connections.CompositeJoint`
+        :class:`~compas_timber.connections.ClusterJoint`
         """
-        joint = cls(joints=joints, **kwargs)
+        joint = cls(cluster=cluster, **kwargs)
         model.add_joint(joint)
         return joint
+
+    @classmethod
+    def promote_cluster(cls, model, cluster, **kwargs):
+        """Creates an instance of this joint from a cluster of elements.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        cluster : :class:`~compas_model.clusters.Cluster`
+            The cluster containing the elements to be connected by this joint.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        return cls.create(model, cluster, **kwargs)
 
     def add_features(self):
         """Delegates feature calculation to each sub-joint."""
@@ -141,3 +159,8 @@ class CompositeJoint(Joint):
             joint.restore_elements_from_keys(model)
             joint._set_unset_attributes()
         self._elements = tuple(set([e for j in self.joints for e in j.elements]))
+
+    @classmethod
+    def from_joints(cls, joints: list[Joint])->ClusterJoint:
+        cluster = Cluster(joints)
+        return cls(cluster=cluster)
