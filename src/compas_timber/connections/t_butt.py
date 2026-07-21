@@ -17,7 +17,16 @@ class TButtJoint(ButtJoint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam.
+        The depth of the pocket/lap to be milled in the cross beam.
+        If `butt_plane_id` is provided, the pocket/lap's depth direction will be along the main beam's centerline direction.
+        Otherwise, the pocket/lap's depth direction will be along the normal of the butt_plane.
+    butt_plane_id : int, optional
+        The BTLx integer ID (>= 100) of a `user_ref_plane` registered on `cross_beam` via :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
+        Overrides the automatic calculation of the closest butt plane to the main_beam.
+    force_pocket : bool
+        If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
+    conical_tool : bool
+        If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
     fastener : :class:`~compas_timber.elements.Fastener`, optional
         The fastener to be used in the joint.
 
@@ -29,8 +38,8 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    butt_plane_spec : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    butt_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the main beam. If not overridden via `butt_plane_id`, the closest side of the cross beam will be used.
 
     """
 
@@ -41,7 +50,7 @@ class TButtJoint(ButtJoint):
         main_beam=None,
         cross_beam=None,
         mill_depth=None,
-        butt_plane_spec=None,
+        butt_plane_id=None,
         force_pocket=False,
         conical_tool=False,
         fastener=None,
@@ -51,7 +60,7 @@ class TButtJoint(ButtJoint):
             main_beam=main_beam,
             cross_beam=cross_beam,
             mill_depth=mill_depth,
-            butt_plane_spec=butt_plane_spec,
+            butt_plane_id=butt_plane_id,
             force_pocket=force_pocket,
             conical_tool=conical_tool,
             **kwargs,

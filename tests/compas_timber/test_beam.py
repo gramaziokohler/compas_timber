@@ -8,6 +8,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Scale
 from compas.geometry import Transformation
 from compas.geometry import Translation
 from compas.geometry import Vector
@@ -559,3 +560,128 @@ def test_remove_parametric_extension():
     beam.add_blank_extension(start=0.0, end=0.10)
 
     assert close(beam.blank.xsize, 1.10)
+
+
+def test_user_ref_plane_follows_beam_transform():
+    """A user reference plane, stored in the beam's local space, should track the beam under transform()."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    translation = Translation.from_vector([100.0, 50.0, -20.0])
+    beam.transform(translation)
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+    expected_point = plane_frame.point.transformed(translation)
+
+    assert TOL.is_allclose(resolved_plane.point, expected_point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
+
+
+def test_user_ref_plane_preserves_non_rigid_transform():
+    """add/get_user_ref_plane must round-trip through the beam's full transformation, not a Frame
+    reconstructed from it - a Frame can only represent a rigid (translation + rotation) transform,
+    so a non-rigid component (e.g. scale) would be silently dropped by such a round trip.
+    """
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    scale = Scale.from_factors([1, 2, 1])
+    beam.transform(scale)
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+    expected_point = plane_frame.point.transformed(scale)
+
+    assert TOL.is_allclose(resolved_plane.point, expected_point)
+
+
+def test_user_ref_plane_survives_blank_extension():
+    """A user reference plane registered before a blank extension should still resolve to the same
+    world-space location afterwards - extending a beam's blank (e.g. from a joint) should not move
+    planes that were registered relative to the beam's frame before the extension existed.
+
+    user_ref_planes are stored relative to ref_frame, which is derived from the beam's blank and
+    therefore shifts whenever add_blank_extension() is called (as joints routinely do) after the
+    plane was registered. Fix: store planes relative to the element's immutable frame instead, and
+    have the BTLx writer transform frame-local planes to ref_frame-local at write time.
+    """
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    # simulate a joint extending the beam's blank at its start end
+    beam.add_blank_extension(start=200.0, end=0.0, joint_key="fake_joint")
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+
+    assert TOL.is_allclose(resolved_plane.point, plane_frame.point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
+
+
+def test_user_ref_plane_add_get_remove():
+    """Cover the basic user_ref_plane API: auto ID assignment, ID collisions, missing lookups, removal, ID non-reissue."""
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+
+    frame_a = Frame(Point(100, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    frame_b = Frame(Point(200, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+
+    id_a = beam.add_user_ref_plane(frame_a)
+    id_b = beam.add_user_ref_plane(frame_b)
+
+    # auto-assigned IDs start at 100 and increment
+    assert id_a == 100
+    assert id_b == 101
+    assert beam.user_ref_plane_ids == (100, 101)
+
+    # explicit id collision raises
+    with pytest.raises(ValueError):
+        beam.add_user_ref_plane(frame_a, id_=id_a)
+
+    # explicit id is honored when not colliding
+    id_c = beam.add_user_ref_plane(frame_a, id_=200)
+    assert id_c == 200
+    assert beam.user_ref_plane_ids == (100, 101, 200)
+
+    # missing ID resolves to None
+    assert beam.get_user_ref_plane(999) is None
+
+    # removal drops just the targeted plane
+    beam.remove_user_ref_plane(id_a)
+    assert beam.user_ref_plane_ids == (101, 200)
+    assert beam.get_user_ref_plane(id_a) is None
+    assert beam.get_user_ref_plane(id_b) is not None
+
+    # a removed ID is never reissued, even though it's now free: the next auto-assigned ID
+    # continues from the counter (201) instead of reusing id_a (100)
+    id_d = beam.add_user_ref_plane(frame_b)
+    assert id_d == 201
+
+
+def test_user_ref_plane_follows_model_transform():
+    """A user reference plane should track the beam correctly after a whole-model transform.
+
+    TimberModel.transform() resets every element's computed properties (including the ref_frame
+    cache the plane is stored relative to), unlike transforming an individual element.
+    """
+    model = TimberModel()
+    beam = Beam(Frame.worldXY(), length=1000, width=100, height=120)
+    model.add_element(beam)
+
+    plane_frame = Frame(Point(500, 10, 60), Vector(1, 0, 0), Vector(0, 1, 0))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+
+    translation = Translation.from_vector([100.0, 50.0, -20.0])
+    model.transform(translation)
+
+    resolved_plane = beam.get_user_ref_plane(plane_id)
+    expected_point = plane_frame.point.transformed(translation)
+
+    assert TOL.is_allclose(resolved_plane.point, expected_point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)

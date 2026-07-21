@@ -6,7 +6,6 @@ from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 
 from .butt_joint import ButtJoint
-from .butt_joint import CutPlaneSpec
 from .solver import JointTopology
 
 
@@ -24,17 +23,19 @@ class LButtJoint(ButtJoint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane_spec` is set.
+        The depth of the pocket/lap to be milled in the cross beam.
+        If `butt_plane_id` is provided, the pocket/lap's depth direction will be along the main beam's centerline direction.
+        Otherwise, the pocket/lap's depth direction will be along the normal of the butt_plane.
     small_beam_butts : bool, default False
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default True
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane_spec : :class:`~compas_timber.connections.JointCutPlane`, optional
-        Overrides the plane used to cut the main beam. Build with
-        :meth:`~compas_timber.connections.JointCutPlane.from_butt_plane`.
-    back_plane : :class:`~compas_timber.connections.JointCutPlane`, optional
-        Overrides the plane used to cut the cross beam when `modify_cross` is True. Build with
-        :meth:`~compas_timber.connections.JointCutPlane.from_back_plane`.
+    butt_plane_id : int, optional
+        The BTLx integer ID (>= 100) of a `user_ref_plane` registered on `cross_beam` via :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
+        Overrides the automatic calculation of the closest butt plane to the main_beam.
+    back_plane_id : int, optional
+        The BTLx integer ID (>= 100) of a `user_ref_plane` registered on `main_beam`, via :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`.
+        Overrides the plane used to cut the cross beam when `modify_cross` is True.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
 
@@ -63,7 +64,7 @@ class LButtJoint(ButtJoint):
     @property
     def __data__(self):
         data = super(LButtJoint, self).__data__
-        data["back_plane_spec"] = self._back_plane_spec
+        data["back_plane_id"] = self.back_plane_id
         data["modify_cross"] = self.modify_cross
         data["reject_i"] = self.reject_i
         return data
@@ -75,29 +76,26 @@ class LButtJoint(ButtJoint):
         mill_depth=None,
         modify_cross=True,
         reject_i=False,
-        butt_plane_spec: Optional[CutPlaneSpec] = None,
-        back_plane_spec: Optional[CutPlaneSpec] = None,
+        butt_plane_id: Optional[int] = None,
+        back_plane_id: Optional[int] = None,
         **kwargs,
     ):
-        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane_spec=butt_plane_spec, **kwargs)
+        super(LButtJoint, self).__init__(main_beam=main_beam, cross_beam=cross_beam, mill_depth=mill_depth, modify_cross=modify_cross, butt_plane_id=butt_plane_id, **kwargs)
         self.modify_cross = modify_cross
         self.reject_i = reject_i
-        self._back_plane_spec: Optional[CutPlaneSpec] = back_plane_spec
+        self.back_plane_id: Optional[int] = back_plane_id
 
     @property
     def back_plane(self) -> Plane:
         """The plane used to cut the cross beam when `modify_cross` is True.
 
-        If a :class:`~compas_timber.connections.JointCutPlane` override is set, it is resolved against the main beam's
-        back face (opposite the cross beam).  Otherwise defaults to the same plane as :meth:`ButtJoint._back_cutting_plane`.
+        If `back_plane_id` is set, it is resolved from the corresponding `user_ref_plane` registered on the main
+        beam's back face (opposite the cross beam). Otherwise defaults to the side of the main beam opposite the
+        one facing the cross beam.
         """
-        if self._back_plane_spec is not None:
-            return self._back_plane_spec.to_plane(self.main_beam)
-        # default: the side of the main beam opposite the one facing the cross beam, same as ButtJoint's default
-        return super(LButtJoint, self)._back_cutting_plane()
-
-    def _back_cutting_plane(self) -> Plane:
-        return self.back_plane
+        if self.back_plane_id is not None:
+            return self._resolve_user_ref_plane(self.main_beam, self.back_plane_id, "back_plane")
+        return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
 
     @property
     def main_beam_ref_side_index(self):

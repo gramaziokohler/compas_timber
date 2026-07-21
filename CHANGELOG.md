@@ -26,10 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
+* Added `user_ref_plane_ids`, `add_user_ref_plane()`, `get_user_ref_plane()`, and `remove_user_ref_plane()` for attaching arbitrary named reference planes (BTLx `UserReferencePlane`, integer ID >= 100) to a beam or plate. 
+* Added `UserReferencePlaneCollection` data class holding all of an element's registered reference planes, keyed by BTLx `id_`. IDs are auto-assigned from a monotonically increasing counter starting at 100; a removed `id_` is never reissued.
+* Added `BTLxPart.et_user_reference_planes` and wired `BTLxWriter` to emit a part's `UserReferencePlanes` XML element when any are registered on its element.
+* Added mechanism in `BTLxReader` to read `UserReferencePlanes` back from BTLx XML and add them to the corresponding element.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
 * Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
+* `ButtJoint` / `LButtJoint` / `TButtJoint` no longer use `butt_plane_spec` / `back_plane_spec`. They now take `butt_plane_id` (and `back_plane_id` on `LButtJoint`) that reference beam `user_ref_plane` entries.
+* `LMiterJoint` no longer uses `miter_plane: MiterPlaneSpec`. It now takes `miter_plane_id`, referencing a `user_ref_plane` on `beam_a`.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
 * `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
 * `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
@@ -44,10 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
+* `BTLxProcessing`'s `ReferencePlaneID` header attribute (read via `HEADER_ATTRIBUTE_MAP` and written via `BTLxProcessingParams.header_attributes`) now passes user reference plane IDs (>= 100) through as-is, instead of always applying the standard side's 1-based/0-based conversion.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `CutPlaneSpec` and `MiterPlaneSpec` APIs from the joint plane-override workflow since the `UserReferencePlane` mechanism serves for encoding arbitrary planes relative to a beam.
 
 ## [2.2.0] 2026-07-02
 

@@ -8,7 +8,6 @@ from compas.geometry import Point
 from compas.geometry import Vector
 from compas.tolerance import TOL
 
-from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import FastenerTimberInterface
@@ -161,22 +160,46 @@ def test_t_butt_joint_serialization_default_planes(cross_beam, planar_beam):
     copied_joint = list(model_copy.joints)[0]
 
     assert isinstance(copied_joint, TButtJoint)
-    assert copied_joint._butt_plane_spec is None
+    assert copied_joint.butt_plane_id is None
     assert copied_joint.mill_depth == joint.mill_depth
 
 
+def test_t_butt_joint_butt_plane_recess_without_mill_depth_adds_no_feature(cross_beam, planar_beam):
+    """A butt_plane_id that recesses into the cross beam should NOT add any feature without an explicit mill_depth."""
+    default_joint = TButtJoint(planar_beam, cross_beam)
+    ref_side = cross_beam.ref_sides[default_joint.cross_beam_ref_side_index]
+    recessed_plane = Plane(ref_side.point - ref_side.normal * 8.0, ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(recessed_plane))
+
+    joint = TButtJoint(planar_beam, cross_beam, butt_plane_id=butt_plane_id)
+    joint.add_features()
+
+    assert len(cross_beam.features) == 0
+    assert len(planar_beam.features) == 1
+
+
+def test_t_butt_joint_butt_plane_with_mill_depth_adds_pocket(cross_beam, planar_beam):
+    """A butt_plane_id combined with an explicit mill_depth adds a Pocket."""
+    default_joint = TButtJoint(planar_beam, cross_beam)
+    ref_side = cross_beam.ref_sides[default_joint.cross_beam_ref_side_index]
+    recessed_plane = Plane(ref_side.point - ref_side.normal * 8.0, ref_side.normal)
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(recessed_plane))
+
+    joint = TButtJoint(planar_beam, cross_beam, mill_depth=4.0, butt_plane_id=butt_plane_id)
+    joint.add_features()
+
+    assert len(cross_beam.features) == 1
+    assert isinstance(cross_beam.features[0], Pocket)
+
+
 def test_t_butt_joint_serialization_with_butt_plane(cross_beam, planar_beam):
-    """Round-trip: JointCutPlane butt_plane survives JSON serialization."""
+    """Round-trip: butt_plane_id (via user_ref_plane) survives JSON serialization."""
     model = TimberModel()
     model.add_elements([planar_beam, cross_beam])
     # cross_beam runs along (1, 0, 0); normal must be perpendicular to that axis
     butt_plane = Plane(Point(100, 0, 0), Vector(0, 1, 0))
-    TButtJoint.create(
-        model,
-        planar_beam,
-        cross_beam,
-        butt_plane_spec=CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, butt_plane),
-    )
+    butt_plane_id = cross_beam.add_user_ref_plane(Frame.from_plane(butt_plane))
+    TButtJoint.create(model, planar_beam, cross_beam, butt_plane_id=butt_plane_id)
 
     model_copy = json_loads(json_dumps(model))
     copied_joint = list(model_copy.joints)[0]

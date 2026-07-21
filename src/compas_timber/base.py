@@ -1,13 +1,108 @@
 import abc
 from functools import wraps
+from typing import Optional
 
+from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
+from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
 from compas_model.elements import reset_computed
+
+
+class UserReferencePlaneCollection(Data):
+    """BTLx user reference planes attached to a single :class:`TimberElement`, keyed by integer ``id_`` (>= 100).
+
+    Frames are stored local to the owning element's ``frame``, in this collection only - never
+    exposed directly on :class:`TimberElement`. Use the owning element's
+    :meth:`~TimberElement.add_user_ref_plane`, :meth:`~TimberElement.get_user_ref_plane` (always
+    world/model coordinates), and :meth:`~TimberElement.remove_user_ref_plane` instead of
+    :meth:`add`/:meth:`get`/:meth:`remove` directly. Iterating yields ids only (``for id_ in
+    collection``, mirroring how a plain ``dict`` iterates its keys) - never frames, so there is no
+    way to retrieve a local frame except through this class's own :meth:`get`.
+
+    A removed ``id_`` is never reissued by :meth:`add`. A new collection always starts empty.
+
+    """
+
+    def __init__(self):
+        super(UserReferencePlaneCollection, self).__init__()
+        self._frames_by_id = {}
+        self._next_id = 100
+
+    def __repr__(self):
+        return "UserReferencePlaneCollection({!r})".format(self._frames_by_id)
+
+    def __len__(self):
+        return len(self._frames_by_id)
+
+    def __iter__(self):
+        return iter(self._frames_by_id)
+
+    @property
+    def __data__(self):
+        # JSON object keys are always strings, so the ids need to round-trip through str <-> int explicitly.
+        return {"planes": {str(id_): frame for id_, frame in self._frames_by_id.items()}, "next_id": self._next_id}
+
+    @classmethod
+    def __from_data__(cls, data):
+        collection = cls()
+        collection._frames_by_id = {int(id_): frame for id_, frame in data["planes"].items()}
+        collection._next_id = data["next_id"]
+        return collection
+
+    def add(self, local_frame: Frame, id_: int = None) -> int:
+        """Store ``local_frame`` (relative to the owning element's ``frame``) under ``id_``.
+
+        Auto-assigns the next free id if ``id_`` is None. Use :meth:`TimberElement.add_user_ref_plane`
+        instead of calling this directly.
+
+        Parameters
+        ----------
+        local_frame : :class:`compas.geometry.Frame` or :class:`compas.geometry.Plane`
+            Converted to a ``Frame`` via :meth:`Frame.from_plane` if a ``Plane`` is given.
+        id_ : int, optional
+            Unique integer >= 100.
+
+        Returns
+        -------
+        int
+            The id assigned to this plane.
+
+        """
+        if isinstance(local_frame, Plane):
+            local_frame = Frame.from_plane(local_frame)
+
+        if id_ is not None:
+            if type(id_) is not int:
+                raise TypeError("BTLx reference plane ids must be integers.")
+            if id_ < 100:
+                raise ValueError("BTLx reference plane ids must be >= 100.")
+            if id_ in self._frames_by_id:
+                raise ValueError("A reference plane with id {} already exists. Call remove() first.".format(id_))
+        else:
+            id_ = self._next_id
+
+        self._frames_by_id[id_] = local_frame
+        self._next_id = max(self._next_id, id_ + 1)
+        return id_
+
+    def get(self, id_: int) -> Optional[Frame]:
+        """Return the frame stored under ``id_``, or None if no such plane exists.
+
+        Use :meth:`TimberElement.get_user_ref_plane` instead of calling this directly.
+        """
+        return self._frames_by_id.get(id_)
+
+    def remove(self, id_: int) -> None:
+        """Remove the plane stored under ``id_``, if any.
+
+        Use :meth:`TimberElement.remove_user_ref_plane` instead of calling this directly.
+        """
+        self._frames_by_id.pop(id_, None)
 
 
 def reset_timber_attrs(f):
@@ -32,7 +127,7 @@ class TimberElement(Element, abc.ABC):
     Parameters
     ----------
     frame : :class:`compas.geometry.Frame`, optional
-        The frame representing the beam's local coordinate system in its hierarchical context.
+        The frame representing the element's local coordinate system in its hierarchical context.
         Defaults to ``None``, in which case the world coordinate system is used.
     length : float
         Length of the timber element.
@@ -42,6 +137,9 @@ class TimberElement(Element, abc.ABC):
         Height of the timber element.
     features : list[:class:`~compas_timber.fabrication.Feature`], optional
         List of features to apply to this element.
+    user_ref_planes : :class:`UserReferencePlaneCollection`, optional
+        The BTLx user reference planes attached to this element. Populated internally on
+        deserialization; use :meth:`add_user_ref_plane` to add planes otherwise.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -71,11 +169,13 @@ class TimberElement(Element, abc.ABC):
         data["width"] = self.width
         data["height"] = self.height
         data["features"] = [f for f in self.features if not f.is_joinery]  # type: ignore
+        data["user_ref_planes"] = self._user_ref_planes
         data.update(self.attributes)
         return data
 
-    def __init__(self, frame, length, width, height, features=None, **kwargs):
+    def __init__(self, frame, length, width, height, features=None, user_ref_planes=None, **kwargs):
         super().__init__(transformation=Transformation.from_frame(frame), features=features)
+        self._user_ref_planes = user_ref_planes if user_ref_planes is not None else UserReferencePlaneCollection()
         self.attributes = {}
         self.attributes.update(kwargs)
         self.length = length
@@ -383,3 +483,66 @@ class TimberElement(Element, abc.ABC):
         if ref_side_index in [1, 3]:
             return self.height, self.width
         return self.width, self.height
+
+    ########################################################################
+    # User Reference Planes
+    ########################################################################
+
+    @property
+    def user_ref_plane_ids(self):
+        """The ids of the BTLx user reference planes attached to this element.
+
+        Frames themselves are never exposed directly - retrieve them one at a time via
+        :meth:`get_user_ref_plane`, which always returns world/model coordinates.
+
+        Returns
+        -------
+        tuple[int]
+        """
+        return tuple(self._user_ref_planes)
+
+    def add_user_ref_plane(self, frame: Frame, id_: int = None) -> int:
+        """Add a reference plane to this element, given in model (global) space.
+
+        Stored local to :attr:`frame`. ``id_`` is auto-assigned (starting at 100, never reissued)
+        if not given.
+
+        Parameters
+        ----------
+        frame : :class:`compas.geometry.Frame`
+        id_ : int, optional
+            Unique integer >= 100.
+
+        Returns
+        -------
+        int
+            The id assigned to this plane.
+
+        """
+        local_frame = frame.transformed(self.transformation_to_local())
+        return self._user_ref_planes.add(local_frame, id_)
+
+    def get_user_ref_plane(self, id_: int) -> Optional[Frame]:
+        """Retrieve the frame stored under ``id_``, transformed to model (global) space.
+
+        Parameters
+        ----------
+        id_ : int
+
+        Returns
+        -------
+        :class:`compas.geometry.Frame` or None
+        """
+        local_frame = self._user_ref_planes.get(id_)
+        if local_frame is None:
+            return None
+        return local_frame.transformed(self.modeltransformation)
+
+    def remove_user_ref_plane(self, id_: int):
+        """Remove the reference plane stored under ``id_``.
+
+        Parameters
+        ----------
+        id_ : int
+        """
+        self._user_ref_planes.remove(id_)

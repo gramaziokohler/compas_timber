@@ -263,6 +263,9 @@ class BTLxWriter(object):
 
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
+        # add user reference planes if there are any on the element.
+        if element.user_ref_plane_ids:
+            part_element.append(part.et_user_reference_planes)
         # create processings element for the part if there are any
         if element.features:
             processings_element = ET.Element("Processings")
@@ -629,6 +632,36 @@ class BTLxPart(BTLxGenericPart):
         raise ValueError("Given element face does not match any of the reference surfaces.")
 
     @property
+    def et_user_reference_planes(self):
+        """Create the UserReferencePlanes XML element from planes stored on the element.
+
+        Planes are retrieved in world/model coordinates (see
+        :meth:`~compas_timber.base.TimberElement.get_user_ref_plane`); BTLx expects them relative to
+        ``ref_frame`` instead, so each is remapped there - a single change of basis, since
+        ``ref_frame`` is itself already expressed in world coordinates - before being scaled for the
+        writer's unit scale factor.
+
+        The ``ID`` XML attribute is taken directly from each plane's ``id_``,
+        which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
+
+        Returns
+        -------
+        :class:`xml.etree.ElementTree.Element`
+        """
+        user_ref_planes = ET.Element("UserReferencePlanes")
+        to_ref_frame_local = Transformation.from_frame(self.element.ref_frame).inverted()
+        for id_ in self.element.user_ref_plane_ids:
+            world_frame = self.element.get_user_ref_plane(id_)
+            ref_frame_local = world_frame.transformed(to_ref_frame_local)
+            scaled_frame = ref_frame_local.scaled(self._scale_factor)
+            plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(id_))
+            position = ET.SubElement(plane_el, "Position")
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(scaled_frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(scaled_frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(scaled_frame.yaxis)))
+        return user_ref_planes
+
+    @property
     def et_shape(self):
         shape = ET.Element("Shape")
         indexed_face_set = ET.SubElement(shape, "IndexedFaceSet", convex="false", coordIndex=self.shape_strings[0])
@@ -802,10 +835,32 @@ class AttributeSpec(object):
 class BTLxProcessing(Data, ABC):
     """Abstract base class for BTLx Processing.
 
+    Parameters
+    ----------
+    ref_side_index : int, optional
+        The reference plane for the processing.
+
+        - 0-5: standard reference sides RS1-RS6 (zero-based)
+        - >= 100: BTLx UserReferencePlane ID
+
+        Defaults to 0 (RS1).
+    priority : int, optional
+        The priority of the process. Defaults to 0.
+    process_id : int, optional
+        The process ID. Defaults to 0.
+    tool_id : int, optional
+        The tool ID for the processing. Only used by specific processing types.
+    counter_sink : bool, optional
+        If True, the processing creates a counter sink. Only used by specific processing types.
+    tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
+        The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    is_joinery : bool, optional
+        If True, the process is a result of joinery process. Defaults to True.
+
     Attributes
     ----------
     ref_side_index : int
-        The reference side, zero-based, index of the element to be cut. 0-5 correspond to RS1-RS6. Defaults to 0 (RS1).
+        The reference side index of the element to be cut. 0-5 correspond to RS1-RS6 (zero-based). Values >= 100 refer to user reference planes. Defaults to 0 (RS1).
     priority : int
         The priority of the process.
     process_id : int
@@ -816,14 +871,15 @@ class BTLxProcessing(Data, ABC):
         If True, the processing creates a counter sink. Only used by specific processing types.
     tool_position : :class:`~compas_timber.fabrication.AlignmentType`
         The position of the tool relative to the beam. Can be 'left', 'center', or 'right'. Only used by specific processing types.
+    is_joinery : bool
+        If True, the process is a result of joinery process.
     PROCESSING_NAME : str
         The name of the process.
     ATTRIBUTE_MAP : dict
-        Mapping of BTLx XML attribute names to Python attribute names.
+        Mapping of BTLx XML attribute names to :class:`AttributeSpec` instances, each specifying the
+        corresponding Python attribute name and its deserialization type.
     HEADER_ATTRIBUTE_MAP : dict
         Mapping of BTLx XML header attribute names (in XML attributes) to Python parameter names with converters.
-    is_joinery : bool
-        If True, the process is a result of joinery process.
     params : :class:`~compas_timber.fabrication.BTLxProcessingParams`
         The BTLx processing parameters for serialization.
 
@@ -831,7 +887,7 @@ class BTLxProcessing(Data, ABC):
 
     # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
     HEADER_ATTRIBUTE_MAP = {
-        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
+        "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1 if int(v) < 100 else int(v)),  # Convert 1-based to 0-based; user planes (>=100) pass through
         "Priority": ("priority", int),
         "ProcessID": ("process_id", int),
         "ToolID": ("tool_id", int),
@@ -845,12 +901,11 @@ class BTLxProcessing(Data, ABC):
     def __data__(self):
         return {"ref_side_index": self.ref_side_index, "priority": self.priority, "process_id": self.process_id}
 
-    def __init__(self, ref_side_index=None, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
+    def __init__(self, ref_side_index=0, priority=0, process_id=0, tool_id=None, counter_sink=None, tool_position=None, name=None, process=None, is_joinery=True):
         super(BTLxProcessing, self).__init__()
-        self._ref_side_index = None
         self._priority = priority
         self._process_id = process_id
-        self.ref_side_index = ref_side_index or 0
+        self.ref_side_index = ref_side_index
         self.subprocessings = None
         self._is_joinery = is_joinery
         self._name = name
@@ -878,8 +933,8 @@ class BTLxProcessing(Data, ABC):
     @ref_side_index.setter
     def ref_side_index(self, value):
         value_ = int(value)
-        if value_ < 0 or value_ > 5:
-            raise ValueError("Reference side index must be between 0 and 5, inclusive.")
+        if not (0 <= value_ <= 5 or value_ >= 100):
+            raise ValueError("Reference side index must be 0-5 (standard sides) or >= 100 (user reference plane ID). Got: {}".format(value))
         self._ref_side_index = value_
 
     @property
@@ -969,7 +1024,7 @@ class BTLxProcessingParams(object):
     header_attributes : OrderedDict
         The header attributes for BTLx serialization.
     attribute_map : dict
-        Mapping of BTLx XML child element tag names (keys) to Python instance attribute names (values).
+        Mapping of BTLx XML child element tag names (keys) to :class:`AttributeSpec` instances (values).
         Delegates to the processing instance's ATTRIBUTE_MAP class attribute.
 
     """
@@ -984,7 +1039,10 @@ class BTLxProcessingParams(object):
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        if self._instance.ref_side_index >= 100:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index)
+        else:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
 
         # Add optional header attributes if set
         if self._instance.tool_id is not None:

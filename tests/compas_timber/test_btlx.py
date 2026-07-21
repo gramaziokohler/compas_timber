@@ -7,6 +7,7 @@ from compas.tolerance import Tolerance
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Vector
 
 import xml.etree.ElementTree as ET
 
@@ -493,6 +494,177 @@ def test_btlx_transformation_roundtrip():
     # If centerline frame is preserved, ref_frame should also match
     assert TOL.is_allclose(beam_original.ref_frame.point, beam_read.ref_frame.point)
     assert TOL.is_allclose(beam_original.ref_frame.yaxis, beam_read.ref_frame.yaxis)
+
+
+def test_btlx_user_ref_plane_roundtrip():
+    """Test that a user reference plane survives a BTLx write/read roundtrip."""
+    model = TimberModel()
+    beam = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam.name = "test_beam"
+
+    plane_frame = Frame(Point(2050, -20, 1010), Vector(-1, 0, 0), Vector(0, 0, 1))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+    model.add_element(beam)
+
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    beam_read = model_read.beams[0]
+    resolved_plane = beam_read.get_user_ref_plane(plane_id)
+
+    assert resolved_plane is not None
+    assert TOL.is_allclose(resolved_plane.point, plane_frame.point)
+    assert TOL.is_allclose(resolved_plane.xaxis, plane_frame.xaxis)
+    assert TOL.is_allclose(resolved_plane.yaxis, plane_frame.yaxis)
+
+
+def test_btlx_user_ref_plane_roundtrip_multiple():
+    """Multiple user reference planes on the same element - including a non-contiguous explicit id -
+    must each resolve to their own frame after a BTLx write/read roundtrip, not get mixed up or
+    dropped. Exercises the writer's per-id lookup (user_ref_plane_ids -> get_user_ref_plane) rather
+    than the single-plane path covered by test_btlx_user_ref_plane_roundtrip.
+    """
+    model = TimberModel()
+    beam = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam.name = "test_beam"
+
+    plane_frame_a = Frame(Point(2050, -20, 1010), Vector(-1, 0, 0), Vector(0, 0, 1))
+    plane_frame_b = Frame(Point(2100, -40, 1020), Vector(0, 1, 0), Vector(-1, 0, 0))
+    id_a = beam.add_user_ref_plane(plane_frame_a)
+    id_b = beam.add_user_ref_plane(plane_frame_b, id_=250)
+    model.add_element(beam)
+
+    writer = BTLxWriter()
+    xml_string = writer.model_to_xml(model)
+
+    reader = BTLxReader()
+    model_read = reader.xml_to_model(xml_string)
+
+    beam_read = model_read.beams[0]
+    assert beam_read.user_ref_plane_ids == (id_a, id_b)
+
+    resolved_a = beam_read.get_user_ref_plane(id_a)
+    resolved_b = beam_read.get_user_ref_plane(id_b)
+
+    assert TOL.is_allclose(resolved_a.point, plane_frame_a.point)
+    assert TOL.is_allclose(resolved_a.xaxis, plane_frame_a.xaxis)
+    assert TOL.is_allclose(resolved_a.yaxis, plane_frame_a.yaxis)
+
+    assert TOL.is_allclose(resolved_b.point, plane_frame_b.point)
+    assert TOL.is_allclose(resolved_b.xaxis, plane_frame_b.xaxis)
+    assert TOL.is_allclose(resolved_b.yaxis, plane_frame_b.yaxis)
+
+
+def test_btlx_writer_omits_user_reference_planes_when_none(namespaces):
+    """An element with no user reference planes should not get a UserReferencePlanes XML element at all."""
+    model = TimberModel()
+    beam = Beam(Frame([2000, -60, 1000], [-1, 0, 0], [0, 0, 1]), length=1500, width=120, height=120)
+    beam.name = "test_beam"
+    model.add_element(beam)
+
+    writer = BTLxWriter()
+    root = ET.fromstring(writer.model_to_xml(model))
+
+    assert root.find(".//d2m:UserReferencePlanes", namespaces) is None
+
+
+def test_btlx_writer_user_ref_plane_xml_values(namespaces):
+    """Check the raw UserReferencePlane XML the writer produces, independent of the reader.
+
+    test_btlx_user_ref_plane_roundtrip only checks write-then-read, so it can't tell "both correct"
+    from "both wrong the same way". This checks the written numbers directly instead, against values
+    derived from beam.ref_frame (not from parsing the writer's own output).
+    """
+    model = TimberModel(tolerance=Tolerance(unit="M"))
+    beam = Beam(Frame([2.0, -0.06, 1.0], [-1, 0, 0], [0, 0, 1]), length=1.5, width=0.12, height=0.12)
+    beam.name = "test_beam"
+
+    plane_frame = Frame(Point(2.05, -0.02, 1.01), Vector(-1, 0, 0), Vector(0, 0, 1))
+    plane_id = beam.add_user_ref_plane(plane_frame)
+    model.add_element(beam)
+
+    # extend the blank after registering the plane, so ref_frame differs from frame - the case that
+    # actually exercises the writer's frame -> ref_frame transform.
+    beam.add_blank_extension(start=0.075, end=0.0, joint_key="fake_joint")
+
+    expected = beam.ref_frame.to_local_coordinates(plane_frame).scaled(1000.0)  # model is in M, BTLx is mm
+
+    writer = BTLxWriter()
+    root = ET.fromstring(writer.model_to_xml(model))
+
+    plane_el = root.find(".//d2m:UserReferencePlane", namespaces)
+    assert plane_el is not None
+    assert plane_el.get("ID") == str(plane_id)
+
+    position = plane_el.find("d2m:Position", namespaces)
+    ref_point = position.find("d2m:ReferencePoint", namespaces)
+    x_vector = position.find("d2m:XVector", namespaces)
+    y_vector = position.find("d2m:YVector", namespaces)
+
+    assert float(ref_point.get("X")) == pytest.approx(expected.point.x, abs=1e-3)
+    assert float(ref_point.get("Y")) == pytest.approx(expected.point.y, abs=1e-3)
+    assert float(ref_point.get("Z")) == pytest.approx(expected.point.z, abs=1e-3)
+
+    assert float(x_vector.get("X")) == pytest.approx(expected.xaxis.x, abs=1e-3)
+    assert float(x_vector.get("Y")) == pytest.approx(expected.xaxis.y, abs=1e-3)
+    assert float(x_vector.get("Z")) == pytest.approx(expected.xaxis.z, abs=1e-3)
+
+    assert float(y_vector.get("X")) == pytest.approx(expected.yaxis.x, abs=1e-3)
+    assert float(y_vector.get("Y")) == pytest.approx(expected.yaxis.y, abs=1e-3)
+    assert float(y_vector.get("Z")) == pytest.approx(expected.yaxis.z, abs=1e-3)
+
+
+def test_btlx_reader_user_ref_plane_from_raw_xml():
+    """Parse a hand-authored BTLx XML string (not produced by our own writer) and check the resolved
+    user reference plane, independent of the writer.
+
+    test_btlx_user_ref_plane_roundtrip only checks write-then-read, so it can't tell "both correct"
+    from "both wrong the same way". The Part's Transformation and the plane's Position below encode
+    a ref_frame and a ref_frame-local plane whose corresponding world-space plane was derived
+    independently (via plain Frame.to_world_coordinates, not any reader/writer code) as
+    point=(50, 0, -50), xaxis=(1, 0, 0), yaxis=(0, 0, 1).
+    """
+    xml = """<?xml version="1.0"?>
+    <BTLx xmlns="https://www.design2machine.com">
+      <Project Name="Test">
+        <Parts>
+          <Part Length="1500.000" Width="120.000" Height="120.000" OrderNumber="1" ElementNumber="test" Annotation="test">
+            <Transformations>
+              <Transformation GUID="{12345678-1234-1234-1234-123456789ABC}">
+                <Position>
+                  <ReferencePoint X="0" Y="60" Z="-60"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="0" Z="1"/>
+                </Position>
+              </Transformation>
+            </Transformations>
+            <UserReferencePlanes>
+              <UserReferencePlane ID="100">
+                <Position>
+                  <ReferencePoint X="50" Y="10" Z="60"/>
+                  <XVector X="1" Y="0" Z="0"/>
+                  <YVector X="0" Y="1" Z="0"/>
+                </Position>
+              </UserReferencePlane>
+            </UserReferencePlanes>
+          </Part>
+        </Parts>
+      </Project>
+    </BTLx>"""
+
+    reader = BTLxReader()
+    model = reader.xml_to_model(xml)
+
+    beam = model.beams[0]
+    resolved_plane = beam.get_user_ref_plane(100)
+
+    assert resolved_plane is not None
+    assert TOL.is_allclose(resolved_plane.point, Point(50, 0, -50))
+    assert TOL.is_allclose(resolved_plane.xaxis, Vector(1, 0, 0))
+    assert TOL.is_allclose(resolved_plane.yaxis, Vector(0, 0, 1))
 
 
 def test_btlx_reader_beam_and_plate():
