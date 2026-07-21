@@ -145,6 +145,40 @@ def test_L_butt_joint_butt_and_back_plane_creation(cross_beam, planar_beam):
     assert TOL.is_allclose(joint.back_plane.normal, back_plane.normal)
 
 
+def test_L_butt_joint_back_plane_survives_main_beam_extension(cross_beam, planar_beam):
+    """A back_plane registered on main_beam before joining should still resolve to the same world-space
+    plane even if main_beam's blank gets extended afterwards (e.g. by this or another joint's own
+    add_extensions()), independently of back_plane_id.
+
+    Unlike test_L_butt_joint_butt_and_back_plane_creation, this also checks the resolved plane's point,
+    not just its normal - the normal is unaffected by the translation this bug introduces, so checking
+    only the normal (as that test does) would not catch it.
+
+    back_plane_id is resolved via main_beam.get_user_ref_plane(), which is relative to ref_frame.
+    ref_frame is derived from main_beam's blank and shifts whenever the blank is extended (as joints
+    routinely do), so a plane registered before joining drifts to the wrong world location afterwards.
+    See test_user_ref_plane_survives_blank_extension in test_beam.py for the root cause.
+    """
+    model = TimberModel()
+    model.add_elements([planar_beam, cross_beam])
+
+    back_plane = Plane(Point(0, 0, 0), Vector(1, 0, -1))
+    back_plane_id = planar_beam.add_user_ref_plane(Frame.from_plane(back_plane))
+
+    joint = LButtJoint.create(
+        model,
+        main_beam=planar_beam,
+        cross_beam=cross_beam,
+        back_plane_id=back_plane_id,
+    )
+
+    # simulate a joint (this one or another) extending main_beam's blank before back_plane is resolved
+    planar_beam.add_blank_extension(start=50.0, end=0.0, joint_key="fake_joint")
+
+    assert TOL.is_allclose(joint.back_plane.point, back_plane.point)
+    assert TOL.is_allclose(joint.back_plane.normal, back_plane.normal)
+
+
 def test_L_butt_joint_copy_and_transform_preserve_planes(cross_beam, planar_beam):
     """Test that butt/back planes survive model serialization and model transforms."""
     model = TimberModel()

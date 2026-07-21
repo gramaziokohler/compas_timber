@@ -264,7 +264,7 @@ class BTLxWriter(object):
         part_element = ET.Element("Part", part.attr)
         part_element.extend([part.et_transformations, part.et_grain_direction, part.et_reference_side])
         # add user reference planes if there are any on the element.
-        if element.user_ref_planes:
+        if element.user_ref_plane_ids:
             part_element.append(part.et_user_reference_planes)
         # create processings element for the part if there are any
         if element.features:
@@ -635,10 +635,11 @@ class BTLxPart(BTLxGenericPart):
     def et_user_reference_planes(self):
         """Create the UserReferencePlanes XML element from planes stored on the element.
 
-        Planes are already stored relative to `ref_frame` (BTLx's ``PartRef``, see
-        :meth:`~compas_timber.base.TimberElement.add_user_ref_plane`), the same coordinate system
-        this part's own ``Position`` (`self.frame`) is defined in, so no further transform is needed
-        here beyond scaling for the writer's unit scale factor.
+        Planes are retrieved in world/model coordinates (see
+        :meth:`~compas_timber.base.TimberElement.get_user_ref_plane`); BTLx expects them relative to
+        ``ref_frame`` instead, so each is remapped there - a single change of basis, since
+        ``ref_frame`` is itself already expressed in world coordinates - before being scaled for the
+        writer's unit scale factor.
 
         The ``ID`` XML attribute is taken directly from each plane's ``id_``,
         which satisfies the BTLx ``unsignedInt minInclusive=100`` constraint.
@@ -648,13 +649,16 @@ class BTLxPart(BTLxGenericPart):
         :class:`xml.etree.ElementTree.Element`
         """
         user_ref_planes = ET.Element("UserReferencePlanes")
-        for id_, frame in self.element.user_ref_planes:
-            local_frame = frame.scaled(self._scale_factor)  # scale the frame for BTLx units
+        to_ref_frame_local = Transformation.from_frame(self.element.ref_frame).inverted()
+        for id_ in self.element.user_ref_plane_ids:
+            world_frame = self.element.get_user_ref_plane(id_)
+            ref_frame_local = world_frame.transformed(to_ref_frame_local)
+            scaled_frame = ref_frame_local.scaled(self._scale_factor)
             plane_el = ET.SubElement(user_ref_planes, "UserReferencePlane", ID=str(id_))
             position = ET.SubElement(plane_el, "Position")
-            position.append(ET.Element("ReferencePoint", self.et_point_vals(local_frame.point)))
-            position.append(ET.Element("XVector", self.et_point_vals(local_frame.xaxis)))
-            position.append(ET.Element("YVector", self.et_point_vals(local_frame.yaxis)))
+            position.append(ET.Element("ReferencePoint", self.et_point_vals(scaled_frame.point)))
+            position.append(ET.Element("XVector", self.et_point_vals(scaled_frame.xaxis)))
+            position.append(ET.Element("YVector", self.et_point_vals(scaled_frame.yaxis)))
         return user_ref_planes
 
     @property

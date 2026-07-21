@@ -303,10 +303,9 @@ class BTLxReader(object):
     def _parse_user_reference_planes(self, part_elem, element):
         """Parse the UserReferencePlanes XML element and add planes to the element.
 
-        Planes are stored in ref_frame-local coordinates in the BTLx file, but
-        :meth:`~compas_timber.base.TimberElement.add_user_ref_plane` is the public API and expects
-        model (world) coordinates, so each parsed plane is transformed to world space before being
-        registered through it.
+        Planes are ref_frame-local in the BTLx file; add_user_ref_plane expects model (world)
+        coordinates. Since ref_frame is itself already expressed in model coordinates, mapping
+        ref_frame-local -> world is a single transformation.
         """
         planes_elem = part_elem.find("{*}UserReferencePlanes")
         if planes_elem is None:

@@ -14,22 +14,17 @@ from compas_model.elements import reset_computed
 
 
 class UserReferencePlaneCollection(Data):
-    """The user reference planes attached to a single :class:`TimberElement`, for use in BTLx processings.
+    """BTLx user reference planes attached to a single :class:`TimberElement`, keyed by integer ``id_`` (>= 100).
 
-    Planes are stored keyed by their BTLx integer ``id_`` (an ``unsignedInt >= 100`` per the BTLx
-    spec), each mapping to a :class:`compas.geometry.Frame` expressed relative to the owning
-    element's ``ref_frame`` (BTLx's ``PartRef``: "The ReferencePlane refers to the PartRef").
+    Frames are stored local to the owning element's ``frame``, in this collection only - never
+    exposed directly on :class:`TimberElement`. Use the owning element's
+    :meth:`~TimberElement.add_user_ref_plane`, :meth:`~TimberElement.get_user_ref_plane` (always
+    world/model coordinates), and :meth:`~TimberElement.remove_user_ref_plane` instead of
+    :meth:`add`/:meth:`get`/:meth:`remove` directly. Iterating yields ids only (``for id_ in
+    collection``, mirroring how a plain ``dict`` iterates its keys) - never frames, so there is no
+    way to retrieve a local frame except through this class's own :meth:`get`.
 
-    :meth:`add`, :meth:`get`, and :meth:`remove` should not be called directly; use the owning
-    :class:`TimberElement`'s :meth:`~TimberElement.add_user_ref_plane`,
-    :meth:`~TimberElement.get_user_ref_plane`, and :meth:`~TimberElement.remove_user_ref_plane` instead.
-    Iterating the collection directly (``for id_, frame in element.user_ref_planes``) or calling
-    ``len()`` on it is fine and gives the raw, ``ref_frame``-local planes, e.g. for BTLx serialization.
-
-    ``id_`` values handed out by :meth:`add` come from a counter that only ever moves forward, so a
-    removed ``id_`` is never reissued, even if planes are added and removed repeatedly.
-
-    A new collection always starts empty.
+    A removed ``id_`` is never reissued by :meth:`add`. A new collection always starts empty.
 
     """
 
@@ -45,7 +40,7 @@ class UserReferencePlaneCollection(Data):
         return len(self._frames_by_id)
 
     def __iter__(self):
-        return iter(self._frames_by_id.items())
+        return iter(self._frames_by_id)
 
     @property
     def __data__(self):
@@ -60,23 +55,22 @@ class UserReferencePlaneCollection(Data):
         return collection
 
     def add(self, local_frame: Frame, id_: int = None) -> int:
-        """Store ``local_frame`` under ``id_``, auto-assigning the next free id if not given.
+        """Store ``local_frame`` (relative to the owning element's ``frame``) under ``id_``.
+
+        Auto-assigns the next free id if ``id_`` is None. Use :meth:`TimberElement.add_user_ref_plane`
+        instead of calling this directly.
 
         Parameters
         ----------
         local_frame : :class:`compas.geometry.Frame` or :class:`compas.geometry.Plane`
-            The plane, expressed relative to the owning element's ``ref_frame``. A ``Plane`` is
-            converted to a ``Frame`` via :meth:`Frame.from_plane`.
+            Converted to a ``Frame`` via :meth:`Frame.from_plane` if a ``Plane`` is given.
         id_ : int, optional
-            The BTLx integer id to assign to this plane. Must be a unique integer >= 100.
-            If None, the next auto-assigned id is used (see class docstring).
+            Unique integer >= 100.
 
         Returns
         -------
         int
             The id assigned to this plane.
-
-        Use :meth:`TimberElement.add_user_ref_plane` instead of calling this directly.
 
         """
         if isinstance(local_frame, Plane):
@@ -495,66 +489,54 @@ class TimberElement(Element, abc.ABC):
     ########################################################################
 
     @property
-    def user_ref_planes(self):
-        """The BTLx user reference planes attached to this element.
+    def user_ref_plane_ids(self):
+        """The ids of the BTLx user reference planes attached to this element.
 
-        Use :meth:`add_user_ref_plane`, :meth:`get_user_ref_plane`, and :meth:`remove_user_ref_plane`
-        instead of calling :meth:`UserReferencePlaneCollection.add`/:meth:`~UserReferencePlaneCollection.get`/
-        :meth:`~UserReferencePlaneCollection.remove` on this collection directly. Iterating it directly
-        or calling ``len()`` on it is fine.
+        Frames themselves are never exposed directly - retrieve them one at a time via
+        :meth:`get_user_ref_plane`, which always returns world/model coordinates.
 
         Returns
         -------
-        :class:`UserReferencePlaneCollection`
+        tuple[int]
         """
-        return self._user_ref_planes
+        return tuple(self._user_ref_planes)
 
     def add_user_ref_plane(self, frame: Frame, id_: int = None) -> int:
-        """Add a named reference plane to this element.
+        """Add a reference plane to this element, given in model (global) space.
 
-        By default, the BTLx ``id_`` is auto-assigned from a monotonically increasing counter
-        starting at 100 (first plane → 100, second → 101, …), and a removed plane's id is never
-        reissued.
+        Stored local to :attr:`frame`. ``id_`` is auto-assigned (starting at 100, never reissued)
+        if not given.
 
         Parameters
         ----------
         frame : :class:`compas.geometry.Frame`
-            The plane expressed in model (world) coordinates. It is converted to and stored relative
-            to :attr:`ref_frame` (BTLx's ``PartRef``), matching how BTLx itself defines a custom
-            reference plane.
         id_ : int, optional
-            The BTLx integer id to assign to this plane. This should be a unique integer >= 100.
-            If None, the id is auto-assigned (see above).
+            Unique integer >= 100.
 
         Returns
         -------
         int
-            The BTLx integer id assigned to this plane (>= 100).
+            The id assigned to this plane.
 
         """
-        local_frame = frame.transformed(Transformation.from_frame(self.ref_frame).inverted())
+        local_frame = frame.transformed(self.transformation_to_local())
         return self._user_ref_planes.add(local_frame, id_)
 
     def get_user_ref_plane(self, id_: int) -> Optional[Frame]:
-        """Retrieve the frame of a reference plane stored under ``id_``.
-
-        The returned frame is transformed to model coordinates, so it can be used directly in the model space.
+        """Retrieve the frame stored under ``id_``, transformed to model (global) space.
 
         Parameters
         ----------
         id_ : int
-            The BTLx integer id of the reference plane to retrieve.
 
         Returns
         -------
         :class:`compas.geometry.Frame` or None
-            The frame of the reference plane with the given id, transformed to model coordinates,
-            or None if no such plane exists.
         """
         local_frame = self._user_ref_planes.get(id_)
         if local_frame is None:
             return None
-        return local_frame.transformed(Transformation.from_frame(self.ref_frame))
+        return local_frame.transformed(self.modeltransformation)
 
     def remove_user_ref_plane(self, id_: int):
         """Remove the reference plane stored under ``id_``.
@@ -562,6 +544,5 @@ class TimberElement(Element, abc.ABC):
         Parameters
         ----------
         id_ : int
-            The BTLx integer id of the reference plane to remove.
         """
         self._user_ref_planes.remove(id_)
