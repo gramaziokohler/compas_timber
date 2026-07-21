@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .cluster import Cluster
 from .joint import Joint
 from .solver import JointTopology
-from .cluster import Cluster
 
 if TYPE_CHECKING:
     from compas_timber.model import TimberModel
@@ -20,21 +20,19 @@ class ClusterJoint(Joint):
 
     Parameters
     ----------
-    joints : list[:class:`~compas_timber.connections.Joint`]
-        The pairwise sub-joints that make up this composite connection. These joints must not be added to model.
+    cluster : :class:`~compas_timber.connections.Cluster`
+        The cluster of elements connected by this joint.
     name : str, optional
         The name of the joint.
-    cluster : :class:`~compas_timber.connections.Cluster`, optional
-        The cluster of elements connected by this joint. If not provided, it will be created from `joints`.
 
     Attributes
     ----------
+    cluster : :class:`~compas_timber.connections.Cluster`
+        The cluster connected by this joint.
     joints : list[:class:`~compas_timber.connections.Joint`]
         The pairwise sub-joints.
     elements : tuple[:class:`~compas_timber.elements.Element`]
         The unique elements connected by this joint, derived from the sub-joints.
-    cluster : :class:`~compas_timber.connections.Cluster`
-        The cluster of elements connected by this joint.
     location : :class:`~compas.geometry.Point`
         The approximate location of the joint, taken from the `cluster.location`.
     topology : :class:`~compas_timber.connections.JointTopology`
@@ -88,15 +86,15 @@ class ClusterJoint(Joint):
         pass
 
     @classmethod
-    def create(cls, model, cluster=None, **kwargs):
+    def create(cls, model, cluster, **kwargs):
         """Creates a ClusterJoint and registers it in the model.
 
         Parameters
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to register this joint in.
-        joints : list[:class:`~compas_timber.connections.Joint`], optional
-            The pairwise sub-joints.
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The Cluster object.
 
         Returns
         -------
@@ -114,8 +112,8 @@ class ClusterJoint(Joint):
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        cluster : :class:`~compas_model.clusters.Cluster`
-            The cluster containing the elements to be connected by this joint.
+        cluster : :class:`~compas_timber.connections.Cluster`
+            The cluster containing the pairwise joints held by this joint.
         **kwargs : dict
             Additional keyword arguments that are passed to the joint's constructor.
 
@@ -161,6 +159,17 @@ class ClusterJoint(Joint):
         self._elements = tuple(set([e for j in self.joints for e in j.elements]))
 
     @classmethod
-    def from_joints(cls, joints: list[Joint])->ClusterJoint:
+    def from_joints(cls, joints: list[Joint]) -> ClusterJoint:
+        """
+        Creates a ClusterJoint from a list of pairwise sub-joints.
+        Parameters
+        ----------
+        joints : list[:class:`~compas_timber.connections.Joint`]
+            The list of pairwise sub-joints to be included in the cluster joint.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.ClusterJoint`
+        """
         cluster = Cluster(joints)
         return cls(cluster=cluster)

@@ -408,13 +408,16 @@ classDiagram
       }
 
       class ClusterJoint {
+         +cluster : Cluster
          +joints : list[Joint]
          +elements : tuple[Element]
          +location : Point
          +SUPPORTED_TOPOLOGY = TOPO_UNKNOWN
          +MIN_ELEMENT_COUNT = 3
          +MAX_ELEMENT_COUNT = None
-         +create(model, joints)
+         +create(model, cluster)
+         +from_joints(joints)
+         +promote_cluster(model, cluster)
          +add_features()
          +add_extensions()
          +restore_elements_from_keys(model)

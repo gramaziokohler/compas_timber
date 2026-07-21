@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-* Added `ClusterJoint`, which is a Joint composed of a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `CompositeJointRule` in timber_design repo.
+* Added `ClusterJoint`, which is a Joint that takes a `Cluster` object composed of a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
