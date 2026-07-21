@@ -136,7 +136,6 @@ class Joint(Data):
 
     @property
     def location(self):
-        # TODO: This will crash/throw error if there are non-beam elements
         # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
         if self._location is None and all(self.elements) and len(self.elements) == 2:
             self._location = location_from_centerlines(self.elements)
