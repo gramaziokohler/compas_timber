@@ -1,4 +1,4 @@
-"""Tests for ClusterJoint — a multi-beam joint that delegates to pairwise sub-joints."""
+"""Tests for CompositeJoint — a multi-beam joint that delegates to pairwise sub-joints."""
 
 import pytest
 
@@ -7,8 +7,7 @@ from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
 
-from compas_timber.connections import Cluster
-from compas_timber.connections import ClusterJoint
+from compas_timber.connections import CompositeJoint
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections.solver import JointTopology
@@ -73,7 +72,7 @@ def sub_joints(beam_a, beam_b, beam_c):
 
 @pytest.fixture
 def composite(model, sub_joints):
-    return ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    return CompositeJoint.create(model, joints=sub_joints)
 
 
 # ---------------------------------------------------------------------------
@@ -82,12 +81,12 @@ def composite(model, sub_joints):
 
 
 def test_create_returns_composite_joint(model, sub_joints):
-    joint = ClusterJoint.create(model, cluster=Cluster(sub_joints))
-    assert isinstance(joint, ClusterJoint)
+    joint = CompositeJoint.create(model, joints=sub_joints)
+    assert isinstance(joint, CompositeJoint)
 
 
 def test_create_registers_in_model(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     assert len(list(model.joints)) == 1
 
 
@@ -107,7 +106,7 @@ def test_composite_elements_are_union_of_sub_joint_elements(composite, beam_a, b
 
 def test_repr(composite):
     r = repr(composite)
-    assert "ClusterJoint" in r
+    assert "CompositeJoint" in r
     assert "2" in r  # 2 sub-joints
 
 
@@ -117,15 +116,15 @@ def test_repr(composite):
 
 
 def test_supported_topology():
-    assert ClusterJoint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_UNKNOWN
+    assert CompositeJoint.SUPPORTED_TOPOLOGY == JointTopology.TOPO_UNKNOWN
 
 
 def test_min_element_count():
-    assert ClusterJoint.MIN_ELEMENT_COUNT == 3
+    assert CompositeJoint.MIN_ELEMENT_COUNT == 3
 
 
 def test_max_element_count_is_none():
-    assert ClusterJoint.MAX_ELEMENT_COUNT is None
+    assert CompositeJoint.MAX_ELEMENT_COUNT is None
 
 
 # ---------------------------------------------------------------------------
@@ -134,20 +133,20 @@ def test_max_element_count_is_none():
 
 
 def test_process_joinery_completes_without_error(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     errors = model.process_joinery()
     assert errors == []
 
 
 def test_process_joinery_adds_features_to_beams(model, beam_a, beam_b, beam_c, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     model.process_joinery()
     # Each L-butt joint adds at least one feature on the main beam (beam_a)
     assert len(beam_a.features) > 0
 
 
 def test_process_joinery_adds_features_to_cross_beams(model, beam_b, beam_c, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     model.process_joinery()
     assert len(beam_b.features) > 0
     assert len(beam_c.features) > 0
@@ -155,9 +154,9 @@ def test_process_joinery_adds_features_to_cross_beams(model, beam_b, beam_c, sub
 
 def test_process_joinery_does_not_add_sub_joints_to_model(model, sub_joints):
     """Sub-joints must not be independently registered in the model."""
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     model.process_joinery()
-    # Only the one ClusterJoint should be in the model
+    # Only the one CompositeJoint should be in the model
     assert len(list(model.joints)) == 1
 
 
@@ -167,7 +166,7 @@ def test_process_joinery_does_not_add_sub_joints_to_model(model, sub_joints):
 
 
 def test_data_contains_joints_key(composite):
-    assert "cluster" in composite.__data__
+    assert "joints" in composite.__data__
 
 
 def test_data_contains_element_guids(composite, beam_a, beam_b, beam_c):
@@ -177,24 +176,24 @@ def test_data_contains_element_guids(composite, beam_a, beam_b, beam_c):
 
 
 def test_json_roundtrip_model(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
 
     joints = list(restored.joints)
     assert len(joints) == 1
     rj = joints[0]
-    assert isinstance(rj, ClusterJoint)
+    assert isinstance(rj, CompositeJoint)
 
 
 def test_json_roundtrip_sub_joint_count(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     rj = list(restored.joints)[0]
     assert len(rj.joints) == 2
 
 
 def test_json_roundtrip_sub_joint_types(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     rj = list(restored.joints)[0]
     for sub in rj.joints:
@@ -202,7 +201,7 @@ def test_json_roundtrip_sub_joint_types(model, sub_joints):
 
 
 def test_json_roundtrip_elements_restored(model, beam_a, beam_b, beam_c, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     rj = list(restored.joints)[0]
     # All element references must be live objects (not None) after deserialization
@@ -211,7 +210,7 @@ def test_json_roundtrip_elements_restored(model, beam_a, beam_b, beam_c, sub_joi
 
 
 def test_json_roundtrip_sub_joint_elements_restored(model, sub_joints):
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     rj = list(restored.joints)[0]
     for sub in rj.joints:
@@ -221,7 +220,7 @@ def test_json_roundtrip_sub_joint_elements_restored(model, sub_joints):
 
 def test_json_roundtrip_process_joinery(model, sub_joints):
     """Deserialized model should still be able to run process_joinery."""
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     errors = restored.process_joinery()
     assert errors == []
@@ -229,7 +228,7 @@ def test_json_roundtrip_process_joinery(model, sub_joints):
 
 def test_json_roundtrip_features_generated_after_reload(model, sub_joints):
     """After deserialization and process_joinery, features are added to beams."""
-    ClusterJoint.create(model, cluster=Cluster(sub_joints))
+    CompositeJoint.create(model, joints=sub_joints)
     restored = json_loads(json_dumps(model))
     restored.process_joinery()
     beams = list(restored.beams)
@@ -243,7 +242,7 @@ def test_json_roundtrip_features_generated_after_reload(model, sub_joints):
 
 
 def test_location_delegated_to_first_sub_joint(composite, sub_joints):
-    """ClusterJoint.location falls back to first sub-joint's location when not set."""
+    """CompositeJoint.location falls back to first sub-joint's location when not set."""
     assert composite.location is not None
 
 
@@ -253,7 +252,7 @@ def test_location_delegated_to_first_sub_joint(composite, sub_joints):
 
 
 def test_mixed_sub_joint_types(beam_a, beam_b, beam_c):
-    """ClusterJoint can hold sub-joints of different types."""
+    """CompositeJoint can hold sub-joints of different types."""
     # One L-type and one T-type sub-joint
     j_l = LButtJoint(main_beam=beam_a, cross_beam=beam_b)
     # beam_c crosses beam_a in T topology (approaching from the side)
@@ -261,7 +260,7 @@ def test_mixed_sub_joint_types(beam_a, beam_b, beam_c):
     j_t = TButtJoint(main_beam=beam_a, cross_beam=beam_t)
 
     m = _make_model(beam_a, beam_b, beam_c, beam_t)
-    joint = ClusterJoint.create(m, cluster=Cluster([j_l, j_t]))
+    joint = CompositeJoint.create(m, joints=[j_l, j_t])
 
     assert len(joint.joints) == 2
     assert isinstance(joint.joints[0], LButtJoint)
@@ -326,78 +325,45 @@ def test_mixed_sub_joints_json_roundtrip(beam_a, beam_b, beam_c):
     j_t = TButtJoint(main_beam=beam_a, cross_beam=beam_t)
 
     m = _make_model(beam_a, beam_b, beam_c, beam_t)
-    ClusterJoint.create(m, cluster=Cluster([j_l, j_t]))
+    CompositeJoint.create(m, joints=[j_l, j_t])
 
     restored = json_loads(json_dumps(m))
     rj = list(restored.joints)[0]
-    assert isinstance(rj, ClusterJoint)
+    assert isinstance(rj, CompositeJoint)
     sub_types = {type(s) for s in rj.joints}
     assert LButtJoint in sub_types
     assert TButtJoint in sub_types
 
 
-# ---------------------------------------------------------------------------
-# 8. from_joints — cluster-derived properties
-# ---------------------------------------------------------------------------
-
-
-def test_from_joint_list_returns_cluster_joint(sub_joints):
-    joint = ClusterJoint.from_joints(sub_joints)
-    assert isinstance(joint, ClusterJoint)
-
-
-def test_from_joint_list_builds_cluster_from_joints(sub_joints):
-    joint = ClusterJoint.from_joints(sub_joints)
-    assert isinstance(joint.cluster, Cluster)
-    assert joint.cluster.joints == sub_joints
-
-
-def test_from_joint_list_joints_property_matches_input(sub_joints):
-    joint = ClusterJoint.from_joints(sub_joints)
-    assert list(joint.joints) == sub_joints
-
-
 def test_from_joint_list_elements_are_union_of_sub_joint_elements(sub_joints, beam_a, beam_b, beam_c):
-    joint = ClusterJoint.from_joints(sub_joints)
+    joint = CompositeJoint(sub_joints)
     all_elements = set(joint.elements)
     assert all_elements == {beam_a, beam_b, beam_c}
 
 
-def test_from_joint_list_location_matches_cluster_location(sub_joints):
-    joint = ClusterJoint.from_joints(sub_joints)
-    assert joint.location == joint.cluster.location
-
-
-def test_from_joint_list_topology_matches_cluster_topology(beam_a, beam_b, beam_c):
-    """Two L-topology sub-joints, none T/X, should collapse to TOPO_Y at the cluster level."""
+def test_from_joint_list_topology_matches_composite_topology(beam_a, beam_b, beam_c):
+    """Two L-topology sub-joints, none T/X, should collapse to TOPO_Y at the joint level."""
     j1 = LButtJoint(main_beam=beam_a, cross_beam=beam_b, topology=JointTopology.TOPO_L)
     j2 = LButtJoint(main_beam=beam_a, cross_beam=beam_c, topology=JointTopology.TOPO_L)
 
-    joint = ClusterJoint.from_joints([j1, j2])
+    joint = CompositeJoint([j1, j2])
 
-    assert joint.cluster.topology == JointTopology.TOPO_Y
     assert joint.topology == JointTopology.TOPO_Y
 
 
-def test_from_joint_list_topology_reflects_t_sub_joint(beam_a, beam_b, beam_c):
-    """A T-topology sub-joint in the mix should promote the cluster topology to TOPO_K."""
+def test_from_joint_list_topology_reflects_t_sub_joint(beam_a, beam_b):
+    """A T-topology sub-joint in the mix should promote the composite topology to TOPO_K."""
     j_l = LButtJoint(main_beam=beam_a, cross_beam=beam_b, topology=JointTopology.TOPO_L)
     beam_t = Beam.from_centerline(Line(Point(500, -500, 0), Point(500, 500, 0)), width=60, height=100)
     j_t = TButtJoint(main_beam=beam_a, cross_beam=beam_t, topology=JointTopology.TOPO_T)
 
-    joint = ClusterJoint.from_joints([j_l, j_t])
+    joint = CompositeJoint([j_l, j_t])
 
     assert joint.topology == JointTopology.TOPO_K
 
 
-def test_from_joint_list_not_registered_in_model(sub_joints, model):
-    """from_joints builds the joint standalone; it is not added to any model."""
-    ClusterJoint.from_joints(sub_joints)
-    assert len(list(model.joints)) == 0
-
-
 def test_from_joint_list_features_delegate_to_sub_joints(sub_joints):
-    joint = ClusterJoint.from_joints(sub_joints)
+    joint = CompositeJoint(sub_joints)
     for sub in joint.joints:
         sub.add_extensions()
         sub.add_features()
