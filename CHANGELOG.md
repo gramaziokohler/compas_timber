@@ -45,6 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
+* Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
