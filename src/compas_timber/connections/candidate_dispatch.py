@@ -1,12 +1,9 @@
-from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 
-from .joint_candidate import JointCandidate
 from .solver import ConnectionSolver
-from .solver import JointTopology
 from .solver import PlateConnectionSolver
 
 # ------------------------------------------------------------------
@@ -27,8 +24,8 @@ _CONNECTION_HANDLERS = {
     frozenset((Beam, Beam)): ConnectionSolver,
     frozenset((Plate, Plate)): PlateConnectionSolver,
     frozenset((Panel, Panel)): PlateConnectionSolver,
-    
 }
+
 
 def find_connection_handler(element_a, element_b):
     """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""

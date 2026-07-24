@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
 * Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
 * Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
-* Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
+* `candidate_dispatch.py`'s `_CONNECTION_HANDLERS` now maps each supported element-type pair directly to its solver class (`ConnectionSolver`, `PlateConnectionSolver`); `get_connection_candidate()` delegates to `handler_type().create_joint_candidate(element_a, element_b, max_distance)` instead of calling a free function per pair.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

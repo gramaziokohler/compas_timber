@@ -5,7 +5,6 @@ from compas.geometry import Polyline
 from compas_timber.connections import get_connection_candidate
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import PlateConnectionSolver
-from compas_timber.connections import get_connection_candidate
 from compas_timber.connections.candidate_dispatch import find_connection_handler
 from compas_timber.elements import Beam
 from compas_timber.elements import Panel
