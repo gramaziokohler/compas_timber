@@ -3,7 +3,6 @@ from enum import auto
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -11,6 +10,7 @@ from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import intersection_line_plane
 from compas_brep import Brep
+from compas_brep import NurbsCurve
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import StrEnum
@@ -79,7 +79,8 @@ class Opening(PanelFeature):
 
         """
         try:
-            panel_geometry -= self.shape.transformed(self.transformation)
+            panel_geometry = Brep.from_boolean_difference(panel_geometry, self.shape.transformed(self.transformation))
+            # panel_geometry -= self.shape.transformed(self.transformation)
             return panel_geometry
         except Exception as e:
             raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
