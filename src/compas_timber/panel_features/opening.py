@@ -80,7 +80,6 @@ class Opening(PanelFeature):
         """
         try:
             panel_geometry = Brep.from_boolean_difference(panel_geometry, self.shape.transformed(self.transformation))
-            # panel_geometry -= self.shape.transformed(self.transformation)
             return panel_geometry
         except Exception as e:
             raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
