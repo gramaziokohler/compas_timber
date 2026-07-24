@@ -43,6 +43,8 @@ from .panel_miter_joint import PanelMiterJoint
 from .panel_layer_butt_joint import PanelLLayerButtJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
+from .cluster import get_topology_from_joints
+from .composite_joint import CompositeJoint
 
 
 __all__ = [
@@ -93,4 +95,6 @@ __all__ = [
     "PanelLLayerButtJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
+    "get_topology_from_joints",
+    "CompositeJoint",
 ]

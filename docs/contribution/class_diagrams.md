@@ -407,6 +407,22 @@ classDiagram
          +beams : list
       }
 
+      class CompositeJoint {
+         +joints : list[Joint]
+         +elements : tuple[Element]
+         +location : Point
+         +topology : JointTopology
+         +SUPPORTED_TOPOLOGY = TOPO_UNKNOWN
+         +MIN_ELEMENT_COUNT = 3
+         +MAX_ELEMENT_COUNT = None
+         +create(model, joints)
+         +add_features()
+         +add_extensions()
+         +clear_features()
+         +clear_extensions()
+         +restore_elements_from_keys(model)
+      }
+
       class PlateJoint {
          <<abstract>>
          +plate_a : Plate
@@ -463,6 +479,9 @@ classDiagram
       Joint <|-- TDovetailJoint
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
+      Joint <|-- CompositeJoint
+      CompositeJoint "1" *-- "1..*" Joint : sub-joints
+
       Joint <|-- PlateJoint
 
       PlateJoint <|-- PanelJoint

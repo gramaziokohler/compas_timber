@@ -76,7 +76,7 @@ class Joint(Data):
     features : list(:class:`~compas_timber.fabrication.BTLxProcessing`)
         A list of features that were added to the elements by this joint.
     topology : literal, one of :class:`JointTopology`
-        The topology by which the two elements connected with this joint interact.
+        The topology by which the elements connected with this joint interact.
     location : :class:`~compas.geometry.Point`
         The estimated location of the interaction point of the two elements connected with this joint.
     """

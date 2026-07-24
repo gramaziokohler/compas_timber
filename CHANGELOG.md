@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
 * Added `ConnectionSolver.create_joint_candidate()`/`PlateConnectionSolver.create_joint_candidate()`, used by `candidate_dispatch.get_connection_candidate()` to build a `JointCandidate` for a pair of adjacent elements.
 * Added `JointCandidate.create(model, *elements, **kwargs)`, mirroring `Joint.create()` except it adds the candidate to `model.joint_candidates` via `TimberModel.add_joint_candidate()` — a `JointCandidate` is never registered as an actual joint on the model.
@@ -49,6 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
+* Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
 * Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
 * Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
 
