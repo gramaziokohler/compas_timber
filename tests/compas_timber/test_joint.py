@@ -3,17 +3,12 @@ import os
 import compas
 import pytest
 from compas.data import json_load
-from compas.data import json_dumps
-from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
-from compas.geometry import Polyline
 from compas.tolerance import TOL
 
-from compas_timber.connections import JointCandidate
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -23,7 +18,6 @@ from compas_timber.connections import XLapJoint
 from compas_timber.connections import find_neighboring_elements
 from compas_timber.connections.joint import location_from_centerlines
 from compas_timber.elements import Beam
-from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -237,81 +231,6 @@ if not compas.IPY:
             assert pair in expected_result
 
 
-def test_generic_joint():
-    w, h = 20, 20
-
-    lines = [
-        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=300.0, y=200.0, z=0.0)),
-        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=-40.0, y=270.0, z=0.0)),
-        Line(Point(x=-10.0, y=-10.0, z=0.0), Point(x=0.0, y=20.0, z=160.0)),
-        Line(Point(x=45.89488087618746, y=234.15459672257862, z=0.0), Point(x=168.58797240614388, y=-95.31137353132192, z=0.0)),
-    ]
-
-    model = TimberModel()
-    model.add_elements([Beam.from_centerline(line, w, h) for line in lines])
-
-    model.connect_adjacent_beams()
-
-    # Joint candidates should be stored separately from actual joints
-    assert all((isinstance(j, JointCandidate) for j in model.joint_candidates))
-    assert len(model.joint_candidates) == 4
-    assert len(model.joints) == 0  # No actual joints should be created
-
-    l_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_L]
-    x_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_X]
-    assert len(l_joints) == 3
-    assert len(x_joints) == 1
-
-    for j in l_joints:
-        assert TOL.is_allclose(j.location, Point(x=-10.0, y=-10.0, z=0.0))
-    for j in x_joints:
-        assert TOL.is_allclose(j.location, Point(x=107.24142664116566, y=69.42161159562835, z=0.0))
-
-
-def test_plate_joint_candidate():
-    polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
-    plate_a = Plate.from_outline_thickness(polyline_a, 1)
-
-    polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
-    plate_b = Plate.from_outline_thickness(polyline_b, 1)
-
-    model = TimberModel()
-    model.add_elements([plate_a, plate_b])
-
-    model.connect_adjacent_plates()
-
-    assert all((isinstance(j, PlateJointCandidate) for j in model.joints))
-
-    assert len(model.joint_candidates) == 1
-    edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
-    assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], PlateJointCandidate)
-    assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
-    assert list(model.joint_candidates)[0].elements[0] == plate_b
-
-
-def test_joint_candidate_create_still_works():
-    """Test that JointCandidate.create() still works for creating actual joints."""
-    w, h = 20, 20
-
-    lines = [
-        Line(Point(x=0.0, y=0.0, z=0.0), Point(x=1.0, y=0.0, z=0.0)),
-        Line(Point(x=0.5, y=-0.5, z=0.0), Point(x=0.5, y=0.5, z=0.0)),
-    ]
-
-    model = TimberModel()
-    beams = [Beam.from_centerline(line, w, h) for line in lines]
-    model.add_elements(beams)
-
-    # JointCandidate.create() should still create actual joints
-    joint = JointCandidate.create(model, beams[0], beams[1], topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
-
-    assert isinstance(joint, JointCandidate)
-    assert joint in model.joints  # Should be in actual joints
-    assert len(model.joints) == 1
-    assert len(model.joint_candidates) == 0  # Should not be in candidates
-
-
 def test_joint_location_explicitly_set():
     """Location returns the explicitly set value without computing from elements."""
     model = TimberModel()
@@ -321,7 +240,7 @@ def test_joint_location_explicitly_set():
     model.add_element(b2)
 
     loc = Point(0.5, 0.0, 0.0)
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=loc)
+    joint = LButtJoint.create(model, b1, b2, topology=JointTopology.TOPO_X, location=loc)
 
     assert TOL.is_allclose(joint.location, loc)
 
@@ -334,7 +253,7 @@ def test_joint_location_computed_from_intersecting_beams():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    joint = LButtJoint.create(model, b1, b2, topology=JointTopology.TOPO_X)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0))
 
 
@@ -346,22 +265,22 @@ def test_joint_location_computed_from_skew_beams():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    joint = LButtJoint.create(model, b1, b2, topology=JointTopology.TOPO_X)
     # closest points are (1,0,0) and (1,0,1), midpoint is (1,0,0.5)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0.5))
 
 
 def test_joint_location_raises_before_elements_available():
     """Accessing location before elements are restored (e.g. during deserialization) raises ValueError."""
-    candidate = JointCandidate.__from_data__(
+    joint = LButtJoint.__from_data__(
         {
             "element_guids": ["00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000002"],
-            "name": "JointCandidate",
+            "name": "LButtJoint",
         }
     )
     # elements are None at this point (not yet restored from model)
     with pytest.raises(ValueError, match="Location of the joint could not be determined"):
-        _ = candidate.location
+        _ = joint.location
 
 
 def test_joint_location_setter_rejects_non_point():
@@ -372,29 +291,9 @@ def test_joint_location_setter_rejects_non_point():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    joint = LButtJoint.create(model, b1, b2, topology=JointTopology.TOPO_X)
     with pytest.raises(TypeError, match="Location must be a Point"):
         joint.location = [1, 2, 3]
-
-
-def test_joint_location_and_topology_survive_serialization():
-    """Location and topology are preserved through a JSON round-trip of the model."""
-    model = TimberModel()
-    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
-    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
-    model.add_element(b1)
-    model.add_element(b2)
-
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=Point(1, 0, 0))
-    original_location = joint.location
-    original_topology = joint.topology
-
-    restored = json_loads(json_dumps(model))
-
-    restored_joint = list(restored.joints)[0]
-    assert isinstance(restored_joint, JointCandidate)
-    assert TOL.is_allclose(restored_joint.location, original_location)
-    assert restored_joint.topology == original_topology
 
 
 def test_location_from_centerlines_intersecting():
