@@ -8,13 +8,9 @@ from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
-from .topology_data import TopologyData
-from .topology_data import BeamTopologyData
-from .topology_data import PlateTopologyData
 from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
-from .solver import SolverResult
 from .solver import find_neighboring_elements
 from .candidate_dispatch import get_connection_candidate
 from .t_butt import TButtJoint
@@ -65,14 +61,10 @@ __all__ = [
     "TLapJoint",
     "LLapJoint",
     "JointCandidate",
-    "TopologyData",
-    "BeamTopologyData",
-    "PlateTopologyData",
     "LFrenchRidgeLapJoint",
     "JointTopology",
     "ConnectionSolver",
     "PlateConnectionSolver",
-    "SolverResult",
     "find_neighboring_elements",
     "get_connection_candidate",
     "TDovetailJoint",
