@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
 * Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
+* Fixed `TimberElement.__data__` (used by `Beam`, `Plate`, and other subclasses that don't override it) serializing the world frame instead of the local/hierarchical transformation, which caused the parent chain's transformation to be applied a second time when a nested element (e.g. a `Beam` inside a `Panel`) was round-tripped through JSON.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

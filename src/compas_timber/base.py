@@ -66,7 +66,10 @@ class TimberElement(Element, abc.ABC):
     @property
     def __data__(self):
         data = {}
-        data["frame"] = self.frame
+        # NOTE: __init__ interprets `frame` as relative to the parent's local hierarchy
+        # (it's assigned straight to `self.transformation`), not the world frame. Serializing
+        # `self.frame` (world) here would double-apply the parent chain's transformation on reload.
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height

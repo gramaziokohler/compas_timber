@@ -110,6 +110,26 @@ def test_add_beam_to_panel(model):
     assert beam.modeltransformation == model.panels[1].transformation, "Expected beam model transformation to match panel transformation"
 
 
+def test_beam_nested_in_panel_roundtrip_preserves_world_position():
+    # regression test: TimberElement.__data__ used to serialize the world frame instead of the
+    # local transformation, causing the parent panel's transformation to be applied twice on reload.
+    new_model = TimberModel()
+    panel = Panel(frame=Frame(Point(10, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=5, width=3, thickness=0.2)
+    new_model.add_element(panel)
+
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=2, width=0.1, height=0.1)
+    new_model.add_element(beam, parent=panel)
+
+    expected_centerline = beam.centerline
+
+    model_copy = json_loads(json_dumps(new_model))
+    panel_copy = next(e for e in model_copy.elements() if isinstance(e, Panel))
+    beam_copy = next(iter(panel_copy.children))
+
+    assert TOL.is_allclose(expected_centerline.start, beam_copy.centerline.start)
+    assert TOL.is_allclose(expected_centerline.end, beam_copy.centerline.end)
+
+
 def test_copy_panel_model(model):
     model_copy = json_loads(json_dumps(model))
 
