@@ -13,7 +13,6 @@ from compas.geometry import Polyline
 from compas.tolerance import TOL
 
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
@@ -280,18 +279,18 @@ def test_plate_joint_candidate():
 
     model.connect_adjacent_plates()
 
-    assert all((isinstance(j, PlateJointCandidate) for j in model.joints))
+    assert all((isinstance(j, JointCandidate) for j in model.joints))
 
     assert len(model.joint_candidates) == 1
     edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], PlateJointCandidate)
+    assert isinstance(edge_face_joints[0], JointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joint_candidates)[0].elements[0] == plate_b
 
 
 def test_joint_candidate_create_still_works():
-    """Test that JointCandidate.create() still works for creating actual joints."""
+    """Test that JointCandidate.create() still works, adding the candidate to model.joint_candidates."""
     w, h = 20, 20
 
     lines = [
@@ -303,13 +302,13 @@ def test_joint_candidate_create_still_works():
     beams = [Beam.from_centerline(line, w, h) for line in lines]
     model.add_elements(beams)
 
-    # JointCandidate.create() should still create actual joints
+    # JointCandidate.create() should register the candidate, never as an actual joint
     joint = JointCandidate.create(model, beams[0], beams[1], topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
 
     assert isinstance(joint, JointCandidate)
-    assert joint in model.joints  # Should be in actual joints
-    assert len(model.joints) == 1
-    assert len(model.joint_candidates) == 0  # Should not be in candidates
+    assert joint in model.joint_candidates
+    assert len(model.joint_candidates) == 1
+    assert len(model.joints) == 0  # Should not be in actual joints
 
 
 def test_joint_location_explicitly_set():
@@ -391,7 +390,7 @@ def test_joint_location_and_topology_survive_serialization():
 
     restored = json_loads(json_dumps(model))
 
-    restored_joint = list(restored.joints)[0]
+    restored_joint = list(restored.joint_candidates)[0]
     assert isinstance(restored_joint, JointCandidate)
     assert TOL.is_allclose(restored_joint.location, original_location)
     assert restored_joint.topology == original_topology

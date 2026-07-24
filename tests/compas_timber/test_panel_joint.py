@@ -3,9 +3,9 @@ from compas.data import json_dumps, json_loads
 from compas_timber.elements import Panel
 from compas_timber.connections import PlateConnectionSolver
 from compas_timber.connections import JointTopology
+from compas_timber.connections import JointCandidate
 from compas_timber.connections import PanelMiterJoint
 from compas_timber.connections import PanelTButtJoint
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.model import TimberModel
 from compas.geometry import Polyline, Point
 
@@ -184,12 +184,12 @@ def test_panel_joint_candidate():
 
     model.connect_adjacent_panels()
 
-    assert all((isinstance(j, PlateJointCandidate) for j in model.joints))  # TODO: do we want a `PanelJointCandidate`?
+    assert all((isinstance(j, JointCandidate) for j in model.joints))  # TODO: do we want a `PanelJointCandidate`?
 
     assert len(model.joint_candidates) == 1
     edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], PlateJointCandidate)
+    assert isinstance(edge_face_joints[0], JointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joint_candidates)[0].elements[0] == panel_b
 

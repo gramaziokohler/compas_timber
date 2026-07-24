@@ -26,8 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added new module `topology_data` in `compas_timber.connections` with `TopologyData`, `BeamTopologyData`, and `PlateTopologyData` — structured, per-element topology data (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
+* Added `SolverResult` (`compas_timber.connections`), replacing `BeamSolverResult`/`PlateSolverResult` with a single class that holds a pair of `TopologyData` instances (one per element) instead of element-type-specific fields. Exposes `beam_a`/`beam_b`/`plate_a`/`plate_b`/`a_segment_index`/`b_segment_index` as compatibility aliases over the new `topology_data`.
+* Added `JointCandidate.create(model, *elements, **kwargs)`, mirroring `Joint.create()` except it adds the candidate to `model.joint_candidates` via `TimberModel.add_joint_candidate()` — a `JointCandidate` is never registered as an actual joint on the model.
+* Added `TimberModel.get_joint_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`, mirroring `TimberModel.get_joint()`.
 
 ### Changed
+* **Breaking:** `JointCandidate` no longer inherits from `Joint`; it's now a lightweight `compas.data.Data` subclass with its own `elements`/`element_guids`/`location` contract (mirroring `Joint`'s closely enough to keep `location` computing a fallback from centerlines, raising `ValueError` when it can't be determined, and rejecting non-`Point` assignments). Code that does `isinstance(candidate, Joint)` on a `JointCandidate` will now fail.
+* **Breaking:** `TimberModel` now tracks joint candidates in a dedicated `self._joints_candidates` registry, mirroring how actual joints are tracked in `self._joints`, instead of storing full candidate objects directly as graph edge attributes. Graph edges now carry only the candidate's guid under the `"candidates"` attribute. This also fixes un-promoted candidates (`model.joint_candidates`) not having their element references restored after a `json_loads`/`json_dumps` round-trip — they previously deserialized with `element_a`/`element_b` left as `None`. Models serialized under the old scheme will not deserialize correctly.
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
 * Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
@@ -50,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `SolverResult`.
+* **Breaking:** Removed `PlateJointCandidate`; use `JointCandidate` for both beam and plate connections.
 
 ## [2.2.0] 2026-07-02
 

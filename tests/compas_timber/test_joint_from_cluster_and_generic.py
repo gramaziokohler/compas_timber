@@ -271,7 +271,7 @@ def test_from_cluster_empty_cluster(model):
 
 
 def test_from_generic_joint_non_generic_plate_joint(generic_joint_with_beams):
-    """Test promote_joint_candidate with non-PlateJointCandidate."""
+    """Test promote_joint_candidate with non-JointCandidate."""
     model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
     # Should not try to extract plate-specific attributes

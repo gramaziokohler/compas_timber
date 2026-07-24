@@ -2,10 +2,11 @@ import pytest
 
 from compas.geometry import Point
 
-from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateLButtJoint
-from compas_timber.connections.solver import PlateSolverResult
+from compas_timber.connections import JointCandidate
+from compas_timber.connections import PlateTopologyData
+from compas_timber.connections.solver import SolverResult
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -34,13 +35,13 @@ def model():
 def generic_plate_joint_with_plates(model):
     """Create a generic plate joint connecting two plates."""
     plate1, plate2 = model.plates
-    generic_plate_joint = PlateJointCandidate(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
+    generic_plate_joint = JointCandidate(element_a=plate1, element_b=plate2, topology=JointTopology.TOPO_L, a_segment_index=1, b_segment_index=0)
     model.add_joint_candidate(generic_plate_joint)
     return model, generic_plate_joint, plate1, plate2
 
 
 def test_from_generic_plate_joint_with_attributes(generic_plate_joint_with_plates):
-    """Test conversion from PlateJointCandidate preserves attributes."""
+    """Test conversion from JointCandidate preserves attributes."""
     model, generic_plate_joint, plate1, plate2 = generic_plate_joint_with_plates
 
     # Convert generic plate joint to specific plate joint
@@ -61,13 +62,13 @@ def test_from_generic_plate_joint_with_attributes(generic_plate_joint_with_plate
 
 
 def test_from_generic_plate_joint_without_b_segment_index(model):
-    """Test conversion from PlateJointCandidate without b_segment_index."""
+    """Test conversion from JointCandidate without b_segment_index."""
     plate1, plate2 = model.plates
 
     # Create generic plate joint without b_segment_index
-    generic_plate_joint = PlateJointCandidate(
-        plate_a=plate1,
-        plate_b=plate2,
+    generic_plate_joint = JointCandidate(
+        element_a=plate1,
+        element_b=plate2,
         topology=JointTopology.TOPO_T,
         a_segment_index=1,
         b_segment_index=None,  # Explicitly None
@@ -85,13 +86,13 @@ def test_from_generic_plate_joint_without_b_segment_index(model):
 
 
 def test_plate_joint_from_generic_joint_topology_solver_not_called_when_attributes_set(model, mocker):
-    """Test that PlateConnectionSolver.find_topology is NOT called when PlateJointCandidate already has topology and segment indices set."""
+    """Test that PlateConnectionSolver.find_topology is NOT called when JointCandidate already has topology and segment indices set."""
     from compas_timber.connections.solver import PlateConnectionSolver
 
     plate1, plate2 = model.plates
 
     # Create generic plate joint with all required attributes already set
-    generic_plate_joint = PlateJointCandidate(plate_a=plate1, plate_b=plate2, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
+    generic_plate_joint = JointCandidate(element_a=plate1, element_b=plate2, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
     model.add_joint_candidate(generic_plate_joint)
 
     # Mock the PlateConnectionSolver.find_topology method
@@ -114,14 +115,18 @@ def test_plate_joint_from_generic_joint_topology_solver_not_called_when_attribut
 
 
 def test_plate_joint_from_generic_joint_topology_solver_called_when_attributes_missing(model, mocker):
-    """Test that PlateConnectionSolver.find_topology IS called when PlateJointCandidate has missing segment indices."""
+    """Test that PlateConnectionSolver.find_topology IS called when JointCandidate has missing segment indices."""
     from compas_timber.connections.solver import PlateConnectionSolver
 
     plate1, plate2 = model.plates
 
     # Mock the PlateConnectionSolver.find_topology method to return expected results
     mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
-    mock_find_topology.return_value = PlateSolverResult(topology=JointTopology.TOPO_EDGE_EDGE, plate_a=plate1, plate_b=plate2, a_segment_index=1, b_segment_index=0)
+    mock_find_topology.return_value = SolverResult(
+        JointTopology.TOPO_EDGE_EDGE,
+        PlateTopologyData(plate1, role="edge", edge_index=1),
+        PlateTopologyData(plate2, role="edge", edge_index=0),
+    )
 
     # Convert generic plate joint to specific plate joint
     joint = PlateLButtJoint.create(model, plate1, plate2)

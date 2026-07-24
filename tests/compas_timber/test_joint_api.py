@@ -463,11 +463,10 @@ def test_candidates_returns_set(crossing_beams_model):
     assert isinstance(candidates, set)
 
 
-def test_candidates_are_joint_subclass(crossing_beams_model):
+def test_candidates_are_joint_candidate_instances(crossing_beams_model):
     model, b1, b2 = crossing_beams_model
     model.connect_adjacent_beams()
     for candidate in model.joint_candidates:
-        assert isinstance(candidate, Joint)
         assert isinstance(candidate, JointCandidate)
 
 
@@ -476,12 +475,11 @@ def test_candidates_empty_when_none_added():
     assert len(model.joint_candidates) == 0
 
 
-def test_manual_candidate_is_joint(two_beam_model):
+def test_manual_candidate_is_joint_candidate(two_beam_model):
     model, b1, b2 = two_beam_model
     candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L)
     model.add_joint_candidate(candidate)
     retrieved = list(model.joint_candidates)[0]
-    assert isinstance(retrieved, Joint)
     assert isinstance(retrieved, JointCandidate)
     assert retrieved is candidate
 

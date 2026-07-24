@@ -98,6 +98,99 @@ class JointTopology(object):
             return "TOPO_UNKNOWN"
 
 
+# imported here (after `JointTopology` is already defined above) to avoid a circular import:
+# `joint.py` imports `JointTopology` from this module, and `joint_candidate.py` imports `JointTopology`
+# from this module as well, so `joint_candidate.py` must only be imported once `JointTopology` exists.
+from .joint_candidate import JointCandidate  # noqa: E402
+from .topology_data import BeamTopologyData  # noqa: E402
+from .topology_data import PlateTopologyData  # noqa: E402
+from .utilities import beam_ref_side_incidence  # noqa: E402
+
+
+def _beam_ref_side_index(this_beam, other_beam):
+    """Index of `this_beam`'s ref side that faces `other_beam`, or ``None`` if not computable (e.g. parallel beams)."""
+    try:
+        ref_side_angles = beam_ref_side_incidence(other_beam, this_beam, ignore_ends=True)
+    except ValueError:
+        return None
+    return min(ref_side_angles, key=ref_side_angles.get)
+
+
+class SolverResult(Data):
+    """Data structure to hold the results of a connection topology analysis between two elements.
+
+    Parameters
+    ----------
+    topology : :class:`~compas_timber.connections.JointTopology`
+        The topology of the intersection.
+    topology_data_a : :class:`~compas_timber.connections.TopologyData`
+        The topology data of the first element involved in the intersection.
+    topology_data_b : :class:`~compas_timber.connections.TopologyData`
+        The topology data of the second element involved in the intersection.
+    distance : float, optional
+        The distance between the closest points of the two elements.
+    location : :class:`~compas.geometry.Point`, optional
+        The location of the intersection.
+
+    Attributes
+    ----------
+    topology : :class:`~compas_timber.connections.JointTopology`
+        The topology of the intersection.
+    topology_data : tuple(:class:`~compas_timber.connections.TopologyData`, :class:`~compas_timber.connections.TopologyData`)
+        The topology data of the two elements involved in the intersection.
+    distance : float or None
+        The distance between the closest points of the two elements.
+    location : :class:`~compas.geometry.Point` or None
+        The location of the intersection.
+
+    """
+
+    def __init__(self, topology, topology_data_a, topology_data_b, distance=None, location=None):
+        super(SolverResult, self).__init__()
+        self.topology = topology
+        self.topology_data = (topology_data_a, topology_data_b)
+        self.distance = distance
+        self.location = location
+
+    @property
+    def __data__(self):
+        return {
+            "topology": self.topology,
+            "topology_data_a": self.topology_data[0],
+            "topology_data_b": self.topology_data[1],
+            "distance": self.distance,
+            "location": self.location,
+        }
+
+    def __repr__(self):
+        return "SolverResult(topology={}, element_a={}, element_b={}, distance={}, location={})".format(
+            self.topology, self.element_a, self.element_b, self.distance, self.location
+        )
+
+    @property
+    def element_a(self):
+        return self.topology_data[0].element if self.topology_data[0] else None
+
+    @property
+    def element_b(self):
+        return self.topology_data[1].element if self.topology_data[1] else None
+
+    # compatibility aliases: previously `BeamSolverResult` exposed `beam_a`/`beam_b`
+    # and `PlateSolverResult` exposed `plate_a`/`plate_b`.
+    beam_a = element_a
+    beam_b = element_b
+    plate_a = element_a
+    plate_b = element_b
+
+    @property
+    def a_segment_index(self):
+        return self.topology_data[0].edge_index if isinstance(self.topology_data[0], PlateTopologyData) else None
+
+    @property
+    def b_segment_index(self):
+        return self.topology_data[1].edge_index if isinstance(self.topology_data[1], PlateTopologyData) else None
+
+
 class ConnectionSolver(object):
     """Provides tools for detecting beam intersections and joint topologies."""
 
@@ -143,14 +236,14 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        :class:`~compas_timber.connections.BeamSolverResult`
+        :class:`~compas_timber.connections.SolverResult`
             The topology results of the intersection between the two beams.
         """
         # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
         max_distance = max_distance or TOL.absolute  # TODO: change to a unit-sensitive value
         dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         if dist > max_distance:
-            return BeamSolverResult(JointTopology.TOPO_UNKNOWN, beam_a, beam_b, None, None)
+            return SolverResult(JointTopology.TOPO_UNKNOWN, BeamTopologyData(beam_a), BeamTopologyData(beam_b))
         point_a = Point(*point_a)
         point_b = Point(*point_b)
 
@@ -160,31 +253,95 @@ class ConnectionSolver(object):
             # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
             overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
             if overlap_on_a is None:
-                return BeamSolverResult(JointTopology.TOPO_I, beam_a, beam_b, dist, (point_a + point_b) / 2.0)
+                end_a, _ = beam_a.endpoint_closest_to_point(point_a)
+                end_b, _ = beam_b.endpoint_closest_to_point(point_b)
+                return SolverResult(
+                    JointTopology.TOPO_I,
+                    BeamTopologyData(beam_a, role="end", end=end_a, location=point_a),
+                    BeamTopologyData(beam_b, role="end", end=end_b, location=point_b),
+                    dist,
+                    (point_a + point_b) / 2.0,
+                )
             if overlap_on_a[1] < max_distance:  # overlaps on beam_a start
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.start)[1]
+                end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.start)
                 dist = distance_point_point(pt, beam_a.centerline.start)
-                return BeamSolverResult(JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.start + pt) / 2.0)
+                return SolverResult(
+                    JointTopology.TOPO_I,
+                    BeamTopologyData(beam_a, role="end", end="start", location=beam_a.centerline.start),
+                    BeamTopologyData(beam_b, role="end", end=end_b, location=pt),
+                    dist,
+                    (beam_a.centerline.start + pt) / 2.0,
+                )
             if abs(overlap_on_a[0] - beam_a.length) < max_distance:  # overlaps on beam_a end
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.end)[1]
+                end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.end)
                 dist = distance_point_point(pt, beam_a.centerline.end)
-                return BeamSolverResult(JointTopology.TOPO_I, beam_a, beam_b, dist, (beam_a.centerline.end + pt) / 2.0)
+                return SolverResult(
+                    JointTopology.TOPO_I,
+                    BeamTopologyData(beam_a, role="end", end="end", location=beam_a.centerline.end),
+                    BeamTopologyData(beam_b, role="end", end=end_b, location=pt),
+                    dist,
+                    (beam_a.centerline.end + pt) / 2.0,
+                )
             else:
-                return BeamSolverResult(JointTopology.TOPO_UNKNOWN, beam_a, beam_b)
+                return SolverResult(JointTopology.TOPO_UNKNOWN, BeamTopologyData(beam_a), BeamTopologyData(beam_b))
 
-        _, a_end_pt = beam_a.endpoint_closest_to_point(point_b)
-        _, b_end_pt = beam_b.endpoint_closest_to_point(point_a)
+        a_end_label, a_end_pt = beam_a.endpoint_closest_to_point(point_b)
+        b_end_label, b_end_pt = beam_b.endpoint_closest_to_point(point_a)
 
         a_end = distance_point_point(a_end_pt, point_a) < max_distance
         b_end = distance_point_point(b_end_pt, point_b) < max_distance
         location = (point_a + point_b) / 2.0
+        ref_side_index_a = _beam_ref_side_index(beam_a, beam_b)
+        ref_side_index_b = _beam_ref_side_index(beam_b, beam_a)
         if a_end and b_end:
-            return BeamSolverResult(JointTopology.TOPO_L, beam_a, beam_b, dist, location)
+            return SolverResult(
+                JointTopology.TOPO_L,
+                BeamTopologyData(beam_a, role="end", end=a_end_label, ref_side_index=ref_side_index_a, location=point_a),
+                BeamTopologyData(beam_b, role="end", end=b_end_label, ref_side_index=ref_side_index_b, location=point_b),
+                dist,
+                location,
+            )
         if a_end:
-            return BeamSolverResult(JointTopology.TOPO_T, beam_a, beam_b, dist, location)
+            return SolverResult(
+                JointTopology.TOPO_T,
+                BeamTopologyData(beam_a, role="end", end=a_end_label, ref_side_index=ref_side_index_a, location=point_a),
+                BeamTopologyData(beam_b, role="through", ref_side_index=ref_side_index_b, location=point_b),
+                dist,
+                location,
+            )
         if b_end:
-            return BeamSolverResult(JointTopology.TOPO_T, beam_b, beam_a, dist, location)
-        return BeamSolverResult(JointTopology.TOPO_X, beam_a, beam_b, dist, location)
+            return SolverResult(
+                JointTopology.TOPO_T,
+                BeamTopologyData(beam_b, role="end", end=b_end_label, ref_side_index=ref_side_index_b, location=point_b),
+                BeamTopologyData(beam_a, role="through", ref_side_index=ref_side_index_a, location=point_a),
+                dist,
+                location,
+            )
+        return SolverResult(
+            JointTopology.TOPO_X,
+            BeamTopologyData(beam_a, role="through", ref_side_index=ref_side_index_a, location=point_a),
+            BeamTopologyData(beam_b, role="through", ref_side_index=ref_side_index_b, location=point_b),
+            dist,
+            location,
+        )
+
+    def create_joint_candidate(self, beam_a, beam_b, max_distance=None):
+        # type: (...) -> JointCandidate | None
+        """creates a JointCandidate from 2 beams"""
+        result = self.find_topology(beam_a, beam_b, max_distance=max_distance)
+        if result.topology == JointTopology.TOPO_UNKNOWN:
+            return None
+        # use the beam order determined by find_topology to keep main, cross relationship
+        return JointCandidate(
+            result.beam_a,
+            result.beam_b,
+            topology=result.topology,
+            distance=result.distance,
+            location=result.location,
+            topology_data=result.topology_data,
+        )
 
 
 class PlateConnectionSolver(ConnectionSolver):
@@ -209,17 +366,35 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        :class:`~compas_timber.connections.PlateSolverResult`
+        :class:`~compas_timber.connections.SolverResult`
         """
         plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if plate_a_segment_index is None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_UNKNOWN, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
+            return SolverResult(JointTopology.TOPO_UNKNOWN, PlateTopologyData(plate_a, location=pt), PlateTopologyData(plate_b, location=pt), dist, pt)
         if plate_a_segment_index is not None and plate_b_segment_index is None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
+            return SolverResult(
+                JointTopology.TOPO_EDGE_FACE,
+                PlateTopologyData(plate_a, role="edge", edge_index=plate_a_segment_index, location=pt),
+                PlateTopologyData(plate_b, role="face", location=pt),
+                dist,
+                pt,
+            )
         if plate_a_segment_index is None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_FACE, plate_b, plate_a, plate_b_segment_index, plate_a_segment_index, dist, pt)
+            return SolverResult(
+                JointTopology.TOPO_EDGE_FACE,
+                PlateTopologyData(plate_b, role="edge", edge_index=plate_b_segment_index, location=pt),
+                PlateTopologyData(plate_a, role="face", location=pt),
+                dist,
+                pt,
+            )
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            return PlateSolverResult(JointTopology.TOPO_EDGE_EDGE, plate_a, plate_b, plate_a_segment_index, plate_b_segment_index, dist, pt)
+            return SolverResult(
+                JointTopology.TOPO_EDGE_EDGE,
+                PlateTopologyData(plate_a, role="edge", edge_index=plate_a_segment_index, location=pt),
+                PlateTopologyData(plate_b, role="edge", edge_index=plate_b_segment_index, location=pt),
+                dist,
+                pt,
+            )
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -323,132 +498,19 @@ class PlateConnectionSolver(ConnectionSolver):
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
-
-class BeamSolverResult(Data):
-    """Data structure to hold the results of beam connection topology analysis.
-
-    Parameters
-    ----------
-    topology : :class:`~compas_timber.connections.JointTopology`
-        The topology of the intersection.
-    beam_a : :class:`~compas_timber.elements.Beam`
-        The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.elements.Beam`
-        The second beam involved in the intersection.
-    distance : float
-        The distance between the closest points of the two beams.
-    location : :class:`~compas.geometry.Point`
-        The location of the intersection.
-
-    Attributes
-    ----------
-    topology : :class:`~compas_timber.connections.JointTopology`
-        The topology of the intersection.
-    beam_a : :class:`~compas_timber.elements.Beam`
-        The first beam involved in the intersection.
-    beam_b : :class:`~compas_timber.elements.Beam`
-        The second beam involved in the intersection.
-    distance : float
-        The distance between the closest points of the two beams.
-    location : :class:`~compas.geometry.Point`
-        The location of the intersection.
-
-    """
-
-    def __init__(self, topology, beam_a, beam_b, distance=None, location=None):
-        super(BeamSolverResult, self).__init__()
-        self.topology = topology
-        self.beam_a = beam_a
-        self.beam_b = beam_b
-        self.distance = distance
-        self.location = location
-
-    @property
-    def __data__(self):
-        return {
-            "topology": self.topology,
-            "beam_a": self.beam_a,
-            "beam_b": self.beam_b,
-            "distance": self.distance,
-            "location": self.location,
+    def create_joint_candidate(self, plate_a, plate_b, max_distance=None):
+        # type: (...) -> JointCandidate | None
+        """creates a JointCandidate from 2 plates"""
+        result = self.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance or self.TOLERANCE)
+        if result.topology is JointTopology.TOPO_UNKNOWN:
+            return None
+        kwargs = {
+            "topology": result.topology,
+            "a_segment_index": result.a_segment_index,
+            "distance": result.distance,
+            "location": result.location,
+            "topology_data": result.topology_data,
         }
-
-    def __repr__(self):
-        return "BeamSolverResult(topology={}, beam_a={}, beam_b={}, distance={}, location={})".format(
-            self.topology, self.beam_a.name, self.beam_b.name, self.distance, self.location
-        )
-
-
-class PlateSolverResult(Data):
-    """Data structure to hold the results of plate connection topology analysis.
-    Parameters
-    ----------
-    topology : :class:`~compas_timber.connections.JointTopology`
-        The topology of the intersection.
-    plate_a : :class:`~compas_timber.elements.Plate`
-        The first plate involved in the intersection.
-    plate_b : :class:`~compas_timber.elements.Plate`
-        The second plate involved in the intersection.
-    a_segment_index : int, optional
-        The index of the segment in `plate_a` where the intersection occurs.
-    b_segment_index : int, optional
-        The index of the segment in `plate_b` where the intersection occurs.
-    distance : float, optional
-        The calculated distance between the location points of the two plates.
-    location : :class:`~compas.geometry.Point`, optional
-        The location of the intersection.
-
-    Attributes
-    ----------
-    topology : :class:`~compas_timber.connections.JointTopology`
-        The topology of the intersection.
-    plate_a : :class:`~compas_timber.elements.Plate`
-        The first plate involved in the intersection.
-    plate_b : :class:`~compas_timber.elements.Plate`
-        The second plate involved in the intersection.
-    a_segment_index : int, optional
-        The index of the segment in `plate_a` where the intersection occurs.
-    b_segment_index : int, optional
-        The index of the segment in `plate_b` where the intersection occurs.
-    distance : float, optional
-        The calculated distance between the location points of the two plates.
-    location : :class:`~compas.geometry.Point`, optional
-        The location of the intersection.
-    """
-
-    def __init__(self, topology, plate_a, plate_b, a_segment_index=None, b_segment_index=None, distance=None, location=None):
-        """Initializes the PlateSolverResult with the given parameters."""
-
-        super(PlateSolverResult, self).__init__()
-        self.topology = topology
-        self.plate_a = plate_a
-        self.plate_b = plate_b
-        self.a_segment_index = a_segment_index
-        self.b_segment_index = b_segment_index
-        self.distance = distance
-        self.location = location
-
-    @property
-    def __data__(self):
-        """Returns the data representation of the PlateSolverResult."""
-        return {
-            "topology": self.topology,
-            "plate_a": self.plate_a,
-            "plate_b": self.plate_b,
-            "a_segment_index": self.a_segment_index,
-            "b_segment_index": self.b_segment_index,
-            "distance": self.distance,
-            "location": self.location,
-        }
-
-    def __repr__(self):
-        """Returns a string representation of the PlateSolverResult."""
-        return "PlateSolverResult(topology={}, plate_a={}, plate_b={}, a_segment_index={}, b_segment_index={}, distance={}, location={})".format(
-            self.topology,
-            self.plate_a.name,
-            self.plate_b.name,
-            self.a_segment_index,
-            self.b_segment_index,
-            self.distance,
-            self.location,
-        )
+        if result.topology == JointTopology.TOPO_EDGE_EDGE:
+            kwargs["b_segment_index"] = result.b_segment_index
+        return JointCandidate(result.plate_a, result.plate_b, **kwargs)
