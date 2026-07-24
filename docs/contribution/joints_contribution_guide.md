@@ -127,8 +127,15 @@ class TNewJoint(Joint):
 
 
     def add_features(self):
-        """Adds the required features in the form of BTLxProcessings to both beams."""
+        """Removes this joint's previously added features, then adds the required features in the form of BTLxProcessings to both beams."""
         assert self.cross_beam and self.main_beam
+
+        # remove any features this joint added in a previous run.
+        # `process_joinery()` may run more than once on the same model (e.g. on every Grasshopper recompute);
+        # without this, each run would apply the joint's features again, on top of the previous ones.
+        if self.features:
+            self.main_beam.remove_features(self.features)
+            self.cross_beam.remove_features(self.features)
 
         # create a BTLx processing for the main beam
         main_feature = NewProcessing.from_plane_and_beam(
@@ -144,7 +151,7 @@ class TNewJoint(Joint):
         cross_feature = # ... Similar logic to create the BTLx processing for the cross beam ...
         self.cross_beam.add_features(cross_feature)  # register the feature to the cross
 
-        self.features.extend([main_feature, cross_feature])  # register the features to the joint itself
+        self.features = [main_feature, cross_feature]  # register the features to the joint itself (replace, don't extend — the old entries were just removed)
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):
@@ -163,8 +170,10 @@ class TNewJoint(Joint):
 ```
 
 !!! note
-    In the `add_features()` method, register each BTLx processing (feature) both to the corresponding element using `element.add_features()` and to the joint itself using `self.features.append(feature)`.
-    This ensures features are properly associated for both element modification and joint serialization.
+    In the `add_features()` method, register each BTLx processing (feature) both to the corresponding element using `element.add_features()` and to the joint itself in `self.features`.
+    Registering on the element is what applies the feature; registering on the joint is what makes re-runs idempotent — `self.features` is the joint's record of what it added, and the remove-first step at the top of `add_features()` uses it to undo the previous run before adding again.
+    Blank extensions need no such step: `add_blank_extension()` is keyed by `self.guid`, so the element can track each joint's contribution (and drop it when the joint is removed). Features carry no owner key on the element — the joint's `self.features` list is the only record of which features are whose, hence the explicit remove.
+    See `ButtJoint.add_features()` and `LMiterJoint.add_features()` for the pattern in shipped joints.
 
 See also:
 
