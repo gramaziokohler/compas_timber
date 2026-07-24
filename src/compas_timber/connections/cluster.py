@@ -9,7 +9,7 @@ from compas_timber.geometry import KDTree
 
 
 class Cluster:
-    """Groups together the clustered joints and offers access to the beams
+    """Represents a collection of `JointCandidate`s grouped by geometric proximity.
 
     Parameters
     ----------
@@ -27,8 +27,10 @@ class Cluster:
     """
 
     def __init__(self, joints):
+        # TODO: rename to make more clear that these are JointCandidates.
         self.joints = joints
         self._elements = None
+        self._topology = None
 
     def __iter__(self):
         return iter(self.elements)
@@ -51,21 +53,9 @@ class Cluster:
     @property
     def topology(self):
         """Returns the topology of the joint if there is only one joint, otherwise TOPO_UNKNOWN."""
-        # TODO: will we ever have clusters from non-GenericJoints? if so then we could have a joint in a cluster with TOPO_Y or TOPO_K
-        # TOPO_Y + TOPO_I = TOPO_Y
-        # TOPO_Y + TOPO_L = TOPO_Y
-        # TOPO_Y + TOPO_T = TOPO_K
-        # TOPO_K + TOPO_I = TOPO_K
-        # TOPO_K + TOPO_L = TOPO_K ...
-        if len(self.joints) == 0:
-            return JointTopology.TOPO_UNKNOWN
-        if len(self.joints) == 1:
-            return self.joints[0].topology
-        if any([j.topology not in [JointTopology.TOPO_L, JointTopology.TOPO_I, JointTopology.TOPO_T, JointTopology.TOPO_X] for j in self.joints]):
-            return JointTopology.TOPO_UNKNOWN
-        if any([j.topology == JointTopology.TOPO_T or j.topology == JointTopology.TOPO_X for j in self.joints]):
-            return JointTopology.TOPO_K
-        return JointTopology.TOPO_Y
+        if not self._topology:
+            self._topology = get_topology_from_joints(self.joints)
+        return self._topology
 
 
 def get_clusters_from_joint_candidates(candidates, max_distance=None, exclude=None):
@@ -127,3 +117,21 @@ def get_clusters_from_joint_candidates(candidates, max_distance=None, exclude=No
     grouped_joints = sorted(joints_by_cluster_index.values(), key=len, reverse=True)
 
     return [Cluster(joint_group) for joint_group in grouped_joints]
+
+
+def get_topology_from_joints(joints):
+    """Returns the composite topology (TOPO_Y/TOPO_K) from a list of joints."""
+    # TOPO_Y + TOPO_I = TOPO_Y
+    # TOPO_Y + TOPO_L = TOPO_Y
+    # TOPO_Y + TOPO_T = TOPO_K
+    # TOPO_K + TOPO_I = TOPO_K
+    # TOPO_K + TOPO_L = TOPO_K ...
+    if len(joints) == 0:
+        return JointTopology.TOPO_UNKNOWN
+    if len(joints) == 1:
+        return joints[0].topology
+    if any([j.topology not in [JointTopology.TOPO_L, JointTopology.TOPO_I, JointTopology.TOPO_T, JointTopology.TOPO_X] for j in joints]):
+        return JointTopology.TOPO_UNKNOWN
+    if any([j.topology == JointTopology.TOPO_T or j.topology == JointTopology.TOPO_X for j in joints]):
+        return JointTopology.TOPO_K
+    return JointTopology.TOPO_Y
