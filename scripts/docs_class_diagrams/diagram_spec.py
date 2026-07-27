@@ -16,20 +16,18 @@ SECTIONS = [
     dict(
         title="Elements Subsystem",
         prose="""
-The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally but remain exported from `compas_timber.elements` for backward compatibility.
+The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from `compas_timber.elements` for backward compatibility.
 """,
         diagrams=[
             dict(
                 classes=[
                     "TimberElement", "Beam", "Plate", "PlateGeometry",
                     "Fastener", "BallNodeFastener", "PlateFastener", "FastenerTimberInterface",
-                    "Feature", "CutFeature", "DrillFeature", "MillVolume", "BrepSubtraction",
                     "Panel", "PanelType", "PanelFeature", "PanelFeatureType",
                     "Opening", "OpeningType", "PanelConnectionInterface", "InterfaceRole",
                 ],
-                anchors={"Element": "compas_model", "Data": "abstract"},
+                anchors={"Element": "compas_model"},
                 overrides={
-                    "Feature": dict(add_stereotypes=["abstract"]),
                     "PanelType": dict(add_stereotypes=["enumeration"]),
                     "PanelFeatureType": dict(add_stereotypes=["enumeration"]),
                     "OpeningType": dict(add_stereotypes=["enumeration"]),
