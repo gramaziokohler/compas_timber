@@ -64,7 +64,6 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
-        data["joint_candidates"] = self._joint_candidates
         return data
 
     @classmethod
@@ -77,11 +76,7 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
-        candidates_data = data.get("joint_candidates", {})
-        for guid_str, candidate in candidates_data.items():
-            model._joint_candidates[guid_str] = candidate
-
-        for candidate in model._joint_candidates.values():
+        for candidate in model.joint_candidates:
             candidate.restore_elements_from_keys(model)
 
         return model
@@ -89,7 +84,6 @@ class TimberModel(Model):
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
         self._joints = {}
-        self._joint_candidates = {}
         self._topologies = []  # added to avoid calculating multiple times
         self._tolerance = tolerance or TOL
         self._graph.update_default_edge_attributes(**self._TIMBER_GRAPH_EDGE_ATTRIBUTES)
@@ -139,7 +133,12 @@ class TimberModel(Model):
 
     @property
     def joint_candidates(self) -> Iterable[JointCandidate]:
-        return self._joint_candidates.values()
+        candidates = set()
+        for edge in self._graph.edges():
+            edge_candidate = self._graph.edge_attribute(edge, "candidates")
+            if edge_candidate is not None:
+                candidates.add(edge_candidate)
+        return candidates
 
     @property
     def unpromoted_joint_candidates(self) -> set[JointCandidate]:
@@ -406,8 +405,8 @@ class TimberModel(Model):
             self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
     def get_candidate(self, element_a, element_b):
-        # type: (Element, Element) -> Joint | None
-        """Get the joint instance that joins two given elements, if any.
+        # type: (Element, Element) -> JointCandidate | None
+        """Get the joint candidate that joins two given elements, if any.
 
         Parameters
         ----------
@@ -418,29 +417,26 @@ class TimberModel(Model):
 
         Returns
         -------
-        :class:`~compas_timber.connections.Joint` or None
-            The joint connecting the two elements, or None if they are not joined.
+        :class:`~compas_timber.connections.JointCandidate` or None
+            The joint candidate connecting the two elements, or None if they are not connected by one.
         """
-        candidate_guids = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "candidates")
-        for guid in candidate_guids:
-            if guid in self._joint_candidates:
-                return self._joint_candidates[guid]
-        return None
+        candidates = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "candidates")
+        return candidates[0] if candidates else None
 
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
         """Add a joint candidate to the model.
 
-        Candidates are tracked in a dedicated registry (`self._joint_candidates`), mirroring how actual joints
-        are tracked in `self._joints`. The graph edges only carry the candidate's guid under the "candidates"
-        attribute, separate from actual joints which are stored under the "joints" attribute.
+        Unlike actual joints (tracked in `self._joints`), candidates are stored only on the graph edge, under
+        the "candidates" attribute, separate from actual joints which are stored under the "joints" attribute.
+        Since a candidate always connects exactly two elements, this is enough to look it up again without a
+        separate registry.
 
         Parameters
         ----------
         candidate : :class:`~compas_timber.connections.JointCandidate`
             An instance of a JointCandidate class.
         """
-        self._joint_candidates[str(candidate.guid)] = candidate
         for interaction in candidate.interactions:
             element_a, element_b = interaction
             edge = (element_a.graphnode, element_b.graphnode)
@@ -568,7 +564,6 @@ class TimberModel(Model):
         candidate : :class:`~compas_timber.connections.JointCandidate`
             The joint candidate to remove.
         """
-        self._joint_candidates.pop(str(candidate.guid), None)
         for interaction in candidate.interactions:
             element_a, element_b = interaction
             edge = (element_a.graphnode, element_b.graphnode)
@@ -632,10 +627,9 @@ class TimberModel(Model):
     def remove_element(self, element):
         # compas_model.Model removes the interactions and edges connected to the element,
         # but joints are stored in a separate dict, so we remove those explicitly first.
+        # JointCandidates are stored directly on edges, removing them handled by compas_model.model.remove_element()
         for joint in self.get_joints_for_element(element):
             self.remove_joint(joint)
-        for candidate in self.get_candidates_for_element(element):
-            self.remove_joint_candidate(candidate)
         return super().remove_element(element)
 
     def _is_remaining_attrs_on_edge(self, edge):

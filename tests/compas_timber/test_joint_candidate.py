@@ -155,6 +155,28 @@ def test_adding_joint_does_not_affect_candidates(crossing_beams_model):
 
 
 # =============================================================================
+# model.get_candidate()
+# =============================================================================
+
+
+def test_get_candidate_returns_the_candidate(crossing_beams_model):
+    model, b1, b2 = crossing_beams_model
+    model.connect_adjacent_beams()
+    candidate = list(model.joint_candidates)[0]
+    assert model.get_candidate(b1, b2) is candidate
+    assert model.get_candidate(b2, b1) is candidate
+
+
+def test_get_candidate_returns_none_when_not_connected():
+    model = TimberModel()
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(1, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(10, 0, 0), Point(11, 0, 0)), 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    assert model.get_candidate(b1, b2) is None
+
+
+# =============================================================================
 # JointCandidate.create()
 # =============================================================================
 
@@ -307,3 +329,42 @@ def test_plate_joint_candidate_extra_kwargs_survive_serialization():
 
     assert restored_candidate.a_segment_index == 1
     assert restored_candidate.b_segment_index == 0
+
+
+# =============================================================================
+# model.remove_element() cleans up joint candidates
+# =============================================================================
+
+
+def test_remove_element_removes_its_candidates(crossing_beams_model):
+    """Removing an element should also remove any joint candidates that reference it."""
+    model, b1, b2 = crossing_beams_model
+    model.connect_adjacent_beams()
+    assert len(model.joint_candidates) == 1
+
+    model.remove_element(b1)
+
+    assert len(model.joint_candidates) == 0
+
+
+def test_remove_element_keeps_candidates_on_unrelated_elements():
+    """Removing an element should not remove candidates between two other elements."""
+    model = TimberModel()
+    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
+    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
+    line3 = Line(Point(10, 0, 0), Point(11, 0, 0))
+    b1 = Beam.from_centerline(line1, 0.1, 0.1)
+    b2 = Beam.from_centerline(line2, 0.1, 0.1)
+    b3 = Beam.from_centerline(line3, 0.1, 0.1)
+    model.add_element(b1)
+    model.add_element(b2)
+    model.add_element(b3)
+
+    candidate = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    unrelated = JointCandidate.create(model, b1, b3, topology=JointTopology.TOPO_T)
+
+    model.remove_element(b2)
+
+    remaining = list(model.joint_candidates)
+    assert remaining == [unrelated]
+    assert candidate not in remaining

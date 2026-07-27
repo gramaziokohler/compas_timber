@@ -43,8 +43,6 @@ class JointCandidate(Data):
         The elements joined by this candidate.
     interactions : list(tuple(:class:`~compas_model.elements.Element`, :class:`~compas_model.elements.Element`))
         The element pairs this candidate connects.
-    generated_elements : list(:class:`~compas_model.elements.Element`)
-        Always empty; a candidate never generates elements of its own.
     topology : literal, one of :class:`JointTopology`
         The topology by which the two elements interact.
     location : :class:`~compas.geometry.Point`
@@ -191,6 +189,7 @@ class PlateJointCandidate(JointCandidate):
         Second plate to be joined.
 
     """
+
     # TODO: this should be consolidated with JointCandidate
 
     def __init__(self, plate_a=None, plate_b=None, distance=None, **kwargs):
