@@ -7,14 +7,10 @@ from .solver import JointTopology
 class JointCandidate(Data):
     """A JointCandidate is an information-only joint, which does not add any features to the elements it connects.
 
-    It is used to create a first-pass joinery information which can be later grouped into Clusters and then promoted
-    to concrete joints. Unlike `Joint`, `JointCandidate` is not tied to the joint promotion machinery (features,
-    extensions, etc.) and is never registered as a joint on `TimberModel` (`model.joints`) — it lives in its own
-    registry (`model.joint_candidates`), added via `TimberModel.add_joint_candidate()`. It mirrors `Joint`'s
-    `elements`/`element_guids`/`location` contract closely enough to make that registry symmetrical with `model.joints`.
+    It is used to create a first-pass joinery information which can be later grouped into a Clusters and then
+    promoted to concrete joints.
 
-    Please use `ConnectionSolver.create_joint_candidate()`/`PlateConnectionSolver.create_joint_candidate()` to
-    properly create an instance of this class from a pair of adjacent elements.
+    Please use `JointCandidate.create()` to properly create an instance of this class and associate it with a model.
 
     Parameters
     ----------

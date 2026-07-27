@@ -192,11 +192,16 @@ classDiagram
 
 ## Connections Subsystem
 
-The connections subsystem defines joints and their relationships. All joints inherit from the base `Joint` class and are categorized by topology.
+The connections subsystem defines joints and their relationships. All concrete joints inherit from the base `Joint` class and are categorized by topology. `JointCandidate`/`PlateJointCandidate` are information-only stand-ins for a joint before it's promoted to a concrete one, and are standalone `Data` subclasses rather than `Joint` subclasses.
 
 ```mermaid
 classDiagram
       class Interaction {
+         <<abstract>>
+         +name : str
+      }
+
+      class Data {
          <<abstract>>
          +name : str
       }
@@ -224,8 +229,19 @@ classDiagram
       class JointCandidate {
          +element_a : TimberElement
          +element_b : TimberElement
-         +element_a_guid : str
-         +element_b_guid : str
+         +elements : tuple[Element, Element]
+         +element_guids : tuple[str, str]
+         +interactions : list[tuple[Element, Element]]
+         +topology : JointTopology
+         +location : Point
+         +distance : float
+         +create(model, *elements)
+         +restore_elements_from_keys(model)
+      }
+
+      class PlateJointCandidate {
+         +plate_a : Plate
+         +plate_b : Plate
       }
 
       class CutPlaneSpec {
@@ -407,6 +423,22 @@ classDiagram
          +beams : list
       }
 
+      class CompositeJoint {
+         +joints : list[Joint]
+         +elements : tuple[Element]
+         +location : Point
+         +topology : JointTopology
+         +SUPPORTED_TOPOLOGY = TOPO_UNKNOWN
+         +MIN_ELEMENT_COUNT = 3
+         +MAX_ELEMENT_COUNT = None
+         +create(model, joints)
+         +add_features()
+         +add_extensions()
+         +clear_features()
+         +clear_extensions()
+         +restore_elements_from_keys(model)
+      }
+
       class PlateJoint {
          <<abstract>>
          +plate_a : Plate
@@ -453,7 +485,8 @@ classDiagram
 
       %% Inheritance relationships
       Interaction <|-- Joint
-      Joint <|-- JointCandidate
+      Data <|-- JointCandidate
+      JointCandidate <|-- PlateJointCandidate
       Joint <|-- ButtJoint
       Joint <|-- TBirdsmouthJoint
       Joint <|-- LMiterJoint
@@ -463,6 +496,9 @@ classDiagram
       Joint <|-- TDovetailJoint
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
+      Joint <|-- CompositeJoint
+      CompositeJoint "1" *-- "1..*" Joint : sub-joints
+
       Joint <|-- PlateJoint
 
       PlateJoint <|-- PanelJoint

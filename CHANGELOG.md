@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
 * Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
@@ -25,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
 * Added new module `topology_data` in `compas_timber.connections` with `TopologyData`, `BeamTopologyData`, and `PlateTopologyData` — structured, per-element topology data (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
 * Added `SolverResult` (`compas_timber.connections`), replacing `BeamSolverResult`/`PlateSolverResult` with a single class that holds a pair of `TopologyData` instances (one per element) instead of element-type-specific fields. Exposes `beam_a`/`beam_b`/`plate_a`/`plate_b`/`a_segment_index`/`b_segment_index` as compatibility aliases over the new `topology_data`.
@@ -32,8 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.get_joint_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`, mirroring `TimberModel.get_joint()`.
 
 ### Changed
-* **Breaking:** `JointCandidate` no longer inherits from `Joint`; it's now a lightweight `compas.data.Data` subclass with its own `elements`/`element_guids`/`location` contract (mirroring `Joint`'s closely enough to keep `location` computing a fallback from centerlines, raising `ValueError` when it can't be determined, and rejecting non-`Point` assignments). Code that does `isinstance(candidate, Joint)` on a `JointCandidate` will now fail.
-* **Breaking:** `TimberModel` now tracks joint candidates in a dedicated `self._joints_candidates` registry, mirroring how actual joints are tracked in `self._joints`, instead of storing full candidate objects directly as graph edge attributes. Graph edges now carry only the candidate's guid under the `"candidates"` attribute. This also fixes un-promoted candidates (`model.joint_candidates`) not having their element references restored after a `json_loads`/`json_dumps` round-trip — they previously deserialized with `element_a`/`element_b` left as `None`. Models serialized under the old scheme will not deserialize correctly.
+* `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.
+* Added `TimberModel.get_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`. Candidates are always pairwise, so (like joints) they're looked up directly from the graph edge rather than a separate registry.
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
 * Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
 * Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
@@ -50,8 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
-* Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
-* Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
+* Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
