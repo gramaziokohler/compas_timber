@@ -405,9 +405,22 @@ class TimberModel(Model):
             edge = self.add_interaction(element_a, element_b)
             self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
-    def _candidate_for_element_pair(self, element_a, element_b):
-        # type: (Element, Element) -> JointCandidate | None
-        """Returns the joint candidate currently stored on the edge between two elements, if any."""
+    def get_candidate(self, element_a, element_b):
+        # type: (Element, Element) -> Joint | None
+        """Get the joint instance that joins two given elements, if any.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_model.elements.Element`
+            The first element.
+        element_b : :class:`~compas_model.elements.Element`
+            The second element.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.Joint` or None
+            The joint connecting the two elements, or None if they are not joined.
+        """
         candidate_guids = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "candidates")
         for guid in candidate_guids:
             if guid in self._joint_candidates:

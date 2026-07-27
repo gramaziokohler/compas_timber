@@ -117,6 +117,8 @@ class JointCandidate(Data):
     @property
     def location(self):
         # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
+        # NOTE: this copies Joint default behavior
+        # TODO: Route to ConnectionSolvers
         if self._location is None and all(self.elements) and len(self.elements) == 2:
             self._location = location_from_centerlines(self.elements)
 
@@ -189,6 +191,7 @@ class PlateJointCandidate(JointCandidate):
         Second plate to be joined.
 
     """
+    # TODO: this should be consolidated with JointCandidate
 
     def __init__(self, plate_a=None, plate_b=None, distance=None, **kwargs):
         # HACK: default distance to 0.0 (rather than None) to pass joint rules that expect a distance attribute,
