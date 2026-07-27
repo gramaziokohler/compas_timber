@@ -4,6 +4,7 @@ from compas.geometry import Point
 from .joint import location_from_centerlines
 from .solver import JointTopology
 
+
 class JointCandidate(Data):
     """A JointCandidate is an information-only joint, which does not add any features to the elements it connects.
 
@@ -77,7 +78,7 @@ class JointCandidate(Data):
 
         self.topology = topology
         self._location = location
-        self.distance = distance 
+        self.distance = distance
         self._extra_kwargs = dict(kwargs)
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -112,6 +113,7 @@ class JointCandidate(Data):
     @property
     def interactions(self):
         return [(self.element_a, self.element_b)]
+
     @property
     def location(self):
         # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
@@ -165,7 +167,8 @@ class JointCandidate(Data):
         candidate = cls(*elements, **kwargs)
         model.add_joint_candidate(candidate)
         return candidate
-    
+
+
 class PlateJointCandidate(JointCandidate):
     """A PlateJointCandidate is an information-only joint for plate connections.
 
@@ -203,7 +206,6 @@ class PlateJointCandidate(JointCandidate):
     @property
     def location(self):
         if self._location is None:
-            return Point(0,0,0) #Matches PlateJoint default TODO: actually calculate the location.
+            return Point(0, 0, 0)  # Matches PlateJoint default TODO: actually calculate the location.
 
         return self._location
-

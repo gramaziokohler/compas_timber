@@ -138,7 +138,7 @@ class TimberModel(Model):
         return self._joints.values()
 
     @property
-    def joint_candidates(self)-> Iterable[JointCandidate]:
+    def joint_candidates(self) -> Iterable[JointCandidate]:
         return self._joint_candidates.values()
 
     @property
@@ -427,7 +427,7 @@ class TimberModel(Model):
         candidate : :class:`~compas_timber.connections.JointCandidate`
             An instance of a JointCandidate class.
         """
-        self._joint_candidates[str(candidate.guid)]= candidate
+        self._joint_candidates[str(candidate.guid)] = candidate
         for interaction in candidate.interactions:
             element_a, element_b = interaction
             edge = (element_a.graphnode, element_b.graphnode)
@@ -621,6 +621,8 @@ class TimberModel(Model):
         # but joints are stored in a separate dict, so we remove those explicitly first.
         for joint in self.get_joints_for_element(element):
             self.remove_joint(joint)
+        for candidate in self.get_candidates_for_element(element):
+            self.remove_joint_candidate(candidate)
         return super().remove_element(element)
 
     def _is_remaining_attrs_on_edge(self, edge):
