@@ -14,7 +14,7 @@ The diagrams are generated from the source code (attributes, methods and inherit
 SECTIONS = [
     # --------------------------------------------------------------- elements
     dict(
-        title="Timber Element Subsystem",
+        title="Elements Subsystem",
         prose="""
 The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally but remain exported from `compas_timber.elements` for backward compatibility.
 """,
