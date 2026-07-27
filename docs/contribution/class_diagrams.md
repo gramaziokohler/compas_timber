@@ -6,58 +6,6 @@ The diagrams are generated from the source code (attributes, methods and inherit
 
 [TOC]
 
-## Model Overview
-
-`TimberModel` is the central class that ties the subsystems together. It extends compas_model's `Model`, which stores elements in a hierarchy (element tree) and their relationships in an interaction graph — elements are added with `add_element()`, inherited from `Model`. Joints are kept in a model-level registry and referenced from the edges of the interaction graph. Calling `process_joinery()` first applies the joints' blank extensions to the elements, then adds their features (`BTLxProcessing` instances), which `BTLxWriter` serializes to a BTLx file for fabrication.
-
-```mermaid
-classDiagram
-      class Model {
-         <<compas_model>>
-      }
-
-      class TimberElement {
-         <<abstract>>
-      }
-
-      class Joint {
-         <<abstract>>
-      }
-
-      class BTLxProcessing {
-         <<abstract>>
-      }
-
-      class BTLxWriter
-
-      class TimberModel {
-         +beams : Generator[Beam]
-         +plates : Generator[Plate]
-         +panels : Generator[Panel]
-         +fasteners
-         +joints : Iterable[Joint]
-         +joint_candidates : set[JointCandidate]
-         +add_joint(joint)
-         +add_joint_candidate(candidate)
-         +remove_joint(joint)
-         +process_joinery(stop_on_first_error=False)
-         +connect_adjacent_beams(max_distance=None)
-         +connect_adjacent_plates(max_distance=None)
-         +connect_adjacent_panels(max_distance=None)
-      }
-
-      %% Inheritance relationships
-      Model <|-- TimberModel
-
-      %% Composition and usage relationships
-      TimberModel o-- TimberElement : elements
-      TimberModel o-- Joint : joints
-      Joint ..> TimberElement : joins
-      Joint ..> BTLxProcessing : generates
-      TimberElement o-- BTLxProcessing : features
-      BTLxWriter ..> TimberModel : serializes to BTLx
-```
-
 ## Timber Element Subsystem
 
 The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally but remain exported from `compas_timber.elements` for backward compatibility.
@@ -367,102 +315,7 @@ classDiagram
 
 ## Connections Subsystem
 
-The connections subsystem defines joints and the machinery that discovers them. All joints inherit from the base `Joint` class (a `compas.data.Data` subclass) and declare the topology they support via `SUPPORTED_TOPOLOGY`. Joints are registered in the `TimberModel` and referenced from the edges of its interaction graph. Because of its size, the subsystem is shown in three diagrams: topology solving, beam joints, and plate/panel joints.
-
-### Topology Solving and Joint Candidates
-
-`ConnectionSolver` (for beams) and `PlateConnectionSolver` (for plates) detect intersecting element pairs and classify their topology as one of the `JointTopology` values, returning `BeamSolverResult` / `PlateSolverResult`. `TimberModel.connect_adjacent_*()` uses these solvers to register `JointCandidate` / `PlateJointCandidate` placeholders, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`. A `Cluster` groups joints that share a location and can be promoted with `Joint.promote_cluster()`.
-
-```mermaid
-classDiagram
-      class Data {
-         <<abstract>>
-      }
-
-      class Joint {
-         <<abstract>>
-      }
-
-      class PlateJoint {
-         <<abstract>>
-      }
-
-      class TimberModel
-
-      class JointTopology {
-         <<enumeration>>
-         TOPO_UNKNOWN
-         TOPO_I
-         TOPO_L
-         TOPO_T
-         TOPO_X
-         TOPO_Y
-         TOPO_K
-         TOPO_EDGE_EDGE
-         TOPO_EDGE_FACE
-      }
-
-      class ConnectionSolver {
-         +find_intersecting_pairs(beams, rtree=False, max_distance=0.0)
-         +find_topology(beam_a, beam_b, max_distance=None)
-      }
-
-      class PlateConnectionSolver {
-         +do_segments_overlap(segment_a, segment_b)
-         +does_segment_intersect_outline(segment, polyline, tol=TOL)
-      }
-
-      class BeamSolverResult {
-         +topology : JointTopology
-         +beam_a : Beam
-         +beam_b : Beam
-         +distance : float
-         +location : Point
-      }
-
-      class PlateSolverResult {
-         +topology : JointTopology
-         +plate_a : Plate
-         +plate_b : Plate
-         +a_segment_index : int
-         +b_segment_index : int
-         +distance : float
-         +location : Point
-      }
-
-      class Cluster {
-         +joints : list[Joint]
-         +elements : set[Element]
-         +location : Point
-         +topology
-      }
-
-      class JointCandidate {
-         +distance : float | None
-      }
-
-      class PlateJointCandidate {
-      }
-
-      %% Inheritance relationships
-      ConnectionSolver <|-- PlateConnectionSolver
-      Data <|-- BeamSolverResult
-      Data <|-- PlateSolverResult
-      Joint <|-- JointCandidate
-      PlateJoint <|-- PlateJointCandidate
-
-      %% Composition and usage relationships
-      ConnectionSolver ..> BeamSolverResult : returns
-      PlateConnectionSolver ..> PlateSolverResult : returns
-      ConnectionSolver ..> JointTopology : classifies as
-      TimberModel ..> JointCandidate : creates
-      TimberModel ..> PlateJointCandidate : creates
-      Joint ..> Cluster : promotes
-```
-
-### Beam Joints
-
-Beam joints join two or more `Beam` elements. Generic bases (`ButtJoint`, `LapJoint`, `MortiseTenonJoint`) share logic across topology-specific implementations. `CutPlaneSpec` and `MiterPlaneSpec` describe cutting planes relative to a beam's reference side (so they survive model transformations) and are passed to the butt/miter joint constructors via the `butt_plane_spec` / `back_plane_spec` / `miter_plane` parameters; the joints expose the resolved world-coordinate planes as `butt_plane` / `back_plane` / `miter_plane` properties.
+The connections subsystem defines joints and their relationships. All joints inherit from the base `Joint` class (a `compas.data.Data` subclass) and declare the topology they support via `SUPPORTED_TOPOLOGY`. Joints are registered in the `TimberModel` and referenced from the edges of its interaction graph. Beam joints join two or more `Beam` elements; generic bases (`ButtJoint`, `LapJoint`, `MortiseTenonJoint`) share logic across topology-specific implementations. `CutPlaneSpec` and `MiterPlaneSpec` describe cutting planes relative to a beam's reference side (so they survive model transformations) and are passed to the butt/miter joint constructors via the `butt_plane_spec` / `back_plane_spec` / `miter_plane` parameters. Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
 
 ```mermaid
 classDiagram
@@ -492,6 +345,10 @@ classDiagram
          +promote_cluster(model, cluster, reordered_elements=None, **kwargs)
          +promote_joint_candidate(model, candidate, reordered_elements=None, **kwargs)
          +check_elements_compatibility(elements, raise_error=False)
+      }
+
+      class JointCandidate {
+         +distance : float | None
       }
 
       class CutPlaneSpec {
@@ -709,46 +566,6 @@ classDiagram
          +main_ref_side_index
       }
 
-      %% Inheritance relationships
-      Data <|-- Joint
-      Data <|-- CutPlaneSpec
-      Data <|-- MiterPlaneSpec
-      Joint <|-- ButtJoint
-      ButtJoint <|-- LButtJoint
-      ButtJoint <|-- TButtJoint
-      Joint <|-- YButtJoint
-      Joint <|-- TBirdsmouthJoint
-      Joint <|-- LMiterJoint
-      Joint <|-- LapJoint
-      LapJoint <|-- TLapJoint
-      LapJoint <|-- LLapJoint
-      LapJoint <|-- XLapJoint
-      LapJoint <|-- LFrenchRidgeLapJoint
-      Joint <|-- BallNodeJoint
-      Joint <|-- TDovetailJoint
-      Joint <|-- TStepJoint
-      Joint <|-- MortiseTenonJoint
-      MortiseTenonJoint <|-- TTenonMortiseJoint
-      MortiseTenonJoint <|-- LTenonMortiseJoint
-      MortiseTenonJoint <|-- TOliGinaJoint
-      Joint <|-- ISimpleScarf
-      Joint <|-- XNotchJoint
-
-      %% Usage relationships
-      ButtJoint ..> CutPlaneSpec : uses
-      LMiterJoint ..> MiterPlaneSpec : uses
-```
-
-### Plate and Panel Joints
-
-Plate joints connect two `Plate` elements along their outlines and are classified by the edge/edge or edge/face topologies. Panel joints reuse the plate joint geometry logic through multiple inheritance and additionally create `PanelConnectionInterface` features on the joined panels.
-
-```mermaid
-classDiagram
-      class Joint {
-         <<abstract>>
-      }
-
       class PlateJoint {
          <<abstract>>
          +a_segment_index : int
@@ -815,6 +632,30 @@ classDiagram
       }
 
       %% Inheritance relationships
+      Data <|-- Joint
+      Joint <|-- JointCandidate
+      Data <|-- CutPlaneSpec
+      Data <|-- MiterPlaneSpec
+      Joint <|-- ButtJoint
+      ButtJoint <|-- LButtJoint
+      ButtJoint <|-- TButtJoint
+      Joint <|-- YButtJoint
+      Joint <|-- TBirdsmouthJoint
+      Joint <|-- LMiterJoint
+      Joint <|-- LapJoint
+      LapJoint <|-- TLapJoint
+      LapJoint <|-- LLapJoint
+      LapJoint <|-- XLapJoint
+      LapJoint <|-- LFrenchRidgeLapJoint
+      Joint <|-- BallNodeJoint
+      Joint <|-- TDovetailJoint
+      Joint <|-- TStepJoint
+      Joint <|-- MortiseTenonJoint
+      MortiseTenonJoint <|-- TTenonMortiseJoint
+      MortiseTenonJoint <|-- LTenonMortiseJoint
+      MortiseTenonJoint <|-- TOliGinaJoint
+      Joint <|-- ISimpleScarf
+      Joint <|-- XNotchJoint
       Joint <|-- PlateJoint
       PlateJoint <|-- PlateJointCandidate
       PlateJoint <|-- PlateButtJoint
@@ -828,15 +669,15 @@ classDiagram
       PlateTButtJoint <|-- PanelTButtJoint
       PanelJoint <|-- PanelMiterJoint
       PlateMiterJoint <|-- PanelMiterJoint
+
+      %% Usage relationships
+      ButtJoint ..> CutPlaneSpec : uses
+      LMiterJoint ..> MiterPlaneSpec : uses
 ```
 
 ## Fabrication Subsystem
 
-The fabrication subsystem handles manufacturing features and BTLx processing. All fabrication features inherit from `BTLxProcessing`. The BTLx core classes live in the `compas_timber.fabrication` package, while `BTLxReader` lives in the separate `compas_timber.btlx` package. `BTLxWriter`, `BTLxReader` and the part classes are plain XML-serialization helpers and do not inherit from `Data`. The subsystem is shown in two diagrams: the serialization infrastructure and the catalog of BTLx processings.
-
-### BTLx Infrastructure
-
-`BTLxWriter` walks a `TimberModel` and wraps each element in a `BTLxPart` (or `BTLxRawpart` for nesting stock) whose processings are serialized to BTLx XML; `BTLxReader` performs the reverse. `BTLxFromGeometryDefinition` defers the construction of a processing from arbitrary geometry until the target element is known. `Contour` and `DualContour` are parameter objects for the `FreeContour` processing, and `MachiningLimits` bundles the face-limitation flags used by several processings.
+The fabrication subsystem handles manufacturing features and BTLx processing. All fabrication features inherit from `BTLxProcessing`; each processing class represents one BTLx machining operation and is instantiated through alternative constructors (e.g. `from_plane_and_beam()`) rather than directly. The constants classes (`OrientationType`, `StepShapeType`, `TenonShapeType`, `AlignmentType`, `EdgePositionType`, `LimitationTopType`) enumerate the allowed values of the string-valued parameters. Several processings also export a lightweight `*Proxy` companion (`JackRafterCutProxy`, `DoubleCutProxy`, `DrillingProxy`, `LapProxy`, `PocketProxy`, `LongitudinalCutProxy`) that defers the expensive parameter computation until the processing is actually applied; proxies mirror the alternative constructors of their processing and are omitted from the diagram. `BTLxWriter` walks a `TimberModel` and wraps each element in a `BTLxPart` (or `BTLxRawpart` for nesting stock) whose processings are serialized to BTLx XML; `BTLxReader` (in the separate `compas_timber.btlx` package) performs the reverse. `BTLxWriter`, `BTLxReader` and the part classes are plain XML-serialization helpers and do not inherit from `Data`. `BTLxFromGeometryDefinition` defers the construction of a processing from arbitrary geometry until the target element is known. `Contour` and `DualContour` are parameter objects for the `FreeContour` processing, and `MachiningLimits` bundles the face-limitation flags used by several processings.
 
 ```mermaid
 classDiagram
@@ -957,36 +798,6 @@ classDiagram
          +from_dict(dictionary)
          +as_dict()
       }
-
-      %% Inheritance relationships
-      Data <|-- BTLxProcessing
-      Data <|-- BTLxFromGeometryDefinition
-      BTLxGenericPart <|-- BTLxPart
-      BTLxGenericPart <|-- BTLxRawpart
-      Data <|-- Contour
-      Data <|-- DualContour
-
-      %% Composition and usage relationships
-      BTLxWriter ..> BTLxPart : creates
-      BTLxWriter ..> BTLxRawpart : creates
-      BTLxReader ..> BTLxProcessing : deserializes
-      BTLxPart o-- BTLxProcessing : contains
-      BTLxRawpart ..> Stock : references
-```
-
-### BTLx Processings
-
-Each processing class represents one BTLx machining operation and is instantiated through alternative constructors (e.g. `from_plane_and_beam()`) rather than directly. The constants classes at the bottom (`OrientationType`, `StepShapeType`, `TenonShapeType`, `AlignmentType`, `EdgePositionType`, `LimitationTopType`) enumerate the allowed values of the string-valued parameters. Several processings also export a lightweight `*Proxy` companion (`JackRafterCutProxy`, `DoubleCutProxy`, `DrillingProxy`, `LapProxy`, `PocketProxy`, `LongitudinalCutProxy`) that defers the expensive parameter computation until the processing is actually applied; proxies mirror the alternative constructors of their processing and are omitted from the diagram.
-
-```mermaid
-classDiagram
-      class BTLxProcessing {
-         <<abstract>>
-      }
-
-      class Contour
-
-      class DualContour
 
       class JackRafterCut {
          +orientation : int
@@ -1364,6 +1175,12 @@ classDiagram
       }
 
       %% Inheritance relationships
+      Data <|-- BTLxProcessing
+      Data <|-- BTLxFromGeometryDefinition
+      BTLxGenericPart <|-- BTLxPart
+      BTLxGenericPart <|-- BTLxRawpart
+      Data <|-- Contour
+      Data <|-- DualContour
       BTLxProcessing <|-- JackRafterCut
       BTLxProcessing <|-- DoubleCut
       BTLxProcessing <|-- Drilling
@@ -1383,246 +1200,13 @@ classDiagram
       BTLxProcessing <|-- LongitudinalCut
 
       %% Composition and usage relationships
+      BTLxWriter ..> BTLxPart : creates
+      BTLxWriter ..> BTLxRawpart : creates
+      BTLxReader ..> BTLxProcessing : deserializes
+      BTLxPart o-- BTLxProcessing : contains
+      BTLxRawpart ..> Stock : references
       FreeContour o-- Contour : contains
       FreeContour o-- DualContour : contains
-```
-
-## Planning Subsystem
-
-The planning subsystem covers fabrication planning: nesting elements into stock material and sequencing assembly instructions. It lives in `compas_timber.planning`.
-
-### Nesting
-
-`BeamNester` optimizes the 1D nesting of a model's beams into `BeamStock` pieces from a stock catalog, returning a serializable `NestingResult`. Each `Stock` piece records the elements assigned to it as `NestedElementData`.
-
-```mermaid
-classDiagram
-      class Data {
-         <<abstract>>
-      }
-
-      class TimberModel
-
-      class Stock {
-         <<abstract>>
-         +length : float
-         +width : float
-         +height : float
-         +spacing : float
-         +element_data : dict[str, NestedElementData]
-         +add_element(element)
-         +can_fit_element(element)
-         +is_compatible_with(element)
-      }
-
-      class BeamStock {
-         +cross_section : tuple[float]
-      }
-
-      class PlateStock {
-         +dimensions : tuple[float]
-         +thickness : float
-      }
-
-      class NestedElementData {
-         +frame : Frame
-         +key : str
-         +length : float
-      }
-
-      class NestingResult {
-         +stocks : list[Stock]
-         +tolerance : Tolerance
-         +total_material_volume : float
-         +total_stock_pieces : dict
-         +summary : str
-      }
-
-      class BeamNester {
-         +model : TimberModel
-         +spacing : float
-         +per_group : bool
-         +stock_catalog : list[BeamStock]
-         +nest(fast=True)
-      }
-
-      %% Inheritance relationships
-      Data <|-- Stock
-      Stock <|-- BeamStock
-      Stock <|-- PlateStock
-      Data <|-- NestedElementData
-      Data <|-- NestingResult
-
-      %% Composition and usage relationships
-      BeamNester ..> TimberModel : nests beams of
-      BeamNester ..> NestingResult : returns
-      NestingResult o-- Stock : contains
-      Stock o-- NestedElementData : contains
-```
-
-### Assembly Sequencing
-
-A `BuildingPlan` is an ordered collection of `Step`s, each holding the `Instruction`s (3D models, text overlays, dimensions) needed to assemble one or more elements, executed by an `Actor`. `SimpleSequenceGenerator` produces a one-step-per-element plan from a model, and `BuildingPlanParser` reads/writes plans as JSON.
-
-```mermaid
-classDiagram
-      class Data {
-         <<abstract>>
-      }
-
-      class BuildingPlan {
-         +steps
-         +add_step(step)
-      }
-
-      class Step {
-         +element_ids : list[int]
-         +location : Frame
-         +geometry : str
-         +priority : int
-         +instructions : list[Instruction]
-         +is_built : bool
-         +is_planned : bool
-         +elements_held : list[int]
-         +actor : Actor
-         +transform(transformation)
-      }
-
-      class Instruction {
-         <<abstract>>
-         +id
-         +location
-         +transform(tranformation)
-      }
-
-      class Model3d {
-         +geometry
-         +element_id
-         +obj_filepath
-      }
-
-      class Text3d {
-         +text
-         +size
-      }
-
-      class LinearDimension {
-         +start
-         +end
-         +char_size
-         +offset
-      }
-
-      class Actor {
-         <<enumeration>>
-         HUMAN
-         ROBOT
-      }
-
-      class SimpleSequenceGenerator {
-         +model : Model
-         +result : BuildingPlan
-      }
-
-      class BuildingPlanParser {
-         +parse(filepath)
-         +serialize(building_plan, filepath)
-      }
-
-      %% Inheritance relationships
-      Data <|-- BuildingPlan
-      Data <|-- Step
-      Data <|-- Instruction
-      Instruction <|-- Model3d
-      Instruction <|-- Text3d
-      Instruction <|-- LinearDimension
-
-      %% Composition and usage relationships
-      BuildingPlan o-- Step : contains
-      Step o-- Instruction : contains
-      Step ..> Actor : executed by
-      SimpleSequenceGenerator ..> BuildingPlan : generates
-      BuildingPlanParser ..> BuildingPlan : parses and serializes
-```
-
-## Structural Subsystem
-
-The structural subsystem (`compas_timber.structural`) derives a `StructuralGraph` — a compas `Graph` of `StructuralSegment`s — from a `TimberModel`, for downstream structural analysis. `BeamStructuralElementSolver` produces the segments: a `BeamSegmentGenerator` splits each beam's centerline at joint locations, and a `JointConnectorGenerator` adds connector segments between non-intersecting centerlines. `InteractionType` selects whether joints, joint candidates, or both are considered.
-
-```mermaid
-classDiagram
-      class Graph {
-         <<compas>>
-      }
-
-      class Data {
-         <<abstract>>
-      }
-
-      class TimberModel
-
-      class StructuralGraph {
-         +beam_edges : iterator
-         +connector_edges : iterator
-         +from_model(model) : StructuralGraph
-         +node_point(node)
-         +node_index(node)
-         +segment(u, v)
-         +beam(u, v)
-         +joint(u, v)
-         +segments_for_beam(beam)
-         +segments_for_joint(joint)
-      }
-
-      class StructuralSegment {
-         +attributes
-         +line
-         +frame
-         +cross_section
-      }
-
-      class BeamStructuralElementSolver {
-         +beam_segment_generator : BeamSegmentGenerator
-         +joint_connector_generator : JointConnectorGenerator
-         +add_structural_segments(model) : Tuple[List[StructuralSegment], Iterable[Joint]]
-         +add_joint_structural_segments(model, joints) : Iterable[StructuralSegment]
-      }
-
-      class BeamSegmentGenerator {
-         <<abstract>>
-         +generate_segments(beam, joints) : List[StructuralSegment]
-      }
-
-      class SimpleBeamSegmentGenerator {
-      }
-
-      class JointConnectorGenerator {
-         <<abstract>>
-         +generate_connectors(joint) : List[Tuple[Beam, Beam, List[StructuralSegment]]]
-      }
-
-      class SimpleJointConnectorGenerator {
-      }
-
-      class InteractionType {
-         <<enumeration>>
-         AUTO
-         JOINTS
-         CANDIDATES
-      }
-
-      %% Inheritance relationships
-      Graph <|-- StructuralGraph
-      Data <|-- StructuralSegment
-      BeamSegmentGenerator <|-- SimpleBeamSegmentGenerator
-      JointConnectorGenerator <|-- SimpleJointConnectorGenerator
-
-      %% Composition and usage relationships
-      StructuralGraph ..> TimberModel : built from
-      BeamStructuralElementSolver *-- BeamSegmentGenerator : uses
-      BeamStructuralElementSolver *-- JointConnectorGenerator : uses
-      BeamStructuralElementSolver ..> StructuralSegment : creates
-      BeamStructuralElementSolver ..> InteractionType : uses
 ```
 
 ## Errors Subsystem
