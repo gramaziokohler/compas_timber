@@ -317,6 +317,10 @@ class TStepJoint(Joint):
             elif self.step_shape == StepShapeType.DOUBLE:
                 kc_vectors = [vector_a, vector_b, main_beam_ref_side.normal * -1, main_beam_direction_vector]
 
+        if self.tenon_mortise_height:
+            tm_vector = self.main_beam.centerline.direction.cross(self.cross_beam.centerline.direction)
+            kc_vectors.extend([tm_vector, tm_vector * -1])
+
         if moving_element == self.main_beam:
             return [kc_vectors]
         elif moving_element == self.cross_beam:
