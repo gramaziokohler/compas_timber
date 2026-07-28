@@ -4,9 +4,7 @@ from compas_timber.elements import Beam
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 
-from .joint_candidate import JointCandidate
 from .solver import ConnectionSolver
-from .solver import JointTopology
 from .solver import PlateConnectionSolver
 
 # ------------------------------------------------------------------
@@ -17,17 +15,17 @@ from .solver import PlateConnectionSolver
 # solvers, candidate classes, and element types, so it depends on all three
 # rather than living inside any one of them.
 #
-# Handlers register the type pair(s) they support via `@_register`, order-independent
-# (both (a, b) and (b, a) pairs match). To support a new type combination (e.g. beam-to-plate),
-# add a handler decorated with `@_register(TypeA, TypeB)` once the corresponding
-# topology-detection geometry exists.
+# `TopologyData` (via its guid-keyed `element_topo_data` of `BeamTopologyData`/`PlateTopologyData`)
+# already represents any pair of element types uniformly (including mixed pairs, e.g. beam-to-plate),
+# so registering a new type combination here only requires a solver that can actually detect that
+# pair's topology; add it to `_CONNECTION_HANDLERS` below, keyed by a frozenset of the two element
+# types (order-independent: both (a, b) and (b, a) pairs match).
 # ------------------------------------------------------------------
 
 _CONNECTION_HANDLERS = {
     frozenset((Beam, Beam)): ConnectionSolver,
     frozenset((Plate, Plate)): PlateConnectionSolver,
     frozenset((Panel, Panel)): PlateConnectionSolver,
-    
 }
 
 def find_connection_handler(element_a, element_b):

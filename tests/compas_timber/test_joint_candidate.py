@@ -7,10 +7,13 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.tolerance import TOL
 
+from compas_timber.connections import BeamTopologyData
+from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
-from compas_timber.connections import PlateJointCandidate
+from compas_timber.connections import PlateTopologyData
+from compas_timber.connections import TopologyData
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -93,12 +96,12 @@ def test_connect_adjacent_plates_creates_plate_joint_candidates():
 
     model.connect_adjacent_plates()
 
-    assert all((isinstance(j, PlateJointCandidate) for j in model.joint_candidates))
+    assert all((isinstance(j, JointCandidate) for j in model.joint_candidates))
 
     assert len(model.joint_candidates) == 1
     edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], PlateJointCandidate)
+    assert isinstance(edge_face_joints[0], JointCandidate)
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
     assert list(model.joint_candidates)[0].elements[0] == plate_b
 
@@ -129,7 +132,7 @@ def test_candidates_empty_when_none_added():
 
 def test_manual_candidate_is_joint_candidate(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L)
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     retrieved = list(model.joint_candidates)[0]
     assert isinstance(retrieved, JointCandidate)
@@ -195,7 +198,7 @@ def test_joint_candidate_create_still_works():
     model.add_elements(beams)
 
     # JointCandidate.create() should not create actual joints
-    joint = JointCandidate.create(model, beams[0], beams[1], topology=JointTopology.TOPO_T, location=Point(0.5, 0, 0))
+    joint = JointCandidate.create(model, beams[0], beams[1])
 
     assert isinstance(joint, JointCandidate)
     assert joint not in model.joints  # Should not be in actual joints
@@ -217,8 +220,17 @@ def test_joint_candidate_location_explicitly_set():
     model.add_element(b1)
     model.add_element(b2)
 
-    loc = Point(0.5, 0.0, 0.0)
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=loc)
+    # deliberately off the true geometric intersection (0.5, 0, 0), to prove this isn't recomputed
+    loc = Point(0.5, 0.0, 5.0)
+    topology_data = TopologyData(
+        JointTopology.TOPO_X,
+        location=loc,
+        element_topo_data={
+            str(b1.guid): BeamTopologyData(role="cross"),
+            str(b2.guid): BeamTopologyData(role="cross"),
+        },
+    )
+    joint = JointCandidate.create(model, b1, b2, topology_data=topology_data)
 
     assert TOL.is_allclose(joint.location, loc)
 
@@ -231,19 +243,26 @@ def test_joint_candidate_location_computed_from_intersecting_beams():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    joint = JointCandidate.create(model, b1, b2)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0))
 
 
 def test_joint_candidate_location_computed_from_skew_beams():
-    """When centerlines don't intersect, location is the midpoint between closest points."""
+    """When centerlines don't intersect, location is the midpoint between closest points.
+
+    The two beams here are 1 unit apart, well beyond `ConnectionSolver`'s tight default
+    `max_distance` (its purpose is adjacency *detection*), so the topology is solved explicitly
+    with a generous `max_distance` and passed in, rather than relying on `JointCandidate`'s
+    lazy solve (which uses the solver's default and would resolve to TOPO_UNKNOWN here).
+    """
     model = TimberModel()
     b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
     b2 = Beam.from_centerline(Line(Point(1, -1, 1), Point(1, 1, 1)), 0.1, 0.1)
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    topology_data = ConnectionSolver().find_topology(b1, b2, max_distance=2.0)
+    joint = JointCandidate.create(model, b1, b2, topology_data=topology_data)
     # closest points are (1,0,0) and (1,0,1), midpoint is (1,0,0.5)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0.5))
 
@@ -256,7 +275,7 @@ def test_joint_candidate_location_setter_rejects_non_point():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
+    joint = JointCandidate.create(model, b1, b2)
     with pytest.raises(TypeError, match="Location must be a Point"):
         joint.location = [1, 2, 3]
 
@@ -274,16 +293,17 @@ def test_joint_candidate_location_raises_before_elements_available():
         _ = candidate.location
 
 
-def test_plate_joint_candidate_location_defaults_to_origin_when_unset():
-    """`PlateJointCandidate.location` defaults to the origin (matching `PlateJoint.location`'s default), not a centerline computation."""
+def test_plate_joint_candidate_location_computed_from_intersecting_plates():
+    """When a `JointCandidate` for two plates is created without a `location`, it is solved lazily via the
+    `PlateConnectionSolver` registered for `(Plate, Plate)` pairs, same as for beams."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
-    candidate = PlateJointCandidate(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_EDGE)
+    candidate = JointCandidate(plate_a, plate_b)
 
-    assert TOL.is_allclose(candidate.location, Point(0, 0, 0))
+    assert TOL.is_allclose(candidate.location, Point(5, 10, 0))
 
 
 # =============================================================================
@@ -299,7 +319,7 @@ def test_joint_candidate_location_and_topology_survive_serialization():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X, location=Point(1, 0, 0))
+    joint = JointCandidate.create(model, b1, b2)
     original_location = joint.location
     original_topology = joint.topology
 
@@ -311,8 +331,8 @@ def test_joint_candidate_location_and_topology_survive_serialization():
     assert restored_joint.topology == original_topology
 
 
-def test_plate_joint_candidate_extra_kwargs_survive_serialization():
-    """`a_segment_index`/`b_segment_index` (arbitrary extra kwargs) survive a JSON round-trip."""
+def test_plate_joint_candidate_segment_indices_survive_serialization():
+    """`a_segment_index`/`b_segment_index`, sourced from `topology_data`'s per-plate `edge_index`, survive a JSON round-trip."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
@@ -321,7 +341,14 @@ def test_plate_joint_candidate_extra_kwargs_survive_serialization():
     model = TimberModel()
     model.add_elements([plate_a, plate_b])
 
-    candidate = PlateJointCandidate(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
+    topology_data = TopologyData(
+        JointTopology.TOPO_EDGE_EDGE,
+        element_topo_data={
+            str(plate_a.guid): PlateTopologyData(role="edge", edge_index=1),
+            str(plate_b.guid): PlateTopologyData(role="edge", edge_index=0),
+        },
+    )
+    candidate = JointCandidate(plate_a, plate_b, topology_data=topology_data)
     model.add_joint_candidate(candidate)
 
     restored = json_loads(json_dumps(model))
@@ -360,8 +387,8 @@ def test_remove_element_keeps_candidates_on_unrelated_elements():
     model.add_element(b2)
     model.add_element(b3)
 
-    candidate = JointCandidate.create(model, b1, b2, topology=JointTopology.TOPO_X)
-    unrelated = JointCandidate.create(model, b1, b3, topology=JointTopology.TOPO_T)
+    candidate = JointCandidate.create(model, b1, b2)
+    unrelated = JointCandidate.create(model, b1, b3)
 
     model.remove_element(b2)
 

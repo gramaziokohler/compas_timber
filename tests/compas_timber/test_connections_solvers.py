@@ -64,8 +64,7 @@ def test_find_topology_basic(beam_fixture, expected_topology, flip_a, flip_b, re
         cs = ConnectionSolver()
         topo_results = cs.find_topology(beam_a, beam_b)
         assert topo_results.topology == expected_topology, f"Expected {expected_topology} joint topology"
-        assert topo_results.beam_a == beam_a, "Expected first beam as beam_a in topology result"
-        assert topo_results.beam_b == beam_b, "Expected second beam as beam_b in topology result"
+        assert topo_results.ordered_guids() == [str(beam_a.guid), str(beam_b.guid)], "Expected first beam ordered first in topology result"
         assert TOL.is_close(topo_results.distance, 0.0), "Expected distance == 0"
         assert isinstance(topo_results.location, Point), "Expected location to be a Point instance"
 
@@ -119,8 +118,7 @@ def test_find_topology_with_max_distance(beam_fixture, expected_topology, flip_a
         topo_results = cs.find_topology(beam_a, beam_b, max_distance=0.02)
 
         assert topo_results.topology == expected_topology, f"Expected {expected_topology} joint topology"
-        assert topo_results.beam_a == beam_a, "Expected first beam as beam_a in topology result"
-        assert topo_results.beam_b == beam_b, "Expected second beam as beam_b in topology result"
+        assert topo_results.ordered_guids() == [str(beam_a.guid), str(beam_b.guid)], "Expected first beam ordered first in topology result"
 
         # For i_beams_with_tolerance, distance is consistently 0.01; for others it varies
         expected_distance = 0.01 if beam_fixture == "i_beams_with_tolerance" else dist
@@ -245,14 +243,13 @@ def test_plate_topology(plate_config, expected_topology, expected_segments, requ
     assert topo_results.topology == expected_topology, f"Expected {expected_topology} topology"
 
     if expected_topology == JointTopology.TOPO_EDGE_EDGE:
-        assert topo_results.plate_a == plate_a, "Expected plate_a as first plate"
-        assert topo_results.plate_b == plate_b, "Expected plate_b as second plate"
-        assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
-        assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
+        assert topo_results.data_for(plate_a).edge_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
+        assert topo_results.data_for(plate_b).edge_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
     elif expected_topology == JointTopology.TOPO_EDGE_FACE:
-        # For T-joints, the roles may be swapped
-        assert topo_results.a_segment_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
-        assert topo_results.b_segment_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
+        # solver normalizes order regardless of input order: edge plate always sorts first, face plate second
+        edge_guid, face_guid = topo_results.ordered_guids()
+        assert topo_results.element_topo_data[edge_guid].edge_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
+        assert topo_results.element_topo_data[face_guid].edge_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
 
 
 @pytest.fixture

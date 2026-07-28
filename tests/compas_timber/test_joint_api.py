@@ -446,7 +446,7 @@ def test_get_interactions_both_elements_see_joint(two_beam_model):
 
 def test_promote_returns_joint(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L, location=Point(0, 0, 0))
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     joint = LButtJoint.promote_joint_candidate(model, candidate)
     assert isinstance(joint, Joint)
@@ -455,7 +455,7 @@ def test_promote_returns_joint(two_beam_model):
 
 def test_promote_adds_to_model_joints(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L, location=Point(0, 0, 0))
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     joint = LButtJoint.promote_joint_candidate(model, candidate)
     assert joint in model.joints
@@ -463,7 +463,7 @@ def test_promote_adds_to_model_joints(two_beam_model):
 
 def test_promoted_joint_has_elements(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L, location=Point(0, 0, 0))
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     joint = LButtJoint.promote_joint_candidate(model, candidate)
     assert b1 in joint.elements
@@ -472,7 +472,7 @@ def test_promoted_joint_has_elements(two_beam_model):
 
 def test_promoted_joint_inherits_topology(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L, location=Point(0, 0, 0))
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     joint = LButtJoint.promote_joint_candidate(model, candidate)
     assert joint.topology == JointTopology.TOPO_L
@@ -480,7 +480,7 @@ def test_promoted_joint_inherits_topology(two_beam_model):
 
 def test_promote_with_reordered_elements(two_beam_model):
     model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L, location=Point(0, 0, 0))
+    candidate = JointCandidate(b1, b2)
     model.add_joint_candidate(candidate)
     joint = LButtJoint.promote_joint_candidate(model, candidate, reordered_elements=[b2, b1])
     assert isinstance(joint, Joint)

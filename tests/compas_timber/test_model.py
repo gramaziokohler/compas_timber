@@ -514,7 +514,7 @@ def test_remove_joint_candidate_preserves_edge():
 
     # Test that we can add a new candidate to the same edge
     # This verifies the edge still exists and can accept new candidates
-    new_candidate = JointCandidate(beam1, beam2, topology=JointTopology.TOPO_X, location=Point(0.5, 0, 0))
+    new_candidate = JointCandidate(beam1, beam2)
     model.add_joint_candidate(new_candidate)
 
     # Verify the new candidate was added successfully

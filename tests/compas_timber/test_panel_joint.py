@@ -10,6 +10,15 @@ from compas_timber.model import TimberModel
 from compas.geometry import Polyline, Point
 
 
+def _ordered_panels(px, py, topo_data):
+    """Orders `px`/`py` to match `topo_data.ordered_guids()` (edge/main first) -- PanelJoint's edge/face
+    handling assumes plate_a is always the edge/main plate, same invariant `PlateConnectionSolver.create_joint_candidate`
+    already enforces when building a `JointCandidate`.
+    """
+    panels_by_guid = {str(px.guid): px, str(py.guid): py}
+    return tuple(panels_by_guid[guid] for guid in topo_data.ordered_guids())
+
+
 def test_simple_joint_and_reset():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
@@ -68,19 +77,17 @@ def test_three_panel_joints():
     panel_c = Panel.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    topo_results = []
-    topo_results.append(cs.find_topology(panel_a, panel_b))
-    topo_results.append(cs.find_topology(panel_c, panel_b))
-    topo_results.append(cs.find_topology(panel_a, panel_c))
+    pairs = [(panel_a, panel_b), (panel_c, panel_b), (panel_a, panel_c)]
+    topo_results = [cs.find_topology(px, py) for px, py in pairs]
 
     joints = []
-    for tr in topo_results:
+    for (px, py), tr in zip(pairs, topo_results):
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PanelMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+            joints.append(PanelMiterJoint(*_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PanelTButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+            joints.append(PanelTButtJoint(*_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
     for j in joints:
         j.add_extensions()
         j.add_features()
@@ -103,19 +110,17 @@ def test_three_panel_joints_mix_topo():
     panel_c = Panel.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    topo_results = []
-    topo_results.append(cs.find_topology(panel_a, panel_b))
-    topo_results.append(cs.find_topology(panel_c, panel_b))
-    topo_results.append(cs.find_topology(panel_a, panel_c))
+    pairs = [(panel_a, panel_b), (panel_c, panel_b), (panel_a, panel_c)]
+    topo_results = [cs.find_topology(px, py) for px, py in pairs]
 
     joints = []
-    for tr in topo_results:
+    for (px, py), tr in zip(pairs, topo_results):
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PanelMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+            joints.append(PanelMiterJoint(*_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PanelTButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+            joints.append(PanelTButtJoint(*_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
     for j in joints:
         j.add_extensions()
     for p in [panel_a, panel_b, panel_c]:
@@ -140,15 +145,11 @@ def test_panel_remove_interfaces():
     panel_c = Panel.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    topo_results = []
-    topo_results.append(cs.find_topology(panel_a, panel_b))
-    topo_results.append(cs.find_topology(panel_c, panel_b))
-    topo_results.append(cs.find_topology(panel_a, panel_c))
 
     joints = []
     for _a, _b in [[panel_a, panel_b], [panel_c, panel_b], [panel_a, panel_c]]:
         tr = cs.find_topology(_a, _b)
-        joints.append(PanelMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
+        joints.append(PanelMiterJoint(*_ordered_panels(_a, _b, tr), topology=tr.topology, topology_data=tr))
 
     for j in joints:
         j.add_extensions()
@@ -208,25 +209,19 @@ def test_copy_three_panel_joints_mix_topo():
     panel_c = Panel.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    topo_results = []
-    topo_results.append(cs.find_topology(panel_a, panel_b))
-    topo_results.append(cs.find_topology(panel_c, panel_b))
-    topo_results.append(cs.find_topology(panel_a, panel_c))
+    pairs = [(panel_a, panel_b), (panel_c, panel_b), (panel_a, panel_c)]
+    topo_results = [cs.find_topology(px, py) for px, py in pairs]
 
     model = TimberModel()
     model.add_elements([panel_a, panel_b, panel_c])
     model_joints = []
-    for tr in topo_results:
+    for (px, py), tr in zip(pairs, topo_results):
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            model_joints.append(
-                PanelMiterJoint.create(model, tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index)
-            )
+            model_joints.append(PanelMiterJoint.create(model, *_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            model_joints.append(
-                PanelTButtJoint.create(model, tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index)
-            )
+            model_joints.append(PanelTButtJoint.create(model, *_ordered_panels(px, py, tr), topology=tr.topology, topology_data=tr))
     for j in model.joints:
         j.add_extensions()
     for p in [panel_a, panel_b, panel_c]:

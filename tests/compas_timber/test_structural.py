@@ -392,7 +392,7 @@ def test_get_interactions_for_element_returns_candidates():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
@@ -410,7 +410,7 @@ def test_solver_auto_prefers_joints_over_candidates(mocker: pytest_mock.MockerFi
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
@@ -434,7 +434,7 @@ def test_solver_auto_falls_back_to_candidates():
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
@@ -452,7 +452,7 @@ def test_solver_joints_only(mocker: pytest_mock.MockerFixture):
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
@@ -470,7 +470,7 @@ def test_solver_candidates_only(mocker: pytest_mock.MockerFixture):
     model.add_element(beam_a)
     model.add_element(beam_b)
 
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 
@@ -570,7 +570,7 @@ def test_build_structural_graph_with_connector_segment():
     model.add_element(beam_b)
 
     # Create an interaction edge between the two beams (required for connector segments)
-    candidate = JointCandidate(element_a=beam_a, element_b=beam_b, distance=0.0)
+    candidate = JointCandidate(element_a=beam_a, element_b=beam_b)
     candidate.location = Point(500, 0, 0)
     model.add_joint_candidate(candidate)
 

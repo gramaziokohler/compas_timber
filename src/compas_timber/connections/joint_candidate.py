@@ -1,6 +1,7 @@
 from compas.data import Data
 from compas.geometry import Point
 
+from .candidate_dispatch import find_connection_handler
 from .solver import JointTopology
 
 
@@ -12,27 +13,27 @@ class JointCandidate(Data):
 
     Please use `JointCandidate.create()` to properly create an instance of this class and associate it with a model.
 
+    A `JointCandidate` references a single `TopologyData` instance holding everything a solver determined about the
+    connection (topology, distance, location, and per-element data). `location`, `distance`, and `topology` are
+    convenience properties that read from this referenced `topology_data`; if a candidate is constructed from bare
+    elements without one, `topology_data` is always solved lazily, via the connection handler registered for the
+    pair's element types, on first access — there is no partial/stub construction path.
+
     Parameters
     ----------
     element_a : :class:`~compas_model.elements.Element`
         First element to be joined.
     element_b : :class:`~compas_model.elements.Element`
         Second element to be joined.
-    topology : literal, one of :class:`JointTopology`, optional
-        The topology by which the two elements interact. Defaults to `JointTopology.TOPO_UNKNOWN`.
-    location : :class:`~compas.geometry.Point`, optional
-        The estimated location of the interaction point of the two elements. If not provided, it is calculated
-        from the elements' centerlines on first access.
-    distance : float, optional
-        The distance between the two elements.
-    topology_data : tuple(:class:`~compas_timber.connections.TopologyData`, :class:`~compas_timber.connections.TopologyData`), optional
-        Structured per-element topology data for `element_a` and `element_b`, respectively.
+    topology_data : :class:`~compas_timber.connections.TopologyData`, optional
+        The topology-analysis result for this pair of elements. If not provided, it is computed lazily
+        from the elements on first access to `location`, `distance`, or `topology`.
     name : str, optional
         The name of the candidate.
     element_guids : tuple(str, str), optional
         GUIDs of the two elements, used during deserialization when the live elements aren't available yet.
     **kwargs : dict, optional
-        Any additional attributes (e.g. `a_segment_index`, `b_segment_index`) are set directly on the instance.
+        Any additional attributes are set directly on the instance.
 
     Attributes
     ----------
@@ -45,14 +46,20 @@ class JointCandidate(Data):
     interactions : list(tuple(:class:`~compas_model.elements.Element`, :class:`~compas_model.elements.Element`))
         The element pairs this candidate connects. This is the minimal surface `TimberModel` needs to store the
         candidate as an edge attribute on its graph.
+    solver : :class:`~compas_timber.connections.ConnectionSolver` or None
+        The solver registered for this candidate's pair of element types, or ``None`` if unsupported.
+    topology_data : :class:`~compas_timber.connections.TopologyData` or None
+        The topology-analysis result referenced by this candidate.
     topology : literal, one of :class:`JointTopology`
-        The topology by which the two elements interact.
+        Shortcut for `topology_data.topology`.
     location : :class:`~compas.geometry.Point`
-        The estimated location of the interaction point of the two elements.
+        Shortcut for `topology_data.location`. Settable — writes through to `topology_data.location`.
     distance : float or None
-        The distance between the two elements.
-    topology_data : tuple(:class:`~compas_timber.connections.TopologyData`, :class:`~compas_timber.connections.TopologyData`) or None
-        Structured per-element topology data for `element_a` and `element_b`, respectively.
+        Shortcut for `topology_data.distance`.
+    a_segment_index : int or None
+        Shortcut for `topology_data.data_for(element_a).edge_index`.
+    b_segment_index : int or None
+        Shortcut for `topology_data.data_for(element_b).edge_index`.
 
     """
 
@@ -60,9 +67,6 @@ class JointCandidate(Data):
         self,
         element_a=None,
         element_b=None,
-        topology=None,
-        location=None,
-        distance=None,
         topology_data=None,
         name=None,
         element_guids=None,
@@ -79,10 +83,14 @@ class JointCandidate(Data):
         else:
             raise ValueError("JointCandidate requires either elements or element_guids.")
 
-        self.topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
-        self._location = location
-        self.distance = distance
-        self.topology_data = topology_data
+        # backward compatibility: older serialized models flattened topology/location/distance directly
+        # onto JointCandidate instead of nesting them in a `topology_data`; drop them silently on load
+        # rather than crashing -- they get recomputed lazily via `topology_data` on first access anyway.
+        kwargs.pop("topology", None)
+        kwargs.pop("location", None)
+        kwargs.pop("distance", None)
+
+        self._topology_data = topology_data
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -91,10 +99,7 @@ class JointCandidate(Data):
         return {
             "name": self.name,
             "element_guids": self.element_guids,
-            "topology": self.topology,
-            "location": self._location,
-            "distance": self.distance,
-            "topology_data": self.topology_data,
+            "topology_data": self._topology_data,
         }
 
     def __repr__(self):
@@ -117,24 +122,46 @@ class JointCandidate(Data):
         return [(self.element_a, self.element_b)]
 
     @property
-    def location(self):
-        if self._location is None and all(self.elements) and len(self.elements) == 2:
-            if hasattr(self.elements[0], "centerline"):
-                from .joint import location_from_centerlines  # local import: avoids a circular import (joint.py imports JointTopology from solver.py, which imports this module)
+    def solver(self):
+        handler_type = find_connection_handler(*self.elements)
+        return handler_type() if handler_type is not None else None
 
-                self._location = location_from_centerlines(self.elements)
-            else:
-                # non-beam elements (e.g. plates) have no centerline-based fallback; match `PlateJoint.location`'s default.
-                self._location = Point(0, 0, 0)
-        if self._location is None:
-            raise ValueError("Location of the joint could not be determined. Please set it manually.")
-        return self._location
+    @property
+    def topology_data(self):
+        """Returns `topology_data`, solving it lazily via the registered connection handler if none exists yet."""
+        if self._topology_data is None:
+            if len(self.elements) < 2:
+                raise ValueError("Location of the joint could not be determined. Please set it manually.")
+            self._topology_data = self.solver.find_topology(*self.elements)
+        return self._topology_data
+
+    @property
+    def location(self):
+        return self.topology_data.location
 
     @location.setter
     def location(self, value):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
-        self._location = value
+        self.topology_data.location = value
+
+    @property
+    def distance(self):
+        return self.topology_data.distance
+
+    @property
+    def topology(self):
+        return self.topology_data.topology
+
+    @property
+    def a_segment_index(self):
+        data = self.topology_data.data_for(self.element_a) if self.topology_data else None
+        return data.edge_index if data else None
+
+    @property
+    def b_segment_index(self):
+        data = self.topology_data.data_for(self.element_b) if self.topology_data else None
+        return data.edge_index if data else None
 
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this candidate.

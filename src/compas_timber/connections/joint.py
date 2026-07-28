@@ -85,7 +85,7 @@ class Joint(Data):
     MIN_ELEMENT_COUNT = 2
     MAX_ELEMENT_COUNT = 2
 
-    def __init__(self, elements=None, topology=None, location=None, name=None, element_guids=None, **kwargs):
+    def __init__(self, elements=None, topology=None, location=None, topology_data=None, name=None, element_guids=None, **kwargs):
         super().__init__(name=name)
         # filter out Nones — subclasses pass e.g. elements=(None, None) during deserialization
         elements = tuple(e for e in (elements or ()) if e is not None)
@@ -105,11 +105,23 @@ class Joint(Data):
         self.features = []
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
         self._location = location
+        self._topology_data = topology_data
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name, "topology": self._topology, "location": self._location, "element_guids": self.element_guids}
+        return {
+            "name": self.name,
+            "topology": self._topology,
+            "location": self._location,
+            "element_guids": self.element_guids,
+            "topology_data": self._topology_data,
+        }
+
+    @property
+    def topology_data(self):
+        """The `TopologyData` this joint was promoted from, or ``None`` if it wasn't promoted from a candidate."""
+        return self._topology_data
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -386,7 +398,9 @@ class Joint(Data):
             elements = reordered_elements
         else:
             elements = candidate.elements
-        kwargs.update({"topology": candidate.topology, "location": candidate.location})  # pass topology, distance and location from candidate
+        kwargs.update(
+            {"topology": candidate.topology, "location": candidate.location, "topology_data": candidate.topology_data}
+        )  # pass topology, location, and the full topology_data from candidate
         joint = cls.create(model, *elements, **kwargs)
         return joint
 
