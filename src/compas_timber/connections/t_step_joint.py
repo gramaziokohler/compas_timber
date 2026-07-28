@@ -269,38 +269,55 @@ class TStepJoint(Joint):
         """Calculates the escape constraint for the TStep joint."""
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
-        
-        mbrs = self.main_beam.ref_sides[self.main_beam_ref_side_index]
-        cbrs = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-        
-        # vector rotation direction of the plane's normal in the vertical direction
-        strut_inclination_vector = Vector.cross(mbrs.zaxis, cbrs.normal)
-        strut_inclination = 180 - abs(
-            angle_vectors_signed(mbrs.zaxis, cbrs.normal, strut_inclination_vector, deg=True)
+
+        main_beam_ref_side = self.main_beam.ref_sides[self.main_beam_ref_side_index]
+        cross_beam_ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        main_beam_end_side = self.main_beam.endpoint_closest_to_point(self.location)[0]
+
+        strut_incl_vector = Vector.cross(main_beam_ref_side.zaxis, cross_beam_ref_side.normal)
+        strut_signed_angle = angle_vectors_signed(
+            main_beam_ref_side.zaxis, cross_beam_ref_side.normal, strut_incl_vector, deg=True
         )
+        strut_inclination = 180 - abs(strut_signed_angle)
 
-        if strut_inclination < 90:
-            rot_ang = (180 - strut_inclination) / 2
+        dir_mulitplier = -1 if main_beam_end_side == "end" else 1
+        main_beam_direction_vector = self.main_beam.centerline.direction * dir_mulitplier
+
+        if self.step_shape in (StepShapeType.HEEL, StepShapeType.TAPERED_HEEL):
+            if self.step_shape == StepShapeType.HEEL:
+                kc_vectors = [main_beam_ref_side.normal * -1, main_beam_direction_vector, cross_beam_ref_side.normal]
+
+            elif self.step_shape == StepShapeType.TAPERED_HEEL:
+                kc_vectors = [main_beam_ref_side.normal * -1, main_beam_direction_vector]
+
         else:
-            rot_ang = strut_inclination - 180
 
-        if self.step_shape == StepShapeType.STEP:
-            vector_a = cbrs.rotated(math.radians(-rot_ang), mbrs.yaxis, cbrs.point).normal
-            vector_b = cbrs.normal
-            kc_vectors = [vector_a, vector_b]
+            if strut_inclination < 90:
+                va_rot_ang = (180 - strut_inclination) / 2
+            else:
+                va_rot_ang = strut_inclination - 180
 
+            _, height = self.main_beam.get_dimensions_relative_to_side(self.main_beam_ref_side_index)
+            intersection_length = height / math.sin(math.radians(strut_inclination))
+            short_step_side_offset = math.tan(math.radians(90 - va_rot_ang)) * self.step_depth
 
-        # elif self.step_shape in (StepShapeType.HEEL, StepShapeType.TAPERED_HEEL):
-        #     self.step_depth = 0.0
-        #     self.heel_depth = self.heel_depth or self.cross_beam.height / 4
+            heel_reduction = 0.0
+            if self.step_shape == StepShapeType.DOUBLE:
+                heel_reduction = self.heel_depth / (math.sin(math.radians(strut_inclination)) * math.cos(math.radians(strut_inclination)))
 
-        # elif self.step_shape == StepShapeType.DOUBLE:
-        #     self.step_depth = self.step_depth or self.cross_beam.height / 6
-        #     self.heel_depth = self.heel_depth or self.cross_beam.height / 4
+            long_step_side_offset = intersection_length - (heel_reduction + short_step_side_offset)
+            vb_rot_ang = math.degrees(math.atan(self.step_depth / long_step_side_offset))
 
-        print(strut_inclination, rot_ang)
-        escape_vector = cbrs.normal
+            vector_a = cross_beam_ref_side.rotated(math.radians(-va_rot_ang * dir_mulitplier), main_beam_ref_side.yaxis, cross_beam_ref_side.point).normal
+            vector_b = cross_beam_ref_side.rotated(math.radians(vb_rot_ang * dir_mulitplier), main_beam_ref_side.yaxis, cross_beam_ref_side.point).normal
+
+            if self.step_shape == StepShapeType.STEP:
+                kc_vectors = [vector_a, vector_b]
+
+            elif self.step_shape == StepShapeType.DOUBLE:
+                kc_vectors = [vector_a, vector_b, main_beam_ref_side.normal * -1, main_beam_direction_vector]
+
         if moving_element == self.main_beam:
-            return Line(self.location, self.location + vector_a)
+            return [kc_vectors]
         elif moving_element == self.cross_beam:
-            return Line(self.location, self.location - escape_vector)
+            return [-v for v in kc_vectors]
