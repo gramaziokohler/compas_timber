@@ -243,12 +243,9 @@ class MortiseTenonJoint(Joint, abc.ABC):
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
 
-        # the tenon slides perpendicular to the cross beam's mortise face
         axis = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
 
         if moving_element == self.main_beam:
-            # main beam (has tenon): pulled away from the cross beam face
             return Line(self.location, self.location + axis)
         else:
-            # cross beam (has mortise): slides in the opposite direction
             return Line(self.location, self.location - axis)
