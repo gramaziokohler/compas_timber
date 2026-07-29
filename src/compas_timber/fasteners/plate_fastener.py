@@ -9,6 +9,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Transformation
+from compas.geometry import Translation
 from compas.geometry import angle_vectors
 from compas_brep import Brep
 
@@ -136,7 +137,7 @@ class RectangularPlate(FastenerPart):
             # box_brep = Brep.from_boolean_difference(box_brep, hole.geometry)
             box_brep -= hole.geometry
         if self.recess > 0:
-            box_brep.translate(self._local_frame.zaxis * -self.recess)
+            box_brep.transform(Translation.from_vector(self._local_frame.zaxis * -self.recess))
         return box_brep
 
     def add_hole_point_diameter(self, point: Point, diameter: float, apply_drilling=True, drilling_depth=5, drilling_diameter=2) -> PlateHole:
