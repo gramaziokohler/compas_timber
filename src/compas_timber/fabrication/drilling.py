@@ -334,8 +334,8 @@ class Drilling(BTLxProcessing):
             return geometry - drill_geometry
         except IndexError:
             raise FeatureApplicationError(
-                drill_geometry,
-                geometry,
+                drill_geometry.transformed(element.modeltransformation),
+                geometry.transformed(element.modeltransformation),
                 "The drill geometry does not intersect with element geometry.",
             )
 
@@ -528,8 +528,8 @@ class DrillingProxy(object):
             return geometry - drill_geometry
         except IndexError:
             raise FeatureApplicationError(
-                drill_geometry,
-                geometry,
+                drill_geometry.transformed(element.modeltransformation),
+                geometry.transformed(element.modeltransformation),
                 "The drill geometry does not intersect with element geometry.",
             )
 

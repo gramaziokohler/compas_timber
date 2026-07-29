@@ -123,8 +123,6 @@ class ISimpleScarf(Joint):
         self.drill_hole_diam = drill_hole_diam
         self.ref_side_index = ref_side_index
 
-        self.features = []
-
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()
 
@@ -218,11 +216,6 @@ class ISimpleScarf(Joint):
             If either beam is not set.
         """
         assert self.main_beam and self.cross_beam
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
-            self.features = []
 
         main_feature = SimpleScarf.from_beam_and_side(
             self.main_beam,

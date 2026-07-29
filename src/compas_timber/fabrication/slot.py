@@ -392,8 +392,8 @@ class Slot(BTLxProcessing):
 
         except Exception:
             raise FeatureApplicationError(
-                subtraction_volume,
-                geometry,
+                subtraction_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The slot subtracting volume does not intersect with the beam geometry."
                 )
 

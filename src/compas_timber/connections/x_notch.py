@@ -39,7 +39,6 @@ class XNotchJoint(Joint):
 
     def __init__(self, notch_beam=None, solid_beam=None, **kwargs):
         super(XNotchJoint, self).__init__(elements=(notch_beam, solid_beam), **kwargs)
-        self.features = []
         self._main_ref_side_index = None
 
     @property
@@ -106,10 +105,6 @@ class XNotchJoint(Joint):
 
         """
         assert self.notch_beam and self.solid_beam
-
-        if self.features:
-            self.notch_beam.remove_features(self.features)
-            self.solid_beam.remove_features(self.features)
 
         # create pocket features
         negative_volume = self._create_negative_volume()

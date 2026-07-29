@@ -105,10 +105,17 @@ classDiagram
          +features : list[PanelFeature]
          +interfaces : list[PanelConnectionInterface]
          +is_group_element : bool = True
+         +layer_structure : LayerStructure
+         +exterior_layer : Layer
+         +core_layer : Layer
+         +interior_layer : Layer
+         +layers : list[Layer]
          +attributes : dict
          +from_outlines(outline_a, outline_b, openings, recognize_doors, horizontal_openings)
          +from_outline_thickness(outline, thickness, vector)
          +from_brep(brep, thickness, vector)
+         +get_leaf_layers()
+         +merge_layer_structure(model)
          +compute_elementgeometry(include_features=True)
          +compute_aabb(inflate=0.0)
          +compute_obb(inflate=0.0)
@@ -118,6 +125,29 @@ classDiagram
          +remove_blank_extension(edge_index=None)
          +reset()
          +remove_features(features=None)
+      }
+
+      class Layer {
+         +start_offset : float
+         +thickness : float
+         +plate_geometry : PlateGeometry
+         +sublayers : list[Layer]
+         +layer_path : tuple[int]
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +planes : tuple[Plane]
+         +normal : Vector
+         +edge_planes : dict[int, Plane]
+         +center_height : float
+         +from_parent_start_end(host, start_offset, end_offset)$
+         +get_outlines_from_parent(parent, start_offset, end_offset)$
+         +define_sublayers(thicknesses, names)
+         +set_extension_plane(edge_index, plane)
+         +apply_edge_extensions()
+         +compute_aabb(inflate=0.0)
+         +compute_obb(inflate=0.0)
+         +compute_collision_mesh()
+         +clear_model_dependent_cache()
       }
 
       class PanelFeature {
@@ -148,12 +178,15 @@ classDiagram
       TimberElement <|-- Beam
       TimberElement <|-- Plate
       Element <|-- Panel
+      Element <|-- Layer
       Element <|-- Fastener
       PanelFeature <|-- Opening
 
       %% Composition relationships
       Fastener ..> FastenerTimberInterface : contains
       Panel ..> PanelFeature : contains
+      Panel "1" *-- "0..3" Layer : exterior/core/interior
+      Layer "1" *-- "0..*" Layer : sublayers
       Opening ..> OpeningType : uses
 ```
 
@@ -374,6 +407,22 @@ classDiagram
          +beams : list
       }
 
+      class CompositeJoint {
+         +joints : list[Joint]
+         +elements : tuple[Element]
+         +location : Point
+         +topology : JointTopology
+         +SUPPORTED_TOPOLOGY = TOPO_UNKNOWN
+         +MIN_ELEMENT_COUNT = 3
+         +MAX_ELEMENT_COUNT = None
+         +create(model, joints)
+         +add_features()
+         +add_extensions()
+         +clear_features()
+         +clear_extensions()
+         +restore_elements_from_keys(model)
+      }
+
       class PlateJoint {
          <<abstract>>
          +plate_a : Plate
@@ -430,6 +479,9 @@ classDiagram
       Joint <|-- TDovetailJoint
       Joint <|-- TStepJoint
       Joint <|-- YButtJoint
+      Joint <|-- CompositeJoint
+      CompositeJoint "1" *-- "1..*" Joint : sub-joints
+
       Joint <|-- PlateJoint
 
       PlateJoint <|-- PanelJoint

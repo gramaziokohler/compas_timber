@@ -536,7 +536,7 @@ class DovetailMortise(BTLxProcessing):
             dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate dovetail mortise volume from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate dovetail mortise volume from parameters and beam: {}".format(str(e))
             )
 
         # fillet the edges of the dovetail volume based on the shape
@@ -549,21 +549,24 @@ class DovetailMortise(BTLxProcessing):
                     self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
                 )  # TODO: NotImplementedError
             except Exception as e:
+                # dovetail_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
                     dovetail_volume,
-                    geometry,
+                    geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
         # transform dovetail volume to local coordinates of the beam
         dovetail_volume.transform(beam.transformation_to_local())
 
-        # remove tenon volume to geometry
+        # remove tenon volume from geometry
         try:
             geometry -= dovetail_volume
         except Exception as e:
             raise FeatureApplicationError(
-                dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                dovetail_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to subtract tenon volume from geometry: {}".format(str(e))
             )
 
         return geometry

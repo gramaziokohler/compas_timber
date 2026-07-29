@@ -87,10 +87,6 @@ class LFrenchRidgeLapJoint(LapJoint):
         """
         assert self.beam_a and self.beam_b
 
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
-
         frl_feature_a = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_a, self.beam_b, self.cutting_plane_a, self.drillhole_diam, self.ref_side_index_a)
         frl_feature_b = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_b, self.beam_a, self.cutting_plane_b, self.drillhole_diam, self.ref_side_index_b)
         # store the features to the beams

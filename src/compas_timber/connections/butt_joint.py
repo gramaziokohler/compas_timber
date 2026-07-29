@@ -175,7 +175,6 @@ class ButtJoint(Joint):
         self._butt_plane_spec: Optional[CutPlaneSpec] = butt_plane_spec
         self.force_pocket: bool = force_pocket
         self.conical_tool: bool = conical_tool
-        self.features = []
 
     @property
     def main_beam(self):
@@ -246,10 +245,6 @@ class ButtJoint(Joint):
     def add_features(self) -> None:
         """Removes this joint's previously generated features and adds new features to each beam."""
         assert self.main_beam and self.cross_beam
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # apply cut on the main beam
         main_feature = JackRafterCutProxy.from_plane_and_beam(self.butt_plane, self.main_beam, self.main_beam_ref_side_index)

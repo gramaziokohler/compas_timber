@@ -257,8 +257,8 @@ class JackRafterCut(BTLxProcessing):
             return geometry.trimmed(cutting_plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                cutting_plane,
-                geometry,
+                cutting_plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The cutting plane does not intersect with beam geometry.",
             )
 
@@ -412,8 +412,8 @@ class JackRafterCutProxy(object):
             return geometry.trimmed(self.plane)
         except BrepTrimmingError:
             raise FeatureApplicationError(
-                self.plane,
-                geometry,
+                self.plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The cutting plane does not intersect with beam geometry.",
             )
 

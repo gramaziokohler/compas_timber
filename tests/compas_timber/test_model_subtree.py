@@ -95,12 +95,13 @@ def test_remove_element_subtree_clears_cache_on_removed_elements():
 def test_remove_element_subtree_removes_joints_spanning_only_descendants(mocker):
     mocker.patch("compas_timber.connections.LButtJoint.add_features")
     model, panel, beam_a, beam_b = _hierarchy_model()
-    LButtJoint.create(model, beam_a, beam_b)
+    joint = LButtJoint.create(model, beam_a, beam_b)
     assert len(list(model.joints)) == 1
-
+    assert joint.location is not None
     model.remove_element_subtree(panel)
 
     assert len(list(model.joints)) == 0
+    assert joint._location is None
 
 
 def test_remove_element_subtree_leaf_element():

@@ -121,8 +121,6 @@ class LTenonMortiseJoint(MortiseTenonJoint):
         """
         assert self.main_beam and self.cross_beam  # should never happen
 
-        self._clear_features()
-
         main_feature = self._create_tenon_feature()
 
         self.main_beam.add_features(main_feature)

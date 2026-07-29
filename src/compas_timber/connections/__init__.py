@@ -13,6 +13,7 @@ from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
+from .solver import find_connection_handler
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -39,9 +40,12 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .panel_layer_butt_joint import PanelLLayerButtJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 from .ball_node import BallNodeJoint
+from .cluster import get_topology_from_joints
+from .composite_joint import CompositeJoint
 
 
 __all__ = [
@@ -66,6 +70,7 @@ __all__ = [
     "ConnectionSolver",
     "PlateConnectionSolver",
     "find_neighboring_elements",
+    "find_connection_handler",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "TTenonMortiseJoint",
@@ -88,7 +93,10 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "PanelLLayerButtJoint",
     "Cluster",
     "BallNodeJoint",
     "get_clusters_from_joint_candidates",
+    "get_topology_from_joints",
+    "CompositeJoint",
 ]

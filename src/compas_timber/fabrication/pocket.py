@@ -555,16 +555,16 @@ class Pocket(BTLxProcessing):
             pocket_volume = Brep.from_mesh(polyhedron_volume.to_mesh())
         except Exception as e:
             raise FeatureApplicationError(
-                polyhedron_volume,
-                geometry,
+                polyhedron_volume.transformed(element.modeltransformation),
+                geometry.transformed(element.modeltransformation),
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
         try:
             return geometry - pocket_volume
         except Exception as e:
             raise FeatureApplicationError(
-                pocket_volume,
-                geometry,
+                pocket_volume.transformed(element.modeltransformation),
+                geometry.transformed(element.modeltransformation),
                 "The pocket volume does not intersect with the element geometry." + str(e),
             )
 
@@ -847,8 +847,8 @@ class PocketProxy(object):
             return geometry - self.volume
         except IndexError:
             raise FeatureApplicationError(
-                self.volume,
-                geometry,
+                self.volume.transformed(self.element.modeltransformation),
+                geometry.transformed(self.element.modeltransformation),
                 "The volume to subtract does not intersect with element geometry.",
             )
 

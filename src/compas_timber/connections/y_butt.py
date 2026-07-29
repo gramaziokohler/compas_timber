@@ -56,7 +56,6 @@ class YButtJoint(Joint):
     def __init__(self, main_beam=None, cross_beam_a=None, cross_beam_b=None, mill_depth=None, **kwargs):
         super(YButtJoint, self).__init__(elements=(main_beam, cross_beam_a, cross_beam_b), **kwargs)
         self.mill_depth = mill_depth
-        self.features = []
 
     @property
     def beams(self):
@@ -177,10 +176,6 @@ class YButtJoint(Joint):
         """
 
         assert self.main_beam and self.cross_beams[0] and self.cross_beams[1]
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beams[0].remove_features(self.features)
-            self.cross_beams[1].remove_features(self.features)
 
         # get the cutting planes for the main beam
         planes = []
@@ -223,7 +218,7 @@ class YButtJoint(Joint):
         cut2 = JackRafterCut.from_plane_and_beam(plane_b, self.cross_beams[1])
         self.cross_beams[0].add_features(cut1)
         self.cross_beams[1].add_features(cut2)
-        self.features = [cut1, cut2]
+        self.features.extend([cut1, cut2])
 
     @classmethod
     def check_elements_compatibility(cls, elements, raise_error=False):

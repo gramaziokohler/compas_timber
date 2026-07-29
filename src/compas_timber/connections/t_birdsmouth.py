@@ -46,8 +46,6 @@ class TBirdsmouthJoint(Joint):
         super(TBirdsmouthJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
 
-        self.features = []  # TODOL remove?
-
     @property
     def main_beam(self):
         return self.element_a
@@ -102,10 +100,6 @@ class TBirdsmouthJoint(Joint):
         """
 
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         cutting_planes = self._get_cutting_planes()
 

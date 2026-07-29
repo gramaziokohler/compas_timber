@@ -10,7 +10,7 @@
 [![pip downloads](https://img.shields.io/pypi/dm/compas_timber)](https://pypi.python.org/project/compas_timber)
 [![PyPI Package latest release](https://img.shields.io/pypi/v/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
 [![Supported implementations](https://img.shields.io/pypi/implementation/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7934267.svg)](https://doi.org/10.5281/zenodo.7934267)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7934266.svg)](https://doi.org/10.5281/zenodo.7934266)
 [![Twitter Follow](https://img.shields.io/twitter/follow/compas_dev?style=social)](https://twitter.com/compas_dev)
 [![Made with COMPAS](https://compas.dev/badge.svg)](https://compas.dev/#/)
 ![COMPAS Timber](https://raw.githubusercontent.com/gramaziokohler/compas_timber/main/docs/_images/compas_timber.jpg)

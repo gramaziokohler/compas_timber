@@ -339,7 +339,7 @@ class DoubleCut(BTLxProcessing):
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
         # convert to the local coordinates of the beam
         cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
@@ -540,7 +540,7 @@ class DoubleCutProxy(object):
         # determine if concave or convex based on the stored planes
         # get the intersection line of cutting planes
         if not intersection_plane_plane(self.planes[0], self.planes[1]):
-            raise FeatureApplicationError(None, geometry, "The two cutting planes are parallel.")
+            raise FeatureApplicationError(None, geometry.transformed(beam.modeltransformation), "The two cutting planes are parallel.")
 
         # check angle between planes to determine concavity
         angle_between = angle_vectors(self.planes[0].normal, self.planes[1].normal, deg=True)

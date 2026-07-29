@@ -44,10 +44,6 @@ class XLapJoint(LapJoint):
         """
         assert self.beam_a and self.beam_b
 
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
-
         # create lap features
         negative_volume_a, negative_volume_b = self._create_negative_volumes(self.cut_plane_bias)
 

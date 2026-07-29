@@ -539,7 +539,7 @@ class Tenon(BTLxProcessing):
             cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
 
         cutting_plane.transform(beam.transformation_to_local())
@@ -549,14 +549,16 @@ class Tenon(BTLxProcessing):
             geometry.trim(cutting_plane)
         except Exception as e:
             raise FeatureApplicationError(
-                cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                cutting_plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to trim geometry with cutting plane: {}".format(str(e)),
             )
         # get tenon volume from params and beam
         try:
             tenon_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
         # fillet the edges of the volume based on the shape
         if self.shape is not TenonShapeType.SQUARE:
@@ -564,9 +566,10 @@ class Tenon(BTLxProcessing):
                 edges = tenon_volume.edges[:8]
                 tenon_volume.fillet(self.shape_radius, edges)
             except Exception as e:
+                # tenon_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
                     tenon_volume,
-                    geometry,
+                    geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
 
@@ -583,7 +586,9 @@ class Tenon(BTLxProcessing):
             geometry += tenon_volume
         except Exception as e:
             raise FeatureApplicationError(
-                tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                tenon_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to add tenon volume to geometry: {}".format(str(e)),
             )
         return geometry
 

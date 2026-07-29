@@ -129,8 +129,6 @@ class TDovetailJoint(Joint):
         self._flank_angle = None
         self._shape_radius = None
 
-        self.features = []
-
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()
 
@@ -212,10 +210,6 @@ class TDovetailJoint(Joint):
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # define the tool parameters
         self.define_dovetail_tool(self.tool_angle, self.tool_diameter, self.tool_height)
