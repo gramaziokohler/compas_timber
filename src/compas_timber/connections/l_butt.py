@@ -157,12 +157,12 @@ class LButtJoint(ButtJoint):
 
         if moving_element == self.cross_beam:
             normal = self.butt_plane.normal
-            endpoint, point = self.cross_beam.endpoint_closest_to_point(self.location)
+            endpoint, _ = self.cross_beam.endpoint_closest_to_point(self.location)
             centerline_dir = self.main_beam.centerline.direction
             
         elif moving_element == self.main_beam:
             normal = self.butt_plane.copy().normal * -1
-            endpoint, point = self.main_beam.endpoint_closest_to_point(self.location)
+            endpoint, _ = self.main_beam.endpoint_closest_to_point(self.location)
             centerline_dir = self.cross_beam.centerline.direction
             
         if self.mill_depth:
