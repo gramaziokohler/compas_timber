@@ -2,6 +2,9 @@
 
 This guide explains how to install the `compas_timber` package for use in Grasshopper with Rhino 8 and Rhino 7.
 
+!!! note
+    The Grasshopper components are developed in the separate [timber_design](https://github.com/gramaziokohler/timber_design) repository.
+
 ## Rhino 8 Installation
 
 1. **Open Rhino 8.**
