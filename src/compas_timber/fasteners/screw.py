@@ -93,9 +93,9 @@ class Screw(FastenerPart):
     def designation(self) -> str:
         """Returns the standard engineering designation (e.g., 'Ø8x120')."""
         # Formats to 1 decimal place if it's a fractional size (like 5.5), otherwise integer
-        d = f"{self.diameter:.1f}".rstrip("0").rstrip(".")
-        l = f"{self.length:.1f}".rstrip("0").rstrip(".")
-        return f"Ø{d}x{l}"
+        diameter = f"{self.diameter:.1f}".rstrip("0").rstrip(".")
+        length = f"{self.length:.1f}".rstrip("0").rstrip(".")
+        return f"Ø{diameter}x{length}"
 
     @classmethod
     def from_name(cls, name: str, placement_frame: Optional[Frame] = None, **kwargs):
