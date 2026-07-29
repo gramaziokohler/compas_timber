@@ -26,6 +26,7 @@ def test_dowel_centerline():
     assert dowel.centerline.end == Point(0, 0, -100)
 
 
+@pytest.mark.requires_occ
 def test_dowel_geometry():
     dowel = Dowel(diameter=10, length=100)
     geo = dowel.compute_elementgeometry()

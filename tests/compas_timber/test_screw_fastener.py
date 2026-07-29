@@ -56,6 +56,7 @@ def test_screw_centerline():
     assert screw.centerline.end == Point(0, 0, -120)
 
 
+@pytest.mark.requires_occ
 def test_screw_simplified_geometry_is_just_the_shank():
     screw = Screw(diameter=8, length=120)
     geo = screw.compute_elementgeometry()
@@ -65,6 +66,7 @@ def test_screw_simplified_geometry_is_just_the_shank():
     assert len(geo.faces) == 3  # plain cylinder: two caps + the lateral face
 
 
+@pytest.mark.requires_occ
 def test_screw_precise_geometry_unions_head_onto_shank():
     simple = Screw(diameter=8, length=120)
     precise = Screw(diameter=8, length=120, precise=True)
