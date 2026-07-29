@@ -14,6 +14,7 @@ from compas.geometry import is_parallel_line_line
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
+from compas_timber.geometry import get_segment_range_on_polyline
 from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
@@ -145,6 +146,45 @@ class ConnectionSolver(object):
 
         """
         return find_neighboring_elements(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)
+
+    def get_distance(self, beam_a, beam_b):
+        """Return the smallest distance between the centerlines of two beams.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.elements.Beam`
+            First beam.
+        beam_b : :class:`~compas_timber.elements.Beam`
+            Second beam.
+
+        Returns
+        -------
+        float
+            The distance, in design units, between the two centerlines.
+
+        """
+        distance, _, _ = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+        return distance
+
+    def get_location(self, beam_a, beam_b):
+        """Return the point midway between the closest points of two beams' centerlines.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.elements.Beam`
+            First beam.
+        beam_b : :class:`~compas_timber.elements.Beam`
+            Second beam.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The point midway between the closest points on the two centerlines.
+
+        """
+        _, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+        return (Point(*point_a) + Point(*point_b)) * 0.5
+
 
     def find_topology(self, beam_a, beam_b, max_distance=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
@@ -308,6 +348,44 @@ class PlateConnectionSolver(ConnectionSolver):
 
     TOLERANCE = 1e-6
 
+    def get_distance(self, plate_a, plate_b):
+        """Return the smallest distance between the two plates.
+
+        Parameters
+        ----------
+        plate_a : :class:`~compas_timber.elements.Plate`
+            First plate.
+        plate_b : :class:`~compas_timber.elements.Plate`
+            Second plate.
+
+        Returns
+        -------
+        float
+            The distance, in design units, between the two plates.
+
+        """
+        return self.find_topology(plate_a.centerline, plate_b.centerline).distance
+
+    def get_location(self, plate_a, plate_b):
+        """Return the mid-point of the overlap of the two plates.
+
+        Parameters
+        ----------
+        plate_a : :class:`~compas_timber.elements.Plate`
+            First plate.
+        plate_b : :class:`~compas_timber.elements.Plate`
+            Second plate.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The point at the center of the overlap of the two plates.
+
+        """
+        return self.find_topology(plate_a.centerline, plate_b.centerline).location
+
+
+
     def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
         When TOPOLOGY_EDGE_FACE is found, the plates are returned in reverse order, with the main plate first and the cross plate second.
@@ -396,7 +474,10 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                return i, j, dist, seg_a_midpt
+                                overlap = get_segment_overlap(seg_a, seg_b, unitize=True)
+                                pt_a = seg_a.point_at(overlap[0])
+                                pt_b = seg_a.point_at(overlap[1])
+                                return i, j, dist, (pt_a + pt_b)/2.0
         return None, None, None, None
 
     @staticmethod
@@ -415,7 +496,8 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                return i, dist, seg_a_midpt
+                                pts = get_segment_range_on_polyline(seg_a, pline_b)
+                                return i, dist, (pts[0] + pts[1])/2.0
         return None, None, None
 
     @staticmethod
