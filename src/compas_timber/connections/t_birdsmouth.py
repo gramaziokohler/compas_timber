@@ -155,6 +155,7 @@ class TBirdsmouthJoint(Joint):
             raise ValueError("Element is not part of this joint.")
 
         cps = self._get_cutting_planes()
+        print(len(cps))
 
         endpoint, _ = self.main_beam.endpoint_closest_to_point(self.location)
         main_beam_vector = self.main_beam.centerline.direction
@@ -168,5 +169,5 @@ class TBirdsmouthJoint(Joint):
         elif moving_element == self.cross_beam:
             if self.mill_depth:
                 return Line(self.location, self.location - main_beam_vector)
-            return [cps[0].normal * -1, cps[3].normal * -1]
+            return [cps[0].normal * -1, cps[1].normal * -1]
         
