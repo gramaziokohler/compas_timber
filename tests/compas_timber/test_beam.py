@@ -445,6 +445,15 @@ def test_geometry_with_features(beam, mocker):
     mock_feature.apply.assert_called()
 
 
+def test_add_feature_with_list_does_not_nest(beam):
+    """A list passed to the singular add_feature is normalised, not stored as a nested list (#823)."""
+    cut = JackRafterCut(is_joinery=False)
+
+    beam.add_feature([cut])
+
+    assert beam.features == [cut]
+
+
 def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
     # Force computation of cached attributes by accessing them
