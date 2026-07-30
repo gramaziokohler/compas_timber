@@ -34,6 +34,7 @@ from .btlx import Contour
 from .btlx import DualContour
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
+from .birds_mouth import BirdsMouth
 from .simple_scarf import SimpleScarf
 
 __all__ = [
@@ -74,4 +75,5 @@ __all__ = [
     "BTLxRawpart",
     "SimpleScarf",
     "LongitudinalCutProxy",
+    "BirdsMouth",
 ]
