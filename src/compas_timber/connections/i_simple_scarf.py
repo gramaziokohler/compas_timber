@@ -8,6 +8,7 @@ from typing import Tuple
 
 from compas.geometry import Plane
 from compas.tolerance import TOL
+from compas.geometry import Line
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import SimpleScarf
@@ -308,21 +309,22 @@ class ISimpleScarf(Joint):
             if beam_side == "start":
                 end_vector = self.main_beam.centerline.direction
                 opp_frame = self.main_beam.opp_side(self.main_beam_ref_side_index)
-                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal
+                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal * -1
             else:
                 end_vector = self.main_beam.centerline.direction * -1
                 opp_frame = self.main_beam.opp_side(self.main_beam_ref_side_index)
-                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal
+                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal * -1
             
         elif moving_element == self.cross_beam:
             beam_side = self._get_beam_side(self.cross_beam)
             if beam_side == "start":
                 end_vector = self.cross_beam.centerline.direction
                 opp_frame = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
-                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal
+                scarf_normal = opp_frame.rotated((scarf_angle * -1), opp_frame.yaxis, opp_frame.point).normal * -1
             else:
                 end_vector = self.cross_beam.centerline.direction * -1
                 opp_frame = self.cross_beam.opp_side(self.cross_beam_ref_side_index)
-                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal
-
+                scarf_normal = opp_frame.rotated(scarf_angle, opp_frame.yaxis, opp_frame.point).normal * -1
+        
+        # return [Line(self.location, self.location + end_vector), Line(self.location, self.location + scarf_normal)]
         return [scarf_normal, end_vector]
