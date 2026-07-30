@@ -1,18 +1,18 @@
 # Show
 
-Tools forpreviewing, inspecting and extracting geometry and data from the assembly.
+Tools for previewing, inspecting and extracting geometry and data from the model.
 
 ## Show Beam Face Index
 
 ![Show Beam Face Index](../images/gh_show_beam_face_index.png){ width=20% }
 
-Displays the indexes of the Beams. Based on a global list of the Beams in the assembly.
+Displays the indexes of the Beam faces.
 
 ## Show Beam Index
 
 ![Show Beam Index](../images/gh_show_beam_index.png){ width=20% }
 
-Displays the indexes of the Beam faces.
+Displays the indexes of the Beams. Based on a global list of the Beams in the model.
 
 ## Show Surface Model Beam Types
 
@@ -34,7 +34,7 @@ Shows information useful for debugging errors occured while attempting to join B
 
 ![Show Joint Types](../images/gh_show_joint_types.png){ width=20% }
 
-Displays the type names of each joints in the assembly.
+Displays the type names of each joint in the model.
 
 ## Show Topology Types
 
