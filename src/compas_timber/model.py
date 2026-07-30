@@ -14,7 +14,7 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import find_connection_handler
+from compas_timber.connections import get_connection_candidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Layer
@@ -731,10 +731,7 @@ class TimberModel(Model):
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
         for pair in pairs:
             element_a, element_b = tuple(pair)
-            handler = find_connection_handler(element_a, element_b)
-            if handler is None:
-                continue
-            candidate = handler(element_a, element_b, max_distance)
+            candidate = get_connection_candidate(element_a, element_b, max_distance)
             if candidate is not None:
                 self.add_joint_candidate(candidate)
 
