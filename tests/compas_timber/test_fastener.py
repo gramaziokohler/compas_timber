@@ -96,6 +96,18 @@ def test_model_deserialization():
 
     assert all(isinstance(part, RectangularPlate) for part in rec_fasteners[0].parts)
 
+    # the part's `elements` (restored from `element_guids` by TimberModel.__from_data__) must reference the
+    # *reconstructed* model's own beam instances, and remain usable by `process_fasteners()`
+    rec_beams = list(reconstructed_model.beams)
+    for part in rec_fasteners[0].parts:
+        assert part.elements
+        assert all(element in rec_beams for element in part.elements)
+
+    reconstructed_model.process_fasteners()
+    rec_cross_beam = next(b for b in rec_beams if b.length == 2000)
+    feature_names = [type(f).__name__ for f in rec_cross_beam.features]
+    assert feature_names.count("Pocket") == 2
+
 
 def test_fastener_part_placement_via_transformation():
     plate_geo = Box(1, 1, 1).to_mesh()
