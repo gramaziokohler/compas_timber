@@ -8,170 +8,62 @@ Because forward-planning an assembly sequence can lead to kinematic dead-ends, t
 ---
 
 ## 1. The Geometric Constraints (Degrees of Freedom)
-When querying a joint for its freedom, it will return one of the following `compas.geometry` objects representing the mathematical space the `moving_element` can travel assuming the other element is frozen:
+When querying a joint for its freedom, it will return one of the following `compas.geometry` objects (or lists thereof) representing the mathematical space the `moving_element` can travel assuming the other element is frozen:
 
-* **`compas.geometry.Line` (1 DOF):** Strict linear sliding (e.g., Mortise & Tenon, Dovetail).
-* **`compas.geometry.Plane` (2 DOF):** Planar sliding (e.g., Lap Joint).
-* **`compas.geometry.Vector` (3 DOF):** A Half-Space defined by a normal. The beam can move anywhere as long as the dot product with this vector is positive (e.g., Simple Butt Joint).
+* **`compas.geometry.Line` (1 DOF):** Strict linear sliding (e.g., Mortise & Tenon, Dovetail). The beam must move exactly along this line.
+* **`list[compas.geometry.Vector]` (>= 2 DOF):** A collection of normal vectors, each defining a Half-Space. The beam can move anywhere as long as the dot product with *all* these vectors is positive (e.g., L-Butt Joint, Lap Joint). The intersection of these half-spaces (or half-spheres) represents the continuous space of valid insertion/extraction possibilities.
 
 ---
 
 ## 2. Base Joint Interface
 **Target File:** `src/compas_timber/connections/joint.py`
 
-We must define the contract for all joints and provide a generic 3-DOF fallback. Add the following imports and method to the base `Joint` class.
+The base `Joint` class defines the contract for all joints. It implements a generic fallback behavior for the kinematic constraint.
 
-### Code to Add:
-```python
-# Add to imports in joint.py
-from compas.geometry import Line
-from compas.geometry import Plane
-from compas.geometry import Vector
+### Fallback Behavior
+If a specific joint type does not override the kinematic constraint method, it falls back to a generic 3-DOF half-space. The generic half-space is defined by a single vector pointing from the midpoint of the static element's centerline to the midpoint of the moving element's centerline. This ensures that by default, the solver assumes the moving element can simply be pulled away from the static element.
 
-# Add to the Joint class (around line 230)
-    def get_kinematic_constraint(self, moving_element):
-        """Returns the geometric freedom to pull `moving_element` out of this joint.
-        
-        This assumes the other element in the joint is completely static/fixed.
-        
-        Parameters
-        ----------
-        moving_element : :class:`~compas_timber.elements.Beam`
-            The element being extracted from the joint.
-            
-        Returns
-        -------
-        compas.geometry.Line | compas.geometry.Plane | compas.geometry.Vector
-            The kinematic escape constraint.
-        """
-        if moving_element not in self.elements:
-            raise ValueError(f"Element {moving_element} is not part of {self.name}.")
-            
-        # Generic Fallback: 3-DOF Half-Space separating the two elements
-        static_element = self.element_a if moving_element == self.element_b else self.element_b
-        
-        v = Vector.from_start_end(static_element.centerline.midpoint, moving_element.centerline.midpoint)
-        v.unitize()
-        return v
-```
+---
 
 ## 3. Specific Joint Implementations (Polymorphism)
-Subclasses must override the base method to provide exact, parameter-driven kinematics.
+Subclasses override the base constraint method to provide exact, parameter-driven kinematics depending on their geometry.
 
 ### 3.1 L-Butt Joint
 **Target File:** `src/compas_timber/connections/l_butt.py`
 
-An L-Butt joint allows sliding anywhere along the cut plane, or pulling directly away from it.
+An L-Butt joint generally allows sliding anywhere along the cut plane or pulling directly away from it. 
 
-### Code to Add:
-```python
-# Add to the LButtJoint class
-    def get_kinematic_constraint(self, moving_element):
-        """Calculates the escape constraint for the L-Butt joint.
-        
-        Returns a Plane representing the 2-DOF sliding freedom along the cut face.
-        """
-        if moving_element not in self.elements:
-            raise ValueError("Element is not part of this joint.")
+- If it is a simple butt joint, it returns a single vector representing the normal of the butt plane pointing away from the static element.
+- If a lap or pocket is milled, the movement is further constrained by the side walls of the pocket. In this case, the joint returns a list of vectors containing both the butt plane normal and the normal of the opposing pocket wall, creating an intersection of half-spaces that mathematically defines the restricted movement.
 
-        if moving_element == self.cross_beam:
-            # The cross beam slides against the butt_plane of the main beam.
-            # Normal should point AWAY from the main beam.
-            return self.butt_plane 
-            
-        elif moving_element == self.main_beam:
-            # The main beam slides against the cut face of the cross beam.
-            # We invert the plane normal so it points AWAY from the cross beam.
-            plane = self.butt_plane.copy()
-            plane.normal = plane.normal * -1
-            return plane
-```
+### 3.2 T-Dovetail Joint
+**Target File:** `src/compas_timber/connections/t_dovetail.py`
 
-### 3.2 T-Dovetail Joint (Example Template)
-**Target File:** `src/compas_timber/connections/t_dovetail.py` (or equivalent dovetail implementation)
+A Dovetail joint physically locks the beam in all directions except exactly along the dovetail groove axis. Therefore, instead of a half-space, this joint returns a single `Line` object. The line defines the strict 1-DOF path the element must follow to slide into or out of the joint.
 
-A Dovetail joint physically locks the beam in all directions except exactly along the dovetail groove axis.
-
-### Code to Add:
-```python
-# Example logic to add to a Dovetail Joint class
-    def get_kinematic_constraint(self, moving_element):
-        """Calculates the 1-DOF strict linear escape constraint for a dovetail."""
-        if moving_element not in self.elements:
-            raise ValueError("Element is not part of this joint.")
-            
-        # Assuming `calculate_groove_axis()` returns the Vector of the groove
-        groove_axis = self.calculate_groove_axis() 
-        
-        if moving_element == self.cross_beam:
-            return Line(self.location, self.location + groove_axis)
-            
-        elif moving_element == self.main_beam:
-            return Line(self.location, self.location + (groove_axis * -1))
-```
+---
 
 ## 4. The Sequencer / Constraint Solver
 **Target File:** `src/compas_timber/planning/insertion_solver.py` (New File)
 
-This solver takes a TimberModel and iteratively works backwards, computing the mathematical intersection of the geometries returned by get_kinematic_constraint.
+The insertion solver takes a `TimberModel` and iteratively works backwards, computing the mathematical intersection of the geometries returned by the kinematic constraints of the joints.
 
-### Code to Add:
-```python
-from compas.geometry import cross_vectors, Vector, Plane, Line
+For a single element, the solver must merge all constraints from its active joints:
+- **Strict 1-DOF lock:** If **any** joint enforces a `Line` (1 DOF), the final escape vector must align with that line. If **multiple** joints enforce a `Line`, the solver verifies they are parallel; otherwise, the element is kinematically locked and cannot be extracted. The chosen line direction (or its reverse) must then be tested against all half-space constraints to ensure it doesn't push through solid material.
+- **>= 2-DOF Intersection:** If there are **only** half-space constraints (`list[Vector]`), the solver must find a vector inside the intersecting convex cone. A simple heuristic is to unitize all boundary normals and sum them. If the resulting vector satisfies all half-space constraints (i.e., its dot product with all vectors is $\ge 0$), it is a valid extraction vector.
 
-class InsertionSolver:
-    def __init__(self, model):
-        self.model = model
-        
-    def resolve_constraints(self, constraints):
-        """Calculates the mathematical intersection of multiple kinematic constraints.
-        
-        Parameters
-        ----------
-        constraints : list of (Line | Plane | Vector)
-        
-        Returns
-        -------
-        compas.geometry.Vector | None
-            The single valid escape vector, or None if kinematically locked.
-        """
-        lines = [c for c in constraints if isinstance(c, Line)]
-        planes = [c for c in constraints if isinstance(c, Plane)]
-        vectors = [c for c in constraints if isinstance(c, Vector)]
-        
-        candidate_vector = None
-        
-        # 1. Strict 1-DOF lock
-        if len(lines) > 0:
-            # If multiple lines exist, they MUST be parallel, otherwise it's locked
-            candidate_vector = lines[0].direction
-            
-        # 2. Planar 2-DOF Intersection
-        elif len(planes) >= 2:
-            # Intersection of two planes is a line (Cross product of normals)
-            v = cross_vectors(planes[0].normal, planes[1].normal)
-            if v.length == 0:  # Planes are parallel
-                candidate_vector = planes[0].normal
-            else:
-                candidate_vector = Vector(*v).unitized()
-                
-        elif len(planes) == 1:
-            candidate_vector = planes[0].normal
-            
-        elif len(vectors) > 0:
-            candidate_vector = vectors[0] # Simplification: average or merge half-spaces
-            
-        # Validate candidate against all half-spaces (Vectors) to ensure no collisions
-        if candidate_vector:
-            for v in vectors:
-                if candidate_vector.dot(v) < 0:
-                    # Trying to push through solid wood
-                    return None 
-                    
-        return candidate_vector
+---
 
-    def get_extraction_vector(self, element, active_joints):
-        """Gets the final extraction vector for a given element."""
-        constraints = [joint.get_kinematic_constraint(element) for joint in active_joints]
-        return self.resolve_constraints(constraints)
-```
+## 5. Assembly Sequence Deduction Algorithm
+
+The overarching sequence is determined by **Disassembly Planning** (working backwards from the completed state). The solver attempts to greedily "pull" elements out of the structure one by one.
+
+### The Algorithm:
+1. **Initialize State:** Create a list of `remaining_elements` containing all beams in the assembly.
+2. **Find a Free Element:** Iterate over `remaining_elements` and test if an element can be extracted.
+    - To test an element, we must gather its `active_joints`. These are only the joints connecting it to **other elements still in `remaining_elements`**. Joints connected to already-removed elements are ignored (since there is no physical blockage).
+    - If the solver can resolve the constraints and return a valid extraction vector, the element is free to move.
+3. **Record and Remove:** Remove the free element from `remaining_elements`. Add it to the disassembly sequence along with its insertion vector (which is simply the extraction vector inverted).
+4. **Repeat:** Restart the search for a free element until `remaining_elements` is empty.
+    - **Deadlock:** If the list is not empty but no elements can be extracted, the structure contains interlocking geometry or requires multi-element simultaneous insertion (which is beyond the scope of this single-element sequential solver).
+5. **Reverse:** The final assembly sequence is simply the reverse of the disassembly sequence.

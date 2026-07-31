@@ -13,6 +13,8 @@ from .nesting import Stock
 from .nesting import BeamStock
 from .nesting import PlateStock
 from .nesting import NestedElementData
+from .insertion_solver import InsertionSolver
+from .kinematic_sequencer import KinematicSequenceGenerator
 
 __all__ = [
     "Actor",
@@ -30,4 +32,6 @@ __all__ = [
     "PlateStock",
     "NestingResult",
     "NestedElementData",
+    "InsertionSolver",
+    "KinematicSequenceGenerator",
 ]

@@ -1,7 +1,5 @@
 from compas.geometry import Line
-from compas.geometry import Plane
 from compas.geometry import Vector
-from compas.geometry import cross_vectors
 
 
 class InsertionSolver:
@@ -13,47 +11,64 @@ class InsertionSolver:
         
         Parameters
         ----------
-        constraints : list of (Line | Plane | Vector)
-        
+        constraints : list of (Line | list[Vector] | Vector)
+            The kinematic constraints from active joints.
+            
         Returns
         -------
         compas.geometry.Vector | None
             The single valid escape vector, or None if kinematically locked.
         """
-        lines = [c for c in constraints if isinstance(c, Line)]
-        planes = [c for c in constraints if isinstance(c, Plane)]
-        vectors = [c for c in constraints if isinstance(c, Vector)]
+        lines = []
+        vectors = []
         
-        candidate_vector = None
-        
-        # 1. Strict 1-DOF lock
-        if len(lines) > 0:
-            # If multiple lines exist, they MUST be parallel, otherwise it's locked
-            candidate_vector = lines[0].direction
-            
-        # 2. Planar 2-DOF Intersection
-        elif len(planes) >= 2:
-            # Intersection of two planes is a line (Cross product of normals)
-            v = cross_vectors(planes[0].normal, planes[1].normal)
-            if v.length == 0:  # Planes are parallel
-                candidate_vector = planes[0].normal
-            else:
-                candidate_vector = Vector(*v).unitized()
+        for c in constraints:
+            if isinstance(c, Line):
+                lines.append(c)
+            elif isinstance(c, list):
+                vectors.extend(c)
+            elif isinstance(c, Vector):
+                vectors.append(c)
                 
-        elif len(planes) == 1:
-            candidate_vector = planes[0].normal
+        # 1. Strict 1-DOF lock
+        if lines:
+            base_dir = lines[0].direction.unitized()
             
-        elif len(vectors) > 0:
-            candidate_vector = vectors[0] # Simplification: average or merge half-spaces
-            
-        # Validate candidate against all half-spaces (Vectors) to ensure no collisions
-        if candidate_vector:
-            for v in vectors:
-                if candidate_vector.dot(v) < 0:
-                    # Trying to push through solid wood
-                    return None 
+            # If multiple lines exist, verify they point in the exact same direction
+            for line in lines[1:]:
+                dir2 = line.direction.unitized()
+                if base_dir.dot(dir2) < 1 - 1e-5:
+                    return None  # Conflicting extraction directions, kinematically locked
                     
-        return candidate_vector
+            # Check the strictly defined extraction direction against all half-spaces
+            d_valid = all(base_dir.dot(v) >= -1e-5 for v in vectors)
+            
+            if d_valid:
+                return base_dir
+            else:
+                return None  # Pushes through solid material
+                
+        # 2. >= 2-DOF Intersection
+        elif vectors:
+            # A simple heuristic is to unitize all boundary normals and sum them.
+            sum_vec = Vector(0, 0, 0)
+            for v in vectors:
+                sum_vec += v.unitized()
+                
+            if sum_vec.length < 1e-6:
+                return None  # Perfectly opposing constraints, locked
+                
+            candidate = sum_vec.unitized()
+            
+            # Ensure it satisfies all half-space constraints
+            if all(candidate.dot(v) >= -1e-5 for v in vectors):
+                return candidate
+            else:
+                return None
+                
+        # If no constraints exist, return a default vector or None. 
+        # Returning None might be safer if constraints are expected.
+        return None
 
     def get_extraction_vector(self, element, active_joints):
         """Gets the final extraction vector for a given element."""

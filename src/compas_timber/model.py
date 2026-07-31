@@ -57,7 +57,12 @@ class TimberModel(Model):
     """
 
     _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
-    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
+    _TIMBER_GRAPH_NODE_ATTRIBUTES = {
+        "structural_segments": None,
+        "assembly_sequence": None, 
+        "insertion_vector": None,
+        "requires_manual_assembly": False
+    }
 
     @property
     def __data__(self):
@@ -135,6 +140,17 @@ class TimberModel(Model):
     @property
     def topologies(self):
         return self._topologies
+
+    @property
+    def assembly_sequence(self):
+        """Returns all elements that have an assembly sequence assigned, ordered by the sequence index."""
+        sequenced = []
+        for element in self.elements():
+            if element.graphnode is not None:
+                seq = self._graph.node_attribute(element.graphnode, "assembly_sequence")
+                if seq is not None:
+                    sequenced.append((seq, element))
+        return [item[1] for item in sorted(sequenced, key=lambda x: x[0])]
 
     @property
     def center_of_mass(self):
