@@ -16,6 +16,7 @@ from .dowel import Dowel
 from .dowel import DowelFastener
 from .screw import Screw
 from .screw import ScrewFastener
+from .steko_fastener import StekoFastener
 
 __all__ = [
     "Fastener",
@@ -36,4 +37,5 @@ __all__ = [
     "DowelFastener",
     "Screw",
     "ScrewFastener",
+    "StekoFastener",
 ]
