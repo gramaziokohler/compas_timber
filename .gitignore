@@ -129,3 +129,8 @@ src/*.btlx
 
 .agents/
 AGENTS.md
+.claude
+.dev
+.zed
+*.ghx
+*.3dm

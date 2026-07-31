@@ -172,6 +172,7 @@ class Slot(BTLxProcessing):
 
     @inclination.setter
     def inclination(self, inclination):
+        inclination = abs(inclination)
         if inclination > 179.9 or inclination < 0.1:
             raise ValueError("Inclination must be between 0.1 and 179.9. Got: {}".format(inclination))
         self._inclination = inclination
@@ -312,7 +313,7 @@ class Slot(BTLxProcessing):
         # look at the jack rafter cut. but idea might be to cross normal and one of the
         # axes of the ref frame to get the yaw angle between ref_side.xaxis and the horizontal direction of the plane
         yaw_vector = plane.normal.cross(ref_side.yaxis)
-        inclination = angle_vectors_signed(yaw_vector, ref_side.xaxis, -ref_side.yaxis, deg=True)
+        inclination = abs(angle_vectors_signed(yaw_vector, ref_side.xaxis, -ref_side.yaxis, deg=True))
 
         roll_vector = plane.normal.cross(ref_side.zaxis)
         angle = angle_vectors_signed(ref_side.xaxis, roll_vector, ref_side.zaxis, deg=True)

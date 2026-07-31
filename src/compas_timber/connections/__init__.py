@@ -46,6 +46,7 @@ from .cluster import get_clusters_from_joint_candidates
 from .ball_node import BallNodeJoint
 from .cluster import get_topology_from_joints
 from .composite_joint import CompositeJoint
+from .steko_joint import StekoJoint
 
 
 __all__ = [
@@ -99,4 +100,5 @@ __all__ = [
     "get_clusters_from_joint_candidates",
     "get_topology_from_joints",
     "CompositeJoint",
+    "StekoJoint",
 ]
