@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
 * Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
 * Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
+* Fixed `PlateMiterJoint` bug where parallel plates failed to join.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
