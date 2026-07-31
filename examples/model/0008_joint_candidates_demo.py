@@ -21,6 +21,7 @@ from compas_timber.connections import LMiterJoint
 from compas_timber.connections import get_clusters_from_joint_candidates
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+from compas_timber.fasteners import BallNodeFastenerParameters
 from compas_timber.model import TimberModel
 
 
@@ -77,7 +78,7 @@ def find_and_create_ball_node_joints(model):
     ball_node_count = 0
     for cluster in clusters:
         try:
-            BallNodeJoint.create(model, *cluster.elements, ball_diameter=1000.0)
+            BallNodeJoint.create(model, *cluster.elements, parameters=BallNodeFastenerParameters(ball_diameter=1000.0))
             ball_node_count += 1
         except Exception:
             pass

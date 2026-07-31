@@ -16,11 +16,12 @@ from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import get_connection_candidate
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.errors import FastenerApplicationError
+from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 
@@ -64,6 +65,7 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
+        # Fasteners are now regular elements in the model tree, so they serialize with the rest of the elements.
         return data
 
     @classmethod
@@ -424,6 +426,63 @@ class TimberModel(Model):
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
 
+    def add_fastener(self, fastener, elements: list):
+        """
+        Adds a fastener to the model.
+
+        The fastener is added to the model as a regular element. Its parts are added as children of the fastener in the
+        model tree. A reference to the fastener (its guid) is stored under the "fasteners" attribute on the edge(s)
+        connecting the specified elements. If two elements are not yet connected by an edge, a new edge is created.
+
+        Parameters
+        ----------
+
+        fastener : :class:`~compas_timber.fasteners.Fastener`
+            The fastener to be added to the model and connecting the elements.
+        elements : list[:class:`~compas_timber.elements.Element`]
+            The elements to be connected by the fastener.
+
+        """
+        # 1: add the fastener and its (staged) part subtree to the model tree
+        # parts may be nested (a part can own child parts), so the staged subtree is added depth-first, each part
+        # becoming a child of its parent.
+        staged_parts = list(fastener.parts)
+        self.add_element(fastener)
+        for part in staged_parts:
+            self._add_staged_part_subtree(part, fastener)
+
+        fastener_guid = str(fastener.guid)
+
+        # 2: reference the fastener on the edge(s) connecting the elements it fastens
+        # (this is how the fastener sits on the beam-beam edge alongside the joint)
+        for ia, element_a in enumerate(elements):
+            for ib, element_b in enumerate(elements):
+                if element_a is element_b or ia < ib:
+                    continue
+                interaction = self.has_interaction(element_a, element_b)
+                if interaction:
+                    edge = (element_a.graphnode, element_b.graphnode)
+                    if not self._graph.has_edge(edge):
+                        edge = (element_b.graphnode, element_a.graphnode)
+
+                else:
+                    edge = self.add_interaction(element_a, element_b)
+
+                edge_fasteners = list(self._graph.edge_attribute(edge, "fasteners") or [])
+                edge_fasteners.append(fastener_guid)
+                self._graph.edge_attribute(edge, "fasteners", value=edge_fasteners)
+
+    def _add_staged_part_subtree(self, part, parent):
+        """Recursively add a staged fastener part and its staged children to the model tree.
+
+        The staged children must be captured before ``part`` is added to the model, because adding it flips
+        ``part.parts`` from the staging list to the (still empty) tree children.
+        """
+        staged_children = list(part.parts)
+        self.add_element(part, parent=parent)
+        for child in staged_children:
+            self._add_staged_part_subtree(child, part)
+
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.
 
@@ -679,6 +738,50 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def process_fasteners(self, stop_on_first_error=False):
+        """
+        Process the fasteners of the model.
+        Applies the features of the fasteners in the model to their respective elements.
+
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.FastenerApplicationError`]
+            A list of errors that occurred during the fastener application process.
+        """
+        errors = []
+
+        for fastener in self.fasteners:
+            elements = self._elements_connected_by_fastener(fastener)
+            try:
+                fastener.apply_fastening_features(elements)
+            except ValueError as ve:
+                bje = FastenerApplicationError(elements, fastener, message=str(ve))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+
+        return errors
+
+    def _elements_connected_by_fastener(self, fastener):
+        """Return the timber elements referenced by the given fastener on the interaction graph."""
+        fastener_guid = str(fastener.guid)
+        elements = []
+        for edge in self._graph.edges():
+            edge_fasteners = self._graph.edge_attribute(edge, "fasteners")
+            if not edge_fasteners or fastener_guid not in edge_fasteners:
+                continue
+            for node in edge:
+                element_guid = self._graph.node_attribute(node, "element")
+                element = self._elements[element_guid]
+                if element not in elements:
+                    elements.append(element)
+        return elements
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.
