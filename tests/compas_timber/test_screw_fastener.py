@@ -174,3 +174,15 @@ def test_screw_fastener_model_deserialization():
     assert len(rec_fasteners[0].parts) == len(fastener.parts)
     assert all(isinstance(part, Screw) for part in rec_fasteners[0].parts)
     assert rec_fasteners[0].parts[0].precise is True
+
+    # the part's `elements` (restored from `element_guids` by TimberModel.__from_data__) must reference the
+    # *reconstructed* model's own beam instances, and remain usable by `process_fasteners()`
+    rec_beams = list(reconstructed_model.beams)
+    for part in rec_fasteners[0].parts:
+        assert part.elements
+        assert all(element in rec_beams for element in part.elements)
+
+    reconstructed_model.process_fasteners()
+    rec_cross_beam = next(b for b in rec_beams if b.length == 2000)
+    drillings = [f for f in rec_cross_beam.features if type(f).__name__ == "Drilling"]
+    assert len(drillings) == 1

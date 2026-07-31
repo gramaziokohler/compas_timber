@@ -89,6 +89,37 @@ def test_dowel_fastener_applies_drilling_features():
     assert feature_names.count("Drilling") == 1
 
 
+def test_dowel_fastener_scopes_features_to_each_anchors_elements():
+    """A single fastener bound to anchors from unrelated beam pairs must only drill each anchor's own elements.
+
+    Regression test: previously `apply_fastening_features` was handed every element the fastener connects to
+    anywhere in the model (the union across all its anchors), so every dowel drilled every beam instead of just
+    the pair its own anchor referenced.
+    """
+    model = TimberModel()
+    cross_beam_1 = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
+    main_beam_1 = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
+    cross_beam_2 = Beam.from_centerline(Line(Point(-100, 500, 20), Point(100, 500, 20)), width=10, height=20)
+    main_beam_2 = Beam.from_centerline(Line(Point(0, 500, 20), Point(0, 500, 200)), width=10, height=20)
+    model.add_elements([cross_beam_1, main_beam_1, cross_beam_2, main_beam_2])
+
+    joint_1 = TButtJoint.create(model, main_beam_1, cross_beam_1, mill_depth=3)
+    joint_2 = TButtJoint.create(model, main_beam_2, cross_beam_2, mill_depth=3)
+
+    anchors = joint_1.fastener_anchors.of_kind(AnchorKind.AXIS) + joint_2.fastener_anchors.of_kind(AnchorKind.AXIS)
+
+    # one fastener, bound across anchors from two unrelated joints (a batch/pattern use case `bind()` supports)
+    fastener = DowelFastener(diameter=8, length=50)
+    fastener.bind(anchors)
+    model.add_fastener(fastener, [cross_beam_1, main_beam_1, cross_beam_2, main_beam_2])
+
+    model.process_fasteners()
+
+    for beam in (cross_beam_1, main_beam_1, cross_beam_2, main_beam_2):
+        drillings = [f for f in beam.features if type(f).__name__ == "Drilling"]
+        assert len(drillings) == 1
+
+
 def test_dowel_fastener_model_deserialization():
     model = TimberModel()
     cross_beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(2000, 0, 0)), width=50, height=50)
@@ -108,3 +139,16 @@ def test_dowel_fastener_model_deserialization():
     assert isinstance(rec_fasteners[0], DowelFastener)
     assert len(rec_fasteners[0].parts) == len(fastener.parts)
     assert all(isinstance(part, Dowel) for part in rec_fasteners[0].parts)
+
+    # the part's `elements` (restored from `element_guids` by TimberModel.__from_data__) must reference the
+    # *reconstructed* model's own beam instances, not the original (pre-serialization) ones
+    rec_beams = list(reconstructed_model.beams)
+    for part in rec_fasteners[0].parts:
+        assert part.elements
+        assert all(element in rec_beams for element in part.elements)
+
+    # and the restored elements must be usable, i.e. `process_fasteners()` works on the reconstructed model too
+    reconstructed_model.process_fasteners()
+    rec_cross_beam = next(b for b in rec_beams if b.width == 50 and b.height == 50 and b.length == 2000)
+    drillings = [f for f in rec_cross_beam.features if type(f).__name__ == "Drilling"]
+    assert len(drillings) == 1

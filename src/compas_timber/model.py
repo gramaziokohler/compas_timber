@@ -78,6 +78,10 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
+        for fastener in model.fasteners:
+            for part in fastener.all_parts:
+                part.restore_elements_from_keys(model)
+
         return model
 
     def __init__(self, tolerance=None, **kwargs):
@@ -757,10 +761,10 @@ class TimberModel(Model):
         errors = []
 
         for fastener in self.fasteners:
-            elements = self._elements_connected_by_fastener(fastener)
             try:
-                fastener.apply_fastening_features(elements)
+                fastener.apply_fastening_features()
             except ValueError as ve:
+                elements = self._elements_connected_by_fastener(fastener)
                 bje = FastenerApplicationError(elements, fastener, message=str(ve))
                 errors.append(bje)
                 if stop_on_first_error:

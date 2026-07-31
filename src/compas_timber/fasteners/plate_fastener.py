@@ -97,6 +97,7 @@ class RectangularPlate(FastenerPart):
             "recess": self.recess,
             "recess_offset": self.recess_offset,
             "holes": self.holes,
+            "element_guids": self.element_guids,
         }
 
     def __init__(
@@ -220,19 +221,14 @@ class RectangularPlate(FastenerPart):
                 holes.append(hole)
         return holes
 
-    def apply_fastening_features(self, elements):
+    def apply_fastening_features(self):
         """
-        Apply the features of the plate to the given elements.
+        Apply the features of the plate to :attr:`elements`.
         This includes creating pockets for the recess and drillings for the holes.
-
-        Parameters
-        ----------
-        elements : list[Element]
-            The elements to which the features of the plate should be applied.
         """
         frame = self.frame  # placement frame in model coordinates
         xform = self.modeltransformation
-        for element in elements:
+        for element in self.elements:
             ref_side_index = beam_ref_side_index(element, frame.zaxis)
 
             # recess Pocket
@@ -402,5 +398,6 @@ class PlateFastener(Fastener):
         for anchor in anchors:
             plate = RectangularPlate(width=self.width, height=self.height, thickness=self.thickness, recess=self.recess, recess_offset=self.recess_offset)
             plate.transformation = Transformation.from_frame(anchor.frame)
+            plate.elements = list(anchor.elements)
             self.add_part(plate)
         return self

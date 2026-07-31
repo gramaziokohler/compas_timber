@@ -144,7 +144,14 @@ class BallNodePlate(FastenerPart):
 
     @property
     def __data__(self):
-        return {"x_size": self.x_size, "y_size": self.y_size, "thickness": self.thickness, "frame": self.placement_frame, "plate_depth": self.plate_depth}
+        return {
+            "x_size": self.x_size,
+            "y_size": self.y_size,
+            "thickness": self.thickness,
+            "frame": self.placement_frame,
+            "plate_depth": self.plate_depth,
+            "element_guids": self.element_guids,
+        }
 
     def __init__(self, x_size: float, y_size: float, thickness: float, frame: Optional[Frame] = None, plate_depth: float = 0, rod=None, ball=None, **kwargs):
         # TODO: narrow down the interface, if all we need is rod length and ball radius, we can just pass those instead of the whole objects
@@ -180,26 +187,24 @@ class BallNodePlate(FastenerPart):
         xform = self.modeltransformation
         return [brep.transformed(xform) for brep in self._local_breps()]
 
-    def apply_fastening_features(self, elements):
+    def apply_fastening_features(self):
         features = []
-        for ele in elements:
-            if self.rod is not None and ele is self.rod.referenced_beam:
-                frame = self.frame  # placement frame in model coordinates
+        frame = self.frame  # placement frame in model coordinates
+        for ele in self.elements:
+            # jack rafter cut
+            cutting_plane = Plane(frame.point, frame.zaxis)
+            cutting_plane.translate(frame.zaxis * self.thickness)
+            cutting_plane.normal *= -1
+            jrc = JackRafterCut.from_plane_and_beam(cutting_plane, ele)
+            ele.add_feature(jrc)
+            features.append(jrc)
 
-                # jack rafter cut
-                cutting_plane = Plane(frame.point, frame.zaxis)
-                cutting_plane.translate(frame.zaxis * self.thickness)
-                cutting_plane.normal *= -1
-                jrc = JackRafterCut.from_plane_and_beam(cutting_plane, ele)
-                ele.add_feature(jrc)
-                features.append(jrc)
-
-                # slot
-                plane = Plane(frame.point, frame.xaxis)
-                slot_depth = self.plate_depth + self.thickness + self.rod.length + self.ball.radius
-                slot = Slot.from_plane_and_beam(plane, ele, slot_depth, self.thickness)
-                ele.add_feature(slot)
-                features.append(slot)
+            # slot
+            plane = Plane(frame.point, frame.xaxis)
+            slot_depth = self.plate_depth + self.thickness + self.rod.length + self.ball.radius
+            slot = Slot.from_plane_and_beam(plane, ele, slot_depth, self.thickness)
+            ele.add_feature(slot)
+            features.append(slot)
 
         return features
 
@@ -338,6 +343,7 @@ class BallNodeFastener(Fastener):
             # the plate sits at the far end of the rod, expressed relative to the rod's frame
             plate_frame = Frame(Point(0, 0, params.rods_length))
             plate = BallNodePlate(beam.width, beam.height, params.plate_thickness, plate_frame, plate_depth=params.plate_depth, rod=rod, ball=core)
+            plate.elements = [beam]
             rod.add_part(plate)
 
         return self

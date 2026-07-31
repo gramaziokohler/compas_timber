@@ -99,6 +99,7 @@ def test_rect_plate_features():
         plate = RectangularPlate(width=10, height=5, thickness=2, recess=2, recess_offset=1)
         plate.add_hole(PlateHole(diameter=5, height=2, frame=Frame.worldXY()))
         plate.transformation = Transformation.from_frame(frame)
+        plate.elements = [cross_beam]
         fastener.add_part(plate)
 
     model.add_fastener(fastener, [main_beam, cross_beam])
