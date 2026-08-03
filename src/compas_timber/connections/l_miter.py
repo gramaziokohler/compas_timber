@@ -288,6 +288,6 @@ class LMiterJoint(Joint):
         
         plane_a, plane_b = self.cutting_planes 
         if moving_element == self.beam_a:
-            return plane_a.normal
+            return [plane_b.normal]
         elif moving_element == self.beam_b:
-            return plane_b.normal
+            return [plane_a.normal]
