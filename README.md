@@ -39,7 +39,7 @@ uv run pytest
 
 * [Documentation](https://gramaziokohler.github.io/compas_timber/)
 * [COMPAS TIMBER Grasshopper Plugin (timber_design)](https://github.com/gramaziokohler/timber_design)
-* [COMPAS TIMBER Grasshopper Tutorial](https://gramaziokohler.github.io/compas_timber/latest/tutorials/)
+* [COMPAS TIMBER Grasshopper Tutorial](https://gramaziokohler.github.io/timber_design/)
 * [COMPAS TIMBER API Reference](https://gramaziokohler.github.io/compas_timber/latest/api/compas_timber.model/)
 
 ## Questions and feedback
