@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
+* `TimberElement.add_feature` now delegates to `add_features`, so a list passed by mistake is normalised instead of silently nested (#823). Docstring corrected accordingly.
 * `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.
 * Added `TimberModel.get_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`. Candidates are always pairwise, so (like joints) they're looked up directly from the graph edge rather than a separate registry.
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
