@@ -18,53 +18,101 @@ class KinematicSequenceGenerator(object):
         higher heuristic scores are prioritized. Example: `lambda e: e.frame.point.z`
     """
 
-    def __init__(self, model, heuristic=None, z_weight=10.0, constraint_weight=5.0, chain_weight=20.0, support_weight=30.0, length_weight=5.0, centrality_weight=10.0):
+    def __init__(self, model, heuristic=None):
         self.model = model
         self.solver = InsertionSolver(model)
         self.heuristic = heuristic
-        self.z_weight = z_weight
-        self.constraint_weight = constraint_weight
-        self.chain_weight = chain_weight
-        self.support_weight = support_weight
-        self.length_weight = length_weight
-        self.centrality_weight = centrality_weight
+        self.topological_levels = {}
 
-    def _evaluate_candidate(self, element, active_joints, last_disassembled):
-        """Scores a candidate for disassembly based on multi-factor heuristics."""
-        score = 0.0
+    def _get_element_z(self, element):
+        """Helper to calculate the effective Z height of an element."""
+        # return element.centerline.midpoint.z + element.centerline.start.z + element.centerline.end.z
+        return min(element.centerline.start.z, element.centerline.end.z) + element.centerline.midpoint.z
+
+    def _compute_topological_levels(self):
+        """Computes the topological distance of each element from the ground using BFS."""
+        self.topological_levels = {}
         
-        # 1. Z-level: higher elements get higher score (disassembled earlier)
-        score += element.centerline.midpoint.z * self.z_weight
+        # 1. Find the absolute lowest physical Z coordinate in the model
+        min_z = min(min(e.centerline.start.z, e.centerline.end.z) + e.centerline.midpoint.z for e in self.model.beams)
         
-        # 2. Constraints: penalize overly constrained elements (e.g. 4+ joints)
-        score -= len(active_joints) * self.constraint_weight
+        # 2. Identify 'Support' elements (Level 0)
+        queue = []
+        visited = set()
+        for e in self.model.beams:
+            lowest_z = min(e.centerline.start.z, e.centerline.end.z)
+            if lowest_z <= min_z + 1e-3:
+                self.topological_levels[e.guid] = 0
+                queue.append((e, 0))
+                visited.add(e.guid)
+                
+        # 3. BFS to assign levels based on actual structural joints
+        while queue:
+            current_element, current_level = queue.pop(0)
+            joints = self.model.get_joints_for_element(current_element)
+            for joint in joints:
+                for neighbor in joint.elements:
+                    if neighbor.guid not in visited:
+                        visited.add(neighbor.guid)
+                        self.topological_levels[neighbor.guid] = current_level + 1
+                        queue.append((neighbor, current_level + 1))
+                        
+        # 4. Fallback for any disconnected elements
+        for e in self.model.beams:
+            if e.guid not in visited:
+                self.topological_levels[e.guid] = 999
+
+    def _evaluate_candidate(self, element, active_joints, last_disassembled, remaining_elements, remaining_set):
+        """Scores a candidate using strict Lexicographical Tuple scoring."""
+        element_z = self._get_element_z(element)
         
-        # 3. Building Chain: prefer extracting elements connected to the one we just removed
+        # Priority 1: Strict Local Z-Dependency (MUST NOT have connected higher beams)
+        is_local_z_valid = True
+        for joint in active_joints:
+            for other in joint.elements:
+                if other.guid != element.guid and other.guid in remaining_set:
+                    if self._get_element_z(other) > element_z + 1e-3:
+                        is_local_z_valid = False
+                        break
+            if not is_local_z_valid:
+                break
+        # Priority 2: Physical Z Height (Highest first, absolutely)
+        z_height = element_z
+        
+        # Priority 3: Topological Graph Level
+        topo_level = self.topological_levels.get(element.guid, 999)
+        
+        # Priority 4: Stability (>= 2 supports)
+        stability = len(active_joints) >= 2
+        
+        # Priority 5: Building Chain Continuity
+        is_in_chain = False
         if last_disassembled is not None:
-            # Check if they share an edge in the timber model graph
             u, v = element.graphnode, last_disassembled.graphnode
             if self.model._graph.has_edge((u, v)) or self.model._graph.has_edge((v, u)):
-                score += self.chain_weight
+                is_in_chain = True
                 
-        # 4. Stability: explicitly reward elements that will have 2 or more connections 
-        # when assembled. (In disassembly, this means they have >= 2 active joints)
-        if len(active_joints) >= 2:
-            score += self.support_weight
-            
-        # 5. Length: longer beams cause more deformation (self-weight torque), so we assemble 
-        # them late (disassemble them early). We boost their score so they are pulled out sooner.
-        score += element.centerline.length * self.length_weight
+        # Priority 6: Beam Length (Longest early)
+        length = element.centerline.length
         
-        # 6. Centrality/Periphery: elements with many TOTAL joints in the completed model
-        # form the "stiff core". They should be assembled early (disassembled late).
-        # We penalise them here so they stay in the structure longer during disassembly.
+        # Priority 7: Centrality (Penalize highly connected core elements)
         total_joints = len(self.model.get_joints_for_element(element))
-        score -= total_joints * self.centrality_weight
-                
-        return score
+        
+        # Return strict hierarchy tuple. Python sorts element-by-element natively.
+        return (
+            int(is_local_z_valid),
+            z_height,
+            topo_level,
+            int(stability),
+            int(is_in_chain),
+            length,
+            -total_joints
+        )
 
     def generate(self):
         """Generates the assembly sequence and writes the data into the model graph and element attributes."""
+        self._compute_topological_levels()
+        
         remaining_elements = list(self.model.beams)
         disassembly_sequence = []
         extraction_vectors = []
@@ -74,72 +122,44 @@ class KinematicSequenceGenerator(object):
         last_disassembled = None
         
         while remaining_elements:
-            free_candidates = []
-            
-            # Find all elements that can be extracted without collisions
-            for element in remaining_elements:
-                all_joints = self.model.get_joints_for_element(element)
-                
-                # Active joints are those connected to elements still in the remaining pool
-                active_joints = []
-                for joint in all_joints:
-                    is_active = any(
-                        other.guid in remaining_set 
-                        for other in joint.elements 
-                        if other.guid != element.guid
-                    )
-                    if is_active:
-                        active_joints.append(joint)
-                
-                # Check kinematic constraints against active joints
-                if not active_joints:
-                    # If there are no constraints, the element is completely free (e.g. the last element in the sequence)
-                    # We assign a default extraction vector (straight up in the Z direction).
-                    escape_vector = Vector(0, 0, 1)
-                else:
-                    escape_vector = self.solver.get_extraction_vector(element, active_joints)
-                
-                if escape_vector is not None:
-                    free_candidates.append((element, escape_vector, active_joints))
-            
-            # If no free element could be found, the structure is kinematically locked
-            if not free_candidates:
-                import logging
-                logging.warning("Kinematic deadlock: cannot find a free element to extract. Forcefully extracting an element (must be placed by hand).")
-                
-                if self.heuristic:
-                    remaining_elements.sort(key=self.heuristic, reverse=True)
-                else:
-                    remaining_elements.sort(
-                        key=lambda e: self._evaluate_candidate(
-                            e, 
-                            [j for j in self.model.get_joints_for_element(e) if any(o.guid in remaining_set for o in j.elements if o.guid != e.guid)], 
-                            last_disassembled
-                        ),
-                        reverse=True
-                    )
-                free_element = remaining_elements[0]
-                free_vector = None
+            # Score and sort all remaining elements so the absolute "best" (highest) comes first
+            if self.heuristic:
+                remaining_elements.sort(key=self.heuristic, reverse=True)
             else:
-                # Pick the best candidate based on the heuristic
-                if self.heuristic:
-                    # Sort descending so the highest scoring element is first
-                    free_candidates.sort(key=lambda item: self.heuristic(item[0]), reverse=True)
-                else:
-                    free_candidates.sort(
-                        key=lambda item: self._evaluate_candidate(item[0], item[2], last_disassembled),
-                        reverse=True
-                    )
-                
-                free_element, free_vector, _ = free_candidates[0]
-                
-            # Record and remove the free element
-            disassembly_sequence.append(free_element)
-            extraction_vectors.append(free_vector)
-            last_disassembled = free_element
+                remaining_elements.sort(
+                    key=lambda e: self._evaluate_candidate(
+                        e, 
+                        [j for j in self.model.get_joints_for_element(e) if any(o.guid in remaining_set for o in j.elements if o.guid != e.guid)], 
+                        last_disassembled,
+                        remaining_elements,
+                        remaining_set
+                    ),
+                    reverse=True
+                )
             
-            remaining_elements.remove(free_element)
-            remaining_set.remove(free_element.guid)
+            # The strictly highest scoring element according to our rules
+            best_element = remaining_elements[0]
+            
+            # Now we figure out if it can be extracted cleanly, or if it must be forced
+            active_joints = [j for j in self.model.get_joints_for_element(best_element) if any(o.guid in remaining_set for o in j.elements if o.guid != best_element.guid)]
+            
+            if not active_joints:
+                # Totally free
+                escape_vector = Vector(0, 0, 1)
+            else:
+                escape_vector = self.solver.get_extraction_vector(best_element, active_joints)
+                
+            if escape_vector is None:
+                import logging
+                logging.warning(f"Kinematic deadlock for element {best_element.name} ({best_element.guid}). Forcefully extracting (must be placed by hand).")
+                
+            # Record and remove the element
+            disassembly_sequence.append(best_element)
+            extraction_vectors.append(escape_vector)
+            last_disassembled = best_element
+            
+            remaining_elements.remove(best_element)
+            remaining_set.remove(best_element.guid)
             
         # Reverse the disassembly sequence to get the assembly sequence
         assembly_sequence = list(reversed(disassembly_sequence))
