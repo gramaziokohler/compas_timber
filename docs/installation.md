@@ -33,8 +33,5 @@ Install the package in editable mode with its development dependencies
 pip install -e .[dev]
 ```
 
-To compile the Rhino8 Grasshopper components
-
-```bash
-invoke build-cpython-ghuser-components
-```
+The Grasshopper components are developed and built in the separate
+[timber_design](https://github.com/gramaziokohler/timber_design) repository.
