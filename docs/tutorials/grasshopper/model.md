@@ -22,3 +22,6 @@ To activate it, set `CreateGeometry` to `True`.
 *   `Model` : Model object.
 *   `Geometry` : Geometry of the Beams and Joints.
 *   `DebugInfo` : Debug information object in the case of feature or joining errors.
+
+!!! tip "Under the hood"
+    The **Model** component builds a [`compas_timber.model.TimberModel`](../../api/compas_timber.model.md).
