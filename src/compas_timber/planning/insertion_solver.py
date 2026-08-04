@@ -48,26 +48,59 @@ class InsertionSolver:
             else:
                 return None  # Pushes through solid material
                 
-        # 2. >= 2-DOF Intersection
+        # 2. >= 2-DOF Intersection (Half-spaces)
         elif vectors:
-            # A simple heuristic is to unitize all boundary normals and sum them.
-            sum_vec = Vector(0, 0, 0)
-            for v in vectors:
-                sum_vec += v.unitized()
-                
-            if sum_vec.length < 1e-6:
-                return None  # Perfectly opposing constraints, locked
-                
-            candidate = sum_vec.unitized()
+            return self._find_valid_vector(vectors)
             
-            # Ensure it satisfies all half-space constraints
-            if all(candidate.dot(v) >= -1e-5 for v in vectors):
-                return candidate
-            else:
-                return None
-                
         # If no constraints exist, return a default vector or None. 
         # Returning None might be safer if constraints are expected.
+        return None
+
+    def _find_valid_vector(self, vectors):
+        """Generates and tests candidate vectors against half-space constraints."""
+        def is_valid(vec):
+            if vec.length < 1e-6:
+                return False
+            vec = vec.unitized()
+            return all(vec.dot(v) >= -1e-5 for v in vectors)
+
+        candidates = []
+        
+        # 1. Preferred Z-up direction
+        candidates.append(Vector(0, 0, 1))
+        
+        # 2. Average normal
+        sum_vec = Vector(0, 0, 0)
+        for v in vectors:
+            sum_vec += v.unitized()
+        candidates.append(sum_vec)
+        
+        # 3. Individual normals (pulling straight out from a joint face)
+        for v in vectors:
+            candidates.append(v)
+            
+        # 4. Cross products of pairs (edges of the constraint cone)
+        for i in range(len(vectors)):
+            for j in range(i + 1, len(vectors)):
+                cross = vectors[i].cross(vectors[j])
+                if cross.length > 1e-6:
+                    candidates.append(cross)
+                    candidates.append(-cross)
+                    
+        # 5. Orthogonal axes (handles perfectly opposing vectors)
+        axes = [Vector(1, 0, 0), Vector(0, 1, 0), Vector(0, 0, 1)]
+        for v in vectors:
+            for axis in axes:
+                cross = v.cross(axis)
+                if cross.length > 1e-6:
+                    candidates.append(cross)
+                    candidates.append(-cross)
+                    
+        # Return the first candidate that satisfies all constraints
+        for c in candidates:
+            if is_valid(c):
+                return c.unitized()
+                
         return None
 
     def get_extraction_vector(self, element, active_joints):
