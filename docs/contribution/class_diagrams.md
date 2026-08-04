@@ -4,7 +4,7 @@ This section provides visual representations of the class hierarchies and relati
 
 The diagrams are generated from the source code (attributes, methods and inheritance are extracted with Python's `ast`), so they reflect the code at the version noted in the changelog rather than an idealized design. Members inherited from `compas` / `compas_model` base classes are not repeated on subclasses.
 
-This page is generated — do not edit it by hand. To regenerate it after code changes, see the pipeline in [`scripts/docs_class_diagrams/`](https://github.com/gramaziokohler/compas_timber/tree/main/scripts/docs_class_diagrams).
+This page is generated — do not edit it by hand; it is regenerated from the source code for each release.
 
 [TOC]
 
@@ -277,7 +277,7 @@ classDiagram
 
 The connections subsystem defines joints and their relationships. All joints inherit from the abstract `Joint` class (a `compas.data.Data` subclass; `Data` is omitted from the diagram since every class here derives from it) and declare the topology they support via `SUPPORTED_TOPOLOGY`. Joints are registered in the `TimberModel` and referenced from the edges of its interaction graph.
 
-Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `LapJoint` and `MortiseTenonJoint` share logic across the topology-specific implementations. `CutPlaneSpec` and `MiterPlaneSpec` describe cutting planes relative to a beam's reference side (so they survive model transformations) and are passed to the butt/miter joint constructors via the `butt_plane_spec` / `back_plane_spec` / `miter_plane` parameters.
+Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `LapJoint` and `MortiseTenonJoint` share logic across the topology-specific implementations.
 
 Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
 
@@ -309,24 +309,6 @@ classDiagram
 
       class JointCandidate {
          +distance : float | None
-      }
-
-      class CutPlaneSpec {
-         +ref_side_index
-         +angle
-         +offset
-         +to_plane(beam) : Plane
-         +from_butt_plane(main_beam, cross_beam, plane) : CutPlaneSpec
-         +from_back_plane(main_beam, cross_beam, plane) : CutPlaneSpec
-      }
-
-      class MiterPlaneSpec {
-         +ref_side_index
-         +angle_x
-         +angle_y
-         +offset
-         +to_plane(beam) : Plane
-         +from_plane(beam_a, beam_b, plane) : MiterPlaneSpec
       }
 
       class ButtJoint {
@@ -626,15 +608,11 @@ classDiagram
       PlateTButtJoint <|-- PanelTButtJoint
       PanelJoint <|-- PanelMiterJoint
       PlateMiterJoint <|-- PanelMiterJoint
-
-      %% Usage relationships
-      ButtJoint ..> CutPlaneSpec : uses
-      LMiterJoint ..> MiterPlaneSpec : uses
 ```
 
 ## Fabrication Subsystem
 
-The fabrication subsystem handles manufacturing features and BTLx processing. All fabrication features inherit from `BTLxProcessing` (a `compas.data.Data` subclass; `Data` is omitted from the diagram); each processing class represents one BTLx machining operation and is instantiated through alternative constructors (e.g. `from_plane_and_beam()`) rather than directly. Several processings also export a lightweight `*Proxy` companion (`JackRafterCutProxy`, `DoubleCutProxy`, `DrillingProxy`, `LapProxy`, `PocketProxy`, `LongitudinalCutProxy`) that defers the expensive parameter computation until the processing is actually applied; proxies mirror the alternative constructors of their processing and are omitted from the diagram.
+The fabrication subsystem handles manufacturing features and BTLx processing; the processing classes are a (partial) Python implementation of the [BTLx standard](https://design2machine.com/btlx/index.html). All fabrication features inherit from `BTLxProcessing` (a `compas.data.Data` subclass; `Data` is omitted from the diagram); each processing class represents one BTLx machining operation and is instantiated through alternative constructors (e.g. `from_plane_and_beam()`) rather than directly. Several processings also export a lightweight `*Proxy` companion (`JackRafterCutProxy`, `DoubleCutProxy`, `DrillingProxy`, `LapProxy`, `PocketProxy`, `LongitudinalCutProxy`) that defers the expensive parameter computation until the processing is actually applied; proxies mirror the alternative constructors of their processing and are omitted from the diagram.
 
 `BTLxWriter` walks a `TimberModel` and wraps each element in a `BTLxPart` (or `BTLxRawpart` for nesting stock) whose processings are serialized to BTLx XML; `BTLxReader` (in the separate `compas_timber.btlx` package) performs the reverse. `BTLxWriter`, `BTLxReader` and the part classes are plain XML-serialization helpers and do not inherit from `Data`.
 
