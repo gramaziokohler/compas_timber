@@ -38,3 +38,6 @@ Features are additional geometric operations on Beams:
 *   `Diameter` : the diameter of the hole
 
 The output `Feature` is to be used as input for the **Model** component. See [model](model.md).
+
+!!! tip "Under the hood"
+    Each feature is a BTLx processing class in [`compas_timber.fabrication`](../../api/compas_timber.fabrication.md): `JackRafterCut`, `DoubleCut` and `Drilling`.

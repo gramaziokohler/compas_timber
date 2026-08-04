@@ -224,3 +224,6 @@ The following table summarises the joint types that can be applied to the differ
 | Step | | X | |
 | Birdsmouth | | X | |
 | Dovetail | | X | |
+
+!!! tip "Under the hood"
+    The rule components are implemented in the [timber_design](https://github.com/gramaziokohler/timber_design) repository; the joints they produce are `Joint` subclasses from [`compas_timber.connections`](../../api/compas_timber.connections.md).

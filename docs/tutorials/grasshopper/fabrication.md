@@ -17,3 +17,6 @@ Writes a BTLx File from a Compas Timber Model.
 **Outputs:**
 
 *   `BTLx` : the BTLx Content as xml text.
+
+!!! tip "Under the hood"
+    BTLx export is done by [`compas_timber.fabrication.BTLxWriter`](../../api/compas_timber.fabrication.md).

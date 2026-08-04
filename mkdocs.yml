@@ -162,6 +162,7 @@ nav:
   - Grasshopper Plugin:
       - Introduction: tutorials/index.md
       - Installation: tutorials/grasshopper/installation.md
+      - Development: tutorials/grasshopper/development.md
       - Workflow: tutorials/grasshopper/workflow.md
       - Attributes: tutorials/grasshopper/attributes.md
       - Beams: tutorials/grasshopper/beams.md

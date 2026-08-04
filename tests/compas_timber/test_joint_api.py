@@ -2,7 +2,6 @@ import pytest
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 
@@ -73,19 +72,6 @@ def miter_beam_triplet():
     model.add_element(b2)
     model.add_element(b3)
     return model, b1, b2, b3
-
-
-@pytest.fixture
-def crossing_beams_model():
-    """Two beams that cross in space — suitable for connect_adjacent_beams."""
-    model = TimberModel()
-    line1 = Line(Point(0, 0, 0), Point(1, 0, 0))
-    line2 = Line(Point(0.5, -0.5, 0), Point(0.5, 0.5, 0))
-    b1 = Beam.from_centerline(line1, 0.1, 0.1)
-    b2 = Beam.from_centerline(line2, 0.1, 0.1)
-    model.add_element(b1)
-    model.add_element(b2)
-    return model, b1, b2
 
 
 # =============================================================================
@@ -452,42 +438,9 @@ def test_get_interactions_both_elements_see_joint(two_beam_model):
 
 
 # =============================================================================
-# model.joint_candidates
-# =============================================================================
-
-
-def test_candidates_returns_set(crossing_beams_model):
-    model, b1, b2 = crossing_beams_model
-    model.connect_adjacent_beams()
-    candidates = model.joint_candidates
-    assert isinstance(candidates, set)
-
-
-def test_candidates_are_joint_subclass(crossing_beams_model):
-    model, b1, b2 = crossing_beams_model
-    model.connect_adjacent_beams()
-    for candidate in model.joint_candidates:
-        assert isinstance(candidate, Joint)
-        assert isinstance(candidate, JointCandidate)
-
-
-def test_candidates_empty_when_none_added():
-    model = TimberModel()
-    assert len(model.joint_candidates) == 0
-
-
-def test_manual_candidate_is_joint(two_beam_model):
-    model, b1, b2 = two_beam_model
-    candidate = JointCandidate(b1, b2, topology=JointTopology.TOPO_L)
-    model.add_joint_candidate(candidate)
-    retrieved = list(model.joint_candidates)[0]
-    assert isinstance(retrieved, Joint)
-    assert isinstance(retrieved, JointCandidate)
-    assert retrieved is candidate
-
-
-# =============================================================================
 # Joint.promote_joint_candidate()
+#
+# (model.joint_candidates / model.add_joint_candidate() tests live in test_joint_candidate.py)
 # =============================================================================
 
 
@@ -845,24 +798,6 @@ def test_model_str_with_no_joints():
 # =============================================================================
 # Edge cases
 # =============================================================================
-
-
-def test_candidates_and_joints_are_separate(crossing_beams_model):
-    """Joint candidates should not appear in model.joints."""
-    model, b1, b2 = crossing_beams_model
-    model.connect_adjacent_beams()
-    assert len(model.joint_candidates) == 1
-    assert len(model.joints) == 0
-
-
-def test_adding_joint_does_not_affect_candidates(crossing_beams_model):
-    """Adding a joint should not remove existing candidates."""
-    model, b1, b2 = crossing_beams_model
-    model.connect_adjacent_beams()
-    candidates_before = len(model.joint_candidates)
-    LButtJoint.create(model, b1, b2)
-    assert len(model.joint_candidates) == candidates_before
-    assert len(model.joints) == 1
 
 
 def test_joint_interactions_property(two_beam_model):
