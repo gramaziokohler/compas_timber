@@ -194,7 +194,7 @@ class TimberElement(Element, abc.ABC):
     @reset_timber_attrs
     def add_features(self, features):
         # type: (BTLxProcessing | list[BTLxProcessing]) -> None
-        """Adds one or more features to the beam.
+        """Adds one or more features to the element.
 
         Parameters
         ----------
@@ -210,7 +210,7 @@ class TimberElement(Element, abc.ABC):
     @reset_timber_attrs
     def remove_features(self, features=None):
         # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
-        """Removes a feature from the beam.
+        """Removes one or more features from the element.
 
         Parameters
         ----------
