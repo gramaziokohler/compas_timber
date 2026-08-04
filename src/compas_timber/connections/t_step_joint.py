@@ -160,7 +160,7 @@ class TStepJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is called during `Model.process_joinery()`, not when the joint is created.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -184,7 +184,7 @@ class TStepJoint(Joint):
     def add_features(self):
         """Adds the required trimming features to both beams.
 
-        This method is called during `Model.process_joinery()`, not when the joint is created.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
         assert self.main_beam and self.cross_beam  # should never happen

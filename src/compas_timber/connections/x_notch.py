@@ -101,7 +101,7 @@ class XNotchJoint(Joint):
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
-        This method is called during `Model.process_joinery()`, not when the joint is created.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
         assert self.notch_beam and self.solid_beam
