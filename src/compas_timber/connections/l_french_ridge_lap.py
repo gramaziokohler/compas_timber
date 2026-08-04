@@ -54,7 +54,7 @@ class LFrenchRidgeLapJoint(LapJoint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `Model.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -80,9 +80,8 @@ class LFrenchRidgeLapJoint(LapJoint):
     def add_features(self):
         """Adds the necessary features to the beams.
 
-        This method is called during the `Model.process_joinery()` process after the joint
-        has been instantiated and added to the model. It is executed after the beam extensions
-        have been added via `Joint.add_extensions()`.
+        This method is called during `Model.process_joinery()`, not when the joint is created.
+        It is executed after the beam extensions have been added via `Joint.add_extensions()`.
 
         """
         assert self.beam_a and self.beam_b

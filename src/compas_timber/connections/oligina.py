@@ -30,7 +30,7 @@ class TOliGinaJoint(MortiseTenonJoint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `Model.process_joinery()`, not when the joint is created.
 
         Raises
         ------

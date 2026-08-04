@@ -94,11 +94,13 @@ class FastenerApplicationError(Exception):
 
 
 class BTLxProcessingError(Exception):
-    """Exception raised when an error occurs while writing a Processing to BTLx file.
+    """Error which occurred while writing a Processing to a BTLx file.
+
+    This error is not raised but rather collected by ``BTLxWriter`` and exposed via its ``errors`` property.
 
     TODO: some work here to figure out the different types of feature/processing related errors.
     TODO: this one is somewhat similar to FeatureApplicationError, but only relevant when processing is created from its proxy.
-    TOOD: also BTLxProcessingError is never throws but rather collected to form some sort of a report for the user.
+    TODO: also BTLxProcessingError is never throws but rather collected to form some sort of a report for the user.
 
     Parameters
     ----------
