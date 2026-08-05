@@ -88,5 +88,8 @@ class XLapJoint(LapJoint):
             raise ValueError("Element is not part of this joint.")
         
         axis = self.cutting_plane_b.normal.cross(self.cutting_plane_a.normal)
-        return Line(self.location, self.location + axis)
+        if moving_element == self.beam_a:
+            return Line(self.location, self.location + axis)
+        elif moving_element == self.beam_b:
+            return Line(self.location, self.location - axis)
             
