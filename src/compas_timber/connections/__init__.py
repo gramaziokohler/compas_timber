@@ -15,7 +15,7 @@ from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
-from .candidate_dispatch import find_connection_handler
+from .candidate_dispatch import find_solver_for
 from .candidate_dispatch import get_connection_candidate
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
@@ -75,7 +75,7 @@ __all__ = [
     "ConnectionSolver",
     "PlateConnectionSolver",
     "find_neighboring_elements",
-    "find_connection_handler",
+    "find_solver_for",
     "get_connection_candidate",
     "TDovetailJoint",
     "MortiseTenonJoint",

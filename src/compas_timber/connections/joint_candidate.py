@@ -1,8 +1,16 @@
 from compas.data import Data
 from compas.geometry import Point
 
-from .candidate_dispatch import find_connection_handler
+from compas_timber.elements import Beam
+from compas_timber.elements import Panel
+from compas_timber.elements import Plate
+
+from .solver import ConnectionSolver
 from .solver import JointTopology
+from .solver import PlateConnectionSolver
+
+from .candidate_dispatch import find_solver_for
+
 
 
 class JointCandidate(Data):
@@ -11,13 +19,14 @@ class JointCandidate(Data):
     It is used to create a first-pass joinery information which can be later grouped into a Clusters and then
     promoted to concrete joints.
 
-    Please use `JointCandidate.create()` to properly create an instance of this class and associate it with a model.
+    Construct one directly and register it with :meth:`~compas_timber.model.TimberModel.add_joint_candidate`, or let
+    :func:`~compas_timber.connections.get_connection_candidate` build it for an adjacent pair of elements.
 
     A `JointCandidate` references a single `TopologyData` instance holding everything a solver determined about the
     connection (topology, distance, location, and per-element data). `location`, `distance`, and `topology` are
     convenience properties that read from this referenced `topology_data`; if a candidate is constructed from bare
-    elements without one, `topology_data` is always solved lazily, via the connection handler registered for the
-    pair's element types, on first access — there is no partial/stub construction path.
+    elements without one, `topology_data` is always solved lazily, via the solver registered for the pair's element
+    types, on first access — there is no partial/stub construction path.
 
     Parameters
     ----------
@@ -48,7 +57,7 @@ class JointCandidate(Data):
         candidate as an edge attribute on its graph.
     solver : :class:`~compas_timber.connections.ConnectionSolver` or None
         The solver registered for this candidate's pair of element types, or ``None`` if unsupported.
-    topology_data : :class:`~compas_timber.connections.TopologyData` or None
+    topology_data : :class:`~compas_timber.connections.TopologyData`
         The topology-analysis result referenced by this candidate.
     topology : literal, one of :class:`JointTopology`
         Shortcut for `topology_data.topology`.
@@ -56,10 +65,12 @@ class JointCandidate(Data):
         Shortcut for `topology_data.location`. Settable — writes through to `topology_data.location`.
     distance : float or None
         Shortcut for `topology_data.distance`.
-    a_segment_index : int or None
-        Shortcut for `topology_data.data_for(element_a).edge_index`.
-    b_segment_index : int or None
-        Shortcut for `topology_data.data_for(element_b).edge_index`.
+
+    Notes
+    -----
+    Element-type-specific results (a plate's connected edge index, a beam's reference side index, ...) are
+    deliberately not exposed here — a `JointCandidate` is type-agnostic. Read them off the per-element entry
+    instead, e.g. `candidate.topology_data.data_for(plate).edge_index`.
 
     """
 
@@ -123,15 +134,17 @@ class JointCandidate(Data):
 
     @property
     def solver(self):
-        handler_type = find_connection_handler(*self.elements)
-        return handler_type() if handler_type is not None else None
+        if len(self.elements) < 2:
+            raise ValueError("Cannot get connection_solver: this candidate's elements have not been restored yet.")
+        solver_type = find_solver_for(*self.elements)
+        if solver_type is None:
+            raise ValueError("No connection solver is registered for elements {} and {}.".format(self.element_a, self.element_b))
+        return solver_type()
 
     @property
     def topology_data(self):
-        """Returns `topology_data`, solving it lazily via the registered connection handler if none exists yet."""
+        """Returns `topology_data`, solving it lazily via the solver registered for this pair if none exists yet."""
         if self._topology_data is None:
-            if len(self.elements) < 2:
-                raise ValueError("Location of the joint could not be determined. Please set it manually.")
             self._topology_data = self.solver.find_topology(*self.elements)
         return self._topology_data
 
@@ -153,16 +166,6 @@ class JointCandidate(Data):
     def topology(self):
         return self.topology_data.topology
 
-    @property
-    def a_segment_index(self):
-        data = self.topology_data.data_for(self.element_a) if self.topology_data else None
-        return data.edge_index if data else None
-
-    @property
-    def b_segment_index(self):
-        data = self.topology_data.data_for(self.element_b) if self.topology_data else None
-        return data.edge_index if data else None
-
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this candidate.
 
@@ -171,29 +174,3 @@ class JointCandidate(Data):
 
         """
         self._elements = tuple(model[guid] for guid in self.element_guids)
-
-    @classmethod
-    def create(cls, model, *elements, **kwargs):
-        """Creates an instance of this candidate and adds it to `model.joint_candidates`.
-
-        Mirrors :meth:`Joint.create`, except it adds the candidate via `model.add_joint_candidate()` rather than
-        `model.add_joint()` — a `JointCandidate` is never registered as an actual joint on the model.
-
-        Parameters
-        ----------
-        model : :class:`~compas_timber.model.TimberModel`
-            The model to which the elements and this candidate belong.
-        *elements : :class:`~compas_model.elements.Element`
-            The elements to be connected by this candidate.
-        **kwargs : dict
-            Additional keyword arguments that are passed to the candidate's constructor.
-
-        Returns
-        -------
-        :class:`compas_timber.connections.JointCandidate`
-            The instance of the created candidate.
-
-        """
-        candidate = cls(*elements, **kwargs)
-        model.add_joint_candidate(candidate)
-        return candidate

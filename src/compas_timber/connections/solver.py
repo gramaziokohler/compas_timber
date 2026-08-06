@@ -22,6 +22,7 @@ from compas_timber.utils import is_point_in_polyline
 from .topology_data import BeamTopologyData
 from .topology_data import PlateTopologyData
 from .topology_data import TopologyData
+from .joint_candidate import JointCandidate
 from .utilities import beam_ref_side_incidence
 
 
@@ -113,6 +114,7 @@ def _beam_ref_side_index(this_beam, other_beam):
 
 
 def _beam_location_parameter(beam, point):
+    # TODO: make this a beam method, e.g. `beam.location_parameter(point)`
     """Absolute distance, in model units, from `beam.centerline.start` to `point` along the centerline.
 
     `point` is expected to already lie on the centerline (e.g. a closest-point or endpoint result).
@@ -166,7 +168,7 @@ class ConnectionSolver(object):
         distance, _, _ = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         return distance
 
-    def get_location(self, beam_a, beam_b):
+    def get_location(self, beam_a, beam_b, max_distance=None, angle_tol=None):
         """Return the point midway between the closest points of two beams' centerlines.
 
         Parameters
@@ -186,7 +188,7 @@ class ConnectionSolver(object):
         return (Point(*point_a) + Point(*point_b)) * 0.5
 
 
-    def find_topology(self, beam_a, beam_b, max_distance=None):
+    def find_topology(self, beam_a, beam_b, max_distance=None, angle_tol=None):
         """If `beam_a` and `beam_b` intersect within the given `max_distance`, return the topology type of the intersection.
 
         If the topology is role-sensitive, the method outputs the beams in a consistent specific order
@@ -201,6 +203,9 @@ class ConnectionSolver(object):
             Second beam from intersecting pair.
         max_distance : float, optional
             Maximum distance, in design units, at which two beams are considered intersecting.
+        angle_tol : float, optional
+            Maximum angle, in radians, between the two centerlines at which the beams are still considered
+            parallel, and therefore a candidate for `TOPO_I`. Defaults to `TOL.absolute`.
 
         Returns
         -------
@@ -219,7 +224,7 @@ class ConnectionSolver(object):
         point_b = Point(*point_b)
 
         # see if beams are parallel
-        if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi):
+        if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi, tol=angle_tol):
             # beams are parallel
             # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
             overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
@@ -331,17 +336,15 @@ class ConnectionSolver(object):
             },
         )
 
-    def create_joint_candidate(self, beam_a, beam_b, max_distance=None):
-        # type: (...) -> JointCandidate | None
-        """creates a JointCandidate from 2 beams"""
-        result = self.find_topology(beam_a, beam_b, max_distance=max_distance)
+    def create_joint_candidate(self, element_a, element_b, max_distance=None) -> JointCandidate | None:
+        """creates a JointCandidate from 2 elements"""
+        result = self.find_topology(element_a, element_b, max_distance=max_distance)
         if result.topology == JointTopology.TOPO_UNKNOWN:
             return None
         # use the role-derived order (main/cross) to keep main, cross relationship
-        elements_by_guid = {str(beam_a.guid): beam_a, str(beam_b.guid): beam_b}
+        elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
         ordered_elements = [elements_by_guid[guid] for guid in result.ordered_guids()]
         return JointCandidate(*ordered_elements, topology_data=result)
-
 
 class PlateConnectionSolver(ConnectionSolver):
     """Provides tools for detecting plate intersections and joint topologies."""
@@ -364,7 +367,7 @@ class PlateConnectionSolver(ConnectionSolver):
             The distance, in design units, between the two plates.
 
         """
-        return self.find_topology(plate_a.centerline, plate_b.centerline).distance
+        return self.find_topology(plate_a, plate_b).distance
 
     def get_location(self, plate_a, plate_b):
         """Return the mid-point of the overlap of the two plates.
@@ -382,30 +385,31 @@ class PlateConnectionSolver(ConnectionSolver):
             The point at the center of the overlap of the two plates.
 
         """
-        return self.find_topology(plate_a.centerline, plate_b.centerline).location
+        return self.find_topology(plate_a, plate_b).location
 
-
-
-    def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, tol=TOLERANCE):
+    def find_topology(self, plate_a, plate_b, max_distance=TOLERANCE, angle_tol=TOLERANCE):
         """Calculates the topology of the intersection between two plates. requires that one edge of a plate lies on the plane of the other plate.
         When TOPOLOGY_EDGE_FACE is found, the plates are returned in reverse order, with the main plate first and the cross plate second.
 
-        parameters
+        Parameters
         ----------
         plate_a : :class:`~compas_timber.elements.Plate`
             First potential intersecting plate.
         plate_b : :class:`~compas_timber.elements.Plate`
             Second potential intersecting plate.
-        tol : float
-            General tolerance to use for mathematical computations.
         max_distance : float, optional
-            Maximum distance, in desigen units, at which two plates are considered intersecting.
+            Maximum distance, in design units, at which two plates are considered intersecting.
+        angle_tol : float, optional
+            Maximum angle, in radians, between two outline segments at which they are still considered
+            parallel, and therefore a candidate for a shared edge.
 
         Returns
         -------
         :class:`~compas_timber.connections.TopologyData`
+            The topology results of the intersection between the two plates.
+
         """
-        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, angle_tol=angle_tol)
         if plate_a_segment_index is None and plate_b_segment_index is None:
             return TopologyData(
                 JointTopology.TOPO_UNKNOWN,
@@ -445,22 +449,22 @@ class PlateConnectionSolver(ConnectionSolver):
             )
 
     @staticmethod
-    def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+    def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, angle_tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
 
-        i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, angle_tol=angle_tol)
         if i_a is not None:
             return i_a, i_b, dist, pt
-        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, angle_tol=angle_tol)
         if i_a is not None:
             return i_a, None, dist, pt
-        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, angle_tol=angle_tol)
         if i_b is not None:
             return None, i_b, dist, pt
         return None, None, None, None
 
     @staticmethod
-    def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
+    def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, angle_tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
         Used to find segments that join in L_TOPO Topology"""
 
@@ -472,7 +476,7 @@ class PlateConnectionSolver(ConnectionSolver):
                     seg_a_midpt = seg_a.point_at(0.5)
                     dist = distance_point_line(seg_a_midpt, seg_b)
                     if dist <= max_distance:
-                        if is_parallel_line_line(seg_a, seg_b, tol=tol):
+                        if is_parallel_line_line(seg_a, seg_b, tol=angle_tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
                                 overlap = get_segment_overlap(seg_a, seg_b, unitize=True)
                                 pt_a = seg_a.point_at(overlap[0])
@@ -481,7 +485,7 @@ class PlateConnectionSolver(ConnectionSolver):
         return None, None, None, None
 
     @staticmethod
-    def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
+    def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, angle_tol=TOL):
         """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
         Used to find segments that join in L_TOPO Topology"""
 
@@ -494,11 +498,12 @@ class PlateConnectionSolver(ConnectionSolver):
                     seg_a_midpt = seg_a.point_at(0.5)
                     dist = distance_point_line(seg_a_midpt, line)
                     if dist <= max_distance:
-                        if is_parallel_line_line(seg_a, line, tol=tol):
+                        if is_parallel_line_line(seg_a, line, tol=angle_tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
                                 pts = get_segment_range_on_polyline(seg_a, pline_b)
                                 return i, dist, (pts[0] + pts[1])/2.0
         return None, None, None
+
 
     @staticmethod
     def do_segments_overlap(segment_a, segment_b):
@@ -550,18 +555,3 @@ class PlateConnectionSolver(ConnectionSolver):
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
 
-    def create_joint_candidate(self, plate_a, plate_b, max_distance=None):
-        # type: (...) -> JointCandidate | None
-        """creates a JointCandidate from 2 plates"""
-        result = self.find_topology(plate_a, plate_b, tol=TOL.relative, max_distance=max_distance or self.TOLERANCE)
-        if result.topology is JointTopology.TOPO_UNKNOWN:
-            return None
-        elements_by_guid = {str(plate_a.guid): plate_a, str(plate_b.guid): plate_b}
-        ordered_elements = [elements_by_guid[guid] for guid in result.ordered_guids()]
-        return JointCandidate(*ordered_elements, topology_data=result)
-
-
-# imported here (after `ConnectionSolver`/`PlateConnectionSolver` are already defined above) to avoid a
-# circular import: `joint_candidate.py` imports `find_connection_handler` from `candidate_dispatch.py`,
-# which in turn imports `ConnectionSolver`/`PlateConnectionSolver` from this module.
-from .joint_candidate import JointCandidate  # noqa: E402

@@ -180,12 +180,12 @@ def test_get_candidate_returns_none_when_not_connected():
 
 
 # =============================================================================
-# JointCandidate.create()
+# TimberModel.add_joint_candidate()
 # =============================================================================
 
 
-def test_joint_candidate_create_still_works():
-    """JointCandidate.create() adds the candidate to model.joint_candidates, not model.joints."""
+def test_add_joint_candidate_does_not_create_a_joint():
+    """A registered candidate lands in model.joint_candidates, never in model.joints."""
     w, h = 20, 20
 
     lines = [
@@ -197,8 +197,8 @@ def test_joint_candidate_create_still_works():
     beams = [Beam.from_centerline(line, w, h) for line in lines]
     model.add_elements(beams)
 
-    # JointCandidate.create() should not create actual joints
-    joint = JointCandidate.create(model, beams[0], beams[1])
+    joint = JointCandidate(beams[0], beams[1])
+    model.add_joint_candidate(joint)
 
     assert isinstance(joint, JointCandidate)
     assert joint not in model.joints  # Should not be in actual joints
@@ -230,7 +230,8 @@ def test_joint_candidate_location_explicitly_set():
             str(b2.guid): BeamTopologyData(role="cross"),
         },
     )
-    joint = JointCandidate.create(model, b1, b2, topology_data=topology_data)
+    joint = JointCandidate(b1, b2, topology_data=topology_data)
+    model.add_joint_candidate(joint)
 
     assert TOL.is_allclose(joint.location, loc)
 
@@ -243,7 +244,8 @@ def test_joint_candidate_location_computed_from_intersecting_beams():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2)
+    joint = JointCandidate(b1, b2)
+    model.add_joint_candidate(joint)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0))
 
 
@@ -262,7 +264,8 @@ def test_joint_candidate_location_computed_from_skew_beams():
     model.add_element(b2)
 
     topology_data = ConnectionSolver().find_topology(b1, b2, max_distance=2.0)
-    joint = JointCandidate.create(model, b1, b2, topology_data=topology_data)
+    joint = JointCandidate(b1, b2, topology_data=topology_data)
+    model.add_joint_candidate(joint)
     # closest points are (1,0,0) and (1,0,1), midpoint is (1,0,0.5)
     assert TOL.is_allclose(joint.location, Point(1, 0, 0.5))
 
@@ -275,7 +278,8 @@ def test_joint_candidate_location_setter_rejects_non_point():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2)
+    joint = JointCandidate(b1, b2)
+    model.add_joint_candidate(joint)
     with pytest.raises(TypeError, match="Location must be a Point"):
         joint.location = [1, 2, 3]
 
@@ -289,7 +293,7 @@ def test_joint_candidate_location_raises_before_elements_available():
         }
     )
     # elements are None at this point (not yet restored from model)
-    with pytest.raises(ValueError, match="Location of the joint could not be determined"):
+    with pytest.raises(ValueError, match="elements have not been restored"):
         _ = candidate.location
 
 
@@ -319,7 +323,8 @@ def test_joint_candidate_location_and_topology_survive_serialization():
     model.add_element(b1)
     model.add_element(b2)
 
-    joint = JointCandidate.create(model, b1, b2)
+    joint = JointCandidate(b1, b2)
+    model.add_joint_candidate(joint)
     original_location = joint.location
     original_topology = joint.topology
 
@@ -332,7 +337,11 @@ def test_joint_candidate_location_and_topology_survive_serialization():
 
 
 def test_plate_joint_candidate_segment_indices_survive_serialization():
-    """`a_segment_index`/`b_segment_index`, sourced from `topology_data`'s per-plate `edge_index`, survive a JSON round-trip."""
+    """A candidate's per-plate `edge_index` values survive a JSON round-trip, and stay correlated to the right plate.
+
+    `JointCandidate` itself is type-agnostic and exposes no segment indices; they're read off the
+    per-element entry in `topology_data`, keyed by element guid.
+    """
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
@@ -354,8 +363,8 @@ def test_plate_joint_candidate_segment_indices_survive_serialization():
     restored = json_loads(json_dumps(model))
     restored_candidate = list(restored.joint_candidates)[0]
 
-    assert restored_candidate.a_segment_index == 1
-    assert restored_candidate.b_segment_index == 0
+    assert restored_candidate.topology_data.data_for(restored_candidate.element_a).edge_index == 1
+    assert restored_candidate.topology_data.data_for(restored_candidate.element_b).edge_index == 0
 
 
 # =============================================================================
@@ -387,8 +396,10 @@ def test_remove_element_keeps_candidates_on_unrelated_elements():
     model.add_element(b2)
     model.add_element(b3)
 
-    candidate = JointCandidate.create(model, b1, b2)
-    unrelated = JointCandidate.create(model, b1, b3)
+    candidate = JointCandidate(b1, b2)
+    model.add_joint_candidate(candidate)
+    unrelated = JointCandidate(b1, b3)
+    model.add_joint_candidate(unrelated)
 
     model.remove_element(b2)
 
