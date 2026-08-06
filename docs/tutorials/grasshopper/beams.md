@@ -1,6 +1,6 @@
 # Beams
 
-A `compas_timber.parts.Beam` object represents a linear (straight) timber part with a rectangular cross-section - for example as a stud, rafter, beam, joist etc.
+A **Beam** represents a linear (straight) timber part with a rectangular cross-section - for example as a stud, rafter, beam, joist etc.
 It has a local coordinate system, where the X-axis corresponds with the *centerline*, Y-axis with the *width* of the cross-section and Z-axis with the *height* of the cross-section.
 The *origin* is located at the start of the centerline.
 
@@ -43,3 +43,6 @@ Extracts the frame, centreline, box, width and height from a Beam.
 Finds a specific Beam corresponding to a referenced Rhino curve or line.
 
 ![Find Beam](../images/gh_beam_guid.png){ width=40% }
+
+!!! tip "Under the hood"
+    In Python, a beam is a [`compas_timber.elements.Beam`](../../api/compas_timber.elements.md).

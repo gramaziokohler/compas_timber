@@ -57,3 +57,6 @@ This is a dynamic component. Sets Beam Dimensions for a selected Beam Type in th
 **Outputs:**
 
 *   `Beam Type` : stud, king_stud, jack_stud, edge_stud, plate, header or sill.
+
+!!! tip "Under the hood"
+    The design components are implemented in the [timber_design](https://github.com/gramaziokohler/timber_design) repository, building on [`compas_timber`](../../api/compas_timber.model.md).

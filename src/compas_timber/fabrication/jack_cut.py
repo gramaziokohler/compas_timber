@@ -156,6 +156,9 @@ class JackRafterCut(BTLxProcessing):
             The beam that is cut by this instance.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+            The cut is fully defined by ``plane``, so any reference side yields an
+            equivalent processing; pass an index to pin the resulting parameters
+            to a specific side (e.g. for post-processing on a chosen face).
 
         Returns
         -------
@@ -167,7 +170,7 @@ class JackRafterCut(BTLxProcessing):
             plane = Plane.from_frame(plane)
         start_y = 0.0
         start_depth = 0.0
-        ref_side = beam.ref_sides[ref_side_index]  # TODO: is this arbitrary?
+        ref_side = beam.ref_sides[ref_side_index]
         ref_edge = Line.from_point_and_vector(ref_side.point, ref_side.xaxis)
         orientation = cls._calculate_orientation(beam, plane)
         point_start_x = intersection_line_plane(ref_edge, plane)
@@ -378,6 +381,9 @@ class JackRafterCutProxy(object):
             The beam that is cut by this instance.
         ref_side_index : int, optional
             The reference side index of the beam to be cut. Default is 0 (i.e. RS1).
+            The cut is fully defined by ``plane``, so any reference side yields an
+            equivalent processing; pass an index to pin the resulting parameters
+            to a specific side (e.g. for post-processing on a chosen face).
 
         Returns
         -------
