@@ -178,19 +178,17 @@ class TimberElement(Element, abc.ABC):
         self.remove_blank_extension()
         self.debug_info = []
 
-    @reset_computed
-    @reset_timber_attrs
     def add_feature(self, feature):
         # type: (BTLxProcessing) -> None
-        """Adds one or more features to the beam.
+        """Adds a feature to the element.
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.fabrication.BTLxProcessing`)
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing`
             The feature to be added.
 
         """
-        self._features.append(feature)  # type: ignore
+        self.add_features(feature)
 
     @reset_computed
     @reset_timber_attrs
