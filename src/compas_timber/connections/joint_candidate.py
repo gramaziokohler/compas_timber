@@ -94,13 +94,6 @@ class JointCandidate(Data):
         else:
             raise ValueError("JointCandidate requires either elements or element_guids.")
 
-        # backward compatibility: older serialized models flattened topology/location/distance directly
-        # onto JointCandidate instead of nesting them in a `topology_data`; drop them silently on load
-        # rather than crashing -- they get recomputed lazily via `topology_data` on first access anyway.
-        kwargs.pop("topology", None)
-        kwargs.pop("location", None)
-        kwargs.pop("distance", None)
-
         self._topology_data = topology_data
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -151,12 +144,6 @@ class JointCandidate(Data):
     @property
     def location(self):
         return self.topology_data.location
-
-    @location.setter
-    def location(self, value):
-        if not isinstance(value, Point):
-            raise TypeError("Location must be a Point.")
-        self.topology_data.location = value
 
     @property
     def distance(self):

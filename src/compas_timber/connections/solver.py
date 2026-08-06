@@ -224,7 +224,8 @@ class ConnectionSolver(object):
         point_b = Point(*point_b)
 
         # see if beams are parallel
-        if TOL.is_zero(angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) % math.pi, tol=angle_tol):
+        angle = angle_vectors(beam_a.centerline.direction, beam_b.centerline.direction) 
+        if abs(angle) <= angle_tol or abs(angle - math.pi) <= angle_tol:
             # beams are parallel
             # if parallel overlap on beam_a means that beam_b is overlapped by beam_a. Only need to perform the check on beam_a
             overlap_on_a = get_segment_overlap(beam_a.centerline, beam_b.centerline)
