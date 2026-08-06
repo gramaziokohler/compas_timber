@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
 * Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
 * Fixed `PlateMiterJoint` bug where parallel plates failed to join.
+* Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

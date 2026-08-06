@@ -746,10 +746,17 @@ class TimberModel(Model):
             The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
 
         """
-        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
-        for candidate in list(self.joint_candidates):
+        if elements is None:
+            to_remove = list(self.joint_candidates)
+        else:
+            # use `all` here so that e.g. a beam-plate candidate is not removed when only beams are passed in.
+            to_remove = [candidate for candidate in self.joint_candidates if all(e in elements for e in candidate.elements)]
+
+        for candidate in to_remove:
             self.remove_joint_candidate(candidate)
+
+        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
         max_distance = max_distance or TOL.absolute
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
