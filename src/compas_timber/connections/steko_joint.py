@@ -1,18 +1,18 @@
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import intersection_line_line
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
-from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import JackRafterCutProxy
-from compas_timber.fabrication import Slot
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.fasteners import FastenerAnchors
+from compas_timber.fasteners import StekoFastener
+from compas_timber.fasteners import StekoJointType
 
 from .joint import Joint
 from .utilities import beam_ref_side_incidence
@@ -23,25 +23,54 @@ class StekoJoint(Joint):
     Steko Joint connecting beam to column
     """
 
-    @property
-    def __data__(self):
-        data = super().__data__
-        data["steko_column_guid"] = self.steko_column_guid
-        data["steko_beams_guids"] = self.steko_beams_guids
-        return data
-
-    def __init__(self, steko_column: Beam, *steko_beams: Beam, **kwargs):
+    def __init__(self, steko_column: Beam = None, *steko_beams: Beam, **kwargs):
         super().__init__(
             elements=(steko_beams + (steko_column,)),
             **kwargs,
         )
-        self.steko_column = steko_column
-        self.steko_beams = list(steko_beams)
         self.slot_width = 0.027  # 27mm
         self.slot_depth = 0.07 + 0.07 + 0.07 + 0.045  # according to drawing
         self.slot_padding = 0.04  # 40 mmm
-        self.steko_column_guid = kwargs.get("steko_column_guid", None) or str(steko_column.guid)
-        self.steko_beams_guids = kwargs.get("steko_beams_guids", None) or [str(beam.guid) for beam in steko_beams]
+
+    @classmethod
+    def create(cls, model, steko_column, *steko_beams, **kwargs):
+        """Create the joint in ``model`` together with its Steko fastener.
+
+        Mirrors :meth:`~compas_timber.connections.BallNodeJoint.create`: the joint stays decoupled from the
+        fastener's internals, publishing its anchors and its :attr:`joint_type` and letting the fastener decide how
+        to lay itself out.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the beams and this joint belong.
+        steko_column : :class:`~compas_timber.elements.Beam`
+            The column the beams connect to.
+        *steko_beams : :class:`~compas_timber.elements.Beam`
+            The beams connecting to the column.
+        **kwargs : dict
+            Additional keyword arguments passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.StekoJoint`
+            The instance of the created joint.
+        """
+        joint = cls(steko_column, *steko_beams, **kwargs)
+        model.add_joint(joint)
+
+        fastener = StekoFastener()
+        fastener.bind(joint.fastener_anchors, joint_type=joint.joint_type)
+        model.add_fastener(fastener, joint.beams)
+        return joint
+
+    @property
+    def steko_column(self) -> Beam:
+        return self.elements[-1] if self.elements else None
+
+    @property
+    def steko_beams(self) -> list[Beam]:
+        return list(self.elements[:-1])
 
     @property
     def location(self) -> Point:
@@ -53,6 +82,24 @@ class StekoJoint(Joint):
         return [self.steko_column] + self.steko_beams
 
     @property
+    def joint_type(self) -> int:
+        """The :class:`StekoJointType` of this joint, derived from the number of beams connected to the column and,
+        for two beams, whether they run straight through the column (linear) or meet it at an angle (angled)."""
+        num_beams = len(self.steko_beams)
+        if num_beams == 1:
+            return StekoJointType.SOLO_BEAM
+        if num_beams == 2:
+            directions = [Vector.from_start_end(self.location, beam.centerline.midpoint).unitized() for beam in self.steko_beams]
+            if TOL.is_close(directions[0].dot(directions[1]), -1.0):
+                return StekoJointType.DOUBLE_LINEAR_BEAM
+            return StekoJointType.DOUBLE_ANGLED_BEAM
+        if num_beams == 3:
+            return StekoJointType.TRIPLE_BEAM
+        if num_beams == 4:
+            return StekoJointType.QUADRUPLE_BEAM
+        raise ValueError(f"StekoJoint does not support {num_beams} beams connected to the column.")
+
+    @property
     def fastener_anchors(self):
         assert self.steko_column is not None, "steko_column must be defined to compute fastener anchors"
         assert self.steko_beams is not None, "steko_beams must be defined to compute fastener anchors"
@@ -62,27 +109,27 @@ class StekoJoint(Joint):
         for beam in self.steko_beams:
             # Building the slot anchors
             out_joint_beam_direction = Vector.from_start_end(self.location, beam.centerline.midpoint).unitized()
-            plane_normal = Vector(*cross_vectors(beam.frame.xaxis, self.steko_column.frame.xaxis))
+            plane_normal = Vector(*cross_vectors(out_joint_beam_direction, self.steko_column.frame.xaxis))
             plane = Plane(self.location, plane_normal)
             plane.translate(out_joint_beam_direction * self.steko_column.width / 2)
 
             front_plane = plane.copy()
             front_plane.translate(plane_normal * (beam.width / 2 - self.slot_padding - self.slot_width / 2))
             front_fame = Frame.from_plane(front_plane)
-            anchor = FastenerAnchor(front_fame, AnchorKind.FACE, [beam, self.steko_column], role="slot_front")
+            anchor = FastenerAnchor(front_fame, AnchorKind.FACE, [self.steko_column, beam], role="slot_front")
             anchors.append(anchor)
 
             back_plane = plane.copy()
             back_plane.translate(plane_normal * -(beam.width / 2 - self.slot_padding - self.slot_width / 2))
             back_fame = Frame.from_plane(back_plane)
-            anchor = FastenerAnchor(back_fame, AnchorKind.FACE, [beam, self.steko_column], role="slot_back")
+            anchor = FastenerAnchor(back_fame, AnchorKind.FACE, [self.steko_column, beam], role="slot_back")
             anchors.append(anchor)
 
             # The Dowels now
             # Go to the first plane
             plane.translate(Vector.Zaxis() * (-beam.height / 2 + 0.04))
             plane.translate(out_joint_beam_direction * (0.045))
-            plane.translate(plane_normal * (beam.width / 2 + 0.01))
+            plane.translate(plane_normal * (beam.width / 2))
             for y in range(6):
                 for x in range(4):
                     if y != 0 and y != 5 and x != 0 and x != 3:
@@ -117,42 +164,10 @@ class StekoJoint(Joint):
             beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
 
     def add_features(self):
-        pass
-        # for beam in self.steko_beams:
-        #     # Jack Rafter Cut
-        #     plane = Plane.from_frame(self.steko_column.ref_sides[self.column_beam_ref_side_index(beam)])
-        #     plane.normal *= -1
-        #     jrc = JackRafterCutProxy.from_plane_and_beam(plane, beam)
-        #     beam.add_feature(jrc)
-        #     self.features.append(jrc)
-
-        #     # Slots
-        #     plane_normal = Vector(*cross_vectors(beam.frame.xaxis, self.steko_column.frame.xaxis))
-        #     plane = Plane(self.location, plane_normal)
-        #     a_plane = plane.translated(plane_normal * (beam.width / 2 - self.slot_padding - self.slot_width / 2))
-        #     slot = Slot.from_plane_and_beam(a_plane, beam, depth=self.slot_depth, thickness=self.slot_width)
-        #     beam.add_feature(slot)
-        #     b_plane = plane.translated(plane_normal * -(beam.width / 2 - self.slot_padding - self.slot_width / 2))
-        #     slot = Slot.from_plane_and_beam(b_plane, beam, depth=self.slot_depth, thickness=self.slot_width)
-        #     beam.add_feature(slot)
-
-        #     # Drillings
-        #     x_dir = Vector.from_start_end(self.location, beam.centerline.midpoint).unitized()
-        #     y_dir = Vector(0, 0, 1)
-        #     line = Line.from_point_direction_length(self.location, plane_normal, beam.width + 0.1)
-        #     line.translate(plane_normal * -0.05)
-        #     line.translate(plane_normal * -beam.width / 2)
-        #     line.translate(x_dir * (self.steko_column.width / 2 + 0.04))
-        #     line.translate(y_dir * -(beam.height / 2 - 0.04))
-        #     lines = []
-        #     x_gap = (self.slot_depth - 0.08) / 2
-        #     y_gap = (beam.height - 0.08) / 4
-        #     for x in range(3):
-        #         for y in range(5):
-        #             drill_line = line.copy()
-        #             drill_line.translate(x_dir * x * x_gap)
-        #             drill_line.translate(y_dir * y * y_gap)
-        #             drilling = Drilling.from_line_and_element(drill_line, beam, diameter=0.02)
-        #             beam.add_feature(drilling)
-        #             self.features.append(drilling)
-        #             lines.append(drill_line)
+        for beam in self.steko_beams:
+            # Jack Rafter Cut
+            plane = Plane.from_frame(self.steko_column.ref_sides[self.column_beam_ref_side_index(beam)])
+            plane.normal *= -1
+            jrc = JackRafterCutProxy.from_plane_and_beam(plane, beam)
+            beam.add_feature(jrc)
+            self.features.append(jrc)

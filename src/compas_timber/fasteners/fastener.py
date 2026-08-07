@@ -89,6 +89,11 @@ class FastenerPart(PartContainer, Element):
         # deserialization, since elements aren't available yet when the part itself is reconstructed
         self.elements = []
         self._element_guids = tuple(element_guids) if element_guids else ()
+        # the fabrication features this part has added to `elements` via `apply_fastening_features()` (e.g. a
+        # plate's recess Pocket, a dowel's Drilling) - mirrors `Joint.features`, so a viewer can show/hide just
+        # the features a specific fastener part is responsible for. Not called `features` - `Element` (this
+        # class's base, via `PartContainer`) already reserves that name for the part's *own* features.
+        self.applied_features = []
 
     @property
     def placement_frame(self) -> Frame:

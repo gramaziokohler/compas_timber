@@ -66,7 +66,7 @@ class TimberElement(Element, abc.ABC):
     @property
     def __data__(self):
         data = {}
-        data["frame"] = self.frame
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height

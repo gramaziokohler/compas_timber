@@ -172,6 +172,7 @@ class Screw(FastenerPart):
             drill_line.transform(xform)
             drilling = Drilling.from_line_and_element(drill_line, element, self.diameter)
             element.add_feature(drilling)
+            self.applied_features.append(drilling)
 
     def __repr__(self):
         return f"Screw({self.designation}, name='{self.name}')"

@@ -17,6 +17,9 @@ from .dowel import DowelFastener
 from .screw import Screw
 from .screw import ScrewFastener
 from .steko_fastener import StekoFastener
+from .steko_fastener import StekoJointType
+from .steko_fastener import StekoPlate
+from .steko_fastener import StekoSwordPlate
 
 __all__ = [
     "Fastener",
@@ -38,4 +41,7 @@ __all__ = [
     "Screw",
     "ScrewFastener",
     "StekoFastener",
+    "StekoJointType",
+    "StekoPlate",
+    "StekoSwordPlate",
 ]

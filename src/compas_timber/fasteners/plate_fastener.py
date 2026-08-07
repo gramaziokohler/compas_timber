@@ -236,6 +236,7 @@ class RectangularPlate(FastenerPart):
             if geo:
                 pocket = Pocket.from_volume_and_element(geo, element, ref_side_index=ref_side_index)
                 element.add_feature(pocket)
+                self.applied_features.append(pocket)
 
             # Drillings
             for hole in self.holes:
@@ -248,6 +249,7 @@ class RectangularPlate(FastenerPart):
                 try:
                     drilling = Drilling.from_line_and_element(drill_line, element, hole.drilling_diameter)
                     element.add_feature(drilling)
+                    self.applied_features.append(drilling)
                 except Exception:
                     pass
 

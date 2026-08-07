@@ -313,7 +313,7 @@ class Slot(BTLxProcessing):
         # look at the jack rafter cut. but idea might be to cross normal and one of the
         # axes of the ref frame to get the yaw angle between ref_side.xaxis and the horizontal direction of the plane
         yaw_vector = plane.normal.cross(ref_side.yaxis)
-        inclination = abs(angle_vectors_signed(yaw_vector, ref_side.xaxis, -ref_side.yaxis, deg=True))
+        inclination = angle_vectors_signed(yaw_vector, ref_side.xaxis, -ref_side.yaxis, deg=True)
 
         roll_vector = plane.normal.cross(ref_side.zaxis)
         angle = angle_vectors_signed(ref_side.xaxis, roll_vector, ref_side.zaxis, deg=True)
