@@ -50,6 +50,53 @@ def test_simple_joint_and_reset_no_kwargs():
     assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
 
 
+def test_miter_joint_parallel_plates():
+    """PlateMiterJoint between two coplanar (parallel) plates joining on one edge.
+
+    Regression test: when the plates' faces are parallel, intersection_plane_plane(a_planes[0], b_planes[0])
+    returns None, so the miter plane must fall back to the plane perpendicular to the plates.
+    """
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)
+
+    polyline_b = Polyline([Point(10, 0, 0), Point(10, 10, 0), Point(20, 10, 0), Point(20, 0, 0), Point(10, 0, 0)])
+    plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
+
+    kwargs = {"topology": JointTopology.TOPO_EDGE_EDGE, "a_segment_index": 2, "b_segment_index": 0}
+    joint = PlateMiterJoint(plate_a, plate_b, **kwargs)
+    joint.add_extensions()
+    for plate in joint.elements:
+        plate.apply_edge_extensions()
+
+    assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
+
+
+def test_miter_joint_parallel_plates_gap():
+    """PlateMiterJoint between two coplanar (parallel) plates joining on one edge.
+
+    Regression test: when the plates' faces are parallel and there is a gap, .
+    """
+    polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
+    plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)
+
+    polyline_b = Polyline([Point(11, 0, 0), Point(11, 10, 0), Point(20, 10, 0), Point(20, 0, 0), Point(11, 0, 0)])
+    plate_b = Plate.from_outline_thickness(Polyline(polyline_b.points), 1)
+
+    kwargs = {"topology": JointTopology.TOPO_EDGE_EDGE, "a_segment_index": 2, "b_segment_index": 0}
+    joint = PlateMiterJoint(plate_a, plate_b, **kwargs)
+    joint.add_extensions()
+    for plate in joint.elements:
+        plate.apply_edge_extensions()
+
+    assert isinstance(joint, PlateMiterJoint), "Expected joint to be a PlateMiterJoint"
+    # plate_a's edge is the reference, so it should be unchanged...
+    for point in plate_a.outline_a.points[2:4]:
+        assert point.x == 10.5
+    # ...while plate_b's edge should be pulled in to close the gap and meet it exactly
+    for point in plate_b.outline_a.points[0:2]:
+        assert point.x == 10.5
+
+
 def test_three_plate_joints():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
