@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
 
 ### Changed
+* Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
+* `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
 * `TimberElement.add_feature` now delegates to `add_features`, so a list passed by mistake is normalised instead of silently nested (#823). Docstring corrected accordingly.
 * `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.
@@ -56,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `PlateMiterJoint` bug where parallel plates failed to join.
 * Fixed `Pocket`, `Lap`, and `BTLxPart.shape_strings` calling the old `compas.geometry.brep` `BrepFace` API (`.nurbssurface`, `.frame_at`), which no longer exists on `compas_brep`'s `BrepFace`; `face.surface` now returns a `Plane` directly for planar faces, with a fallback to `surface.frame_at()` only for genuinely curved faces. Also fixed `face.surface` not accounting for `face.is_reversed` (opposite faces of a box reported identical normals instead of opposite ones), and `Pocket`/`Lap`'s `_get_optimal_ref_side_index` unpacking `edge.curve` (already a `Line`) as if it needed `Line(*curve.points)`.
 * `Pocket.apply()` now raises a clear `FeatureApplicationError` when `start_depth` is negative (the pocket volume lies entirely outside the element's material on the ref_side's outward side) instead of letting a corrupted or erased geometry reach the boolean subtraction.
+* Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

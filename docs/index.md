@@ -12,6 +12,8 @@ COMPAS TIMBER is written in Python and is a part of the [COMPAS](https://compas.
 It also features an implementation for [Rhinoceros 3D](https://www.rhino3d.com/)
 as a [Grasshopper](https://www.rhino3d.com/features/#grasshopper) plug-in,
 which is developed in the separate [timber_design](https://github.com/gramaziokohler/timber_design) repository.
+The plugin's documentation, including the Grasshopper tutorials, lives on the
+[timber_design documentation site](https://gramaziokohler.github.io/timber_design/).
 
 COMPAS TIMBER is an active research project and is being continuously developed at Gramazio Kohler Research at ETH Zurich.
 At the current stage, the library encompasses tools for fast and intuitive design of frame structures with simple joints

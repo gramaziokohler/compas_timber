@@ -20,6 +20,7 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+import compas_timber
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_from_outlines
@@ -149,8 +150,8 @@ class BTLxWriter(object):
         # create file history element
         file_history = ET.Element("FileHistory")
         # create initial export program element
-        file_history_attibutes = self._get_file_history_attributes()
-        file_history.append(ET.Element("InitialExportProgram", file_history_attibutes))
+        file_history_attributes = self._get_file_history_attributes()
+        file_history.append(ET.Element("InitialExportProgram", file_history_attributes))
         return file_history
 
     def _get_file_history_attributes(self):
@@ -159,7 +160,7 @@ class BTLxWriter(object):
             [
                 ("CompanyName", self.company_name or "Gramazio Kohler Research"),
                 ("ProgramName", "COMPAS_Timber"),
-                ("ProgramVersion", "Compas: {}".format(compas.__version__)),
+                ("ProgramVersion", "COMPAS Timber: {}; COMPAS: {}".format(compas_timber.__version__, compas.__version__)),
                 ("ComputerName", "{}".format(os.getenv("computername"))),
                 ("UserName", "{}".format(os.getenv("USERNAME"))),
                 ("FileName", self.file_name or ""),
