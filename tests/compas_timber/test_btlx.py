@@ -70,7 +70,7 @@ def test_btlx_file_history(resulting_btlx, namespaces):
     # Validate the attributes of InitialExportProgram
     assert initial_export_program.get("CompanyName") == "Gramazio Kohler Research"
     assert initial_export_program.get("ProgramName") == "COMPAS_Timber"
-    assert initial_export_program.get("ProgramVersion") == "Compas: {}".format(compas.__version__)
+    assert initial_export_program.get("ProgramVersion") == "COMPAS Timber: {}; COMPAS: {}".format(compas_timber.__version__, compas.__version__)
     assert initial_export_program.get("ComputerName") == (os.getenv("computername") or "None")
     assert initial_export_program.get("UserName") == (os.getenv("USERNAME") or "None")
 

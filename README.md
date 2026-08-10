@@ -29,7 +29,7 @@ pip install compas_timber
 
 * [Documentation](https://gramaziokohler.github.io/compas_timber/)
 * [COMPAS TIMBER Grasshopper Plugin (timber_design)](https://github.com/gramaziokohler/timber_design)
-* [COMPAS TIMBER Grasshopper Tutorial](https://gramaziokohler.github.io/compas_timber/latest/tutorials.html)
+* [COMPAS TIMBER Grasshopper Tutorial](https://gramaziokohler.github.io/timber_design/)
 * [COMPAS TIMBER API Reference](https://gramaziokohler.github.io/compas_timber/latest/api.html)
 
 ## Questions and feedback
