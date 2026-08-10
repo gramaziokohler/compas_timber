@@ -21,22 +21,22 @@ In short, this is how that works.
    pip install -e ".[dev]"
    ```
 
-4. Make sure all tests pass:
+3. Make sure all tests pass:
 
    ```bash
    invoke test
    ```
 
-5. Start making your changes to the **main** branch (or branch off of it).
-6. Make sure all tests still pass:
+4. Start making your changes to the **main** branch (or branch off of it).
+5. Make sure all tests still pass:
 
    ```bash
    invoke test
    ```
 
-7. Add yourself to the *Contributors* section of `AUTHORS.md`.
-8. Commit your changes and push your branch to GitHub.
-9. Create a [pull request](https://help.github.com/articles/about-pull-requests/) through the GitHub website.
+6. Add yourself to the authors list in `CITATION.cff`, then run `invoke sync-authors` to update `pyproject.toml` and `docs/citing.md`.
+7. Commit your changes and push your branch to GitHub.
+8. Create a [pull request](https://help.github.com/articles/about-pull-requests/) through the GitHub website.
 
 During development, use [pyinvoke](http://docs.pyinvoke.org/) tasks on the
 command line to ease recurring operations:
