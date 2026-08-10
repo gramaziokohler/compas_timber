@@ -206,6 +206,7 @@ class BallNodePlate(FastenerPart):
             ele.add_feature(slot)
             features.append(slot)
 
+        self.applied_features.extend(features)
         return features
 
 

@@ -59,6 +59,13 @@ class Dowel(FastenerPart):
         return Line(sp, ep)
 
     @property
+    def drill_line(self) -> Line:
+        drill_line = self.centerline.copy()
+        xform = self.modeltransformation
+        drill_line.transform(xform)
+        return drill_line
+
+    @property
     def _local_frame(self) -> Frame:
         return Frame.worldXY()
 
@@ -86,6 +93,7 @@ class Dowel(FastenerPart):
             drill_line.transform(xform)
             drilling = Drilling.from_line_and_element(drill_line, element, self.diameter)
             element.add_feature(drilling)
+            self.applied_features.append(drilling)
 
 
 class DowelFastener(Fastener):
