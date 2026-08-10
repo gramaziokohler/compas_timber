@@ -7,7 +7,21 @@ repo_url: https://github.com/gramaziokohler/compas_timber/
 copyright: Copyright &copy; 2026, ETH Zurich - Gramazio Kohler Research
 
 extra:
+  generator: false
   homepage: https://gramaziokohler.github.io/compas_timber/
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/gramaziokohler/compas_timber
+      name: compas_timber on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/compas-timber/
+      name: compas_timber on PyPI
+    - icon: fontawesome/brands/discourse
+      link: https://forum.compas-framework.org/
+      name: COMPAS forum
+    - icon: material/web
+      link: https://gramaziokohler.arch.ethz.ch/
+      name: Gramazio Kohler Research
   version:
     provider: mike
 
@@ -161,3 +175,7 @@ nav:
       - Joints Contribution: contribution/joints_contribution_guide.md
   - Citing: citing.md
   - License: license.md
+  - Links:
+      - COMPAS: https://compas.dev/
+      - Timber Design: https://gramaziokohler.github.io/timber_design/
+      - Grasshopper Plugin: https://www.food4rhino.com/en/app/compas-timber
