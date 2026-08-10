@@ -6,7 +6,6 @@ from typing import Union
 
 from compas.datastructures import Mesh
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
