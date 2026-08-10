@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
+* `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
 * `TimberElement.add_feature` now delegates to `add_features`, so a list passed by mistake is normalised instead of silently nested (#823). Docstring corrected accordingly.
 * `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.

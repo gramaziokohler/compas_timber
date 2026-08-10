@@ -252,7 +252,7 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        self._elements = tuple(model[guid] for guid in self.element_guids)
         self._set_unset_attributes()
 
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
