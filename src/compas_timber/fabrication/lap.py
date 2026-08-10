@@ -410,9 +410,15 @@ class Lap(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            volume_surfaces = [face.nurbssurface for face in volume.faces]
-            volume_frames = [surface.frame_at(0, 0) for surface in volume_surfaces]
-            planes = [Plane.from_frame(frame) for frame in volume_frames]
+            # a 6-face lap volume is always a box, so every face is planar: `face.surface` already returns
+            # a Plane directly, no need to go through a NurbsSurface/frame_at (which planar faces don't have).
+            # `is_reversed` faces store the surface with an inverted normal relative to the actual face orientation.
+            planes = []
+            for face in volume.faces:
+                plane = face.surface
+                if face.is_reversed:
+                    plane.normal = -plane.normal
+                planes.append(plane)
 
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
@@ -572,8 +578,7 @@ class Lap(BTLxProcessing):
         # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
         # get the volume edges
         if isinstance(volume, Brep):
-            volume_curve = [edge.curve for edge in volume.edges]
-            volume_edges = [Line(*curve.points) for curve in volume_curve]
+            volume_edges = [edge.curve for edge in volume.edges]
         else:
             volume_edges = [volume.edge_line(edge) for edge in volume.edges()]
 
