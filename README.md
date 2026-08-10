@@ -26,6 +26,12 @@ Add `compas_timber` to your project:
 uv add compas_timber
 ```
 
+To visualize models outside of Rhino, install with the `viz` extra, which adds [compas_viewer](https://github.com/compas-dev/compas_viewer) and `compas_brep[occ]`:
+
+```bash
+uv add "compas_timber[viz]"
+```
+
 For a development setup, clone the repository and sync the environment:
 
 ```bash
@@ -60,4 +66,4 @@ for more details.
 
 ## Credits
 
-`compas_timber` is currently developed by Gramazio Kohler Research. See the [list of authors](AUTHORS.md) for a complete overview.
+`compas_timber` is currently developed by Gramazio Kohler Research. See [`CITATION.cff`](CITATION.cff) for a complete list of authors.

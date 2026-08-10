@@ -20,12 +20,17 @@ If you use COMPAS Timber for your work, please acknowledge it by citing it with:
         Stryzhevska, Anastasiia and
         Feringa, Jelle and
         Kenny, Joseph and
-        Lytle, Beverly
+        Lytle, Beverly and
+        Gozzi, Eric and
+        Arca Zimmermann, Rodrigo and
+        Boscoboinik, Nicolas Benjamin and
+        Jaeggi, Paul and
+        Nunes Locatelli, Daniel
     },
     howpublished={https://github.com/gramaziokohler/compas_timber/},
     note={ETH Z"{u}rich},
-    year={2022-2025},
-    doi={10.5281/zenodo.17024080},
-    url={https://doi.org/10.5281/zenodo.17024080},
+    year={2022-2026},
+    doi={10.5281/zenodo.7934266},
+    url={https://doi.org/10.5281/zenodo.7934266},
 }
 ```

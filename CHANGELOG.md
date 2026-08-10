@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added `CITATION.cff` as the canonical authors list (serves GitHub, Zenodo, PyPI and the docs).
+* Added `invoke sync-authors` task that regenerates the `pyproject.toml` authors (names only, see pypi/warehouse#12877) and the BibTeX authors in `docs/citing.md` from `CITATION.cff`, plus a `pre-build` task that runs it.
 
 ### Changed
 * `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
@@ -59,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `AUTHORS.md` in favor of `CITATION.cff`.
 
 ## [2.2.0] 2026-07-02
 
