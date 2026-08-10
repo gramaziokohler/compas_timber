@@ -572,15 +572,32 @@ def test_getitem_returns_correct_element():
     assert result is beam
 
 
-def test_element_by_guid_deprecated_warning(mocker):
+def test_element_by_guid_deprecated_warning():
     model = TimberModel()
     beam = Beam(Frame.worldXY(), width=0.1, height=0.1, length=1.0)
     model.add_element(beam)
 
-    warn_spy = mocker.spy(model, "element_by_guid")
+    with pytest.warns(DeprecationWarning):
+        result = model.element_by_guid(str(beam.guid))
 
-    _ = model.element_by_guid(str(beam.guid))
-    warn_spy.assert_called_once()
+    assert result is beam
+
+
+@pytest.mark.filterwarnings("error::DeprecationWarning")
+def test_serialization_jointed_model_no_deprecation_warning(mocker):
+    mocker.patch("compas_timber.connections.LButtJoint.add_features")
+    F1 = Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0))
+    F2 = Frame(Point(0, 0, 0), Vector(0, 0, 1), Vector(0, 1, 0))
+    B1 = Beam(F1, length=1.0, width=0.1, height=0.12)
+    B2 = Beam(F2, length=1.0, width=0.1, height=0.12)
+    A = TimberModel()
+    A.add_element(B1)
+    A.add_element(B2)
+    _ = LButtJoint.create(A, B1, B2)
+
+    A = json_loads(json_dumps(A))
+
+    assert len(list(A.joints)) == 1
 
 
 def test_compute_topologies_mixed_beams_and_plates():
