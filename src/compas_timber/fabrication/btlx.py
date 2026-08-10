@@ -343,10 +343,10 @@ class BTLxWriter(object):
 
         Parameters
         ----------
-        type_ : type
-            The type to be serialized.
+        type_ : str
+            The name of the type to be serialized, i.e. its ``__name__`` attribute.
         serializer : callable
-            The serializer function. Takes an instance of `type_` and returns an XML element which correspondes with it.
+            The serializer function. Takes an instance of the named type and returns an XML element which corresponds with it.
 
         """
         cls.SERIALIZERS[type_] = serializer
