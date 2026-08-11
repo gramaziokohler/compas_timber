@@ -24,6 +24,7 @@ class KinematicSequenceGenerator(object):
         self.heuristic = heuristic
         self.topological_levels = {}
         self.precedence_graph = {}
+        self.hierarchy_graph = {}
         self.subassemblies = {}
 
     def _get_element_z(self, element):
@@ -41,10 +42,8 @@ class KinematicSequenceGenerator(object):
         if not elements:
             return
             
-        # 1. Find the absolute lowest physical Z coordinate in the model
         min_z = min(self._get_element_z(e) for e in elements)
         
-        # 2. Identify 'Support' elements (Level 0)
         queue = []
         visited = set()
         for e in elements:
@@ -56,7 +55,6 @@ class KinematicSequenceGenerator(object):
                 queue.append((e, 0))
                 visited.add(e.guid)
                 
-        # 3. BFS to assign levels based on actual structural joints
         while queue:
             current_element, current_level = queue.pop(0)
             joints = self.model.get_joints_for_element(current_element)
@@ -67,7 +65,6 @@ class KinematicSequenceGenerator(object):
                         self.topological_levels[neighbor.guid] = current_level + 1
                         queue.append((neighbor, current_level + 1))
                         
-        # 4. Fallback for any disconnected elements
         for e in elements:
             if e.guid not in visited:
                 self.topological_levels[e.guid] = 999
@@ -84,24 +81,32 @@ class KinematicSequenceGenerator(object):
                 if a.guid not in element_set or b.guid not in element_set:
                     continue
                     
-                # Check if A can be extracted from B
                 vec_a = self.solver.get_extraction_vector(a, [joint])
-                # Check if B can be extracted from A
                 vec_b = self.solver.get_extraction_vector(b, [joint])
                 
                 if vec_a is None and vec_b is not None:
-                    # A cannot be extracted if B is present, but B can.
-                    # B must be disassembled before A. In assembly, A before B.
                     self.precedence_graph[a.guid].add(b.guid)
                 elif vec_b is None and vec_a is not None:
                     self.precedence_graph[b.guid].add(a.guid)
+
+    def _build_hierarchy_graph(self, elements):
+        """Builds a directed graph where cross_beam -> main_beam (cross_beam assembled before main_beam)."""
+        self.hierarchy_graph = {e.guid: set() for e in elements}
+        element_set = {e.guid for e in elements}
+        
+        for joint in self.model.joints:
+            if hasattr(joint, 'main_beam') and hasattr(joint, 'cross_beam'):
+                if joint.main_beam and joint.cross_beam:
+                    main_guid = joint.main_beam.guid
+                    cross_guid = joint.cross_beam.guid
+                    if main_guid in element_set and cross_guid in element_set:
+                        self.hierarchy_graph[cross_guid].add(main_guid)
 
     def _detect_subassemblies(self, elements):
         """Uses Label Propagation to cluster elements into subassemblies."""
         labels = {e.guid: e.guid for e in elements}
         element_set = {e.guid for e in elements}
         
-        # Build adjacency list
         adj = {e.guid: [] for e in elements}
         for e in elements:
             joints = self.model.get_joints_for_element(e)
@@ -128,7 +133,6 @@ class KinematicSequenceGenerator(object):
             if not changed:
                 break
                 
-        # Group by label
         self.subassemblies = labels
 
     def _creates_floating_component(self, candidate, remaining_set):
@@ -167,20 +171,22 @@ class KinematicSequenceGenerator(object):
             if node not in visited:
                 is_supported = bfs_is_supported(node)
                 if not is_supported:
-                    return True # Found a floating component!
+                    return True
                     
         return False
 
     def _evaluate_candidate(self, element, active_joints, last_disassembled, remaining_elements, remaining_set):
         """Scores a candidate using strict Lexicographical Tuple scoring."""
-        # Precedence check (A -> B means A must be assembled before B, so B must be disassembled before A).
-        # We are considering disassembling `element`. If `element` must be assembled BEFORE some `other` element still in remaining_set,
-        # then we CANNOT disassemble `element` yet, because `other` must be disassembled first.
-        # Check edges: element -> other
         is_precedence_valid = True
         for other_guid in self.precedence_graph.get(element.guid, set()):
             if other_guid in remaining_set:
                 is_precedence_valid = False
+                break
+                
+        is_hierarchy_valid = True
+        for other_guid in self.hierarchy_graph.get(element.guid, set()):
+            if other_guid in remaining_set:
+                is_hierarchy_valid = False
                 break
                 
         element_z = self._get_element_z(element)
@@ -206,31 +212,31 @@ class KinematicSequenceGenerator(object):
             if self.subassemblies.get(element.guid) == self.subassemblies.get(last_disassembled.guid):
                 same_subassembly = True
 
-        # Priority 3: Physical Z Height (Highest first, absolutely)
+        # Priority 4: Physical Z Height (Highest first, absolutely)
         z_height = element_z
         
-        # Priority 4: Topological Graph Level
+        # Priority 5: Topological Graph Level
         topo_level = self.topological_levels.get(element.guid, 999)
         
-        # Priority 5: Building Chain Continuity
+        # Priority 6: Building Chain Continuity
         is_in_chain = False
         if last_disassembled is not None:
             u, v = element.graphnode, last_disassembled.graphnode
             if self.model._graph.has_edge((u, v)) or self.model._graph.has_edge((v, u)):
                 is_in_chain = True
                 
-        # Priority 6: Element Length
+        # Priority 7: Element Length
         length = element.centerline.length if hasattr(element, 'centerline') and element.centerline else 0
         
-        # Priority 7: Centrality (Penalize highly connected core elements)
+        # Priority 8: Centrality (Penalize highly connected core elements)
         total_joints = len(self.model.get_joints_for_element(element))
         
-        # Return strict hierarchy tuple. Python sorts element-by-element natively.
         return (
-            int(is_precedence_valid), # MUST be true to respect kinematic DAG
-            int(is_stable_globally),  # MUST be true to prevent parts falling off
+            int(is_precedence_valid),
+            int(is_stable_globally),
+            int(is_hierarchy_valid),
             int(is_local_z_valid),
-            int(same_subassembly),    # Group by subassemblies
+            int(same_subassembly),
             z_height,
             topo_level,
             int(is_in_chain),
@@ -240,25 +246,23 @@ class KinematicSequenceGenerator(object):
 
     def generate(self):
         """Generates the assembly sequence and writes the data into the model graph and element attributes."""
-        # Sequence all elements, not just beams (or fallback to beams if none)
         elements = list(self.model.elements())
         if not elements:
             elements = list(self.model.beams)
             
         self._compute_topological_levels(elements)
         self._build_precedence_graph(elements)
+        self._build_hierarchy_graph(elements)
         self._detect_subassemblies(elements)
         
         remaining_elements = elements[:]
         disassembly_sequence = []
         extraction_vectors = []
         
-        # Quick lookup for active elements
         remaining_set = set(e.guid for e in remaining_elements)
         last_disassembled = None
         
         while remaining_elements:
-            # Score and sort all remaining elements so the absolute "best" (highest) comes first
             if self.heuristic:
                 remaining_elements.sort(key=self.heuristic, reverse=True)
             else:
@@ -273,14 +277,11 @@ class KinematicSequenceGenerator(object):
                     reverse=True
                 )
             
-            # The strictly highest scoring element according to our rules
             best_element = remaining_elements[0]
             
-            # Now we figure out if it can be extracted cleanly, or if it must be forced
             active_joints = [j for j in self.model.get_joints_for_element(best_element) if any(o.guid in remaining_set for o in j.elements if o.guid != best_element.guid)]
             
             if not active_joints:
-                # Totally free
                 escape_vector = Vector(0, 0, 1)
             else:
                 escape_vector = self.solver.get_extraction_vector(best_element, active_joints)
@@ -289,7 +290,6 @@ class KinematicSequenceGenerator(object):
                 import logging
                 logging.warning(f"Kinematic deadlock for element {best_element.name} ({best_element.guid}). Forcefully extracting (must be placed by hand).")
                 
-            # Record and remove the element
             disassembly_sequence.append(best_element)
             extraction_vectors.append(escape_vector)
             last_disassembled = best_element
@@ -297,10 +297,8 @@ class KinematicSequenceGenerator(object):
             remaining_elements.remove(best_element)
             remaining_set.remove(best_element.guid)
             
-        # Reverse the disassembly sequence to get the assembly sequence
         assembly_sequence = list(reversed(disassembly_sequence))
         
-        # Reverse the extraction vectors to get insertion vectors
         insertion_vectors = []
         for v in reversed(extraction_vectors):
             if v is not None:
@@ -308,7 +306,6 @@ class KinematicSequenceGenerator(object):
             else:
                 insertion_vectors.append(None)
                 
-        # Write sequence data to both the TimberModel graph and directly on the element attributes
         for i, element in enumerate(assembly_sequence):
             node = element.graphnode
             vector = insertion_vectors[i]
