@@ -145,7 +145,7 @@ force_grid_wrap = 0
 use_parentheses = true
 force_single_line = true
 ensure_newline_before_comments = true
-known_first_party = "compas_timber"
+known_first_party = ["assembly_sequencing", "compas_timber"]
 default_section = "THIRDPARTY"
 forced_separate = "test_compas_timber"
 
@@ -165,6 +165,7 @@ select = ["E", "F", "I"]
 [tool.ruff.lint.isort]
 force-single-line = true
 known-first-party = [
+    "assembly_sequencing",
     "compas_timber",
 ]
 
