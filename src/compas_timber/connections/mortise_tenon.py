@@ -205,21 +205,6 @@ class MortiseTenonJoint(Joint, abc.ABC):
         return start_main, end_main
 
     def get_kinematic_constraint(self, moving_element):
-        """Calculates the 1-DOF strict linear escape constraint for a mortise-tenon joint."""
-        if moving_element not in self.elements:
-            raise ValueError("Element is not part of this joint.")
-            
-        axis = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
-        
-        if moving_element == self.cross_beam:
-            return Line(self.location, self.location + axis)
-            
-        elif moving_element == self.main_beam:
-            return Line(self.location, self.location - axis)
-
-    
-
-    def get_kinematic_constraint(self, moving_element):
         """Calculates the 1-DOF strict linear escape constraint for the L mortise-tenon joint.
 
         A tenon can only be inserted into and removed from a mortise along the tenon axis.
@@ -247,5 +232,5 @@ class MortiseTenonJoint(Joint, abc.ABC):
 
         if moving_element == self.main_beam:
             return Line(self.location, self.location + axis)
-        else:
+        elif moving_element == self.cross_beam:
             return Line(self.location, self.location - axis)

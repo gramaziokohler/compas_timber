@@ -94,14 +94,19 @@ class LLapJoint(LapJoint):
 
     def get_kinematic_constraint(self, moving_element):
         """Calculates the escape constraint for the Lap joint.
-        
-        Returns a Plane representing the 2-DOF sliding freedom along the lap plane.
+
+        Returns
+        -------
+        list of :class:`compas.geometry.Vector`
+            Inward normals of the half-spaces bounding the lap, whose intersection is the
+            sliding freedom along the lap plane.
+
         """
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
 
         if moving_element == self.beam_a:
             return [(self.cutting_plane_a.normal * -1), self.cutting_plane_b.normal, (self.beam_a.ref_sides[self.ref_side_index_a].normal * -1)]
-            
+
         elif moving_element == self.beam_b:
             return [self.cutting_plane_a.normal, (self.cutting_plane_b.normal * -1), (self.beam_b.ref_sides[self.ref_side_index_b].normal * -1)]

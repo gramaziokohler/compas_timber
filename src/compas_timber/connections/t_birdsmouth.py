@@ -147,21 +147,31 @@ class TBirdsmouthJoint(Joint):
             self.features.extend([cross_feature_1, cross_feature_2])
 
     def get_kinematic_constraint(self, moving_element):
-        """
-        Calculates the escape constraint for the TBirdsmouth joint.
-        Does not yet work with the mill depth.
+        """Calculates the escape constraint for the TBirdsmouth joint.
+
+        Returns
+        -------
+        :class:`compas.geometry.Line` or list of :class:`compas.geometry.Vector`
+            With a mill depth the seat is a housing, so the freedom is a strict 1-DOF
+            axis along the main beam, **signed**: the main beam slides out away from the
+            joint and the cross beam the opposite way. A member seated at both ends is
+            therefore held to two opposite directions and is locked -- the canonical
+            hand-placed case.
+
+            Without a mill depth the freedom is the intersection of the half-spaces of
+            the two notch faces, negated for the cross beam.
+
         """
         if moving_element not in self.elements:
             raise ValueError("Element is not part of this joint.")
 
         cps = self._get_cutting_planes()
-        print(len(cps))
 
         endpoint, _ = self.main_beam.endpoint_closest_to_point(self.location)
         main_beam_vector = self.main_beam.centerline.direction
         if endpoint == "end":
             main_beam_vector = -main_beam_vector
-        
+
         if moving_element == self.main_beam:
             if self.mill_depth:
                 return Line(self.location, self.location + main_beam_vector)
@@ -170,4 +180,3 @@ class TBirdsmouthJoint(Joint):
             if self.mill_depth:
                 return Line(self.location, self.location - main_beam_vector)
             return [cps[0].normal * -1, cps[1].normal * -1]
-        

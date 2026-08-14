@@ -252,25 +252,38 @@ class Joint(Data):
 
     def get_kinematic_constraint(self, moving_element):
         """Returns the geometric freedom to pull `moving_element` out of this joint.
-        
+
         This assumes the other element in the joint is completely static/fixed.
-        
+
+        The generic fallback below is permissive: a single half-space pointing roughly
+        beam-to-beam, which almost always yields a valid extraction. It cannot be
+        distinguished from a real answer by looking at the value, so
+        :mod:`compas_timber.planning.sequencing` tags anything coming from here as
+        *inferred* and reports the count. A concrete joint that has not implemented this
+        method reports near-total freedom, which for a vector feeding a robot is the
+        failure direction that hurts; once joint coverage is good, unimplemented joints
+        should return a locked constraint instead.
+
         Parameters
         ----------
         moving_element : :class:`~compas_timber.elements.Beam`
             The element being extracted from the joint.
-            
+
         Returns
         -------
-        compas.geometry.Line | compas.geometry.Plane | compas.geometry.Vector
-            The kinematic escape constraint.
+        :class:`compas.geometry.Line` or :class:`compas.geometry.Vector` or list of :class:`compas.geometry.Vector`
+            A ``Line`` is a strict 1-DOF sliding axis, **signed**: the permitted extraction
+            direction runs ``start`` -> ``end``, and its reverse pushes deeper into the
+            joint. A ``Vector`` is the inward normal of a permitted half-space; a list of
+            them is the intersection of those half-spaces.
+
         """
         if moving_element not in self.elements:
             raise ValueError(f"Element {moving_element} is not part of {self.name}.")
-            
+
         # Generic Fallback: 3-DOF Half-Space separating the two elements
         static_element = self.element_a if moving_element == self.element_b else self.element_b
-        
+
         v = Vector.from_start_end(static_element.centerline.midpoint, moving_element.centerline.midpoint)
         v.unitize()
         return v
