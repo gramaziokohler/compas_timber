@@ -1,5 +1,7 @@
 import math
 
+from compas.geometry import Line
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
@@ -7,9 +9,11 @@ from compas_timber.fabrication import TenonShapeType
 
 from .joint import Joint
 from .solver import JointTopology
+from .utilities import are_beams_aligned_with_cross_vector
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
+
 
 
 class TDovetailJoint(Joint):
@@ -272,3 +276,36 @@ class TDovetailJoint(Joint):
         self._height = tool_height
         self._flank_angle = tool_angle
         self._shape_radius = tool_top_radius
+
+    def calculate_dovetail_axis(self):
+        """Calculates the axis direction of the dovetail groove in the cross beam.
+
+        The groove runs along the cross beam's length on the mortise face.  The direction matches
+        the tenon frame's x-axis, which is the negative of the ref side's x-axis (``normal × yaxis``).
+
+        Returns
+        -------
+        :class:`~compas.geometry.Vector`
+            Unit vector along the groove direction.
+
+        """
+        crs_normal = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+        mrs_normal_neg = self.main_beam.ref_sides[self.main_beam_ref_side_index].normal
+        z_component = crs_normal * mrs_normal_neg.dot(crs_normal)
+        projected_vector = mrs_normal_neg - z_component
+        if self.rotation != 0.0:
+            projected_vector.rotate(math.radians(self.rotation), crs_normal, self.location)
+        return projected_vector
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the 1-DOF strict linear escape constraint for a dovetail."""
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+            
+        dovetail_axis = self.calculate_dovetail_axis()
+
+        if moving_element == self.cross_beam:
+            return Line(self.location, self.location + (dovetail_axis * -1))
+            
+        elif moving_element == self.main_beam:
+            return Line(self.location, self.location + dovetail_axis)

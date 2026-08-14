@@ -1,5 +1,7 @@
 import abc
 
+from compas.geometry import Line
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import Tenon
@@ -193,3 +195,34 @@ class MortiseTenonJoint(Joint, abc.ABC):
         except AttributeError as ae:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[cutting_plane])
         return start_main, end_main
+
+    def get_kinematic_constraint(self, moving_element):
+        """Calculates the 1-DOF strict linear escape constraint for the L mortise-tenon joint.
+
+        A tenon can only be inserted into and removed from a mortise along the tenon axis.
+
+        Parameters
+        ----------
+        moving_element : :class:`~compas_timber.elements.Beam`
+            The element being extracted from the joint.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Line`
+            A Line along the tenon axis representing the single degree of freedom.
+
+        Raises
+        ------
+        ValueError
+            If the moving element is not part of this joint.
+
+        """
+        if moving_element not in self.elements:
+            raise ValueError("Element is not part of this joint.")
+
+        axis = self.cross_beam.ref_sides[self.cross_beam_ref_side_index].normal
+
+        if moving_element == self.main_beam:
+            return Line(self.location, self.location + axis)
+        elif moving_element == self.cross_beam:
+            return Line(self.location, self.location - axis)

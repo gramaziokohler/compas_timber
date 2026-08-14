@@ -1,3 +1,5 @@
+from compas.geometry import Line
+
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
 

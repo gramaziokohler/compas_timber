@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
+* Added the top-level `assembly_sequencing` package: kinematic assembly sequencing extracted from `compas_timber.planning`, with no dependency back on `compas_timber`. Holds the constraint types (`HalfSpace`, `SignedAxis`), the pure cone-feasibility solver, the blocking graph, beam search, and injectable ranking strategies.
+* Added `compas_timber.planning.generate_assembly_sequence`, `sequencing_input_from_model` and `TimberModelAdapter`, the adapter between `TimberModel` and `assembly_sequencing`.
+* Added a hand-placement override that is both an input and an output: it is proposed by the solver, amendable by the user, persisted in the `requires_manual_assembly` element attribute, and honoured on re-run.
+* Added pinned assembly positions, reported as a `PinConflict` when they cannot be honoured rather than silently reordered.
+* Added `StalenessReport` for overrides that no longer apply after the model changed, and `StuckReport` for search dead ends.
+* Added test coverage for assembly sequencing, which previously had none: synthetic constraint-level fixtures under `tests/assembly_sequencing`, plus a model-level regression net in `tests/compas_timber/test_sequencing.py`.
+* Added `get_kinematic_constraint` implementations across the joint classes, describing the geometric freedom available to extract each element from its joint.
 
 ### Changed
 * `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
@@ -46,6 +53,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
 * Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
 * Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
+* `Joint.get_kinematic_constraint` returning a `Line` is now documented as a **signed** 1-DOF axis: the permitted extraction direction runs `start` -> `end`, and its reverse pushes into the joint.
+* Extraction feasibility now distinguishes roomy, tight and locked instead of collapsing all three onto `None`, and an empty constraint set means *free* rather than *locked*.
+* Intrinsic locks (locked in every order, genuinely hand-placed) are now distinguished from order-dependent locks (a failure of the sequence, routed around), which previously shared one `requires_manual_assembly` flag.
+* The cone solver now takes the argmax over candidate directions instead of returning the first candidate that passed, so a marginal straight-up answer no longer beats a comfortable one, and the result no longer depends on constraint ordering.
+* Subassembly detection now uses strongly connected components rather than label propagation, which broke ties on random guids and so produced different output on identical input.
+* N-ary joints (ball nodes, multibeam) now contribute assembly precedence; the previous implementation skipped every joint without exactly two members.
+* An extraction path is now checked against all elements with a swept broad-phase test, not only against jointed neighbours.
+* Non-beam elements are excluded from sequencing and reported, instead of being sequenced at an implied height of zero.
+* Removed the rule that ordered `cross_beam` before `main_beam`; those names describe which beam got cut, not assembly order.
+* `InsertionSolver` and `KinematicSequenceGenerator` are unchanged and remain exported, kept as a working fallback while the new path is verified against real designs. They share no code with `assembly_sequencing`; the two can be run against the same model and compared. The cleanups noted for `kinematic_sequencer.py` are therefore still outstanding, and will be picked up when it is retired.
+* Removed a stray `print` from `TBirdsmouthJoint.get_kinematic_constraint` and corrected four docstrings that promised a `Plane` return no implementation produces.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
