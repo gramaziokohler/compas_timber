@@ -32,18 +32,22 @@ class TimberModel(Model):
 
     Attributes
     ----------
-    beams : Generator[:class:`~compas_timber.elements.Beam`]
-        A Generator object of all beams assigned to this model.
-    plates : Generator[:class:`~compas_timber.elements.Plate`]
-        A Generator object of all plates assigned to this model.
-    joints : set[:class:`~compas_timber.connections.Joint`]
-        A set of all actual joints assigned to this model.
+    beams : list[:class:`~compas_timber.elements.Beam`]
+        A list of all beams assigned to this model.
+    plates : list[:class:`~compas_timber.elements.Plate`]
+        A list of all plates assigned to this model.
+    joints : Iterable[:class:`~compas_timber.connections.Joint`]
+        A view of all actual joints assigned to this model.
     joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model.
-    panels : Generator[:class:`~compas_timber.elements.Panel`]
-        A Generator object of all panels assigned to this model.
+    unpromoted_joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
+        A set of all joint candidates in the model which have not been promoted to joints.
+    panels : list[:class:`~compas_timber.elements.Panel`]
+        A list of all panels assigned to this model.
     layers : list[:class:`~compas_timber.elements.Layer`]
-        A Generator object of all layers assigned to this model.
+        A list of all layers assigned to this model.
+    fasteners : list[:class:`~compas_timber.elements.Fastener`]
+        A list of all fasteners assigned to this model.
 
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
@@ -746,10 +750,17 @@ class TimberModel(Model):
             The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
 
         """
-        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
-        for candidate in list(self.joint_candidates):
+        if elements is None:
+            to_remove = list(self.joint_candidates)
+        else:
+            # use `all` here so that e.g. a beam-plate candidate is not removed when only beams are passed in.
+            to_remove = [candidate for candidate in self.joint_candidates if all(e in elements for e in candidate.elements)]
+
+        for candidate in to_remove:
             self.remove_joint_candidate(candidate)
+
+        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
         max_distance = max_distance or TOL.absolute
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
