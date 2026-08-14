@@ -1,18 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Optional
-from typing import Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from compas.data import Data
-from compas.geometry import Box
-from compas.geometry import Plane
-from compas.geometry import Point
-from compas.geometry import Polyline
-from compas.geometry import Transformation
-from compas.geometry import Vector
-from compas_model.elements import Element
-from compas_model.elements import reset_computed
+from compas.geometry import Box, Plane, Point, Polyline, Transformation, Vector
+from compas_model.elements import Element, reset_computed
 
 from .plate_geometry import PlateGeometry
 
@@ -87,7 +79,9 @@ class Layer(Element):
         data["plate_geometry"] = self.plate_geometry
         data["start_offset"] = self.start_offset
         data["name"] = self.name
-        data["layer_path"] = list(self.layer_path) if self.layer_path is not None else None
+        data["layer_path"] = (
+            list(self.layer_path) if self.layer_path is not None else None
+        )
         return data
 
     # ------------------------------------------------------------------
@@ -146,8 +140,12 @@ class Layer(Element):
         -------
         :class:`Layer`
         """
-        outline_a, outline_b = cls.get_outlines_from_parent(host, start_offset, end_offset)
-        plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
+        outline_a, outline_b = cls.get_outlines_from_parent(
+            host, start_offset, end_offset
+        )
+        plate_geometry = PlateGeometry.from_global_outlines(
+            outline_a, outline_b, orientation=[0, 1, 0]
+        )
         return cls(
             plate_geometry,
             start_offset,
@@ -198,7 +196,10 @@ class Layer(Element):
     @property
     def planes(self):
         if not self._planes:
-            local_planes = (Plane.worldXY(), Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)))
+            local_planes = (
+                Plane.worldXY(),
+                Plane(Point(0, 0, self.thickness), Vector(0, 0, 1)),
+            )
             self._planes = (
                 local_planes[0].transformed(self.modeltransformation),
                 local_planes[1].transformed(self.modeltransformation),
@@ -211,7 +212,10 @@ class Layer(Element):
 
     @property
     def edge_planes(self):
-        return {i: plane.transformed(self.modeltransformation) for i, plane in self.plate_geometry.edge_planes.items()}
+        return {
+            i: plane.transformed(self.modeltransformation)
+            for i, plane in self.plate_geometry.edge_planes.items()
+        }
 
     @property
     def center_height(self):
@@ -224,7 +228,9 @@ class Layer(Element):
 
     @geometry.setter
     def geometry(self, _):
-        raise AttributeError("Geometry is a computed property and cannot be set directly.")
+        raise AttributeError(
+            "Geometry is a computed property and cannot be set directly."
+        )
 
     # ------------------------------------------------------------------
     # Methods
@@ -263,12 +269,20 @@ class Layer(Element):
         if none_count > 1:
             raise ValueError("At most one None is allowed in thicknesses.")
         if names is not None and len(names) != len(thicknesses):
-            raise ValueError("Length of names ({}) must match length of thicknesses ({}).".format(len(names), len(thicknesses)))
+            raise ValueError(
+                "Length of names ({}) must match length of thicknesses ({}).".format(
+                    len(names), len(thicknesses)
+                )
+            )
 
         sum_defined = sum(t for t in thicknesses if t is not None)
         remaining = self.thickness - sum_defined
         if remaining < -1e-6:
-            raise ValueError("Sum of defined thicknesses ({:.6f}) exceeds layer thickness ({:.6f}).".format(sum_defined, self.thickness))
+            raise ValueError(
+                "Sum of defined thicknesses ({:.6f}) exceeds layer thickness ({:.6f}).".format(
+                    sum_defined, self.thickness
+                )
+            )
 
         if none_count == 1:
             thicknesses = [remaining if t is None else t for t in thicknesses]
@@ -323,7 +337,9 @@ class Layer(Element):
 
     def set_extension_plane(self, edge_index: int, plane: Plane):
         """Set an extension plane for an edge.  Propagates to all sublayers."""
-        self.plate_geometry.set_extension_plane(edge_index, plane.transformed(self.transformation_to_local()))
+        self.plate_geometry.set_extension_plane(
+            edge_index, plane.transformed(self.transformation_to_local())
+        )
         for sublayer in self.sublayers:
             sublayer.set_extension_plane(edge_index, plane)
 
@@ -378,13 +394,17 @@ class Layer(Element):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def get_outlines_from_parent(parent: Union[Panel, Layer], start_offset: float, end_offset: float):
+    def get_outlines_from_parent(
+        parent: Union[Panel, Layer], start_offset: float, end_offset: float
+    ):
         """Interpolate *parent*'s local outlines at the given panel-absolute levels.
 
         *parent* is either the :class:`~compas_timber.elements.Panel` (for root
         layers) or the enclosing :class:`Layer` (for sublayers).
         """
-        parent_start = getattr(parent, "start_offset", 0.0)  # Panel has no start_offset: it starts at 0.
+        parent_start = getattr(
+            parent, "start_offset", 0.0
+        )  # Panel has no start_offset: it starts at 0.
         relative_start = start_offset - parent_start
         relative_end = end_offset - parent_start
 
@@ -393,12 +413,24 @@ class Layer(Element):
 
         offset_a = relative_start / parent.thickness
         if offset_a:
-            layer_outline_a = Polyline([pt_a * (1.0 - offset_a) + pt_b * offset_a for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
+            layer_outline_a = Polyline(
+                [
+                    pt_a * (1.0 - offset_a) + pt_b * offset_a
+                    for pt_a, pt_b in zip(
+                        local_outline_a.points, local_outline_b.points
+                    )
+                ]
+            )
         else:
             layer_outline_a = local_outline_a
 
         offset_b = relative_end / parent.thickness
-        layer_outline_b = Polyline([pt_a * (1.0 - offset_b) + pt_b * offset_b for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)])
+        layer_outline_b = Polyline(
+            [
+                pt_a * (1.0 - offset_b) + pt_b * offset_b
+                for pt_a, pt_b in zip(local_outline_a.points, local_outline_b.points)
+            ]
+        )
         return layer_outline_a, layer_outline_b
 
 
@@ -434,7 +466,11 @@ class LayerDefinition(Data):
 
     @property
     def __data__(self):
-        return {"name": self.name, "thickness": self.thickness, "sublayer_defs": self.sublayer_defs}
+        return {
+            "name": self.name,
+            "thickness": self.thickness,
+            "sublayer_defs": self.sublayer_defs,
+        }
 
     def __init__(self, name=None, thickness=None, sublayer_defs=None):
         super().__init__()
@@ -444,7 +480,9 @@ class LayerDefinition(Data):
         self.layer_path = ()
 
     def __repr__(self):
-        return "LayerDefinition(name={!r}, thickness={}, path={})".format(self.name, self.thickness, self.layer_path)
+        return "LayerDefinition(name={!r}, thickness={}, path={})".format(
+            self.name, self.thickness, self.layer_path
+        )
 
 
 class LayerStructure(Data):
@@ -472,7 +510,9 @@ class LayerStructure(Data):
 
     def __init__(self, layer_defs=None):
         super().__init__()
-        self.layer_defs = list(layer_defs) if layer_defs else [LayerDefinition(name="core")]
+        self.layer_defs = (
+            list(layer_defs) if layer_defs else [LayerDefinition(name="core")]
+        )
         self._assign_paths(self.layer_defs, ())
 
     def __repr__(self):
@@ -491,19 +531,29 @@ class LayerStructure(Data):
     def _create_layers(self, parent, defs, start, total):
         none_count = sum(1 for d in defs if d.thickness is None)
         if none_count > 1:
-            raise ValueError("At most one LayerDefinition sibling may have thickness=None.")
+            raise ValueError(
+                "At most one LayerDefinition sibling may have thickness=None."
+            )
         fixed_sum = sum(d.thickness for d in defs if d.thickness is not None)
         if fixed_sum > total + 1e-6:
-            raise ValueError("Defined thicknesses ({:.4f}) exceed available thickness ({:.4f}).".format(fixed_sum, total))
+            raise ValueError(
+                "Defined thicknesses ({:.4f}) exceed available thickness ({:.4f}).".format(
+                    fixed_sum, total
+                )
+            )
         fill = total - fixed_sum
 
         current = start
         layers = []
         for def_ in defs:
             t = fill if def_.thickness is None else def_.thickness
-            layer = Layer.from_parent_start_end(parent, current, current + t, name=def_.name, layer_path=def_.layer_path)
+            layer = Layer.from_parent_start_end(
+                parent, current, current + t, name=def_.name, layer_path=def_.layer_path
+            )
             if def_.sublayer_defs:
-                layer.sublayers = self._create_layers(layer, def_.sublayer_defs, current, t)
+                layer.sublayers = self._create_layers(
+                    layer, def_.sublayer_defs, current, t
+                )
             layers.append(layer)
             current += t
         return layers

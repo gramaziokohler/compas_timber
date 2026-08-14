@@ -659,17 +659,17 @@ class BTLxPart(BTLxGenericPart):
                     # `is_reversed` faces store the surface with an inverted normal relative to the actual
                     # face orientation; flip yaxis (not xaxis) so zaxis (normal) flips while xaxis is preserved.
                     frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
+                edges = face.outer_loop.edges[1:]
+                pts = [face.outer_loop.edges[0].first_vertex.point, face.outer_loop.edges[0].last_vertex.point]
                 overflow = len(edges)
                 while edges and overflow > 0:
                     for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
+                        if (not edge.is_line) or ((edge.first_vertex.point in pts) and (edge.last_vertex.point in pts)):  # edge endpoints already in pts
                             edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
+                        elif TOL.is_allclose(edge.first_vertex.point, pts[-1]) and (edge.last_vertex.point not in pts):  # edge.first_vertex is the last point in pts
+                            pts.append(edges.pop(i).last_vertex.point)
+                        elif TOL.is_allclose(edge.last_vertex.point, pts[-1]) and (edge.first_vertex.point not in pts):  # edge.last_vertex is the last point in pts
+                            pts.append(edges.pop(i).first_vertex.point)
                     overflow -= 1
                 pts = correct_polyline_direction(pts, frame.normal)
 
