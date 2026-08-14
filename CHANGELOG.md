@@ -13,9 +13,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `SimpleScarf` BTLx processing class to `compas_timber.fabrication` for generating simple scarf joint machining operations, including optional drill holes (0, 1, or 2).
 * Added `ISimpleScarf` joint class to `compas_timber.connections` for joining two parallel beams (Topology I) with a simple scarf joint.
 * Added series of unit tests
+* Added the top-level `assembly_sequencing` package: kinematic assembly sequencing extracted from `compas_timber.planning`, with no dependency back on `compas_timber`. Holds the constraint types (`HalfSpace`, `SignedAxis`), the pure cone-feasibility solver, the blocking graph, beam search, and injectable ranking strategies.
+* Added `compas_timber.planning.generate_assembly_sequence`, `sequencing_input_from_model` and `TimberModelAdapter`, the adapter between `TimberModel` and `assembly_sequencing`.
+* Added a hand-placement override that is both an input and an output: it is proposed by the solver, amendable by the user, persisted in the `requires_manual_assembly` element attribute, and honoured on re-run.
+* Added pinned assembly positions, reported as a `PinConflict` when they cannot be honoured rather than silently reordered.
+* Added `StalenessReport` for overrides that no longer apply after the model changed, and `StuckReport` for search dead ends.
+* Added test coverage for assembly sequencing, which previously had none: synthetic constraint-level fixtures under `tests/assembly_sequencing`, plus a model-level regression net in `tests/compas_timber/test_sequencing.py`.
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
+* `Joint.get_kinematic_constraint` returning a `Line` is now documented as a **signed** 1-DOF axis: the permitted extraction direction runs `start` -> `end`, and its reverse pushes into the joint.
+* Extraction feasibility now distinguishes roomy, tight and locked instead of collapsing all three onto `None`, and an empty constraint set means *free* rather than *locked*.
+* Intrinsic locks (locked in every order, genuinely hand-placed) are now distinguished from order-dependent locks (a failure of the sequence, routed around), which previously shared one `requires_manual_assembly` flag.
+* The cone solver now takes the argmax over candidate directions instead of returning the first candidate that passed, so a marginal straight-up answer no longer beats a comfortable one, and the result no longer depends on constraint ordering.
+* Subassembly detection now uses strongly connected components rather than label propagation, which broke ties on random guids and so produced different output on identical input.
+* N-ary joints (ball nodes, multibeam) now contribute assembly precedence; the previous implementation skipped every joint without exactly two members.
+* An extraction path is now checked against all elements with a swept broad-phase test, not only against jointed neighbours.
+* Non-beam elements are excluded from sequencing and reported, instead of being sequenced at an implied height of zero.
+* Removed the rule that ordered `cross_beam` before `main_beam`; those names describe which beam got cut, not assembly order.
+* `InsertionSolver` and `KinematicSequenceGenerator` are unchanged and remain exported, kept as a working fallback while the new path is verified against real designs. They share no code with `assembly_sequencing`; the two can be run against the same model and compared. The cleanups noted for `kinematic_sequencer.py` are therefore still outstanding, and will be picked up when it is retired.
+* Removed a stray `print` from `TBirdsmouthJoint.get_kinematic_constraint` and corrected four docstrings that promised a `Plane` return no implementation produces.
 
 * `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, replacing the previous hard-coded `outline_a[-2]` index which could fail on outlines where the second-to-last point is colinear with the first edge.
 * Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check (which ensures `outline_b` is in the positive-Z half of the local frame) was applied *after* computing `transform_to_world_xy`, producing an incorrect transform and malformed local coordinates for outlines whose natural frame normal pointed in the −Z direction.
