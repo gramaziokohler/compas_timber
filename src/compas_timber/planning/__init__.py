@@ -15,6 +15,9 @@ from .nesting import PlateStock
 from .nesting import NestedElementData
 from .insertion_solver import InsertionSolver
 from .kinematic_sequencer import KinematicSequenceGenerator
+from .sequencing import TimberModelAdapter
+from .sequencing import generate_assembly_sequence
+from .sequencing import sequencing_input_from_model
 
 __all__ = [
     "Actor",
@@ -34,4 +37,7 @@ __all__ = [
     "NestedElementData",
     "InsertionSolver",
     "KinematicSequenceGenerator",
+    "TimberModelAdapter",
+    "generate_assembly_sequence",
+    "sequencing_input_from_model",
 ]
