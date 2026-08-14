@@ -1,139 +1,87 @@
-from .joint_candidate import JointCandidate
-from .solver import JointTopology
-from .solver import ConnectionSolver
-from .solver import PlateConnectionSolver
+from compas.tolerance import TOL
+
 from compas_timber.elements import Beam
-from compas_timber.elements import Plate
 from compas_timber.elements import Panel
+from compas_timber.elements import Plate
 
-# Element-type dispatch: which solver knows how to analyze a given pair of element types.
-# Keyed by a frozenset of the two types, so lookup is order-independent: both (a, b) and (b, a) match.
+from .joint_candidate import JointCandidate
+from .solver import ConnectionSolver
+from .solver import JointTopology
+from .solver import PlateConnectionSolver
+
+# ------------------------------------------------------------------
+# element-type dispatch: builds a JointCandidate for an adjacent pair,
+# based on the pair's element types.
 #
-# `TopologyData` (via its guid-keyed `element_topo_data`) already represents any pair of element types
-# uniformly, including mixed pairs (e.g. beam-to-plate), so supporting a new combination only requires
-# a solver that can actually detect that pair's topology. Add it below once one exists.
-_SOLVERS = {
-    frozenset((Beam, Beam)): ConnectionSolver,
-    frozenset((Plate, Plate)): PlateConnectionSolver,
-    frozenset((Panel, Panel)): PlateConnectionSolver,
-}
+# This module sits above `solver.py` and `joint_candidate.py`: it composes
+# solvers, candidate classes, and element types, so it depends on all three
+# rather than living inside any one of them.
+#
+# Handlers register the type pair(s) they support via `@_register`, order-independent
+# (both (a, b) and (b, a) pairs match). To support a new type combination (e.g. beam-to-plate),
+# add a handler decorated with `@_register(TypeA, TypeB)` once the corresponding
+# topology-detection geometry exists.
+# ------------------------------------------------------------------
+
+_CONNECTION_HANDLERS = {}
 
 
-def find_solver_for(element_a, element_b):
-    """Returns the solver type registered for the given pair's element types, or ``None`` if unsupported.
+def _register(type_a, type_b):
+    """Registers the decorated function as the connection-candidate handler for the given pair of element types."""
 
-    Parameters
-    ----------
-    element_a : :class:`~compas_model.elements.Element`
-        The first element.
-    element_b : :class:`~compas_model.elements.Element`
-        The second element.
+    def decorator(handler):
+        _CONNECTION_HANDLERS[frozenset((type_a, type_b))] = handler
+        return handler
 
-    Returns
-    -------
-    type[:class:`~compas_timber.connections.ConnectionSolver`] or None
-        The solver class for this type combination, or ``None`` if the combination is unsupported.
-
-    """
-    return _SOLVERS.get(frozenset((type(element_a), type(element_b))))
+    return decorator
 
 
-def get_distance(element_a, element_b):
-    """Builds the joint candidate for a pair of adjacent elements, or ``None`` if their type combination is unsupported or their topology is unknown.
+def _ordered_elements(element_a, element_b, result):
+    """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second)."""
+    elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
+    return [elements_by_guid[guid] for guid in result.ordered_guids()]
 
-    Parameters
-    ----------
-    element_a : :class:`~compas_model.elements.Element`
-        The first element.
-    element_b : :class:`~compas_model.elements.Element`
-        The second element.
-    max_distance : float
-        The maximum distance between the elements to consider them connected.
 
-    Returns
-    -------
-    :class:`~compas_timber.connections.JointCandidate` or None
-        The candidate connecting the two elements, or ``None`` if none could be determined.
-
-    """
-    solver_type = find_solver_for(element_a, element_b)
-    if solver_type is None:
+@_register(Beam, Beam)
+def _beam_connection_candidate(beam_a, beam_b, max_distance):
+    """Builds a :class:`~compas_timber.connections.JointCandidate` for a pair of adjacent beams, or ``None`` if their topology is unknown."""
+    result = ConnectionSolver().find_topology(beam_a, beam_b, max_distance=max_distance)
+    if result.topology == JointTopology.TOPO_UNKNOWN:
         return None
-    return solver_type().get_distance(element_a, element_b)
+    # use the beam order determined by find_topology to keep main, cross relationship
+    main, cross = _ordered_elements(beam_a, beam_b, result)
+    return JointCandidate(main, cross, topology=result.topology, distance=result.distance, location=result.location)
 
-def get_location(element_a, element_b, max_distance, angle_tol):
-    """Builds the joint candidate for a pair of adjacent elements, or ``None`` if their type combination is unsupported or their topology is unknown.
 
-    Parameters
-    ----------
-    element_a : :class:`~compas_model.elements.Element`
-        The first element.
-    element_b : :class:`~compas_model.elements.Element`
-        The second element.
-    max_distance : float
-        The maximum distance between the elements to consider them connected.
-
-    Returns
-    -------
-    :class:`~compas_timber.connections.JointCandidate` or None
-        The candidate connecting the two elements, or ``None`` if none could be determined.
-
-    """
-    solver_type = find_solver_for(element_a, element_b)
-    if solver_type is None:
+@_register(Plate, Plate)
+@_register(Panel, Panel)
+def _plate_connection_candidate(element_a, element_b, max_distance):
+    """Builds a :class:`~compas_timber.connections.JointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
+    result = PlateConnectionSolver().find_topology(element_a, element_b, tol=TOL.relative, max_distance=max_distance)
+    if result.topology is JointTopology.TOPO_UNKNOWN:
         return None
-    return solver_type().get_location(element_a, element_b, max_distance, angle_tol)
+    # use the plate order determined by find_topology to keep edge, face relationship
+    plate_a, plate_b = _ordered_elements(element_a, element_b, result)
+    kwargs = {
+        "topology": result.topology,
+        "distance": result.distance,
+        "location": result.location,
+        # `edge_index` is None on the face-side plate of a TOPO_EDGE_FACE connection
+        "a_segment_index": result.data_for(plate_a).edge_index,
+        "b_segment_index": result.data_for(plate_b).edge_index,
+    }
+    return JointCandidate(plate_a, plate_b, **kwargs)
 
-def get_topology_data(element_a, element_b, max_distance, angle_tol):
-    """Builds the topology data for a pair of adjacent elements, or ``None`` if their type combination is unsupported or their topology is unknown.
 
-    Parameters
-    ----------
-    element_a : :class:`~compas_model.elements.Element`
-        The first element.
-    element_b : :class:`~compas_model.elements.Element`
-        The second element.
-    max_distance : float
-        The maximum distance between the elements to consider them connected.
+def find_connection_handler(element_a, element_b):
+    """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
+    key = frozenset((type(element_a), type(element_b)))
+    return _CONNECTION_HANDLERS.get(key, None)
 
-    Returns
-    -------
-    :class:`~compas_timber.connections.TopologyData` or None
-        The topology data for the two elements, or ``None`` if none could be determined.
-
-    """
-    solver_type = find_solver_for(element_a, element_b)
-    if solver_type is None:
-        return None
-    return solver_type().find_topology(element_a, element_b, max_distance)
 
 def get_connection_candidate(element_a, element_b, max_distance):
-    """Builds the joint candidate for a pair of adjacent elements, or ``None`` if their type combination is unsupported or their topology is unknown.
-
-    Parameters
-    ----------
-    element_a : :class:`~compas_model.elements.Element`
-        The first element.
-    element_b : :class:`~compas_model.elements.Element`
-        The second element.
-    max_distance : float
-        The maximum distance between the elements to consider them connected.
-
-    Returns
-    -------
-    :class:`~compas_timber.connections.JointCandidate` or None
-        The candidate connecting the two elements, or ``None`` if none could be determined.
-
-    """
-    solver_type = find_solver_for(element_a, element_b)
-    if solver_type is None:
+    """Builds the joint candidate for a pair of adjacent elements, or ``None`` if their type combination is unsupported or their topology is unknown."""
+    handler = find_connection_handler(element_a, element_b)
+    if handler is None:
         return None
-
-    topology_data = solver_type().solve(element_a, element_b, max_distance)
-    if topology_data.topology == JointTopology.TOPO_UNKNOWN:
-        return None
-
-    # order the elements by their solver-assigned roles, so that e.g. main precedes cross
-    elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
-    ordered_elements = [elements_by_guid[guid] for guid in topology_data.ordered_guids()]
-    return JointCandidate(*ordered_elements, topology_data=topology_data)
+    return handler(element_a, element_b, max_distance)

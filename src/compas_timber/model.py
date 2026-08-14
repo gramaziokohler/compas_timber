@@ -152,7 +152,6 @@ class TimberModel(Model):
 
     @property
     def topologies(self):
-        # TODO: remove
         return self._topologies
 
     @property

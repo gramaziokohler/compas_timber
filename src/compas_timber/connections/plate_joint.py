@@ -54,14 +54,14 @@ class PlateJoint(Joint, ABC):
 
     def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
         super(PlateJoint, self).__init__(elements=(plate_a, plate_b), topology=topology, **kwargs)
-        self._a_segment_index = a_segment_index
-        self._b_segment_index = b_segment_index
-        self._reverse_a_planes = False
-        self._reverse_b_planes = False
-        self.distance = 0.0  # HACK: to pass joint rules that expect a distance attribute
+        self.a_segment_index = a_segment_index
+        self.b_segment_index = b_segment_index
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
+        self._reverse_a_planes = False
+        self._reverse_b_planes = False
+        self.distance = 0.0  # HACK: to pass joint rules that expect a distance attribute
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -77,28 +77,6 @@ class PlateJoint(Joint, ABC):
     @property
     def plate_b(self):
         return self.element_b
-
-    @property
-    def a_segment_index(self):
-        if self.topology_data is not None:
-            data = self.topology_data.data_for(self.plate_a)
-            return data.edge_index if data else None
-        return self._a_segment_index
-
-    @a_segment_index.setter
-    def a_segment_index(self, value):
-        self._a_segment_index = value
-
-    @property
-    def b_segment_index(self):
-        if self.topology_data is not None:
-            data = self.topology_data.data_for(self.plate_b)
-            return data.edge_index if data else None
-        return self._b_segment_index
-
-    @b_segment_index.setter
-    def b_segment_index(self, value):
-        self._b_segment_index = value
 
     @property
     def a_planes(self):
@@ -149,15 +127,37 @@ class PlateJoint(Joint, ABC):
                     debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
                 )
         self.topology = topo_results.topology
-        self.distance = topo_results.distance
-        self._topology_data = topo_results
-        if topo_results.location is not None:
-            self.location = topo_results.location
+        self.a_segment_index = topo_results.data_for(self.plate_a).edge_index
+        self.b_segment_index = topo_results.data_for(self.plate_b).edge_index
         return topo_results
 
-    # `promote_joint_candidate` is inherited from `Joint` unchanged: `a_segment_index`/`b_segment_index`
-    # read through `topology_data` by element identity (see the properties above), so no manual
-    # reversal-on-reorder is needed here regardless of how `reordered_elements` orders the plates.
+    @classmethod
+    def promote_joint_candidate(cls, model, candidate, reordered_elements=None, **kwargs):
+        """Creates an instance of this joint from a generic joint.
+
+        Parameters
+        ----------
+        model : :class:`~compas_timber.model.TimberModel`
+            The model to which the elements and this joint belong.
+        candidate : :class:`~compas_timber.connections.Joint`
+            The generic joint to be converted.
+        reordered_elements : list(:class:`~compas_model.elements.Element`), optional
+            The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
+            This is used to explicitly define the element order.
+        **kwargs : dict
+            Additional keyword arguments that are passed to the joint's constructor.
+
+        Returns
+        -------
+        :class:`compas_timber.connections.Joint`
+            The instance of the created joint.
+
+        """
+        if reordered_elements and candidate.elements[0] != reordered_elements[0]:  # plates are in different order, reverse segment indices
+            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
+        else:
+            kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_extensions(self):
         """Adjusts plate outlines to outer shape required for the joint."""
