@@ -167,3 +167,47 @@ class JointCandidate(Data):
         candidate = cls(*elements, **kwargs)
         model.add_joint_candidate(candidate)
         return candidate
+
+
+class PlateJointCandidate(JointCandidate):
+    """A PlateJointCandidate is an information-only joint for plate connections.
+
+    It is used to create a first-pass joinery information which can be later used to create concrete joints.
+
+    Parameters
+    ----------
+    plate_a : :class:`~compas_timber.elements.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.elements.Plate`
+        Second plate to be joined.
+
+    Attributes
+    ----------
+    plate_a : :class:`~compas_timber.elements.Plate`
+        First plate to be joined.
+    plate_b : :class:`~compas_timber.elements.Plate`
+        Second plate to be joined.
+
+    """
+
+    # TODO: this should be consolidated with JointCandidate
+
+    def __init__(self, plate_a=None, plate_b=None, distance=None, **kwargs):
+        # HACK: default distance to 0.0 (rather than None) to pass joint rules that expect a distance attribute,
+        # matching the old `PlateJoint.__init__`'s behavior.
+        super(PlateJointCandidate, self).__init__(element_a=plate_a, element_b=plate_b, distance=distance if distance is not None else 0.0, **kwargs)
+
+    @property
+    def plate_a(self):
+        return self.element_a
+
+    @property
+    def plate_b(self):
+        return self.element_b
+
+    @property
+    def location(self):
+        if self._location is None:
+            return Point(0, 0, 0)  # Matches PlateJoint default TODO: actually calculate the location.
+
+        return self._location
