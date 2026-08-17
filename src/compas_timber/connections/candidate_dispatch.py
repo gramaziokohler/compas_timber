@@ -5,6 +5,7 @@ from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 
 from .joint_candidate import JointCandidate
+from .joint_candidate import PlateJointCandidate
 from .solver import ConnectionSolver
 from .solver import JointTopology
 from .solver import PlateConnectionSolver
@@ -35,13 +36,6 @@ def _register(type_a, type_b):
 
     return decorator
 
-
-def _ordered_elements(element_a, element_b, result):
-    """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second)."""
-    elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
-    return [elements_by_guid[guid] for guid in result.ordered_guids()]
-
-
 @_register(Beam, Beam)
 def _beam_connection_candidate(beam_a, beam_b, max_distance):
     """Builds a :class:`~compas_timber.connections.JointCandidate` for a pair of adjacent beams, or ``None`` if their topology is unknown."""
@@ -49,7 +43,7 @@ def _beam_connection_candidate(beam_a, beam_b, max_distance):
     if result.topology == JointTopology.TOPO_UNKNOWN:
         return None
     # use the beam order determined by find_topology to keep main, cross relationship
-    main, cross = _ordered_elements(beam_a, beam_b, result)
+    main, cross = result.reorder_elements(beam_a, beam_b)
     return JointCandidate(main, cross, topology=result.topology, distance=result.distance, location=result.location)
 
 
@@ -61,7 +55,7 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
     if result.topology is JointTopology.TOPO_UNKNOWN:
         return None
     # use the plate order determined by find_topology to keep edge, face relationship
-    plate_a, plate_b = _ordered_elements(element_a, element_b, result)
+    plate_a, plate_b = result.reorder_elements(element_a, element_b)
     kwargs = {
         "topology": result.topology,
         "distance": result.distance,
@@ -70,7 +64,7 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
         "a_segment_index": result.data_for(plate_a).edge_index,
         "b_segment_index": result.data_for(plate_b).edge_index,
     }
-    return JointCandidate(plate_a, plate_b, **kwargs)
+    return PlateJointCandidate(plate_a, plate_b, **kwargs)
 
 
 def find_connection_handler(element_a, element_b):

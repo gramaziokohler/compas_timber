@@ -119,7 +119,7 @@ class PlateJoint(Joint, ABC):
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
         if topo_results.ordered_guids()[0] != str(self.plate_a.guid):
             if allow_reordering:
-                self._elements = (self.plate_b, self.plate_a)
+                self._elements = topo_results.reorder_elements(self.plate_a, self.plate_b)
             else:
                 raise BeamJoiningError(
                     beams=[self.plate_a, self.plate_b],

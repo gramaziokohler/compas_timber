@@ -1,4 +1,5 @@
 from compas.data import Data
+from compas_model.elements import Element
 
 # Canonical element ordering convention: the "main"/"edge" role always sorts before "cross"/"face".
 # Used by `TopologyData.ordered_guids()` to derive a/b-style ordering without storing it positionally.
@@ -175,3 +176,10 @@ class TopologyData(Data):
 
         """
         return sorted(self.element_topo_data, key=lambda guid: _ROLE_PRIORITY.get(self.element_topo_data[guid].role, 2))
+
+    def reorder_elements(self, element_a:Element, element_b:Element) -> list[Element]:
+        """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second)."""
+        if not (set((str(element_a.guid), str(element_b.guid))) <= set(self.element_topo_data)):
+            raise ValueError("Both elements must be present in this topology's `element_topo_data`.")
+        elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
+        return [elements_by_guid[guid] for guid in self.ordered_guids()]
