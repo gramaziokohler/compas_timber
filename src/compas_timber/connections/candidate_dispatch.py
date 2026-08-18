@@ -36,6 +36,7 @@ def _register(type_a, type_b):
 
     return decorator
 
+
 @_register(Beam, Beam)
 def _beam_connection_candidate(beam_a, beam_b, max_distance):
     """Builds a :class:`~compas_timber.connections.JointCandidate` for a pair of adjacent beams, or ``None`` if their topology is unknown."""

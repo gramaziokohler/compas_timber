@@ -65,7 +65,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
 * Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `SolverResult`.
-* **Breaking:** Removed `PlateJointCandidate`; use `JointCandidate` for both beam and plate connections.
 
 ## [2.2.0] 2026-07-02
 

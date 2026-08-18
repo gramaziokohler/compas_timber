@@ -52,9 +52,7 @@ class BeamTopologyData(Data):
         }
 
     def __repr__(self):
-        return "BeamTopologyData(role={}, end={}, ref_side_index={}, location_parameter={})".format(
-            self.role, self.end, self.ref_side_index, self.location_parameter
-        )
+        return "BeamTopologyData(role={}, end={}, ref_side_index={}, location_parameter={})".format(self.role, self.end, self.ref_side_index, self.location_parameter)
 
 
 class PlateTopologyData(Data):
@@ -146,9 +144,7 @@ class TopologyData(Data):
         }
 
     def __repr__(self):
-        return "TopologyData(topology={}, distance={}, location={}, element_topo_data={})".format(
-            self.topology, self.distance, self.location, self.element_topo_data
-        )
+        return "TopologyData(topology={}, distance={}, location={}, element_topo_data={})".format(self.topology, self.distance, self.location, self.element_topo_data)
 
     def data_for(self, element):
         """Returns the `BeamTopologyData`/`PlateTopologyData` entry for a live `element`, or ``None`` if absent.
@@ -177,7 +173,7 @@ class TopologyData(Data):
         """
         return sorted(self.element_topo_data, key=lambda guid: _ROLE_PRIORITY.get(self.element_topo_data[guid].role, 2))
 
-    def reorder_elements(self, element_a:Element, element_b:Element) -> list[Element]:
+    def reorder_elements(self, element_a: Element, element_b: Element) -> list[Element]:
         """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second)."""
         if not (set((str(element_a.guid), str(element_b.guid))) <= set(self.element_topo_data)):
             raise ValueError("Both elements must be present in this topology's `element_topo_data`.")

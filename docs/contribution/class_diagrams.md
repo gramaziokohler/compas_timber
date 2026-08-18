@@ -194,6 +194,8 @@ classDiagram
 
 The connections subsystem defines joints and their relationships. All concrete joints inherit from the base `Joint` class and are categorized by topology. `JointCandidate`/`PlateJointCandidate` are information-only stand-ins for a joint before it's promoted to a concrete one, and are standalone `Data` subclasses rather than `Joint` subclasses.
 
+`TopologyData` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyData`, `PlateTopologyData`) deliberately hold no reference to their element — they live in `TopologyData.element_topo_data`, keyed by `str(element.guid)`, and are correlated back to a live element with `data_for(element)`. Keeping the elements out of the per-element data lets one `TopologyData` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `ordered_guids()`/`reorder_elements(a, b)` derive the canonical a/b order from each entry's `role` (`main`/`edge` sorts before `cross`/`face`).
+
 ```mermaid
 classDiagram
       class Interaction {
@@ -242,6 +244,29 @@ classDiagram
       class PlateJointCandidate {
          +plate_a : Plate
          +plate_b : Plate
+      }
+
+      class TopologyData {
+         +topology : JointTopology
+         +distance : float
+         +location : Point
+         +element_topo_data : dict[str, BeamTopologyData | PlateTopologyData]
+         +data_for(element)
+         +ordered_guids() list[str]
+         +reorder_elements(element_a, element_b) list[Element]
+      }
+
+      class BeamTopologyData {
+         +role : main | cross
+         +end : start | end
+         +ref_side_index : int
+         +location_parameter : float
+      }
+
+      class PlateTopologyData {
+         +role : edge | face
+         +edge_index : int
+         +location : Point
       }
 
       class CutPlaneSpec {
@@ -443,6 +468,10 @@ classDiagram
          <<abstract>>
          +plate_a : Plate
          +plate_b : Plate
+         +plates : tuple[Plate, Plate]
+         +a_segment_index : int
+         +b_segment_index : int
+         +calculate_topology(allow_reordering) TopologyData
       }
 
       class PlateButtJoint {
@@ -487,6 +516,13 @@ classDiagram
       Interaction <|-- Joint
       Data <|-- JointCandidate
       JointCandidate <|-- PlateJointCandidate
+      Data <|-- TopologyData
+      Data <|-- BeamTopologyData
+      Data <|-- PlateTopologyData
+      TopologyData "1" o-- "2..*" BeamTopologyData : element_topo_data, keyed by element guid
+      TopologyData "1" o-- "2..*" PlateTopologyData : element_topo_data, keyed by element guid
+      PlateJoint ..> TopologyData : calculate_topology()
+      JointCandidate ..> TopologyData : built from, by candidate_dispatch
       Joint <|-- ButtJoint
       Joint <|-- TBirdsmouthJoint
       Joint <|-- LMiterJoint

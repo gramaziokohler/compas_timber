@@ -472,4 +472,3 @@ class PlateConnectionSolver(ConnectionSolver):
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
-
