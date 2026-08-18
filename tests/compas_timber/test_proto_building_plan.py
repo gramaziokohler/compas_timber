@@ -1,19 +1,14 @@
 import pytest
 
 from compas.geometry import Box
-from compas.geometry import Cylinder
 from compas.geometry import Frame
-from compas.geometry import Sphere
 from compas_model.elements import Element
 from compas_model.models import Model
-from compas_pb import pb_dump_bts
 from compas_pb import pb_dump_json
-from compas_pb import pb_load_bts
 from compas_pb import pb_load_json
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 from compas_timber.planning import BuildingPlan
-from compas_timber.planning import BuildingPlanModelContainer
 from compas_timber.planning import SimpleSequenceGenerator
 
 
@@ -88,60 +83,3 @@ def test_building_plan_justmodel(just_model):
 
     for loaded_step, step in zip(loaded_plan["plan"].steps, plan.steps):
         assert step.element_ids == loaded_step.element_ids
-
-
-def test_buildingplanmodelcontainer_serialization(just_model):
-    element_map = {str(element.guid): element for element in just_model.elements()}
-    plan = SimpleSequenceGenerator(just_model).result
-    geometries_map = {guid: f"{element.name}.obj" for guid, element in element_map.items()}
-    container = BuildingPlanModelContainer(plan, element_map, geometries_map)
-
-    serialized = pb_dump_bts(container)
-    loaded_container = pb_load_bts(serialized)
-
-    assert isinstance(loaded_container, BuildingPlanModelContainer)
-    assert isinstance(loaded_container.plan, BuildingPlan)
-    assert loaded_container.plan.name == container.plan.name
-    assert len(loaded_container.plan.steps) == len(container.plan.steps)
-
-    assert set(loaded_container.elements.keys()) == set(container.elements.keys())
-    for guid in container.elements:
-        assert str(loaded_container.elements[guid].guid) == str(container.elements[guid].guid)
-        assert loaded_container.elements[guid].name == container.elements[guid].name
-
-    assert set(loaded_container.geometries.keys()) == set(container.geometries.keys())
-    for guid in container.geometries:
-        assert loaded_container.geometries[guid] == container.geometries[guid]
-
-
-def test_buildingplanmodelcontainer_shapes(just_model):
-    element_map = {str(element.guid): element for element in just_model.elements()}
-    elements = list(just_model.elements())
-    plan = SimpleSequenceGenerator(just_model).result
-    geometries_map = {
-        str(elements[0].guid): f"{elements[0].name}.obj",
-        str(elements[1].guid): Box(3.0),
-        str(elements[2].guid): Cylinder(2.0, 30.0),
-        str(elements[3].guid): Sphere(100.0),
-    }
-    container = BuildingPlanModelContainer(plan, element_map, geometries_map)
-
-    serialized = pb_dump_bts(container)
-    loaded_container = pb_load_bts(serialized)
-
-    assert isinstance(loaded_container, BuildingPlanModelContainer)
-    assert isinstance(loaded_container.plan, BuildingPlan)
-    assert loaded_container.plan.name == container.plan.name
-    assert len(loaded_container.plan.steps) == len(container.plan.steps)
-
-    assert set(loaded_container.elements.keys()) == set(container.elements.keys())
-    for guid in container.elements:
-        assert str(loaded_container.elements[guid].guid) == str(container.elements[guid].guid)
-        assert loaded_container.elements[guid].name == container.elements[guid].name
-
-    assert set(loaded_container.geometries.keys()) == set(container.geometries.keys())
-
-    assert isinstance(loaded_container.geometries[str(elements[0].guid)], str)
-    assert isinstance(loaded_container.geometries[str(elements[1].guid)], Box)
-    assert isinstance(loaded_container.geometries[str(elements[2].guid)], Cylinder)
-    assert isinstance(loaded_container.geometries[str(elements[3].guid)], Sphere)

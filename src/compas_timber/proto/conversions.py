@@ -534,32 +534,6 @@ register(_pl.PlateStock, planning_pb2.PlateStockData)
 register_wrapper(planning_pb2.StockData)
 register(_pl.NestingResult, planning_pb2.NestingResultData)
 
-
-def _container_to_pb(obj):
-    msg = planning_pb2.BuildingPlanModelContainerData()
-    msg.plan.CopyFrom(_nested_to_pb(obj.plan))
-    for guid, element in obj.elements.items():
-        msg.elements[guid].CopyFrom(_wrap(elements_pb2.ElementData.DESCRIPTOR, element))
-    for guid, geometry in obj.geometries.items():
-        if isinstance(geometry, str):
-            msg.geometries[guid].firebase_filename = geometry
-        else:
-            msg.geometries[guid].geometry.CopyFrom(any_to_pb(geometry))
-    return msg
-
-
-def _container_from_pb(msg):
-    elements = {guid: _unwrap(e) for guid, e in msg.elements.items()}
-    geometries = {}
-    for guid, geo in msg.geometries.items():
-        which = geo.WhichOneof("kind")
-        geometries[guid] = geo.firebase_filename if which == "firebase_filename" else any_from_pb(geo.geometry)
-    return _pl.BuildingPlanModelContainer(_nested_from_pb(msg.plan), elements, geometries)
-
-
-pb_serializer(_pl.BuildingPlanModelContainer)(_container_to_pb)
-pb_deserializer(planning_pb2.BuildingPlanModelContainerData)(_container_from_pb)
-
 # ---------------------------------------------------------------------------
 # model
 # ---------------------------------------------------------------------------
