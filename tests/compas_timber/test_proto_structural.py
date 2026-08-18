@@ -49,13 +49,17 @@ def test_structural_segment_without_cross_section_roundtrip(line):
 
 
 def test_structural_segment_named_roundtrip(line):
-    # Not assert_lossless: StructuralSegment.__init__ copies every kwarg into
-    # `attributes`, so `name` lands there as well as in `_name` and its __data__
-    # reports the name twice. The serializer stores it once and restores it
-    # through `obj.name`, so the name itself is what is worth asserting.
     segment = StructuralSegment(line, Frame.worldXY(), name="post_01")
-
-    other = pb_load_bts(pb_dump_bts(segment))
-
+    other = assert_lossless(segment)
     assert other.name == "post_01"
-    assert str(other.guid) == str(segment.guid)
+    # `name` belongs to Data, not to the free-form attributes
+    assert other.attributes == {}
+
+
+def test_structural_segment_attributes_roundtrip(line):
+    # Any keyword other than the declared ones is collected into `attributes`
+    # and travels as the message's attributes map.
+    segment = StructuralSegment(line, Frame.worldXY(), cross_section=(100.0, 200.0), role="post", load=5.5)
+    other = assert_lossless(segment)
+    assert other.attributes == {"role": "post", "load": 5.5}
+    assert other.cross_section == (100.0, 200.0)
