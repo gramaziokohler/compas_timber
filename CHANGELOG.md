@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added new module `topology_data` in `compas_timber.connections` 
+* Added `TopologyData`, structured, element-agnostic, pairwise data class for topology information
+* Added `BeamTopologyData`, and `PlateTopologyData` — structured, per-element topology data (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
 
 ### Changed
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
@@ -61,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `SolverResult`.
 
 ## [2.2.0] 2026-07-02
 

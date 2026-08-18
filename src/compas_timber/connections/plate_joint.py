@@ -117,9 +117,9 @@ class PlateJoint(Joint, ABC):
         topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
-        if self.plate_a != topo_results.plate_a:
+        if topo_results.ordered_guids()[0] != str(self.plate_a.guid):
             if allow_reordering:
-                self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
+                self._elements = topo_results.reorder_elements(self.plate_a, self.plate_b)
             else:
                 raise BeamJoiningError(
                     beams=[self.plate_a, self.plate_b],
@@ -127,8 +127,8 @@ class PlateJoint(Joint, ABC):
                     debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
                 )
         self.topology = topo_results.topology
-        self.a_segment_index = topo_results.a_segment_index
-        self.b_segment_index = topo_results.b_segment_index
+        self.a_segment_index = topo_results.data_for(self.plate_a).edge_index
+        self.b_segment_index = topo_results.data_for(self.plate_b).edge_index
         return topo_results
 
     @classmethod
