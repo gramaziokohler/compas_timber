@@ -104,6 +104,7 @@ class JointTopology(object):
 
 def _beam_ref_side_index(this_beam, other_beam):
     """Index of `this_beam`'s ref side that faces `other_beam`, or ``None`` if not computable (e.g. parallel beams)."""
+    # TODO: move to beam method or connections.utilities.py or make public.
     try:
         ref_side_angles = beam_ref_side_incidence(other_beam, this_beam, ignore_ends=True)
     except ValueError:
@@ -192,39 +193,45 @@ class ConnectionSolver(object):
             if overlap_on_a is None:
                 end_a, _ = beam_a.endpoint_closest_to_point(point_a)
                 end_b, _ = beam_b.endpoint_closest_to_point(point_b)
+                beam_a_data = BeamTopologyData(role="main", end=end_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, point_b))
                 return TopologyData(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(point_a + point_b) / 2.0,
                     element_topo_data={
-                        str(beam_a.guid): BeamTopologyData(role="main", end=end_a, location_parameter=_beam_location_parameter(beam_a, point_a)),
-                        str(beam_b.guid): BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, point_b)),
+                        str(beam_a.guid): beam_a_data,
+                        str(beam_b.guid): beam_b_data,
                     },
                 )
             if overlap_on_a[1] < max_distance:  # overlaps on beam_a start
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.start)[1]
                 end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.start)
                 dist = distance_point_point(pt, beam_a.centerline.start)
+                beam_a_data = BeamTopologyData(role="main", end="start", location_parameter=0.0)
+                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
                 return TopologyData(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(beam_a.centerline.start + pt) / 2.0,
                     element_topo_data={
-                        str(beam_a.guid): BeamTopologyData(role="main", end="start", location_parameter=0.0),
-                        str(beam_b.guid): BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt)),
+                        str(beam_a.guid): beam_a_data,
+                        str(beam_b.guid): beam_b_data,
                     },
                 )
             if abs(overlap_on_a[0] - beam_a.length) < max_distance:  # overlaps on beam_a end
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.end)[1]
                 end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.end)
                 dist = distance_point_point(pt, beam_a.centerline.end)
+                beam_a_data = BeamTopologyData(role="main", end="end", location_parameter=beam_a.length)
+                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
                 return TopologyData(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(beam_a.centerline.end + pt) / 2.0,
                     element_topo_data={
-                        str(beam_a.guid): BeamTopologyData(role="main", end="end", location_parameter=beam_a.length),
-                        str(beam_b.guid): BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt)),
+                        str(beam_a.guid): beam_a_data,
+                        str(beam_b.guid): beam_b_data,
                     },
                 )
             else:
@@ -241,59 +248,52 @@ class ConnectionSolver(object):
         location = (point_a + point_b) / 2.0
         ref_side_index_a = _beam_ref_side_index(beam_a, beam_b)
         ref_side_index_b = _beam_ref_side_index(beam_b, beam_a)
+        beam_a_data = BeamTopologyData(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+        beam_b_data = BeamTopologyData(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
         if a_end and b_end:
             return TopologyData(
                 JointTopology.TOPO_L,
                 distance=dist,
                 location=location,
                 element_topo_data={
-                    str(beam_a.guid): BeamTopologyData(
-                        role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a)
-                    ),
-                    str(beam_b.guid): BeamTopologyData(
-                        role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b)
-                    ),
+                    str(beam_a.guid): beam_a_data,
+                    str(beam_b.guid): beam_b_data,
                 },
             )
         if a_end:
+            beam_a_data = BeamTopologyData(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+            beam_b_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
             return TopologyData(
                 JointTopology.TOPO_T,
                 distance=dist,
                 location=location,
                 element_topo_data={
-                    str(beam_a.guid): BeamTopologyData(
-                        role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a)
-                    ),
-                    str(beam_b.guid): BeamTopologyData(
-                        role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b)
-                    ),
+                    str(beam_a.guid): beam_a_data,
+                    str(beam_b.guid): beam_b_data,
                 },
             )
         if b_end:
+            beam_a_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+            beam_b_data = BeamTopologyData(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
             return TopologyData(
                 JointTopology.TOPO_T,
                 distance=dist,
                 location=location,
                 element_topo_data={
-                    str(beam_b.guid): BeamTopologyData(
-                        role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b)
-                    ),
-                    str(beam_a.guid): BeamTopologyData(
-                        role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a)
-                    ),
+                    str(beam_b.guid): beam_b_data,
+                    str(beam_a.guid): beam_a_data,
                 },
             )
+
+        beam_a_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+        beam_b_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
         return TopologyData(
             JointTopology.TOPO_X,
             distance=dist,
             location=location,
             element_topo_data={
-                str(beam_a.guid): BeamTopologyData(
-                    role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a)
-                ),
-                str(beam_b.guid): BeamTopologyData(
-                    role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b)
-                ),
+                str(beam_a.guid): beam_a_data,
+                str(beam_b.guid): beam_b_data,
             },
         )
 
@@ -330,36 +330,42 @@ class PlateConnectionSolver(ConnectionSolver):
                 JointTopology.TOPO_UNKNOWN,
                 distance=dist,
                 location=pt,
-                element_topo_data={str(plate_a.guid): PlateTopologyData(location=pt), str(plate_b.guid): PlateTopologyData(location=pt)},
+                element_topo_data={str(plate_a.guid): PlateTopologyData(), str(plate_b.guid): PlateTopologyData()},
             )
         if plate_a_segment_index is not None and plate_b_segment_index is None:
+            plate_a_data = PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt)
+            plate_b_data = PlateTopologyData(role="face", location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
                 location=pt,
                 element_topo_data={
-                    str(plate_a.guid): PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt),
-                    str(plate_b.guid): PlateTopologyData(role="face", location=pt),
+                    str(plate_a.guid): plate_a_data,
+                    str(plate_b.guid): plate_b_data,
                 },
             )
         if plate_a_segment_index is None and plate_b_segment_index is not None:
+            plate_a_data = PlateTopologyData(role="face", location=pt)
+            plate_b_data = PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
                 location=pt,
                 element_topo_data={
-                    str(plate_b.guid): PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt),
-                    str(plate_a.guid): PlateTopologyData(role="face", location=pt),
+                    str(plate_b.guid): plate_b_data,
+                    str(plate_a.guid): plate_a_data,
                 },
             )
         if plate_a_segment_index is not None and plate_b_segment_index is not None:
+            plate_a_data = PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt)
+            plate_b_data = PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_EDGE,
                 distance=dist,
                 location=pt,
                 element_topo_data={
-                    str(plate_a.guid): PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt),
-                    str(plate_b.guid): PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt),
+                    str(plate_a.guid): plate_a_data,
+                    str(plate_b.guid): plate_b_data,
                 },
             )
 
@@ -431,6 +437,7 @@ class PlateConnectionSolver(ConnectionSolver):
         bool
             True if the segments overlap, False otherwise.
         """
+        # TODO: move to compas.geometry and add unit tests
         for pt_a in [segment_a.start, segment_a.end, segment_a.point_at(0.5)]:
             dot_start = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.start, pt_a))
             dot_end = dot_vectors(segment_b.direction, Vector.from_start_end(segment_b.end, pt_a))
@@ -461,6 +468,7 @@ class PlateConnectionSolver(ConnectionSolver):
         bool
             True if the segment intersects with the outline of the polyline, False otherwise.
         """
+        # TODO: move to compas.geometry and add unit tests
         if intersection_segment_polyline(segment, polyline, tol.absolute)[0]:
             return True
         return is_point_in_polyline(segment.point_at(0.5), polyline, in_plane=False, tol=tol)
