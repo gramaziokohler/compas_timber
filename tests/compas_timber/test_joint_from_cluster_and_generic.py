@@ -230,13 +230,7 @@ def test_from_generic_joint_calls_create(generic_joint_with_beams, mocker):
     TButtJoint.promote_joint_candidate(model, generic_joint)
 
     # Verify create was called with the generic joint's elements
-    mock_create.assert_called_once_with(
-        model,
-        *generic_joint.elements,
-        topology=generic_joint.topology,
-        location=generic_joint.location,
-        topology_data=generic_joint.topology_data,
-    )
+    mock_create.assert_called_once_with(model, *generic_joint.elements, topology=generic_joint.topology, location=generic_joint.location)
 
 
 def test_from_generic_joint_removes_original(generic_joint_with_beams):
@@ -277,7 +271,7 @@ def test_from_cluster_empty_cluster(model):
 
 
 def test_from_generic_joint_non_generic_plate_joint(generic_joint_with_beams):
-    """Test promote_joint_candidate with non-JointCandidate."""
+    """Test promote_joint_candidate with non-PlateJointCandidate."""
     model, generic_joint, beam1, beam2 = generic_joint_with_beams
 
     # Should not try to extract plate-specific attributes

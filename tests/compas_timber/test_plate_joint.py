@@ -11,15 +11,6 @@ from compas_timber.connections import PlateTButtJoint
 from compas.geometry import Polyline, Point
 
 
-def _ordered_plates(px, py, topo_data):
-    """Orders `px`/`py` to match `topo_data.ordered_guids()` (edge/main first) -- PlateJoint's edge/face
-    handling assumes plate_a is always the edge/main plate, same invariant `PlateConnectionSolver.create_joint_candidate`
-    already enforces when building a `JointCandidate`.
-    """
-    plates_by_guid = {str(px.guid): px, str(py.guid): py}
-    return tuple(plates_by_guid[guid] for guid in topo_data.ordered_guids())
-
-
 def test_simple_joint_and_reset():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
 
@@ -117,17 +108,19 @@ def test_three_plate_joints():
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    pairs = [(plate_a, plate_b), (plate_c, plate_b), (plate_a, plate_c)]
-    topo_results = [cs.find_topology(px, py) for px, py in pairs]
+    topo_results = []
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     joints = []
-    for (px, py), tr in zip(pairs, topo_results):
+    for tr in topo_results:
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(*_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateLButtJoint(*_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            joints.append(PlateLButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert all(isinstance(j, PlateMiterJoint) for j in joints), "Expected L-joints to be PlateMiterJoint"
@@ -147,17 +140,19 @@ def test_three_plate_joints_mix_topo():
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    pairs = [(plate_a, plate_b), (plate_c, plate_b), (plate_a, plate_c)]
-    topo_results = [cs.find_topology(px, py) for px, py in pairs]
+    topo_results = []
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     joints = []
-    for (px, py), tr in zip(pairs, topo_results):
+    for tr in topo_results:
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            joints.append(PlateMiterJoint(*_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            joints.append(PlateMiterJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            joints.append(PlateLButtJoint(*_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            joints.append(PlateLButtJoint(tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index))
 
     assert len(joints) == 3, "Expected three joints"
     assert isinstance(joints[0], PlateLButtJoint), "Expected L-joints to be PlateButtJoint"
@@ -179,19 +174,25 @@ def test_copy_three_plate_joints_mix_topo():
     plate_c = Plate.from_outline_thickness(polyline_c, 1)
 
     cs = PlateConnectionSolver()
-    pairs = [(plate_a, plate_b), (plate_c, plate_b), (plate_a, plate_c)]
-    topo_results = [cs.find_topology(px, py) for px, py in pairs]
+    topo_results = []
+    topo_results.append(cs.find_topology(plate_a, plate_b))
+    topo_results.append(cs.find_topology(plate_c, plate_b))
+    topo_results.append(cs.find_topology(plate_a, plate_c))
 
     model = TimberModel()
     model.add_elements([plate_a, plate_b, plate_c])
     model_joints = []
-    for (px, py), tr in zip(pairs, topo_results):
+    for tr in topo_results:
         if tr.topology == JointTopology.TOPO_UNKNOWN:
             continue
         elif tr.topology == JointTopology.TOPO_EDGE_EDGE:
-            model_joints.append(PlateMiterJoint.create(model, *_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            model_joints.append(
+                PlateMiterJoint.create(model, tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index)
+            )
         elif tr.topology == JointTopology.TOPO_EDGE_FACE:
-            model_joints.append(PlateTButtJoint.create(model, *_ordered_plates(px, py, tr), topology=tr.topology, topology_data=tr))
+            model_joints.append(
+                PlateTButtJoint.create(model, tr.plate_a, tr.plate_b, topology=tr.topology, a_segment_index=tr.a_segment_index, b_segment_index=tr.b_segment_index)
+            )
     for j in model.joints:
         j.add_extensions()
     for p in [plate_a, plate_b, plate_c]:

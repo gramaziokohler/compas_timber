@@ -514,7 +514,7 @@ def test_remove_joint_candidate_preserves_edge():
 
     # Test that we can add a new candidate to the same edge
     # This verifies the edge still exists and can accept new candidates
-    new_candidate = JointCandidate(beam1, beam2)
+    new_candidate = JointCandidate(beam1, beam2, topology=JointTopology.TOPO_X, location=Point(0.5, 0, 0))
     model.add_joint_candidate(new_candidate)
 
     # Verify the new candidate was added successfully
@@ -809,10 +809,7 @@ def test_connect_adjacent_plates_and_panels_equivalent():
     panel_candidates = list(panel_model.joint_candidates)
     assert len(plate_candidates) == len(panel_candidates) == 1
     assert plate_candidates[0].topology == panel_candidates[0].topology
-
-    plate_edge = plate_candidates[0].topology_data.data_for(plate_candidates[0].element_a)
-    panel_edge = panel_candidates[0].topology_data.data_for(panel_candidates[0].element_a)
-    assert plate_edge.edge_index == panel_edge.edge_index
+    assert plate_candidates[0].a_segment_index == panel_candidates[0].a_segment_index
 
 
 def test_connect_adjacent_plates_repeated_call_no_duplicate_candidates():
