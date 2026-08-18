@@ -15,8 +15,8 @@ message ElementData {
 message BeamData {
   string guid = 1;
   string name = 2;
-  float length = 3;
-  float width = 4;
-  float height = 5;
+  double length = 3;
+  double width = 4;
+  double height = 5;
   compas_pb.data.FrameData frame = 6;
 }

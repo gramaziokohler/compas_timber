@@ -7,22 +7,22 @@ from compas_pb.conversions import box_to_pb
 from compas_pb.conversions import cylinder_from_pb
 from compas_pb.conversions import cylinder_to_pb
 from compas_pb.conversions import frame_from_pb
-from compas_pb.conversions import sphere_from_pb
-from compas_pb.conversions import sphere_to_pb
 from compas_pb.conversions import frame_to_pb
 from compas_pb.conversions import mesh_from_pb
 from compas_pb.conversions import mesh_to_pb
+from compas_pb.conversions import sphere_from_pb
+from compas_pb.conversions import sphere_to_pb
 from compas_pb.core import any_from_pb
 from compas_pb.core import any_to_pb
 from compas_pb.registry import pb_deserializer
 from compas_pb.registry import pb_serializer
+
 from compas_timber.elements import Beam
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.planning import Actor
 from compas_timber.planning import BuildingPlan
 from compas_timber.planning import BuildingPlanModelContainer
 from compas_timber.planning import Step
-
 from compas_timber.proto import building_plan_pb2
 from compas_timber.proto import elements_pb2
 from compas_timber.proto import processing_pb2

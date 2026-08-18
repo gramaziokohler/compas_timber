@@ -5,7 +5,7 @@ package compas_timber.proto;
 import "compas_pb/generated/geometry.proto";
 import "compas_pb/generated/datastructures.proto";
 
-import "elements.proto";
+import "compas_timber/proto/elements.proto";
 
 message StepData {
     string guid = 1;

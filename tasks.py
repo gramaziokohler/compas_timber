@@ -39,7 +39,11 @@ ns.configure(
     {
         "base_folder": os.path.dirname(__file__),
         "proto_folder": Path("./src") / "compas_timber" / "proto",
-        "proto_include_paths": [Path("./src") / "compas_timber" / "proto", compas_pb.PROTOBUF_DEFS],
-        "proto_out_folder": Path("./src") / "compas_timber" / "proto",
+        # include/out paths are rooted at ./src so that protoc derives the python
+        # import of a cross-file proto import from its full package path, i.e.
+        # `from compas_timber.proto import elements_pb2` rather than a bare
+        # `import elements_pb2` which would only resolve via sys.path hacking.
+        "proto_include_paths": [Path("./src"), compas_pb.PROTOBUF_DEFS],
+        "proto_out_folder": Path("./src"),
     }
 )

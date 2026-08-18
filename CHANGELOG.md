@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added new subpackage `compas_timber.proto`, merging the former `compas_timber_pb` plugin into compas_timber. It contains the protobuf IDL files (`elements.proto`, `processing.proto`, `building_plan.proto`) and `compas_timber.proto.data`, which registers protobuf serializers for `Beam`, `Element`, `BTLxProcessing`, `BuildingPlan`, `Step` and `BuildingPlanModelContainer` via the `compas_pb.plugins` entry point. Objects can be round-tripped with `compas_pb.pb_dump_bts()` / `pb_load_bts()`.
+* Added `BuildingPlanModelContainer` to `compas_timber.planning`, a container bundling a `BuildingPlan` with its elements and geometries.
+* Added `invoke pre_build` task, which generates the protobuf python bindings (`*_pb2.py`) from the `.proto` files. It must be run before `invoke test` and before building a distribution.
+* Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 
 ### Changed
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
@@ -57,6 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
 * Fixed `PlateMiterJoint` bug where parallel plates failed to join.
 * Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
+* Changed `build.yml` and `release.yml` workflows to run the `pre_build` step so the generated protobuf bindings are present before tests and before publishing.
+* Changed the ruff configuration to exclude the protoc-generated `*_pb2.py` / `*_pb2.pyi` files, which are not hand-authored and would otherwise fail `invoke lint`.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.
