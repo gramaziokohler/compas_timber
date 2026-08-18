@@ -28,9 +28,7 @@ ns = Collection(
     tests.test,
     tests.testdocs,
     tests.testcodeblocks,
-    build.prepare_changelog,
     build.clean,
-    build.release,
     pre_build,
 )
 

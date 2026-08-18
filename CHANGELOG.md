@@ -48,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `StepData.geometry` is now a `string`, not `AnyData`. `Step.geometry` is the name of a geometry type used for visualization (`"obj"`, `"cylinder"`, `"box"`), not a geometry object.
 * Fixed `PlateFastener` failing to serialize at all. Its `__data__` stores `interface.__data__` rather than the interfaces themselves, and the codec had no path for a dict where a nested message was expected.
 * Fixed `Step`, `Model3d`, `Text3d` and `LinearDimension` coming back with `location` as a plain dict, which broke the restored object's next `__data__` or `transform()` call.
+* Migrated CI to the new-generation `compas-dev/compas-actions` monorepo: `build`, `coverage`, `docs` and `pr-checks` now use `ci`/`setup-python`/`docs`/`pr-checks`/`release-check` instead of `compas-actions.build`, `compas-actions.docs` and `Zomzog/changelog-checker`.
+* Python 3.9 (the version Rhino 8 ships) stays in the build matrix, except on `macos-latest`: the `ci` action installs interpreters with `actions/setup-python`, which has no darwin-arm64 build for 3.9. macOS is covered on 3.12/3.14 and 3.9 is covered on the other runners.
+* The `publish_yak` workflow is now a stub on `main`: the components and the `yakerize`/`publish-yak` tasks it drove moved to `timber_design`, but the file has to stay on the default branch for `LTS-1.x.x` to remain dispatchable. Running it against any branch other than `LTS-1.x.x` now fails with an explanation.
+* Releases are now prepared by the `prepare release` workflow (manual dispatch), which opens a `release/vX.Y.Z` pull request; merging it to `main` runs the release. Pushing a `v*` tag no longer publishes.
+* PyPI uploads now use OIDC Trusted Publishing via `pypa/gh-action-pypi-publish` instead of the `PYPI` API token secret.
+* `[tool.bumpversion]` no longer commits or tags, and no longer parses pre-release versions; the release actions support stable semantic versions only.
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
 * `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
@@ -82,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
 
 ### Removed
+* Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
 
