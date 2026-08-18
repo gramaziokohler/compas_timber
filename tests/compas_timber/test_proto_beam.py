@@ -12,7 +12,7 @@ from compas_timber.fabrication import JackRafterCut
 
 @pytest.fixture(autouse=True)
 def load_serializers():
-    import compas_timber.proto.data  # noqa: F401
+    import compas_timber.proto.conversions  # noqa: F401
 
 
 def test_beam_roundtrip():
