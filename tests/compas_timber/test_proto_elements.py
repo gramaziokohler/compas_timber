@@ -12,6 +12,7 @@ from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
 from compas_timber.elements import Beam
+from compas_timber.elements import Layer
 from compas_timber.elements import LayerDefinition
 from compas_timber.elements import LayerStructure
 from compas_timber.elements import Panel
@@ -118,6 +119,23 @@ def test_layer_definition_nested_roundtrip():
     nested = LayerDefinition("core", 30.0, sublayer_defs=[LayerDefinition("inner", 15.0)])
     other = assert_lossless(nested)
     assert other.sublayer_defs[0].name == "inner"
+
+
+def test_layer_roundtrip(outline):
+    # Layer has a hand-written serializer, unlike the layer *definition* types
+    # above, which are derived from the message descriptor by register().
+    panel = Panel.from_outline_thickness(outline, 50.0)
+    layer = Layer.from_parent_start_end(panel, 0.0, 20.0, name="exterior")
+    other = assert_lossless(layer)
+    assert other.start_offset == layer.start_offset
+    assert other.layer_path is None
+
+
+def test_layer_with_layer_path_roundtrip(outline):
+    panel = Panel.from_outline_thickness(outline, 50.0)
+    layer = Layer.from_parent_start_end(panel, 10.0, 30.0, layer_path=(0, 1))
+    other = assert_lossless(layer)
+    assert other.layer_path == (0, 1)
 
 
 def test_opening_roundtrip(outline):

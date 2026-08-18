@@ -12,6 +12,7 @@ from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
 from compas_timber.elements import Beam
+from compas_timber.fabrication import BTLxFromGeometryDefinition
 from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DoubleCut
 from compas_timber.fabrication import Drilling
@@ -106,3 +107,31 @@ def test_beam_with_features_roundtrip(beam):
     assert len(other.features) == 1
     assert isinstance(other.features[0], Drilling)
     assert other.features[0].diameter == 8.0
+
+
+def test_btlx_from_geometry_definition_roundtrip(beam):
+    # Hand-written serializer: the processing class travels as its name, and the
+    # elements are deliberately not carried -- only their guids are stored.
+    drill_line = Line(Point(500, -100, 100), Point(500, 100, 100))
+    definition = BTLxFromGeometryDefinition(Drilling, drill_line, beam, diameter=12.0)
+    definition.name = "a_drilling_def"
+
+    other = pb_load_bts(pb_dump_bts(definition))
+
+    assert type(other) is BTLxFromGeometryDefinition
+    assert str(other.guid) == str(definition.guid)
+    assert other.name == "a_drilling_def"
+    assert other.processing is Drilling
+    assert other.kwargs == {"diameter": 12.0}
+    assert json.loads(json_dumps(other.geometries, minimal=True)) == json.loads(json_dumps(definition.geometries, minimal=True))
+    assert other.elements == []
+
+
+def test_btlx_from_geometry_definition_unnamed_stays_unnamed(beam):
+    definition = BTLxFromGeometryDefinition(JackRafterCut, Frame.worldYZ(), beam)
+
+    other = pb_load_bts(pb_dump_bts(definition))
+
+    assert other._name is None
+    assert other.processing is JackRafterCut
+    assert other.kwargs == {}
