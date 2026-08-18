@@ -31,7 +31,7 @@ jobs:
 
       - name: Run pre-build
         run: |
-          invoke pre_build
+          invoke pre-build
 
       - name: Run tests
         run: |
