@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/message.proto";
+import "compas_timber/proto/elements.proto";
+import "compas_timber/proto/connections.proto";
+
+// TimberModel (compas_timber.model).
+//
+// TimberModel.__data__ is compas_model's Model data (transformation, elements,
+// materials, tree, graph) plus `joints`. `tree` and `graph` are already plain
+// dicts in __data__ (Tree.__data__ / Graph.__data__), so they are carried as
+// AnyData, which round-trips a nested dict losslessly.
+
+message TimberModelData {
+  string guid = 1;
+  optional string name = 2;
+  optional compas_pb.data.TransformationData transformation = 10;
+  repeated ElementData elements = 11;
+  repeated compas_pb.data.AnyData materials = 12;
+  optional compas_pb.data.AnyData tree = 13;
+  optional compas_pb.data.AnyData graph = 14;
+  repeated JointData joints = 15;
+}

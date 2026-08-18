@@ -1,0 +1,421 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/message.proto";
+
+// BTLx processings (compas_timber.fabrication).
+//
+// Proto has no inheritance, so the fields of the BTLxProcessing base class
+// (ref_side_index, priority, process_id) are copied into every concrete
+// message, along with the guid/name carried by the compas serialization
+// envelope. Field numbers 1-5 are reserved for those; processing-specific
+// fields start at 10.
+//
+// Scalars are `optional` so that a None in __data__ round-trips as absent
+// rather than collapsing to the proto3 default (0 / "" / false).
+
+message ContourData {
+  string guid = 1;
+  optional string name = 2;
+  compas_pb.data.PolylineData polyline = 10;
+  optional double depth = 11;
+  optional bool depth_bounded = 12;
+  repeated double inclination = 13;
+}
+
+message DualContourData {
+  string guid = 1;
+  optional string name = 2;
+  compas_pb.data.PolylineData principal_contour = 10;
+  compas_pb.data.PolylineData associated_contour = 11;
+  optional bool depth_bounded = 12;
+}
+
+message JackRafterCutData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination = 15;
+}
+
+message DoubleCutData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double angle_1 = 13;
+  optional double inclination_1 = 14;
+  optional double angle_2 = 15;
+  optional double inclination_2 = 16;
+}
+
+message DrillingData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double angle = 12;
+  optional double inclination = 13;
+  optional bool depth_limited = 14;
+  optional double depth = 15;
+  optional double diameter = 16;
+}
+
+message LapData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double angle = 13;
+  optional double inclination = 14;
+  optional double slope = 15;
+  optional double length = 16;
+  optional double width = 17;
+  optional double depth = 18;
+  optional bool lead_angle_parallel = 19;
+  optional double lead_angle = 20;
+  optional bool lead_inclination_parallel = 21;
+  optional double lead_inclination = 22;
+  map<string, bool> machining_limits = 23;
+}
+
+message MortiseData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double slope = 14;
+  optional double inclination = 15;
+  optional bool length_limited_top = 16;
+  optional bool length_limited_bottom = 17;
+  optional double length = 18;
+  optional double width = 19;
+  optional double depth = 20;
+  optional string shape = 21;
+  optional double shape_radius = 22;
+}
+
+message TenonData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination = 15;
+  optional double rotation = 16;
+  optional bool length_limited_top = 17;
+  optional bool length_limited_bottom = 18;
+  optional double length = 19;
+  optional double width = 20;
+  optional double height = 21;
+  optional string shape = 22;
+  optional double shape_radius = 23;
+  optional bool chamfer = 24;
+}
+
+message PocketData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double inclination = 14;
+  optional double slope = 15;
+  optional double length = 16;
+  optional double width = 17;
+  optional double internal_angle = 18;
+  optional double tilt_ref_side = 19;
+  optional double tilt_end_side = 20;
+  optional double tilt_opp_side = 21;
+  optional double tilt_start_side = 22;
+  map<string, bool> machining_limits = 23;
+}
+
+message SlotData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination = 15;
+  optional double length = 16;
+  optional double depth = 17;
+  optional double thickness = 18;
+  optional double angle_ref_point = 19;
+  optional double angle_opp_point = 20;
+  optional double add_angle_opp_point = 21;
+  map<string, bool> machining_limits = 22;
+}
+
+message StepJointData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double strut_inclination = 12;
+  optional double step_depth = 13;
+  optional double heel_depth = 14;
+  optional string step_shape = 15;
+  optional bool tenon = 16;
+  optional double tenon_width = 17;
+  optional double tenon_height = 18;
+}
+
+message StepJointNotchData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double strut_inclination = 13;
+  optional bool notch_limited = 14;
+  optional double notch_width = 15;
+  optional double step_depth = 16;
+  optional double heel_depth = 17;
+  optional double strut_height = 18;
+  optional string step_shape = 19;
+  optional bool mortise = 20;
+  optional double mortise_width = 21;
+  optional double mortise_height = 22;
+}
+
+message DovetailTenonData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination = 15;
+  optional double rotation = 16;
+  optional bool length_limited_top = 17;
+  optional bool length_limited_bottom = 18;
+  optional double length = 19;
+  optional double width = 20;
+  optional double height = 21;
+  optional double cone_angle = 22;
+  optional bool use_flank_angle = 23;
+  optional double flank_angle = 24;
+  optional string shape = 25;
+  optional double shape_radius = 26;
+}
+
+message DovetailMortiseData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double slope = 14;
+  optional double inclination = 15;
+  optional string limitation_top = 16;
+  optional bool length_limited_bottom = 17;
+  optional double length = 18;
+  optional double width = 19;
+  optional double depth = 20;
+  optional double cone_angle = 21;
+  optional bool use_flank_angle = 22;
+  optional double flank_angle = 23;
+  optional string shape = 24;
+  optional double shape_radius = 25;
+}
+
+message FrenchRidgeLapData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double angle = 12;
+  optional string ref_position = 13;
+  optional bool drillhole = 14;
+  optional double drillhole_diam = 15;
+}
+
+message BirdsMouthData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination_1 = 15;
+  optional double inclination_2 = 16;
+  optional double depth = 17;
+  optional double width = 18;
+  optional bool width_counter_part_limited = 19;
+  optional double width_counter_part = 20;
+  optional bool height_counter_part_limited = 21;
+  optional double height_counter_part = 22;
+  optional bool face_limited_front = 23;
+  optional bool face_limited_back = 24;
+  optional bool lead_angle_parallel = 25;
+  optional double lead_angle = 26;
+  optional bool lead_inclination_parallel = 27;
+  optional double lead_inclination = 28;
+  optional bool rafter_nail_hole = 29;
+}
+
+message LongitudinalCutData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double inclination = 12;
+  optional bool start_limited = 13;
+  optional bool end_limited = 14;
+  optional double length = 15;
+  optional bool depth_limited = 16;
+  optional double depth = 17;
+  optional double angle_start = 18;
+  optional double angle_end = 19;
+  optional string tool_position = 20;
+}
+
+message SimpleScarfData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double length = 12;
+  optional double depth_ref_side = 13;
+  optional double depth_opp_side = 14;
+  optional int32 num_drill_hole = 15;
+  optional double drill_hole_diam_1 = 16;
+  optional double drill_hole_diam_2 = 17;
+}
+
+message TextData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double angle = 12;
+  optional string alignment_vertical = 13;
+  optional string alignment_horizontal = 14;
+  optional string alignment_multiline = 15;
+  optional bool stacked_marking = 16;
+  optional bool text_height_auto = 17;
+  optional double text_height = 18;
+  optional string text = 19;
+}
+
+message FreeContourData {
+  string guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  oneof contour_param_object {
+    ContourData contour = 10;
+    DualContourData dual_contour = 11;
+  }
+  optional int32 tool_id = 12;
+  optional bool counter_sink = 13;
+  optional string tool_position = 14;
+  optional bool depth_bounded = 15;
+}
+// Authoring helper. `processing` is a class object and `elements` are live
+// Element instances, neither of which can be embedded here without making
+// fabrication.proto depend on elements.proto. The class is stored by name and
+// the elements by guid, which is what a consumer needs to resolve them.
+message BTLxFromGeometryDefinitionData {
+  string guid = 1;
+  optional string name = 2;
+  string processing_name = 10;
+  repeated compas_pb.data.AnyData geometries = 11;
+  repeated string element_guids = 12;
+  map<string, compas_pb.data.AnyData> kwargs = 13;
+}
+
+// Polymorphic wrapper: any BTLxProcessing instance.
+message BTLxProcessingData {
+  oneof processing {
+    JackRafterCutData jack_rafter_cut = 1;
+    DoubleCutData double_cut = 2;
+    DrillingData drilling = 3;
+    LapData lap = 4;
+    MortiseData mortise = 5;
+    TenonData tenon = 6;
+    PocketData pocket = 7;
+    SlotData slot = 8;
+    StepJointData step_joint = 9;
+    StepJointNotchData step_joint_notch = 10;
+    DovetailTenonData dovetail_tenon = 11;
+    DovetailMortiseData dovetail_mortise = 12;
+    FrenchRidgeLapData french_ridge_lap = 13;
+    BirdsMouthData birds_mouth = 14;
+    LongitudinalCutData longitudinal_cut = 15;
+    SimpleScarfData simple_scarf = 16;
+    TextData text = 17;
+    FreeContourData free_contour = 18;
+  }
+}

@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/message.proto";
+import "compas_timber/proto/elements.proto";
+
+// Building plan / sequencing and nesting (compas_timber.planning).
+
+message Model3dData {
+  string guid = 1;
+  optional string name = 2;
+  optional string id = 10;
+  compas_pb.data.FrameData location = 11;
+  optional compas_pb.data.AnyData geometry = 12;
+  optional string element_id = 13;
+  optional string obj_filepath = 14;
+}
+
+message Text3dData {
+  string guid = 1;
+  optional string name = 2;
+  optional string id = 10;
+  compas_pb.data.FrameData location = 11;
+  optional string text = 12;
+  optional double size = 13;
+}
+
+message LinearDimensionData {
+  string guid = 1;
+  optional string name = 2;
+  optional string id = 10;
+  compas_pb.data.FrameData location = 11;
+  compas_pb.data.PointData start = 12;
+  compas_pb.data.PointData end = 13;
+  optional double char_size = 14;
+  optional double offset = 15;
+}
+
+// Polymorphic wrapper: any Instruction.
+message InstructionData {
+  oneof instruction {
+    Model3dData model_3d = 1;
+    Text3dData text_3d = 2;
+    LinearDimensionData linear_dimension = 3;
+  }
+}
+
+message StepData {
+  string guid = 1;
+  optional string name = 2;
+  repeated string element_ids = 10;
+  optional string actor = 11;          // stored by name via Actor.get_name()
+  compas_pb.data.FrameData location = 12;
+  optional compas_pb.data.AnyData geometry = 13;
+  repeated InstructionData instructions = 14;
+  optional bool is_built = 15;
+  optional bool is_planned = 16;
+  repeated string elements_held = 17;
+  optional int32 priority = 18;
+}
+
+message BuildingPlanData {
+  string guid = 1;
+  optional string name = 2;
+  repeated StepData steps = 10;
+}
+
+message NestedElementDataData {
+  string guid = 1;
+  optional string name = 2;
+  compas_pb.data.FrameData frame = 10;
+  optional string key = 11;
+  optional double length = 12;
+}
+
+message BeamStockData {
+  string guid = 1;
+  optional string name = 2;
+  optional double spacing = 10;
+  repeated NestedElementDataData element_data = 11;
+  repeated double cross_section = 12;
+  optional double length = 13;
+}
+
+message PlateStockData {
+  string guid = 1;
+  optional string name = 2;
+  optional double spacing = 10;
+  repeated NestedElementDataData element_data = 11;
+  repeated double dimensions = 12;
+  optional double thickness = 13;
+}
+
+message StockData {
+  oneof stock {
+    BeamStockData beam_stock = 1;
+    PlateStockData plate_stock = 2;
+  }
+}
+
+message NestingResultData {
+  string guid = 1;
+  optional string name = 2;
+  repeated StockData stocks = 10;
+  optional double tolerance = 11;
+}
+
+message ElementGeometryData {
+  oneof kind {
+    string firebase_filename = 1;
+    compas_pb.data.AnyData geometry = 2;
+  }
+}
+
+message BuildingPlanModelContainerData {
+  BuildingPlanData plan = 1;
+  map<string, ElementData> elements = 2;
+  map<string, ElementGeometryData> geometries = 3;
+}

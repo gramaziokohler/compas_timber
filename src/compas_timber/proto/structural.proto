@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/message.proto";
+
+// compas_timber.structural
+
+message StructuralSegmentData {
+  string guid = 1;
+  optional string name = 2;
+  compas_pb.data.LineData line = 10;
+  compas_pb.data.FrameData frame = 11;
+  // cross_section is an optional (width, height) tuple
+  repeated double cross_section = 12;
+  optional bool cross_section_set = 13;
+  map<string, compas_pb.data.AnyData> attributes = 14;
+}
