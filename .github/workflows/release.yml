@@ -27,7 +27,7 @@ jobs:
     needs: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: compas-dev/compas-actions.publish@prebuild_v2
+      - uses: compas-dev/compas-actions.publish@prebuild_v2  # will be replaced with the new gen build actions in a following PR
         with:
           publish_to_pypi: true
           pypi_token: ${{ secrets.PYPI }}
