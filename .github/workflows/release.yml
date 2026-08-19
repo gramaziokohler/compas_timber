@@ -57,8 +57,30 @@ jobs:
           extras: dev
           run-prebuild: true
 
+  assets:
+    needs: [release, build]
+    if: needs.release.outputs.is-release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # compas_timber owns these .proto files, so each release publishes the
+      # schema bundle and the per-language bindings next to the wheel. This is a
+      # job of its own rather than prepare-release's `release-assets` input,
+      # because that input ties asset generation to `invoke pre-build` -- which
+      # every lint/test/wheel job runs, and which has no business pulling in
+      # protoc plugins and node for languages those jobs never build.
+      - uses: compas-dev/compas-actions/release-assets@v1
+        with:
+          python-version: '3.12'
+          management-tool: uv
+          extras: dev
+          invoke-tasks: create-class-assets
+          paths: dist/proto/*.zip
+
   publish:
-    needs: [release, prepare]
+    # `assets` gates the upload on purpose: PyPI publishing cannot be undone, so
+    # a failure to build the release assets should stop the release before it,
+    # not leave a published wheel with no GitHub release to accompany it.
+    needs: [release, prepare, assets]
     if: needs.release.outputs.is-release == 'true'
     runs-on: ubuntu-latest
     environment:
@@ -78,7 +100,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@v1.14.2
 
   create-release:
-    needs: [release, publish]
+    needs: [release, publish, assets]
     if: needs.release.outputs.is-release == 'true'
     runs-on: ubuntu-latest
     permissions:
@@ -89,6 +111,9 @@ jobs:
           github-token: ${{ github.token }}
           tag-name: ${{ needs.release.outputs.tag }}
           target: ${{ github.sha }}
+          # without this the action defaults to "" and skips the download, so the
+          # proto bundle and bindings would never reach the release
+          release-assets-artifact-name: github-release-assets
 
   docs:
     needs: [release, create-release]

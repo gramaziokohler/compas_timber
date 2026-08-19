@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
@@ -36,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 
 ### Changed
+* Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.
+* The generated bindings reference `compas_pb`'s own bindings rather than embedding them, so a consumer needs both bundles unpacked into the same tree, at matching versions.
 * Guids are no longer written as 36-character text everywhere they appear. `TimberModelData` now carries a `guid_table` of 16-byte uuids and every guid in the message -- the object's own, the interaction graph's element and joint references, the element tree's, and each joint's `element_guids` -- is a `GuidRef` index into it. A message serialized on its own has no table and falls back to carrying the raw uuid, so it stays decodable in isolation. A 200-beam model went from 92,392 to 32,660 bytes (65% smaller).
 * `TimberModelData.tree` is no longer `AnyData`. It is now `ElementTreeData`, which flattens the tree into parallel arrays in depth-first order (a varint parent index per node) and interns the node names, instead of a recursive dict repeating `name` / `attributes` / `children` / `element` per node.
 * `TimberModelData.graph` is no longer `AnyData`. It is now `InteractionGraphData`, which lifts the two guid-valued attributes (`element` on a node, `joints` on an edge) into `GuidRef` columns so they join the guid table; any other node or edge attribute still falls through to `AnyData` and round-trips unchanged. `compas_pb.data.GraphData` was tried first but keeps its attributes as `AnyData`, which is where nearly all of this graph's payload lives.
