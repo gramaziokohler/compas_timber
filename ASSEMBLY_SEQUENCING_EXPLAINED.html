@@ -1,0 +1,880 @@
+<title>Kinematic Assembly Sequencing</title>
+<style>
+  :root{
+    --paper:#F2F4F3; --panel:#FAFBFB; --panel-2:#EAEEED;
+    --ink:#16201F; --ink-soft:#42504E; --ink-mute:#65736F;
+    --rule:#D3DBD9; --rule-soft:#E3E9E8;
+    --accent:#0F6B62; --accent-soft:#DFEDEB; --accent-line:#8FC0BA;
+    --warn:#8A5806; --warn-soft:#F3E9D6; --warn-line:#D3B478;
+    --crit:#9C3626; --crit-soft:#F4E2DE; --crit-line:#D19C8E;
+    --code-bg:#E7ECEB;
+    --serif: Charter, "Bitstream Charter", "Iowan Old Style", "Source Serif Pro", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1413; --panel:#151D1C; --panel-2:#1B2524;
+      --ink:#DDE5E3; --ink-soft:#AAB7B5; --ink-mute:#8A9896;
+      --rule:#2B3735; --rule-soft:#212C2A;
+      --accent:#4FBFAF; --accent-soft:#123029; --accent-line:#2F6D63;
+      --warn:#D9A23B; --warn-soft:#31280F; --warn-line:#7A6428;
+      --crit:#E0806C; --crit-soft:#33201B; --crit-line:#7E4A3E;
+      --code-bg:#1A2423;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1413; --panel:#151D1C; --panel-2:#1B2524;
+    --ink:#DDE5E3; --ink-soft:#AAB7B5; --ink-mute:#8A9896;
+    --rule:#2B3735; --rule-soft:#212C2A;
+    --accent:#4FBFAF; --accent-soft:#123029; --accent-line:#2F6D63;
+    --warn:#D9A23B; --warn-soft:#31280F; --warn-line:#7A6428;
+    --crit:#E0806C; --crit-soft:#33201B; --crit-line:#7E4A3E;
+    --code-bg:#1A2423;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:var(--serif); font-size:17px; line-height:1.72;
+    margin:0; padding:0 0 5rem;
+    -webkit-font-smoothing:antialiased;
+  }
+  main{
+    display:grid;
+    grid-template-columns:minmax(1.25rem,1fr) min(68ch,100%) minmax(1.25rem,1fr);
+  }
+  main > *{grid-column:2;}
+  main > .wide{grid-column:1 / -1; width:min(1080px, calc(100% - 2.5rem)); margin-inline:auto;}
+
+  .masthead{padding:4.25rem 0 2rem; border-bottom:1px solid var(--rule);}
+  .eyebrow{
+    font-family:var(--sans); font-size:.7rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.14em; color:var(--accent);
+    margin:0 0 1rem;
+  }
+  h1{
+    font-weight:600; font-size:clamp(2.1rem,5.4vw,3rem); line-height:1.12;
+    letter-spacing:-.015em; text-wrap:balance; margin:0 0 1rem;
+  }
+  .standfirst{font-size:1.14rem; color:var(--ink-soft); margin:0; text-wrap:pretty;}
+  .byline{
+    font-family:var(--sans); font-size:.77rem; color:var(--ink-mute);
+    margin:1.8rem 0 0; display:flex; flex-wrap:wrap; gap:.45rem 1.4rem;
+  }
+  .byline b{font-weight:650; color:var(--ink-soft);}
+
+  section{padding-top:3.2rem;}
+  .stage-no{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.1em;
+    color:var(--accent); display:block; margin-bottom:.5rem;
+    font-variant-numeric:tabular-nums;
+  }
+  h2{
+    font-weight:600; font-size:1.6rem; line-height:1.25;
+    letter-spacing:-.01em; text-wrap:balance; margin:0 0 .3rem;
+  }
+  .deck{
+    font-family:var(--sans); font-size:.85rem; color:var(--ink-mute);
+    margin:0 0 1.35rem;
+  }
+  h3{
+    font-family:var(--sans); font-weight:650; font-size:.8rem;
+    text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft);
+    margin:2rem 0 .7rem;
+  }
+  p{margin:0 0 1.1rem; text-wrap:pretty;}
+  ul,ol{margin:0 0 1.1rem; padding-left:1.3rem;}
+  li{margin-bottom:.45rem;}
+  li::marker{color:var(--ink-mute);}
+  strong{font-weight:650;}
+  a{color:var(--accent); text-underline-offset:2px;}
+  a:focus-visible,summary:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px;}
+
+  code{
+    font-family:var(--mono); font-size:.855em;
+    background:var(--code-bg); padding:.1em .34em; border-radius:3px;
+    word-break:break-word;
+  }
+  pre{
+    background:var(--panel); border:1px solid var(--rule);
+    border-radius:4px; padding:.95rem 1.05rem; overflow-x:auto;
+    margin:0 0 1.25rem; line-height:1.6;
+  }
+  pre code{background:none; padding:0; font-size:.79rem;}
+  .lede{font-size:1.05rem; color:var(--ink-soft);}
+
+  .note{
+    border-left:2px solid var(--accent-line); background:var(--accent-soft);
+    padding:.9rem 1.1rem; margin:0 0 1.25rem; border-radius:0 3px 3px 0;
+  }
+  .note.warn{border-left-color:var(--warn-line); background:var(--warn-soft);}
+  .note.crit{border-left-color:var(--crit-line); background:var(--crit-soft);}
+  .note p{margin:0;}
+  .note p + p{margin-top:.65rem;}
+  .note .tag{
+    font-family:var(--sans); font-size:.67rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.11em; color:var(--accent);
+    display:block; margin-bottom:.3rem;
+  }
+  .note.warn .tag{color:var(--warn);}
+  .note.crit .tag{color:var(--crit);}
+
+  .tablewrap{overflow-x:auto; margin:0 0 1.35rem; border:1px solid var(--rule); border-radius:4px; background:var(--panel);}
+  table{border-collapse:collapse; width:100%; font-family:var(--sans); font-size:.82rem;}
+  th,td{text-align:left; padding:.6rem .8rem; border-bottom:1px solid var(--rule-soft); vertical-align:top;}
+  thead th{
+    font-size:.67rem; font-weight:700; text-transform:uppercase; letter-spacing:.09em;
+    color:var(--ink-mute); background:var(--panel-2); border-bottom:1px solid var(--rule);
+    white-space:nowrap;
+  }
+  tbody tr:last-child td{border-bottom:0;}
+  td code{font-size:.84em;}
+
+  .chip{
+    font-family:var(--sans); font-size:.65rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.09em;
+    padding:.14em .5em; border-radius:2px; white-space:nowrap; border:1px solid;
+  }
+  .chip.roomy{color:var(--accent); background:var(--accent-soft); border-color:var(--accent-line);}
+  .chip.tight{color:var(--warn); background:var(--warn-soft); border-color:var(--warn-line);}
+  .chip.locked{color:var(--crit); background:var(--crit-soft); border-color:var(--crit-line);}
+
+  figure{margin:0 0 1.5rem;}
+  figure svg{display:block; width:100%; max-width:100%; height:auto; color:var(--ink-soft);}
+  .figframe{
+    background:var(--panel); border:1px solid var(--rule);
+    border-radius:4px; padding:1.3rem 1.1rem 1rem; overflow-x:auto;
+  }
+  figcaption{
+    font-family:var(--sans); font-size:.77rem; color:var(--ink-mute);
+    margin-top:.75rem; line-height:1.55; text-wrap:pretty;
+  }
+  figcaption b{color:var(--ink-soft); font-weight:650;}
+  .svg-box{fill:var(--panel); stroke:currentColor; stroke-width:1;}
+  .svg-box-accent{fill:var(--accent-soft); stroke:var(--accent); stroke-width:1.4;}
+  .svg-label{font-family:var(--sans); font-size:11.5px; fill:var(--ink);}
+  .svg-mono{font-family:var(--mono); font-size:10px; fill:var(--ink-mute);}
+  .svg-small{font-family:var(--sans); font-size:10.5px; fill:var(--ink-mute);}
+  .svg-line{stroke:currentColor; stroke-width:1.2; fill:none;}
+  .svg-accent{stroke:var(--accent); stroke-width:1.3; fill:none;}
+  .svg-crit{stroke:var(--crit); stroke-width:1.3; fill:none;}
+  .svg-faint{stroke:var(--rule); stroke-width:1; fill:none;}
+
+  .toc{
+    background:var(--panel); border:1px solid var(--rule); border-radius:4px;
+    padding:1.2rem 1.35rem; margin-top:2.4rem;
+  }
+  .toc h3{margin:0 0 .75rem;}
+  .toc ol{list-style:none; padding:0; margin:0; columns:2; column-gap:2rem;}
+  .toc li{font-family:var(--sans); font-size:.82rem; margin-bottom:.4rem; break-inside:avoid;}
+  .toc .n{font-family:var(--mono); font-size:.74rem; color:var(--accent); margin-right:.5rem; font-variant-numeric:tabular-nums;}
+  .toc a{text-decoration:none; color:var(--ink-soft);}
+  .toc a:hover{color:var(--accent); text-decoration:underline;}
+  @media (max-width:34rem){ .toc ol{columns:1;} }
+
+  .kv{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr));
+    gap:1px; background:var(--rule); border:1px solid var(--rule);
+    border-radius:4px; overflow:hidden; margin:0 0 1.35rem;
+  }
+  .kv > div{background:var(--panel); padding:.8rem .95rem;}
+  .kv dt{
+    font-family:var(--sans); font-size:.65rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.09em; color:var(--ink-mute); margin:0 0 .25rem;
+  }
+  .kv dd{margin:0; font-family:var(--mono); font-size:.8rem; color:var(--ink); line-height:1.5;}
+
+  details{
+    border:1px solid var(--rule); border-radius:4px; background:var(--panel);
+    padding:.7rem 1rem; margin:0 0 1.25rem;
+  }
+  details[open]{padding-bottom:.35rem;}
+  summary{
+    font-family:var(--sans); font-size:.79rem; font-weight:600;
+    cursor:pointer; color:var(--ink-soft); list-style:none;
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary::before{content:"\25B8\00a0"; color:var(--accent);}
+  details[open] summary::before{content:"\25BE\00a0";}
+  details > *:not(summary){margin-top:.85rem;}
+
+  footer{
+    margin-top:3.5rem; padding-top:1.4rem; border-top:1px solid var(--rule);
+    font-family:var(--sans); font-size:.77rem; color:var(--ink-mute);
+  }
+  @media (prefers-reduced-motion:reduce){ *{animation:none!important; transition:none!important;} }
+</style>
+
+<main>
+
+<header class="masthead">
+  <p class="eyebrow">compas_timber &middot; how it works</p>
+  <h1>Kinematic Assembly Sequencing</h1>
+  <p class="standfirst">How a jointed timber model becomes an ordered build sequence, a unit insertion vector per beam, and an explicit list of parts that must go in by hand.</p>
+  <p class="byline">
+    <span><b>Packages</b> assembly_sequencing &middot; compas_timber.planning</span>
+    <span><b>Branch</b> feature/joint_kinematics</span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#produces">What it produces</a></li>
+    <li><a href="#boundary">Two packages, one boundary</a></li>
+    <li><a href="#solver">The solver: the shared core</a></li>
+    <li><a href="#pipeline">The pipeline at a glance</a></li>
+    <li><span class="n">01</span><a href="#s01">Collect and classify</a></li>
+    <li><span class="n">02</span><a href="#s02">Flatten to the boundary</a></li>
+    <li><span class="n">03</span><a href="#s03">Normalize the overrides</a></li>
+    <li><span class="n">04</span><a href="#s04">Build the blocking graph</a></li>
+    <li><span class="n">05</span><a href="#s05">Intrinsic locks</a></li>
+    <li><span class="n">06</span><a href="#s06">Beam search</a></li>
+    <li><span class="n">07</span><a href="#s07">Reverse and negate</a></li>
+    <li><span class="n">08</span><a href="#s08">Write back to the model</a></li>
+    <li><a href="#overrides">Overrides in practice</a></li>
+    <li><a href="#limits">Where it fails</a></li>
+    <li><a href="#reference">Quick reference</a></li>
+  </ol>
+</nav>
+
+<section id="produces">
+  <h2>What it produces</h2>
+  <p class="deck">Three outputs, for three different consumers.</p>
+  <p class="lede">Give it a <code>TimberModel</code> with joints. It gives back an order to build in, a direction to come in from for each beam, and an honest list of the parts a robot cannot place.</p>
+
+  <div class="kv">
+    <div><dt>Assembly order</dt><dd>list of element ids<br><span style="color:var(--ink-mute)">first placed &rarr; last</span></dd></div>
+    <div><dt>Insertion vector</dt><dd>unit Vector per beam<br><span style="color:var(--ink-mute)">consumed by compas_fab</span></dd></div>
+    <div><dt>Hand-placement set</dt><dd>set of element ids<br><span style="color:var(--ink-mute)">a real shop instruction</span></dd></div>
+  </div>
+
+  <p>Those three go to three audiences, in priority order. <strong>Robotic assembly</strong> is the demanding one: <code>compas_fab</code> takes the unit insertion vector and plans a trajectory along it, with the approach distance fixed and short and decided downstream. <strong>Visualization</strong> in Grasshopper shows the order and the arrows. <strong>Human fabrication</strong> reads the hand-placement list off the drawing.</p>
+
+  <div class="note">
+    <span class="tag">The design premise</span>
+    <p>Every design has exceptions. The tool's job is to get close and make the exceptions easy to express &mdash; not to be right unaided. Both the order and the hand-placement set are user-overridable inputs as well as outputs, and re-running with an amended set is the intended workflow.</p>
+  </div>
+</section>
+
+<section id="boundary">
+  <h2>Two packages, one boundary</h2>
+  <p class="deck">Why the algorithm code cannot see a beam.</p>
+
+  <p>The work is split across two top-level packages that ship in the same wheel:</p>
+  <ul>
+    <li><code>assembly_sequencing/</code> &mdash; the algorithms. Cones, graphs, search. Depends on <code>compas.geometry</code> and nothing else. No numpy, no scipy, Python 3.9 syntax so it runs under Rhino's CPython.</li>
+    <li><code>compas_timber/planning/sequencing.py</code> &mdash; the adapter. The only place the two meet.</li>
+  </ul>
+
+  <p>The dependency runs one way only, and it is enforced structurally rather than by convention: <code>compas_timber</code> imports <code>assembly_sequencing</code>, so any import back would be circular and fail immediately. The boundary defends itself.</p>
+
+  <p>That matters because of what it buys. Everything the algorithms are allowed to know passes through one object, <code>SequencingInput</code>. Which means the solver can be tested against about twenty lines of hand-written literals &mdash; no model, no Rhino, no joint classes. When a sequence comes out wrong, you can ask whether the geometry was wrong or the search was wrong, and get separate answers.</p>
+
+  <figure class="wide">
+    <div class="figframe">
+      <svg viewBox="0 0 760 272" role="img" aria-label="TimberModel feeds an adapter which builds a SequencingInput; the algorithms read it and call back into the adapter for constraints and collision checks, so no import ever crosses back.">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+          </marker>
+          <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <line x1="406" y1="16" x2="406" y2="252" class="svg-faint" stroke-dasharray="4 4"/>
+        <text x="200" y="264" text-anchor="middle" class="svg-mono">compas_timber</text>
+        <text x="588" y="264" text-anchor="middle" class="svg-mono">assembly_sequencing</text>
+
+        <rect x="24" y="46" width="140" height="50" rx="3" class="svg-box"/>
+        <text x="94" y="76" text-anchor="middle" class="svg-label">TimberModel</text>
+
+        <rect x="214" y="46" width="170" height="50" rx="3" class="svg-box"/>
+        <text x="299" y="70" text-anchor="middle" class="svg-label">TimberModelAdapter</text>
+        <text x="299" y="86" text-anchor="middle" class="svg-small">beams, joints, geometry</text>
+
+        <rect x="448" y="46" width="170" height="50" rx="3" class="svg-box-accent"/>
+        <text x="533" y="70" text-anchor="middle" class="svg-label">SequencingInput</text>
+        <text x="533" y="86" text-anchor="middle" class="svg-small">the whole vocabulary</text>
+
+        <rect x="448" y="168" width="280" height="66" rx="3" class="svg-box"/>
+        <text x="588" y="192" text-anchor="middle" class="svg-label">solver &middot; blocking &middot; search</text>
+        <text x="588" y="210" text-anchor="middle" class="svg-small">cones, SCC, beam search</text>
+        <text x="588" y="226" text-anchor="middle" class="svg-small">no model reference anywhere</text>
+
+        <line x1="164" y1="71" x2="208" y2="71" class="svg-line" marker-end="url(#ah)"/>
+        <text x="186" y="38" text-anchor="middle" class="svg-small">reads</text>
+
+        <line x1="384" y1="71" x2="442" y2="71" class="svg-line" marker-end="url(#ah)"/>
+        <text x="415" y="38" text-anchor="middle" class="svg-small">builds</text>
+
+        <line x1="533" y1="96" x2="533" y2="162" class="svg-line" marker-end="url(#ah)"/>
+        <text x="543" y="134" class="svg-small">read by</text>
+
+        <path d="M 448 190 H 322 V 102" class="svg-accent" stroke-dasharray="5 3" marker-end="url(#ah-a)"/>
+        <text x="386" y="183" text-anchor="middle" class="svg-mono">constraints(id, active)</text>
+
+        <path d="M 448 220 H 262 V 102" class="svg-accent" stroke-dasharray="5 3" marker-end="url(#ah-a)"/>
+        <text x="356" y="236" text-anchor="middle" class="svg-mono">path_is_clear(dir, dist, active)</text>
+      </svg>
+    </div>
+    <figcaption><b>Solid arrows are imports; dashed teal arrows are callbacks.</b> Data flows back across the boundary at run time without any dependency flowing back at compile time. That is why <code>constraints</code> and <code>path_is_clear</code> are functions rather than lookup tables &mdash; the geometry stays on the timber side.</figcaption>
+  </figure>
+
+  <h3>Why those two are callbacks</h3>
+  <p><strong><code>constraints(element_id, active_neighbor_ids)</code></strong> has to be a function because an n-ary joint's constraint on one member depends on which <em>other</em> members are still present. A ball node with five beams leaves its sixth member very different freedom depending on how many have already come out. A per-joint lookup table cannot express that; a two-element joint is just the degenerate case.</p>
+  <p><strong><code>path_is_clear(...)</code></strong> has to be a callback because the swept collision check needs the geometry of <em>every</em> element in the model, and benefits from the host's spatial index. Keeping it behind a callback leaves geometry where it belongs and keeps the algorithm package geometry-light.</p>
+</section>
+
+<section id="solver">
+  <h2>The solver: the shared core</h2>
+  <p class="deck">One question, asked hundreds of times: can this element get out of here, and which way?</p>
+
+  <p>Everything downstream is built on a single primitive. Given a set of constraints on one element, find the best direction to pull it out &mdash; or prove there isn't one. It is pure geometry: dot products and cross products, no model, no state.</p>
+
+  <h3>The two constraint types</h3>
+  <p>A joint describes the freedom it leaves a member, assuming every other member of that joint is frozen. Two types cover the whole vocabulary:</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Type</th><th>Means</th><th>Test</th><th>Produced by</th></tr></thead>
+      <tbody>
+        <tr><td><code>HalfSpace(n)</code></td><td>3&#8209;DOF. Travel anywhere in the half-space.</td><td><code>n &middot; d &gt;= 0</code></td><td>butt joints, laps, pockets</td></tr>
+        <tr><td><code>SignedAxis(d)</code></td><td>1&#8209;DOF. Travel along exactly one direction.</td><td><code>axis &middot; d = 1</code></td><td>mortise-tenons, dovetails, seat cuts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    <span class="tag">Signed, not bidirectional</span>
+    <p>A <code>SignedAxis</code> permits <em>one</em> direction. Its reverse pushes deeper into the joint. The solver never tests the reverse &mdash; if the permitted direction runs into material, the element is locked, and two anti-parallel axes are a genuine deadlock rather than a sign mistake. This is the most surprising part of the protocol and it is easy to "fix" into a bug.</p>
+  </div>
+
+  <p>Anything else raises. An unrecognised constraint is never dropped silently, because a dropped constraint makes an element look <em>more</em> free than it is &mdash; failure in the direction that hurts when a robot is holding the beam.</p>
+
+  <h3>The three states</h3>
+  <p>The solver maximises the worst-case clearance over all constraints:</p>
+  <pre><code>maximise   min_i (n_i &middot; d)
+subject to |d| = 1</code></pre>
+  <p>The result of that minimum is the <strong>margin</strong>: the sine of the angle by which the chosen direction clears its nearest constraint boundary. The margin then classifies the fit into one of three states.</p>
+
+  <figure class="wide">
+    <div class="figframe">
+      <svg viewBox="0 0 700 208" role="img" aria-label="Three cross-sections of the direction sphere: a wide feasible wedge is roomy, a thin sliver is tight, and three mutually opposed half-spaces leave nothing, which is locked.">
+        <defs>
+          <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- ROOMY -->
+        <circle cx="110" cy="88" r="52" class="svg-faint" stroke-dasharray="3 3"/>
+        <path d="M 110 88 L 155 62 A 52 52 0 0 0 65 62 Z" fill="var(--accent-soft)" stroke="none"/>
+        <line x1="155" y1="62" x2="65" y2="114" class="svg-line"/>
+        <line x1="65" y1="62" x2="155" y2="114" class="svg-line"/>
+        <line x1="110" y1="88" x2="110" y2="34" stroke="var(--accent)" stroke-width="2" marker-end="url(#ah2)" fill="none"/>
+        <text x="110" y="168" text-anchor="middle" class="svg-label" fill="var(--accent)">ROOMY</text>
+        <text x="110" y="186" text-anchor="middle" class="svg-mono">margin &#8805; sin 5&deg;</text>
+
+        <!-- TIGHT -->
+        <circle cx="350" cy="88" r="52" class="svg-faint" stroke-dasharray="3 3"/>
+        <path d="M 350 88 L 355.4 36.3 A 52 52 0 0 0 344.6 36.3 Z" fill="var(--warn-soft)" stroke="none"/>
+        <line x1="355.4" y1="36.3" x2="344.6" y2="139.7" class="svg-line"/>
+        <line x1="344.6" y1="36.3" x2="355.4" y2="139.7" class="svg-line"/>
+        <line x1="350" y1="88" x2="350" y2="34" stroke="var(--warn)" stroke-width="2" marker-end="url(#ah2)" fill="none"/>
+        <text x="350" y="168" text-anchor="middle" class="svg-label" fill="var(--warn)">TIGHT</text>
+        <text x="350" y="186" text-anchor="middle" class="svg-mono">0 &#8804; margin &lt; sin 5&deg;</text>
+
+        <!-- LOCKED -->
+        <circle cx="590" cy="88" r="52" class="svg-faint" stroke-dasharray="3 3"/>
+        <line x1="538" y1="88" x2="642" y2="88" class="svg-line"/>
+        <line x1="564" y1="43" x2="616" y2="133" class="svg-line"/>
+        <line x1="616" y1="43" x2="564" y2="133" class="svg-line"/>
+        <line x1="590" y1="88" x2="590" y2="62" class="svg-crit" marker-end="url(#ah2)"/>
+        <line x1="590" y1="88" x2="567" y2="101" class="svg-crit" marker-end="url(#ah2)"/>
+        <line x1="590" y1="88" x2="613" y2="101" class="svg-crit" marker-end="url(#ah2)"/>
+        <text x="590" y="168" text-anchor="middle" class="svg-label" fill="var(--crit)">LOCKED</text>
+        <text x="590" y="186" text-anchor="middle" class="svg-mono">margin &lt; 0</text>
+      </svg>
+    </div>
+    <figcaption><b>A cross-section of the sphere of possible directions.</b> Straight lines are constraint boundaries; the shaded region is what remains feasible; the coloured arrow is what the solver returns. In the locked panel three half-spaces point away from one another, so nothing survives &mdash; note that it takes <em>three</em> half-spaces to lock an element in this way, never two.</figcaption>
+  </figure>
+
+  <div class="note">
+    <span class="tag">Margin classifies; it never rejects</span>
+    <p>A beam dropped vertically into a slot between two others has a margin of exactly <em>zero</em> &mdash; the only feasible direction is precisely parallel to both contact faces. That is a correct answer about a genuinely tight fit, not a numerical artifact, and it must not be reported as a lock. <span class="chip tight">tight</span> is feasible.</p>
+    <p>Report the angle as a number where a human will read it. "3.2&deg;" tells a fabricator something; "tight" does not.</p>
+  </div>
+
+  <h3>How the direction is chosen</h3>
+  <p>The optimum of a polyhedral cone lies on one of its extreme rays, so the solver enumerates a finite candidate set and takes the <strong>argmax</strong> &mdash; not the first candidate that happens to pass. Candidates are: each constraint normal, both signs of every pairwise cross product, and the normalized sum of all normals as an interior seed.</p>
+  <p>Two consequences worth carrying around:</p>
+  <ul>
+    <li><strong>Two half-spaces never pin down a direction.</strong> They leave a wedge, and the answer is the bisector, not the cross product. You need three to pin a ray. If a joint should produce exactly one direction, it should be returning a <code>Line</code> (a <code>SignedAxis</code>) &mdash; half-spaces bound a region, and a region with one member is a different constraint type.</li>
+    <li><strong>Anti-parallel normals are handled explicitly.</strong> Their cross vanishes and the feasible set collapses into the plane they share &mdash; a beam housed between two parallel faces, which can still slide anywhere in that plane at exactly zero margin. The solver adds a basis of that plane so the case reports as tight rather than locked.</li>
+  </ul>
+
+  <p>Where margins tie exactly, four further keys settle it: alignment with the interior seed (the "most centred" direction), then alignment with world up, then the rounded components for pure determinism. The world-up term is a gravity-friendly preference among directions the geometry genuinely cannot distinguish.</p>
+
+  <h3>Then the collision check</h3>
+  <p>Joint constraints only see <em>jointed</em> neighbours. In a dense lattice a beam can be perfectly free according to its joints while its extraction path drives straight through a beam it is not jointed to. So after the cone solve, candidates are offered in descending margin order to a swept broad-phase check against <em>all</em> remaining elements, and the first that clears wins.</p>
+  <p>The check sweeps the element's oriented bounding box a fixed short distance (default 100 model units) and tests axis-aligned overlap. Broad-phase, so a reported collision may be a false alarm while a reported clearance is trustworthy &mdash; erring toward "obstructed" is the safe direction for a robot.</p>
+
+  <details>
+    <summary>What happens with zero constraints</summary>
+    <p>An element with no active joints is <em>entirely free</em>, and the solver returns a <span class="chip roomy">roomy</span> solution pointing up with margin 1.0. This is worth stating because the previous implementation returned <code>None</code> here, which also meant "locked" and "not computed" &mdash; three unrelated outcomes sharing one value. <code>None</code> is retired from this package's vocabulary.</p>
+  </details>
+</section>
+
+<section id="pipeline">
+  <h2>The pipeline at a glance</h2>
+  <p class="deck">Eight stages, and one subroutine called from two of them.</p>
+
+  <figure class="wide">
+    <div class="figframe">
+      <svg viewBox="0 0 760 276" role="img" aria-label="Eight pipeline stages running left to right then right to left, with the cone solver drawn in the middle as a subroutine called by both the blocking graph stage and the beam search stage.">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+          </marker>
+          <marker id="ah3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <g>
+          <rect x="24" y="32" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="34" y="50" class="svg-mono" fill="var(--accent)">01</text>
+          <text x="104" y="68" text-anchor="middle" class="svg-label">Collect &amp; classify</text>
+
+          <rect x="204" y="32" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="214" y="50" class="svg-mono" fill="var(--accent)">02</text>
+          <text x="284" y="68" text-anchor="middle" class="svg-label">Flatten to input</text>
+
+          <rect x="384" y="32" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="394" y="50" class="svg-mono" fill="var(--accent)">03</text>
+          <text x="464" y="68" text-anchor="middle" class="svg-label">Normalize overrides</text>
+
+          <rect x="564" y="32" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="574" y="50" class="svg-mono" fill="var(--accent)">04</text>
+          <text x="644" y="68" text-anchor="middle" class="svg-label">Blocking graph</text>
+        </g>
+
+        <line x1="184" y1="57" x2="200" y2="57" class="svg-line" marker-end="url(#ah3)"/>
+        <line x1="364" y1="57" x2="380" y2="57" class="svg-line" marker-end="url(#ah3)"/>
+        <line x1="544" y1="57" x2="560" y2="57" class="svg-line" marker-end="url(#ah3)"/>
+
+        <rect x="294" y="115" width="200" height="46" rx="3" class="svg-box-accent"/>
+        <text x="394" y="134" text-anchor="middle" class="svg-label">cone solver</text>
+        <text x="394" y="150" text-anchor="middle" class="svg-small">pure geometry, memoized</text>
+
+        <line x1="644" y1="82" x2="644" y2="190" class="svg-line" marker-end="url(#ah3)"/>
+
+        <path d="M 570 78 L 500 130" class="svg-accent" stroke-dasharray="4 3" marker-end="url(#ah3a)"/>
+        <text x="546" y="106" text-anchor="middle" class="svg-mono" fill="var(--accent)">calls</text>
+
+        <path d="M 464 190 L 430 165" class="svg-accent" stroke-dasharray="4 3" marker-end="url(#ah3a)"/>
+        <text x="466" y="172" class="svg-mono" fill="var(--accent)">calls</text>
+
+        <g>
+          <rect x="564" y="194" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="574" y="212" class="svg-mono" fill="var(--accent)">05</text>
+          <text x="644" y="230" text-anchor="middle" class="svg-label">Intrinsic locks</text>
+
+          <rect x="384" y="194" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="394" y="212" class="svg-mono" fill="var(--accent)">06</text>
+          <text x="464" y="230" text-anchor="middle" class="svg-label">Beam search</text>
+
+          <rect x="204" y="194" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="214" y="212" class="svg-mono" fill="var(--accent)">07</text>
+          <text x="284" y="230" text-anchor="middle" class="svg-label">Reverse &amp; negate</text>
+
+          <rect x="24" y="194" width="160" height="50" rx="3" class="svg-box"/>
+          <text x="34" y="212" class="svg-mono" fill="var(--accent)">08</text>
+          <text x="104" y="230" text-anchor="middle" class="svg-label">Write back</text>
+        </g>
+
+        <line x1="564" y1="219" x2="548" y2="219" class="svg-line" marker-end="url(#ah3)"/>
+        <line x1="384" y1="219" x2="368" y2="219" class="svg-line" marker-end="url(#ah3)"/>
+        <line x1="204" y1="219" x2="188" y2="219" class="svg-line" marker-end="url(#ah3)"/>
+
+        <text x="740" y="140" text-anchor="end" class="svg-small">flow continues</text>
+        <text x="740" y="155" text-anchor="end" class="svg-small">on the lower row</text>
+      </svg>
+    </div>
+    <figcaption><b>The solver is not a stage; it is a subroutine.</b> Stage 04 calls it once per jointed pair to build the blocking graph, and stage 06 calls it once per candidate per search state. Results are memoized on <code>(element, active set)</code>, which is exactly what the answer depends on.</figcaption>
+  </figure>
+</section>
+
+<section id="s01">
+  <span class="stage-no">Stage 01</span>
+  <h2>Collect and classify</h2>
+  <p class="deck">Decide what is being sequenced, and say out loud what is not.</p>
+
+  <p>The adapter walks every element in the model and sorts it into one of two buckets. Beams are sequenceable. Everything else &mdash; plates, panels, fasteners, group containers &mdash; goes into <code>excluded</code>, each with a reason string attached.</p>
+
+  <div class="note">
+    <span class="tag">Beams only, stated out loud</span>
+    <p>Sequencing a plate would need a different notion of insertion than "slide a stick along a vector". The earlier implementation silently gave non-beams a height of <code>0.0</code>, which sank them to the bottom of the ranking while looking like a real measurement. They were still sequenced, just wrongly. Excluding them with a reason is the honest version of the same limitation.</p>
+  </div>
+
+  <p>Excluded elements are invisible to the joint kinematics but are still treated as physically present by the collision check. That is the conservative reading: a plate you are not sequencing can still be in the way.</p>
+</section>
+
+<section id="s02">
+  <span class="stage-no">Stage 02</span>
+  <h2>Flatten to the boundary</h2>
+  <p class="deck">Everything the algorithms will ever know, assembled once.</p>
+
+  <p>The adapter builds the <code>SequencingInput</code>. Element ids are <code>str(guid)</code>, sorted, so ordering is stable across runs.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Field</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><code>element_ids</code></td><td>every sequenceable beam, in a stable order</td></tr>
+        <tr><td><code>neighbors</code></td><td>jointed adjacency, forcibly symmetrized</td></tr>
+        <tr><td><code>base_z</code></td><td>z of the beam's lowest point</td></tr>
+        <tr><td><code>centroid_z</code></td><td>z of the beam's midpoint</td></tr>
+        <tr><td><code>length</code></td><td>centerline length</td></tr>
+        <tr><td><code>groups</code></td><td>user-declared model groups, which always win over inferred ones</td></tr>
+        <tr><td><code>constraints</code></td><td>callable &mdash; asks the joints, live</td></tr>
+        <tr><td><code>path_is_clear</code></td><td>callable &mdash; the swept collision check</td></tr>
+        <tr><td><code>excluded</code></td><td>id &rarr; reason, carried through to the report</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Construction validates hard. Duplicate ids, an asymmetric neighbour map, a missing height &mdash; all raise. A missing height is an <em>error</em> rather than a default, for the same reason as above: a silent <code>0.0</code> looks like a measurement.</p>
+
+  <h3>Where constraints actually come from</h3>
+  <p>When the solver asks for constraints on a beam, the adapter walks that beam's joints, skips any joint whose other members have all been removed, calls <code>joint.get_kinematic_constraint(beam)</code>, and converts the result: a <code>Line</code> becomes a <code>SignedAxis</code>, a <code>Vector</code> becomes a <code>HalfSpace</code>, a list becomes both. Anything else raises.</p>
+
+  <div class="note warn">
+    <span class="tag">The permissive fallback</span>
+    <p>The base <code>Joint.get_kinematic_constraint</code> returns a single half-space pointing roughly midpoint-to-midpoint, which almost always yields a valid extraction. A large share of the joint library still inherits it, and you cannot tell "computed" from "nobody implemented this joint" by looking at the value.</p>
+    <p>So constraints from the fallback are tagged <code>inferred</code> and counted. Check <code>result.inferred_total</code> before you trust a surprising sequence &mdash; some apparent design quirks turn out to be missing implementations.</p>
+  </div>
+</section>
+
+<section id="s03">
+  <span class="stage-no">Stage 03</span>
+  <h2>Normalize the overrides</h2>
+  <p class="deck">Never drop a fabrication instruction someone typed without saying so.</p>
+
+  <p>Before any geometry runs, the two user-supplied override channels are cleaned against the model as it now stands. A hand-placed element that has since been deleted, a pin pointing at a position that no longer exists, two pins claiming the same slot &mdash; each becomes an entry in a <code>StalenessReport</code> that travels with the result.</p>
+
+  <p>Pins are also converted here from the caller's assembly-order view into the disassembly step the search actually works in: <code>step = total - 1 - assembly_index</code>.</p>
+</section>
+
+<section id="s04">
+  <span class="stage-no">Stage 04</span>
+  <h2>Build the blocking graph</h2>
+  <p class="deck">One edge means one thing: B must come out before A, in every possible order.</p>
+
+  <p>For every jointed pair, the solver is asked a deliberately narrow question: <em>delete the entire rest of the model, leaving only A and B &mdash; can A get out?</em> If it cannot, draw the edge <code>A &rarr; B</code>.</p>
+
+  <p>That narrowness is what makes the edge trustworthy. A larger active set can only add constraints, never remove them, so if B alone locks A, no order in the universe frees A while B is present. The edge is an <em>unconditional</em> precedence.</p>
+
+  <p>The tempting stronger rule &mdash; draw an edge to every neighbour involved in locking A in the complete assembly &mdash; is unsound, and the reason is worth internalising.</p>
+
+  <figure class="wide">
+    <div class="figframe">
+      <svg viewBox="0 0 700 256" role="img" aria-label="Left: the pairwise test finds no edges when A escapes from B alone and from C alone. Right: the full-assembly rule draws edges to both, creating a cycle and a phantom lock.">
+        <defs>
+          <marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--crit)"/>
+          </marker>
+        </defs>
+
+        <line x1="350" y1="14" x2="350" y2="246" class="svg-faint" stroke-dasharray="4 4"/>
+
+        <!-- LEFT: pairwise -->
+        <text x="180" y="26" text-anchor="middle" class="svg-label">Pairwise &mdash; what the code does</text>
+        <line x1="180" y1="70" x2="120" y2="175" class="svg-faint" stroke-dasharray="3 3"/>
+        <line x1="180" y1="70" x2="240" y2="175" class="svg-faint" stroke-dasharray="3 3"/>
+        <circle cx="180" cy="70" r="22" class="svg-box"/><text x="180" y="75" text-anchor="middle" class="svg-label">A</text>
+        <circle cx="120" cy="175" r="22" class="svg-box"/><text x="120" y="180" text-anchor="middle" class="svg-label">B</text>
+        <circle cx="240" cy="175" r="22" class="svg-box"/><text x="240" y="180" text-anchor="middle" class="svg-label">C</text>
+        <text x="180" y="222" text-anchor="middle" class="svg-small">B alone &rarr; A escapes. C alone &rarr; A escapes.</text>
+        <text x="180" y="238" text-anchor="middle" class="svg-small" fill="var(--accent)">No edges. No lock. Correct.</text>
+
+        <!-- RIGHT: full assembly -->
+        <text x="520" y="26" text-anchor="middle" class="svg-label">Full assembly &mdash; the unsound rule</text>
+        <line x1="513.4" y1="91.6" x2="475.2" y2="158.4" class="svg-crit" marker-end="url(#ah4)"/>
+        <line x1="466.6" y1="153.4" x2="504.8" y2="86.6" class="svg-crit" marker-end="url(#ah4)"/>
+        <line x1="535.2" y1="86.6" x2="573.4" y2="153.4" class="svg-crit" marker-end="url(#ah4)"/>
+        <line x1="564.8" y1="158.4" x2="526.6" y2="91.6" class="svg-crit" marker-end="url(#ah4)"/>
+        <circle cx="520" cy="70" r="22" class="svg-box"/><text x="520" y="75" text-anchor="middle" class="svg-label">A</text>
+        <circle cx="460" cy="175" r="22" class="svg-box"/><text x="460" y="180" text-anchor="middle" class="svg-label">B</text>
+        <circle cx="580" cy="175" r="22" class="svg-box"/><text x="580" y="180" text-anchor="middle" class="svg-label">C</text>
+        <text x="520" y="222" text-anchor="middle" class="svg-small">Edges to both, because both were involved.</text>
+        <text x="520" y="238" text-anchor="middle" class="svg-small" fill="var(--crit)">OR became AND. Phantom lock.</text>
+      </svg>
+    </div>
+    <figcaption><b>Blocking is disjunctive.</b> A is free once <em>either</em> B <em>or</em> C is removed. Drawing an edge to each turns that OR into an AND, and the symmetric edges back close a cycle &mdash; reporting an intrinsic lock for an assembly that has a perfectly good build order.</figcaption>
+  </figure>
+</section>
+
+<section id="s05">
+  <span class="stage-no">Stage 05</span>
+  <h2>Intrinsic locks and subassemblies</h2>
+  <p class="deck">The one distinction that decides what gets printed on a shop drawing.</p>
+
+  <p>Run Tarjan's algorithm over the blocking graph. Any strongly connected component with more than one member is a <strong>mutually blocking cluster</strong>: every member transitively blocks something that blocks it back, so no member can go first and no order exists that frees them.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th></th><th>Intrinsic lock</th><th>Order-dependent lock</th></tr></thead>
+      <tbody>
+        <tr><td>Means</td><td>Locked in every order</td><td>Locked given what is still in place</td></tr>
+        <tr><td>Canonical case</td><td>double birdsmouth</td><td>a beam boxed in by a bad choice three steps ago</td></tr>
+        <tr><td>Found</td><td>up front, stage 05</td><td>during search</td></tr>
+        <tr><td>Response</td><td>flag for hand placement</td><td>route around it</td></tr>
+        <tr><td>Goes on a drawing?</td><td>yes</td><td>never</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Keeping these apart is the whole reason the stage exists. When both produced the same warning flag, a merely mis-ordered element was indistinguishable from one that physically needs hands &mdash; and the shop floor got told to hand-place something a robot could have managed.</p>
+
+  <div class="note warn">
+    <span class="tag">Sound, but not complete</span>
+    <p>Every cluster reported here really is locked forever, because every edge is an unconditional pairwise precedence. But an interlock that only closes across <em>three or more</em> elements at once &mdash; each pair separable, the trio not &mdash; leaves no pairwise edge to find, so it is not reported here. Those surface later as a stuck report, which is the honest outcome: the tool did not find an order, rather than claiming none exists.</p>
+  </div>
+
+  <h3>Subassemblies come free</h3>
+  <p>The same components double as real, geometry-derived subassembly groups, used later as a ranking preference. User-declared model groups win where they exist; otherwise each SCC is a group; otherwise an element is its own.</p>
+  <p>Every label derives from element ids, never from iteration order. That is not fussiness: the label propagation this replaced broke ties on <code>(count, guid)</code>, and since guids are random, <strong>subassembly labels differed between runs on identical input</strong>. Non-deterministic output from a fabrication tool is a correctness defect.</p>
+</section>
+
+<section id="s06">
+  <span class="stage-no">Stage 06</span>
+  <h2>Beam search over disassembly</h2>
+  <p class="deck">Take it apart, then read the tape backwards.</p>
+
+  <p>The search runs on <em>dis</em>assembly, not assembly, because an element's freedom is decided by what is still around it &mdash; and that shrinks monotonically as you take things apart. Searching forward through assembly would mean reasoning about elements that are not there yet.</p>
+
+  <p>Five partial sequences are carried at a time. At each step, for each partial:</p>
+
+  <ol>
+    <li><strong>Assess the state.</strong> Find the grounded elements (everything at the lowest <code>base_z</code>), then run one articulation-point pass to find every element whose removal would strand part of the assembly from the ground. One pass answers this for all candidates at once.</li>
+    <li><strong>Filter &mdash; the hard gate.</strong> Solve each remaining element against the current active set. Feasible elements pass. Hand-placed elements pass regardless, because a person can rotate, tilt and spring a member into place and robot kinematics do not apply. Everything else is recorded with its blocking reason.</li>
+    <li><strong>Honour pins.</strong> If a pin claims this step, it becomes the only candidate. If it cannot be honoured, this partial dies with a conflict report.</li>
+    <li><strong>Rank &mdash; the soft preferences.</strong> Score the survivors and take the best few.</li>
+    <li><strong>Prune.</strong> Merge partials that have removed the same <em>set</em> of elements by any route, then keep the five best overall.</li>
+  </ol>
+
+  <div class="note">
+    <span class="tag">Hard constraints filter; soft preferences rank</span>
+    <p>Steps 2 and 4 are deliberately separate mechanisms. The earlier implementation blended five booleans and five continuous values into one lexicographic comparator, which meant a genuine constraint violation could be outvoted by an ordering accident. Splitting them is what makes the behaviour explainable, tunable and testable.</p>
+  </div>
+
+  <h3>The default ranking</h3>
+  <p>Gravity: bottom-up assembly is top-down disassembly. The score is a tuple, most significant term first.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>#</th><th>Term</th><th>Why it sits there</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Does not strand anything</td><td>the one term whose violation produces obvious nonsense, so it leads</td></tr>
+        <tr><td>2</td><td><code>base_z</code>, descending</td><td>take the high things off first</td></tr>
+        <tr><td>3</td><td><code>centroid_z</code>, descending</td><td>separates beams that start at the same level</td></tr>
+        <tr><td>4</td><td>Roomy before tight</td><td>spend the free extractions while there is still room</td></tr>
+        <tr><td>5</td><td>Subassembly continuity</td><td>finish a cluster before starting another</td></tr>
+        <tr><td>6</td><td>Chain continuity</td><td>prefer a neighbour of the last one removed</td></tr>
+        <tr><td>7</td><td>Length, then low connectivity</td><td>long and peripheral members come off first</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Terms 2 and 3 are separate lexicographic keys, not a sum. Centroid alone ranks a ground-standing post as "high"; base alone cannot separate two beams starting at the same level; adding them produces a quantity with no physical meaning and no nameable unit. The strategy is injectable &mdash; gravity is the default, not the only thing the package can express.</p>
+
+  <h3>What happens at a dead end</h3>
+
+  <figure class="wide">
+    <div class="figframe">
+      <svg viewBox="0 0 700 250" role="img" aria-label="A lattice of five beam slots advancing across five steps; one partial dies at step two, and a struck-through backward arrow marks that discarded states are never revisited.">
+        <defs>
+          <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="var(--crit)"/>
+          </marker>
+        </defs>
+
+        <path d="M 470 62 Q 340 24 210 62" class="svg-crit" stroke-dasharray="5 3" marker-end="url(#ah5)"/>
+        <line x1="333" y1="30" x2="347" y2="44" class="svg-crit" stroke-width="1.8"/>
+        <line x1="347" y1="30" x2="333" y2="44" class="svg-crit" stroke-width="1.8"/>
+        <text x="600" y="30" text-anchor="end" class="svg-small" fill="var(--crit)">a discarded partial is never revisited</text>
+
+        <g class="svg-faint">
+          <path d="M 80 88 L 210 88 M 80 88 L 210 120"/>
+          <path d="M 80 120 L 210 120 M 80 120 L 210 152"/>
+          <path d="M 80 152 L 210 152 M 80 152 L 210 184"/>
+          <path d="M 80 184 L 210 184 M 80 184 L 210 216"/>
+          <path d="M 80 216 L 210 216"/>
+          <path d="M 210 88 L 340 88 M 210 120 L 340 120 M 210 152 L 340 152 M 210 184 L 340 184 M 210 216 L 340 216"/>
+          <path d="M 340 88 L 470 88 M 340 120 L 470 120 M 340 152 L 470 152 M 340 184 L 470 184"/>
+          <path d="M 470 88 L 600 88 M 470 120 L 600 120 M 470 152 L 600 152 M 470 184 L 600 184 M 470 216 L 600 216"/>
+        </g>
+
+        <g fill="var(--ink-mute)">
+          <circle cx="80" cy="88" r="4.5"/><circle cx="80" cy="120" r="4.5"/><circle cx="80" cy="152" r="4.5"/><circle cx="80" cy="184" r="4.5"/><circle cx="80" cy="216" r="4.5"/>
+          <circle cx="210" cy="88" r="4.5"/><circle cx="210" cy="120" r="4.5"/><circle cx="210" cy="152" r="4.5"/><circle cx="210" cy="184" r="4.5"/><circle cx="210" cy="216" r="4.5"/>
+          <circle cx="340" cy="88" r="4.5"/><circle cx="340" cy="120" r="4.5"/><circle cx="340" cy="152" r="4.5"/><circle cx="340" cy="184" r="4.5"/>
+          <circle cx="470" cy="88" r="4.5"/><circle cx="470" cy="120" r="4.5"/><circle cx="470" cy="152" r="4.5"/><circle cx="470" cy="184" r="4.5"/><circle cx="470" cy="216" r="4.5"/>
+          <circle cx="600" cy="120" r="4.5"/><circle cx="600" cy="152" r="4.5"/><circle cx="600" cy="184" r="4.5"/><circle cx="600" cy="216" r="4.5"/>
+        </g>
+        <circle cx="600" cy="88" r="6" fill="var(--accent)"/>
+        <text x="614" y="92" class="svg-small" fill="var(--accent)">best sequence</text>
+
+        <line x1="333" y1="209" x2="347" y2="223" class="svg-crit" stroke-width="1.8"/>
+        <line x1="347" y1="209" x2="333" y2="223" class="svg-crit" stroke-width="1.8"/>
+        <text x="340" y="242" text-anchor="middle" class="svg-small" fill="var(--crit)">this partial dies here</text>
+
+        <text x="80" y="70" text-anchor="middle" class="svg-mono">step 0</text>
+        <text x="210" y="70" text-anchor="middle" class="svg-mono">step 1</text>
+        <text x="340" y="70" text-anchor="middle" class="svg-mono">step 2</text>
+        <text x="470" y="70" text-anchor="middle" class="svg-mono">step 3</text>
+        <text x="600" y="70" text-anchor="middle" class="svg-mono">step 4</text>
+      </svg>
+    </div>
+    <figcaption><b>The search only moves forward.</b> Carrying five partials gives lateral recovery &mdash; if one dies, the others carry on &mdash; but there is no frontier and no undo. Once a partial falls out of the top five it is gone permanently.</figcaption>
+  </figure>
+
+  <div class="note crit">
+    <span class="tag">There is no backtracking</span>
+    <p>When every partial dead-ends at the same step, the search returns the best partial order it reached plus a <strong>stuck report</strong>: the step index, the elements still in place, and the specific blocking reason for each one. <code>result.is_complete</code> goes false.</p>
+    <p>This was a deliberate trade. Beam search is deterministic, degrades gracefully instead of falling off a node-budget cliff, and makes "show me three alternative sequences" nearly free. The price is that a bad choice early cannot be undone.</p>
+  </div>
+
+  <p>If you hit a stuck report, work through it in this order:</p>
+  <ol>
+    <li><strong>Check <code>inferred_total</code> first.</strong> A stuck model is often a missing joint implementation, not a search failure.</li>
+    <li><strong>Widen the beam.</strong> <code>width=20</code>. One argument, linear cost, often enough.</li>
+    <li><strong>Read the report and pin your way past it.</strong> This is what the override channel is for.</li>
+    <li><strong>Suspect a three-way interlock</strong> that the pairwise graph structurally cannot see.</li>
+  </ol>
+</section>
+
+<section id="s07">
+  <span class="stage-no">Stage 07</span>
+  <h2>Reverse and negate</h2>
+  <p class="deck">Two lines that turn a teardown into a build.</p>
+
+  <p>The disassembly order is reversed to give assembly order, and each extraction direction is negated to give an insertion vector. A beam that pulls out along <code>+Z</code> goes in along <code>-Z</code>.</p>
+  <p>The result object is assembled here: the order, the per-element solution, the effective manual set, a <em>proposed</em> manual set for the next run, the intrinsic lock clusters, the subassembly labels, the excluded elements, the staleness report, and any stuck or pin conflict.</p>
+</section>
+
+<section id="s08">
+  <span class="stage-no">Stage 08</span>
+  <h2>Write back to the model</h2>
+  <p class="deck">Four attributes per element.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Attribute</th><th>Holds</th></tr></thead>
+      <tbody>
+        <tr><td><code>assembly_sequence</code></td><td>integer position in the build order</td></tr>
+        <tr><td><code>insertion_vector</code></td><td>unit Vector, or <code>None</code> if hand-placed and locked</td></tr>
+        <tr><td><code>requires_manual_assembly</code></td><td>the hand-placement flag &mdash; serialized with the model</td></tr>
+        <tr><td><code>extraction_state</code></td><td><span class="chip roomy">roomy</span> <span class="chip tight">tight</span> <span class="chip locked">locked</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The first three are also mirrored onto the graph node, which is what <code>TimberModel.assembly_sequence</code> reads. That reaches into the model's private graph &mdash; in one place, on purpose, and documented, because there is no public node-attribute setter. A public API for it belongs upstream in the model.</p>
+</section>
+
+<section id="overrides">
+  <h2>Overrides in practice</h2>
+  <p class="deck">Two channels, easy to confuse, different in kind.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th></th><th>Hand-placement set</th><th>Pinned order</th></tr></thead>
+      <tbody>
+        <tr><td>Says</td><td>"a person places this"</td><td>"this goes at position N"</td></tr>
+        <tr><td>A fact about</td><td>the design</td><td>a particular build</td></tr>
+        <tr><td>Lives</td><td>on the element, serialized</td><td>passed per run, never stored</td></tr>
+        <tr><td>Effect</td><td>exempt from the feasibility filter</td><td>forces position</td></tr>
+        <tr><td>If impossible</td><td>&mdash;</td><td>reported as a conflict, never worked around</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The intended loop is a conversation, not a single shot:</p>
+  <ol>
+    <li>Run it. The solver proposes a manual set &mdash; intrinsic locks, plus tight fits as candidates.</li>
+    <li>You amend it, using what you know about the design that the model does not encode.</li>
+    <li>Run it again with the amended set as a given. Same inputs give the same outputs; the process is idempotent.</li>
+  </ol>
+
+  <p>A pin does two things, and the second is the subtle one: it claims its own step, <em>and it forbids every other step</em>. Without that, ranking could spend the pinned element early and the pin would fail later with the useless message "already placed".</p>
+
+  <div class="note">
+    <span class="tag">Pins win</span>
+    <p>If a pinned position cannot be honoured, sequencing stops and reports the position, the element and the reason. It does not quietly reorder around a plan someone typed.</p>
+  </div>
+</section>
+
+<section id="limits">
+  <h2>Where it fails</h2>
+  <p class="deck">Accepted limitations. Tell people these before they discover them.</p>
+
+  <ul>
+    <li><strong>Cone feasibility is infinitesimal freedom.</strong> The solver proves an element can <em>begin</em> to move, not that it can travel far enough to clear the assembly. The swept check mitigates this over the fixed approach distance; it does not close the gap for deep mortises, scarfs or long engagements.</li>
+    <li><strong>No clearance distance.</strong> Maximum travel before collision is expensive to compute and the approach distance is fixed and short downstream, so it is deliberately not answered.</li>
+    <li><strong>The robot is not a point.</strong> Gripper and arm collision with already-placed elements is <code>compas_fab</code>'s domain. A sequence certified here can still be unbuildable for reach reasons &mdash; and users will experience that as <em>this</em> tool being wrong.</li>
+    <li><strong>Monotone sequences only.</strong> No assemble, disassemble, reassemble.</li>
+    <li><strong>Stability is a proxy.</strong> "Does not strand anything from the ground" is a topological connectivity test, not a structural calculation. A piece that stays connected can still tip over.</li>
+    <li><strong>Broad-phase collision.</strong> Axis-aligned bounds around a swept oriented box. False collisions are possible; reported clearances are trustworthy.</li>
+  </ul>
+</section>
+
+<section id="reference">
+  <h2>Quick reference</h2>
+  <p class="deck">The vocabulary, in one place.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Term</th><th>Means</th></tr></thead>
+      <tbody>
+        <tr><td><b>Margin</b></td><td>Sine of the angle by which the chosen direction clears its nearest constraint boundary. Classifies; never rejects.</td></tr>
+        <tr><td><b><span class="chip roomy">roomy</span></b></td><td>Margin at or above sin 5&deg;. Comfortable, safe for a robot.</td></tr>
+        <tr><td><b><span class="chip tight">tight</span></b></td><td>A real but zero-clearance fit &mdash; a slot. Feasible, and risky.</td></tr>
+        <tr><td><b><span class="chip locked">locked</span></b></td><td>No direction satisfies all constraints.</td></tr>
+        <tr><td><b>Intrinsic lock</b></td><td>Locked in every possible order. The only thing that legitimately means "place by hand".</td></tr>
+        <tr><td><b>Order-dependent lock</b></td><td>Locked given what is still in place. A bug in the sequence, not in the design.</td></tr>
+        <tr><td><b>Inferred constraint</b></td><td>Came from the permissive base fallback rather than a joint-specific implementation. Counted and reported.</td></tr>
+        <tr><td><b>Manual set</b></td><td>Elements a person places. Input and output. Persisted on the element.</td></tr>
+        <tr><td><b>Pin</b></td><td>An element forced to a position for this build. Passed per run.</td></tr>
+        <tr><td><b>Stuck report</b></td><td>The search dead-ended: step index, remaining elements, and why each is blocked.</td></tr>
+        <tr><td><b>Staleness report</b></td><td>Overrides that no longer apply to the model as it stands.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Reading a result</h3>
+  <pre><code>result.order              # element ids, first placed to last
+result.insertion_vectors  # id -&gt; unit Vector (None if locked)
+result.is_complete        # False if stuck or a pin conflicted
+result.state(id)          # 'roomy' | 'tight' | 'locked'
+result.manual_set         # what was exempt on this run
+result.proposed_manual_set# feed this back in after amending
+result.intrinsic_locks    # list of frozensets
+result.inferred_total     # how much of this was a guess
+result.describe()         # human-readable, per element</code></pre>
+
+  <div class="note">
+    <span class="tag">Two habits worth forming</span>
+    <p>Check <code>is_complete</code> before trusting an order, and check <code>inferred_total</code> before trusting a vector. The first tells you the search finished; the second tells you how much of the geometry was actually computed rather than assumed.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Source: <code>src/assembly_sequencing/</code> and <code>src/compas_timber/planning/sequencing.py</code>. The design rationale and work breakdown live in <code>ASSEMBLY_SEQUENCING_PLAN.md</code>.</p>
+</footer>
+
+</main>
