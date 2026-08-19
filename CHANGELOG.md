@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
 * Added `brep_from_outlines` to `compas_timber.geometry`.
@@ -28,8 +29,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added new subpackage `compas_timber.proto`, merging the former `compas_timber_pb` plugin into compas_timber. It contains the protobuf IDL split by domain (`elements.proto`, `fabrication.proto`, `connections.proto`, `panel_features.proto`, `planning.proto`, `structural.proto`, `model.proto`) and `compas_timber.proto.conversions`, which registers the serializers via the `compas_pb.plugins` entry point. Objects can be round-tripped with `compas_pb.pb_dump_bts()` / `pb_load_bts()`.
+* Added protobuf messages for every class that implements `__data__`: all timber elements (`Beam`, `Plate`, `Panel`, `Layer`, `LayerDefinition`, `LayerStructure`, `PlateGeometry`, the fastener types), all 18 BTLx processings plus `Contour` / `DualContour`, all 28 instantiable joints, `JointCandidate`, the panel features, the building plan / sequencing / nesting types, `StructuralSegment`, and `TimberModel` itself. A whole model -- beams, plates, panels, joints and features -- round-trips without data loss.
+* Added `compas_timber.proto.conversions.register()`, which derives the mapping between a class and its protobuf message from the message descriptor, so proto field names matching `__data__` keys is all that is needed to serialize a new type.
+* Added `invoke pre_build` task, which generates the protobuf python bindings (`*_pb2.py`) from the `.proto` files. It must be run before `invoke test` and before building a distribution.
+* Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 
 ### Changed
+* Guids are no longer written as 36-character text everywhere they appear. `TimberModelData` now carries a `guid_table` of 16-byte uuids and every guid in the message -- the object's own, the interaction graph's element and joint references, the element tree's, and each joint's `element_guids` -- is a `GuidRef` index into it. A message serialized on its own has no table and falls back to carrying the raw uuid, so it stays decodable in isolation. A 200-beam model went from 92,392 to 32,660 bytes (65% smaller).
+* `TimberModelData.tree` is no longer `AnyData`. It is now `ElementTreeData`, which flattens the tree into parallel arrays in depth-first order (a varint parent index per node) and interns the node names, instead of a recursive dict repeating `name` / `attributes` / `children` / `element` per node.
+* `TimberModelData.graph` is no longer `AnyData`. It is now `InteractionGraphData`, which lifts the two guid-valued attributes (`element` on a node, `joints` on an edge) into `GuidRef` columns so they join the guid table; any other node or edge attribute still falls through to `AnyData` and round-trips unchanged. `compas_pb.data.GraphData` was tried first but keeps its attributes as `AnyData`, which is where nearly all of this graph's payload lives.
+* `TimberModelData.materials` is now a `ModelMaterialData` oneof over `Material`, `Timber`, `Concrete` and `Steel` instead of `AnyData`, and those four now have serializers. Note that their numeric fields are proto `double`, so an int passed to e.g. `Steel(fy=235)` comes back as `235.0`.
+* `FastenerTimberInterfaceData.outline_points` is now a `PointList` (a flat coordinate array) rather than `repeated PointData`, which carried a guid and a name per point.
+* `FastenerTimberInterfaceData.holes` is now `repeated FastenerHoleData` instead of `repeated AnyData`; the documented `point` / `diameter` / `vector` / `through` keys are typed and anything else is kept in an `extra` map.
+* `FastenerTimberInterfaceData.features` is now `repeated BTLxFromGeometryDefinitionData`, and `PlateFastenerData.cutouts` is now `repeated PolylineData`, both previously `AnyData`.
+* `GenericElementData.material` and the panel features' `material` are now `GuidRef`, not `AnyData`. `Element.__data__` has always stored the material as a guid rather than the material itself.
+* `GenericElementData.features` and the panel features' `features` are now a `ModelFeatureData` oneof over `compas_model`'s `Feature`, `BeamFeature`, `PlateFeature` and `ColumnFeature`.
+* `StepData.geometry` is now a `string`, not `AnyData`. `Step.geometry` is the name of a geometry type used for visualization (`"obj"`, `"cylinder"`, `"box"`), not a geometry object.
+* Fixed `PlateFastener` failing to serialize at all. Its `__data__` stores `interface.__data__` rather than the interfaces themselves, and the codec had no path for a dict where a nested message was expected.
+* Fixed `Step`, `Model3d`, `Text3d` and `LinearDimension` coming back with `location` as a plain dict, which broke the restored object's next `__data__` or `transform()` call.
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
 * `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
@@ -57,6 +75,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
 * Fixed `PlateMiterJoint` bug where parallel plates failed to join.
 * Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
+* Changed `build.yml` and `release.yml` workflows to run the `pre_build` step so the generated protobuf bindings are present before tests and before publishing.
+* Changed the ruff configuration to exclude the protoc-generated `*_pb2.py` / `*_pb2.pyi` files, which are not hand-authored and would otherwise fail `invoke lint`.
+* Changed `BeamData` dimensions from `float` to `double`, so beam dimensions and frames round-trip bit-exact.
+* Changed the proto IDL layout: `processing.proto` and `building_plan.proto` (written against a demo application) were replaced by the domain-split files above. Since proto has no inheritance, each concrete message carries its whole MRO's `__data__` fields flattened; `guid` and `name` come from the compas serialization envelope and occupy fields 1 and 2 everywhere.
+* Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
 
 ### Removed
 * Removed depricated `features.py` module and related imports.

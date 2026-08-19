@@ -21,9 +21,16 @@ jobs:
           python-version: "3.12"
           activate-environment: true
 
-      - name: Run tests collecting coverage reports
+      - name: Install dependencies
         run: |
           uv pip install -e ".[dev]"
+
+      - name: Run pre-build
+        run: |
+          invoke pre-build
+
+      - name: Run tests collecting coverage reports
+        run: |
           pytest --cov src/compas_timber --cov-report=html
 
       - name: Upload coverage reports to Codecov
