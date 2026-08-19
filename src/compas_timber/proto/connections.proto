@@ -4,6 +4,7 @@ package compas_timber.proto;
 
 import "compas_pb/generated/geometry.proto";
 import "compas_pb/generated/message.proto";
+import "compas_timber/proto/common.proto";
 import "compas_timber/proto/elements.proto";
 import "compas_timber/proto/panel_features.proto";
 
@@ -18,7 +19,7 @@ import "compas_timber/proto/panel_features.proto";
 // message of their own; only instantiable classes are represented.
 
 message CutPlaneSpecData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 ref_side_index = 10;
   optional double angle = 11;
@@ -26,7 +27,7 @@ message CutPlaneSpecData {
 }
 
 message MiterPlaneSpecData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 ref_side_index = 10;
   optional double angle_x = 11;
@@ -36,9 +37,9 @@ message MiterPlaneSpecData {
 
 // JointCandidate merges an open-ended `_extra_kwargs` dict into its __data__.
 message JointCandidateData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
-  repeated string element_guids = 10;
+  repeated GuidRef element_guids = 10;
   optional int32 topology = 11;
   optional compas_pb.data.PointData location = 12;
   optional double distance = 13;
@@ -46,21 +47,21 @@ message JointCandidateData {
 }
 
 message BeamSolverResultData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
-  optional string beam_a_guid = 11;
-  optional string beam_b_guid = 12;
+  optional GuidRef beam_a_guid = 11;
+  optional GuidRef beam_b_guid = 12;
   optional double distance = 13;
   optional compas_pb.data.PointData location = 14;
 }
 
 message PlateSolverResultData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
-  optional string plate_a_guid = 11;
-  optional string plate_b_guid = 12;
+  optional GuidRef plate_a_guid = 11;
+  optional GuidRef plate_b_guid = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
   optional double distance = 15;
@@ -68,23 +69,23 @@ message PlateSolverResultData {
 }
 
 message BallNodeJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
-  repeated string beam_guids = 13;
+  repeated GuidRef element_guids = 12;
+  repeated GuidRef beam_guids = 13;
   optional double ball_diameter = 14;
-  optional string fastener_guid = 15;
+  optional GuidRef fastener_guid = 15;
   optional FastenerTimberInterfaceData base_interface = 16;
 }
 
 message ButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double mill_depth = 13;
   optional CutPlaneSpecData butt_plane_spec = 14;
   optional bool force_pocket = 15;
@@ -92,22 +93,22 @@ message ButtJointData {
 }
 
 message CompositeJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   repeated JointData joints = 13;
 }
 
 message ISimpleScarfData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
-  optional string main_beam_guid = 13;
-  optional string cross_beam_guid = 14;
+  repeated GuidRef element_guids = 12;
+  optional GuidRef main_beam_guid = 13;
+  optional GuidRef cross_beam_guid = 14;
   optional double length = 15;
   optional double depth_ref_side = 16;
   optional double depth_opp_side = 17;
@@ -117,11 +118,11 @@ message ISimpleScarfData {
 }
 
 message LButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double mill_depth = 13;
   optional CutPlaneSpecData butt_plane_spec = 14;
   optional bool force_pocket = 15;
@@ -132,31 +133,31 @@ message LButtJointData {
 }
 
 message LFrenchRidgeLapJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool flip_lap_side = 13;
   optional double drillhole_diam = 14;
 }
 
 message LLapJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool flip_lap_side = 13;
   optional double cut_plane_bias = 14;
 }
 
 message LMiterJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool cutoff = 13;
   optional bool ref_side_miter = 14;
   optional MiterPlaneSpecData miter_plane = 15;
@@ -164,11 +165,11 @@ message LMiterJointData {
 }
 
 message LTenonMortiseJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double start_y = 13;
   optional double start_depth = 14;
   optional double rotation = 15;
@@ -181,21 +182,21 @@ message LTenonMortiseJointData {
 }
 
 message LapJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool flip_lap_side = 13;
   optional double cut_plane_bias = 14;
 }
 
 message MortiseTenonJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double start_y = 13;
   optional double start_depth = 14;
   optional double rotation = 15;
@@ -207,94 +208,94 @@ message MortiseTenonJointData {
 }
 
 message PanelLButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
   repeated PanelConnectionInterfaceData interfaces = 15;
 }
 
 message PanelLLayerButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
   repeated PanelConnectionInterfaceData interfaces = 15;
 }
 
 message PanelMiterJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
   repeated PanelConnectionInterfaceData interfaces = 15;
 }
 
 message PanelTButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
   repeated PanelConnectionInterfaceData interfaces = 15;
 }
 
 message PlateLButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
 }
 
 message PlateMiterJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
 }
 
 message PlateTButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional int32 a_segment_index = 13;
   optional int32 b_segment_index = 14;
 }
 
 message TBirdsmouthJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double mill_depth = 13;
 }
 
 message TButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double mill_depth = 13;
   optional CutPlaneSpecData butt_plane_spec = 14;
   optional bool force_pocket = 15;
@@ -302,11 +303,11 @@ message TButtJointData {
 }
 
 message TDovetailJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double start_y = 13;
   optional double start_depth = 14;
   optional double rotation = 15;
@@ -320,21 +321,21 @@ message TDovetailJointData {
 }
 
 message TLapJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool flip_lap_side = 13;
   optional double cut_plane_bias = 14;
 }
 
 message TOliGinaJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double start_y = 13;
   optional double start_depth = 14;
   optional double rotation = 15;
@@ -346,11 +347,11 @@ message TOliGinaJointData {
 }
 
 message TStepJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional string step_shape = 13;
   optional double step_depth = 14;
   optional double heel_depth = 15;
@@ -358,11 +359,11 @@ message TStepJointData {
 }
 
 message TTenonMortiseJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double start_y = 13;
   optional double start_depth = 14;
   optional double rotation = 15;
@@ -374,29 +375,29 @@ message TTenonMortiseJointData {
 }
 
 message XLapJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional bool flip_lap_side = 13;
   optional double cut_plane_bias = 14;
 }
 
 message XNotchJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
 }
 
 message YButtJointData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
-  repeated string element_guids = 12;
+  repeated GuidRef element_guids = 12;
   optional double mill_depth = 13;
 }
 

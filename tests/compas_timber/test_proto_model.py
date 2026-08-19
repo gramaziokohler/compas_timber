@@ -13,6 +13,10 @@ from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas_model.materials import Concrete
+from compas_model.materials import Material
+from compas_model.materials import Steel
+from compas_model.materials import Timber
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
@@ -144,3 +148,134 @@ def test_empty_model_roundtrip():
     other = roundtrip(model)
     assert len(list(other.elements())) == 0
     assert len(list(other.joints)) == 0
+
+
+# ---------------------------------------------------------------------------
+# guid interning
+# ---------------------------------------------------------------------------
+
+
+def test_model_interns_guids_into_a_table(model):
+    from compas_timber.proto.conversions import _nested_to_pb
+
+    msg = _nested_to_pb(model)
+    assert len(msg.guid_table) > 0
+    assert all(len(raw) == 16 for raw in msg.guid_table)
+    # inside a model every guid is an index into that table
+    assert msg.guid.WhichOneof("id") == "index"
+    assert msg.elements[0].beam.guid.WhichOneof("id") == "index"
+
+
+def test_standalone_message_carries_the_guid_itself():
+    """A message serialized outside a model has no table, so it spells the uuid out."""
+    from compas_timber.proto.conversions import _nested_to_pb
+
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 100.0, 200.0)
+    msg = _nested_to_pb(beam)
+    assert msg.guid.WhichOneof("id") == "raw"
+    assert len(msg.guid.raw) == 16
+    assert str(roundtrip(beam).guid) == str(beam.guid)
+
+
+def test_guid_table_holds_each_guid_once(model):
+    from compas_timber.proto.conversions import _nested_to_pb
+
+    msg = _nested_to_pb(model)
+    assert len(set(msg.guid_table)) == len(msg.guid_table)
+
+
+def test_model_is_smaller_than_the_same_data_without_interning(model):
+    """The interned encoding should stay well under compas' own JSON."""
+    packed = len(pb_dump_bts(model))
+    as_json = len(json_dumps(model).encode("utf-8"))
+    assert packed < as_json / 2
+
+
+# ---------------------------------------------------------------------------
+# materials
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "material_factory",
+    [
+        lambda: Material(name="generic"),
+        lambda: Timber(name="GL24h"),
+        lambda: Concrete(fck=30, name="C30"),
+        lambda: Steel(fy=235, fu=360, name="S235"),
+    ],
+    ids=["Material", "Timber", "Concrete", "Steel"],
+)
+def test_material_roundtrip(material_factory):
+    material = material_factory()
+    other = roundtrip(material)
+    assert type(other) is type(material)
+    assert json.loads(json_dumps(other, minimal=True)) == json.loads(json_dumps(material, minimal=True))
+    assert str(other.guid) == str(material.guid)
+
+
+def test_model_materials_preserved():
+    model = TimberModel()
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 100.0, 200.0)
+    model.add_element(beam)
+    timber = Timber(name="GL24h")
+    model.add_material(timber)
+    model.assign_material(timber, element=beam)
+
+    other = roundtrip(model)
+    materials = list(other.materials())
+    assert [type(m).__name__ for m in materials] == ["Timber"]
+    assert materials[0].name == "GL24h"
+    assert str(materials[0].guid) == str(timber.guid)
+
+
+def test_generic_element_keeps_its_material_reference():
+    """Element.__data__ carries the material as a guid, so GenericElementData does too.
+
+    The timber elements do not: Beam.__data__ has no `material` key at all, so
+    the assignment is lost through compas' own JSON as well.
+    """
+    from compas_model.elements import Element
+
+    model = TimberModel()
+    element = Element()
+    model.add_element(element)
+    timber = Timber(name="GL24h")
+    model.add_material(timber)
+    model.assign_material(timber, element=element)
+
+    other = roundtrip(model)
+    assert str(list(other.elements())[0].material.guid) == str(timber.guid)
+
+
+# ---------------------------------------------------------------------------
+# tree and graph
+# ---------------------------------------------------------------------------
+
+
+def test_tree_node_names_are_interned(model):
+    from compas_timber.proto.conversions import _nested_to_pb
+
+    msg = _nested_to_pb(model)
+    # every element node is called "ElementNode"; the table holds it once
+    assert len(msg.tree.name_table) < len(msg.tree.node_name_refs)
+
+
+def test_graph_element_and_joint_guids_are_interned(model):
+    from compas_timber.proto.conversions import _nested_to_pb
+
+    msg = _nested_to_pb(model)
+    assert len(msg.graph.node_keys) == len(list(model.elements()))
+    assert all(ref.WhichOneof("id") == "index" for ref in msg.graph.node_elements)
+    assert any(ref.WhichOneof("id") == "index" for ref in msg.graph.edge_joints)
+
+
+def test_graph_unknown_edge_attribute_still_roundtrips(model):
+    """An attribute this codec knows nothing about falls through to AnyData."""
+    edge = next(iter(model._graph.edges()))
+    model._graph.edge_attribute(edge, "some_future_attribute", {"a": 1, "b": [2.0, "three"]})
+
+    other = roundtrip(model)
+    assert other._graph.edge_attribute(edge, "some_future_attribute") == {"a": 1, "b": [2.0, "three"]}
+    # and the guid-valued one next to it is still interned
+    assert other._graph.edge_attribute(edge, "joints") == model._graph.edge_attribute(edge, "joints")

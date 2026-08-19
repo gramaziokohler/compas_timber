@@ -4,11 +4,12 @@ package compas_timber.proto;
 
 import "compas_pb/generated/geometry.proto";
 import "compas_pb/generated/message.proto";
+import "compas_timber/proto/common.proto";
 
 // Building plan / sequencing and nesting (compas_timber.planning).
 
 message Model3dData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional string id = 10;
   compas_pb.data.FrameData location = 11;
@@ -18,7 +19,7 @@ message Model3dData {
 }
 
 message Text3dData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional string id = 10;
   compas_pb.data.FrameData location = 11;
@@ -27,7 +28,7 @@ message Text3dData {
 }
 
 message LinearDimensionData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional string id = 10;
   compas_pb.data.FrameData location = 11;
@@ -47,12 +48,14 @@ message InstructionData {
 }
 
 message StepData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   repeated string element_ids = 10;
   optional string actor = 11;          // stored by name via Actor.get_name()
   compas_pb.data.FrameData location = 12;
-  optional compas_pb.data.AnyData geometry = 13;
+  // Step.geometry is the *name* of a geometry type for visualization -- one of
+  // "obj", "cylinder", "box" -- not a geometry object.
+  optional string geometry = 13;
   repeated InstructionData instructions = 14;
   optional bool is_built = 15;
   optional bool is_planned = 16;
@@ -61,13 +64,13 @@ message StepData {
 }
 
 message BuildingPlanData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   repeated StepData steps = 10;
 }
 
 message NestedElementDataData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   compas_pb.data.FrameData frame = 10;
   optional string key = 11;
@@ -75,7 +78,7 @@ message NestedElementDataData {
 }
 
 message BeamStockData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional double spacing = 10;
   repeated NestedElementDataData element_data = 11;
@@ -84,7 +87,7 @@ message BeamStockData {
 }
 
 message PlateStockData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   optional double spacing = 10;
   repeated NestedElementDataData element_data = 11;
@@ -100,7 +103,7 @@ message StockData {
 }
 
 message NestingResultData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
   repeated StockData stocks = 10;
   optional double tolerance = 11;

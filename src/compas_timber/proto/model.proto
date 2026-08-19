@@ -4,23 +4,117 @@ package compas_timber.proto;
 
 import "compas_pb/generated/geometry.proto";
 import "compas_pb/generated/message.proto";
+import "compas_timber/proto/common.proto";
 import "compas_timber/proto/elements.proto";
 import "compas_timber/proto/connections.proto";
 
 // TimberModel (compas_timber.model).
 //
 // TimberModel.__data__ is compas_model's Model data (transformation, elements,
-// materials, tree, graph) plus `joints`. `tree` and `graph` are already plain
-// dicts in __data__ (Tree.__data__ / Graph.__data__), so they are carried as
-// AnyData, which round-trips a nested dict losslessly.
+// materials, tree, graph) plus `joints`.
+
+// A compas_model Material. The set of material classes is closed (Material and
+// its three subclasses), so a oneof beats an AnyData with a packed type_url.
+message MaterialData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+message TimberMaterialData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+message ConcreteData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double fck = 10;
+  optional double fck_cube = 11;
+  optional double fcm = 12;
+  optional double fctm = 13;
+  optional double Ecm = 14;
+  optional double density = 15;
+  optional double poisson = 16;
+}
+
+message SteelData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double fy = 10;
+  optional double fu = 11;
+}
+
+// Polymorphic wrapper: any compas_model Material.
+message ModelMaterialData {
+  oneof material {
+    MaterialData base_material = 1;
+    TimberMaterialData timber = 2;
+    ConcreteData concrete = 3;
+    SteelData steel = 4;
+  }
+}
+
+// Model.tree, an ElementTree, flattened.
+//
+// Tree.__data__ is a recursive dict whose every node repeats the keys "name",
+// "attributes", "children" and "element"; carrying that as AnyData costs more
+// in dict keys than in payload. Here the tree is stored as parallel arrays in
+// depth-first order: node i's parent is `parent[i]` (-1 for the root), so the
+// shape is a packed varint array rather than nested messages.
+//
+// Node names are interned as well -- every element node is called
+// "ElementNode", which is 13 bytes each when spelled out per node.
+message ElementTreeData {
+  map<string, compas_pb.data.AnyData> attributes = 1;
+  repeated int32 parent = 2;              // parent index per node, -1 for the root
+  repeated string name_table = 3;         // distinct node names
+  repeated int32 node_name_refs = 4;      // index into name_table, -1 == unnamed
+  repeated GuidRef node_elements = 5;     // per node; the unset arm means "no element"
+  // Sparse per-node attributes: node_attr_indices[k] carries node_attr_values[k].
+  repeated uint32 node_attr_indices = 6;
+  repeated compas_pb.data.DictData node_attr_values = 7;
+}
+
+// Model.graph, an InteractionGraph.
+//
+// compas_pb has a general-purpose GraphData, but it carries node and edge
+// attributes as AnyData -- and in this graph those attributes are almost
+// entirely element and joint guids, which is exactly what the guid table
+// exists to collapse. So the two guid-valued attributes compas_timber puts
+// there ("element" on a node, "joints" on an edge) are lifted out into
+// GuidRef columns and everything else falls through to AnyData unchanged.
+//
+// Node keys are the ints InteractionGraph.add_node() hands out.
+message InteractionGraphData {
+  map<string, compas_pb.data.AnyData> attributes = 1;
+  map<string, compas_pb.data.AnyData> default_node_attributes = 2;
+  map<string, compas_pb.data.AnyData> default_edge_attributes = 3;
+  int32 max_node = 4;
+
+  repeated int32 node_keys = 5;
+  repeated GuidRef node_elements = 6;      // "element" per node; the unset arm means absent
+  // Sparse: node_attr_indices[k] indexes node_keys, node_attr_values[k] holds
+  // that node's remaining attributes.
+  repeated uint32 node_attr_indices = 7;
+  repeated compas_pb.data.DictData node_attr_values = 8;
+
+  repeated int32 edge_u = 9;               // node keys, aligned with edge_v
+  repeated int32 edge_v = 10;
+  repeated GuidRef edge_joints = 11;       // "joints" per edge; the unset arm means absent
+  repeated uint32 edge_attr_indices = 12;
+  repeated compas_pb.data.DictData edge_attr_values = 13;
+}
 
 message TimberModelData {
-  string guid = 1;
+  GuidRef guid = 1;
   optional string name = 2;
+  // Every GuidRef.index in this message and its descendants indexes into this
+  // table. Entries are the 16 raw bytes of the uuid.
+  repeated bytes guid_table = 3;
   optional compas_pb.data.TransformationData transformation = 10;
   repeated ElementData elements = 11;
-  repeated compas_pb.data.AnyData materials = 12;
-  optional compas_pb.data.AnyData tree = 13;
-  optional compas_pb.data.AnyData graph = 14;
+  repeated ModelMaterialData materials = 12;
+  optional ElementTreeData tree = 13;
+  optional InteractionGraphData graph = 14;
   repeated JointData joints = 15;
 }

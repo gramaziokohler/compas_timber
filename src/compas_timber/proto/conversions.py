@@ -13,11 +13,16 @@ a message is enough, as long as ``__data__`` uses the same key.
 than by ``__data__``, so every message reserves fields 1 and 2 for them.
 """
 
+import contextlib as _contextlib
+import threading as _threading
+import uuid as _uuid
+
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas_pb.conversions import frame_from_pb
 from compas_pb.conversions import frame_to_pb
 from compas_pb.conversions import line_from_pb
@@ -28,6 +33,8 @@ from compas_pb.conversions import polyline_from_pb
 from compas_pb.conversions import polyline_to_pb
 from compas_pb.conversions import transformation_from_pb
 from compas_pb.conversions import transformation_to_pb
+from compas_pb.conversions import vector_from_pb
+from compas_pb.conversions import vector_to_pb
 
 # compas_pb's public any_to_pb/any_from_pb only cover Data objects and
 # primitives; these two also handle plain dicts and lists, which several
@@ -39,18 +46,183 @@ from compas_pb.registry import pb_deserializer
 from compas_pb.registry import pb_serializer
 from google.protobuf.descriptor import FieldDescriptor
 
+from compas_timber.proto import common_pb2
+from compas_timber.proto import elements_pb2
+
 # ---------------------------------------------------------------------------
 # geometry converters, keyed by proto message name
 # ---------------------------------------------------------------------------
 
 _GEOMETRY = {
     "compas_pb.data.PointData": (Point, point_to_pb, point_from_pb),
+    "compas_pb.data.VectorData": (Vector, vector_to_pb, vector_from_pb),
     "compas_pb.data.FrameData": (Frame, frame_to_pb, frame_from_pb),
     "compas_pb.data.PolylineData": (Polyline, polyline_to_pb, polyline_from_pb),
     "compas_pb.data.LineData": (Line, line_to_pb, line_from_pb),
     "compas_pb.data.TransformationData": (Transformation, transformation_to_pb, transformation_from_pb),
 }
 _ANY = "compas_pb.data.AnyData"
+_GUID = "compas_timber.proto.GuidRef"
+
+
+# ---------------------------------------------------------------------------
+# guid interning
+# ---------------------------------------------------------------------------
+#
+# A uuid spelled out as text is 38 bytes on the wire and a model repeats each
+# one about three and a half times -- as the object's own guid, then from the
+# interaction graph, the element tree and every joint naming the element. In a
+# 40-beam model that came to 53% of the whole message.
+#
+# So while a TimberModel is being (de)serialized, a table is pushed onto
+# ``_CONTEXT`` and every guid goes in once, referenced by index everywhere else.
+# Outside that scope there is no table, and a GuidRef falls back to carrying the
+# 16 raw bytes so a message serialized on its own still round-trips.
+
+
+class _GuidTable(object):
+    """Interns guid strings for the duration of one model (de)serialization."""
+
+    def __init__(self, entries=None):
+        self._entries = list(entries or [])
+        self._index = {g: i for i, g in enumerate(self._entries)}
+
+    @property
+    def entries(self):
+        return self._entries
+
+    def intern(self, guid):
+        index = self._index.get(guid)
+        if index is None:
+            index = len(self._entries)
+            self._index[guid] = index
+            self._entries.append(guid)
+        return index
+
+    def resolve(self, index):
+        return self._entries[index]
+
+
+_CONTEXT = _threading.local()
+
+
+def _table():
+    return getattr(_CONTEXT, "table", None)
+
+
+@_contextlib.contextmanager
+def _guid_table(entries=None):
+    previous = _table()
+    _CONTEXT.table = _GuidTable(entries)
+    try:
+        yield _CONTEXT.table
+    finally:
+        _CONTEXT.table = previous
+
+
+def _guid_to_pb(guid):
+    """Encode a guid as a GuidRef, interning it when a table is in scope."""
+    guid = str(guid)
+    ref = common_pb2.GuidRef()
+    table = _table()
+    if table is not None:
+        ref.index = table.intern(guid)
+        return ref
+    try:
+        ref.raw = _uuid.UUID(guid).bytes
+    except (ValueError, AttributeError, TypeError):
+        # not a uuid; keep it verbatim rather than lose it
+        ref.text = guid
+    return ref
+
+
+def _guid_from_pb(ref):
+    which = ref.WhichOneof("id")
+    if which is None:
+        return None
+    if which == "index":
+        table = _table()
+        if table is None:
+            raise ValueError("GuidRef references a guid table, but none is in scope")
+        return table.resolve(ref.index)
+    if which == "raw":
+        return str(_uuid.UUID(bytes=ref.raw))
+    return ref.text
+
+
+def _pack_guid_table(table):
+    """The 16 raw bytes of each interned uuid, in index order."""
+    packed = []
+    for guid in table.entries:
+        try:
+            packed.append(_uuid.UUID(guid).bytes)
+        except (ValueError, AttributeError, TypeError):
+            # a non-uuid guid never reaches the table via _guid_to_pb, but keep
+            # the arrays aligned if one ever does
+            packed.append(b"")
+    return packed
+
+
+def _unpack_guid_table(packed):
+    return [str(_uuid.UUID(bytes=raw)) if raw else "" for raw in packed]
+
+
+# ---------------------------------------------------------------------------
+# plain-python structures that get a typed message instead of AnyData
+# ---------------------------------------------------------------------------
+
+
+def _pointlist_to_pb(points):
+    msg = common_pb2.PointList()
+    for point in points:
+        msg.coordinates.extend([point[0], point[1], point[2]])
+    return msg
+
+
+def _pointlist_from_pb(msg):
+    flat = list(msg.coordinates)
+    return [Point(*flat[i : i + 3]) for i in range(0, len(flat), 3)]
+
+
+_HOLE_KEYS = ("point", "diameter", "vector", "through")
+
+
+def _hole_to_pb(hole):
+    msg = elements_pb2.FastenerHoleData()
+    if hole.get("point") is not None:
+        msg.point.CopyFrom(point_to_pb(hole["point"]))
+    if hole.get("diameter") is not None:
+        msg.diameter = hole["diameter"]
+    if hole.get("vector") is not None:
+        msg.vector.CopyFrom(vector_to_pb(hole["vector"]))
+    if hole.get("through") is not None:
+        msg.through = hole["through"]
+    for key, value in hole.items():
+        if key not in _HOLE_KEYS:
+            msg.extra[key].CopyFrom(any_to_pb(value))
+    return msg
+
+
+def _hole_from_pb(msg):
+    hole = {}
+    if msg.HasField("point"):
+        hole["point"] = point_from_pb(msg.point)
+    if msg.HasField("diameter"):
+        hole["diameter"] = msg.diameter
+    if msg.HasField("vector"):
+        hole["vector"] = vector_from_pb(msg.vector)
+    if msg.HasField("through"):
+        hole["through"] = msg.through
+    hole.update({k: any_from_pb(v) for k, v in msg.extra.items()})
+    return hole
+
+
+# message full_name -> (to_pb, from_pb) for values that are plain python rather
+# than compas Data objects, so the generic codec below can handle them too.
+_STRUCTS = {
+    "compas_timber.proto.PointList": (_pointlist_to_pb, _pointlist_from_pb),
+    "compas_timber.proto.FastenerHoleData": (_hole_to_pb, _hole_from_pb),
+}
 
 
 def _nested_to_pb(obj):
@@ -106,16 +278,24 @@ def _field_to_pb(msg, field, value):
     if repeated:
         target = getattr(msg, name)
         for item in value:
-            if tname == _ANY:
+            if tname == _GUID:
+                target.add().CopyFrom(_guid_to_pb(item))
+            elif tname == _ANY:
                 target.add().CopyFrom(any_to_pb(item))
+            elif tname in _STRUCTS:
+                target.add().CopyFrom(_STRUCTS[tname][0](item))
             elif tname in _GEOMETRY:
                 target.add().CopyFrom(_GEOMETRY[tname][1](item))
             else:
                 target.add().CopyFrom(_wrap(field.message_type, item))
         return
 
-    if tname == _ANY:
+    if tname == _GUID:
+        getattr(msg, name).CopyFrom(_guid_to_pb(value))
+    elif tname == _ANY:
         getattr(msg, name).CopyFrom(any_to_pb(value))
+    elif tname in _STRUCTS:
+        getattr(msg, name).CopyFrom(_STRUCTS[tname][0](value))
     elif tname in _GEOMETRY:
         cls, to_pb_fn, _ = _GEOMETRY[tname]
         # a few __data__ implementations store `obj.__data__` rather than obj
@@ -144,8 +324,12 @@ def _field_from_pb(msg, field):
     tname = field.message_type.full_name
     if repeated:
         items = getattr(msg, name)
+        if tname == _GUID:
+            return [_guid_from_pb(i) for i in items]
         if tname == _ANY:
             return [any_from_pb(i) for i in items]
+        if tname in _STRUCTS:
+            return [_STRUCTS[tname][1](i) for i in items]
         if tname in _GEOMETRY:
             return [_GEOMETRY[tname][2](i) for i in items]
         return [_unwrap(i) for i in items]
@@ -153,8 +337,12 @@ def _field_from_pb(msg, field):
     if not msg.HasField(name):
         return None
     sub = getattr(msg, name)
+    if tname == _GUID:
+        return _guid_from_pb(sub)
     if tname == _ANY:
         return any_from_pb(sub)
+    if tname in _STRUCTS:
+        return _STRUCTS[tname][1](sub)
     if tname in _GEOMETRY:
         return _GEOMETRY[tname][2](sub)
     return _unwrap(sub)
@@ -165,11 +353,19 @@ def _field_from_pb(msg, field):
 # ---------------------------------------------------------------------------
 
 _WRAPPERS = {}  # wrapper message full_name -> wrapper message class
+_CLASSES = {}  # concrete message full_name -> the compas class it stands for
 
 
 def _wrap(descriptor, obj):
     """Put ``obj`` into a wrapper message if the target field is a oneof wrapper."""
     wrapper_cls = _WRAPPERS.get(descriptor.full_name)
+    if isinstance(obj, dict):
+        # a few __data__ implementations store `child.__data__` rather than the
+        # child itself (PlateFastener does this with its interfaces)
+        cls = _CLASSES.get(descriptor.full_name)
+        if cls is None:
+            raise TypeError("{} was given a dict but no class is registered for it".format(descriptor.full_name))
+        obj = cls.__from_data__(obj)
     inner = _nested_to_pb(obj)
     if wrapper_cls is None:
         return inner
@@ -228,7 +424,7 @@ def register(cls, msg_cls, aliases=None, from_data=None, catchall="attributes", 
 
     def to_pb(obj, _msg_cls=msg_cls, _fields=fields, _aliases=aliases, _catch=catch, _known=known):
         msg = _msg_cls()
-        msg.guid = str(obj.guid)
+        msg.guid.CopyFrom(_guid_to_pb(obj.guid))
         # `obj.name` falls back to the class name when unset; `_name` is the
         # raw value, so an unnamed object stays unnamed across a round-trip.
         if getattr(obj, "_name", None) is not None:
@@ -260,7 +456,8 @@ def register(cls, msg_cls, aliases=None, from_data=None, catchall="attributes", 
         for f in _fields:
             value = _field_from_pb(msg, f)
             if f.name in _raw_dicts and value is not None:
-                value = value.__data__
+                # __from_data__ expects the child's __data__ dict, not the child
+                value = [v.__data__ for v in value] if isinstance(value, list) else value.__data__
             if f.name in _guid_dicts and value is not None:
                 value = {str(item.guid): item for item in value}
             if f.name == _catch:
@@ -274,13 +471,14 @@ def register(cls, msg_cls, aliases=None, from_data=None, catchall="attributes", 
             data["name"] = msg.name if msg.HasField("name") else None
         builder = _from_data or _cls.__from_data__
         obj = builder(data)
-        obj._guid = msg.guid
+        obj._guid = _guid_from_pb(msg.guid)
         if msg.HasField("name"):
             obj.name = msg.name
         return obj
 
     pb_serializer(cls)(to_pb)
     pb_deserializer(msg_cls)(from_pb)
+    _CLASSES.setdefault(msg_cls.DESCRIPTOR.full_name, cls)
     return to_pb, from_pb
 
 
@@ -290,7 +488,6 @@ def register(cls, msg_cls, aliases=None, from_data=None, catchall="attributes", 
 
 from compas_timber import fabrication as _fab  # noqa: E402
 from compas_timber.proto import connections_pb2  # noqa: E402
-from compas_timber.proto import elements_pb2  # noqa: E402
 from compas_timber.proto import fabrication_pb2  # noqa: E402
 from compas_timber.proto import model_pb2  # noqa: E402
 from compas_timber.proto import panel_features_pb2  # noqa: E402
@@ -302,9 +499,23 @@ register(_fab.DualContour, fabrication_pb2.DualContourData)
 
 # every BTLxProcessing whose fields are plain scalars (plus machining_limits)
 _PROCESSINGS = [
-    "JackRafterCut", "DoubleCut", "Drilling", "Lap", "Mortise", "Tenon", "Pocket", "Slot",
-    "StepJoint", "StepJointNotch", "DovetailTenon", "DovetailMortise", "FrenchRidgeLap",
-    "BirdsMouth", "LongitudinalCut", "SimpleScarf", "Text",
+    "JackRafterCut",
+    "DoubleCut",
+    "Drilling",
+    "Lap",
+    "Mortise",
+    "Tenon",
+    "Pocket",
+    "Slot",
+    "StepJoint",
+    "StepJointNotch",
+    "DovetailTenon",
+    "DovetailMortise",
+    "FrenchRidgeLap",
+    "BirdsMouth",
+    "LongitudinalCut",
+    "SimpleScarf",
+    "Text",
 ]
 for _n in _PROCESSINGS:
     register(getattr(_fab, _n), getattr(fabrication_pb2, _n + "Data"))
@@ -313,7 +524,7 @@ for _n in _PROCESSINGS:
 # FreeContour holds either a Contour or a DualContour under one __data__ key.
 def _freecontour_to_pb(obj):
     msg = fabrication_pb2.FreeContourData()
-    msg.guid = str(obj.guid)
+    msg.guid.CopyFrom(_guid_to_pb(obj.guid))
     if getattr(obj, "_name", None) is not None:
         msg.name = obj._name
     data = obj.__data__
@@ -329,12 +540,11 @@ def _freecontour_to_pb(obj):
 
 
 def _freecontour_from_pb(msg):
-    data = {k: (getattr(msg, k) if msg.HasField(k) else None)
-            for k in ("ref_side_index", "priority", "process_id", "tool_id", "counter_sink", "tool_position", "depth_bounded")}
+    data = {k: (getattr(msg, k) if msg.HasField(k) else None) for k in ("ref_side_index", "priority", "process_id", "tool_id", "counter_sink", "tool_position", "depth_bounded")}
     which = msg.WhichOneof("contour_param_object")
     data["contour_param_object"] = _nested_from_pb(getattr(msg, which)) if which else None
     obj = _fab.FreeContour.__from_data__(data)
-    obj._guid = msg.guid
+    obj._guid = _guid_from_pb(msg.guid)
     if msg.HasField("name"):
         obj.name = msg.name
     return obj
@@ -346,26 +556,22 @@ pb_deserializer(fabrication_pb2.FreeContourData)(_freecontour_from_pb)
 
 def _btlxdef_to_pb(obj):
     msg = fabrication_pb2.BTLxFromGeometryDefinitionData()
-    msg.guid = str(obj.guid)
+    msg.guid.CopyFrom(_guid_to_pb(obj.guid))
     if getattr(obj, "_name", None) is not None:
         msg.name = obj._name
     msg.processing_name = obj.processing.__name__
     for g in obj.geometries:
         msg.geometries.add().CopyFrom(any_to_pb(g))
-    msg.element_guids.extend([str(e.guid) for e in obj.elements])
+    for element in obj.elements:
+        msg.element_guids.add().CopyFrom(_guid_to_pb(element.guid))
     for k, v in (obj.kwargs or {}).items():
         msg.kwargs[k].CopyFrom(any_to_pb(v))
     return msg
 
 
 def _btlxdef_from_pb(msg):
-    obj = _fab.BTLxFromGeometryDefinition(
-        getattr(_fab, msg.processing_name),
-        [any_from_pb(g) for g in msg.geometries],
-        [],
-        **{k: any_from_pb(v) for k, v in msg.kwargs.items()}
-    )
-    obj._guid = msg.guid
+    obj = _fab.BTLxFromGeometryDefinition(getattr(_fab, msg.processing_name), [any_from_pb(g) for g in msg.geometries], [], **{k: any_from_pb(v) for k, v in msg.kwargs.items()})
+    obj._guid = _guid_from_pb(msg.guid)
     if msg.HasField("name"):
         obj.name = msg.name
     return obj
@@ -401,13 +607,14 @@ register(_el.Panel, elements_pb2.PanelData)
 register(_el.FastenerTimberInterface, elements_pb2.FastenerTimberInterfaceData, aliases={"element_guid": "element"})
 register(_el.Fastener, elements_pb2.FastenerData)
 register(_el.BallNodeFastener, elements_pb2.BallNodeFastenerData)
-register(_el.PlateFastener, elements_pb2.PlateFastenerData)
+# PlateFastener.__data__ stores `interface.__data__` rather than the interface.
+register(_el.PlateFastener, elements_pb2.PlateFastenerData, raw_dict_fields=("interfaces",))
 
 
 # Layer.layer_path is a tuple-or-None, wrapped so the two stay distinct.
 def _layer_to_pb(obj):
     msg = elements_pb2.LayerData()
-    msg.guid = str(obj.guid)
+    msg.guid.CopyFrom(_guid_to_pb(obj.guid))
     if getattr(obj, "_name", None) is not None:
         msg.name = obj._name
     data = obj.__data__
@@ -427,7 +634,7 @@ def _layer_from_pb(msg):
         "name": msg.name if msg.HasField("name") else None,
     }
     obj = _el.Layer.__from_data__(data)
-    obj._guid = msg.guid
+    obj._guid = _guid_from_pb(msg.guid)
     return obj
 
 
@@ -457,15 +664,12 @@ register(_cn.JointCandidate, connections_pb2.JointCandidateData, catchall="extra
 from compas_timber.connections.solver import BeamSolverResult as _BeamSolverResult  # noqa: E402
 from compas_timber.connections.solver import PlateSolverResult as _PlateSolverResult  # noqa: E402
 
-register(_BeamSolverResult, connections_pb2.BeamSolverResultData,
-         aliases={"beam_a_guid": "beam_a", "beam_b_guid": "beam_b"})
-register(_PlateSolverResult, connections_pb2.PlateSolverResultData,
-         aliases={"plate_a_guid": "plate_a", "plate_b_guid": "plate_b"})
+register(_BeamSolverResult, connections_pb2.BeamSolverResultData, aliases={"beam_a_guid": "beam_a", "beam_b_guid": "beam_b"})
+register(_PlateSolverResult, connections_pb2.PlateSolverResultData, aliases={"plate_a_guid": "plate_a", "plate_b_guid": "plate_b"})
 
 for _name in dir(_cn):
     _obj = getattr(_cn, _name)
-    if (_inspect.isclass(_obj) and issubclass(_obj, _cn.Joint) and _obj is not _cn.Joint
-            and not getattr(_obj, "__abstractmethods__", frozenset())):
+    if _inspect.isclass(_obj) and issubclass(_obj, _cn.Joint) and _obj is not _cn.Joint and not getattr(_obj, "__abstractmethods__", frozenset()):
         _msg = getattr(connections_pb2, _name + "Data", None)
         if _msg is not None:
             register(_obj, _msg, name_in_data=True)
@@ -481,7 +685,7 @@ from compas_timber.structural import StructuralSegment  # noqa: E402
 
 def _segment_to_pb(obj):
     msg = structural_pb2.StructuralSegmentData()
-    msg.guid = str(obj.guid)
+    msg.guid.CopyFrom(_guid_to_pb(obj.guid))
     if getattr(obj, "_name", None) is not None:
         msg.name = obj._name
     data = obj.__data__
@@ -504,7 +708,7 @@ def _segment_from_pb(msg):
     }
     data.update({k: any_from_pb(v) for k, v in msg.attributes.items()})
     obj = StructuralSegment.__from_data__(data)
-    obj._guid = msg.guid
+    obj._guid = _guid_from_pb(msg.guid)
     if msg.HasField("name"):
         obj.name = msg.name
     return obj
@@ -519,13 +723,16 @@ pb_deserializer(structural_pb2.StructuralSegmentData)(_segment_from_pb)
 
 from compas_timber import planning as _pl  # noqa: E402
 
-# Instruction subclasses store `location.__data__` rather than the Frame itself.
-register(_pl.Model3d, planning_pb2.Model3dData, raw_dict_fields=("location",))
-register(_pl.Text3d, planning_pb2.Text3dData, raw_dict_fields=("location",))
-register(_pl.LinearDimension, planning_pb2.LinearDimensionData, raw_dict_fields=("location",))
+# Instruction subclasses put `location.__data__` in their __data__ rather than
+# the Frame itself, which _field_to_pb already unpacks on the way out. On the
+# way back they are handed the Frame: their constructors store `location` as
+# given, and a dict there would break the next __data__ / transform() call.
+register(_pl.Model3d, planning_pb2.Model3dData)
+register(_pl.Text3d, planning_pb2.Text3dData)
+register(_pl.LinearDimension, planning_pb2.LinearDimensionData)
 register_wrapper(planning_pb2.InstructionData)
 
-register(_pl.Step, planning_pb2.StepData, raw_dict_fields=("location",))
+register(_pl.Step, planning_pb2.StepData)
 register(_pl.BuildingPlan, planning_pb2.BuildingPlanData)
 
 register(_pl.NestedElementData, planning_pb2.NestedElementDataData)
@@ -538,6 +745,256 @@ register(_pl.NestingResult, planning_pb2.NestingResultData)
 # model
 # ---------------------------------------------------------------------------
 
+from compas_model.materials import Concrete as _Concrete  # noqa: E402
+from compas_model.materials import Material as _Material  # noqa: E402
+from compas_model.materials import Steel as _Steel  # noqa: E402
+from compas_model.materials import Timber as _Timber  # noqa: E402
+
 from compas_timber.model import TimberModel  # noqa: E402
 
-register(TimberModel, model_pb2.TimberModelData, guid_dict_fields=("elements", "materials", "joints"))
+# Subclasses first: SerializerRegistry resolves along the MRO, so a bare
+# Material must be registered last to keep it from shadowing its subclasses.
+register(_Timber, model_pb2.TimberMaterialData, catchall=None, name_in_data=True)
+register(_Concrete, model_pb2.ConcreteData, catchall=None, name_in_data=True)
+register(_Steel, model_pb2.SteelData, catchall=None, name_in_data=True)
+register(_Material, model_pb2.MaterialData, catchall=None, name_in_data=True)
+register_wrapper(model_pb2.ModelMaterialData)
+
+# compas_model Feature and its three marker subclasses, likewise subclass-first.
+from compas_model.elements import Feature as _Feature  # noqa: E402
+from compas_model.elements.beam import BeamFeature as _BeamFeature  # noqa: E402
+from compas_model.elements.column import ColumnFeature as _ColumnFeature  # noqa: E402
+from compas_model.elements.plate import PlateFeature as _PlateFeature  # noqa: E402
+
+register(_BeamFeature, common_pb2.BeamFeatureData, catchall=None)
+register(_PlateFeature, common_pb2.PlateFeatureData, catchall=None)
+register(_ColumnFeature, common_pb2.ColumnFeatureData, catchall=None)
+register(_Feature, common_pb2.ModelFeatureBaseData, catchall=None)
+register_wrapper(common_pb2.ModelFeatureData)
+
+
+# ---------------------------------------------------------------------------
+# element tree
+# ---------------------------------------------------------------------------
+#
+# Tree.__data__ nests a dict per node, each repeating the keys "name",
+# "attributes", "children" and "element". Flattened into parallel arrays in
+# depth-first order it costs a varint parent index per node instead, and the
+# node names -- almost all of them the literal "ElementNode" -- are interned.
+
+
+def _tree_to_pb(data):
+    """Flatten an ElementTree's ``__data__`` dict into an ElementTreeData."""
+    msg = model_pb2.ElementTreeData()
+    for key, value in (data.get("attributes") or {}).items():
+        msg.attributes[key].CopyFrom(any_to_pb(value))
+
+    names = {}
+
+    def walk(nodedata, parent):
+        index = len(msg.parent)
+        msg.parent.append(parent)
+
+        name = nodedata.get("name")
+        if name is None:
+            msg.node_name_refs.append(-1)
+        else:
+            if name not in names:
+                names[name] = len(msg.name_table)
+                msg.name_table.append(name)
+            msg.node_name_refs.append(names[name])
+
+        # an empty GuidRef means the node carries no element
+        element = nodedata.get("element")
+        ref = msg.node_elements.add()
+        if element is not None:
+            ref.CopyFrom(_guid_to_pb(element))
+
+        attributes = nodedata.get("attributes")
+        if attributes:
+            msg.node_attr_indices.append(index)
+            values = msg.node_attr_values.add()
+            for key, value in attributes.items():
+                values.items[key].CopyFrom(any_to_pb(value))
+
+        for child in nodedata.get("children") or []:
+            walk(child, index)
+
+    walk(data["root"], -1)
+    return msg
+
+
+def _tree_from_pb(msg):
+    """Rebuild the nested ``__data__`` dict of an ElementTree."""
+    extras = {index: values for index, values in zip(msg.node_attr_indices, msg.node_attr_values)}
+
+    nodes = []
+    for i, parent in enumerate(msg.parent):
+        node = {}
+        ref = msg.node_name_refs[i]
+        if ref >= 0:
+            node["name"] = msg.name_table[ref]
+        element = _guid_from_pb(msg.node_elements[i])
+        if element is not None:
+            node["element"] = element
+        values = extras.get(i)
+        if values is not None:
+            node["attributes"] = {k: any_from_pb(v) for k, v in values.items.items()}
+        nodes.append(node)
+        if parent >= 0:
+            nodes[parent].setdefault("children", []).append(node)
+
+    data = {"root": nodes[0] if nodes else {}}
+    if msg.attributes:
+        data["attributes"] = {k: any_from_pb(v) for k, v in msg.attributes.items()}
+    else:
+        data["attributes"] = {}
+    return data
+
+
+# ---------------------------------------------------------------------------
+# interaction graph
+# ---------------------------------------------------------------------------
+#
+# Graph.__data__ keeps its node and edge attributes as dicts of AnyData, and in
+# this graph those are almost all element and joint guids. Lifting the two
+# guid-valued attributes into GuidRef columns puts them in the model's guid
+# table with everything else; anything unexpected falls through to AnyData, so
+# an attribute this codec has never seen still round-trips.
+
+_NODE_GUID_ATTR = "element"
+_EDGE_GUID_ATTR = "joints"
+
+
+def _graph_attrs_to_pb(attributes, guid_attr, ref, indices, values, index):
+    """Split one node's / edge's attributes into the guid column and the rest."""
+    rest = dict(attributes or {})
+    guid = rest.pop(guid_attr, None)
+    if isinstance(guid, str):
+        ref.CopyFrom(_guid_to_pb(guid))
+    elif guid is not None:
+        # not a guid after all -- keep it verbatim rather than mangle it
+        rest[guid_attr] = guid
+    if rest:
+        indices.append(index)
+        holder = values.add()
+        for key, value in rest.items():
+            holder.items[key].CopyFrom(any_to_pb(value))
+
+
+def _graph_attrs_from_pb(guid_ref, holder, guid_attr):
+    attributes = {}
+    if holder is not None:
+        attributes.update({k: any_from_pb(v) for k, v in holder.items.items()})
+    guid = _guid_from_pb(guid_ref)
+    if guid is not None:
+        attributes[guid_attr] = guid
+    return attributes
+
+
+def _graph_to_pb(data):
+    """Flatten an InteractionGraph's ``__data__`` dict into an InteractionGraphData."""
+    msg = model_pb2.InteractionGraphData()
+    for name in ("attributes", "default_node_attributes", "default_edge_attributes"):
+        for key, value in (data.get(name) or {}).items():
+            getattr(msg, name)[key].CopyFrom(any_to_pb(value))
+    msg.max_node = data.get("max_node", -1)
+
+    nodes = data.get("node") or {}
+    for i, (key, attributes) in enumerate(nodes.items()):
+        msg.node_keys.append(int(key))
+        _graph_attrs_to_pb(
+            attributes,
+            _NODE_GUID_ATTR,
+            msg.node_elements.add(),
+            msg.node_attr_indices,
+            msg.node_attr_values,
+            i,
+        )
+
+    i = 0
+    for u, neighbours in (data.get("edge") or {}).items():
+        for v, attributes in (neighbours or {}).items():
+            msg.edge_u.append(int(u))
+            msg.edge_v.append(int(v))
+            _graph_attrs_to_pb(
+                attributes,
+                _EDGE_GUID_ATTR,
+                msg.edge_joints.add(),
+                msg.edge_attr_indices,
+                msg.edge_attr_values,
+                i,
+            )
+            i += 1
+    return msg
+
+
+def _graph_from_pb(msg):
+    """Rebuild the ``__data__`` dict of an InteractionGraph."""
+    data = {name: {k: any_from_pb(v) for k, v in getattr(msg, name).items()} for name in ("attributes", "default_node_attributes", "default_edge_attributes")}
+    data["max_node"] = msg.max_node
+
+    extras = dict(zip(msg.node_attr_indices, msg.node_attr_values))
+    node = {}
+    for i, key in enumerate(msg.node_keys):
+        node[str(key)] = _graph_attrs_from_pb(msg.node_elements[i], extras.get(i), _NODE_GUID_ATTR)
+    data["node"] = node
+
+    extras = dict(zip(msg.edge_attr_indices, msg.edge_attr_values))
+    # every node gets an entry, so a node with no outgoing edges stays present
+    edge = {str(key): {} for key in msg.node_keys}
+    for i, (u, v) in enumerate(zip(msg.edge_u, msg.edge_v)):
+        edge.setdefault(str(u), {})[str(v)] = _graph_attrs_from_pb(msg.edge_joints[i], extras.get(i), _EDGE_GUID_ATTR)
+    data["edge"] = edge
+    return data
+
+
+# ---------------------------------------------------------------------------
+# TimberModel
+# ---------------------------------------------------------------------------
+#
+# The model is the scope of the guid table, so it gets a hand-written pair
+# rather than going through `register`: the table has to be open before any
+# nested element, joint or tree node is touched, and written out once they all
+# have been.
+
+_MODEL_FIELDS = ("transformation", "elements", "materials", "joints")
+
+
+def _model_to_pb(obj):
+    msg = model_pb2.TimberModelData()
+    with _guid_table() as table:
+        msg.guid.CopyFrom(_guid_to_pb(obj.guid))
+        if getattr(obj, "_name", None) is not None:
+            msg.name = obj._name
+        data = obj.__data__
+        for name in _MODEL_FIELDS:
+            field = model_pb2.TimberModelData.DESCRIPTOR.fields_by_name[name]
+            _field_to_pb(msg, field, data.get(name))
+        msg.tree.CopyFrom(_tree_to_pb(data["tree"]))
+        msg.graph.CopyFrom(_graph_to_pb(data["graph"]))
+        # last: the table is only complete once everything above has interned
+        msg.guid_table.extend(_pack_guid_table(table))
+    return msg
+
+
+def _model_from_pb(msg):
+    with _guid_table(_unpack_guid_table(msg.guid_table)):
+        data = {}
+        for name in _MODEL_FIELDS:
+            field = model_pb2.TimberModelData.DESCRIPTOR.fields_by_name[name]
+            value = _field_from_pb(msg, field)
+            if name in ("elements", "materials", "joints") and value is not None:
+                value = {str(item.guid): item for item in value}
+            data[name] = value
+        data["tree"] = _tree_from_pb(msg.tree)
+        data["graph"] = _graph_from_pb(msg.graph)
+        obj = TimberModel.__from_data__(data)
+        obj._guid = _guid_from_pb(msg.guid)
+    if msg.HasField("name"):
+        obj.name = msg.name
+    return obj
+
+
+pb_serializer(TimberModel)(_model_to_pb)
+pb_deserializer(model_pb2.TimberModelData)(_model_from_pb)
