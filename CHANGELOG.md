@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
 * Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
@@ -36,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 
 ### Changed
+* Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.
+* The generated bindings reference `compas_pb`'s own bindings rather than embedding them, so a consumer needs both bundles unpacked into the same tree, at matching versions.
 * Guids are no longer written as 36-character text everywhere they appear. `TimberModelData` now carries a `guid_table` of 16-byte uuids and every guid in the message -- the object's own, the interaction graph's element and joint references, the element tree's, and each joint's `element_guids` -- is a `GuidRef` index into it. A message serialized on its own has no table and falls back to carrying the raw uuid, so it stays decodable in isolation. A 200-beam model went from 92,392 to 32,660 bytes (65% smaller).
 * `TimberModelData.tree` is no longer `AnyData`. It is now `ElementTreeData`, which flattens the tree into parallel arrays in depth-first order (a varint parent index per node) and interns the node names, instead of a recursive dict repeating `name` / `attributes` / `children` / `element` per node.
 * `TimberModelData.graph` is no longer `AnyData`. It is now `InteractionGraphData`, which lifts the two guid-valued attributes (`element` on a node, `joints` on an edge) into `GuidRef` columns so they join the guid table; any other node or edge attribute still falls through to `AnyData` and round-trips unchanged. `compas_pb.data.GraphData` was tried first but keeps its attributes as `AnyData`, which is where nearly all of this graph's payload lives.
@@ -48,6 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `StepData.geometry` is now a `string`, not `AnyData`. `Step.geometry` is the name of a geometry type used for visualization (`"obj"`, `"cylinder"`, `"box"`), not a geometry object.
 * Fixed `PlateFastener` failing to serialize at all. Its `__data__` stores `interface.__data__` rather than the interfaces themselves, and the codec had no path for a dict where a nested message was expected.
 * Fixed `Step`, `Model3d`, `Text3d` and `LinearDimension` coming back with `location` as a plain dict, which broke the restored object's next `__data__` or `transform()` call.
+* Migrated CI to the new-generation `compas-dev/compas-actions` monorepo: `build`, `coverage`, `docs` and `pr-checks` now use `ci`/`setup-python`/`docs`/`pr-checks`/`release-check` instead of `compas-actions.build`, `compas-actions.docs` and `Zomzog/changelog-checker`.
+* Python 3.9 (the version Rhino 8 ships) stays in the build matrix, except on `macos-latest`: the `ci` action installs interpreters with `actions/setup-python`, which has no darwin-arm64 build for 3.9. macOS is covered on 3.12/3.14 and 3.9 is covered on the other runners.
+* The `publish_yak` workflow is now a stub on `main`: the components and the `yakerize`/`publish-yak` tasks it drove moved to `timber_design`, but the file has to stay on the default branch for `LTS-1.x.x` to remain dispatchable. Running it against any branch other than `LTS-1.x.x` now fails with an explanation.
+* Releases are now prepared by the `prepare release` workflow (manual dispatch), which opens a `release/vX.Y.Z` pull request; merging it to `main` runs the release. Pushing a `v*` tag no longer publishes.
+* PyPI uploads now use OIDC Trusted Publishing via `pypa/gh-action-pypi-publish` instead of the `PYPI` API token secret.
+* `[tool.bumpversion]` no longer commits or tags, and no longer parses pre-release versions; the release actions support stable semantic versions only.
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
 * `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
 * Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
@@ -82,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
 
 ### Removed
+* Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
 
