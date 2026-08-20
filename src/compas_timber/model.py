@@ -14,7 +14,7 @@ from compas_model.models import Model
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
-from compas_timber.connections import find_connection_handler
+from compas_timber.connections import get_connection_candidate
 from compas_timber.elements import Beam
 from compas_timber.elements import Layer
 from compas_timber.elements import Panel
@@ -33,18 +33,22 @@ class TimberModel(Model):
 
     Attributes
     ----------
-    beams : Generator[:class:`~compas_timber.elements.Beam`]
-        A Generator object of all beams assigned to this model.
-    plates : Generator[:class:`~compas_timber.elements.Plate`]
-        A Generator object of all plates assigned to this model.
-    joints : set[:class:`~compas_timber.connections.Joint`]
-        A set of all actual joints assigned to this model.
+    beams : list[:class:`~compas_timber.elements.Beam`]
+        A list of all beams assigned to this model.
+    plates : list[:class:`~compas_timber.elements.Plate`]
+        A list of all plates assigned to this model.
+    joints : Iterable[:class:`~compas_timber.connections.Joint`]
+        A view of all actual joints assigned to this model.
     joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model.
-    panels : Generator[:class:`~compas_timber.elements.Panel`]
-        A Generator object of all panels assigned to this model.
+    unpromoted_joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
+        A set of all joint candidates in the model which have not been promoted to joints.
+    panels : list[:class:`~compas_timber.elements.Panel`]
+        A list of all panels assigned to this model.
     layers : list[:class:`~compas_timber.elements.Layer`]
-        A Generator object of all layers assigned to this model.
+        A list of all layers assigned to this model.
+    fasteners : list[:class:`~compas_timber.elements.Fastener`]
+        A list of all fasteners assigned to this model.
 
     center_of_mass : :class:`~compas.geometry.Point`
         The calculated center of mass of the model.
@@ -81,6 +85,8 @@ class TimberModel(Model):
         for fastener in model.fasteners:
             for part in fastener.all_parts:
                 part.restore_elements_from_keys(model)
+        for candidate in model.joint_candidates:
+            candidate.restore_elements_from_keys(model)
 
         return model
 
@@ -135,8 +141,7 @@ class TimberModel(Model):
         return self._joints.values()
 
     @property
-    def joint_candidates(self):
-        # type: () -> set[JointCandidate]
+    def joint_candidates(self) -> Iterable[JointCandidate]:
         candidates = set()
         for edge in self._graph.edges():
             edge_candidate = self._graph.edge_attribute(edge, "candidates")
@@ -408,12 +413,33 @@ class TimberModel(Model):
             edge = self.add_interaction(element_a, element_b)
             self._graph.edge_attribute(edge, "joints", value=joint_guid)
 
+    def get_candidate(self, element_a, element_b):
+        # type: (Element, Element) -> JointCandidate | None
+        """Get the joint candidate that joins two given elements, if any.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_model.elements.Element`
+            The first element.
+        element_b : :class:`~compas_model.elements.Element`
+            The second element.
+
+        Returns
+        -------
+        :class:`~compas_timber.connections.JointCandidate` or None
+            The joint candidate connecting the two elements, or None if they are not connected by one.
+        """
+        candidates = self._safely_get_edge_attribute((element_a.graphnode, element_b.graphnode), "candidates")
+        return candidates[0] if candidates else None
+
     def add_joint_candidate(self, candidate):
         # type: (JointCandidate) -> None
         """Add a joint candidate to the model.
 
-        Joint candidates are stored on the graph edges under the "candidate" attribute,
-        separate from actual joints which are stored under the "interaction" attribute.
+        Unlike actual joints (tracked in `self._joints`), candidates are stored only on the graph edge, under
+        the "candidates" attribute, separate from actual joints which are stored under the "joints" attribute.
+        Since a candidate always connects exactly two elements, this is enough to look it up again without a
+        separate registry.
 
         Parameters
         ----------
@@ -667,6 +693,7 @@ class TimberModel(Model):
     def remove_element(self, element):
         # compas_model.Model removes the interactions and edges connected to the element,
         # but joints are stored in a separate dict, so we remove those explicitly first.
+        # JointCandidates are stored directly on edges, removing them handled by compas_model.model.remove_element()
         for joint in self.get_joints_for_element(element):
             self.remove_joint(joint)
         return super().remove_element(element)
@@ -829,19 +856,23 @@ class TimberModel(Model):
             The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
 
         """
-        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
-        for candidate in list(self.joint_candidates):
+        if elements is None:
+            to_remove = list(self.joint_candidates)
+        else:
+            # use `all` here so that e.g. a beam-plate candidate is not removed when only beams are passed in.
+            to_remove = [candidate for candidate in self.joint_candidates if all(e in elements for e in candidate.elements)]
+
+        for candidate in to_remove:
             self.remove_joint_candidate(candidate)
+
+        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
 
         max_distance = max_distance or TOL.absolute
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
         for pair in pairs:
             element_a, element_b = tuple(pair)
-            handler = find_connection_handler(element_a, element_b)
-            if handler is None:
-                continue
-            candidate = handler(element_a, element_b, max_distance)
+            candidate = get_connection_candidate(element_a, element_b, max_distance)
             if candidate is not None:
                 self.add_joint_candidate(candidate)
 
