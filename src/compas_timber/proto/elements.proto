@@ -84,61 +84,116 @@ message PanelData {
   map<string, compas_pb.data.AnyData> attributes = 14;
 }
 
-// One entry of FastenerTimberInterface.holes. The dict schema is documented and
-// closed -- point, diameter and the optional vector / through -- so it is typed
-// out here; `extra` keeps an unexpected key from being dropped.
-message FastenerHoleData {
-  optional compas_pb.data.PointData point = 1;
-  optional double diameter = 2;
-  optional compas_pb.data.VectorData vector = 3;
-  optional bool through = 4;
-  map<string, compas_pb.data.AnyData> extra = 5;
-}
-
-message FastenerTimberInterfaceData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional PointList outline_points = 10;
-  optional double thickness = 11;
-  repeated FastenerHoleData holes = 12;
-  optional compas_pb.data.FrameData frame = 13;
-  optional GuidRef element_guid = 14;          // `element` stored by reference
-  // `shapes` stays AnyData: it takes any compas solid, Brep included, and Brep
-  // has no proto message to point a oneof at.
-  repeated compas_pb.data.AnyData shapes = 15;
-  repeated BTLxFromGeometryDefinitionData features = 16;
-}
+// Fasteners (compas_timber.fasteners): the anchor-based fastener system.
+//
+// `Fastener` is a resolved, model-ready container element with no geometry of
+// its own -- its parts (below) carry the geometry and are its children in the
+// model tree. `FastenerSystem` and its subclasses are the design-time recipes
+// that build a `Fastener`; they are plain `Data`, never part of a model, and
+// have no proto message of their own.
+//
+// `frame`/`placement_frame` below mirror each class' `placement_frame`
+// property, which is never `None` (it defaults to the world XY frame), so
+// unlike most message fields these are not `optional`.
 
 message FastenerData {
   GuidRef guid = 1;
   optional string name = 2;
-  optional compas_pb.data.AnyData shape = 10;
-  optional compas_pb.data.TransformationData transformation = 11;
-  repeated FastenerTimberInterfaceData interfaces = 12;
+  compas_pb.data.FrameData frame = 10;
 }
 
-message BallNodeFastenerData {
+// One entry of RectangularPlate.holes.
+message PlateHoleData {
   GuidRef guid = 1;
   optional string name = 2;
-  optional compas_pb.data.AnyData shape = 10;
-  optional compas_pb.data.TransformationData transformation = 11;
-  repeated FastenerTimberInterfaceData interfaces = 12;
+  compas_pb.data.FrameData frame = 10;
+  optional double diameter = 11;
+  optional double height = 12;
+  optional bool apply_drilling = 13;
+  optional double drilling_depth = 14;
+  optional double drilling_diameter = 15;
 }
 
-message PlateFastenerData {
+message ScrewData {
   GuidRef guid = 1;
   optional string name = 2;
-  // inherited from Fastener
-  optional compas_pb.data.AnyData shape = 10;
-  optional compas_pb.data.TransformationData transformation = 11;
-  // PlateFastener
-  optional compas_pb.data.PolylineData outline = 12;
-  optional double thickness = 13;
-  repeated FastenerTimberInterfaceData interfaces = 14;
-  optional compas_pb.data.FrameData frame = 15;
-  optional double angle = 16;
-  optional string topology = 17;
-  repeated compas_pb.data.PolylineData cutouts = 18;
+  optional double diameter = 10;
+  optional double length = 11;
+  optional bool precise = 12;
+  optional double head_diameter = 13;
+  optional double head_length = 14;
+  compas_pb.data.FrameData placement_frame = 15;
+  repeated GuidRef element_guids = 16;
+}
+
+message DowelData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double diameter = 10;
+  optional double length = 11;
+  compas_pb.data.FrameData placement_frame = 12;
+  repeated GuidRef element_guids = 13;
+}
+
+message RectangularPlateData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double width = 10;
+  optional double height = 11;
+  optional double thickness = 12;
+  compas_pb.data.FrameData frame = 13;
+  optional double recess = 14;
+  optional double recess_offset = 15;
+  repeated PlateHoleData holes = 16;
+  repeated GuidRef element_guids = 17;
+}
+
+// A fastener part with explicit, arbitrary geometry (a custom fastener, or one
+// pulled from a library). `geometry` stays AnyData: it takes any compas solid,
+// Brep included, and Brep has no proto message to point a oneof at.
+message GeometryPartData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional compas_pb.data.AnyData geometry = 10;
+  compas_pb.data.FrameData frame = 11;
+}
+
+message BallNodeCoreData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double diameter = 10;
+  compas_pb.data.FrameData frame = 11;
+}
+
+message BallNodeRodData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double length = 10;
+  optional double diameter = 11;
+  compas_pb.data.FrameData frame = 12;
+}
+
+message BallNodePlateData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double x_size = 10;
+  optional double y_size = 11;
+  optional double thickness = 12;
+  compas_pb.data.FrameData frame = 13;
+  optional double plate_depth = 14;
+  repeated GuidRef element_guids = 15;
+}
+
+// The design-time parameters shaping a BallNodeFastenerSystem. Not an
+// Element -- referenced from BallNodeJointData.parameters, never a model tree
+// node in its own right.
+message BallNodeFastenerParametersData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double ball_diameter = 10;
+  optional double rods_length = 11;
+  optional double plate_thickness = 12;
+  optional double plate_depth = 13;
 }
 
 // A plain compas_model Element, for models that hold elements which are not
@@ -162,9 +217,14 @@ message ElementData {
     PanelData panel = 3;
     LayerData layer = 4;
     FastenerData fastener = 5;
-    BallNodeFastenerData ball_node_fastener = 6;
-    PlateFastenerData plate_fastener = 7;
+    ScrewData screw = 6;
+    DowelData dowel = 7;
     PanelFeatureData panel_feature = 8;
     GenericElementData generic_element = 9;
+    RectangularPlateData rectangular_plate = 10;
+    GeometryPartData geometry_part = 11;
+    BallNodeCoreData ball_node_core = 12;
+    BallNodeRodData ball_node_rod = 13;
+    BallNodePlateData ball_node_plate = 14;
   }
 }
