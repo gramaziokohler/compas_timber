@@ -9,7 +9,8 @@ from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import Dowel
-from compas_timber.fasteners import DowelFastener
+from compas_timber.fasteners import DowelFastenerSystem
+from compas_timber.fasteners import Fastener
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.model import TimberModel
 
@@ -42,19 +43,19 @@ def test_dowel_deserialization():
     assert rec_dowel.length == dowel.length
 
 
-def test_dowel_fastener_accepts_axis_only():
-    assert DowelFastener.ACCEPTS is AnchorKind.AXIS
+def test_dowel_fastener_system_accepts_axis_only():
+    assert DowelFastenerSystem.ACCEPTS == [AnchorKind.AXIS]
 
 
-def test_dowel_fastener_rejects_wrong_anchor_kind():
-    fastener = DowelFastener(diameter=8, length=50)
+def test_dowel_fastener_system_rejects_wrong_anchor_kind():
+    system = DowelFastenerSystem(diameter=8, length=50)
     anchor = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.FACE, elements=[])
 
     with pytest.raises(ValueError):
-        fastener.bind([anchor])
+        system.bind([anchor])
 
 
-def test_dowel_fastener_bind_places_one_dowel_per_anchor():
+def test_dowel_fastener_system_bind_places_one_dowel_per_anchor():
     model = TimberModel()
     cross_beam = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
     main_beam = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
@@ -62,13 +63,40 @@ def test_dowel_fastener_bind_places_one_dowel_per_anchor():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
-    fastener = DowelFastener(diameter=8, length=50)
+    system = DowelFastenerSystem(diameter=8, length=50)
     anchors = joint.fastener_anchors.of_kind(AnchorKind.AXIS)
-    fastener.bind(anchors)
+    fastener = system.bind(anchors)
 
     assert len(fastener.parts) == len(anchors)
     assert all(isinstance(part, Dowel) for part in fastener.parts)
     assert all(part.diameter == 8 and part.length == 50 for part in fastener.parts)
+
+
+def test_dowel_fastener_system_bind_is_reusable_across_multiple_binds():
+    """The same system can be bound to different joints independently, each producing its own fastener."""
+    model = TimberModel()
+    cross_beam_1 = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
+    main_beam_1 = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
+    cross_beam_2 = Beam.from_centerline(Line(Point(-100, 500, 20), Point(100, 500, 20)), width=10, height=20)
+    main_beam_2 = Beam.from_centerline(Line(Point(0, 500, 20), Point(0, 500, 200)), width=10, height=20)
+    model.add_elements([cross_beam_1, main_beam_1, cross_beam_2, main_beam_2])
+
+    joint_1 = TButtJoint.create(model, main_beam_1, cross_beam_1, mill_depth=3)
+    joint_2 = TButtJoint.create(model, main_beam_2, cross_beam_2, mill_depth=3)
+
+    system = DowelFastenerSystem(diameter=8, length=50)
+    fastener_1 = system.bind(joint_1.fastener_anchors.of_kind(AnchorKind.AXIS))
+    fastener_2 = system.bind(joint_2.fastener_anchors.of_kind(AnchorKind.AXIS))
+
+    assert fastener_1 is not fastener_2
+    model.add_fastener(fastener_1, joint_1.beams)
+    model.add_fastener(fastener_2, joint_2.beams)
+
+    model.process_fasteners()
+
+    for beam in (cross_beam_1, main_beam_1, cross_beam_2, main_beam_2):
+        drillings = [f for f in beam.features if type(f).__name__ == "Drilling"]
+        assert len(drillings) == 1
 
 
 def test_dowel_fastener_applies_drilling_features():
@@ -79,8 +107,8 @@ def test_dowel_fastener_applies_drilling_features():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
-    fastener = DowelFastener(diameter=8, length=50)
-    fastener.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
+    system = DowelFastenerSystem(diameter=8, length=50)
+    fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
     model.add_fastener(fastener, joint.beams)
 
     model.process_fasteners()
@@ -108,9 +136,10 @@ def test_dowel_fastener_scopes_features_to_each_anchors_elements():
 
     anchors = joint_1.fastener_anchors.of_kind(AnchorKind.AXIS) + joint_2.fastener_anchors.of_kind(AnchorKind.AXIS)
 
-    # one fastener, bound across anchors from two unrelated joints (a batch/pattern use case `bind()` supports)
-    fastener = DowelFastener(diameter=8, length=50)
-    fastener.bind(anchors)
+    # one fastener, bound across anchors from two unrelated joints in a single bind() call (a batch/pattern use
+    # case, distinct from reusing the *system* across separate binds - see the "is_reusable" test above)
+    system = DowelFastenerSystem(diameter=8, length=50)
+    fastener = system.bind(anchors)
     model.add_fastener(fastener, [cross_beam_1, main_beam_1, cross_beam_2, main_beam_2])
 
     model.process_fasteners()
@@ -128,15 +157,15 @@ def test_dowel_fastener_model_deserialization():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=10)
 
-    fastener = DowelFastener(diameter=8, length=100)
-    fastener.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
+    system = DowelFastenerSystem(diameter=8, length=100)
+    fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
     model.add_fastener(fastener, joint.beams)
 
     reconstructed_model = json_loads(json_dumps(model))
 
     rec_fasteners = list(reconstructed_model.fasteners)
     assert len(rec_fasteners) == 1
-    assert isinstance(rec_fasteners[0], DowelFastener)
+    assert isinstance(rec_fasteners[0], Fastener)
     assert len(rec_fasteners[0].parts) == len(fastener.parts)
     assert all(isinstance(part, Dowel) for part in rec_fasteners[0].parts)
 

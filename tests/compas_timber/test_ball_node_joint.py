@@ -6,7 +6,7 @@ from compas_timber.model import TimberModel
 from compas_timber.elements import Beam
 from compas_timber.connections import BallNodeJoint
 from compas_timber.fasteners import Fastener
-from compas_timber.fasteners import BallNodeCore, BallNodeFastener, BallNodeFastenerParameters, BallNodePlate, BallNodeRod
+from compas_timber.fasteners import BallNodeCore, BallNodeFastenerParameters, BallNodePlate, BallNodeRod
 
 
 def test_ball_node_joint():
@@ -76,12 +76,12 @@ def test_ball_node_model_serialization():
     assert isinstance(rec_joints[0].parameters, BallNodeFastenerParameters)
     assert rec_joints[0].parameters.__data__ == parameters.__data__
 
-    # the fastener survives, carrying its parameters and its nested part hierarchy (fastener -> core -> rod -> plate)
+    # the fastener survives, carrying its nested part hierarchy (fastener -> core -> rod -> plate); the parameters
+    # that shaped it live on the joint (checked above), not on the resolved fastener itself
     rec_fasteners = list(reconstructed_model.fasteners)
     assert len(rec_fasteners) == 1
     fastener = rec_fasteners[0]
-    assert isinstance(fastener, BallNodeFastener)
-    assert fastener.parameters.__data__ == parameters.__data__
+    assert isinstance(fastener, Fastener)
     assert len(fastener.parts) == 1
     core = fastener.parts[0]
     assert isinstance(core, BallNodeCore)

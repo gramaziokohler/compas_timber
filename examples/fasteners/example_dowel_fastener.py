@@ -5,7 +5,7 @@ from compas_threejs.viewer import Viewer
 
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.fasteners import DowelFastener
+from compas_timber.fasteners import DowelFastenerSystem
 from compas_timber.fasteners.anchor import AnchorKind
 from compas_timber.model import TimberModel
 
@@ -20,10 +20,10 @@ model.add_elements([cross_beam, main_beam])
 joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=0.01, force_pocket=True)
 
 
-fastener = DowelFastener(diameter=0.02, length=0.1, angle_x=None, angle_y=None)
+system = DowelFastenerSystem(diameter=0.02, length=0.1)
 
 anchors = joint.fastener_anchors.of_kind(AnchorKind.AXIS)
-fastener.bind(anchors)
+fastener = system.bind(anchors)
 
 model.add_fastener(fastener, joint.beams)
 model.process_joinery()
