@@ -399,7 +399,9 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                return i, j, dist, seg_a_midpt
+                                overlap_dots = get_segment_overlap(seg_a,seg_b)
+                                location = seg_a.point_at(sum(overlap_dots)/2)
+                                return i, j, dist, location
         return None, None, None, None
 
     @staticmethod
