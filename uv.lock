@@ -488,7 +488,7 @@ wheels = [
 
 [[package]]
 name = "compas-brep"
-version = "0.1.1"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "compas" },
@@ -499,9 +499,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/f1/864ce6a2ed61f3274636019d07e9e32585495d9e27114fde24a363d1c2f9/compas_brep-0.1.1.tar.gz", hash = "sha256:62c7bd8063ff68a2a2d6160529ec4a803455e83191eabe0a8cf76dfaf6cd7ca5", size = 73032, upload-time = "2026-06-25T14:37:23.529Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/f3/b58f0c9d44aba8ad1f240a01a6cd1f73ea36a0697787c785de96e15708d8/compas_brep-0.1.2.tar.gz", hash = "sha256:11bab9e5cac1a265dbaf830c0a9d8336cde51d05f70cc9b78c3b2a4eba7a6559", size = 73429, upload-time = "2026-07-07T15:38:24.552Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/1f/45a8628a183fd492e600fdb5f09fd231e96dc2e15608a4897c5b153ca7b5/compas_brep-0.1.1-py3-none-any.whl", hash = "sha256:6d987d1d2604109a1dda109c9893910cdf9efa7b85c5e51fdf9af3463f2d32fa", size = 89091, upload-time = "2026-06-25T14:37:22.299Z" },
+    { url = "https://files.pythonhosted.org/packages/41/81/a345b08cee4ada7ae95cd362bb98b4ea6a937b1a4345169d350d29beeb47/compas_brep-0.1.2-py3-none-any.whl", hash = "sha256:2b2bcf89df702aed447561e8dbdae213a4dd134f7759f0f3daebd54908cc4a0e", size = 89452, upload-time = "2026-07-07T15:38:23.581Z" },
 ]
 
 [package.optional-dependencies]

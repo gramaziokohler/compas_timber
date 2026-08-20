@@ -360,7 +360,7 @@ classDiagram
          +beams : list[Beam]
          +_beam_guids : list[str]
          +ball_diameter : float
-         +fastener : BallNodeFastener
+         +fastener : Fastener
          +SUPPORTED_TOPOLOGY = TOPO_Y
          +MAX_ELEMENT_COUNT = None
          +fastener_guid : str
@@ -888,4 +888,83 @@ classDiagram
       Exception <|-- BeamJoiningError
       Exception <|-- FastenerApplicationError
       Exception <|-- BTLxProcessingError
+```
+
+## Fasteners Subsystem
+
+```mermaid
+classDiagram
+direction TB
+	namespace BallNodeJoint {
+        class BallNode {
+	        + diameter
+	        + radius
+	        + geometry
+        }
+
+        class BallNodeRod {
+	        + length
+	        + diameter
+	        + referenced_beam
+	        + geometry
+        }
+
+        class BallNodePlate {
+	        + xsize
+	        + ysize
+	        + thickness
+	        + plate_depth
+	        + rod
+	        + ball
+	        + geometry
+        }
+
+	}
+    class Part {
+	    + guid
+	    + frame
+	    + copy()
+	    + apply_features(elements)
+    }
+
+    class GeometryPart {
+	    + geometry
+    }
+
+    class RectangularPlatePart {
+	    + width
+	    + height
+	    + thickness
+	    + holes
+	    + recess
+	    + recess_offset
+	    + geometry
+	    + blank_geometry
+	    + add_hole_point_diameter()
+	    + add_hole()
+	    + add_holes_grid()
+    }
+
+    class Fastener {
+	    + frame
+	    + interacionts: []
+	    + parts: []
+	    + target_frames: []
+	    + guid:
+	    + geometry
+	    + copy()
+	    + add_part()
+	    + add_child_part()
+	    + get_parent()
+	    + get_children()
+	    + get_fastener_instances()
+	    + apply_features()
+    }
+
+    Part <|-- GeometryPart
+    Part <|-- RectangularPlatePart
+    Part <|-- BallNode
+    Part <|-- BallNodeRod
+    Part <|-- BallNodePlate
+    Fastener <..> Part
 ```
