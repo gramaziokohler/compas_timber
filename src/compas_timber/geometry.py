@@ -1,6 +1,7 @@
 import math
 from typing import Optional
 
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polygon
 from compas.geometry import Polyhedron
@@ -9,11 +10,13 @@ from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
+from compas.geometry import intersection_segment_segment
 from compas.tolerance import TOL
 from compas_brep import Brep
 from scipy.spatial import KDTree as _ScipyKDTree
 
 from compas_timber.utils import correct_polyline_direction
+from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import is_polyline_clockwise
 
 
@@ -214,3 +217,45 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     for i in range(len(outline_a) - 1):
         polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
     return Brep.from_polygons(polygons)
+
+
+def get_segment_range_on_polyline(segment: Line, polyline: Polyline, tol: float = 0.0) -> Optional[tuple[Point, Point]]:
+    """Return the outermost extremities of the overlap of a segment with a closed polyline.
+
+    An endpoint of the segment that lies inside the polyline bounds the overlap, e.g. a segment
+    lying entirely within the polyline returns its own endpoints. When the segment crosses the
+    polyline more than twice, the crossings closest to the segment's start and end are returned.
+
+    Parameters
+    ----------
+    segment : :class:`~compas.geometry.Line`
+        The line along which the overlap is measured.
+    polyline : :class:`~compas.geometry.Polyline`
+        The polyline that generates the overlap. Must be closed.
+    tol : float, optional
+        Tolerance for the segment intersection checks.
+
+    Returns
+    -------
+    tuple[:class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`] or None
+        A pair of points bounding the overlap of the polyline on the segment, or ``None`` if the
+        segment and the polyline do not overlap.
+
+    """
+    start_inside = is_point_in_polyline(segment.start, polyline)
+    end_inside = is_point_in_polyline(segment.end, polyline)
+    if start_inside and end_inside:
+        return segment.start, segment.end
+    points = {}
+    if start_inside:
+        points[0.0] = segment.start
+    if end_inside:
+        points[1.0] = segment.end
+    for seg in polyline.lines:
+        intersection = intersection_segment_segment(segment, seg, tol)
+        if intersection[0]:
+            point, t = segment.closest_point(Point(*intersection[0]), return_parameter=True)
+            points[t] = point
+    if not points:
+        return None
+    return points[min(points)], points[max(points)]

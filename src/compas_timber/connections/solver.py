@@ -14,6 +14,7 @@ from compas.geometry import is_parallel_line_line
 from compas.plugins import pluggable
 from compas.tolerance import TOL
 
+from compas_timber.geometry import get_segment_range_on_polyline
 from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
@@ -297,6 +298,49 @@ class ConnectionSolver(object):
             },
         )
 
+    def update_location(self, beam_a, beam_b, topology_data):
+        """Recomputes the location of an existing connection between `beam_a` and `beam_b` from their current geometry.
+
+        The location is the midpoint between the closest points of the two centerlines, the same
+        definition used by :meth:`find_topology`. Only the location data of `topology_data` is
+        updated in place, i.e. `TopologyData.location` and the `location_parameter` of each beam's
+        `BeamTopologyData`. The topology type, roles, ends and reference side indices are left
+        untouched, as is `TopologyData.distance`.
+
+        Parameters
+        ----------
+        beam_a : :class:`~compas_timber.elements.Beam`
+            First beam of the connection.
+        beam_b : :class:`~compas_timber.elements.Beam`
+            Second beam of the connection.
+        topology_data : :class:`~compas_timber.connections.TopologyData`
+            The topology data to update. Must contain entries for both beams.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point`
+            The updated location.
+
+        Raises
+        ------
+        ValueError
+            If `topology_data` does not contain an entry for both beams.
+
+        """
+        data_a = topology_data.data_for(beam_a)
+        data_b = topology_data.data_for(beam_b)
+        if data_a is None or data_b is None:
+            raise ValueError("Both beams must be present in the given topology data.")
+
+        _, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
+        point_a = Point(*point_a)
+        point_b = Point(*point_b)
+
+        data_a.location_parameter = _beam_location_parameter(beam_a, point_a)
+        data_b.location_parameter = _beam_location_parameter(beam_b, point_b)
+        topology_data.location = (point_a + point_b) / 2.0
+        return topology_data.location
+
 
 class PlateConnectionSolver(ConnectionSolver):
     """Provides tools for detecting plate intersections and joint topologies."""
@@ -324,17 +368,19 @@ class PlateConnectionSolver(ConnectionSolver):
             The topology results of the intersection between the two plates.
 
         """
-        plate_a_segment_index, plate_b_segment_index, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if plate_a_segment_index is None and plate_b_segment_index is None:
+        plate_a_edge, plate_b_edge, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        a_ref_side_index, a_segment_index = plate_a_edge if plate_a_edge else (None, None)
+        b_ref_side_index, b_segment_index = plate_b_edge if plate_b_edge else (None, None)
+        if a_segment_index is None and b_segment_index is None:
             return TopologyData(
                 JointTopology.TOPO_UNKNOWN,
                 distance=dist,
                 location=pt,
                 element_topo_data={str(plate_a.guid): PlateTopologyData(), str(plate_b.guid): PlateTopologyData()},
             )
-        if plate_a_segment_index is not None and plate_b_segment_index is None:
-            plate_a_data = PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt)
-            plate_b_data = PlateTopologyData(role="face", location=pt)
+        if a_segment_index is not None and b_segment_index is None:
+            plate_a_data = PlateTopologyData(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=pt)
+            plate_b_data = PlateTopologyData(role="face", ref_side_index=b_ref_side_index, location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
@@ -344,9 +390,9 @@ class PlateConnectionSolver(ConnectionSolver):
                     str(plate_b.guid): plate_b_data,
                 },
             )
-        if plate_a_segment_index is None and plate_b_segment_index is not None:
-            plate_a_data = PlateTopologyData(role="face", location=pt)
-            plate_b_data = PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt)
+        if a_segment_index is None and b_segment_index is not None:
+            plate_a_data = PlateTopologyData(role="face", ref_side_index=a_ref_side_index, location=pt)
+            plate_b_data = PlateTopologyData(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
@@ -356,9 +402,9 @@ class PlateConnectionSolver(ConnectionSolver):
                     str(plate_a.guid): plate_a_data,
                 },
             )
-        if plate_a_segment_index is not None and plate_b_segment_index is not None:
-            plate_a_data = PlateTopologyData(role="edge", edge_index=plate_a_segment_index, location=pt)
-            plate_b_data = PlateTopologyData(role="edge", edge_index=plate_b_segment_index, location=pt)
+        if a_segment_index is not None and b_segment_index is not None:
+            plate_a_data = PlateTopologyData(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=pt)
+            plate_b_data = PlateTopologyData(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=pt)
             return TopologyData(
                 JointTopology.TOPO_EDGE_EDGE,
                 distance=dist,
@@ -369,50 +415,155 @@ class PlateConnectionSolver(ConnectionSolver):
                 },
             )
 
+    def update_location(self, plate_a, plate_b, topology_data):
+        """Recomputes the location of an existing connection between `plate_a` and `plate_b` from their current geometry.
+
+        The connecting edges are not searched for again: they are looked up from the `ref_side_index`
+        and `edge_index` already stored in `topology_data`, and only the location along them is solved
+        anew, using the same definition as :meth:`find_topology` (midpoint of the overlap of the two
+        edges for `TOPO_EDGE_EDGE`, midpoint of the portion of the edge that lies on the cross plate's
+        outline for `TOPO_EDGE_FACE`). `TopologyData.location` and the `location` of each plate's
+        `PlateTopologyData` are updated in place; topology type, roles and indices are left untouched,
+        as is `TopologyData.distance`.
+
+        Parameters
+        ----------
+        plate_a : :class:`~compas_timber.elements.Plate`
+            First plate of the connection.
+        plate_b : :class:`~compas_timber.elements.Plate`
+            Second plate of the connection.
+        topology_data : :class:`~compas_timber.connections.TopologyData`
+            The topology data to update. Must contain entries for both plates.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Point` or None
+            The updated location, or ``None`` if the topology is unknown or the stored edges no longer
+            overlap, in which case `topology_data` is left unchanged.
+
+        Raises
+        ------
+        ValueError
+            If `topology_data` does not contain an entry for both plates.
+
+        """
+        data_a = topology_data.data_for(plate_a)
+        data_b = topology_data.data_for(plate_b)
+        if data_a is None or data_b is None:
+            raise ValueError("Both plates must be present in the given topology data.")
+
+        if topology_data.topology == JointTopology.TOPO_EDGE_EDGE:
+            location = self._edge_edge_location(self._plate_edge_segment(plate_a, data_a), self._plate_edge_segment(plate_b, data_b))
+        elif topology_data.topology == JointTopology.TOPO_EDGE_FACE:
+            if data_a.role == "edge":
+                main_plate, main_data, cross_plate, cross_data = plate_a, data_a, plate_b, data_b
+            else:
+                main_plate, main_data, cross_plate, cross_data = plate_b, data_b, plate_a, data_a
+            location = self._edge_face_location(
+                self._plate_edge_segment(main_plate, main_data),
+                cross_plate.outlines[cross_data.ref_side_index],
+                min(main_plate.thickness, cross_plate.thickness),
+            )
+        else:
+            return None
+
+        if location is None:
+            return None
+        topology_data.location = location
+        data_a.location = location
+        data_b.location = location
+        return location
+
+    @staticmethod
+    def _plate_edge_segment(plate, plate_topo_data):
+        """The outline segment of `plate` that takes part in the connection described by `plate_topo_data`."""
+        return plate.outlines[plate_topo_data.ref_side_index].lines[plate_topo_data.edge_index]
+
+    @staticmethod
+    def _edge_edge_location(seg_a, seg_b):
+        """Midpoint of the overlap of two colinear edge segments, or ``None`` if they no longer overlap."""
+        overlap = get_segment_overlap(seg_a, seg_b, unitize=True)
+        if overlap is None:
+            return None
+        return seg_a.point_at(sum(overlap) / 2.0)
+
+    @staticmethod
+    def _edge_face_location(segment, outline, max_distance):
+        """Midpoint of the portion of `segment` that lies on `outline`, or ``None`` if there is no overlap."""
+        pts = get_segment_range_on_polyline(segment, outline, max_distance)
+        if pts is None:
+            return None
+        return (pts[0] + pts[1]) / 2.0
+
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
-        """Finds the indices of the outline segments of `polyline_a` and `polyline_b`. used to determine connection Topology"""
+        """Finds the connecting edges of `plate_a` and `plate_b`. used to determine connection Topology.
 
-        i_a, i_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if i_a is not None:
-            return i_a, i_b, dist, pt
-        i_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
-        if i_a is not None:
-            return i_a, None, dist, pt
-        i_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
-        if i_b is not None:
-            return None, i_b, dist, pt
+        Returns
+        -------
+        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, :class:`~compas.geometry.Point` or None)
+            For each plate a `(ref_side_index, edge_index)` pair, where `edge_index` is ``None`` for the
+            face side of an edge-face connection, followed by the distance between the plates and the
+            location of the connection. All ``None`` when the plates do not connect.
+
+        """
+
+        edge_a, edge_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if edge_a is not None:
+            return edge_a, edge_b, dist, pt
+        edge_a, ref_side_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        if edge_a is not None:
+            return edge_a, (ref_side_b, None), dist, pt
+        edge_b, ref_side_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+        if edge_b is not None:
+            return (ref_side_a, None), edge_b, dist, pt
         return None, None, None, None
 
     @staticmethod
     def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
-        """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
-        Used to find segments that join in L_TOPO Topology"""
+        """Finds the outline segments of `plate_a` and `plate_b` that are colinear.
+        Used to find segments that join in L_TOPO Topology.
+
+        Returns
+        -------
+        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, :class:`~compas.geometry.Point` or None)
+            A `(ref_side_index, edge_index)` pair per plate, the distance between the segments and the
+            location of the connection. All ``None`` when no colinear overlapping pair is found.
+
+        """
 
         if max_distance is None:
             max_distance = max(plate_a.thickness, plate_b.thickness)
-        for pair in itertools.product(plate_a.outlines, plate_b.outlines):
-            for i, seg_a in enumerate(pair[0].lines):
-                for j, seg_b in enumerate(pair[1].lines):  # TODO: use rtree?
+        for (ref_side_a, pline_a), (ref_side_b, pline_b) in itertools.product(enumerate(plate_a.outlines), enumerate(plate_b.outlines)):
+            for i, seg_a in enumerate(pline_a.lines):
+                for j, seg_b in enumerate(pline_b.lines):  # TODO: use rtree?
                     seg_a_midpt = seg_a.point_at(0.5)
                     dist = distance_point_line(seg_a_midpt, seg_b)
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                overlap_dots = get_segment_overlap(seg_a,seg_b)
-                                location = seg_a.point_at(sum(overlap_dots)/2)
-                                return i, j, dist, location
+                                location = PlateConnectionSolver._edge_edge_location(seg_a, seg_b)
+                                return (ref_side_a, i), (ref_side_b, j), dist, location
         return None, None, None, None
 
     @staticmethod
     def _get_t_topo_segment_index(main_plate, cross_plate, max_distance=None, tol=TOL):
-        """Finds the indices of the outline segments of `polyline_a` and `polyline_b` that are colinear.
-        Used to find segments that join in L_TOPO Topology"""
+        """Finds the outline segment of `main_plate` that lies on an outline of `cross_plate`.
+        Used to find segments that join in T_TOPO Topology.
+
+        Returns
+        -------
+        tuple(tuple(int, int) or None, int or None, float or None, :class:`~compas.geometry.Point` or None)
+            The `(ref_side_index, edge_index)` pair of the main plate's connecting edge, the reference
+            side index of the cross plate it lands on, the distance between the two, and the location of
+            the connection. All ``None`` when no such segment is found.
+
+        """
 
         if max_distance is None:
             max_distance = min(main_plate.thickness, cross_plate.thickness)
-        for pline_a, plane_a in zip(main_plate.outlines, main_plate.planes):
-            for pline_b, plane_b in zip(cross_plate.outlines, cross_plate.planes):
+        for ref_side_a, (pline_a, plane_a) in enumerate(zip(main_plate.outlines, main_plate.planes)):
+            for ref_side_b, (pline_b, plane_b) in enumerate(zip(cross_plate.outlines, cross_plate.planes)):
                 line = Line(*intersection_plane_plane(plane_a, plane_b))
                 for i, seg_a in enumerate(pline_a.lines):  # TODO: use rtree?
                     seg_a_midpt = seg_a.point_at(0.5)
@@ -420,8 +571,9 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                return i, dist, seg_a_midpt
-        return None, None, None
+                                location = PlateConnectionSolver._edge_face_location(seg_a, pline_b, max_distance)
+                                return (ref_side_a, i), ref_side_b, dist, location
+        return None, None, None, None
 
     @staticmethod
     def do_segments_overlap(segment_a, segment_b):

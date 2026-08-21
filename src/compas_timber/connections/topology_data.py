@@ -69,6 +69,10 @@ class PlateTopologyData(Data):
     edge_index : int, optional
         The index of the segment in this plate's outline where the connection occurs. ``None`` when
         `role` is ``"face"`` or the topology is unknown.
+    ref_side_index : int, optional
+        Index of this plate's reference side, i.e. of the outline in `plate.outlines` (and the plane in
+        `plate.planes`) on which the connection was detected. ``None`` when the topology is unknown.
+        Together with `edge_index` it identifies the exact outline segment involved in the connection.
     location : :class:`~compas.geometry.Point`, optional
         The point on this plate closest to the joint.
 
@@ -76,22 +80,24 @@ class PlateTopologyData(Data):
     ----------
     role : literal("edge", "face") or None
     edge_index : int or None
+    ref_side_index : int or None
     location : :class:`~compas.geometry.Point`
 
     """
 
-    def __init__(self, role=None, edge_index=None, location=None):
+    def __init__(self, role=None, edge_index=None, ref_side_index=None, location=None):
         super(PlateTopologyData, self).__init__()
         self.role = role
         self.edge_index = edge_index
+        self.ref_side_index = ref_side_index
         self.location = location
 
     @property
     def __data__(self):
-        return {"role": self.role, "edge_index": self.edge_index, "location": self.location}
+        return {"role": self.role, "edge_index": self.edge_index, "ref_side_index": self.ref_side_index, "location": self.location}
 
     def __repr__(self):
-        return "PlateTopologyData(role={}, edge_index={}, location={})".format(self.role, self.edge_index, self.location)
+        return "PlateTopologyData(role={}, edge_index={}, ref_side_index={}, location={})".format(self.role, self.edge_index, self.ref_side_index, self.location)
 
 
 class TopologyData(Data):

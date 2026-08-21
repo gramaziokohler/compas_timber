@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added new module `topology_data` in `compas_timber.connections` 
 * Added `TopologyData`, structured, element-agnostic, pairwise data class for topology information
 * Added `BeamTopologyData`, and `PlateTopologyData` — structured, per-element topology data (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
+* Added `ConnectionSolver.update_location(element_a, element_b, topology_data)` and `PlateConnectionSolver.update_location(plate_a, plate_b, topology_data)`, which recompute the location of an already-solved connection from the elements' current geometry, without searching for the topology again.
+* Added `PlateTopologyData.ref_side_index`, the index of the plate outline/plane on which the connection was detected. Together with `edge_index` it identifies the exact outline segment involved in the connection.
+* Added `get_segment_range_on_polyline` to `compas_timber.geometry`.
 
 ### Changed
 * Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
