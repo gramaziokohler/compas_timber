@@ -325,3 +325,101 @@ def with_excluded():
         centroid_z={"beam_low": 0.5, "beam_high": 1.5},
         excluded={"sheathing": "plate elements are not sequenced", "screw_1": "fasteners are not sequenced"},
     )
+
+
+def _stacking_input(element_ids, rests_on, base_z, centroid_z, length, **kwargs):
+    """A fixture whose constraints come from a "what rests on what" relation.
+
+    The lookup tables above enumerate one entry per subset of active neighbours, which is
+    fine for three elements and impossible for eleven. This builds the same constraints
+    from a rule instead: an element with something still underneath it may only move up,
+    one with something still on top of it may only move down, and one with both is a slot.
+
+    """
+    supports = {i: set() for i in element_ids}
+    for element_id, supporters in rests_on.items():
+        supports[element_id] |= set(supporters)
+
+    carries = {i: set() for i in element_ids}
+    for element_id, supporters in rests_on.items():
+        for supporter in supporters:
+            carries[supporter].add(element_id)
+
+    neighbors = {i: set() for i in element_ids}
+    for element_id, supporters in rests_on.items():
+        for supporter in supporters:
+            neighbors[element_id].add(supporter)
+            neighbors[supporter].add(element_id)
+
+    def constraints(element_id, active_neighbor_ids):
+        found = []
+        if active_neighbor_ids & supports[element_id]:
+            found.append(HalfSpace(UP))
+        if active_neighbor_ids & carries[element_id]:
+            found.append(HalfSpace(DOWN))
+        return found
+
+    return SequencingInput(
+        element_ids=element_ids,
+        neighbors=neighbors,
+        base_z=base_z,
+        centroid_z=centroid_z,
+        length=length,
+        constraints=constraints,
+        **kwargs,
+    )
+
+
+def wall_panels():
+    """Two stud bays on a shared sill, each with a header, under one top plate.
+
+    Ten elements with real slack in the ranking: at any step several elements are
+    kinematically free, so which one comes off is decided entirely by the preference
+    strategy rather than by feasibility. The small fixtures above cannot show a difference
+    between strategies because their constraints leave almost no choice.
+
+    The shapes each strategy has to argue about:
+
+    * The **sill** is free downwards from the first step, and taking it strands everything
+      -- so it separates strategies that respect the stability term from those that chase
+      clearance.
+    * The **studs** are slots while both the sill and their header are present, and become
+      roomy once the header is gone. Tight-versus-roomy therefore changes over time.
+    * The **bays** are declared groups, so cluster continuity has something to be
+      continuous about.
+    * Studs are short and peripheral; the sill and the plate are long and well connected.
+      Length and degree point in opposite directions from height.
+
+    """
+    studs_a = ["stud_a1", "stud_a2", "stud_a3"]
+    studs_b = ["stud_b1", "stud_b2", "stud_b3"]
+    element_ids = ["sill"] + studs_a + ["header_a"] + studs_b + ["header_b"] + ["plate"]
+
+    rests_on = {"sill": set()}
+    for stud in studs_a + studs_b:
+        rests_on[stud] = {"sill"}
+    rests_on["header_a"] = set(studs_a)
+    rests_on["header_b"] = set(studs_b)
+    rests_on["plate"] = {"header_a", "header_b"}
+
+    base_z = {"sill": 0.0, "plate": 2.8}
+    centroid_z = {"sill": 0.05, "plate": 2.85}
+    length = {"sill": 4.0, "plate": 4.0}
+    for stud in studs_a + studs_b:
+        base_z[stud] = 0.1
+        centroid_z[stud] = 1.3
+        length[stud] = 2.4
+    for header in ("header_a", "header_b"):
+        base_z[header] = 2.5
+        centroid_z[header] = 2.55
+        length[header] = 1.8
+
+    groups = {"sill": "base", "plate": "roof"}
+    for stud in studs_a:
+        groups[stud] = "bay_a"
+    groups["header_a"] = "bay_a"
+    for stud in studs_b:
+        groups[stud] = "bay_b"
+    groups["header_b"] = "bay_b"
+
+    return _stacking_input(element_ids, rests_on, base_z, centroid_z, length, groups=groups)

@@ -315,6 +315,41 @@ Default gravity strategy:
 - subassembly continuity (§5.2).
 - chain continuity, length, connectivity as tiebreaks.
 
+### 7.1 The strategies that ship
+
+Every strategy is stated in **disassembly** terms — a higher score means removed earlier,
+which means placed later in the assembly order handed back. Each docstring names the
+assembly consequence out loud, because that is the sentence a fabricator reads.
+
+| Strategy | Idea | For |
+| --- | --- | --- |
+| `GravityStrategy` | Bottom-up assembly. | The default; nothing else has earned it yet. |
+| `LayeredStrategy` | Height quantized into courses; continuity decides within one. | Platform framing, log walls — anything built course by course. |
+| `SubassemblyStrategy` | Finish a cluster before starting the next. | Prefabrication: the order can be cut at panel boundaries. |
+| `ChainStrategy` | Prefer a neighbour of the last element moved. | Minimizing travel across the model. |
+| `ClearanceStrategy` | Roomiest first, so tight fits are *placed* first. | Models full of slots and housings. |
+| `SkeletonFirstStrategy` | Long, well-connected members placed first. | Frame-then-infill, the way a carpenter describes it. |
+| `RandomStrategy` | An arbitrary order that still respects stability. | The control (see below). |
+| `TermStrategy` | Lexicographic over named terms, composed by the caller. | Expressing a rule without subclassing. |
+| `WeightedStrategy` | Weighted sum of named terms. | Tuning by hand; the one to sweep. |
+
+The last two compose over the named terms in `preferences.TERMS`, each normalized onto
+0..1 over the model so that a height in millimetres and a length in metres can appear in
+the same sum without one drowning the other. A `-` prefix inverts a term.
+
+**Ship the control.** `RandomStrategy` is not a candidate; it is the measuring stick. A
+heuristic that scores no better than an arbitrary order on a given model is not earning
+its place there, and without a control that never becomes visible. It hashes with `crc32`
+rather than Python's `hash`, which is salted per process and would make "deterministic"
+false across runs.
+
+**Choosing between them is empirical.** `assembly_sequencing.compare.compare_strategies`
+runs each one on the same model with the same settings and reports completion, tight fits,
+mean and worst clearance angle, hand-placed count, cluster switches, chain continuity and
+height inversions. It deliberately does *not* collapse those into a single score: the
+weighting between "fewer tight fits" and "less travel" is a fact about the shop, not about
+this package. `scripts/compare_strategies.py` runs it against an exported model.
+
 **Deleted outright:**
 
 - `_build_hierarchy_graph` — forces `cross_beam` before `main_beam` at a priority above every

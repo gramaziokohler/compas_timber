@@ -80,15 +80,30 @@ from .blocking import strongly_connected_components
 from .blocking import subassemblies
 from .boundary import SequencingInput
 from .boundary import sort_key
+from .compare import HEADER
+from .compare import StrategyReport
+from .compare import compare_strategies
+from .compare import describe_comparison
 from .constraints import TOL
 from .constraints import Constraint
 from .constraints import HalfSpace
 from .constraints import SignedAxis
 from .constraints import validate_constraints
+from .preferences import STRATEGIES
+from .preferences import TERMS
+from .preferences import ChainStrategy
+from .preferences import ClearanceStrategy
 from .preferences import GravityStrategy
 from .preferences import HeuristicStrategy
+from .preferences import LayeredStrategy
 from .preferences import PreferenceStrategy
+from .preferences import RandomStrategy
 from .preferences import RankingContext
+from .preferences import SkeletonFirstStrategy
+from .preferences import SubassemblyStrategy
+from .preferences import TermStrategy
+from .preferences import WeightedStrategy
+from .preferences import make_strategy
 from .result import LOCKED
 from .result import ROOMY
 from .result import TIGHT
@@ -117,31 +132,45 @@ __version__ = "2.1.2"
 
 __all__ = [
     "APPROACH_DISTANCE",
+    "ChainStrategy",
+    "ClearanceStrategy",
     "Constraint",
     "DEFAULT_BEAM_WIDTH",
     "GravityStrategy",
+    "HEADER",
     "HalfSpace",
     "HeuristicStrategy",
     "LOCKED",
+    "LayeredStrategy",
     "Locked",
     "PARALLEL_TOL",
     "PinConflict",
     "PreferenceStrategy",
     "ROOMY",
     "ROOMY_MARGIN",
+    "RandomStrategy",
     "RankingContext",
+    "STRATEGIES",
     "SequenceResult",
     "SequencingInput",
     "SignedAxis",
+    "SkeletonFirstStrategy",
     "Solution",
     "StalenessReport",
+    "StrategyReport",
     "StuckReport",
+    "SubassemblyStrategy",
+    "TERMS",
     "TIGHT",
     "TOL",
+    "TermStrategy",
+    "WeightedStrategy",
     "beam_search",
     "build_blocking_graph",
     "candidate_directions",
     "classify",
+    "compare_strategies",
+    "describe_comparison",
     "disconnecting_elements",
     "extract",
     "fully_blocked",
@@ -149,6 +178,7 @@ __all__ = [
     "get_tracer",
     "ground_ids",
     "intrinsic_locks",
+    "make_strategy",
     "order_dependent_locks",
     "rank_candidates",
     "set_tracer",
