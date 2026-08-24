@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added pinned assembly positions, reported as a `PinConflict` when they cannot be honoured rather than silently reordered.
 * Added `StalenessReport` for overrides that no longer apply after the model changed, and `StuckReport` for search dead ends.
 * Added test coverage for assembly sequencing, which previously had none: synthetic constraint-level fixtures under `tests/assembly_sequencing`, plus a model-level regression net in `tests/compas_timber/test_sequencing.py`.
+* Added six more ranking strategies alongside `GravityStrategy`: `LayeredStrategy` (course by course), `SubassemblyStrategy` (one cluster finished before the next), `ChainStrategy` (minimal travel), `ClearanceStrategy` (tight fits placed first, into the emptiest site), `SkeletonFirstStrategy` (long, well-connected members first) and `RandomStrategy` (a deterministic arbitrary order, shipped as a control to show what the others are worth).
+* Added `TermStrategy` and `WeightedStrategy`, which compose the named ranking terms in `assembly_sequencing.TERMS` lexicographically or as a weighted sum. Terms are normalized onto 0..1 over the model, so weights are comparable across models and across quantities in different units; a `-` prefix inverts a term.
+* Added `assembly_sequencing.STRATEGIES` and `make_strategy` for building a strategy by name.
+* Added `assembly_sequencing.compare`, which runs several strategies over the same model and reports completion, tight fits, mean and worst clearance angle, hand-placed count, cluster switches, chain continuity and height inversions. It deliberately does not collapse them into one score. `scripts/compare_strategies.py` runs it against an exported model.
 
 ### Changed
 * Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
