@@ -652,14 +652,8 @@ class BTLxPart(BTLxGenericPart):
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
             for face in scaled_geometry.faces:
                 pts = []
-                surface = face.surface
-                # planar faces (the common case) return a Plane, which has no frame_at (parameter-independent
-                # anyway); only genuinely curved faces (NurbsSurface, etc.) need parametric evaluation.
-                frame = Frame.from_plane(surface) if isinstance(surface, Plane) else surface.frame_at(0.5, 0.5)
-                if face.is_reversed:
-                    # `is_reversed` faces store the surface with an inverted normal relative to the actual
-                    # face orientation; flip yaxis (not xaxis) so zaxis (normal) flips while xaxis is preserved.
-                    frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
+                # not `face.surface.frame_at()`: a planar face's surface is a Plane, which has none.
+                frame = face.frame_at()
                 edges = face.boundary.edges[1:]
                 pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
                 overflow = len(edges)

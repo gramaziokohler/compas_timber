@@ -341,15 +341,9 @@ class Pocket(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            # a 6-face pocket volume is always a box, so every face is planar: `face.surface` already returns
-            # a Plane directly, no need to go through a NurbsSurface/frame_at (which planar faces don't have).
-            # `is_reversed` faces store the surface with an inverted normal relative to the actual face orientation.
-            planes = []
-            for face in volume.faces:
-                plane = face.surface
-                if face.is_reversed:
-                    plane.normal = -plane.normal
-                planes.append(plane)
+            # not `face.surface`: it ignores `is_reversed`, and it is the face's own Plane,
+            # so flipping the normal in place would mutate the volume we were handed.
+            planes = [Plane.from_frame(face.frame_at()) for face in volume.faces]
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
 
