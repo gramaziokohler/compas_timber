@@ -214,10 +214,14 @@ class SimpleScarf(BTLxProcessing):
 
     @staticmethod
     def _calculate_start_x(beam: Beam, orientation: str, length: float) -> float:
+        # StartX is measured along the reference edge, whose origin sits at the start of the *blank*.
+        # The scarf is placed at the corresponding end of the blank: 0.0 at the start, blank_length at
+        # the end. `blank_length` must be used rather than `length`, since blank extensions added by
+        # this joint and by any joint at the other end of the beam both shift the blank end.
         if orientation == OrientationType.START:
             return 0.0
         else:
-            return beam.length + length/2
+            return beam.blank_length
 
 
     #########################################################################
@@ -268,20 +272,25 @@ class SimpleScarf(BTLxProcessing):
             sub_brep = Brep.from_boolean_difference(geometry, scarf_volume)
             for dv in drill_volumes:
                 sub_brep = Brep.from_boolean_difference(sub_brep, dv)
-            for b in sub_brep:
-                if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
-                    return b
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume,
                 geometry,
                 "The scarf volume does not intersect with the beam geometry."
             )
-        raise FeatureApplicationError(
-            scarf_volume,
-            geometry,
-            "No valid result solid found after boolean difference: the beam midpoint is not contained in any result Brep.",
-        )
+        # some backends return a list of solids when the difference splits the geometry apart.
+        # in that case only the piece that still holds the beam's centerline midpoint is the beam.
+        if isinstance(sub_brep, (list, tuple)):
+            midpoint = beam.centerline.midpoint.transformed(beam.transformation_to_local())
+            for b in sub_brep:
+                if b.contains(midpoint):
+                    return b
+            raise FeatureApplicationError(
+                scarf_volume,
+                geometry,
+                "No valid result solid found after boolean difference: the beam midpoint is not contained in any result Brep.",
+            )
+        return sub_brep
 
     def _planes_from_params_and_beam(self, beam: Beam) -> List[Plane]:
         """Generates the planes needed to define the scarf volume from the feature parameters and the beam.
@@ -306,8 +315,7 @@ class SimpleScarf(BTLxProcessing):
         ref_surface = beam.side_as_surface(self.ref_side_index)
 
         top_frame = ref_surface.frame
-        if self.orientation == OrientationType.END:
-            top_frame.translate(top_frame.xaxis * (beam.length + self.length/2))
+        top_frame.translate(top_frame.xaxis * self.start_x)
 
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
 

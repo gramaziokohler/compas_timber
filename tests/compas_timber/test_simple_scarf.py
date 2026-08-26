@@ -47,8 +47,36 @@ def test_simple_scarf_end_orientation(standard_beam):
     )
 
     assert feature.orientation == OrientationType.END
-    # StartX should be beam length + length/2 for END cuts based on the method
-    assert feature.start_x == 1000.0 + (300 / 2)
+    # StartX is measured along the reference edge, which starts at the blank start.
+    # For END cuts the scarf sits at the blank end, so StartX is the blank length.
+    assert feature.start_x == standard_beam.blank_length
+
+
+def test_simple_scarf_end_orientation_accounts_for_start_extension(standard_beam):
+    """StartX for an END cut must follow the blank end when the beam is extended at its start.
+
+    Regression test: StartX used to be derived from the centerline length, which ignored any
+    blank extension added at the *other* end of the beam by a second joint. The scarf was then
+    placed too far towards the start of the beam by exactly that extension.
+    """
+    standard_beam.add_blank_extension(150.0, 150.0, joint_key="other-joint")
+
+    feature = SimpleScarf.from_beam_and_side(
+        beam=standard_beam,
+        side="end",
+        length=300,
+        depth_ref_side=50,
+        depth_opp_side=50,
+    )
+
+    assert standard_beam.blank_length == 1300.0
+    assert feature.start_x == 1300.0
+
+    # the volume must follow StartX rather than the centerline length
+    planes = feature._planes_from_params_and_beam(standard_beam)
+    ref_side = standard_beam.ref_sides[0]
+    start_plane_x = Vector.from_start_end(ref_side.point, Point(*planes[2].point)).dot(ref_side.xaxis)
+    assert start_plane_x == pytest.approx(1300.0)
 
 
 def test_simple_scarf_validation():
