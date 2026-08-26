@@ -18,6 +18,7 @@ adding a strategy test against them.
 
 import pytest
 from compas.geometry import Vector
+from synthetic import blocked_ridge
 from synthetic import double_birdsmouth
 from synthetic import slot
 from synthetic import stack
@@ -172,6 +173,45 @@ def test_gravity_takes_the_higher_element_even_when_it_is_tight():
     context = context_for(wall_panels())
     candidates = {"header_a": tight(), "stud_a1": roomy()}
     assert preferred(GravityStrategy(), context, candidates) == "header_a"
+
+
+def test_gravity_leaves_alone_an_element_that_is_still_carrying_something():
+    # The pier stands higher than the cleat and gravity would normally say so, but the
+    # ridge is jointed to the pier and still up there on it. Read forwards: the ridge must
+    # not go into the model before the pier it sits on.
+    data = blocked_ridge()
+    candidates = {"pier": roomy(), "cleat": roomy()}
+    assert preferred(GravityStrategy(), context_for(data), candidates) == "cleat"
+
+
+def test_gravity_goes_back_to_height_once_nothing_is_left_on_top():
+    # The same two candidates and the opposite answer, with only the ridge taken away:
+    # the term speaks about what is still standing, not about the pair.
+    data = blocked_ridge()
+    context = context_for(data, active=set(data.element_ids) - {"ridge"})
+    candidates = {"pier": roomy(), "cleat": roomy()}
+    assert preferred(GravityStrategy(), context, candidates) == "pier"
+
+
+def test_gravity_reaches_past_height_when_the_tallest_candidate_is_carrying_something():
+    # The whole point of the fixture: the ridge is obstructed, so the highest element the
+    # ranking can see is the pier -- and the pier is holding the ridge up. Sorting by
+    # height alone takes the pier; gravity takes the cleat, which frees the ridge next
+    # step and gets the ridge into the model after the pier rather than before it.
+    data = blocked_ridge()
+    order = generate(data, strategy=GravityStrategy()).order
+    assert order.index("pier") < order.index("ridge")
+    assert order.index("post") < order.index("ridge")
+    assert order == ["pad", "post", "pier", "ridge", "cleat"]
+
+
+def test_gravity_yields_the_precedence_rather_than_getting_stuck():
+    # Every element is carrying another, so no candidate is ever clear above. The term
+    # goes quiet and the sequence still completes rather than reporting a dead end.
+    data = stack()
+    result = generate(data, strategy=GravityStrategy())
+    assert result.is_complete
+    assert result.order == ["bottom", "middle", "top"]
 
 
 def test_clearance_takes_the_roomier_element_even_when_it_is_lower():

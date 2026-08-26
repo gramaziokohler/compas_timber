@@ -148,6 +148,59 @@ def test_the_adapter_supplies_a_swept_check_by_default(portal):
     assert TimberModelAdapter(model, use_geometry=False).build().has_geometry is False
 
 
+# ---------------------------------------------------------------------------
+# the swept check
+# ---------------------------------------------------------------------------
+
+
+def test_the_swept_check_sees_an_element_standing_in_the_way():
+    model = TimberModel()
+    mover = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), WIDTH, HEIGHT)
+    blocker = Beam.from_centerline(Line(Point(0, 0, 400), Point(1000, 0, 400)), WIDTH, HEIGHT)
+    model.add_element(mover)
+    model.add_element(blocker)
+
+    adapter = TimberModelAdapter(model)
+    active = set(str(element.guid) for element in (mover, blocker))
+    assert adapter.path_is_clear(str(mover.guid), Vector(0, 0, 1), 1000.0, active) is False
+    assert adapter.path_is_clear(str(mover.guid), Vector(0, 0, -1), 1000.0, active) is True
+
+
+def test_the_swept_check_is_not_fooled_by_the_empty_corner_of_a_diagonal():
+    # A brace running corner to corner fills a fraction of its axis-aligned bounds, and
+    # the beam here passes through the empty part of them. An axis-aligned test alone
+    # calls that a collision; in a braced frame that false veto lands on the elements
+    # highest up and drives the sequence to pull posts out from under standing beams.
+    model = TimberModel()
+    beam = Beam.from_centerline(Line(Point(0, 0, 2000), Point(3000, 0, 2000)), WIDTH, HEIGHT)
+    brace = Beam.from_centerline(Line(Point(0, 0, 1000), Point(0, -1000, 2000)), WIDTH, HEIGHT)
+    model.add_element(beam)
+    model.add_element(brace)
+
+    adapter = TimberModelAdapter(model)
+    active = set(str(element.guid) for element in (beam, brace))
+
+    from compas_timber.planning.sequencing import _bounds_overlap
+    from compas_timber.planning.sequencing import _swept_aabb
+
+    swept = _swept_aabb(beam.obb, Vector(0, 0, 1), 100.0)
+    assert _bounds_overlap(swept, adapter._bounds(str(brace.guid))) is True, "the broad phase should be the one that is fooled"
+    assert adapter.path_is_clear(str(beam.guid), Vector(0, 0, 1), 100.0, active) is True
+
+
+def test_the_swept_check_stops_short_of_something_further_than_the_approach():
+    model = TimberModel()
+    mover = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), WIDTH, HEIGHT)
+    far = Beam.from_centerline(Line(Point(0, 0, 5000), Point(1000, 0, 5000)), WIDTH, HEIGHT)
+    model.add_element(mover)
+    model.add_element(far)
+
+    adapter = TimberModelAdapter(model)
+    active = set(str(element.guid) for element in (mover, far))
+    assert adapter.path_is_clear(str(mover.guid), Vector(0, 0, 1), 100.0, active) is True
+    assert adapter.path_is_clear(str(mover.guid), Vector(0, 0, 1), 6000.0, active) is False
+
+
 def test_plates_are_excluded_and_reported():
     from compas_timber.elements import Plate
 

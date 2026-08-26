@@ -31,6 +31,10 @@ the shop:
 * Anyone prefabricating cares about ``switches`` -- a sequence that finishes one panel
   before starting the next can be cut into panels.
 * ``byhand`` is real fabrication work and is worth minimizing on any account.
+* Everyone cares about ``unsupp``: jointed pairs where the sequence puts the higher
+  element in before the lower one it sits on. Zero is what a bottom-up order should score.
+  Above zero means some extraction that would have avoided it was blocked, so read it
+  together with ``done`` and run scripts/debug_sequencing.py if it is large.
 
 The ``random`` row is a control, not a candidate. It is an arbitrary order that still
 respects stability, and it is there to show what the other rows are worth: a strategy that

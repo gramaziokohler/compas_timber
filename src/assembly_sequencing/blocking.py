@@ -261,7 +261,7 @@ def subassemblies(sequencing_input, graph):
     return labels
 
 
-def ground_ids(sequencing_input, active_ids=None, tolerance=1e-3):
+def ground_ids(sequencing_input, active_ids=None, tolerance=None):
     """The elements resting at the lowest level of the assembly.
 
     Parameters
@@ -269,15 +269,32 @@ def ground_ids(sequencing_input, active_ids=None, tolerance=1e-3):
     sequencing_input : :class:`~assembly_sequencing.boundary.SequencingInput`
     active_ids : set, optional
     tolerance : float, optional
+        How far above the lowest element a base may sit and still count as being on the
+        ground, in model units. Defaults to the input's
+        :attr:`~assembly_sequencing.boundary.SequencingInput.support_tolerance`, which asks
+        the same question -- are these two at the same level? -- and is scaled to the model
+        for the same reason.
 
     Returns
     -------
     set
 
+    Notes
+    -----
+    The tolerance matters more than it looks. Feet cut to sit on one slab still differ by
+    a fraction of a millimetre in the lowest corner of their bounding boxes, so a tolerance
+    finer than that noise grounds only whichever foot happens to be lowest. Every other
+    element is then one step from being cut off from the ground, and
+    :func:`disconnecting_elements` reports removals as stranding the structure when they do
+    nothing of the sort. On the braced canopy this was measured against, a hard 1e-3
+    grounded 1 element of 74 where 54 sit on the slab.
+
     """
     active = set(sequencing_input.element_ids) if active_ids is None else set(active_ids)
     if not active:
         return set()
+    if tolerance is None:
+        tolerance = sequencing_input.support_tolerance
     lowest = min(sequencing_input.base_z[element_id] for element_id in active)
     return set(element_id for element_id in active if sequencing_input.base_z[element_id] <= lowest + tolerance)
 

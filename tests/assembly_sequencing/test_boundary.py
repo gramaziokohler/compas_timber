@@ -114,3 +114,54 @@ def test_sorted_ids_is_deterministic_for_unorderable_ids():
 def test_joint_members_keeps_n_ary_joints_intact():
     data = minimal(joint_members={"j1": ("a", "b")})
     assert data.joint_members["j1"] == ("a", "b")
+
+
+def test_above_lists_the_jointed_neighbours_that_sit_higher():
+    data = stack()
+    assert data.above("bottom") == {"middle"}
+    assert data.above("middle") == {"top"}
+    assert data.above("top") == set()
+
+
+def test_above_only_counts_neighbours_so_it_cannot_reach_across_the_model():
+    # "top" is a metre above "bottom" but they share no joint, so neither carries the
+    # other as far as this relation is concerned.
+    data = stack()
+    assert "top" not in data.above("bottom")
+
+
+def test_neighbours_at_the_same_height_are_above_neither():
+    data = minimal(base_z={"a": 1.0, "b": 1.0})
+    assert data.above("a") == set()
+    assert data.above("b") == set()
+
+
+def test_bounding_box_noise_does_not_make_a_precedence():
+    # Two members at the same level on a two-metre model, whose boxes disagree by a fifth
+    # of a millimetre because they meet at an angle. Neither rests on the other.
+    data = minimal(base_z={"a": 0.0, "b": 0.2}, centroid_z={"a": 1000.0, "b": 1000.0})
+    assert data.support_tolerance == pytest.approx(1.0)
+    assert data.above("a") == set()
+
+
+def test_a_real_height_difference_still_makes_a_precedence():
+    data = minimal(base_z={"a": 0.0, "b": 2000.0}, centroid_z={"a": 1000.0, "b": 2500.0})
+    assert data.above("a") == {"b"}
+
+
+def test_the_support_tolerance_can_be_given_outright():
+    data = minimal(base_z={"a": 0.0, "b": 0.2}, centroid_z={"a": 1000.0, "b": 1000.0}, support_tolerance=0.05)
+    assert data.above("a") == {"b"}
+
+
+def test_the_default_support_tolerance_scales_with_the_model():
+    # The same shape in metres and in millimetres has to sequence the same way, which an
+    # absolute default could not manage.
+    metres = minimal(base_z={"a": 0.0, "b": 2.0}, centroid_z={"a": 1.0, "b": 2.5})
+    millimetres = minimal(base_z={"a": 0.0, "b": 2000.0}, centroid_z={"a": 1000.0, "b": 2500.0})
+    assert metres.above("a") == millimetres.above("a") == {"b"}
+
+
+def test_a_negative_support_tolerance_raises():
+    with pytest.raises(ValueError):
+        minimal(support_tolerance=-1.0)

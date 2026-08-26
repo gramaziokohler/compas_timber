@@ -104,17 +104,32 @@ class GravityStrategy(PreferenceStrategy):
     1. **Does not strand anything from the ground.** A topological proxy for stability,
        not a stability calculation, and the one term whose violation produces obvious
        nonsense -- so it leads.
-    2. **base_z, then centroid_z**, both descending, as two separate lexicographic terms.
+    2. **Nothing jointed to it is still standing higher up**, from
+       :meth:`~assembly_sequencing.boundary.SequencingInput.above`. Comparing heights
+       *within a step* is not the same as sorting by height: at any step the tallest
+       element left may be kinematically blocked, and a comparator that only sorts by
+       ``base_z`` then reaches straight past it and takes a post out from under a beam
+       that is still up there. Read forwards, that put the beam into the model before the
+       post that carries it. This term is what forbids it: a candidate with a jointed
+       neighbour still above it ranks below every candidate without one, whatever their
+       heights.
+
+       It is a preference and not a filter on purpose. When *every* remaining candidate
+       is carrying something -- an interlock, a blocked extraction overhead -- the search
+       needs a sequence more than it needs this rule, so the term goes quiet and the
+       height terms below decide. That fallback is visible: ``support_inversions`` in
+       :mod:`assembly_sequencing.compare` counts the times it fired.
+    3. **base_z, then centroid_z**, both descending, as two separate lexicographic terms.
        Both carry real signal: centroid alone ranks a ground-standing post as "high",
        base alone cannot separate two beams that start at the same level. Summing them,
        as an earlier implementation did, produces a quantity with no physical meaning and
        no nameable unit -- and was then used simultaneously as a hard gate and a
        continuous sort key.
-    3. **Roomy before tight.** Free clearance is strictly better than a zero-clearance
+    4. **Roomy before tight.** Free clearance is strictly better than a zero-clearance
        slot, so spend the roomy extractions while there is still room.
-    4. **Subassembly continuity** -- finish a cluster before starting another.
-    5. **Chain continuity** -- prefer a neighbour of the last element removed.
-    6. **Length**, then **low connectivity**, as tiebreaks. Long members and peripheral
+    5. **Subassembly continuity** -- finish a cluster before starting another.
+    6. **Chain continuity** -- prefer a neighbour of the last element removed.
+    7. **Length**, then **low connectivity**, as tiebreaks. Long members and peripheral
        members come off first.
 
     """
@@ -125,6 +140,7 @@ class GravityStrategy(PreferenceStrategy):
         sequencing_input = context.input
 
         stable = element_id not in context.disconnecting
+        clear_above = not (sequencing_input.above(element_id) & context.active_ids)
         roomy = solution.state == ROOMY
 
         same_subassembly = False
@@ -135,6 +151,7 @@ class GravityStrategy(PreferenceStrategy):
 
         return (
             int(stable),
+            int(clear_above),
             sequencing_input.base_z[element_id],
             sequencing_input.centroid_z[element_id],
             int(roomy),
@@ -222,6 +239,10 @@ def _term_stable(context, element_id, solution, ranges):
     return 0.0 if element_id in context.disconnecting else 1.0
 
 
+def _term_clear_above(context, element_id, solution, ranges):
+    return 0.0 if context.input.above(element_id) & context.active_ids else 1.0
+
+
 def _term_base_z(context, element_id, solution, ranges):
     return ranges.unit("base_z", context.input.base_z[element_id])
 
@@ -293,6 +314,7 @@ TERMS = {
     "centroid_z": _term_centroid_z,
     "certain": _term_certain,
     "chain": _term_chain,
+    "clear_above": _term_clear_above,
     "degree": _term_degree,
     "freed": _term_freed,
     "length": _term_length,
@@ -310,6 +332,7 @@ consequence is the mirror image.
 
 ===============  ========================================================================
 ``stable``       1.0 unless removing this element would strand something from the ground.
+``clear_above``  1.0 unless a jointed neighbour whose base sits higher is still in place.
 ``base_z``       Height of the element's lowest point, normalized over the model.
 ``centroid_z``   Height of the element's centroid, normalized over the model.
 ``length``       Element length, normalized over the model.

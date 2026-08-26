@@ -11,6 +11,7 @@ from assembly_sequencing import STRATEGIES
 from assembly_sequencing import GravityStrategy
 from assembly_sequencing import RandomStrategy
 from assembly_sequencing import compare_strategies
+from assembly_sequencing import make_strategy
 from assembly_sequencing import describe_comparison
 from assembly_sequencing.compare import StrategyReport
 
@@ -80,7 +81,7 @@ def test_the_table_has_a_row_for_every_strategy():
     reports = compare_strategies(wall_panels())
     text = describe_comparison(reports)
     lines = text.splitlines()
-    assert lines[0].split() == ["strategy", "done", "placed", "tight", "mean", "deg", "min", "deg", "byhand", "switches", "chain", "inversions"]
+    assert lines[0].split() == ["strategy", "done", "placed", "tight", "mean", "deg", "min", "deg", "byhand", "switches", "chain", "inversions", "unsupp"]
     for report in reports:
         assert any(line.startswith(report.name) for line in lines)
 
@@ -96,3 +97,26 @@ def test_a_report_keeps_the_result_it_summarizes():
     report = compare_strategies(stack(), ["gravity"])[0]
     assert isinstance(report, StrategyReport)
     assert report.order == report.result.order == ["bottom", "middle", "top"]
+
+
+def test_support_inversions_counts_the_jointed_pairs_built_in_the_wrong_order():
+    from assembly_sequencing import TermStrategy
+    from synthetic import blocked_ridge
+
+    data = blocked_ridge()
+    # Height alone reaches past the obstructed ridge and takes the pier out from under it.
+    by_height = TermStrategy(["stable", "base_z", "centroid_z"], name="by-height")
+    assert _report(data, by_height).support_inversions == 1
+    assert _report(data, make_strategy("gravity")).support_inversions == 0
+
+
+def test_support_inversions_ignores_a_height_drop_between_unjointed_elements():
+    # wall_panels finishes one bay and drops back down to start the next, which is a
+    # height inversion and not a support inversion.
+    reports = compare_strategies(wall_panels(), ["subassembly"])
+    assert reports[0].height_inversions > 0
+    assert reports[0].support_inversions == 0
+
+
+def _report(data, strategy):
+    return compare_strategies(data, [strategy])[0]

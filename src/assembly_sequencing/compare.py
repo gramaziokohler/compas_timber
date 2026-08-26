@@ -20,7 +20,20 @@ Read the metrics like this:
 ``cluster_switches`` Times the sequence jumps between subassemblies. Fewer is tidier.
 ``chain_continuity`` Fraction of placements that touch something already placed.
 ``height_inversions`` Times the sequence places something lower than what came before.
+``support_inversions`` Jointed pairs where the higher one is placed before the lower one.
 ===================  ========================================================================
+
+``height_inversions`` and ``support_inversions`` are not the same measurement and the
+second is the one to read first. A height inversion counts every step that goes downhill,
+including the harmless one where the sequence finishes a low bay and moves to a high one.
+A support inversion counts only pairs that are actually jointed to each other, so each one
+is a beam going into the model before something underneath it that it is joined to -- the
+kind a fabricator notices. A sequence can score badly on the first and perfectly on the
+second, and that sequence is fine.
+
+A support inversion is not automatically a defect either. When every extraction that would
+avoid one is kinematically blocked, some element has to come out from under something, and
+the number says how often that happened rather than that the ranking misbehaved.
 
 Examples
 --------
@@ -82,6 +95,7 @@ class StrategyReport(object):
     chain_continuity : float
         On 0..1. The first placement has nothing to touch and is not counted.
     height_inversions : int
+    support_inversions : int
 
     """
 
@@ -102,6 +116,7 @@ class StrategyReport(object):
         self.cluster_switches = _cluster_switches(result)
         self.chain_continuity = _chain_continuity(sequencing_input, result)
         self.height_inversions = _height_inversions(sequencing_input, result)
+        self.support_inversions = _support_inversions(sequencing_input, result)
 
     def __repr__(self):
         return "StrategyReport({!r}, complete={}, tight={})".format(self.name, self.is_complete, self.tight)
@@ -119,7 +134,7 @@ class StrategyReport(object):
         str
 
         """
-        return "{:<14} {:<5} {:>7} {:>7} {:>9.1f} {:>9.1f} {:>7} {:>9} {:>8.2f} {:>10}".format(
+        return "{:<14} {:<5} {:>7} {:>7} {:>9.1f} {:>9.1f} {:>7} {:>9} {:>8.2f} {:>10} {:>9}".format(
             self.name[:14],
             "yes" if self.is_complete else "NO",
             "{}/{}".format(self.placed, self.total),
@@ -130,10 +145,11 @@ class StrategyReport(object):
             self.cluster_switches,
             self.chain_continuity,
             self.height_inversions,
+            self.support_inversions,
         )
 
 
-HEADER = "{:<14} {:<5} {:>7} {:>7} {:>9} {:>9} {:>7} {:>9} {:>8} {:>10}".format(
+HEADER = "{:<14} {:<5} {:>7} {:>7} {:>9} {:>9} {:>7} {:>9} {:>8} {:>10} {:>9}".format(
     "strategy",
     "done",
     "placed",
@@ -144,6 +160,7 @@ HEADER = "{:<14} {:<5} {:>7} {:>7} {:>9} {:>9} {:>7} {:>9} {:>8} {:>10}".format(
     "switches",
     "chain",
     "inversions",
+    "unsupp",
 )
 """str: The column header matching :meth:`StrategyReport.row`."""
 
@@ -169,6 +186,23 @@ def _chain_continuity(sequencing_input, result):
             touching += 1
         placed.add(element_id)
     return float(touching) / float(len(result.order) - 1)
+
+
+def _support_inversions(sequencing_input, result):
+    """Jointed pairs the sequence puts the higher element into the model first.
+
+    Counted over pairs rather than over steps: what matters is that a specific element went
+    in before a specific lower element it is joined to, not where in the sequence that
+    happened.
+
+    """
+    position = {element_id: index for index, element_id in enumerate(result.order)}
+    inversions = 0
+    for element_id in result.order:
+        for higher_id in sequencing_input.above(element_id):
+            if higher_id in position and position[higher_id] < position[element_id]:
+                inversions += 1
+    return inversions
 
 
 def _height_inversions(sequencing_input, result):

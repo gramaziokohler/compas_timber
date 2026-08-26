@@ -423,3 +423,42 @@ def wall_panels():
     groups["header_b"] = "bay_b"
 
     return _stacking_input(element_ids, rests_on, base_z, centroid_z, length, groups=groups)
+
+
+def blocked_ridge():
+    """A ridge that is briefly unreachable, with a pier under it and a cleat to spare.
+
+    The shape that separates a comparator which merely *sorts* by height from one that
+    compares heights *between candidates*. The ridge is the highest element and stays
+    obstructed while the cleat is in place, so at step zero it is not a candidate at all.
+    Of what is left, the pier stands highest -- and the pier is carrying the ridge.
+
+    Sorting by ``base_z`` therefore takes the pier out from under a ridge that is still up
+    there, which read forwards puts the ridge into the model before the pier that holds it.
+    The cleat is the way out: it is lower than the pier, it has nothing on it, and taking
+    it first frees the ridge for the very next step.
+
+    Everything here stays connected to the ground whichever element goes first, so the
+    stability term cannot rescue the ordering -- this is a question about heights and it
+    has to be answered by a term about heights.
+    """
+    element_ids = ["pad", "post", "pier", "ridge", "cleat"]
+    rests_on = {
+        "pad": set(),
+        "post": {"pad"},
+        "pier": {"pad"},
+        "cleat": {"pad"},
+        "ridge": {"pier", "post"},
+    }
+
+    def path_is_clear(element_id, direction, distance, active_ids):
+        return not (element_id == "ridge" and "cleat" in active_ids)
+
+    return _stacking_input(
+        element_ids,
+        rests_on,
+        base_z={"pad": 0.0, "post": 0.0, "cleat": 0.0, "pier": 1.0, "ridge": 2.0},
+        centroid_z={"pad": 0.0, "post": 1.0, "cleat": 0.1, "pier": 1.5, "ridge": 2.0},
+        length={"pad": 4.0, "post": 2.0, "cleat": 0.5, "pier": 1.0, "ridge": 4.0},
+        path_is_clear=path_is_clear,
+    )

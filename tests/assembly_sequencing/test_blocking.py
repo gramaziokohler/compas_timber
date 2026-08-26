@@ -205,3 +205,36 @@ def test_blocking_graph_respects_a_reduced_active_set():
     graph = build_blocking_graph(data, active_ids={"strut_west", "plate"})
     assert set(graph) == {"strut_west", "plate"}
     assert graph["plate"] == set()
+
+
+def test_the_ground_is_a_level_and_not_a_single_lowest_element():
+    # Feet cut to sit on one slab differ by a fraction of a millimetre in the lowest
+    # corner of their boxes. All three are on the ground; grounding only the lowest one
+    # would leave the other two a step away from being stranded.
+    from synthetic import _table_input
+
+    ids = ["foot_a", "foot_b", "foot_c", "cap"]
+    neighbors = {"foot_a": {"cap"}, "foot_b": {"cap"}, "foot_c": {"cap"}, "cap": {"foot_a", "foot_b", "foot_c"}}
+    data = _table_input(
+        ids,
+        neighbors,
+        {},
+        base_z={"foot_a": 0.0, "foot_b": 0.2, "foot_c": 0.4, "cap": 2000.0},
+        centroid_z={"foot_a": 1000.0, "foot_b": 1000.0, "foot_c": 1000.0, "cap": 2000.0},
+    )
+    assert ground_ids(data) == {"foot_a", "foot_b", "foot_c"}
+    assert disconnecting_elements(data, set(ids), ground_ids(data)) == set()
+
+
+def test_a_tighter_ground_tolerance_can_still_be_asked_for():
+    from synthetic import _table_input
+
+    ids = ["foot_a", "foot_b"]
+    data = _table_input(
+        ids,
+        {"foot_a": {"foot_b"}, "foot_b": {"foot_a"}},
+        {},
+        base_z={"foot_a": 0.0, "foot_b": 0.2},
+        centroid_z={"foot_a": 1000.0, "foot_b": 1000.0},
+    )
+    assert ground_ids(data, tolerance=0.05) == {"foot_a"}

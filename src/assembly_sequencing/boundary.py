@@ -17,6 +17,24 @@ Two members are callables rather than tables, deliberately:
 
 """
 
+SUPPORT_TOLERANCE_FRACTION = 1e-3
+"""float: The default support tolerance, as a fraction of the model's height.
+
+How much higher a jointed neighbour's base must sit before
+:meth:`SequencingInput.above` counts it as resting on the element, expressed against the
+model rather than in any one unit -- this package is handed millimetres by one caller and
+metres by another, and an absolute default would be either meaningless or catastrophic
+depending on which arrived.
+
+A thousandth of the model's height is deliberately generous towards "same level". The
+quantity being compared is the lowest corner of an element's bounding box, and on a frame
+of members at compound angles that corner lands a fraction of a millimetre apart on
+members that are, for any purpose a fabricator has, at the same height. On the braced
+canopy this was measured against, a thousandth came to 1 mm and separated 30 such pairs of
+noise from 19 real ones with nothing in between.
+
+"""
+
 
 def sort_key(element_id):
     """Deterministic ordering key for element ids of any hashable type.
@@ -73,6 +91,12 @@ class SequencingInput(object):
         sequence (plates, fasteners). These ids must not appear in `element_ids`; they
         are carried so the result can report them out loud rather than silently
         sequencing them at height zero.
+    support_tolerance : float, optional
+        How much higher a jointed neighbour's base must sit before :meth:`above` counts it
+        as resting on this element, in model units. Defaults to
+        :data:`SUPPORT_TOLERANCE_FRACTION` of the model's height. Raise it when members sit
+        at compound angles and their bounding boxes disagree about a shared level; lower it
+        on a model whose levels are genuinely finer than that.
 
     Raises
     ------
@@ -96,6 +120,7 @@ class SequencingInput(object):
         path_is_clear=None,
         groups=None,
         excluded=None,
+        support_tolerance=None,
     ):
         self.element_ids = list(element_ids)
         self._id_set = set(self.element_ids)
@@ -112,8 +137,15 @@ class SequencingInput(object):
 
         self._constraints_fn = constraints
         self._path_is_clear_fn = path_is_clear
+        self._above = None
 
         self._validate()
+
+        if support_tolerance is None:
+            support_tolerance = self.height * SUPPORT_TOLERANCE_FRACTION
+        self.support_tolerance = float(support_tolerance)
+        if self.support_tolerance < 0.0:
+            raise ValueError("support_tolerance must not be negative, got {!r}.".format(support_tolerance))
 
     def _validate(self):
         for element_id in self.element_ids:
@@ -207,6 +239,62 @@ class SequencingInput(object):
 
         """
         return set(self.neighbors[element_id]) & set(active_ids) - {element_id}
+
+    @property
+    def height(self):
+        """float : How tall the model is, near enough to scale a tolerance by.
+
+        Measured from the lowest base to the highest centroid, not across the bases alone.
+        In a canopy or a tower every leg starts on the ground and the bases span almost
+        nothing, while the structure itself is metres tall -- a tolerance derived from the
+        bases there would be a small fraction of a small number and would not separate
+        anything.
+
+        """
+        if not self.element_ids:
+            return 0.0
+        lowest = min(self.base_z[element_id] for element_id in self.element_ids)
+        highest = max(max(self.base_z[element_id], self.centroid_z[element_id]) for element_id in self.element_ids)
+        return highest - lowest
+
+    def above(self, element_id):
+        """The jointed neighbours whose base sits higher than this element's.
+
+        Read it as "what is resting on this element", and read it sceptically: this is a
+        height comparison over the joint graph, not a load path. Nothing in this package
+        knows which element actually carries which. It is the same proxy :attr:`base_z`
+        already supplies to the ranking, promoted from a sort key to a precedence -- of two
+        jointed elements at different base heights, the higher one is taken to be resting
+        on the lower, and so must be removed before it in disassembly and placed after it
+        in assembly.
+
+        Bases that agree to within :attr:`support_tolerance` put neither element above the
+        other, which is what makes this a strict partial order: a cycle would need a chain
+        of strictly increasing heights returning to its start, so there is always an order
+        that honours every one of these precedences -- though not necessarily one that also
+        satisfies the kinematics, which is why the ranking treats these as preferences and
+        not as filters.
+
+        The tolerance is not a rounding detail. Set it too fine and every jointed pair on a
+        frame of angled members acquires a precedence from a fraction of a millimetre of
+        bounding-box noise, the relation becomes very nearly a total order, and a term built
+        on it can no longer tell anything apart.
+
+        Parameters
+        ----------
+        element_id : hashable
+
+        Returns
+        -------
+        set
+
+        """
+        if self._above is None:
+            self._above = {
+                key: set(neighbor_id for neighbor_id in neighbor_ids if self.base_z[neighbor_id] > self.base_z[key] + self.support_tolerance)
+                for key, neighbor_ids in self.neighbors.items()
+            }
+        return self._above[element_id]
 
     def degree(self, element_id):
         """Number of jointed neighbours.

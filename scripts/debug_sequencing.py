@@ -153,6 +153,7 @@ def obstructions(adapter, element_id, direction, distance, active_ids):
 def main(path, distance=APPROACH_DISTANCE):
     describe_environment()
     model = json_load(path)
+    model.process_joinery()
     result = compare_with_and_without_geometry(model, distance)
     explain_first_stuck_element(model, result, distance)
 
