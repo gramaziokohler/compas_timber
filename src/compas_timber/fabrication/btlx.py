@@ -14,13 +14,13 @@ from warnings import warn
 
 import compas
 from compas.data import Data
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
 from compas.geometry import Plane
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError

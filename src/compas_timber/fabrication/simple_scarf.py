@@ -4,13 +4,13 @@ import math
 from typing import TYPE_CHECKING
 from typing import List
 
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import intersection_plane_plane_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 
@@ -233,7 +233,7 @@ class SimpleScarf(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The geometry to be processed.
 
         beam : :class:`~compas_timber.elements.Beam`
@@ -248,7 +248,7 @@ class SimpleScarf(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -272,7 +272,9 @@ class SimpleScarf(BTLxProcessing):
             sub_brep = Brep.from_boolean_difference(geometry, scarf_volume)
             for dv in drill_volumes:
                 sub_brep = Brep.from_boolean_difference(sub_brep, dv)
-        except IndexError:
+        except (IndexError, RuntimeError):
+            # compas_brep's rhino backend raises RuntimeError when the difference yields no result,
+            # while other backends signal the same thing by indexing into an empty result list.
             raise FeatureApplicationError(
                 scarf_volume,
                 geometry,

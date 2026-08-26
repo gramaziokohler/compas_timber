@@ -1,4 +1,3 @@
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -7,6 +6,7 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas_brep import Brep
 
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
