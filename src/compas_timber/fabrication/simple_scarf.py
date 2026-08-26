@@ -146,9 +146,6 @@ class SimpleScarf(BTLxProcessing):
 
     @property
     def num_drill_hole_str(self) -> str:
-        # BTLxProcessingParams._format_value formats integers as floats (e.g. 2 -> "2.000").
-        # Returning a str here bypasses that branch and writes the value as a plain integer string.
-        # This workaround can be removed once _format_value is updated to handle int separately.
         return str(self._num_drill_hole)
 
     @property
@@ -214,10 +211,6 @@ class SimpleScarf(BTLxProcessing):
 
     @staticmethod
     def _calculate_start_x(beam: Beam, orientation: str, length: float) -> float:
-        # StartX is measured along the reference edge, whose origin sits at the start of the *blank*.
-        # The scarf is placed at the corresponding end of the blank: 0.0 at the start, blank_length at
-        # the end. `blank_length` must be used rather than `length`, since blank extensions added by
-        # this joint and by any joint at the other end of the beam both shift the blank end.
         if orientation == OrientationType.START:
             return 0.0
         else:
@@ -280,8 +273,6 @@ class SimpleScarf(BTLxProcessing):
                 geometry,
                 "The scarf volume does not intersect with the beam geometry."
             )
-        # some backends return a list of solids when the difference splits the geometry apart.
-        # in that case only the piece that still holds the beam's centerline midpoint is the beam.
         if isinstance(sub_brep, (list, tuple)):
             midpoint = beam.centerline.midpoint.transformed(beam.transformation_to_local())
             for b in sub_brep:
