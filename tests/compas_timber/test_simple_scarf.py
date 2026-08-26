@@ -341,6 +341,27 @@ def test_apply_raises_on_boolean_difference_index_error():
                         feature.apply(mock_geometry, mock_beam)
 
 
+def test_apply_raises_on_boolean_difference_runtime_error():
+    """apply() must raise FeatureApplicationError when boolean difference raises RuntimeError.
+
+    compas_brep's rhino backend raises RuntimeError("Boolean difference ended with no result")
+    rather than indexing into an empty result list, so that must map to the same error.
+    """
+    feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
+    mock_beam = MagicMock()
+    mock_geometry = MagicMock()
+
+    with patch.object(feature, "volume_from_params_and_beam", return_value=MagicMock()):
+        with patch.object(feature, "drill_hole_volumes_from_params_and_beam", return_value=[]):
+            with patch("compas_timber.fabrication.simple_scarf.Brep.from_mesh", return_value=MagicMock()):
+                with patch(
+                    "compas_timber.fabrication.simple_scarf.Brep.from_boolean_difference",
+                    side_effect=RuntimeError("Boolean difference ended with no result"),
+                ):
+                    with pytest.raises(FeatureApplicationError):
+                        feature.apply(mock_geometry, mock_beam)
+
+
 def test_apply_raises_when_no_result_contains_midpoint():
     """apply() must raise FeatureApplicationError when no result Brep contains the midpoint."""
     feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
