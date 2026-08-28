@@ -277,12 +277,15 @@ def _get_plate_center_outline(plate):
 class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
     """
     Generates analytical surfaces from plate centre outlines.
-    It stretches the center-plane of the plate to automatically close gaps 
+    It stretches the center-plane of the plate to automatically close gaps
     to adjacent plates identified by the given joints.
+
+    This generator produces one surface per plate and never subdivides it, so
+    `split` is accepted for interface compatibility but has no effect here.
     """
 
-    def __init__(self, tolerance=2.0):
-        self.split = False # We strictly don't split.
+    def __init__(self, tolerance=2.0, split=False):
+        self.split = split
         self.tolerance = tolerance
 
     def generate_surfaces(self, plate, joints):
