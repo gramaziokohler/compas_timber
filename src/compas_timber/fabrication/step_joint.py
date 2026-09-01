@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,8 +10,10 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_union
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -338,7 +339,7 @@ class StepJoint(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`compas.geometry.Brep`
+        geometry : :class:`compas_brep.Brep`
             The geometry to be processed.
 
         beam : :class:`compas_timber.elements.Beam`
@@ -351,7 +352,7 @@ class StepJoint(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -460,7 +461,7 @@ class StepJoint(BTLxProcessing):
                         )
             # add tenon volume to geometry
             try:
-                geometry += tenon_volume
+                geometry = brep_union(geometry, tenon_volume)
             except Exception as e:
                 raise FeatureApplicationError(
                     tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
@@ -635,7 +636,7 @@ class StepJoint(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The tenon volume.
 
         """

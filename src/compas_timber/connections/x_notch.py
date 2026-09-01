@@ -77,7 +77,7 @@ class XNotchJoint(Joint):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The negative volume representing the notch.
         """
         assert self.elements

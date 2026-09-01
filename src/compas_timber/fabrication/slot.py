@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 import typing
 
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -16,8 +15,10 @@ from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_line
 from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -364,7 +365,7 @@ class Slot(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -376,7 +377,7 @@ class Slot(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -387,7 +388,7 @@ class Slot(BTLxProcessing):
             subtraction_volume.flip()
 
         try:
-            cutted_geometry = geometry - subtraction_volume
+            cutted_geometry = brep_difference(geometry, subtraction_volume)
             return cutted_geometry
 
         except Exception:

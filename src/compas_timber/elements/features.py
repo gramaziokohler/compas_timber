@@ -1,12 +1,13 @@
 from compas.data import Data
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 
 
 class Feature(Data):
@@ -63,7 +64,7 @@ class CutFeature(Feature):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -118,7 +119,7 @@ class DrillFeature(Feature):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -127,7 +128,7 @@ class DrillFeature(Feature):
         drill_volume = Cylinder(frame=Frame.from_plane(plane), radius=self.diameter / 2.0, height=self.length)
 
         try:
-            return element_geometry - Brep.from_cylinder(drill_volume)
+            return brep_difference(element_geometry, Brep.from_cylinder(drill_volume))
         except IndexError:
             raise FeatureApplicationError(
                 drill_volume,
@@ -169,7 +170,7 @@ class MillVolume(Feature):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -179,7 +180,7 @@ class MillVolume(Feature):
             mesh = self.mesh_volume.to_mesh()
         volume = Brep.from_mesh(mesh)
         try:
-            return element_geometry - volume
+            return brep_difference(element_geometry, volume)
         except IndexError:
             raise FeatureApplicationError(
                 volume,
@@ -196,7 +197,7 @@ class BrepSubtraction(Feature):
 
     Parameters
     ----------
-    volume : :class:`compas.geometry.Brep`
+    volume : :class:`compas_brep.Brep`
         The volume to be subtracted from the element.
 
     """
@@ -221,12 +222,12 @@ class BrepSubtraction(Feature):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """
         try:
-            return element_geometry - self.volume
+            return brep_difference(element_geometry, self.volume)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,

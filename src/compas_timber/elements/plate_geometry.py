@@ -2,7 +2,6 @@ from typing import Optional
 
 from compas.data import Data
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -13,6 +12,7 @@ from compas.geometry import Vector
 from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
@@ -51,7 +51,7 @@ class PlateGeometry(Data):
         A tuple containing both outline_a and outline_b.
     edge_planes : list[:class:`~compas.geometry.Frame`]
         Frames representing the edge planes of the plate.
-    shape : :class:`~compas.geometry.Brep`
+    shape : :class:`~compas_brep.Brep`
         The geometry of the Plate before other machining features are applied.
 
     """
@@ -171,7 +171,7 @@ class PlateGeometry(Data):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The shape of the element.
 
         """

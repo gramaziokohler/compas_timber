@@ -13,6 +13,7 @@ from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_plane_plane
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import intersection_line_beam_param
 from compas_timber.utils import planar_surface_point_at
 
@@ -317,7 +318,7 @@ class DoubleCut(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -329,7 +330,7 @@ class DoubleCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -348,7 +349,7 @@ class DoubleCut(BTLxProcessing):
             trim_volume = geometry.copy()
             for cutting_plane in cutting_planes:
                 trim_volume.trim(cutting_plane)
-            return geometry - trim_volume
+            return brep_difference(geometry, trim_volume)
         else:
             for cutting_plane in cutting_planes:
                 plane = Plane(cutting_plane.point, -cutting_plane.normal)
@@ -518,7 +519,7 @@ class DoubleCutProxy(object):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -530,7 +531,7 @@ class DoubleCutProxy(object):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -550,7 +551,7 @@ class DoubleCutProxy(object):
             trim_volume = geometry.copy()
             for cutting_plane in self.planes:
                 trim_volume.trim(self.planes)
-            return geometry - trim_volume
+            return brep_difference(geometry, trim_volume)
         else:
             for cutting_plane in self.planes:
                 plane = Plane(cutting_plane.point, -cutting_plane.normal)

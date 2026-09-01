@@ -5,7 +5,6 @@ from typing import Optional
 from typing import Union
 
 from compas.datastructures import Mesh
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -20,9 +19,11 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -319,7 +320,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
@@ -434,7 +435,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
@@ -528,7 +529,7 @@ class Pocket(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The geometry of the elements to be processed.
         element : :class:`compas_timber.base.TimberElement`
             The element that is processed by this instance.
@@ -540,7 +541,7 @@ class Pocket(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -558,7 +559,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
         try:
-            return geometry - pocket_volume
+            return brep_difference(geometry, pocket_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 pocket_volume,
@@ -750,7 +751,7 @@ class PocketProxy(object):
 
     Parameters
     ----------
-    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
         The volume of the pocket. Must have 6 faces.
     element : :class:`~compas_timber.base.TimberElement`
         The element that is cut by this instance.
@@ -800,7 +801,7 @@ class PocketProxy(object):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the pocket. Must have 6 faces.
         element : :class:`~compas_timber.base.TimberElement`
             The element that is cut by this instance.
@@ -826,7 +827,7 @@ class PocketProxy(object):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to apply the pocket to.
 
         Raises
@@ -836,13 +837,13 @@ class PocketProxy(object):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
         # type: (Brep, Element) -> Brep
         try:
-            return geometry - self.volume
+            return brep_difference(geometry, self.volume)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,

@@ -1,6 +1,5 @@
 import math
 
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -15,8 +14,10 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -323,7 +324,7 @@ class Drilling(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -331,7 +332,7 @@ class Drilling(BTLxProcessing):
         drill_geometry.transform(element.transformation_to_local())
 
         try:
-            return geometry - drill_geometry
+            return brep_difference(geometry, drill_geometry)
         except IndexError:
             raise FeatureApplicationError(
                 drill_geometry,
@@ -505,7 +506,7 @@ class DrillingProxy(object):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The element geometry to drill.
         element : :class:`~compas_timber.elements.Element`
             The element to drill.
@@ -517,7 +518,7 @@ class DrillingProxy(object):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing.
 
         """
@@ -525,7 +526,7 @@ class DrillingProxy(object):
         drill_geometry = Brep.from_cylinder(Cylinder.from_line_and_radius(self.line, self.diameter * 0.5))
 
         try:
-            return geometry - drill_geometry
+            return brep_difference(geometry, drill_geometry)
         except IndexError:
             raise FeatureApplicationError(
                 drill_geometry,

@@ -1,7 +1,6 @@
 from enum import auto
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import NurbsCurve
@@ -11,9 +10,11 @@ from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import intersection_line_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import StrEnum
+from compas_timber.utils import brep_difference
 from compas_timber.utils import correct_polyline_direction
 
 from .panel_features import PanelFeature
@@ -62,14 +63,14 @@ class Opening(PanelFeature):
 
         Parameters
         ----------
-        panel_geometry : :class:`compas.geometry.Brep`
+        panel_geometry : :class:`compas_brep.Brep`
             The geometry of the panel to which the opening will be applied.
         panel : :class:`compas_timber.elements.Panel`
             The panel element.
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The modified panel geometry with the opening applied.
 
         Raises
@@ -79,8 +80,7 @@ class Opening(PanelFeature):
 
         """
         try:
-            panel_geometry -= self.shape.transformed(self.transformation)
-            return panel_geometry
+            return brep_difference(panel_geometry, self.shape.transformed(self.transformation))
         except Exception as e:
             raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
 

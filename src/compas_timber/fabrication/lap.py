@@ -1,7 +1,6 @@
 import math
 
 from compas.datastructures import Mesh
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -19,8 +18,10 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -388,7 +389,7 @@ class Lap(BTLxProcessing):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -510,7 +511,7 @@ class Lap(BTLxProcessing):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep` or :class:`~compas.geometry.Mesh`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep` or :class:`~compas.geometry.Mesh`
             The volume of the Lap. Must have 6 faces.
         element : :class:`~compas_timber.elements.Beam`
             The element that is cut by this instance.
@@ -652,7 +653,7 @@ class Lap(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -664,7 +665,7 @@ class Lap(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -684,7 +685,7 @@ class Lap(BTLxProcessing):
 
         # subtract the lap volume from the beam geometry
         try:
-            return geometry - lap_volume
+            return brep_difference(geometry, lap_volume)
         except IndexError:
             raise FeatureApplicationError(
                 lap_volume,
@@ -856,7 +857,7 @@ class LapProxy(object):
 
     Parameters
     ----------
-    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep`
+    volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep`
         The negative volume that constitutes the lap.
     beam : :class:`~compas_timber.elements.Beam`
         The beam where lap should be applied.
@@ -899,7 +900,7 @@ class LapProxy(object):
 
         Parameters
         ----------
-        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas.geometry.Brep`
+        volume : :class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep`
             The volume of the lap. Must have 6 faces.
         beam : :class:`~compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -925,7 +926,7 @@ class LapProxy(object):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to apply the lap to.
 
         Raises
@@ -935,7 +936,7 @@ class LapProxy(object):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -948,7 +949,7 @@ class LapProxy(object):
             scaling_factor = 1 + TOL.approximation
             frame_at_centroid = Frame(self.volume.centroid, self.volume.frame.xaxis, self.volume.frame.yaxis)
             inflated_brep = self.volume.transformed(Scale.from_factors([scaling_factor, scaling_factor, scaling_factor], frame=frame_at_centroid))
-            return geometry - inflated_brep
+            return brep_difference(geometry, inflated_brep)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume,

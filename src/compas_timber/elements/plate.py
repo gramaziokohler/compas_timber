@@ -5,13 +5,13 @@ from typing import Union
 
 from compas.datastructures import Mesh  # noqa: F401
 from compas.geometry import Box
-from compas.geometry import Brep  # noqa: F401
 from compas.geometry import Frame  # noqa: F401
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import TOL
+from compas_brep import Brep  # noqa: F401
 from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
@@ -265,7 +265,7 @@ class Plate(TimberElement):
 
         Returns
         -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+        :class:`compas.datastructures.Mesh` | :class:`compas_brep.Brep`
 
         """
 
@@ -352,7 +352,7 @@ class Plate(TimberElement):
 
         Parameters
         ----------
-        brep : :class:`~compas.geometry.Brep`
+        brep : :class:`~compas_brep.Brep`
             A single-face brep representing the plate surface.
         thickness : float
             The thickness of the plate.
@@ -385,7 +385,7 @@ class Plate(TimberElement):
 
         Parameters
         ----------
-        brep : :class:`~compas.geometry.Brep`
+        brep : :class:`~compas_brep.Brep`
             The brep representing the plate geometry. Must have at least 5 faces.
         orientation : :class:`~compas.geometry.Vector`, optional
             A vector indicating the desired orientation of the plate's local y-axis. If None, orientation is determined from the outline.

@@ -237,7 +237,7 @@ class Text(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
 
         """

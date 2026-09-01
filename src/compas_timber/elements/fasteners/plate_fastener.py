@@ -1,6 +1,5 @@
 import math
 
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -12,12 +11,15 @@ from compas.geometry import angle_vectors
 from compas.geometry import cross_vectors
 from compas.geometry import distance_point_plane
 from compas.tolerance import Tolerance
+from compas_brep import Brep
 
 from compas_timber.connections.solver import JointTopology
 from compas_timber.connections.utilities import beam_ref_side_incidence_with_vector
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.utils import brep_difference
+from compas_timber.utils import brep_union
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
@@ -271,7 +273,7 @@ class PlateFastener(Fastener):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
 
         """
         if not self._shape:
@@ -283,7 +285,7 @@ class PlateFastener(Fastener):
             if self.cutouts:
                 for cutout in self.cutouts:
                     cutout_brep = Brep.from_extrusion(cutout, vector)
-                    self._shape -= cutout_brep
+                    self._shape = brep_difference(self._shape, cutout_brep)
             if self.holes:
                 for hole in self.holes:
                     cylinder = Brep.from_cylinder(
@@ -293,10 +295,10 @@ class PlateFastener(Fastener):
                             Frame(hole["point"], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
                         )
                     )
-                    self._shape -= cylinder
+                    self._shape = brep_difference(self._shape, cylinder)
             if self.shapes:
                 for shape in self.shapes:
-                    self._shape += shape
+                    self._shape = brep_union(self._shape, shape)
         return self._shape
 
     def compute_geometry(self):
@@ -304,7 +306,7 @@ class PlateFastener(Fastener):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
 
         """
         return self.shape.transformed(Transformation.from_frame(self.frame)) if self.shape else None

@@ -15,6 +15,8 @@ from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
 from compas_timber.base import TimberElement
+from compas_timber.utils import brep_difference
+from compas_timber.utils import brep_intersection
 from compas_timber.utils import is_polyline_clockwise
 
 from .btlx import AlignmentType
@@ -300,7 +302,7 @@ class FreeContour(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The resulting geometry after processing.
         """
 
@@ -309,9 +311,9 @@ class FreeContour(BTLxProcessing):
         transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
         vol.transform(transformation_ref_side_to_local)
         if self.counter_sink:  # contour should remove material inside of the contour
-            return geometry - vol
+            return brep_difference(geometry, vol)
         else:
-            return geometry & vol
+            return brep_intersection(geometry, vol)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

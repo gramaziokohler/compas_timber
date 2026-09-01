@@ -1,8 +1,6 @@
 import math
 
 from compas.datastructures import Mesh
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -14,8 +12,12 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
+from compas_timber.utils import brep_union
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -273,7 +275,7 @@ class FrenchRidgeLap(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -285,7 +287,7 @@ class FrenchRidgeLap(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -307,7 +309,7 @@ class FrenchRidgeLap(BTLxProcessing):
         subtracting_volume = self.lap_volume_from_params_and_beam(beam)
         subtracting_volume.transform(beam.transformation_to_local())
         try:
-            return geometry - subtracting_volume
+            return brep_difference(geometry, subtracting_volume)
         except IndexError:
             raise FeatureApplicationError(
                 subtracting_volume,
@@ -365,7 +367,7 @@ class FrenchRidgeLap(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The trimming volume of the lap.
         """
         # type: (Beam) -> Brep
@@ -432,7 +434,7 @@ class FrenchRidgeLap(BTLxProcessing):
             diagonal = Line(bottom_vertices[0], bottom_vertices[2])
             drill_frame = Frame(diagonal.midpoint, -ref_side.xaxis, ref_side.yaxis)
             drill_cylinder = Cylinder(self.drillhole_diam / 2, height * 2, drill_frame)
-            subtraction_volume += Brep.from_cylinder(drill_cylinder)
+            subtraction_volume = brep_union(subtraction_volume, Brep.from_cylinder(drill_cylinder))
         return subtraction_volume
 
     def scale(self, factor):

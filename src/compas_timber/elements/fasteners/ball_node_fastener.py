@@ -1,4 +1,3 @@
-from compas.geometry import Brep
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import NurbsCurve
@@ -7,11 +6,13 @@ from compas.geometry import Point
 from compas.geometry import Sphere
 from compas.geometry import Transformation
 from compas.geometry import Vector
+from compas_brep import Brep
 
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.utils import brep_union
 from compas_timber.utils import correct_polyline_direction
 
 
@@ -135,7 +136,7 @@ class BallNodeFastener(Fastener):
         for interface in self.interfaces:
             if self.interface_shape:
                 interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
-                geometry += interface_geometry
+                geometry = brep_union(geometry, interface_geometry)
         return geometry
 
     # TODO: implement compute_aabb()
@@ -186,5 +187,5 @@ class BallNodeFastener(Fastener):
             if geometries:
                 self._interface_shape = geometries[0]
                 for geometry in geometries[1:]:
-                    self._interface_shape += geometry
+                    self._interface_shape = brep_union(self._interface_shape, geometry)
         return self._interface_shape

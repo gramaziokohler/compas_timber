@@ -7,7 +7,7 @@ from typing import Union
 
 if TYPE_CHECKING:
     from compas.datastructures import Mesh  # noqa: F401
-    from compas.geometry import Brep  # noqa: F401
+    from compas_brep import Brep  # noqa: F401
 
     from compas_timber.panel_features import PanelFeature  # noqa: F401
 
@@ -319,7 +319,7 @@ class Panel(Element):
 
         Returns
         -------
-        :class:`compas.datastructures.Mesh` | :class:`compas.geometry.Brep`
+        :class:`compas.datastructures.Mesh` | :class:`compas_brep.Brep`
 
         """
 
@@ -376,7 +376,7 @@ class Panel(Element):
 
         Parameters
         ----------
-        brep : :class:`~compas.geometry.Brep`
+        brep : :class:`~compas_brep.Brep`
             A single-face brep representing the panel surface.
         thickness : float
             The thickness of the panel.
@@ -409,7 +409,7 @@ class Panel(Element):
 
         Parameters
         ----------
-        brep : :class:`~compas.geometry.Brep`
+        brep : :class:`~compas_brep.Brep`
             The brep representing the panel geometry. Must have at least 2 parallel faces.
         orientation : :class:`~compas.geometry.Vector`, optional
             A vector indicating the desired orientation of the panel's local y-axis. If None, orientation is determined from the outline.

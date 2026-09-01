@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -12,8 +11,10 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_union
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -614,7 +615,7 @@ class DovetailTenon(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`compas.geometry.Brep`
+        geometry : :class:`compas_brep.Brep`
             The geometry to be processed.
 
         beam : :class:`compas_timber.elements.Beam`
@@ -627,7 +628,7 @@ class DovetailTenon(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -655,9 +656,8 @@ class DovetailTenon(BTLxProcessing):
         ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
             edge_indices = [4, 7] if self.length_limited_top else [5, 8]
             try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
+                # compas_brep takes the indices of the edges to fillet, not the edges themselves
+                dovetail_volume.fillet(self.shape_radius, edge_indices)
             except Exception as e:
                 raise FeatureApplicationError(
                     dovetail_volume,
@@ -685,7 +685,7 @@ class DovetailTenon(BTLxProcessing):
 
         # add tenon volume to geometry
         try:
-            geometry += dovetail_volume
+            geometry = brep_union(geometry, dovetail_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
@@ -812,7 +812,7 @@ class DovetailTenon(BTLxProcessing):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
             The tenon volume.
 
         """

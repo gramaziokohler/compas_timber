@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,6 +10,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
@@ -147,7 +147,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     def compute_elementgeometry(self, include_features=True):
-        # type: (bool) -> compas.geometry.Brep
+        # type: (bool) -> compas_brep.Brep
         """Compute the geometry of the element in local coordinates.
 
         Parameters
@@ -157,7 +157,7 @@ class Beam(TimberElement):
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`compas_brep.Brep`
 
         Raises
         ------

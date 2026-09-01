@@ -3,7 +3,6 @@ import copy
 import pytest
 from compas.data import json_dumps
 from compas.data import json_loads
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -13,6 +12,7 @@ from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import close
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel

@@ -1,7 +1,5 @@
 import math
 
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -13,8 +11,11 @@ from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_plane
 from compas.geometry import intersection_segment_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.utils import brep_difference
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
@@ -397,7 +398,7 @@ class LongitudinalCut(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
         beam : :class:`compas_timber.elements.Beam`
             The beam that is cut by this instance.
@@ -409,7 +410,7 @@ class LongitudinalCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing
 
         """
@@ -427,7 +428,7 @@ class LongitudinalCut(BTLxProcessing):
             neg_vol = self.volume_from_params_and_beam(beam)
             neg_vol.transform(beam.transformation_to_local())
             try:
-                return geometry - neg_vol
+                return brep_difference(geometry, neg_vol)
             except IndexError:
                 raise FeatureApplicationError(neg_vol, geometry, "The boolean difference between the cutting volume and the beam geometry failed.")
 
@@ -468,7 +469,7 @@ class LongitudinalCut(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The negative volume representing the cut.
 
         """
@@ -646,7 +647,7 @@ class LongitudinalCutProxy(object):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The beam geometry to be cut.
 
         Raises
@@ -656,7 +657,7 @@ class LongitudinalCutProxy(object):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing.
 
         """

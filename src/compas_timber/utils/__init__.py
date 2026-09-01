@@ -27,6 +27,7 @@ from compas.geometry import closest_point_on_segment
 from compas.geometry import intersection_segment_segment
 
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 try:
     from enum import StrEnum  # type: ignore
@@ -613,7 +614,7 @@ def polyline_from_brep_loop(loop):
 
     Parameters
     ----------
-    loop : :class:`~compas.geometry.BrepLoop`
+    loop : :class:`~compas_brep.BrepLoop`
         The BrepLoop to convert to a polyline.
 
     Returns
@@ -642,7 +643,7 @@ def polylines_from_brep_face(face):
     """Extract polylines from a BRep face.
     Parameters
     ----------
-    face : :class:`~compas.geometry.BrepFace`
+    face : :class:`~compas_brep.BrepFace`
         The Brep face to extract polylines from.
     Returns
     -------
@@ -679,7 +680,7 @@ def get_plate_geometry_outlines_from_brep(brep):
 
     Parameters
     ----------
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         A plate-like brep. Must have at least 5 faces.
 
     Returns
@@ -844,9 +845,9 @@ def get_brep_loop_vertex_indices(loop, brep):
 
     Parameters
     ----------
-    loop : :class:`~compas.geometry.BrepLoop`
+    loop : :class:`~compas_brep.BrepLoop`
         The BrepLoop to get the vertex indices from.
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         The Brep to get the vertex indices from.
 
     Returns
@@ -882,7 +883,7 @@ def mesh_from_brep_simple(brep):
 
     Parameters
     ----------
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         A polyhedral Brep with planar faces and straight edges.
 
     Returns
@@ -901,6 +902,83 @@ def mesh_from_brep_simple(brep):
             outer_loop = face.loops[0]  # OCC brep
         faces_indices.append(get_brep_loop_vertex_indices(outer_loop, brep))
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
+
+
+def brep_difference(brep_a, brep_b):
+    """Subtracts `brep_b` from `brep_a` and returns the result as a single Brep.
+
+    `Brep.from_boolean_difference` returns one Brep per resulting piece, since a subtraction can cut
+    a solid into several disconnected ones, and an empty list when nothing is left. The first piece
+    is returned here, and an empty result raises `IndexError`, the way `Brep.__sub__` used to behave.
+
+    Parameters
+    ----------
+    brep_a : :class:`~compas_brep.Brep`
+        The Brep to subtract from.
+    brep_b : :class:`~compas_brep.Brep`
+        The Brep to subtract.
+
+    Raises
+    ------
+    IndexError
+        If the subtraction leaves nothing.
+
+    Returns
+    -------
+    :class:`~compas_brep.Brep`
+
+    """
+    return Brep.from_boolean_difference(brep_a, brep_b)[0]
+
+
+def brep_union(brep_a, brep_b):
+    """Joins `brep_a` and `brep_b` and returns the result as a single Brep.
+
+    See :func:`brep_difference` for why the result needs unpacking.
+
+    Parameters
+    ----------
+    brep_a : :class:`~compas_brep.Brep`
+        The first Brep.
+    brep_b : :class:`~compas_brep.Brep`
+        The second Brep.
+
+    Raises
+    ------
+    IndexError
+        If the union yields no result.
+
+    Returns
+    -------
+    :class:`~compas_brep.Brep`
+
+    """
+    return Brep.from_boolean_union(brep_a, brep_b)[0]
+
+
+def brep_intersection(brep_a, brep_b):
+    """Intersects `brep_a` with `brep_b` and returns the result as a single Brep.
+
+    See :func:`brep_difference` for why the result needs unpacking.
+
+    Parameters
+    ----------
+    brep_a : :class:`~compas_brep.Brep`
+        The first Brep.
+    brep_b : :class:`~compas_brep.Brep`
+        The second Brep.
+
+    Raises
+    ------
+    IndexError
+        If the two Breps do not overlap.
+
+    Returns
+    -------
+    :class:`~compas_brep.Brep`
+
+    """
+    return Brep.from_boolean_intersection(brep_a, brep_b)[0]
 
 
 def get_leaf_subclasses(cls):
@@ -935,6 +1013,9 @@ __all__ = [
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
     "get_leaf_subclasses",
+    "brep_difference",
+    "brep_union",
+    "brep_intersection",
     "move_polyline_segment_to_line",
     "join_polyline_segments",
     "polyline_from_brep_loop",

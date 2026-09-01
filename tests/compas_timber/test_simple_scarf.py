@@ -9,6 +9,7 @@ from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyhedron
 from compas.geometry import Vector
+from compas_brep import Brep
 
 from compas_timber.elements import Beam
 from compas_timber.errors import FeatureApplicationError
@@ -47,8 +48,8 @@ def test_simple_scarf_end_orientation(standard_beam):
     )
 
     assert feature.orientation == OrientationType.END
-    # StartX should be beam length + length/2 for END cuts based on the method
-    assert feature.start_x == 1000.0 + (300 / 2)
+    # StartX should be the end of the blank for END cuts, the scarf volume itself overshoots it
+    assert feature.start_x == standard_beam.blank_length
 
 
 def test_simple_scarf_validation():
@@ -290,7 +291,7 @@ def test_apply_raises_on_brep_conversion_error():
     """apply() must raise FeatureApplicationError when Brep.from_mesh fails."""
     feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
     mock_beam = MagicMock()
-    mock_geometry = MagicMock()
+    mock_geometry = MagicMock(spec=Brep)
 
     with patch.object(feature, "volume_from_params_and_beam", return_value=MagicMock()):
         with patch.object(feature, "drill_hole_volumes_from_params_and_beam", return_value=[]):
@@ -303,7 +304,7 @@ def test_apply_raises_on_boolean_difference_index_error():
     """apply() must raise FeatureApplicationError when boolean difference raises IndexError."""
     feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
     mock_beam = MagicMock()
-    mock_geometry = MagicMock()
+    mock_geometry = MagicMock(spec=Brep)
 
     with patch.object(feature, "volume_from_params_and_beam", return_value=MagicMock()):
         with patch.object(feature, "drill_hole_volumes_from_params_and_beam", return_value=[]):
@@ -317,7 +318,7 @@ def test_apply_raises_when_no_result_contains_midpoint():
     """apply() must raise FeatureApplicationError when no result Brep contains the midpoint."""
     feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
     mock_beam = MagicMock()
-    mock_geometry = MagicMock()
+    mock_geometry = MagicMock(spec=Brep)
     non_matching = MagicMock()
     non_matching.contains.return_value = False
 
@@ -333,7 +334,7 @@ def test_apply_returns_matching_brep():
     """apply() must return the first result Brep whose contains() returns True."""
     feature = SimpleScarf(start_x=0.0, length=300, depth_ref_side=50, depth_opp_side=50)
     mock_beam = MagicMock()
-    mock_geometry = MagicMock()
+    mock_geometry = MagicMock(spec=Brep)
     matching = MagicMock()
     matching.contains.return_value = True
 
