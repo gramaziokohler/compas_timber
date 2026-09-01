@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from typing import TYPE_CHECKING
 from typing import List
@@ -11,7 +13,6 @@ from compas.geometry import intersection_plane_plane_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
-from compas_timber.utils import brep_difference
 
 from .btlx import AttributeSpec
 from .btlx import BTLxProcessing
@@ -254,8 +255,8 @@ class SimpleScarf(BTLxProcessing):
             drill_volumes = [Brep.from_cylinder(dv) for dv in drill_volumes]
         except Exception:
             raise FeatureApplicationError(
-                scarf_volume,
-                geometry,
+                scarf_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "Could not convert the scarf volume mesh to a Brep."
             )
 
@@ -263,17 +264,17 @@ class SimpleScarf(BTLxProcessing):
             for sub_brep in Brep.from_boolean_difference(geometry, scarf_volume):
                 if sub_brep.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
                     for dv in drill_volumes:
-                        sub_brep = brep_difference(sub_brep, dv)
+                        sub_brep = Brep.from_boolean_difference(sub_brep, dv)[0]
                     return sub_brep
         except IndexError:
             raise FeatureApplicationError(
-                scarf_volume,
-                geometry,
+                scarf_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "The scarf volume does not intersect with the beam geometry."
             )
         raise FeatureApplicationError(
-            scarf_volume,
-            geometry,
+            scarf_volume.transformed(beam.modeltransformation),
+            geometry.transformed(beam.modeltransformation),
             "No valid result solid found after boolean difference: the beam midpoint is not contained in any result Brep.",
         )
 
