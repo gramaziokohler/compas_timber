@@ -146,9 +146,6 @@ class SimpleScarf(BTLxProcessing):
 
     @property
     def num_drill_hole_str(self) -> str:
-        # BTLxProcessingParams._format_value formats integers as floats (e.g. 2 -> "2.000").
-        # Returning a str here bypasses that branch and writes the value as a plain integer string.
-        # This workaround can be removed once _format_value is updated to handle int separately.
         return str(self._num_drill_hole)
 
     @property
@@ -217,7 +214,7 @@ class SimpleScarf(BTLxProcessing):
         if orientation == OrientationType.START:
             return 0.0
         else:
-            return beam.length + length/2
+            return beam.blank_length
 
 
     #########################################################################
@@ -229,7 +226,7 @@ class SimpleScarf(BTLxProcessing):
 
         Parameters
         ----------
-        geometry : :class:`~compas.geometry.Brep`
+        geometry : :class:`~compas_brep.Brep`
             The geometry to be processed.
 
         beam : :class:`~compas_timber.elements.Beam`
@@ -244,17 +241,17 @@ class SimpleScarf(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The resulting geometry after processing.
 
         """
-        scarf_volume = self.volume_from_params_and_beam(beam) 
+        scarf_volume = self.volume_from_params_and_beam(beam)
         scarf_volume.transform(beam.transformation_to_local())
         drill_volumes = self.drill_hole_volumes_from_params_and_beam(beam)
         drill_volumes = [dv.transformed(beam.transformation_to_local()) for dv in drill_volumes]
 
         try:
-            scarf_volume = Brep.from_mesh(scarf_volume)
+            scarf_volume = Brep.from_mesh(scarf_volume.to_mesh())
             drill_volumes = [Brep.from_cylinder(dv) for dv in drill_volumes]
         except Exception:
             raise FeatureApplicationError(
@@ -263,14 +260,12 @@ class SimpleScarf(BTLxProcessing):
                 "Could not convert the scarf volume mesh to a Brep."
             )
 
-        # Subtract the scarf volume from the beam geometry
         try:
-            sub_brep = Brep.from_boolean_difference(geometry, scarf_volume)
-            for dv in drill_volumes:
-                sub_brep = Brep.from_boolean_difference(sub_brep, dv)
-            for b in sub_brep:
-                if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
-                    return b
+            for sub_brep in Brep.from_boolean_difference(geometry, scarf_volume):
+                if sub_brep.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
+                    for dv in drill_volumes:
+                        sub_brep = Brep.from_boolean_difference(sub_brep, dv)[0]
+                    return sub_brep
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume.transformed(beam.modeltransformation),
@@ -306,8 +301,7 @@ class SimpleScarf(BTLxProcessing):
         ref_surface = beam.side_as_surface(self.ref_side_index)
 
         top_frame = ref_surface.frame
-        if self.orientation == OrientationType.END:
-            top_frame.translate(top_frame.xaxis * (beam.length + self.length/2))
+        top_frame.translate(top_frame.xaxis * self.start_x)
 
         ref_middle_frame = top_frame.translated(-top_frame.normal * self.depth_ref_side)
 
@@ -340,7 +334,7 @@ class SimpleScarf(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas.geometry.Brep`
+        :class:`~compas_brep.Brep`
             The Brep representing the volume to be removed from the beam.
 
         """
