@@ -613,9 +613,13 @@ class BirdsMouth(BTLxProcessing):
             raise FeatureApplicationError(cutting_planes, trim_volume, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
 
         try:
-            return geometry - trim_volume
+            result = geometry - trim_volume
         except Exception as e:
             raise FeatureApplicationError(trim_volume, geometry, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
+
+        if len(result) != 1:
+            raise FeatureApplicationError(trim_volume, geometry, "Expected a single resulting solid from the birds mouth cut, got {}.".format(len(result)))
+        return result[0]
 
     def planes_from_params_and_element(self, element:TimberElement) -> list[Plane]:
         """Calculates the two cutting planes from the machining parameters in this instance and the given timber element.
