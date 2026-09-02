@@ -21,6 +21,7 @@ from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -686,7 +687,7 @@ class Lap(BTLxProcessing):
 
         # subtract the lap volume from the beam geometry
         try:
-            return geometry - lap_volume
+            return brep_difference_first(geometry, lap_volume)
         except IndexError:
             raise FeatureApplicationError(
                 lap_volume.transformed(beam.modeltransformation),
@@ -950,7 +951,7 @@ class LapProxy(object):
             scaling_factor = 1 + TOL.approximation
             frame_at_centroid = Frame(self.volume.centroid, self.volume.frame.xaxis, self.volume.frame.yaxis)
             inflated_brep = self.volume.transformed(Scale.from_factors([scaling_factor, scaling_factor, scaling_factor], frame=frame_at_centroid))
-            return geometry - inflated_brep
+            return brep_difference_first(geometry, inflated_brep)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.beam.modeltransformation),

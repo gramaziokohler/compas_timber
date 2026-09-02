@@ -12,6 +12,8 @@ from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.fabrication.btlx import BTLxFromGeometryDefinition
 from compas_timber.fabrication.jack_cut import JackRafterCut
+from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import correct_polyline_direction
 
 
@@ -135,7 +137,7 @@ class BallNodeFastener(Fastener):
         for interface in self.interfaces:
             if self.interface_shape:
                 interface_geometry = self.interface_shape.transformed(Transformation.from_frame(interface.frame))
-                geometry += interface_geometry
+                geometry = brep_union_first(geometry, interface_geometry)
         return geometry
 
     # TODO: implement compute_aabb()
@@ -168,7 +170,7 @@ class BallNodeFastener(Fastener):
         for hole in holes:
             frame = Frame(hole["point"], Vector(1, 0, 0), Vector(0, 1, 0))
             hole = Brep.from_cylinder(Cylinder(hole["diameter"] / 2, thickness * 2, frame))
-            plate -= hole
+            plate = brep_difference_first(plate, hole)
         return plate
 
     @property
@@ -186,5 +188,5 @@ class BallNodeFastener(Fastener):
             if geometries:
                 self._interface_shape = geometries[0]
                 for geometry in geometries[1:]:
-                    self._interface_shape += geometry
+                    self._interface_shape = brep_union_first(self._interface_shape, geometry)
         return self._interface_shape
