@@ -92,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BeamData` dimensions from `float` to `double`, so beam dimensions and frames round-trip bit-exact.
 * Changed the proto IDL layout: `processing.proto` and `building_plan.proto` (written against a demo application) were replaced by the domain-split files above. Since proto has no inheritance, each concrete message carries its whole MRO's `__data__` fields flattened; `guid` and `name` come from the compas serialization envelope and occupy fields 1 and 2 everywhere.
 * Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
-* Fixed `Layer` silently dropping `self.attributes` on every JSON round-trip. Unlike `Beam`/`Panel`/`Plate`, `Layer.__init__` never initialized `self.attributes` and `Layer.__data__` never included it, so any custom attributes set on a `Layer` (e.g. application-level tags) were lost as soon as the owning model was serialized and reloaded.
+* Fixed `Layer` silently dropping `self.attributes` on every JSON round-trip. Unlike `Beam`/`Panel`/`Plate`, `Layer.__init__` never initialized `self.attributes` and `Layer.__data__` never included it, so any custom attributes set on a `Layer` were lost as soon as the owning model was serialized and reloaded.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
