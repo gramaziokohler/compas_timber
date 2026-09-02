@@ -102,11 +102,13 @@ def test_panel_roundtrip(outline):
 
 def test_panel_with_layer_structure_roundtrip(outline):
     panel = Panel.from_outline_thickness(outline, 50.0)
-    panel.layer_structure = LayerStructure([
-        LayerDefinition("exterior", 10.0),
-        LayerDefinition("core", 30.0),
-        LayerDefinition("interior", 10.0),
-    ])
+    panel.layer_structure = LayerStructure(
+        [
+            LayerDefinition("exterior", 10.0),
+            LayerDefinition("core", 30.0),
+            LayerDefinition("interior", 10.0),
+        ]
+    )
     other = assert_lossless(panel)
     assert [d.name for d in other.layer_structure.layer_defs] == ["exterior", "core", "interior"]
 
