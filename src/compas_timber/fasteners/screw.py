@@ -16,6 +16,7 @@ from compas_timber.geometry import brep_union_first
 from .anchor import AnchorKind
 from .fastener import Fastener
 from .fastener import FastenerPart
+from .fastener import FastenerSystem
 
 
 class Screw(FastenerPart):
@@ -179,9 +180,9 @@ class Screw(FastenerPart):
         return f"Screw({self.designation}, name='{self.name}')"
 
 
-class ScrewFastener(Fastener):
+class ScrewFastenerSystem(FastenerSystem):
     """
-    A fastener that consists of one or more screws, placed at every anchor it is bound to.
+    A fastener system that places one or more screws at every anchor it is bound to.
 
     The screws describe a reusable pattern: each screw's own placement frame expresses its position relative to the
     anchor it will be bound to (e.g. an offset within a group of screws), defaulting to the anchor's frame itself.
@@ -189,12 +190,12 @@ class ScrewFastener(Fastener):
     Parameters
     ----------
     screws : list of :class:`Screw`
-        The screws that make up this fastener's pattern.
+        The screws that make up this system's pattern.
 
     Attributes
     ----------
     ACCEPTS : list of :class:`~compas_timber.fasteners.AnchorKind`
-        The kinds of anchor this fastener binds to.
+        The kinds of anchor this system binds to.
     """
 
     ACCEPTS = [AnchorKind.AXIS, AnchorKind.POINT]
@@ -209,29 +210,27 @@ class ScrewFastener(Fastener):
             "screws": [screw.__data__ for screw in self.screws],
         }
 
-    def bind(self, anchors: list) -> "ScrewFastener":
-        """Bind the fastener to a set of anchors, staging a copy of every screw in the pattern at each.
+    def bind(self, anchors: list) -> Fastener:
+        """Build a fastener staging a copy of every screw in the pattern at each of the given anchors.
 
         Parameters
         ----------
         anchors : list of :class:`~compas_timber.fasteners.FastenerAnchor`
-            The anchors to place the screw pattern at. Every anchor must be of a kind this fastener accepts.
+            The anchors to place the screw pattern at. Every anchor must be of a kind this system accepts.
 
         Returns
         -------
-        :class:`~compas_timber.fasteners.ScrewFastener`
-            The fastener itself, for chaining.
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its screws staged and positioned, ready to be added to a model.
 
         Raises
         ------
         ValueError
-            If any of the anchors are not of a kind this fastener accepts.
+            If any of the anchors are not of a kind this system accepts.
         """
-        anchors = list(anchors)
-        wrong = [anchor for anchor in anchors if anchor.kind not in self.ACCEPTS]
-        if wrong:
-            raise ValueError("{} accepts {} anchors, got {}.".format(type(self).__name__, self.ACCEPTS, [anchor.kind for anchor in wrong]))
+        anchors = self._validate_anchors(anchors)
 
+        fastener = Fastener()
         for anchor in anchors:
             anchor_transformation = Transformation.from_frame(anchor.frame)
             for screw in self.screws:
@@ -245,8 +244,8 @@ class ScrewFastener(Fastener):
                 )
                 placed.transformation = anchor_transformation * (screw.transformation or Transformation())
                 placed.elements = list(anchor.elements)
-                self.add_part(placed)
-        return self
+                fastener.add_part(placed)
+        return fastener
 
     def __repr__(self):
-        return f"FastenerScrew(screws={len(self.screws)}, name='{self.name}')"
+        return f"ScrewFastenerSystem(screws={len(self.screws)}, name='{self.name}')"

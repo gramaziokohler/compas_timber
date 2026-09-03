@@ -11,8 +11,12 @@ which kinds of anchor it accepts and how to place its own parts there.
   oriented), a `kind` (see below), and the `elements` (beams) it references.
 * **`AnchorKind`** — the small, stable vocabulary of geometric primitives an anchor can offer: `POINT` (0-D, e.g. a
   ball node), `AXIS` (1-D, e.g. a dowel or screw driven along a line), `FACE` (2-D, e.g. a plate), `VOLUME` (3-D).
-* **`Fastener`** — a container element. It declares `ACCEPTS` (the anchor kind(s) it consumes) and implements
-  `bind(anchors)`, which stages one or more `FastenerPart` children at each accepted anchor.
+* **`FastenerSystem`** — the *design-time recipe* for a fastener (e.g. `DowelFastenerSystem`, `ScrewFastenerSystem`).
+  It declares `ACCEPTS` (the anchor kind(s) it consumes) and implements `bind(anchors)`, which builds and returns a
+  brand-new `Fastener`. A system is plain data, not tied to any model — it can be authored once and bound to as many
+  joints as needed; each `bind()` call produces its own independent fastener.
+* **`Fastener`** — the *resolved*, model-ready container element that `bind()` returns, holding the `FastenerPart`
+  children it staged.
 * **`FastenerPart`** — the actual geometry-bearing piece (a `Dowel`, `Screw`, `RectangularPlate`, `BallNodeCore`, ...).
   A part's placement is expressed relative to its parent; parts can themselves own child parts (e.g. a ball node's
   core owns a rod per beam, and each rod owns a plate).
@@ -20,9 +24,9 @@ which kinds of anchor it accepts and how to place its own parts there.
 A typical usage pattern is therefore:
 
 ```python
-fastener = SomeFastener(...)                                  # 1. build the (joint-agnostic) fastener
+system = SomeFastenerSystem(...)                                # 1. build the (joint-agnostic) fastener system
 anchors = joint.fastener_anchors.of_kind(AnchorKind.SOME_KIND)  # 2. ask the joint for the anchors it accepts
-fastener.bind(anchors)                                          # 3. bind: stages parts at each anchor
+fastener = system.bind(anchors)                                 # 3. bind: builds a fastener with parts at each anchor
 model.add_fastener(fastener, joint.beams)                       # 4. add it to the model
 model.process_joinery()
 model.process_fasteners()                                       # 5. apply fabrication features to the beams
@@ -34,15 +38,15 @@ live viewer are in `examples/fasteners/`.
 
 ## Dowel Fastener
 
-A `DowelFastener` places one cylindrical `Dowel` at every `AXIS` anchor it is bound to, and drills a matching hole
-into the connected beams.
+A `DowelFastenerSystem` places one cylindrical `Dowel` at every `AXIS` anchor it is bound to, and drills a matching
+hole into the connected beams.
 
 ```python
 from compas.geometry import Line
 
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.fasteners import DowelFastener
+from compas_timber.fasteners import DowelFastenerSystem
 from compas_timber.fasteners.anchor import AnchorKind
 from compas_timber.model import TimberModel
 
@@ -56,12 +60,12 @@ model.add_elements([cross_beam, main_beam])
 
 joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=0.01, force_pocket=True)
 
-# WHAT: a joint-agnostic dowel fastener
-fastener = DowelFastener(diameter=0.02, length=0.1)
+# WHAT: a joint-agnostic dowel fastener system
+system = DowelFastenerSystem(diameter=0.02, length=0.1)
 
-# WHERE: the joint publishes its attachment anchors; the fastener binds to the ones it accepts
+# WHERE: the joint publishes its attachment anchors; the system binds to the ones it accepts
 anchors = joint.fastener_anchors.of_kind(AnchorKind.AXIS)
-fastener.bind(anchors)
+fastener = system.bind(anchors)
 
 model.add_fastener(fastener, joint.beams)
 model.process_joinery()
@@ -76,15 +80,15 @@ See `examples/fasteners/example_dowel_fastener.py` for a runnable version with a
 
 ## Plate Fastener
 
-A `PlateFastener` places one `RectangularPlate` at every `FACE` anchor it is bound to. The plate can carry a grid of
-holes and mill a recess into the beam it sits against.
+A `PlateFastenerSystem` places one `RectangularPlate` at every `FACE` anchor it is bound to. The plate can carry a
+grid of holes and mill a recess into the beam it sits against.
 
 ```python
 from compas.geometry import Line
 
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.fasteners import PlateFastener
+from compas_timber.fasteners import PlateFastenerSystem
 from compas_timber.fasteners.anchor import AnchorKind
 from compas_timber.model import TimberModel
 
@@ -97,12 +101,12 @@ model.add_elements([cross_beam, main_beam])
 
 joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=0.01, force_pocket=True, conical_tool=True)
 
-# WHAT: a joint-agnostic plate fastener
-fastener = PlateFastener(width=0.04, height=0.05, thickness=0.005, recess=0.005, recess_offset=0.001)
+# WHAT: a joint-agnostic plate fastener system
+system = PlateFastenerSystem(width=0.04, height=0.05, thickness=0.005, recess=0.005, recess_offset=0.001)
 
-# WHERE: the joint publishes its attachment anchors; the fastener binds to the ones it accepts
+# WHERE: the joint publishes its attachment anchors; the system binds to the ones it accepts
 anchors = joint.fastener_anchors.of_kind(AnchorKind.FACE)
-fastener.bind(anchors)
+fastener = system.bind(anchors)
 
 model.add_fastener(fastener, joint.beams)
 model.process_joinery()
@@ -125,10 +129,10 @@ model's hierarchy tree and interaction graph).
 
 ## Screw Fastener
 
-`Screw` and `ScrewFastener` accept both `AXIS` and `POINT` anchors. A `ScrewFastener` bundles one or more `Screw`
-parts into a reusable pattern: each screw's own `placement_frame` expresses its position *relative to the anchor* it
-will be bound to (an offset within the group), defaulting to the anchor's frame itself when left unset. Calling
-`bind()` stages a copy of every screw in the pattern at each accepted anchor.
+`Screw` and `ScrewFastenerSystem` accept both `AXIS` and `POINT` anchors. A `ScrewFastenerSystem` bundles one or more
+`Screw` parts into a reusable pattern: each screw's own `placement_frame` expresses its position *relative to the
+anchor* it will be bound to (an offset within the group), defaulting to the anchor's frame itself when left unset.
+Calling `bind()` builds a fastener staging a copy of every screw in the pattern at each accepted anchor.
 
 A `Screw` can be built directly, or parsed from a standard designation string with `Screw.from_name` (e.g. `"8x120"`
 or `"Ø8x120"`). It also carries a `precise` flag:
@@ -145,7 +149,7 @@ from compas.geometry import Line
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.fasteners import Screw
-from compas_timber.fasteners import ScrewFastener
+from compas_timber.fasteners import ScrewFastenerSystem
 from compas_timber.fasteners.anchor import AnchorKind
 from compas_timber.model import TimberModel
 
@@ -159,14 +163,14 @@ model.add_elements([cross_beam, main_beam])
 
 joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=0.01, force_pocket=True)
 
-# WHAT: a joint-agnostic screw fastener; a pattern of two screws, offset side by side, comparing `precise`
+# WHAT: a joint-agnostic screw fastener system; a pattern of two screws, offset side by side, comparing `precise`
 screw_simple = Screw(diameter=0.008, length=0.12, placement_frame=Frame([-0.015, 0, 0], [1, 0, 0], [0, 1, 0]))
 screw_precise = Screw(diameter=0.008, length=0.12, precise=True, placement_frame=Frame([0.015, 0, 0], [1, 0, 0], [0, 1, 0]))
-fastener = ScrewFastener([screw_simple, screw_precise])
+system = ScrewFastenerSystem([screw_simple, screw_precise])
 
-# WHERE: the joint publishes its attachment anchors; the fastener binds to the ones it accepts (AXIS or POINT)
+# WHERE: the joint publishes its attachment anchors; the system binds to the ones it accepts (AXIS or POINT)
 anchors = joint.fastener_anchors.of_kind(AnchorKind.AXIS)
-fastener.bind(anchors)
+fastener = system.bind(anchors)
 
 model.add_fastener(fastener, joint.beams)
 model.process_joinery()
@@ -184,10 +188,10 @@ See `examples/fasteners/example_screw_fastener.py` for a runnable version.
 
 ## Ball Node Fastener
 
-A `BallNodeFastener` binds to a single `POINT` anchor and stages a nested hierarchy of parts that mirrors the
-physical assembly: a central `BallNodeCore` owns one `BallNodeRod` per beam meeting at the node, and each rod owns a
-`BallNodePlate` that bolts against the beam's end face. `BallNodeJoint` is what publishes that `POINT` anchor, so it
-takes as many beams as meet at the node (not just two).
+A `BallNodeFastenerSystem` binds to a single `POINT` anchor and builds a fastener with a nested hierarchy of parts
+that mirrors the physical assembly: a central `BallNodeCore` owns one `BallNodeRod` per beam meeting at the node, and
+each rod owns a `BallNodePlate` that bolts against the beam's end face. `BallNodeJoint` is what publishes that
+`POINT` anchor, so it takes as many beams as meet at the node (not just two).
 
 ```python
 from compas.geometry import Line

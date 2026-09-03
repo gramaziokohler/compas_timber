@@ -3,71 +3,22 @@ from __future__ import annotations
 from typing import List
 from typing import Optional
 
+from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Transformation
 from compas_model.elements import Element
 
 
-class PartContainer:
-    """Mixin adding nested part staging and subtree traversal to fastener elements.
-
-    Both :class:`Fastener` and :class:`FastenerPart` can own child parts, so a fastener's anatomy can be a *tree* rather
-    than a flat list (e.g. a ball node owns a core, the core owns rods, each rod owns a plate). Before the owning element
-    is added to a model, children are staged in a plain list; once in the model they live in the model tree as
-    ``children``. Either way, :attr:`parts` exposes the direct children and :attr:`all_parts` walks the whole subtree.
-
-    The placement of every part is expressed by its element ``transformation`` *relative to its parent*; the model tree
-    composes those into each part's ``modeltransformation``.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._parts = []  # staging area for child parts before this element is added to a model
-
-    @property
-    def parts(self) -> List["FastenerPart"]:
-        """The direct child parts: the model-tree children once in a model, otherwise the staged parts."""
-        if self.model is not None:
-            return list(self.children)
-        return self._parts
-
-    @property
-    def all_parts(self) -> List["FastenerPart"]:
-        """All descendant parts of this element, depth-first (children, grandchildren, ...)."""
-        collected = []
-        for part in self.parts:
-            collected.append(part)
-            collected.extend(part.all_parts)
-        return collected
-
-    def add_part(self, part: "FastenerPart") -> "FastenerPart":
-        """Stage a part as a direct child of this element.
-
-        The part is held in a staging area until the owning fastener is added to a model, at which point the model moves
-        the whole staged subtree into the tree (``model.add_element(part, parent=this)``).
-
-        Parameters
-        ----------
-        part : :class:`~compas_timber.elements.FastenerPart`
-            The part to stage as a child.
-
-        Returns
-        -------
-        :class:`~compas_timber.elements.FastenerPart`
-            The added part, for chaining.
-        """
-        self._parts.append(part)
-        return part
-
-
-class FastenerPart(PartContainer, Element):
+class FastenerPart(Element):
     """Base class for the parts that make up a :class:`~compas_timber.elements.Fastener`.
 
     A part is a non-timber :class:`~compas_model.elements.Element`. In a model it lives as a child of its parent (the
     fastener, or another part) in the model tree, and its placement is expressed by the element ``transformation``
-    relative to that parent rather than a stored world frame. A part may itself own child parts (see
-    :class:`PartContainer`). Besides carrying its own geometry, a part may emit fabrication features onto the timber
-    elements its fastener connects (see :meth:`apply_fastening_features`).
+    relative to that parent rather than a stored world frame. A part may itself own child parts, so a fastener's
+    anatomy can be a *tree* rather than a flat list (e.g. a ball node owns a core, the core owns rods, each rod owns a
+    plate) - :attr:`parts` exposes the direct children and :attr:`all_parts` walks the whole subtree. Besides
+    carrying its own geometry, a part may emit fabrication features onto the timber elements its fastener connects
+    (see :meth:`apply_fastening_features`).
 
     Parameters
     ----------
@@ -84,6 +35,7 @@ class FastenerPart(PartContainer, Element):
     def __init__(self, frame: Optional[Frame] = None, element_guids: Optional[List[str]] = None, **kwargs):
         transformation = Transformation.from_frame(frame) if frame is not None else None
         super().__init__(transformation=transformation, **kwargs)
+        self._parts = []  # staging area for child parts before this part is added to a model
         # the elements this part actually applies to (as opposed to every element the fastener as a whole connects),
         # set by the fastener's `bind()` from the anchor's `elements`; restored from `element_guids` after model
         # deserialization, since elements aren't available yet when the part itself is reconstructed
@@ -92,8 +44,43 @@ class FastenerPart(PartContainer, Element):
         # the fabrication features this part has added to `elements` via `apply_fastening_features()` (e.g. a
         # plate's recess Pocket, a dowel's Drilling) - mirrors `Joint.features`, so a viewer can show/hide just
         # the features a specific fastener part is responsible for. Not called `features` - `Element` (this
-        # class's base, via `PartContainer`) already reserves that name for the part's *own* features.
+        # class's base) already reserves that name for the part's *own* features.
         self.applied_features = []
+
+    @property
+    def parts(self) -> List["FastenerPart"]:
+        """The direct child parts: the model-tree children once in a model, otherwise the staged parts."""
+        if self.model is not None:
+            return list(self.children)
+        return self._parts
+
+    @property
+    def all_parts(self) -> List["FastenerPart"]:
+        """All descendant parts of this part, depth-first (children, grandchildren, ...)."""
+        collected = []
+        for part in self.parts:
+            collected.append(part)
+            collected.extend(part.all_parts)
+        return collected
+
+    def add_part(self, part: "FastenerPart") -> "FastenerPart":
+        """Stage a part as a direct child of this part.
+
+        The part is held in a staging area until the owning fastener is added to a model, at which point the model moves
+        the whole staged subtree into the tree (``model.add_element(part, parent=this)``).
+
+        Parameters
+        ----------
+        part : :class:`~compas_timber.elements.FastenerPart`
+            The part to stage as a child.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.FastenerPart`
+            The added part, for chaining.
+        """
+        self._parts.append(part)
+        return part
 
     @property
     def placement_frame(self) -> Frame:
@@ -139,16 +126,20 @@ class FastenerPart(PartContainer, Element):
         pass
 
 
-class Fastener(PartContainer, Element):
+class Fastener(Element):
     """A connector element (screws, dowels, plates, ...) joining two or more timber elements.
 
-    A fastener is a non-timber :class:`~compas_model.elements.Element` that acts as a container: it orchestrates the
-    creation of its :class:`~compas_timber.elements.FastenerPart` parts and, once added to a model, holds them in the
-    model tree. The parts may form a nested hierarchy (see :class:`PartContainer`); the fastener itself has no geometry
-    of its own, its geometry is the aggregation of the whole part subtree.
+    A fastener is a non-timber :class:`~compas_model.elements.Element` that acts as a container: it holds the
+    :class:`~compas_timber.elements.FastenerPart` parts that make up its physical anatomy, once in a model, in the
+    model tree. The parts may form a nested hierarchy (a part can own child parts); the fastener itself has no
+    geometry of its own, its geometry is the aggregation of the whole part subtree.
 
-    Before the fastener is added to a model, parts are staged with :meth:`add_part`. When the model adds the fastener it
-    moves the staged subtree into the tree (``model.add_element(part, parent=...)``).
+    A ``Fastener`` is the *resolved*, model-ready element: it represents one specific occurrence of a fastener at one
+    place in the model, built either directly (staging parts with :meth:`add_part`, e.g. for a custom
+    :class:`~compas_timber.elements.GeometryPart`-based fastener) or by a :class:`~compas_timber.fasteners.FastenerSystem`'s
+    :meth:`~compas_timber.fasteners.FastenerSystem.bind`, which returns a fresh ``Fastener`` per call. Before the
+    fastener is added to a model, parts are staged in a plain list; when the model adds the fastener it moves the
+    staged subtree into the tree (``model.add_element(part, parent=...)``).
 
     Parameters
     ----------
@@ -172,6 +163,42 @@ class Fastener(PartContainer, Element):
     def __init__(self, frame: Optional[Frame] = None, **kwargs):
         transformation = Transformation.from_frame(frame) if frame is not None else None
         super().__init__(transformation=transformation, **kwargs)
+        self._parts = []  # staging area for child parts before this fastener is added to a model
+
+    @property
+    def parts(self) -> List["FastenerPart"]:
+        """The direct child parts: the model-tree children once in a model, otherwise the staged parts."""
+        if self.model is not None:
+            return list(self.children)
+        return self._parts
+
+    @property
+    def all_parts(self) -> List["FastenerPart"]:
+        """All descendant parts of this fastener, depth-first (children, grandchildren, ...)."""
+        collected = []
+        for part in self.parts:
+            collected.append(part)
+            collected.extend(part.all_parts)
+        return collected
+
+    def add_part(self, part: "FastenerPart") -> "FastenerPart":
+        """Stage a part as a direct child of this fastener.
+
+        The part is held in a staging area until the fastener is added to a model, at which point the model moves
+        the whole staged subtree into the tree (``model.add_element(part, parent=this)``).
+
+        Parameters
+        ----------
+        part : :class:`~compas_timber.elements.FastenerPart`
+            The part to stage as a child.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.FastenerPart`
+            The added part, for chaining.
+        """
+        self._parts.append(part)
+        return part
 
     @property
     def placement_frame(self) -> Frame:
@@ -206,7 +233,68 @@ class Fastener(PartContainer, Element):
         """Apply the fabrication features generated by the parts to the elements each part applies to.
 
         Every part in the subtree is given the chance to machine the elements referenced by its own :attr:`FastenerPart.elements`
-        (set during :meth:`bind`), rather than every element this fastener connects as a whole.
+        (set during binding), rather than every element this fastener connects as a whole.
         """
         for part in self.all_parts:
             part.apply_fastening_features()
+
+
+class FastenerSystem(Data):
+    """The design-time recipe for a fastener: what a fastener designer authors and reuses across joints.
+
+    A system is joint-agnostic: it declares the kind(s) of :class:`~compas_timber.fasteners.FastenerAnchor` it
+    consumes (:attr:`ACCEPTS`) and knows how to build a fastener's parts from a set of anchors of that kind. It is
+    plain data - not a :class:`~compas_model.elements.Element` - so it carries no guid and is never itself added to a
+    model; it can be authored once and bound to as many joints as needed.
+
+    :meth:`bind` is a pure factory: given a set of anchors, it returns a brand-new, fully-built
+    :class:`~compas_timber.elements.Fastener` ready to be passed to
+    :meth:`~compas_timber.model.TimberModel.add_fastener`. It never mutates the system itself, so the same system
+    instance can be bound to multiple joints independently, and mutating it afterwards cannot retroactively affect a
+    fastener it already produced.
+
+    Attributes
+    ----------
+    ACCEPTS : list[:class:`~compas_timber.fasteners.AnchorKind`]
+        The kinds of anchor this system binds to. Set by subclasses.
+    """
+
+    ACCEPTS: List = []
+
+    def _validate_anchors(self, anchors: list) -> list:
+        """Check that every anchor is of a kind this system accepts, returning them as a list.
+
+        Parameters
+        ----------
+        anchors : list of :class:`~compas_timber.fasteners.FastenerAnchor`
+            The anchors to validate.
+
+        Returns
+        -------
+        list of :class:`~compas_timber.fasteners.FastenerAnchor`
+
+        Raises
+        ------
+        ValueError
+            If any of the anchors are not of a kind this system accepts.
+        """
+        anchors = list(anchors)
+        wrong = [anchor for anchor in anchors if anchor.kind not in self.ACCEPTS]
+        if wrong:
+            raise ValueError("{} accepts {} anchors, got {}.".format(type(self).__name__, self.ACCEPTS, [anchor.kind for anchor in wrong]))
+        return anchors
+
+    def bind(self, anchors: list) -> "Fastener":
+        """Build a fastener from this system's recipe, placed at the given anchors.
+
+        Parameters
+        ----------
+        anchors : list of :class:`~compas_timber.fasteners.FastenerAnchor`
+            The anchors to place the fastener's parts at. Every anchor must be of a kind this system accepts.
+
+        Returns
+        -------
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its parts staged and positioned, ready to be added to a model.
+        """
+        raise NotImplementedError

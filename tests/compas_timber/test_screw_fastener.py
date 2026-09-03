@@ -8,9 +8,10 @@ from compas.geometry import Point
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
+from compas_timber.fasteners import Fastener
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.fasteners import Screw
-from compas_timber.fasteners import ScrewFastener
+from compas_timber.fasteners import ScrewFastenerSystem
 from compas_timber.model import TimberModel
 
 
@@ -92,48 +93,63 @@ def test_screw_deserialization():
     assert rec_screw.head_length == screw.head_length
 
 
-def test_screw_fastener_accepts_axis_and_point():
-    assert AnchorKind.AXIS in ScrewFastener.ACCEPTS
-    assert AnchorKind.POINT in ScrewFastener.ACCEPTS
+def test_screw_fastener_system_accepts_axis_and_point():
+    assert AnchorKind.AXIS in ScrewFastenerSystem.ACCEPTS
+    assert AnchorKind.POINT in ScrewFastenerSystem.ACCEPTS
 
 
-def test_screw_fastener_rejects_wrong_anchor_kind():
-    fastener = ScrewFastener([Screw(diameter=6, length=50)])
+def test_screw_fastener_system_rejects_wrong_anchor_kind():
+    system = ScrewFastenerSystem([Screw(diameter=6, length=50)])
     anchor = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.FACE, elements=[])
 
     with pytest.raises(ValueError):
-        fastener.bind([anchor])
+        system.bind([anchor])
 
 
-def test_screw_fastener_bind_places_the_whole_pattern_at_each_anchor():
+def test_screw_fastener_system_bind_places_the_whole_pattern_at_each_anchor():
     screws = [Screw(diameter=6, length=50), Screw(diameter=6, length=50, placement_frame=Frame(Point(5, 0, 0), [1, 0, 0], [0, 1, 0]))]
-    fastener = ScrewFastener(screws)
+    system = ScrewFastenerSystem(screws)
 
     anchor_a = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.AXIS, elements=[])
     anchor_b = FastenerAnchor(frame=Frame(Point(0, 0, 100), [1, 0, 0], [0, 1, 0]), kind=AnchorKind.AXIS, elements=[])
-    fastener.bind([anchor_a, anchor_b])
+    fastener = system.bind([anchor_a, anchor_b])
 
     assert len(fastener.parts) == len(screws) * 2
     assert all(isinstance(part, Screw) for part in fastener.parts)
 
 
-def test_screw_fastener_bind_offsets_pattern_by_screw_placement_frame():
+def test_screw_fastener_system_bind_offsets_pattern_by_screw_placement_frame():
     offset_frame = Frame(Point(5, 0, 0), [1, 0, 0], [0, 1, 0])
-    fastener = ScrewFastener([Screw(diameter=6, length=50, placement_frame=offset_frame)])
+    system = ScrewFastenerSystem([Screw(diameter=6, length=50, placement_frame=offset_frame)])
     anchor = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.AXIS, elements=[])
 
-    fastener.bind([anchor])
+    fastener = system.bind([anchor])
 
     assert fastener.parts[0].frame.point == offset_frame.point
 
 
-def test_screw_fastener_bind_accepts_point_anchor():
-    fastener = ScrewFastener([Screw(diameter=6, length=50)])
+def test_screw_fastener_system_bind_accepts_point_anchor():
+    system = ScrewFastenerSystem([Screw(diameter=6, length=50)])
     anchor = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.POINT, elements=[])
 
-    fastener.bind([anchor])
+    fastener = system.bind([anchor])
 
     assert len(fastener.parts) == 1
+
+
+def test_screw_fastener_system_bind_is_reusable_across_multiple_binds():
+    system = ScrewFastenerSystem([Screw(diameter=6, length=50)])
+    anchor_a = FastenerAnchor(frame=Frame.worldXY(), kind=AnchorKind.AXIS, elements=[])
+    anchor_b = FastenerAnchor(frame=Frame(Point(0, 0, 100), [1, 0, 0], [0, 1, 0]), kind=AnchorKind.AXIS, elements=[])
+
+    fastener_a = system.bind([anchor_a])
+    fastener_b = system.bind([anchor_b])
+
+    # each bind() produces its own independent fastener; neither shares parts with the other
+    assert fastener_a is not fastener_b
+    assert len(fastener_a.parts) == 1
+    assert len(fastener_b.parts) == 1
+    assert fastener_a.parts[0] is not fastener_b.parts[0]
 
 
 def test_screw_fastener_applies_drilling_features():
@@ -144,8 +160,8 @@ def test_screw_fastener_applies_drilling_features():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
-    fastener = ScrewFastener([Screw(diameter=6, length=50)])
-    fastener.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
+    system = ScrewFastenerSystem([Screw(diameter=6, length=50)])
+    fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
     model.add_fastener(fastener, joint.beams)
 
     model.process_fasteners()
@@ -162,15 +178,15 @@ def test_screw_fastener_model_deserialization():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=10)
 
-    fastener = ScrewFastener([Screw(diameter=8, length=100, precise=True)])
-    fastener.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
+    system = ScrewFastenerSystem([Screw(diameter=8, length=100, precise=True)])
+    fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.AXIS))
     model.add_fastener(fastener, joint.beams)
 
     reconstructed_model = json_loads(json_dumps(model))
 
     rec_fasteners = list(reconstructed_model.fasteners)
     assert len(rec_fasteners) == 1
-    assert isinstance(rec_fasteners[0], ScrewFastener)
+    assert isinstance(rec_fasteners[0], Fastener)
     assert len(rec_fasteners[0].parts) == len(fastener.parts)
     assert all(isinstance(part, Screw) for part in rec_fasteners[0].parts)
     assert rec_fasteners[0].parts[0].precise is True

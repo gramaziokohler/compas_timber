@@ -1,8 +1,8 @@
 """Ball-node fastener on a group of 6 beams, with the same tree/graph visualization as ``plate_fasteners.py``.
 
 Six beams radiate from a common node (the +x/+y/+z/-x/-y/-z directions). A ``BallNodeJoint`` publishes a single POINT
-anchor at the node; a joint-agnostic ``BallNodeFastener`` binds to it and builds one fastener for the whole node: a
-central ball plus a rod and a plate per beam -- 13 part-elements in total.
+anchor at the node; a joint-agnostic ``BallNodeFastenerSystem`` binds to it and builds one fastener for the whole
+node: a central ball plus a rod and a plate per beam -- 13 part-elements in total.
 
 The two floating boards make visible how much the model's two data structures grow:
 

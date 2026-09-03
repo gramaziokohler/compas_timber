@@ -13,6 +13,7 @@ from compas_timber.fabrication import Drilling
 from .anchor import AnchorKind
 from .fastener import Fastener
 from .fastener import FastenerPart
+from .fastener import FastenerSystem
 
 
 class Dowel(FastenerPart):
@@ -96,9 +97,9 @@ class Dowel(FastenerPart):
             self.applied_features.append(drilling)
 
 
-class DowelFastener(Fastener):
+class DowelFastenerSystem(FastenerSystem):
     """
-    A fastener consisitng of one dowel per anchor, placed on the axis a joint expososes.
+    A fastener system placing one dowel per anchor, on the axis a joint exposes.
 
     Parameters
     ----------
@@ -109,52 +110,50 @@ class DowelFastener(Fastener):
 
     Attributes
     ----------
-    ACCEPTS: :class:`~compas_timber.fasteners.AnchorKind`
-        The kind of anchor this fastener binds to.
+    ACCEPTS: list of :class:`~compas_timber.fasteners.AnchorKind`
+        The kinds of anchor this system binds to.
     """
 
-    ACCEPTS = AnchorKind.AXIS
+    ACCEPTS = [AnchorKind.AXIS]
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["diameter"] = self.diameter
-        data["length"] = self.length
-        return data
+        return {
+            "diameter": self.diameter,
+            "length": self.length,
+        }
 
     def __init__(self, diameter: float, length: float, **kwargs):
         super().__init__(**kwargs)
         self.diameter = diameter
         self.length = length
 
-    def bind(self, anchors: list) -> DowelFastener:
-        """Binds the `DowelFastener` to a set of anchors. Stages one `DowelPart` at each.
+    def bind(self, anchors: list) -> Fastener:
+        """Build a fastener staging one dowel at each of the given anchors.
 
         Parameters
         ----------
         anchors: list of :class:`~compas_timber.fasteners.FastenerAnchor`
-            The anchors to placte th plate at. Every anchor must be of the kinf this fastener accepts.
+            The anchors to place the dowel at. Every anchor must be of a kind this system accepts.
 
         Returns
         -------
-        "class:`~compas_timber.fasteners.DowelFastener`
-            The fatener itself, dor chaining.
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its dowels staged and positioned, ready to be added to a model.
 
         Raises
         ------
         ValueError
-            If any of the anchors are not of the kind this fastener accepts.
+            If any of the anchors are not of a kind this system accepts.
 
         """
-        anchors = list(anchors)
-        wrong = [anchor for anchor in anchors if anchor.kind is not self.ACCEPTS]
-        if wrong:
-            raise ValueError("{} accepts {} anchors, got {}.".format(type(self).__name__, self.ACCEPTS, [anchor.kind for anchor in wrong]))
+        anchors = self._validate_anchors(anchors)
 
         # one dowel per anchor
+        fastener = Fastener()
         for anchor in anchors:
             dowel = Dowel(self.diameter, self.length)
             dowel.transform(Transformation.from_frame(anchor.frame))
             dowel.elements = list(anchor.elements)
-            self.add_part(dowel)
-        return self
+            fastener.add_part(dowel)
+        return fastener

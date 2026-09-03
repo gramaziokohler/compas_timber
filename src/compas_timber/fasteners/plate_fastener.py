@@ -20,6 +20,7 @@ from compas_timber.geometry import brep_difference_first
 from .anchor import AnchorKind
 from .fastener import Fastener
 from .fastener import FastenerPart
+from .fastener import FastenerSystem
 
 
 def beam_ref_side_incidence_vector(beam, vector, ignore_ends=True):
@@ -327,12 +328,12 @@ class PlateHole(Data):
         return line
 
 
-class PlateFastener(Fastener):
-    """A fastener consisting of one rectangular plate per anchor, placed on the faces a joint exposes.
+class PlateFastenerSystem(FastenerSystem):
+    """A fastener system placing one rectangular plate per anchor, on the faces a joint exposes.
 
     This is the "what" half of the anchor-based fastener system: it is joint-agnostic. It declares the kind of anchor it
-    consumes (``FACE``) and, when bound to a set of anchors, stages one plate part at each of them (repeat-per-anchor
-    cardinality). The plate parts become children of the fastener once it is added to a model.
+    consumes (``FACE``) and, when bound to a set of anchors, builds a fastener with one plate part at each of them
+    (repeat-per-anchor cardinality).
 
     Parameters
     ----------
@@ -349,57 +350,55 @@ class PlateFastener(Fastener):
 
     Attributes
     ----------
-    ACCEPTS : :class:`~compas_timber.fasteners.AnchorKind`
-        The kind of anchor this fastener binds to.
+    ACCEPTS : list of :class:`~compas_timber.fasteners.AnchorKind`
+        The kinds of anchor this system binds to.
     """
 
-    ACCEPTS = AnchorKind.FACE
+    ACCEPTS = [AnchorKind.FACE]
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["width"] = self.width
-        data["height"] = self.height
-        data["thickness"] = self.thickness
-        data["recess"] = self.recess
-        data["recess_offset"] = self.recess_offset
-        return data
+        return {
+            "width": self.width,
+            "height": self.height,
+            "thickness": self.thickness,
+            "recess": self.recess,
+            "recess_offset": self.recess_offset,
+        }
 
     def __init__(self, width: float, height: float, thickness: float, recess: float = 0.0, recess_offset: float = 0.0, **kwargs):
-        super(PlateFastener, self).__init__(**kwargs)
+        super(PlateFastenerSystem, self).__init__(**kwargs)
         self.width = width
         self.height = height
         self.thickness = thickness
         self.recess = recess
         self.recess_offset = recess_offset
 
-    def bind(self, anchors: list) -> "PlateFastener":
-        """Bind the fastener to a set of anchors, staging one plate part at each.
+    def bind(self, anchors: list) -> Fastener:
+        """Build a fastener staging one plate part at each of the given anchors.
 
         Parameters
         ----------
         anchors : list of :class:`~compas_timber.fasteners.FastenerAnchor`
-            The anchors to place the plate at. Every anchor must be of the kind this fastener accepts.
+            The anchors to place the plate at. Every anchor must be of a kind this system accepts.
 
         Returns
         -------
-        :class:`~compas_timber.fasteners.PlateFastener`
-            The fastener itself, for chaining.
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its plates staged and positioned, ready to be added to a model.
 
         Raises
         ------
         ValueError
-            If any anchor is not of the accepted kind.
+            If any anchor is not of an accepted kind.
         """
-        anchors = list(anchors)
-        wrong = [anchor for anchor in anchors if anchor.kind is not self.ACCEPTS]
-        if wrong:
-            raise ValueError("{} accepts {} anchors, got {}.".format(type(self).__name__, self.ACCEPTS, [anchor.kind for anchor in wrong]))
+        anchors = self._validate_anchors(anchors)
 
         # one plate part is staged per anchor (repetition, not spanning)
+        fastener = Fastener()
         for anchor in anchors:
             plate = RectangularPlate(width=self.width, height=self.height, thickness=self.thickness, recess=self.recess, recess_offset=self.recess_offset)
             plate.transformation = Transformation.from_frame(anchor.frame)
             plate.elements = list(anchor.elements)
-            self.add_part(plate)
-        return self
+            fastener.add_part(plate)
+        return fastener

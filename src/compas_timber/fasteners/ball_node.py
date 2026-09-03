@@ -9,7 +9,6 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Sphere
-from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_brep import Brep
 
@@ -19,6 +18,7 @@ from compas_timber.fabrication import Slot
 from .anchor import AnchorKind
 from .fastener import Fastener
 from .fastener import FastenerPart
+from .fastener import FastenerSystem
 
 
 class BallNodeCore(FastenerPart):
@@ -211,7 +211,7 @@ class BallNodePlate(FastenerPart):
 
 
 class BallNodeFastenerParameters(Data):
-    """The parameters that shape a :class:`BallNodeFastener`.
+    """The parameters that shape a :class:`BallNodeFastenerSystem`.
 
     This is the design intent of the fastener, kept separate from the fastener so it can be authored on the joint (and
     passed through :meth:`~compas_timber.connections.BallNodeJoint.create`) without the joint touching the fastener's
@@ -248,12 +248,12 @@ class BallNodeFastenerParameters(Data):
         self.plate_depth = plate_depth
 
 
-class BallNodeFastener(Fastener):
-    """A fastener that ties the ends of several beams together through a central ball node.
+class BallNodeFastenerSystem(FastenerSystem):
+    """A fastener system that ties the ends of several beams together through a central ball node.
 
     This is the "what" half of the anchor-based fastener system for the ball node: it is joint-agnostic and binds to a
-    single ``POINT`` anchor (the node where the beams meet). When bound, it stages a nested part hierarchy that mirrors
-    the physical assembly:
+    single ``POINT`` anchor (the node where the beams meet). When bound, it builds a fastener with a nested part
+    hierarchy that mirrors the physical assembly:
 
     * the fastener owns a central :class:`BallNodeCore` (the *core*),
     * the core owns one :class:`BallNodeRod` per beam,
@@ -271,24 +271,22 @@ class BallNodeFastener(Fastener):
     ----------
     parameters : :class:`BallNodeFastenerParameters`
         The parameters shaping the fastener.
-    ACCEPTS : :class:`~compas_timber.fasteners.AnchorKind`
-        The kind of anchor this fastener binds to (``POINT``).
+    ACCEPTS : list of :class:`~compas_timber.fasteners.AnchorKind`
+        The kinds of anchor this system binds to (``POINT``).
     """
 
-    ACCEPTS = AnchorKind.POINT
+    ACCEPTS = [AnchorKind.POINT]
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["parameters"] = self.parameters
-        return data
+        return {"parameters": self.parameters}
 
     def __init__(self, parameters: Optional[BallNodeFastenerParameters] = None, **kwargs):
         super().__init__(**kwargs)
         self.parameters = parameters if parameters is not None else BallNodeFastenerParameters()
 
-    def bind(self, anchors: list) -> "BallNodeFastener":
-        """Bind the fastener to the joint's node anchor, staging the core/rods/plates hierarchy.
+    def bind(self, anchors: list) -> Fastener:
+        """Build a fastener at the joint's node anchor, staging the core/rods/plates hierarchy.
 
         Parameters
         ----------
@@ -298,16 +296,16 @@ class BallNodeFastener(Fastener):
 
         Returns
         -------
-        :class:`~compas_timber.fasteners.BallNodeFastener`
-            The fastener itself, for chaining.
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its core/rods/plates hierarchy staged and positioned, ready to be added to a model.
 
         Raises
         ------
         ValueError
             If the anchors are not a single anchor of the accepted kind.
         """
-        anchors = list(anchors)
-        if len(anchors) != 1 or anchors[0].kind is not self.ACCEPTS:
+        anchors = self._validate_anchors(anchors)
+        if len(anchors) != 1:
             raise ValueError("{} binds to exactly one {} anchor, got {}.".format(type(self).__name__, self.ACCEPTS, [anchor.kind for anchor in anchors]))
 
         anchor = anchors[0]
@@ -316,11 +314,11 @@ class BallNodeFastener(Fastener):
         params = self.parameters
 
         # the fastener sits at the node; every part below is placed relative to it
-        self.transformation = Transformation.from_frame(anchor.frame)
+        fastener = Fastener(frame=anchor.frame)
 
         # the core sits at the fastener origin (identity relative to the fastener)
         core = BallNodeCore(diameter=params.ball_diameter)
-        self.add_part(core)
+        fastener.add_part(core)
 
         for beam in beams:
             rod_direction = beam.centerline.direction
@@ -347,7 +345,7 @@ class BallNodeFastener(Fastener):
             plate.elements = [beam]
             rod.add_part(plate)
 
-        return self
+        return fastener
 
     @staticmethod
     def _beam_points_outwards(beam, node_point: Point) -> bool:

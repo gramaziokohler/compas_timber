@@ -6,8 +6,8 @@ from compas.geometry import intersection_line_line
 
 from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
-from compas_timber.fasteners import BallNodeFastener
 from compas_timber.fasteners import BallNodeFastenerParameters
+from compas_timber.fasteners import BallNodeFastenerSystem
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.fasteners import FastenerAnchors
 from compas_timber.utils import intersection_line_line_param
@@ -22,9 +22,9 @@ class BallNodeJoint(Joint):
     Please use `BallNodeJoint.create()` to properly create an instance of this class and associate it with an model.
 
     The joint only describes *where* the beams meet; it does not build the fastener. It publishes a single ``POINT``
-    anchor at the node (see :attr:`fastener_anchors`) that a joint-agnostic fastener (e.g.
-    :class:`~compas_timber.fasteners.BallNodeFastener`) binds to. This keeps the joint decoupled from any particular
-    fastener implementation.
+    anchor at the node (see :attr:`fastener_anchors`) that a joint-agnostic fastener system (e.g.
+    :class:`~compas_timber.fasteners.BallNodeFastenerSystem`) binds to. This keeps the joint decoupled from any
+    particular fastener implementation.
 
     Parameters
     ----------
@@ -65,8 +65,8 @@ class BallNodeJoint(Joint):
         """Create the joint in ``model`` together with its ball-node fastener.
 
         A ball node joint only makes sense with a ball-node fastener, so ``create`` always builds and attaches one. The
-        joint stays decoupled from the fastener's internals: it hands the fastener its published anchors and lets the
-        fastener build itself from the given ``parameters``.
+        joint stays decoupled from the fastener's internals: it hands the fastener system its published anchors and
+        lets the system build the fastener from the given ``parameters``.
 
         Parameters
         ----------
@@ -88,8 +88,8 @@ class BallNodeJoint(Joint):
         joint = cls(*elements, parameters=parameters, **kwargs)
         model.add_joint(joint)
 
-        fastener = BallNodeFastener(parameters=joint.parameters)
-        fastener.bind(joint.fastener_anchors.of_kind(fastener.ACCEPTS))
+        system = BallNodeFastenerSystem(parameters=joint.parameters)
+        fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.POINT))
         model.add_fastener(fastener, joint.beams)
         return joint
 

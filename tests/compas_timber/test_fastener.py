@@ -11,7 +11,7 @@ from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import Fastener
 from compas_timber.fasteners import GeometryPart
-from compas_timber.fasteners import PlateFastener
+from compas_timber.fasteners import PlateFastenerSystem
 from compas_timber.model import TimberModel
 
 
@@ -81,15 +81,15 @@ def test_model_deserialization():
 
     joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=10)
 
-    fastener = PlateFastener(width=40, height=50, thickness=5, recess=5, recess_offset=1)
-    fastener.bind(joint.fastener_anchors.of_kind(AnchorKind.FACE))
+    system = PlateFastenerSystem(width=40, height=50, thickness=5, recess=5, recess_offset=1)
+    fastener = system.bind(joint.fastener_anchors.of_kind(AnchorKind.FACE))
     model.add_fastener(fastener, joint.beams)
 
     reconstructed_model = json_loads(json_dumps(model))
 
     rec_fasteners = list(reconstructed_model.fasteners)
     assert len(rec_fasteners) == 1
-    assert isinstance(rec_fasteners[0], PlateFastener)
+    assert isinstance(rec_fasteners[0], Fastener)
     # the parts survive as children of the fastener in the reconstructed model tree
     assert len(rec_fasteners[0].parts) == 2
     from compas_timber.fasteners import RectangularPlate

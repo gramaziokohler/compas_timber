@@ -360,7 +360,7 @@ classDiagram
          +beams : list[Beam]
          +_beam_guids : list[str]
          +ball_diameter : float
-         +fastener : BallNodeFastener
+         +fastener : Fastener
          +SUPPORTED_TOPOLOGY = TOPO_Y
          +MAX_ELEMENT_COUNT = None
          +fastener_guid : str

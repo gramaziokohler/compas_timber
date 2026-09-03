@@ -28,7 +28,7 @@ from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import Fastener
 from compas_timber.fasteners import FastenerPart
-from compas_timber.fasteners import PlateFastener
+from compas_timber.fasteners import PlateFastenerSystem
 from compas_timber.model import TimberModel
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -238,12 +238,12 @@ model.add_elements([cross_beam, main_beam])
 joint = TButtJoint.create(model, main_beam, cross_beam, mill_depth=0.01, force_pocket=True, conical_tool=True)
 
 
-# WHAT: a joint-agnostic plate fastener
-fastener = PlateFastener(width=0.04, height=0.05, thickness=0.005, recess=0.005, recess_offset=0.001)
+# WHAT: a joint-agnostic plate fastener system
+system = PlateFastenerSystem(width=0.04, height=0.05, thickness=0.005, recess=0.005, recess_offset=0.001)
 
-# WHERE: the joint publishes its attachment anchors; the fastener binds to the ones it accepts
+# WHERE: the joint publishes its attachment anchors; the system binds to the ones it accepts
 anchors = joint.fastener_anchors.of_kind(AnchorKind.FACE)
-fastener.bind(anchors)
+fastener = system.bind(anchors)
 
 
 model.add_fastener(fastener, joint.beams)

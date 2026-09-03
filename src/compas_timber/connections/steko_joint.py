@@ -11,7 +11,7 @@ from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import FastenerAnchor
 from compas_timber.fasteners import FastenerAnchors
-from compas_timber.fasteners import StekoFastener
+from compas_timber.fasteners import StekoFastenerSystem
 from compas_timber.fasteners import StekoJointType
 
 from .joint import Joint
@@ -59,8 +59,8 @@ class StekoJoint(Joint):
         joint = cls(steko_column, *steko_beams, **kwargs)
         model.add_joint(joint)
 
-        fastener = StekoFastener()
-        fastener.bind(joint.fastener_anchors, joint_type=joint.joint_type)
+        system = StekoFastenerSystem()
+        fastener = system.bind(joint.fastener_anchors, joint_type=joint.joint_type)
         model.add_fastener(fastener, joint.beams)
         return joint
 

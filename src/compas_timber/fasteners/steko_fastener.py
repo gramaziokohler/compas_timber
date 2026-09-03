@@ -18,13 +18,14 @@ from .anchor import AnchorKind
 from .dowel import Dowel
 from .fastener import Fastener
 from .fastener import FastenerPart
+from .fastener import FastenerSystem
 
 
 class StekoJointType:
     """The anatomy of a :class:`~compas_timber.connections.StekoJoint`: how many beams meet the column and how.
 
     Published by the joint (see :attr:`~compas_timber.connections.StekoJoint.joint_type`) and consumed by
-    :meth:`StekoFastener.bind` to decide how to lay out plates and dowels.
+    :meth:`StekoFastenerSystem.bind` to decide how to lay out plates and dowels.
     """
 
     SOLO_BEAM = 0
@@ -142,16 +143,16 @@ class StekoSwordPlate(StekoPlate):
         The length of each solid, rectangular shank, before the comb begins. Defaults to a third of ``depth``.
     double_shank : bool, optional
         If ``False`` (the default), the plate has a single shank — for a solo beam, embedding into that one beam,
-        with the comb reaching from there to the corner (see :meth:`StekoFastener._bind_solo_beam` /
+        with the comb reaching from there to the corner (see :meth:`StekoFastenerSystem._bind_solo_beam` /
         :meth:`_bind_double_angled_beams`). If ``True``, the plate has a shank at *both* ends — for a pair of beams
-        it spans (see :meth:`StekoFastener._merge_linear_pair`), one embedding into each beam — with the comb only
+        it spans (see :meth:`StekoFastenerSystem._merge_linear_pair`), one embedding into each beam — with the comb only
         in the middle, where it crosses the other beam's plates.
     finger_count : int, optional
         The number of teeth on this plate. The comb is divided into ``2 * finger_count`` equal height bands,
         alternating tooth/gap; ``finger_count`` of them are teeth. Defaults to 2.
     phase : int, optional
         Which set of alternating bands are teeth: ``0`` for the even bands, ``1`` for the odd ones — the exact
-        complement, with zero overlap. :meth:`StekoFastener._bind_double_angled_beams` gives each of the two beams
+        complement, with zero overlap. :meth:`StekoFastenerSystem._bind_double_angled_beams` gives each of the two beams
         a different phase so their plates weave instead of colliding. Defaults to 0.
     """
 
@@ -252,12 +253,12 @@ class StekoSwordPlate(StekoPlate):
             self.applied_features.append(pocket)
 
 
-class StekoFastener(Fastener):
-    """A fastener consisting of a pair of steel plates, each slotted into a beam, pinned in place with dowels.
+class StekoFastenerSystem(FastenerSystem):
+    """A fastener system consisting of a pair of steel plates, each slotted into a beam, pinned in place with dowels.
 
     This is the "what" half of the anchor-based fastener system: it is joint-agnostic. It declares the kinds of
-    anchor it consumes (``FACE`` for the plates, ``AXIS`` for the dowels) and, when bound to a set of anchors, stages
-    one part per anchor.
+    anchor it consumes (``FACE`` for the plates, ``AXIS`` for the dowels) and, when bound to a set of anchors, builds
+    a fastener with one part per anchor.
 
     Parameters
     ----------
@@ -273,19 +274,19 @@ class StekoFastener(Fastener):
     Attributes
     ----------
     ACCEPTS : tuple(:class:`~compas_timber.fasteners.AnchorKind`)
-        The kinds of anchor this fastener binds to.
+        The kinds of anchor this system binds to.
     """
 
     ACCEPTS = (AnchorKind.FACE, AnchorKind.AXIS)
 
     @property
     def __data__(self):
-        data = super().__data__
-        data["plate_depth"] = self.plate_depth
-        data["plate_thickness"] = self.plate_thickness
-        data["dowel_diameter"] = self.dowel_diameter
-        data["dowel_length"] = self.dowel_length
-        return data
+        return {
+            "plate_depth": self.plate_depth,
+            "plate_thickness": self.plate_thickness,
+            "dowel_diameter": self.dowel_diameter,
+            "dowel_length": self.dowel_length,
+        }
 
     def __init__(
         self,
@@ -301,50 +302,48 @@ class StekoFastener(Fastener):
         self.dowel_diameter = dowel_diameter
         self.dowel_length = dowel_length
 
-    def bind(self, anchors: list, joint_type: Optional[int] = None) -> "StekoFastener":
-        """Bind the fastener to a set of anchors, staging one plate or dowel part at each.
+    def bind(self, anchors: list, joint_type: Optional[int] = None) -> Fastener:
+        """Build a fastener staging one plate or dowel part at each of the given anchors.
 
         Parameters
         ----------
         anchors : list of :class:`~compas_timber.fasteners.FastenerAnchor`
-            The anchors to attach to. Every anchor must be of a kind this fastener accepts.
+            The anchors to attach to. Every anchor must be of a kind this system accepts.
         joint_type : int, optional
             The :class:`StekoJointType` of the joint publishing ``anchors``, used to decide how plates and dowels
             are laid out. Defaults to ``StekoJointType.SOLO_BEAM``, i.e. one independent plate/dowel set per beam.
 
         Returns
         -------
-        :class:`~compas_timber.fasteners.StekoFastener`
-            The fastener itself, for chaining.
+        :class:`~compas_timber.elements.Fastener`
+            A new fastener, its plates and dowels staged and positioned, ready to be added to a model.
 
         Raises
         ------
         ValueError
-            If any of the anchors are not of a kind this fastener accepts.
+            If any of the anchors are not of a kind this system accepts.
         NotImplementedError
             If ``joint_type`` is not yet supported.
         """
-        anchors = list(anchors)
-        wrong = [a for a in anchors if a.kind not in self.ACCEPTS]
-        if wrong:
-            raise ValueError(f"StekoFastener can only be bound to anchors of kind {self.ACCEPTS}, but got {wrong}")
+        anchors = self._validate_anchors(anchors)
 
+        fastener = Fastener()
         joint_type = StekoJointType.SOLO_BEAM if joint_type is None else joint_type
         if joint_type is StekoJointType.SOLO_BEAM:
-            self._bind_solo_beam(anchors)
+            self._bind_solo_beam(fastener, anchors)
         elif joint_type is StekoJointType.DOUBLE_LINEAR_BEAM:
-            self._bind_double_linear_beams(anchors)
+            self._bind_double_linear_beams(fastener, anchors)
         elif joint_type is StekoJointType.DOUBLE_ANGLED_BEAM:
-            self._bind_double_angled_beams(anchors)
+            self._bind_double_angled_beams(fastener, anchors)
         elif joint_type is StekoJointType.TRIPLE_BEAM:
-            self._bind_triple_beams(anchors)
+            self._bind_triple_beams(fastener, anchors)
         elif joint_type is StekoJointType.QUADRUPLE_BEAM:
-            self._bind_quadruple_beams(anchors)
+            self._bind_quadruple_beams(fastener, anchors)
         else:
             raise ValueError(f"Unknown StekoJointType: {joint_type}")
-        return self
+        return fastener
 
-    def _bind_face_and_axis_anchors(self, anchors: list, plate_cls: type) -> None:
+    def _bind_face_and_axis_anchors(self, fastener: Fastener, anchors: list, plate_cls: type) -> None:
         """Stage one independent plate (of ``plate_cls``) or dowel part per anchor, i.e. per beam.
 
         This is the layout for :attr:`StekoJointType.SOLO_BEAM` (plain :class:`StekoPlate`) and
@@ -363,18 +362,18 @@ class StekoFastener(Fastener):
                 plate.transform(Transformation.from_frame(anchor.frame))
                 plate.transform(Translation.from_vector(anchor.frame.xaxis * (plate.depth / 2 - column.width)))
                 plate.elements = list(anchor.elements)
-                self.add_part(plate)
+                fastener.add_part(plate)
             elif anchor.kind == AnchorKind.AXIS:
                 dowel = Dowel(diameter=self.dowel_diameter, length=self.dowel_length)
                 dowel.transform(Transformation.from_frame(anchor.frame))
                 dowel.elements = list(anchor.elements)
-                self.add_part(dowel)
+                fastener.add_part(dowel)
 
-    def _bind_solo_beam(self, anchors: list) -> None:
+    def _bind_solo_beam(self, fastener: Fastener, anchors: list) -> None:
         """Stage one plain :class:`StekoPlate` or dowel part per anchor, i.e. per beam."""
-        self._bind_face_and_axis_anchors(anchors, StekoPlate)
+        self._bind_face_and_axis_anchors(fastener, anchors, StekoPlate)
 
-    def _bind_double_linear_beams(self, anchors: list) -> None:
+    def _bind_double_linear_beams(self, fastener: Fastener, anchors: list) -> None:
         """Stage one dowel per ``AXIS`` anchor, as in :meth:`_bind_solo_beam`, but merge the ``FACE`` anchors.
 
         A linear pair's two beams point in opposite directions away from the column, so one beam's ``slot_front``
@@ -390,7 +389,7 @@ class StekoFastener(Fastener):
                 dowel = Dowel(diameter=self.dowel_diameter, length=self.dowel_length)
                 dowel.transform(Transformation.from_frame(anchor.frame))
                 dowel.elements = list(anchor.elements)
-                self.add_part(dowel)
+                fastener.add_part(dowel)
 
         # pair each "front" anchor of one beam with the "back" anchor of the other beam: they share the same plane
         fronts = [a for a in face_anchors if a.role == "slot_front"]
@@ -414,9 +413,9 @@ class StekoFastener(Fastener):
             plate.transform(Transformation.from_frame(anchor_a.frame))
             plate.transform(Translation.from_vector(anchor_a.frame.xaxis * -(column.width / 2)))
             plate.elements = [column, beam_a, beam_b]
-            self.add_part(plate)
+            fastener.add_part(plate)
 
-    def _bind_double_angled_beams(self, anchors: list) -> None:
+    def _bind_double_angled_beams(self, fastener: Fastener, anchors: list) -> None:
         """Stage one notched :class:`StekoSwordPlate` or dowel part per anchor, i.e. per beam.
 
         An angled pair's two beams meet the column at 90° to each other rather than sitting on opposite sides of
@@ -442,14 +441,14 @@ class StekoFastener(Fastener):
                 plate.transform(Transformation.from_frame(anchor.frame))
                 plate.transform(Translation.from_vector(anchor.frame.xaxis * (plate.depth / 2 - column.width)))
                 plate.elements = list(anchor.elements)
-                self.add_part(plate)
+                fastener.add_part(plate)
             elif anchor.kind == AnchorKind.AXIS:
                 dowel = Dowel(diameter=self.dowel_diameter, length=self.dowel_length)
                 dowel.transform(Transformation.from_frame(anchor.frame))
                 dowel.elements = list(anchor.elements)
-                self.add_part(dowel)
+                fastener.add_part(dowel)
 
-    def _bind_triple_beams(self, anchors: list) -> None:
+    def _bind_triple_beams(self, fastener: Fastener, anchors: list) -> None:
         """Combine :meth:`_bind_double_linear_beams` and :meth:`_bind_double_angled_beams`.
 
         Of the three beams, two run straight through the column in opposite directions and share merged plates
@@ -465,7 +464,7 @@ class StekoFastener(Fastener):
             dowel = Dowel(diameter=self.dowel_diameter, length=self.dowel_length)
             dowel.transform(Transformation.from_frame(anchor.frame))
             dowel.elements = list(anchor.elements)
-            self.add_part(dowel)
+            fastener.add_part(dowel)
 
         beams = []
         for anchor in face_anchors:
@@ -483,11 +482,11 @@ class StekoFastener(Fastener):
                 if TOL.is_close(anchor_i.frame.xaxis.dot(anchor_j.frame.xaxis), -1.0):
                     linear_pair = (beams[i], beams[j])
         if linear_pair is None:
-            raise ValueError("StekoFastener could not find a linear pair of beams among the three connected to the column.")
+            raise ValueError("StekoFastenerSystem could not find a linear pair of beams among the three connected to the column.")
         angled_beam = next(beam for beam in beams if beam not in linear_pair)
 
         # merge the linear pair's plates, as in `_bind_double_linear_beams`, but notched (phase=0)
-        self._merge_linear_pair(face_anchors, *linear_pair, phase=0)
+        self._merge_linear_pair(fastener, face_anchors, *linear_pair, phase=0)
 
         # the angled beam gets its own plates, as in `_bind_solo_beam`, notched with the complementary phase (1)
         for anchor in face_anchors:
@@ -500,9 +499,9 @@ class StekoFastener(Fastener):
             plate.transform(Transformation.from_frame(anchor.frame))
             plate.transform(Translation.from_vector(anchor.frame.xaxis * (plate.depth / 2 - column.width)))
             plate.elements = list(anchor.elements)
-            self.add_part(plate)
+            fastener.add_part(plate)
 
-    def _bind_quadruple_beams(self, anchors: list) -> None:
+    def _bind_quadruple_beams(self, fastener: Fastener, anchors: list) -> None:
         """Combine two :meth:`_bind_double_linear_beams`-style merges: a "+" of two beam pairs, each running
         straight through the column in opposite directions, crossing each other at 90°. Both pairs use notched
         :class:`StekoSwordPlate` with complementary :attr:`StekoSwordPlate.phase` values (0 and 1) so their teeth
@@ -515,7 +514,7 @@ class StekoFastener(Fastener):
             dowel = Dowel(diameter=self.dowel_diameter, length=self.dowel_length)
             dowel.transform(Transformation.from_frame(anchor.frame))
             dowel.elements = list(anchor.elements)
-            self.add_part(dowel)
+            fastener.add_part(dowel)
 
         beams = []
         for anchor in face_anchors:
@@ -538,13 +537,13 @@ class StekoFastener(Fastener):
                 None,
             )
             if match_index is None:
-                raise ValueError("StekoFastener could not find two linear pairs of beams among the four connected to the column.")
+                raise ValueError("StekoFastenerSystem could not find two linear pairs of beams among the four connected to the column.")
             pairs.append((beam_a, unpaired.pop(match_index)))
 
         for phase, (beam_a, beam_b) in enumerate(pairs):
-            self._merge_linear_pair(face_anchors, beam_a, beam_b, phase=phase)
+            self._merge_linear_pair(fastener, face_anchors, beam_a, beam_b, phase=phase)
 
-    def _merge_linear_pair(self, face_anchors: list, beam_a, beam_b, phase: int) -> None:
+    def _merge_linear_pair(self, fastener: Fastener, face_anchors: list, beam_a, beam_b, phase: int) -> None:
         """Merge a pair of beams that run straight through the column in opposite directions into notched
         :class:`StekoSwordPlate` plates spanning both, as in :meth:`_bind_double_linear_beams` but with a shank at
         each end (``double_shank=True``) and a comb only in the middle (see :attr:`StekoSwordPlate.phase`) so they
@@ -569,4 +568,4 @@ class StekoFastener(Fastener):
             plate.transform(Transformation.from_frame(anchor_a.frame))
             plate.transform(Translation.from_vector(anchor_a.frame.xaxis * -(column.width / 2)))
             plate.elements = [column, beam_x, beam_y]
-            self.add_part(plate)
+            fastener.add_part(plate)
