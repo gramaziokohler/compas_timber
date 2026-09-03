@@ -1,4 +1,5 @@
 import math
+from typing import List
 from typing import Optional
 
 from compas.geometry import Point
@@ -130,12 +131,11 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     Parameters
     ----------
-    polyhedron : :class:`~compas.geometry.Polyhedron`
+    polyhedron :
         The input polyhedron.
 
     Returns
     -------
-    :class:`~compas.geometry.Polyhedron`
         A new polyhedron with its faces reordered to ensure outward-facing normals.
 
     """
@@ -214,3 +214,83 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     for i in range(len(outline_a) - 1):
         polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
     return Brep.from_polygons(polygons)
+
+
+def _first_solid(results: List[Brep], operation: str) -> Brep:
+    # taking the first piece is not a meaningful selection, it is what the Rhino backend happened to do
+    # internally in compas.geometry.Brep. Which piece is wanted is a decision only the caller can make, so a
+    # caller which can tell them apart should call the boolean operation directly and select from all of them.
+    if not results:
+        raise IndexError("Boolean {} left no result.".format(operation))
+    return results[0]
+
+
+def brep_difference_first(brep_a: Brep, brep_b: Brep) -> Brep:
+    """Subtracts `brep_b` from `brep_a` and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The Brep to subtract from.
+    brep_b :
+        The Brep to subtract.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If nothing is left of `brep_a` after the subtraction.
+
+    """
+    return _first_solid(Brep.from_boolean_difference(brep_a, brep_b), "difference")
+
+
+def brep_union_first(brep_a: Brep, *breps: Brep) -> Brep:
+    """Unions `brep_a` with one or more other Breps and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The Brep to union with.
+    *breps :
+        One or more Breps to union with `brep_a`.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If the union left no result.
+
+    """
+    if not breps:
+        raise ValueError("At least one Brep to union with is required.")
+    return _first_solid(Brep.from_boolean_union_multi(brep_a, *breps), "union")
+
+
+def brep_intersection_first(brep_a: Brep, brep_b: Brep) -> Brep:
+    """Intersects `brep_a` with `brep_b` and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The first Brep.
+    brep_b :
+        The second Brep.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If the two Breps do not overlap.
+
+    """
+    return _first_solid(Brep.from_boolean_intersection(brep_a, brep_b), "intersection")

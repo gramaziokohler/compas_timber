@@ -20,6 +20,7 @@ from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 
+import compas_timber
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_from_outlines
@@ -149,8 +150,8 @@ class BTLxWriter(object):
         # create file history element
         file_history = ET.Element("FileHistory")
         # create initial export program element
-        file_history_attibutes = self._get_file_history_attributes()
-        file_history.append(ET.Element("InitialExportProgram", file_history_attibutes))
+        file_history_attributes = self._get_file_history_attributes()
+        file_history.append(ET.Element("InitialExportProgram", file_history_attributes))
         return file_history
 
     def _get_file_history_attributes(self):
@@ -159,7 +160,7 @@ class BTLxWriter(object):
             [
                 ("CompanyName", self.company_name or "Gramazio Kohler Research"),
                 ("ProgramName", "COMPAS_Timber"),
-                ("ProgramVersion", "Compas: {}".format(compas.__version__)),
+                ("ProgramVersion", "COMPAS Timber: {}; COMPAS: {}".format(compas_timber.__version__, compas.__version__)),
                 ("ComputerName", "{}".format(os.getenv("computername"))),
                 ("UserName", "{}".format(os.getenv("USERNAME"))),
                 ("FileName", self.file_name or ""),
@@ -342,10 +343,10 @@ class BTLxWriter(object):
 
         Parameters
         ----------
-        type_ : type
-            The type to be serialized.
+        type_ : str
+            The name of the type to be serialized, i.e. its ``__name__`` attribute.
         serializer : callable
-            The serializer function. Takes an instance of `type_` and returns an XML element which correspondes with it.
+            The serializer function. Takes an instance of the named type and returns an XML element which corresponds with it.
 
         """
         cls.SERIALIZERS[type_] = serializer
@@ -651,16 +652,10 @@ class BTLxPart(BTLxGenericPart):
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
             for face in scaled_geometry.faces:
                 pts = []
-                surface = face.surface
-                # planar faces (the common case) return a Plane, which has no frame_at (parameter-independent
-                # anyway); only genuinely curved faces (NurbsSurface, etc.) need parametric evaluation.
-                frame = Frame.from_plane(surface) if isinstance(surface, Plane) else surface.frame_at(0.5, 0.5)
-                if face.is_reversed:
-                    # `is_reversed` faces store the surface with an inverted normal relative to the actual
-                    # face orientation; flip yaxis (not xaxis) so zaxis (normal) flips while xaxis is preserved.
-                    frame = Frame(frame.point, frame.xaxis, -frame.yaxis)
-                edges = face.outer_loop.edges[1:]
-                pts = [face.outer_loop.edges[0].first_vertex.point, face.outer_loop.edges[0].last_vertex.point]
+                # not `face.surface.frame_at()`: a planar face's surface is a Plane, which has none.
+                frame = face.frame_at()
+                edges = face.boundary.edges[1:]
+                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
                 overflow = len(edges)
                 while edges and overflow > 0:
                     for i, edge in enumerate(edges):

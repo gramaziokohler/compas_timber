@@ -15,6 +15,7 @@ from compas_brep import Brep
 
 from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import Pocket
+from compas_timber.geometry import brep_difference_first
 
 from .anchor import AnchorKind
 from .fastener import Fastener
@@ -135,8 +136,7 @@ class RectangularPlate(FastenerPart):
         box = self.blank_geometry
         box_brep = Brep.from_mesh(box.to_mesh())
         for hole in self.holes:
-            # box_brep = Brep.from_boolean_difference(box_brep, hole.geometry)
-            box_brep -= hole.geometry
+            box_brep = brep_difference_first(box_brep, hole.geometry)
         if self.recess > 0:
             box_brep.transform(Translation.from_vector(self._local_frame.zaxis * -self.recess))
         return box_brep

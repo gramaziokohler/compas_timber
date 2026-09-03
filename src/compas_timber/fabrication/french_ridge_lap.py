@@ -16,6 +16,8 @@ from compas_brep import Brep
 from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -307,7 +309,7 @@ class FrenchRidgeLap(BTLxProcessing):
         subtracting_volume = self.lap_volume_from_params_and_beam(beam)
         subtracting_volume.transform(beam.transformation_to_local())
         try:
-            return geometry - subtracting_volume
+            return brep_difference_first(geometry, subtracting_volume)
         except IndexError:
             raise FeatureApplicationError(
                 subtracting_volume.transformed(beam.modeltransformation),
@@ -432,7 +434,7 @@ class FrenchRidgeLap(BTLxProcessing):
             diagonal = Line(bottom_vertices[0], bottom_vertices[2])
             drill_frame = Frame(diagonal.midpoint, -ref_side.xaxis, ref_side.yaxis)
             drill_cylinder = Cylinder(self.drillhole_diam / 2, height * 2, drill_frame)
-            subtraction_volume += Brep.from_cylinder(drill_cylinder)
+            subtraction_volume = brep_union_first(subtraction_volume, Brep.from_cylinder(drill_cylinder))
         return subtraction_volume
 
     def scale(self, factor):

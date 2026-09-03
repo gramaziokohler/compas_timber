@@ -21,7 +21,7 @@ def find_neighboring_elements(elements, inflate_by=0.0):
     Returns
     -------
     list(set(:class:`~compas_timber.parts.Beam`, :class:`~compas_timber.parts.Beam`))
-        List containing sets of two neightboring beams each.
+        List containing sets of two neighboring beams each.
 
     """
     # insert and search three dimensional data (bounding boxes).

@@ -21,6 +21,7 @@ from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -410,15 +411,9 @@ class Lap(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            # a 6-face lap volume is always a box, so every face is planar: `face.surface` already returns
-            # a Plane directly, no need to go through a NurbsSurface/frame_at (which planar faces don't have).
-            # `is_reversed` faces store the surface with an inverted normal relative to the actual face orientation.
-            planes = []
-            for face in volume.faces:
-                plane = face.surface
-                if face.is_reversed:
-                    plane.normal = -plane.normal
-                planes.append(plane)
+            # not `face.surface`: it ignores `is_reversed`, and it is the face's own Plane,
+            # so flipping the normal in place would mutate the volume we were handed.
+            planes = [Plane.from_frame(face.frame_at()) for face in volume.faces]
 
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
@@ -691,7 +686,7 @@ class Lap(BTLxProcessing):
 
         # subtract the lap volume from the beam geometry
         try:
-            return geometry - lap_volume
+            return brep_difference_first(geometry, lap_volume)
         except IndexError:
             raise FeatureApplicationError(
                 lap_volume.transformed(beam.modeltransformation),
@@ -955,7 +950,7 @@ class LapProxy(object):
             scaling_factor = 1 + TOL.approximation
             frame_at_centroid = Frame(self.volume.centroid, self.volume.frame.xaxis, self.volume.frame.yaxis)
             inflated_brep = self.volume.transformed(Scale.from_factors([scaling_factor, scaling_factor, scaling_factor], frame=frame_at_centroid))
-            return geometry - inflated_brep
+            return brep_difference_first(geometry, inflated_brep)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.beam.modeltransformation),

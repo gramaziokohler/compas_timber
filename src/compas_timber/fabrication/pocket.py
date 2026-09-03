@@ -6,7 +6,6 @@ from typing import Union
 
 from compas.datastructures import Mesh
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
@@ -23,6 +22,7 @@ from compas_brep import Brep
 
 from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -342,15 +342,9 @@ class Pocket(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            # a 6-face pocket volume is always a box, so every face is planar: `face.surface` already returns
-            # a Plane directly, no need to go through a NurbsSurface/frame_at (which planar faces don't have).
-            # `is_reversed` faces store the surface with an inverted normal relative to the actual face orientation.
-            planes = []
-            for face in volume.faces:
-                plane = face.surface
-                if face.is_reversed:
-                    plane.normal = -plane.normal
-                planes.append(plane)
+            # not `face.surface`: it ignores `is_reversed`, and it is the face's own Plane,
+            # so flipping the normal in place would mutate the volume we were handed.
+            planes = [Plane.from_frame(face.frame_at()) for face in volume.faces]
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
 
@@ -582,7 +576,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
         try:
-            return geometry - pocket_volume
+            return brep_difference_first(geometry, pocket_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 pocket_volume.transformed(element.modeltransformation),
@@ -866,7 +860,7 @@ class PocketProxy(object):
         """
         # type: (Brep, Element) -> Brep
         try:
-            return geometry - self.volume
+            return brep_difference_first(geometry, self.volume)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.element.modeltransformation),

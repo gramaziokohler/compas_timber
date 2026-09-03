@@ -79,9 +79,8 @@ class Layer(Element):
         data["plate_geometry"] = self.plate_geometry
         data["start_offset"] = self.start_offset
         data["name"] = self.name
-        data["layer_path"] = (
-            list(self.layer_path) if self.layer_path is not None else None
-        )
+        data["layer_path"] = list(self.layer_path) if self.layer_path is not None else None
+        data.update(self.attributes)
         return data
 
     # ------------------------------------------------------------------
@@ -108,6 +107,8 @@ class Layer(Element):
         self.debug_info = []
         self._sublayers = []
         self._planes = None
+        self.attributes = {}
+        self.attributes.update(kwargs)
 
         if sublayers:
             self.sublayers = sublayers
