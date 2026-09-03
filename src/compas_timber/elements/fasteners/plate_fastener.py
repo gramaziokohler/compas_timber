@@ -18,6 +18,8 @@ from compas_timber.connections.utilities import beam_ref_side_incidence_with_vec
 from compas_timber.elements import Fastener
 from compas_timber.elements import FastenerTimberInterface
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import intersection_line_line_param
 
 TOL = Tolerance()
@@ -283,7 +285,7 @@ class PlateFastener(Fastener):
             if self.cutouts:
                 for cutout in self.cutouts:
                     cutout_brep = Brep.from_extrusion(cutout, vector)
-                    self._shape -= cutout_brep
+                    self._shape = brep_difference_first(self._shape, cutout_brep)
             if self.holes:
                 for hole in self.holes:
                     cylinder = Brep.from_cylinder(
@@ -293,10 +295,10 @@ class PlateFastener(Fastener):
                             Frame(hole["point"], Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)),
                         )
                     )
-                    self._shape -= cylinder
+                    self._shape = brep_difference_first(self._shape, cylinder)
             if self.shapes:
                 for shape in self.shapes:
-                    self._shape += shape
+                    self._shape = brep_union_first(self._shape, shape)
         return self._shape
 
     def compute_geometry(self):

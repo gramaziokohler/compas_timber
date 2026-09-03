@@ -16,6 +16,7 @@ from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -613,7 +614,7 @@ class BirdsMouth(BTLxProcessing):
             raise FeatureApplicationError(cutting_planes, trim_volume, "Failed to trim notch geometry with cutting planes: {}".format(str(e)))
 
         try:
-            return geometry - trim_volume
+            return brep_difference_first(geometry, trim_volume)
         except Exception as e:
             raise FeatureApplicationError(trim_volume, geometry, "Failed to compute final geometry difference for birds mouth notch: {}".format(str(e)))
 

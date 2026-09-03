@@ -13,6 +13,7 @@ from compas.geometry import is_point_behind_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -474,7 +475,7 @@ class StepJoint(BTLxProcessing):
                         )
             # add tenon volume to geometry
             try:
-                geometry += tenon_volume
+                geometry = brep_union_first(geometry, tenon_volume)
             except Exception as e:
                 raise FeatureApplicationError(
                     tenon_volume.transformed(beam.modeltransformation),

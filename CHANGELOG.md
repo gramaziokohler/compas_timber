@@ -35,8 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_timber.proto.conversions.register()`, which derives the mapping between a class and its protobuf message from the message descriptor, so proto field names matching `__data__` keys is all that is needed to serialize a new type.
 * Added `invoke pre_build` task, which generates the protobuf python bindings (`*_pb2.py`) from the `.proto` files. It must be run before `invoke test` and before building a distribution.
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
+* Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 ### Changed
+* Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
+* Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
 * Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.
 * The generated bindings reference `compas_pb`'s own bindings rather than embedding them, so a consumer needs both bundles unpacked into the same tree, at matching versions.
 * Guids are no longer written as 36-character text everywhere they appear. `TimberModelData` now carries a `guid_table` of 16-byte uuids and every guid in the message -- the object's own, the interaction graph's element and joint references, the element tree's, and each joint's `element_guids` -- is a `GuidRef` index into it. A message serialized on its own has no table and falls back to carrying the raw uuid, so it stays decodable in isolation. A 200-beam model went from 92,392 to 32,660 bytes (65% smaller).
