@@ -13,6 +13,7 @@ from compas_brep import Brep
 from compas_brep import NurbsCurve
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import StrEnum
 from compas_timber.utils import correct_polyline_direction
 
@@ -79,8 +80,7 @@ class Opening(PanelFeature):
 
         """
         try:
-            panel_geometry = Brep.from_boolean_difference(panel_geometry, self.shape.transformed(self.transformation))
-            return panel_geometry
+            return brep_difference_first(panel_geometry, self.shape.transformed(self.transformation))
         except Exception as e:
             raise FeatureApplicationError(panel_geometry, self.shape, f"Failed to apply opening to panel geometry: {e}")
 

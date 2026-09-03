@@ -39,7 +39,7 @@ class XLapJoint(LapJoint):
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
         assert self.beam_a and self.beam_b

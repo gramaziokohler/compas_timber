@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_timber/proto/common.proto";
+
+// Panel features (compas_timber.panel_features).
+//
+// PanelFeature derives from compas_model Element; its __data__ is the Element
+// data (features, name, material) with `transformation` replaced by `frame`.
+// Those inherited fields are copied into each concrete message below.
+// Note `panel_feature_type` is deliberately absent: it is not part of __data__.
+
+message OpeningData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  // inherited from PanelFeature / Element
+  compas_pb.data.FrameData frame = 3;
+  repeated ModelFeatureData features = 4;
+  optional GuidRef material = 5;   // guid of a material held by the model
+  // Opening
+  compas_pb.data.PolylineData outline_a = 10;
+  compas_pb.data.PolylineData outline_b = 11;
+  optional string opening_type = 12;
+}
+
+message PanelConnectionInterfaceData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  // inherited from PanelFeature / Element
+  compas_pb.data.FrameData frame = 3;
+  repeated ModelFeatureData features = 4;
+  optional GuidRef material = 5;   // guid of a material held by the model
+  // PanelConnectionInterface
+  compas_pb.data.PolylineData polyline = 10;
+  optional int32 edge_index = 11;
+  optional string interface_role = 12;
+}
+
+// Polymorphic wrapper: any PanelFeature instance.
+message PanelFeatureData {
+  oneof feature {
+    OpeningData opening = 1;
+    PanelConnectionInterfaceData connection_interface = 2;
+  }
+}

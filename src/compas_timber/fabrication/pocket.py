@@ -22,6 +22,7 @@ from compas_brep import Brep
 
 from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -581,7 +582,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
         try:
-            return geometry - pocket_volume
+            return brep_difference_first(geometry, pocket_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 pocket_volume.transformed(element.modeltransformation),
@@ -865,7 +866,7 @@ class PocketProxy(object):
         """
         # type: (Brep, Element) -> Brep
         try:
-            return geometry - self.volume
+            return brep_difference_first(geometry, self.volume)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.element.modeltransformation),

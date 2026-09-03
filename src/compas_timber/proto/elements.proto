@@ -1,0 +1,170 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+import "compas_pb/generated/geometry.proto";
+import "compas_pb/generated/message.proto";
+import "compas_timber/proto/common.proto";
+import "compas_timber/proto/fabrication.proto";
+import "compas_timber/proto/panel_features.proto";
+
+// Timber elements (compas_timber.elements).
+//
+// Proto has no inheritance, so fields of TimberElement / Element are copied
+// into each concrete message. `guid` and `name` come from the compas
+// serialization envelope rather than from __data__.
+//
+// `attributes` carries the open-ended kwargs dict that TimberElement, Plate
+// and Panel merge into their __data__ via `data.update(self.attributes)`.
+
+message PlateGeometryData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  compas_pb.data.PolylineData local_outline_a = 10;
+  compas_pb.data.PolylineData local_outline_b = 11;
+  compas_pb.data.FrameData frame = 12;
+  optional double length = 13;
+  optional double width = 14;
+  optional double thickness = 15;
+}
+
+message LayerDefinitionData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double thickness = 10;
+  repeated LayerDefinitionData sublayer_defs = 11;  // recursive
+}
+
+message LayerStructureData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  repeated LayerDefinitionData layer_defs = 10;
+}
+
+// Wrapper so that a None layer_path stays distinct from an empty tuple.
+message LayerPath {
+  repeated int32 indices = 1;
+}
+
+message LayerData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  PlateGeometryData plate_geometry = 10;
+  optional double start_offset = 11;
+  optional LayerPath layer_path = 12;
+}
+
+message BeamData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  // TimberElement
+  compas_pb.data.FrameData frame = 10;
+  optional double length = 11;
+  optional double width = 12;
+  optional double height = 13;
+  repeated BTLxProcessingData features = 14;
+  map<string, compas_pb.data.AnyData> attributes = 15;
+}
+
+message PlateData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  PlateGeometryData plate_geometry = 10;
+  repeated BTLxProcessingData features = 11;
+  map<string, compas_pb.data.AnyData> attributes = 12;
+}
+
+message PanelData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  PlateGeometryData plate_geometry = 10;
+  optional string type = 11;
+  repeated PanelFeatureData features = 12;
+  optional LayerStructureData layer_structure = 13;
+  map<string, compas_pb.data.AnyData> attributes = 14;
+}
+
+// One entry of FastenerTimberInterface.holes. The dict schema is documented and
+// closed -- point, diameter and the optional vector / through -- so it is typed
+// out here; `extra` keeps an unexpected key from being dropped.
+message FastenerHoleData {
+  optional compas_pb.data.PointData point = 1;
+  optional double diameter = 2;
+  optional compas_pb.data.VectorData vector = 3;
+  optional bool through = 4;
+  map<string, compas_pb.data.AnyData> extra = 5;
+}
+
+message FastenerTimberInterfaceData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional PointList outline_points = 10;
+  optional double thickness = 11;
+  repeated FastenerHoleData holes = 12;
+  optional compas_pb.data.FrameData frame = 13;
+  optional GuidRef element_guid = 14;          // `element` stored by reference
+  // `shapes` stays AnyData: it takes any compas solid, Brep included, and Brep
+  // has no proto message to point a oneof at.
+  repeated compas_pb.data.AnyData shapes = 15;
+  repeated BTLxFromGeometryDefinitionData features = 16;
+}
+
+message FastenerData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional compas_pb.data.AnyData shape = 10;
+  optional compas_pb.data.TransformationData transformation = 11;
+  repeated FastenerTimberInterfaceData interfaces = 12;
+}
+
+message BallNodeFastenerData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional compas_pb.data.AnyData shape = 10;
+  optional compas_pb.data.TransformationData transformation = 11;
+  repeated FastenerTimberInterfaceData interfaces = 12;
+}
+
+message PlateFastenerData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  // inherited from Fastener
+  optional compas_pb.data.AnyData shape = 10;
+  optional compas_pb.data.TransformationData transformation = 11;
+  // PlateFastener
+  optional compas_pb.data.PolylineData outline = 12;
+  optional double thickness = 13;
+  repeated FastenerTimberInterfaceData interfaces = 14;
+  optional compas_pb.data.FrameData frame = 15;
+  optional double angle = 16;
+  optional string topology = 17;
+  repeated compas_pb.data.PolylineData cutouts = 18;
+}
+
+// A plain compas_model Element, for models that hold elements which are not
+// timber elements. Mirrors Element.__data__ exactly -- note that `geometry` is
+// not part of it and so is not carried here.
+message GenericElementData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional compas_pb.data.TransformationData transformation = 10;
+  repeated ModelFeatureData features = 11;
+  // Element.__data__["material"] is the guid of a material held by the model,
+  // not the material itself.
+  optional GuidRef material = 12;
+}
+
+// Polymorphic wrapper: any element that can live in a TimberModel.
+message ElementData {
+  oneof element {
+    BeamData beam = 1;
+    PlateData plate = 2;
+    PanelData panel = 3;
+    LayerData layer = 4;
+    FastenerData fastener = 5;
+    BallNodeFastenerData ball_node_fastener = 6;
+    PlateFastenerData plate_fastener = 7;
+    PanelFeatureData panel_feature = 8;
+    GenericElementData generic_element = 9;
+  }
+}

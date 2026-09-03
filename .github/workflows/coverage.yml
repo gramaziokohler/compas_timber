@@ -8,26 +8,33 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   coverage:
     if: "!contains(github.event.pull_request.labels.*.name, 'docs-only')"
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-      
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@v7.0.1
         with:
-          python-version: "3.12"
-          activate-environment: true
+          persist-credentials: false
+
+      - uses: compas-dev/compas-actions/setup-python@v1
+        with:
+          python-version: '3.12'
+          management-tool: uv
+          extras: dev
+
+      - name: Run pre-build
+        run: invoke pre-build
 
       - name: Run tests collecting coverage reports
-        run: |
-          uv pip install -e ".[dev]"
-          pytest --cov src/compas_timber --cov-report=html
+      - name: Run tests collecting coverage reports
+        run: pytest --cov src/compas_timber --cov-report=xml --cov-report=term
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-    
