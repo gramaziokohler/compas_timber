@@ -183,6 +183,10 @@ docstring-code-line-length = "dynamic"
 # Testing
 # ============================================================================
 
+# TEMPORARY -- remove before this reaches main.
+[tool.uv.sources]
+compas_brep = { git = "https://github.com/gramaziokohler/compas_brep", branch = "at_frame" }
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
