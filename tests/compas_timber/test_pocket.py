@@ -424,6 +424,7 @@ def box_volume():
     return Box(150, 200, 40, frame=Frame(Point(500, 0, 20)))
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("ref_side_index", [0, 1, 2, 3])
 def test_pocket_from_brep_matches_mesh(tol, straight_beam, box_volume, ref_side_index):
     from_brep = Pocket.from_volume_and_element(Brep.from_box(box_volume), straight_beam, ref_side_index=ref_side_index)
@@ -433,6 +434,7 @@ def test_pocket_from_brep_matches_mesh(tol, straight_beam, box_volume, ref_side_
         assert tol.is_close(getattr(from_brep, attr), getattr(from_mesh, attr)), attr
 
 
+@pytest.mark.requires_occ
 def test_pocket_from_brep_does_not_mutate_volume(straight_beam, box_volume):
     volume = Brep.from_box(box_volume)
     assert any(face.is_reversed for face in volume.faces), "volume has no reversed faces, test would be vacuous"
@@ -444,6 +446,7 @@ def test_pocket_from_brep_does_not_mutate_volume(straight_beam, box_volume):
     assert before == after
 
 
+@pytest.mark.requires_occ
 def test_pocket_from_brep_is_repeatable(tol, straight_beam, box_volume):
     volume = Brep.from_box(box_volume)
     first = Pocket.from_volume_and_element(volume, straight_beam, ref_side_index=0)
