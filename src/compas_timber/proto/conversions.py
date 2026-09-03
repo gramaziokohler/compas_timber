@@ -604,11 +604,9 @@ register(_el.LayerStructure, elements_pb2.LayerStructureData)
 register(_el.Beam, elements_pb2.BeamData)
 register(_el.Plate, elements_pb2.PlateData)
 register(_el.Panel, elements_pb2.PanelData)
-register(_el.FastenerTimberInterface, elements_pb2.FastenerTimberInterfaceData, aliases={"element_guid": "element"})
-register(_el.Fastener, elements_pb2.FastenerData)
-register(_el.BallNodeFastener, elements_pb2.BallNodeFastenerData)
-# PlateFastener.__data__ stores `interface.__data__` rather than the interface.
-register(_el.PlateFastener, elements_pb2.PlateFastenerData, raw_dict_fields=("interfaces",))
+# Fastener classes (FastenerTimberInterface, Fastener, BallNodeFastener, PlateFastener) live in
+# compas_timber.fasteners on this branch, not compas_timber.elements; their protobuf registration
+# is not yet ported to the anchor-based fastener design. See TODO tracked for steko_joint.
 
 
 # Layer.layer_path is a tuple-or-None, wrapped so the two stay distinct.
