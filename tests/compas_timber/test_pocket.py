@@ -9,9 +9,12 @@ from compas.geometry import Polyhedron
 from compas.geometry import Line
 from compas.geometry import Vector
 from compas.geometry import Frame
+from compas.geometry import Box
 from compas.geometry import Transformation
 
 from compas.tolerance import TOL
+
+from compas_brep import Brep
 
 from compas_timber.elements import Beam
 from compas_timber.fabrication import Pocket
@@ -406,3 +409,44 @@ def test_pocket_proxy_transforms_with_beam(tol, neg_vol):
     assert len(vertices_a) == len(vertices_b)
     for vertex_a, vertex_b in zip(vertices_a, vertices_b):
         assert tol.is_allclose(vertex_a, vertex_b)
+
+
+# Brep volumes. How many faces come back `is_reversed` depends on the geometry kernel.
+
+
+@pytest.fixture
+def straight_beam():
+    return Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 120, 60)
+
+
+@pytest.fixture
+def box_volume():
+    return Box(150, 200, 40, frame=Frame(Point(500, 0, 20)))
+
+
+@pytest.mark.parametrize("ref_side_index", [0, 1, 2, 3])
+def test_pocket_from_brep_matches_mesh(tol, straight_beam, box_volume, ref_side_index):
+    from_brep = Pocket.from_volume_and_element(Brep.from_box(box_volume), straight_beam, ref_side_index=ref_side_index)
+    from_mesh = Pocket.from_volume_and_element(box_volume.to_mesh(), straight_beam, ref_side_index=ref_side_index)
+
+    for attr in ("start_x", "start_y", "start_depth", "angle", "inclination", "slope", "length", "width", "internal_angle"):
+        assert tol.is_close(getattr(from_brep, attr), getattr(from_mesh, attr)), attr
+
+
+def test_pocket_from_brep_does_not_mutate_volume(straight_beam, box_volume):
+    volume = Brep.from_box(box_volume)
+    assert any(face.is_reversed for face in volume.faces), "volume has no reversed faces, test would be vacuous"
+
+    before = [Vector(*face.surface.normal) for face in volume.faces]
+    Pocket.from_volume_and_element(volume, straight_beam, ref_side_index=0)
+    after = [Vector(*face.surface.normal) for face in volume.faces]
+
+    assert before == after
+
+
+def test_pocket_from_brep_is_repeatable(tol, straight_beam, box_volume):
+    volume = Brep.from_box(box_volume)
+    first = Pocket.from_volume_and_element(volume, straight_beam, ref_side_index=0)
+    second = Pocket.from_volume_and_element(volume, straight_beam, ref_side_index=0)
+
+    assert tol.is_close(first.start_depth, second.start_depth)
