@@ -137,7 +137,7 @@ name = "cadquery-ocp-novtk"
 version = "7.9.3.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cadquery-ocp-proxy", marker = "python_full_version >= '3.10'" },
+    { name = "cadquery-ocp-proxy", marker = "python_full_version >= '3.10'"},
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/ce/287c003e8a96771854cac6563ca209a13a1b22a9bc012e32aafed2d5ebe5/cadquery_ocp_novtk-7.9.3.1.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:cee061a62066e58b366d1b0647d7148ffa2b3a7cec08e0e612a59a25b019791a", size = 61702081, upload-time = "2026-05-28T13:07:19.388Z" },
