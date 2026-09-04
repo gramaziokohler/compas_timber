@@ -66,6 +66,10 @@ class TimberElement(Element, abc.ABC):
     @property
     def __data__(self):
         data = {}
+        # not `self.frame`: that is `Frame.from_transformation(self.modeltransformation)`, the world-composed
+        # frame with the whole ancestor chain baked in. The constructor treats `frame` as `self.transformation`,
+        # the *local*, parent-relative placement - so for a nested element (a child of another element in the
+        # model tree), storing the world frame would double-apply the ancestor's transformation on deserialization.
         data["frame"] = Frame.from_transformation(self.transformation)
         data["length"] = self.length
         data["width"] = self.width
