@@ -356,6 +356,51 @@ def test_process_joinery_cut_all_parts_applies_joint_to_every_beam_part():
         assert part.features, "{!r} should have received a feature from the expanded joint".format(part)
 
 
+def test_process_joinery_cut_all_parts_is_idempotent_across_repeated_calls():
+    """Regression test: _expand_composite_joints() must reuse the same clone joint for a given part
+    pair across calls, or clear_features()/clear_extensions() has nothing to undo each time (a fresh
+    clone has no memory of what a previous, discarded clone applied) and features/extensions
+    silently accumulate on every re-run instead of staying constant."""
+    composite_a, a_bottom, a_top = _stacked_composite(0)
+    composite_b, b_bottom, b_top = _stacked_composite(500)
+
+    model = TimberModel()
+    model.add_element(composite_a)
+    composite_a.merge_contained_elements(model)
+    model.add_element(composite_b)
+    composite_b.merge_contained_elements(model)
+
+    ISimpleScarf.create(model, composite_a, composite_b)
+
+    model.process_joinery()
+    counts_after_first_run = [len(part.features) for part in (a_bottom, a_top, b_bottom, b_top)]
+
+    for _ in range(3):
+        model.process_joinery()
+        counts = [len(part.features) for part in (a_bottom, a_top, b_bottom, b_top)]
+        assert counts == counts_after_first_run
+
+
+def test_expand_composite_joints_reuses_the_same_clone_across_calls():
+    composite_a, a_bottom, a_top = _stacked_composite(0)
+    composite_b, b_bottom, b_top = _stacked_composite(500)
+
+    model = TimberModel()
+    model.add_element(composite_a)
+    composite_a.merge_contained_elements(model)
+    model.add_element(composite_b)
+    composite_b.merge_contained_elements(model)
+
+    joint = ISimpleScarf(composite_a, composite_b)
+
+    first_pass = {j.elements: j for j in model._expand_composite_joints([joint])}
+    second_pass = {j.elements: j for j in model._expand_composite_joints([joint])}
+
+    assert first_pass.keys() == second_pass.keys()
+    for elements in first_pass:
+        assert first_pass[elements] is second_pass[elements]
+
+
 # ---------------------------------------------------------------------------
 # Serialization round-trip
 # ---------------------------------------------------------------------------

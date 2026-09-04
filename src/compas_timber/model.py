@@ -730,6 +730,13 @@ class TimberModel(Model):
         pair is skipped - not raised - if either element lacks `centerline` (e.g. a `Plate` paired
         with a `Beam`-oriented joint type): that pair simply doesn't receive this joint.
 
+        The clone for a given part pair is cached on the original joint and reused on every later
+        call, rather than rebuilt from scratch - a clone remembers (via its own `.features`/blank
+        extensions) what it previously applied, which is what lets `clear_features()`/
+        `clear_extensions()` undo it before re-adding. A fresh clone every call would have nothing
+        to undo, so repeated `process_joinery()` calls would silently accumulate features/extensions
+        instead of staying idempotent.
+
         Joints that don't touch a `cut_all_parts` composite are returned unchanged. `CompositeJoint`
         is also returned unchanged and never expanded here - it delegates its actual joinery to its
         own `self.joints` (unregistered sub-joints `type(joint)(*part_pair, **kwargs)` couldn't
@@ -757,10 +764,14 @@ class TimberModel(Model):
             # exclude guid references to the original (composite) elements - not real constructor
             # params on most joint types, and stale/misleading if passed through to the clones.
             kwargs = {k: v for k, v in joint.__data__.items() if k not in skip_keys and not k.endswith(("guid", "guids"))}
+            # per-part-pair clones, cached on the original joint and reused across calls (see docstring)
+            clone_cache = joint.__dict__.setdefault("_cut_all_parts_clones", {})
             for part_pair in zip(*per_element_options):
                 if not all(hasattr(part, "centerline") for part in part_pair):
                     continue  # this joint type doesn't apply to this pair (e.g. a Plate layer)
-                expanded.append(type(joint)(*part_pair, **kwargs))
+                if part_pair not in clone_cache:
+                    clone_cache[part_pair] = type(joint)(*part_pair, **kwargs)
+                expanded.append(clone_cache[part_pair])
 
         return expanded
 
