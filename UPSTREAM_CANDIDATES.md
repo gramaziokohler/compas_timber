@@ -1,16 +1,43 @@
-# Candidates to upstream from `steko_joint`
+# Candidates to upstream from `steko_branch`
 
-Generic (non-Steko) changes found on `steko_joint`, beyond what's already been
+Generic (non-Steko) changes found on `steko_branch`, beyond what's already been
 extracted:
 
 - `applied_features` tracking + `Dowel.drill_line` — already pushed to
   `refactor-fasteners` (commit `c8250fabf8`).
 - `Pocket`/`Lap`/`BTLxPart` `BrepFace` API fixes (`compas_brep` migration) +
-  `Pocket.apply()` negative `start_depth` guard — already on branch
-  `fix-compas-brep-face-api` (off `main`), pushed to `origin`, not yet PR'd.
+  `Pocket.apply()` negative `start_depth` guard — **now merged into `main`**
+  (came in via PR from `fix-compas-brep-face-api`). `steko_branch` took
+  `main`'s version of these three files wholesale when merging `main` in
+  (2026-09), so nothing left to upstream here.
+- The older "apply fastening features only to the elements referenced by the
+  anchor" fixes to `dowel.py`/`fastener.py`/`ball_node.py` (commit
+  `4261ab0ab7`) — superseded by `refactor-fasteners`' own
+  "Split staged FastenerSystem from resolved `Fastener` element" rewrite
+  (commit `75442736e4`); those three files are now byte-identical to
+  `refactor-fasteners`.
+- `elements/layer.py`'s line-wrapping/formatting divergence from `main` (seen
+  when diffing `steko_branch` against `main`) is not a functional fix, just
+  local formatting drift (multi-line-wrapped calls vs. `main`'s ruff-compact
+  style) from an earlier commit. Needs a `ruff format` pass locally, not an
+  upstream PR.
 
-Everything below is still sitting only on `steko_joint`, uncommitted-to-main.
-Comparison baseline: `refactor-fasteners..steko_joint`.
+Two new bugs found and fixed while merging `refactor-fasteners` in (2026-09),
+not yet reflected upstream:
+
+- `fasteners/screw.py`, `Screw.compute_elementgeometry()`: `shank_brep +
+  head_brep` returns a `list` under `compas_brep>=0.3.0` (the operator's
+  boolean-union contract changed), not a single `Brep` — breaks any caller
+  that treats the result as one Brep (e.g. `.is_valid`). This is literally
+  what broke `test_screw_fastener.py` before the fix. Same class of bug as
+  the already-known `PlateFastener`/`BallNodeFastener` `+=`/`-=` issue.
+  Fix: `brep_union_first(shank_brep, head_brep)`.
+- `fasteners/plate_fastener.py`, `RectangularPlate.compute_elementgeometry()`:
+  same bug, `box_brep -= hole.geometry` → `box_brep =
+  brep_difference_first(box_brep, hole.geometry)`.
+
+Everything below is still sitting only on `steko_branch`, uncommitted-to-main.
+Comparison baseline: `refactor-fasteners..steko_branch`.
 
 ## Safe to upstream as-is
 
