@@ -1,5 +1,7 @@
-from .beam import Beam
 from compas_timber.base import TimberElement
+
+from .beam import Beam
+
 
 def _aabb_bounds(points) -> tuple[tuple[float, float, float], tuple[float, float, float]]:
     xs = [p[0] for p in points]
