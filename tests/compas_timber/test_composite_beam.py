@@ -3,11 +3,14 @@
 
 import pytest
 
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Vector
 
 from compas_timber.connections import ButtJoint
+from compas_timber.connections import CompositeJoint
 from compas_timber.connections import ISimpleScarf
 from compas_timber.connections import Joint
 from compas_timber.elements import Beam
@@ -132,6 +135,65 @@ def test_resolve_composite_elements_is_idempotent():
     joint.resolve_composite_elements()  # calling again should not error or change anything
 
     assert joint.elements == (part_2, other_beam)
+
+
+def test_resolve_composite_elements_updates_element_guids_to_match():
+    """element_guids must stay consistent with elements, or restore_elements_from_keys() would
+    restore the joint pointing at the composite again after a serialize/deserialize round-trip."""
+    composite, part_1, part_2 = _linear_composite()
+    other_beam = Beam(Frame(Point(190, -50, 0), Vector(0, 1, 0), Vector(1, 0, 0)), length=100, width=30, height=30)
+    joint = Joint(elements=(composite, other_beam))
+
+    joint.resolve_composite_elements()
+
+    assert joint.element_guids == tuple(str(e.guid) for e in joint.elements)
+    assert str(composite.guid) not in joint.element_guids
+    assert str(part_2.guid) in joint.element_guids
+
+
+# ---------------------------------------------------------------------------
+# CompositeJoint delegates to its own sub-joints, not its own (inert) .elements
+# ---------------------------------------------------------------------------
+
+
+def test_composite_joint_resolve_composite_elements_routes_each_subjoint():
+    composite, part_1, part_2 = _linear_composite()
+    other_beam = Beam(Frame(Point(190, -50, 0), Vector(0, 1, 0), Vector(1, 0, 0)), length=100, width=30, height=30)
+    third_beam = Beam(Frame(Point(0, 100, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=100, width=30, height=30)
+
+    sub_joint_touching_composite = ISimpleScarf(composite, other_beam)
+    sub_joint_unrelated = ISimpleScarf(part_1, third_beam)
+    composite_joint = CompositeJoint([sub_joint_touching_composite, sub_joint_unrelated])
+
+    composite_joint.resolve_composite_elements()
+
+    # the sub-joint that actually touched the composite gets routed to the real part
+    assert composite not in sub_joint_touching_composite.elements
+    assert part_2 in sub_joint_touching_composite.elements
+
+    # the CompositeJoint's own (flattened) elements/element_guids reflect the resolved sub-joints
+    assert composite not in composite_joint.elements
+    assert composite_joint.element_guids == tuple(str(e.guid) for e in composite_joint.elements)
+
+
+def test_expand_composite_joints_passes_through_composite_joint_unchanged():
+    """CompositeJoint can't be reconstructed as type(joint)(*part_pair, **kwargs) (its constructor
+    takes a `joints` list, not element positionals), so it must never be handed to that path."""
+    composite, part_1, part_2 = _linear_composite()
+    composite.cut_all_parts = True
+    other_beam = Beam(Frame(Point(190, -50, 0), Vector(0, 1, 0), Vector(1, 0, 0)), length=100, width=30, height=30)
+    third_beam = Beam(Frame(Point(0, 100, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=100, width=30, height=30)
+
+    sub_joint = ISimpleScarf(composite, other_beam)
+    composite_joint = CompositeJoint([sub_joint, ISimpleScarf(part_1, third_beam)])
+
+    model = TimberModel()
+    model.add_element(composite)
+    composite.merge_contained_elements(model)
+
+    expanded = model._expand_composite_joints([composite_joint])
+
+    assert expanded == [composite_joint]
 
 
 # ---------------------------------------------------------------------------
@@ -292,3 +354,46 @@ def test_process_joinery_cut_all_parts_applies_joint_to_every_beam_part():
     assert composite_b.features == []
     for part in (a_bottom, a_top, b_bottom, b_top):
         assert part.features, "{!r} should have received a feature from the expanded joint".format(part)
+
+
+# ---------------------------------------------------------------------------
+# Serialization round-trip
+# ---------------------------------------------------------------------------
+
+
+def test_composite_beam_cut_all_parts_survives_json_round_trip():
+    composite = CompositeBeam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=200, width=30, height=30, cut_all_parts=True)
+    restored = json_loads(json_dumps(composite))
+    assert restored.cut_all_parts is True
+
+
+def test_model_round_trip_joint_stays_pointed_at_the_resolved_part_not_the_composite():
+    """Regression test for the element_guids consistency fix in Joint.resolve_composite_elements():
+    without it, restore_elements_from_keys() would rebuild the joint's elements from the (stale)
+    guids captured before routing, silently undoing the routing on every reload."""
+    composite, part_1, part_2 = _linear_composite()
+    end_beam = Beam(Frame(Point(200, -60, 0), Vector(0, 1, 0), Vector(-1, 0, 0)), width=30, height=30, length=120)
+
+    model = TimberModel()
+    model.add_element(composite)
+    composite.merge_contained_elements(model)
+    model.add_element(end_beam)
+    ButtJoint.create(model, composite, end_beam, mill_depth=0)
+    model.process_joinery()
+
+    restored = json_loads(json_dumps(model))
+    r_joint = list(restored.joints)[0]
+    r_composite = next(e for e in restored.elements() if isinstance(e, CompositeBeam))
+    r_part_1, r_part_2 = r_composite.parts
+
+    # the joint restores pointing at the real part, not the composite - both in .elements and
+    # in the .element_guids it was restored from
+    assert r_composite not in r_joint.elements
+    assert r_part_2 in r_joint.elements
+    assert r_joint.element_guids == tuple(str(e.guid) for e in r_joint.elements)
+
+    # and re-running joinery on the reloaded model reproduces the same, correctly-routed result
+    restored.process_joinery()
+    assert r_composite.features == []
+    assert r_part_1.features == []
+    assert r_part_2.features

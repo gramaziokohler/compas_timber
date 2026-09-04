@@ -65,6 +65,12 @@ class CompositeBeam(Beam):
 
     """
 
+    @property
+    def __data__(self):
+        data = super(CompositeBeam, self).__data__
+        data["cut_all_parts"] = self.cut_all_parts
+        return data
+
     def __init__(self, frame, length, width, height, cut_all_parts=False, **kwargs):
         super(CompositeBeam, self).__init__(frame, length, width, height, **kwargs)
         self._parts = []

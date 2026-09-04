@@ -12,6 +12,7 @@ from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.models import Model
 
+from compas_timber.connections import CompositeJoint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
@@ -729,7 +730,12 @@ class TimberModel(Model):
         pair is skipped - not raised - if either element lacks `centerline` (e.g. a `Plate` paired
         with a `Beam`-oriented joint type): that pair simply doesn't receive this joint.
 
-        Joints that don't touch a `cut_all_parts` composite are returned unchanged.
+        Joints that don't touch a `cut_all_parts` composite are returned unchanged. `CompositeJoint`
+        is also returned unchanged and never expanded here - it delegates its actual joinery to its
+        own `self.joints` (unregistered sub-joints `type(joint)(*part_pair, **kwargs)` couldn't
+        reconstruct it from anyway), and those sub-joints aren't reachable from this model's
+        registered joint list to expand individually. A `cut_all_parts` composite touched only
+        through a `CompositeJoint` sub-joint is not currently expanded to all of its parts.
 
         Parameters
         ----------
@@ -743,7 +749,7 @@ class TimberModel(Model):
         skip_keys = {"name", "topology", "location", "element_guids"}
         expanded = []
         for joint in joints:
-            if not any(isinstance(e, CompositeBeam) and e.cut_all_parts for e in joint.elements):
+            if isinstance(joint, CompositeJoint) or not any(isinstance(e, CompositeBeam) and e.cut_all_parts for e in joint.elements):
                 expanded.append(joint)
                 continue
 

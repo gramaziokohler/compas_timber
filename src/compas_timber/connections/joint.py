@@ -213,6 +213,10 @@ class Joint(Data):
         so re-running this is a no-op for it. Silently does nothing if this joint's location cannot be
         determined (e.g. more than 2 elements, and no location was set explicitly).
 
+        Also refreshes ``self.element_guids`` to match the resolved ``self.elements`` - otherwise a
+        serialized-and-reloaded model would restore this joint pointing at the composite again via
+        ``restore_elements_from_keys()``, silently losing the routing decision.
+
         """
         from compas_timber.elements import CompositeBeam
 
@@ -223,6 +227,7 @@ class Joint(Data):
         except ValueError:
             return
         self._elements = tuple(e.resolve_part_at(location) if isinstance(e, CompositeBeam) else e for e in self._elements)
+        self.element_guids = tuple(str(e.guid) for e in self._elements)
 
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
