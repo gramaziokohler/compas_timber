@@ -197,6 +197,33 @@ class Joint(Data):
         else:
             return len(elements) >= cls.MIN_ELEMENT_COUNT
 
+    def resolve_composite_elements(self):
+        """Replaces any :class:`~compas_timber.elements.CompositeBeam` among this joint's elements
+        with whichever of its parts this joint's :attr:`location` actually falls in/nearest to.
+
+        Called once by :meth:`~compas_timber.model.TimberModel.process_joinery` before any joint
+        computes its extensions/features. This is what makes composite-routing joint-agnostic: every
+        joint type inherits this unchanged, computes its :attr:`location` the same way it always has
+        (from the two elements it was created with), and by the time ``add_extensions()``/
+        ``add_features()`` run, ``self.elements`` (and therefore ``main_beam``/``cross_beam``/
+        ``beam_a``/``beam_b``/etc., all of which just read ``self.elements``) already point at the
+        real, independently fabricable part - no per-joint-type code involved.
+
+        Idempotent: once an element has been resolved to a part, it is no longer a ``CompositeBeam``,
+        so re-running this is a no-op for it. Silently does nothing if this joint's location cannot be
+        determined (e.g. more than 2 elements, and no location was set explicitly).
+
+        """
+        from compas_timber.elements import CompositeBeam
+
+        if not any(isinstance(e, CompositeBeam) for e in self._elements):
+            return
+        try:
+            location = self.location
+        except ValueError:
+            return
+        self._elements = tuple(e.resolve_part_at(location) if isinstance(e, CompositeBeam) else e for e in self._elements)
+
     def add_features(self):
         """Adds the features defined by this joint to affected beam(s).
 

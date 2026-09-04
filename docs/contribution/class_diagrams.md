@@ -49,6 +49,14 @@ classDiagram
          +remove_blank_extension(joint_key=None)
       }
 
+      class CompositeBeam {
+         +is_group_element : bool = True
+         +parts : list[TimberElement]
+         +add_part(element)
+         +merge_contained_elements(model)
+         +resolve_part_at(point)
+      }
+
       class Plate {
          +plate_geometry : PlateGeometry
          +outline_a : Polyline
@@ -176,6 +184,7 @@ classDiagram
       %% Inheritance relationships
       Element <|-- TimberElement
       TimberElement <|-- Beam
+      Beam <|-- CompositeBeam
       TimberElement <|-- Plate
       Element <|-- Panel
       Element <|-- Layer
@@ -187,8 +196,13 @@ classDiagram
       Panel ..> PanelFeature : contains
       Panel "1" *-- "0..3" Layer : exterior/core/interior
       Layer "1" *-- "0..*" Layer : sublayers
+      CompositeBeam "1" *-- "0..*" TimberElement : parts
       Opening ..> OpeningType : uses
 ```
+
+`is_group_element` is a general contract, not specific to `Panel`/`CompositeBeam`: any element overriding it to `True` holds its children directly until attached to a model, exposes them via a property that switches to reading `self.children` once attached, and implements a `merge_contained_elements(model)`-shaped method (name may be more specific) called explicitly right after `model.add_element(...)`. `CompositeBeam` additionally behaves like an ordinary `Beam` towards the rest of the model — joints can extend/cut it exactly like a leaf beam.
+
+Routing a feature from a `CompositeBeam` to the correct part is joint-agnostic: `TimberModel.process_joinery` calls `Joint.resolve_composite_elements()` on every joint before any extensions/features are computed. That base-class method replaces any `CompositeBeam` among the joint's elements with `composite.resolve_part_at(self.location)` — `location` is the same generic, joint-type-independent point every `Joint` already computes from its two elements' centerlines. Once `joint.elements` points at the real part, every joint type's existing `add_extensions`/`add_features` implementation runs completely unmodified against it. No joint subclass needs to know `CompositeBeam` exists.
 
 ## Connections Subsystem
 
@@ -220,6 +234,7 @@ classDiagram
          +create(model, *elements)
          +add_features()
          +add_extensions()
+         +resolve_composite_elements()
          +check_elements_compatibility()
          +restore_beams_from_keys(model)
          +get_beam_direction_towards_joint()
