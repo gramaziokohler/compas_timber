@@ -1,4 +1,5 @@
 from .beam import Beam
+from .composite_beam import CompositeBeam
 from .plate import Plate
 from .panel import Panel
 from .fastener import Fastener
@@ -12,6 +13,7 @@ from .layer import LayerStructure
 
 __all__ = [
     "Beam",
+    "CompositeBeam",
     "Plate",
     "Fastener",
     "FastenerTimberInterface",
