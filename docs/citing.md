@@ -10,22 +10,12 @@ If you use COMPAS Timber for your work, please acknowledge it by citing it with:
 @misc{compas_timber,
     title={{COMPAS Timber}: A library for design and fabrication of timber structures},
     author={
-        Apolinarska, Aleksandra Anna and
-        Kasirer, Chen and
-        Casas, Gonzalo and
-        Haldemann, Jonas and
-        Bucklin, Oliver Appling and
-        Gheyselinck, Aurèle L. and
-        Papacharalambous, Panayiotis and
-        Stryzhevska, Anastasiia and
-        Feringa, Jelle and
-        Kenny, Joseph and
-        Lytle, Beverly
+        %% authors: generated from CITATION.cff
     },
-    howpublished={https://github.com/gramaziokohler/compas_timber/},
+    howpublished={%% repository-code/},
     note={ETH Z"{u}rich},
-    year={2022-2025},
-    doi={10.5281/zenodo.17024080},
-    url={https://doi.org/10.5281/zenodo.17024080},
+    year={2022-%% build-year},
+    doi={%% doi},
+    url={https://doi.org/%% doi},
 }
 ```
