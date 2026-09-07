@@ -84,6 +84,9 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
+hooks:
+  - scripts/mkdocs_hooks.py
+
 plugins:
   - search
   - mermaid2
