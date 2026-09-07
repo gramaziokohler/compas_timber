@@ -5,18 +5,19 @@
 </figure>
 
 <p class="lead">
-COMPAS TIMBER is an open-source package for modeling, designing and fabricating timber frame structures.
+COMPAS TIMBER is an open-source package for the design-to-fabrication of timber structures.
 </p>
 
-COMPAS TIMBER is written in Python and is a part of the [COMPAS](https://compas.dev/index.html) ecosystem.
-It also features an implementation for [Rhinoceros 3D](https://www.rhino3d.com/)
-as a [Grasshopper](https://www.rhino3d.com/features/#grasshopper) plug-in,
-which is developed in the separate [timber_design](https://github.com/gramaziokohler/timber_design) repository.
-The plugin's documentation, including the Grasshopper tutorials, lives on the
-[timber_design documentation site](https://gramaziokohler.github.io/timber_design/).
+A project is designed and refined in a single digital model that also produces the manufacturing data,
+so it can go from first concept to fabrication without re-modeling or back-and-forth rework along the way.
+
+This site documents the **compas_timber Python library**, the modeling, joinery and fabrication engine.
+Here you will find the API reference and contribution guides.
+The library is written in Python and is part of the [COMPAS](https://compas.dev/index.html) ecosystem.
+
+To use COMPAS Timber in [Rhinoceros 3D](https://www.rhino3d.com/) / [Grasshopper](https://www.rhino3d.com/features/#grasshopper),
+get the plug-in on [food4rhino](https://www.food4rhino.com/en/app/compas-timber) or through Rhino's Package Manager,
+and follow the [timber_design documentation](https://gramaziokohler.github.io/timber_design/) for installation and tutorials.
+The plug-in is developed in the separate [timber_design](https://github.com/gramaziokohler/timber_design) repository.
 
 COMPAS TIMBER is an active research project and is being continuously developed at Gramazio Kohler Research at ETH Zurich.
-At the current stage, the library encompasses tools for fast and intuitive design of frame structures with simple joints
-using custom object classes for beam, joints and assembly entities to maintain parametric and semantic information about the structure.
-In the future, it will be expanded to entail interfaces to structural analysis software and specialist timber construction software,
-assembly sequencing methods, fabricability checking tools and more.
