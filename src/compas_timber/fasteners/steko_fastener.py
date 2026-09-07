@@ -13,6 +13,7 @@ from compas_brep import Brep
 
 from compas_timber.fabrication import Pocket
 from compas_timber.fabrication import Slot
+from compas_timber.geometry import brep_union_first
 
 from .anchor import AnchorKind
 from .dowel import Dowel
@@ -224,7 +225,10 @@ class StekoSwordPlate(StekoPlate):
 
     def compute_elementgeometry(self, include_features: bool = False) -> Brep:
         breps = [Brep.from_box(box) for box in self._tooth_boxes]
-        return Brep.from_boolean_union_multi(*breps)
+        # the shank(s) and comb teeth are all mutually touching/overlapping boxes, so the union is always a
+        # single connected solid - compas_brep's boolean ops return list[Brep] (one piece per resulting solid)
+        # since v0.3.0, hence brep_union_first rather than treating the result as a single Brep directly.
+        return brep_union_first(breps[0], *breps[1:])
 
     def apply_fastening_features(self) -> None:
         """Cut a :class:`~compas_timber.fabrication.Slot` into each beam in :attr:`elements`, and one
