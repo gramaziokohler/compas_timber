@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 ### Changed
+* Fixed `Panel.compute_modeltransformation()` composing a panel's transformation with its ancestors' in the model tree. Unlike most elements, a `Panel`'s own `transformation` is already an absolute (world) placement rather than parent-relative, so composing it with an ancestor's transformation double-applied the ancestor's placement.
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
 * Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.
