@@ -963,3 +963,32 @@ def test_process_ids_restart_for_each_part(tmp_path, plate_with_opening):
     assert len(ids) == 2
     for part_ids in ids:
         assert part_ids == [str(i) for i in range(1, len(part_ids) + 1)]
+
+
+########################################################################
+# declared BTLx version
+########################################################################
+
+
+def test_writer_declares_the_default_version():
+    attributes = BTLxWriter().FILE_ATTRIBUTES
+
+    assert attributes["Version"] == BTLxWriter.BTLX_VERSION
+    assert "btlx_{}.xsd".format(BTLxWriter.BTLX_VERSION.replace(".", "_")) in attributes["xsi:schemaLocation"]
+
+
+def test_writer_version_can_be_overridden():
+    writer = BTLxWriter(version="2.1.0")
+
+    assert writer.FILE_ATTRIBUTES["Version"] == "2.1.0"
+    assert "btlx_2_1_0.xsd" in writer.FILE_ATTRIBUTES["xsi:schemaLocation"]
+
+
+def test_written_file_declares_the_version(tmp_path, plate_with_opening):
+    path = str(tmp_path / "versioned.btlx")
+
+    BTLxWriter(version="2.2.0").write(_mm_model(plate_with_opening), path)
+
+    root = ET.parse(path).getroot()
+    assert root.attrib["Version"] == "2.2.0"
+    assert "btlx_2_2_0.xsd" in root.attrib["{http://www.w3.org/2001/XMLSchema-instance}schemaLocation"]

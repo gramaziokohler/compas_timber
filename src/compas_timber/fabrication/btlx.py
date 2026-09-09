@@ -44,6 +44,10 @@ class BTLxWriter(object):
         The name of the file. Defaults to None.
     comment : str, optional
         A comment to be included in the file. Defaults to None.
+    version : str, optional
+        The BTLx version to declare in the file, e.g. "2.2.0". Defaults to :attr:`BTLX_VERSION`. Consumers
+        may accept a processing only if the declared version covers it, so it should name a version of the
+        specification which covers everything written.
 
 
     """
@@ -52,26 +56,32 @@ class BTLxWriter(object):
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
-    FILE_ATTRIBUTES = OrderedDict(
-        [
-            ("xmlns", "https://www.design2machine.com"),
-            ("Version", "2.0.0"),
-            ("Language", "en"),
-            ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
-            (
-                "xsi:schemaLocation",
-                "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
-            ),
-        ]
-    )
+    BTLX_VERSION = "2.3.0"
 
-    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, version=None):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
+        self.version = version or self.BTLX_VERSION
         self._project_name = project_name or "COMPAS Timber Project"
         self._tolerance = TOL
         self._errors = []
+
+    @property
+    def FILE_ATTRIBUTES(self):
+        """The attributes of the root ``BTLx`` element, built from :attr:`version`."""
+        return OrderedDict(
+            [
+                ("xmlns", "https://www.design2machine.com"),
+                ("Version", self.version),
+                ("Language", "en"),
+                ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
+                (
+                    "xsi:schemaLocation",
+                    "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_{}.xsd".format(self.version.replace(".", "_")),
+                ),
+            ]
+        )
 
     @property
     def errors(self):
