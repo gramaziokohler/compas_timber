@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import date
 from datetime import datetime
 from itertools import chain
+from itertools import count
 from warnings import warn
 
 import compas
@@ -267,17 +268,39 @@ class BTLxWriter(object):
         # create processings element for the part if there are any
         if element.features:
             processings_element = ET.Element("Processings")
+            process_ids = count(1)
             for feature in element.features:
                 try:
                     processing_element = self._create_processing(feature)
                 except ValueError as ex:
                     self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
                 else:
+                    self._assign_process_ids(processing_element, process_ids)
                     processings_element.append(processing_element)
             part_element.append(processings_element)
         if element._geometry:
             part_element.append(part.et_shape)
         return part_element
+
+    @classmethod
+    def _assign_process_ids(cls, processing_element, process_ids):
+        """Numbers `processing_element`, and anything nested in it, from the part's ProcessID counter.
+
+        ProcessID must be unique within a part, and non-zero. A processing knows nothing about its
+        siblings, so they are numbered here, where the whole part is known.
+
+        Parameters
+        ----------
+        processing_element : :class:`~xml.etree.ElementTree.Element`
+            The processing element to number.
+        process_ids : iterator
+            The counter shared by all processings of the part.
+
+        """
+        if processing_element.get("ProcessID") is not None:
+            processing_element.set("ProcessID", str(next(process_ids)))
+        for child in processing_element:
+            cls._assign_process_ids(child, process_ids)
 
     def _create_processing(self, processing):
         """Creates a processing element. This method creates the subprocess elements and appends them to the processing element.

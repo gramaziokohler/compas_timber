@@ -5,6 +5,8 @@ from unittest.mock import patch
 from compas.data import json_load
 from compas.tolerance import Tolerance
 from compas.geometry import Frame
+from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 
@@ -897,3 +899,67 @@ def test_btlx_reader_processing_instantiation_error():
     assert len(reader.errors) > 0
     # Error should reference the JackRafterCut processing type
     assert any("JackRafterCut" in (e.processing_type or "") for e in reader.errors)
+
+
+########################################################################
+# ProcessID uniqueness
+########################################################################
+
+
+@pytest.fixture
+def plate_with_opening():
+    outline = Polyline([Point(0, 0, 0), Point(0, 200, 0), Point(300, 200, 0), Point(300, 0, 0), Point(0, 0, 0)])
+    opening = Polyline([Point(50, 50, 0), Point(50, 150, 0), Point(250, 150, 0), Point(250, 50, 0), Point(50, 50, 0)])
+    return Plate.from_outline_thickness(outline, 20.0, openings=[opening])
+
+
+def _mm_model(*elements):
+    model = TimberModel(tolerance=Tolerance(unit="MM", absolute=1e-6, relative=1e-6))
+    for element in elements:
+        model.add_element(element)
+    return model
+
+
+def _process_ids(path):
+    ns = "{https://www.design2machine.com}"
+    result = []
+    for part in ET.parse(path).getroot().iter(ns + "Part"):
+        processings = part.find(ns + "Processings")
+        if processings is not None:
+            result.append([element.get("ProcessID") for element in processings])
+    return result
+
+
+def test_process_ids_are_unique_within_a_part(tmp_path, plate_with_opening):
+    """A plate already carries its blank contour, so adding an opening gives two FreeContours."""
+    path = str(tmp_path / "ids.btlx")
+
+    BTLxWriter().write(_mm_model(plate_with_opening), path)
+
+    for ids in _process_ids(path):
+        assert len(ids) > 1
+        assert len(ids) == len(set(ids)), "ProcessID must be unique within a part, got {}".format(ids)
+
+
+def test_process_ids_are_never_zero(tmp_path, plate_with_opening):
+    """FreeContour is expected to carry a ProcessID other than 0, so numbering starts at 1."""
+    path = str(tmp_path / "ids.btlx")
+
+    BTLxWriter().write(_mm_model(plate_with_opening), path)
+
+    for ids in _process_ids(path):
+        assert all(int(process_id) > 0 for process_id in ids)
+
+
+def test_process_ids_restart_for_each_part(tmp_path, plate_with_opening):
+    """Uniqueness is required within a part, so each part starts numbering again."""
+    beam = Beam.from_centerline(Line(Point(0, -600, 0), Point(600, -600, 0)), width=120, height=200)
+    beam.add_features([JackRafterCut.from_plane_and_beam(Plane(Point(300, -600, 0), (1, 0, 0)), beam)])
+    path = str(tmp_path / "ids.btlx")
+
+    BTLxWriter().write(_mm_model(plate_with_opening, beam), path)
+
+    ids = _process_ids(path)
+    assert len(ids) == 2
+    for part_ids in ids:
+        assert part_ids == [str(i) for i in range(1, len(part_ids) + 1)]

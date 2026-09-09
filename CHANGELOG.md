@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* `BTLxWriter` now numbers the processings of each part so that `ProcessID` is unique within the part, starting at 1. Previously every `FreeContour` wrote `ProcessID="1"` and every other processing wrote `0`, so any part carrying two of the same kind emitted duplicates and was rejected ("ProcessID 1 ist nicht eindeutig"). A plate hits this as soon as one contour is added, since it already carries its blank contour.
 * Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
