@@ -14,7 +14,7 @@ writes the result to BTLx and shows it in the viewer.
 
 Not every consumer implements the NURBS contour segment type. Lignocam's BtlViewer, for one, parses the
 `NURBS` element but never assigns the segment an end point, so the contour collapses onto its start point
-instead of failing outright. Pass `tessellate=True` to write the very same contour as straight segments,
+instead of failing outright. `BTLxWriter(tessellate=True)` writes the very same model as straight segments,
 which any consumer can read; the second file below does that.
 """
 
@@ -139,19 +139,9 @@ BTLxWriter().write(model, PATH)
 print("wrote {}".format(PATH))
 
 
-# the same two contours, written as straight segments for consumers without NURBS support
-tessellated_plate = Plate.from_outline_thickness(plate_outline, PLATE_THICKNESS)
-tessellated_plate.add_features([FreeContour.from_nurbs_curves_and_element(aperture_curve, tessellated_plate, interior=True, tessellate=True)])
-
-tessellated_beam = Beam.from_centerline(Line(Point(0, -600, 0), Point(BEAM_LENGTH, -600, 0)), BEAM_WIDTH, BEAM_HEIGHT)
-tessellated_beam.add_features([FreeContour.from_nurbs_curves_and_element([wave, closing_line], tessellated_beam, depth=POCKET_DEPTH, interior=True, tessellate=True)])
-
-tessellated_model = TimberModel(tolerance=Tolerance(unit="MM", absolute=1e-6, relative=1e-6))
-tessellated_model.add_element(tessellated_plate)
-tessellated_model.add_element(tessellated_beam)
-
+# the same model again, written as straight segments for consumers without NURBS support
 TESSELLATED_PATH = os.path.join(HERE, "nurbs_contour_tessellated.btlx")
-BTLxWriter().write(tessellated_model, TESSELLATED_PATH)
+BTLxWriter(tessellate=True).write(model, TESSELLATED_PATH)
 print("wrote {}".format(TESSELLATED_PATH))
 
 

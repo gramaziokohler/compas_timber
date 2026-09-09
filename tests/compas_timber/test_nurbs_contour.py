@@ -581,58 +581,69 @@ def test_nurbs_contour_to_contour_keeps_geometry(closed_curve):
     assert TOL.is_close(contour.to_contour().to_brep().volume, contour.to_brep().volume, rtol=1e-9)
 
 
-def test_free_contour_tessellate_produces_plain_contour(plate, closed_curve):
-    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellate=True)
+def test_writer_tessellates_nurbs_on_the_way_out(plate, closed_curve):
+    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)
 
-    assert isinstance(contour.contour_param_object, Contour)
-    assert not isinstance(contour.contour_param_object, NurbsContour)
+    processing_element = BTLxWriter(tessellate=True)._create_processing(contour)
 
-    processing_element = BTLxWriter()._create_processing(contour)
     assert processing_element.find("Contour/NURBS") is None
     assert processing_element.find("Contour/Line") is not None
 
 
-def test_free_contour_tessellate_defaults_to_nurbs(plate, closed_curve):
+def test_writer_leaves_the_model_alone_when_tessellating(plate, closed_curve):
     contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)
+
+    BTLxWriter(tessellate=True)._create_processing(contour)
 
     assert isinstance(contour.contour_param_object, NurbsContour)
 
 
-def test_free_contour_tessellate_has_no_zero_length_segments(plate, closed_curve):
+def test_writer_writes_nurbs_by_default(plate, closed_curve):
+    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)
+
+    processing_element = BTLxWriter()._create_processing(contour)
+
+    assert processing_element.find("Contour/NURBS") is not None
+
+
+def test_tessellated_output_has_no_zero_length_segments(tmp_path, plate, closed_curve):
     """A dropped NURBS segment is what makes a closing line degenerate, so check none are left."""
-    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellate=True)
-
-    polyline = contour.contour_param_object.polyline
-    assert polyline.is_closed
-    for a, b in zip(polyline.points[:-1], polyline.points[1:]):
-        assert a.distance_to_point(b) > 1e-6
-
-
-def test_free_contour_tessellate_matches_nurbs_geometry(plate, closed_curve):
-    nurbs_version = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellation_count=64)
-    line_version = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellation_count=64, tessellate=True)
-
-    assert TOL.is_close(
-        line_version.contour_param_object.to_brep().volume,
-        nurbs_version.contour_param_object.to_brep().volume,
-        rtol=1e-9,
-    )
-
-
-def test_tessellated_free_contour_btlx_roundtrip(tmp_path, plate, closed_curve):
-    plate.add_features([FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellate=True)])
+    plate.add_features([FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)])
     model = _mm_model()
     model.add_element(plate)
 
-    read_model = _write_and_read(model, tmp_path)
+    read_model = _write_and_read(model, tmp_path, tessellate=True)
 
     contours = [f.contour_param_object for e in read_model.elements() for f in e.features]
     assert contours
-    # nothing NURBS survives, and nothing degenerate either
     assert not any(isinstance(c, NurbsContour) for c in contours)
     for contour in contours:
+        assert contour.polyline.is_closed
         for a, b in zip(contour.polyline.points[:-1], contour.polyline.points[1:]):
             assert a.distance_to_point(b) > 1e-6
+
+
+def test_tessellated_output_matches_the_nurbs_geometry(plate, closed_curve):
+    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellation_count=64)
+    nurbs_contour = contour.contour_param_object
+
+    assert TOL.is_close(nurbs_contour.to_contour().to_brep().volume, nurbs_contour.to_brep().volume, rtol=1e-9)
+
+
+def test_the_same_model_writes_both_ways(tmp_path, plate, closed_curve):
+    """The choice belongs to the export, so one model yields both files."""
+    plate.add_features([FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)])
+    model = _mm_model()
+    model.add_element(plate)
+    ns = "{https://www.design2machine.com}"
+
+    nurbs_path = str(tmp_path / "nurbs.btlx")
+    lines_path = str(tmp_path / "lines.btlx")
+    BTLxWriter().write(model, nurbs_path)
+    BTLxWriter(tessellate=True).write(model, lines_path)
+
+    assert list(ET.parse(nurbs_path).getroot().iter(ns + "NURBS"))
+    assert not list(ET.parse(lines_path).getroot().iter(ns + "NURBS"))
 
 
 ########################################################################
@@ -640,9 +651,9 @@ def test_tessellated_free_contour_btlx_roundtrip(tmp_path, plate, closed_curve):
 ########################################################################
 
 
-def _write_and_read(model, tmp_path):
+def _write_and_read(model, tmp_path, tessellate=False):
     path = str(tmp_path / "nurbs.btlx")
-    BTLxWriter().write(model, path)
+    BTLxWriter(tessellate=tessellate).write(model, path)
     reader = BTLxReader()
     read_model = reader.read(path)
     assert reader.errors == []

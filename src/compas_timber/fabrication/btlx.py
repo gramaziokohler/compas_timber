@@ -52,6 +52,10 @@ class BTLxWriter(object):
         The BTLx version to declare in the file, e.g. "2.2.0". Defaults to :attr:`BTLX_VERSION`. Consumers
         may accept a processing only if the declared version covers it, so it should name a version of the
         specification which covers everything written. NURBS contour segments are defined from 2.0.0 on.
+    tessellate : bool, optional
+        If True, every :class:`~compas_timber.fabrication.NurbsContour` in the model is written as straight
+        ``Line`` segments instead of ``NURBS`` ones, for consumers which do not support them. The model
+        itself is left alone. Defaults to False, which writes NURBS as the specification defines it.
 
 
     """
@@ -64,11 +68,12 @@ class BTLxWriter(object):
     NURBS_PARAM_PRECISION = 12
     BTLX_VERSION = "2.3.0"
 
-    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, version=None):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, version=None, tessellate=False):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
         self.version = version or self.BTLX_VERSION
+        self.tessellate = tessellate
         self._project_name = project_name or "COMPAS Timber Project"
         self._tolerance = TOL
         self._errors = []
@@ -371,6 +376,8 @@ class BTLxWriter(object):
         return processing_element
 
     def _element_from_complex_param(self, param):
+        if self.tessellate and isinstance(param, NurbsContour):
+            param = param.to_contour()
         serializer = self.SERIALIZERS.get(type(param).__name__, None)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
@@ -1644,8 +1651,7 @@ class NurbsContour(Data):
     clamped, i.e. it must start at its first control point and end at its last one.
 
     Not every consumer implements NURBS segments. :meth:`to_contour` produces an equivalent contour of
-    straight segments for those, which :meth:`FreeContour.from_nurbs_curves_and_element` exposes as
-    ``tessellate=True``.
+    straight segments for those, which ``BTLxWriter(tessellate=True)`` applies on the way out.
 
     Parameters
     ----------
@@ -1793,9 +1799,10 @@ class NurbsContour(Data):
         and is written as a contour of ``Line`` elements. How closely it follows the curve is governed by
         ``tessellation_count``.
 
-        Use this when the consumer does not support NURBS contour segments. Lignocam's BtlViewer, for one,
-        parses them but never assigns the segment an end point, so the contour collapses onto its start
-        point instead of failing outright.
+        Use this when the consumer does not support NURBS contour segments; ``BTLxWriter(tessellate=True)``
+        calls it for every NURBS contour it writes. Lignocam's BtlViewer, for one, parses them but never
+        assigns the segment an end point, so the contour collapses onto its start point instead of failing
+        outright.
 
         Returns
         -------

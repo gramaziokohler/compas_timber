@@ -257,7 +257,6 @@ class FreeContour(BTLxProcessing):
         tool_position: Optional[str] = None,
         ref_side_index: Optional[int] = None,
         tessellation_count: int = 64,
-        tessellate: bool = False,
         **kwargs,
     ):
         """Construct a FreeContour processing from NURBS curves and an element.
@@ -283,11 +282,7 @@ class FreeContour(BTLxProcessing):
             The reference side index. If none is given, it is derived from the curves and the element.
         tessellation_count
             The number of straight sub-segments each NURBS segment is approximated with when generating the
-            geometry, and when `tessellate` is True also in the BTLx output.
-        tessellate
-            If True, the NURBS segments are written to BTLx as straight segments instead, for consumers
-            which do not support them. See :meth:`NurbsContour.to_contour`. Default is False, which writes
-            NURBS segments as the specification defines them.
+            geometry, and when writing with ``BTLxWriter(tessellate=True)`` also in the BTLx output.
 
         Returns
         -------
@@ -309,8 +304,6 @@ class FreeContour(BTLxProcessing):
         transformation_to_local = Transformation.from_frame(ref_side).inverse()
         local_segments = [segment.transformed(transformation_to_local) for segment in segments]
         contour = NurbsContour(local_segments, depth=depth, inclination=[0.0], tessellation_count=tessellation_count)
-        if tessellate:
-            contour = contour.to_contour()
         return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
 
     @staticmethod
