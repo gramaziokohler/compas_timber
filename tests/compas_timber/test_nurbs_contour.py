@@ -21,6 +21,7 @@ from compas_timber.fabrication import knotvector_from_btlx
 from compas_timber.fabrication import knotvector_to_btlx
 from compas_timber.fabrication import nurbs_curve_from_btlx
 from compas_timber.fabrication.btlx import contour_to_xml
+from compas_timber.fabrication.btlx import nurbs_contour_to_tessellated_xml
 from compas_timber.fabrication.btlx import nurbs_contour_to_xml
 from compas_timber.fabrication.btlx import split_nurbs_curve
 from compas_timber.model import TimberModel
@@ -628,6 +629,26 @@ def test_tessellated_output_matches_the_nurbs_geometry(plate, closed_curve):
     nurbs_contour = contour.contour_param_object
 
     assert TOL.is_close(nurbs_contour.to_contour().to_brep().volume, nurbs_contour.to_brep().volume, rtol=1e-9)
+
+
+def test_tessellated_serializer_is_looked_up_by_registration(plate, closed_curve):
+    """The writer picks the alternative from the registry, so it needs no knowledge of the type."""
+    contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)
+
+    assert BTLxWriter.TESSELLATED_SERIALIZERS["NurbsContour"] is nurbs_contour_to_tessellated_xml
+    assert BTLxWriter.SERIALIZERS["NurbsContour"] is nurbs_contour_to_xml
+    assert "Contour" not in BTLxWriter.TESSELLATED_SERIALIZERS
+    assert contour_to_xml(contour.contour_param_object.to_contour()).tag == "Contour"
+
+
+def test_a_type_without_a_tessellated_serializer_is_written_the_same_either_way(plate):
+    polyline = Polyline([Point(20, 50, 0), Point(20, 150, 0), Point(80, 150, 0), Point(80, 50, 0), Point(20, 50, 0)])
+    contour = FreeContour.from_polyline_and_element(polyline, plate, depth=5.0)
+
+    plain = ET.tostring(BTLxWriter()._create_processing(contour))
+    tessellated = ET.tostring(BTLxWriter(tessellate=True)._create_processing(contour))
+
+    assert plain == tessellated
 
 
 def test_the_same_model_writes_both_ways(tmp_path, plate, closed_curve):

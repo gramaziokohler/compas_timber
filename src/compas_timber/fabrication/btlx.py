@@ -53,14 +53,15 @@ class BTLxWriter(object):
         may accept a processing only if the declared version covers it, so it should name a version of the
         specification which covers everything written. NURBS contour segments are defined from 2.0.0 on.
     tessellate : bool, optional
-        If True, every :class:`~compas_timber.fabrication.NurbsContour` in the model is written as straight
-        ``Line`` segments instead of ``NURBS`` ones, for consumers which do not support them. The model
-        itself is left alone. Defaults to False, which writes NURBS as the specification defines it.
+        If True, any type which registered a tessellated serializer is written through that instead, for
+        consumers which do not support it. :class:`~compas_timber.fabrication.NurbsContour` registers one
+        and is written as straight ``Line`` segments. The model itself is left alone. Defaults to False.
 
 
     """
 
     SERIALIZERS = {}
+    TESSELLATED_SERIALIZERS = {}
 
     POINT_PRECISION = 3
     ANGLE_PRECISION = 3
@@ -376,15 +377,15 @@ class BTLxWriter(object):
         return processing_element
 
     def _element_from_complex_param(self, param):
-        if self.tessellate and isinstance(param, NurbsContour):
-            param = param.to_contour()
-        serializer = self.SERIALIZERS.get(type(param).__name__, None)
+        type_name = type(param).__name__
+        serializer = self.TESSELLATED_SERIALIZERS.get(type_name) if self.tessellate else None
+        serializer = serializer or self.SERIALIZERS.get(type_name)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
         return serializer(param)
 
     @classmethod
-    def register_type_serializer(cls, type_, serializer):
+    def register_type_serializer(cls, type_, serializer, tessellated=None):
         """Register a type and its serializer.
 
         Parameters
@@ -393,9 +394,14 @@ class BTLxWriter(object):
             The name of the type to be serialized, i.e. its ``__name__`` attribute.
         serializer : callable
             The serializer function. Takes an instance of the named type and returns an XML element which corresponds with it.
+        tessellated : callable, optional
+            The serializer to use instead when the writer was asked to tessellate, for a type which not
+            every BTLx consumer supports. If none is given, the type is written the same way either way.
 
         """
         cls.SERIALIZERS[type_] = serializer
+        if tessellated:
+            cls.TESSELLATED_SERIALIZERS[type_] = tessellated
 
 
 class BTLxGenericPart(object):
@@ -1918,7 +1924,27 @@ def nurbs_contour_to_xml(contour):
     return root
 
 
-BTLxWriter.register_type_serializer(NurbsContour.__name__, nurbs_contour_to_xml)
+def nurbs_contour_to_tessellated_xml(contour):
+    """Converts a NurbsContour to a ``Contour`` element made only of straight ``Line`` segments.
+
+    This is what :class:`BTLxWriter` writes for a NurbsContour when it was constructed with
+    ``tessellate=True``. See :meth:`NurbsContour.to_contour`.
+
+    Parameters
+    ----------
+    contour : :class:`NurbsContour`
+        The contour to be converted.
+
+    Returns
+    -------
+    :class:`~xml.etree.ElementTree.Element`
+        The element which represents the contour, with no ``NURBS`` children.
+
+    """
+    return contour_to_xml(contour.to_contour())
+
+
+BTLxWriter.register_type_serializer(NurbsContour.__name__, nurbs_contour_to_xml, tessellated=nurbs_contour_to_tessellated_xml)
 
 
 class BTLxFromGeometryDefinition(Data):
