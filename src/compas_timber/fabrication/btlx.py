@@ -11,6 +11,9 @@ from datetime import date
 from datetime import datetime
 from itertools import chain
 from itertools import count
+from typing import Iterator
+from typing import Optional
+from typing import Union
 from warnings import warn
 
 import compas
@@ -305,20 +308,9 @@ class BTLxWriter(object):
         return part_element
 
     @classmethod
-    def _assign_process_ids(cls, processing_element, process_ids):
-        """Numbers `processing_element`, and anything nested in it, from the part's ProcessID counter.
-
-        ProcessID must be unique within a part, and non-zero. A processing knows nothing about its
-        siblings, so they are numbered here, where the whole part is known.
-
-        Parameters
-        ----------
-        processing_element : :class:`~xml.etree.ElementTree.Element`
-            The processing element to number.
-        process_ids : iterator
-            The counter shared by all processings of the part.
-
-        """
+    def _assign_process_ids(cls, processing_element: ET.Element, process_ids: Iterator[int]) -> None:
+        # ProcessID must be unique within a part, and non-zero. A processing knows nothing about its
+        # siblings, so they are numbered here, where the whole part is known.
         if processing_element.get("ProcessID") is not None:
             processing_element.set("ProcessID", str(next(process_ids)))
         for child in processing_element:
@@ -1473,12 +1465,12 @@ BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)
 # convention and is taken to be a mistake in the documentation.
 
 
-def knotvector_to_btlx(knotvector):
+def knotvector_to_btlx(knotvector: list[float]) -> list[float]:
     """Converts a standard knot vector to the reduced form used by BTLx.
 
     Parameters
     ----------
-    knotvector : list[float]
+    knotvector
         The full knot vector, of length ``count + degree + 1``.
 
     Returns
@@ -1492,12 +1484,12 @@ def knotvector_to_btlx(knotvector):
     return list(knotvector[1:-1])
 
 
-def knotvector_from_btlx(knots):
+def knotvector_from_btlx(knots: list[float]) -> list[float]:
     """Converts a BTLx knot vector to the standard form.
 
     Parameters
     ----------
-    knots : list[float]
+    knots
         The knot vector as found in a BTLx file, of length ``count + degree - 1``.
 
     Returns
@@ -1512,23 +1504,23 @@ def knotvector_from_btlx(knots):
     return [knots[0]] + knots + [knots[-1]]
 
 
-def nurbs_curve_from_btlx(points, weights, knots, degree):
+def nurbs_curve_from_btlx(points: list[Point], weights: list[float], knots: list[float], degree: int) -> NurbsCurve:
     """Creates a NURBS curve from the parameters as they appear in a BTLx ``NURBS`` element.
 
     Parameters
     ----------
-    points : list[:class:`compas.geometry.Point`]
+    points
         The control points.
-    weights : list[float]
+    weights
         The weight of each control point.
-    knots : list[float]
+    knots
         The knot vector in BTLx form, see :func:`knotvector_from_btlx`.
-    degree : int
+    degree
         The degree of the curve.
 
     Returns
     -------
-    :class:`compas_brep.curves.NurbsCurve`
+    NurbsCurve
         The resulting curve.
 
     """
@@ -1536,8 +1528,7 @@ def nurbs_curve_from_btlx(points, weights, knots, degree):
     return NurbsCurve.from_parameters(points, weights, unique_knots, multiplicities, degree)
 
 
-def _compress_knotvector(knotvector):
-    """Splits a full knot vector into its unique values and their multiplicities."""
+def _compress_knotvector(knotvector: list[float]) -> tuple[list[float], list[int]]:
     unique_knots = []
     multiplicities = []
     for knot in knotvector:
@@ -1549,28 +1540,8 @@ def _compress_knotvector(knotvector):
     return unique_knots, multiplicities
 
 
-def _insert_knot(homogeneous_points, knotvector, degree, u):
-    """Inserts the knot `u` once using Boehm's algorithm.
-
-    Works on homogeneous control points, so that rational curves are handled correctly.
-
-    Parameters
-    ----------
-    homogeneous_points : list[list[float]]
-        The control points as ``[w * x, w * y, w * z, w]``.
-    knotvector : list[float]
-        The full knot vector.
-    degree : int
-        The degree of the curve.
-    u : float
-        The knot to insert.
-
-    Returns
-    -------
-    tuple[list[list[float]], list[float]]
-        The new control points and the new knot vector.
-
-    """
+def _insert_knot(homogeneous_points: list[list[float]], knotvector: list[float], degree: int, u: float) -> tuple[list[list[float]], list[float]]:
+    # Boehm's algorithm, on control points in homogeneous form ``[w * x, w * y, w * z, w]``
     span = None
     for index in range(len(knotvector) - 1):
         if knotvector[index] <= u < knotvector[index + 1]:
@@ -1595,15 +1566,14 @@ def _insert_knot(homogeneous_points, knotvector, degree, u):
     return new_points, knotvector[: span + 1] + [u] + knotvector[span + 1 :]
 
 
-def _curve_from_homogeneous(homogeneous_points, knotvector, degree):
-    """Builds a NURBS curve from homogeneous control points and a full knot vector."""
+def _curve_from_homogeneous(homogeneous_points: list[list[float]], knotvector: list[float], degree: int) -> NurbsCurve:
     points = [Point(point[0] / point[3], point[1] / point[3], point[2] / point[3]) for point in homogeneous_points]
     weights = [point[3] for point in homogeneous_points]
     unique_knots, multiplicities = _compress_knotvector(knotvector)
     return NurbsCurve.from_parameters(points, weights, unique_knots, multiplicities, degree)
 
 
-def split_nurbs_curve(curve, u=None):
+def split_nurbs_curve(curve: NurbsCurve, u: Optional[float] = None) -> tuple[NurbsCurve, NurbsCurve]:
     """Splits a NURBS curve in two at the parameter `u`.
 
     The knot `u` is inserted until its multiplicity equals the degree of the curve, at which point the
@@ -1612,14 +1582,14 @@ def split_nurbs_curve(curve, u=None):
 
     Parameters
     ----------
-    curve : :class:`compas_brep.curves.NurbsCurve`
+    curve
         The curve to split.
-    u : float, optional
+    u
         The parameter to split at. Defaults to the middle of the curve's domain.
 
     Returns
     -------
-    tuple[:class:`compas_brep.curves.NurbsCurve`, :class:`compas_brep.curves.NurbsCurve`]
+    tuple[NurbsCurve, NurbsCurve]
         The two halves of the curve.
 
     """
@@ -1682,7 +1652,14 @@ class NurbsContour(Data):
 
     """
 
-    def __init__(self, segments, depth, depth_bounded=True, inclination=None, tessellation_count=64):
+    def __init__(
+        self,
+        segments: list[Union[NurbsCurve, Line]],
+        depth: float,
+        depth_bounded: bool = True,
+        inclination: Optional[list[float]] = None,
+        tessellation_count: int = 64,
+    ):
         super(NurbsContour, self).__init__()
         self.segments = segments
         self.depth = depth
@@ -1701,11 +1678,11 @@ class NurbsContour(Data):
         }
 
     @property
-    def segments(self):
+    def segments(self) -> list[Union[NurbsCurve, Line]]:
         return self._segments
 
     @segments.setter
-    def segments(self, value):
+    def segments(self, value: list[Union[NurbsCurve, Line]]):
         segments = []
         for segment in value:
             if not isinstance(segment, (NurbsCurve, Line)):
@@ -1735,44 +1712,37 @@ class NurbsContour(Data):
         self._segments = segments
 
     @property
-    def start_point(self):
+    def start_point(self) -> Point:
         return self._segment_start_point(self.segments[0])
 
     @property
-    def is_closed(self):
+    def is_closed(self) -> bool:
         return TOL.is_allclose(self._segment_end_point(self.segments[-1]), self.start_point, atol=1e-6)
 
     @staticmethod
-    def _verify_clamped(curve):
-        """Raises if `curve` does not start at its first control point and end at its last one.
-
-        BTLx identifies the ends of a NURBS segment with its first and last control point, so an unclamped
-        curve cannot be attached to its neighbours in a way the specification defines.
-        """
+    def _verify_clamped(curve: NurbsCurve) -> None:
+        # BTLx identifies the ends of a NURBS segment with its first and last control point, so an
+        # unclamped curve cannot be attached to its neighbours in a way the specification defines
         start, end = curve.domain
         if not TOL.is_allclose(curve.point_at(start), curve.points[0], atol=1e-6) or not TOL.is_allclose(curve.point_at(end), curve.points[-1], atol=1e-6):
             raise ValueError("BTLx can only represent clamped NURBS curves, i.e. curves which start at their first and end at their last control point.")
 
     @staticmethod
-    def _segment_start_point(segment):
+    def _segment_start_point(segment: Union[NurbsCurve, Line]) -> Point:
         return Point(*segment.start) if isinstance(segment, Line) else Point(*segment.points[0])
 
     @staticmethod
-    def _segment_end_point(segment):
+    def _segment_end_point(segment: Union[NurbsCurve, Line]) -> Point:
         return Point(*segment.end) if isinstance(segment, Line) else Point(*segment.points[-1])
 
-    def _segment_to_points(self, segment):
-        """Returns the points which approximate `segment`, including both of its end points."""
+    def _segment_to_points(self, segment: Union[NurbsCurve, Line]) -> list[Point]:
         if isinstance(segment, Line):
             return [Point(*segment.start), Point(*segment.end)]
         return segment.to_polyline(self.tessellation_count).points
 
-    def _inclination_per_subsegment(self):
-        """Expands the per-segment inclination to one value per straight sub-segment of :meth:`to_polyline`.
-
-        A single, global inclination is passed through unchanged, as :class:`Contour` expresses it the
-        same way.
-        """
+    def _inclination_per_subsegment(self) -> list[float]:
+        # one value per straight sub-segment of to_polyline(); a single, global inclination is passed
+        # through unchanged, as Contour expresses it the same way
         if len(self.inclination) == 1:
             return list(self.inclination)
         if len(self.inclination) != len(self.segments):
@@ -1782,7 +1752,7 @@ class NurbsContour(Data):
             expanded.extend([inclination] * (len(self._segment_to_points(segment)) - 1))
         return expanded
 
-    def to_polyline(self):
+    def to_polyline(self) -> Polyline:
         """Approximates the contour with a polyline.
 
         Returns
@@ -1798,7 +1768,7 @@ class NurbsContour(Data):
             points.extend(segment_points[1:] if points else segment_points)
         return Polyline(points)
 
-    def to_contour(self):
+    def to_contour(self) -> Contour:
         """Converts this contour to an equivalent polyline based :class:`Contour`.
 
         The NURBS segments are tessellated into straight segments, so the result contains no NURBS at all
@@ -1829,12 +1799,12 @@ class NurbsContour(Data):
         """
         return self.to_contour().to_brep()
 
-    def scale(self, factor):
+    def scale(self, factor: float) -> None:
         """Scale the contour by a given factor.
 
         Parameters
         ----------
-        factor : float
+        factor
             The scaling factor.
 
         """
@@ -1843,28 +1813,26 @@ class NurbsContour(Data):
         if self.depth is not None:
             self.depth *= factor
 
-    def scaled(self, factor):
+    def scaled(self, factor: float) -> "NurbsContour":
         """Returns a new instance of the contour with the parameters scaled by a given factor.
 
         Parameters
         ----------
-        factor : float
+        factor
             The scaling factor.
 
         Returns
         -------
-        :class:`~compas_timber.fabrication.NurbsContour`
+        NurbsContour
             A new instance of the contour with the parameters scaled by the given factor.
 
         """
-        # type: (float) -> NurbsContour
         new_instance = self.copy()
         new_instance.scale(factor)
         return new_instance
 
 
-def _set_point_attributes(element, point, weight=None):
-    """Sets the X/Y/Z (and optionally W) attributes of `element` from `point`."""
+def _set_point_attributes(element: ET.Element, point: Point, weight: Optional[float] = None) -> None:
     element.set("X", "{:.{prec}f}".format(point[0], prec=BTLxWriter.POINT_PRECISION))
     element.set("Y", "{:.{prec}f}".format(point[1], prec=BTLxWriter.POINT_PRECISION))
     element.set("Z", "{:.{prec}f}".format(point[2], prec=BTLxWriter.POINT_PRECISION))
@@ -1872,7 +1840,7 @@ def _set_point_attributes(element, point, weight=None):
         element.set("W", "{:.{prec}f}".format(weight, prec=BTLxWriter.NURBS_PARAM_PRECISION))
 
 
-def nurbs_contour_to_xml(contour):
+def nurbs_contour_to_xml(contour: NurbsContour) -> ET.Element:
     """Converts a NurbsContour to an XML element.
 
     The result is a ``Contour`` element, same as for :class:`~compas_timber.fabrication.Contour`, whose
@@ -1880,7 +1848,7 @@ def nurbs_contour_to_xml(contour):
 
     Parameters
     ----------
-    contour : :class:`NurbsContour`
+    contour
         The contour to be converted.
 
     Returns
@@ -1924,7 +1892,7 @@ def nurbs_contour_to_xml(contour):
     return root
 
 
-def nurbs_contour_to_tessellated_xml(contour):
+def nurbs_contour_to_tessellated_xml(contour: NurbsContour) -> ET.Element:
     """Converts a NurbsContour to a ``Contour`` element made only of straight ``Line`` segments.
 
     This is what :class:`BTLxWriter` writes for a NurbsContour when it was constructed with
@@ -1932,7 +1900,7 @@ def nurbs_contour_to_tessellated_xml(contour):
 
     Parameters
     ----------
-    contour : :class:`NurbsContour`
+    contour
         The contour to be converted.
 
     Returns

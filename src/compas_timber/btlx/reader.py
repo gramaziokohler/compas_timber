@@ -8,6 +8,7 @@ from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import Tolerance
+from compas_brep.curves import NurbsCurve
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
@@ -526,25 +527,11 @@ def xml_to_dual_contour(element):
     return DualContour(principal_contour, associated_contour)
 
 
-def _xml_to_point(element):
-    """Reads the X/Y/Z attributes of `element` into a point."""
+def _xml_to_point(element: ET.Element) -> Point:
     return Point(float(element.attrib["X"]), float(element.attrib["Y"]), float(element.attrib["Z"]))
 
 
-def _xml_to_nurbs_curve(element):
-    """Converts a single NURBS contour segment to a curve.
-
-    Parameters
-    ----------
-    element : :class:`~xml.etree.ElementTree.Element`
-        The ``NURBS`` element.
-
-    Returns
-    -------
-    :class:`compas_brep.curves.NurbsCurve`
-        The curve.
-
-    """
+def _xml_to_nurbs_curve(element: ET.Element) -> NurbsCurve:
     degree = int(element.attrib["Degree"])
 
     control_points_elem = element.find("{*}ControlPoints")
@@ -568,17 +555,17 @@ def _xml_to_nurbs_curve(element):
     return nurbs_curve_from_btlx(points, weights, knots, degree)
 
 
-def xml_to_nurbs_contour(element):
+def xml_to_nurbs_contour(element: ET.Element) -> NurbsContour:
     """Converts a Contour XML element which contains NURBS segments to a NurbsContour object.
 
     Parameters
     ----------
-    element : :class:`~xml.etree.ElementTree.Element`
+    element
         The XML element representing the contour.
 
     Returns
     -------
-    :class:`NurbsContour`
+    NurbsContour
         The NurbsContour object.
 
     """
