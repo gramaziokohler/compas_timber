@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from collections import OrderedDict
 from typing import Optional
+from typing import Union
 
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
@@ -12,6 +14,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
+from compas_brep.curves import NurbsCurve
 
 from compas_timber.base import TimberElement
 from compas_timber.geometry import brep_difference_first
@@ -247,7 +250,7 @@ class FreeContour(BTLxProcessing):
     @classmethod
     def from_nurbs_curves_and_element(
         cls,
-        curves,
+        curves: Union[NurbsCurve, list[Union[NurbsCurve, Line]]],
         element: TimberElement,
         depth: Optional[float] = None,
         interior: Optional[bool] = False,
@@ -264,24 +267,24 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        curves : :class:`compas_brep.curves.NurbsCurve` or list
-            The curve, or the connected sequence of :class:`compas_brep.curves.NurbsCurve` and
-            :class:`compas.geometry.Line` segments, which make up the contour. All of them must lie on one
-            of the reference sides of `element`.
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        curves
+            The curve, or the connected sequence of curves and lines, which make up the contour. All of
+            them must lie on one of the reference sides of `element`.
+        element
             The element.
-        depth : float, optional
+        depth
             The depth of the contour. Default is the dimension of the element normal to the reference side.
-        interior : bool, optional
+        interior
             If True, the material inside of the contour is removed. Default is False.
-        tool_position : :class:`~compas_timber.fabrication.AlignmentType`, optional
-            The position of the tool. Required if the contour is not closed.
-        ref_side_index : int, optional
+        tool_position
+            The position of the tool, an :class:`~compas_timber.fabrication.AlignmentType`. Required if the
+            contour is not closed.
+        ref_side_index
             The reference side index. If none is given, it is derived from the curves and the element.
-        tessellation_count : int, optional
+        tessellation_count
             The number of straight sub-segments each NURBS segment is approximated with when generating the
             geometry, and when `tessellate` is True also in the BTLx output.
-        tessellate : bool, optional
+        tessellate
             If True, the NURBS segments are written to BTLx as straight segments instead, for consumers
             which do not support them. See :meth:`NurbsContour.to_contour`. Default is False, which writes
             NURBS segments as the specification defines them.
@@ -343,9 +346,9 @@ class FreeContour(BTLxProcessing):
 
         Parameters
         ----------
-        contour_points : :class:`compas.geometry.Polyline` or list[:class:`compas.geometry.Point`]
+        contour_points
             The points of the contour.
-        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+        element
             The element.
 
         Returns
