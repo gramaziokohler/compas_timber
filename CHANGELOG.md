@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 ### Changed
+* `FreeContour.get_ref_face_index()` now finds the reference side a contour lies on by testing every point against every side, instead of deriving a plane from three of the points and comparing its normal. Three consecutive points of a tessellated curve are close to collinear, which makes the three-point plane unreliable. Note this is stricter: a contour whose points are not all within 1e-6 of one reference side is now rejected, where before only its first point was tested.
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
 * Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.

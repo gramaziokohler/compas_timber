@@ -4,7 +4,6 @@ import math
 from collections import OrderedDict
 from typing import Optional
 
-from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
@@ -272,13 +271,25 @@ class FreeContour(BTLxProcessing):
     @staticmethod
     def get_ref_face_index(contour_points, element):
         # type: (Polyline, Union[Plate, Beam]) -> int
-        curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
-        for i, ref_side in enumerate(element.ref_sides):
-            distance = distance_point_plane(contour_points[0], Plane.from_frame(ref_side))
-            if TOL.is_zero(distance, tol=1e-6):
-                angle = angle_vectors(ref_side.normal, curve_frame.zaxis, deg=True)
-                if TOL.is_zero(angle, 1e-3) or TOL.is_zero(angle - 180.0, 1e-3):
-                    return i
+        """Finds the reference side of `element` which all of `contour_points` lie on.
+
+        Parameters
+        ----------
+        contour_points : :class:`compas.geometry.Polyline` or list[:class:`compas.geometry.Point`]
+            The points of the contour.
+        element : :class:`compas_timber.elements.Beam` or :class:`compas_timber.elements.Plate`
+            The element.
+
+        Returns
+        -------
+        int
+            The index of the matching reference side.
+
+        """
+        for index, ref_side in enumerate(element.ref_sides):
+            plane = Plane.from_frame(ref_side)
+            if all(TOL.is_zero(distance_point_plane(point, plane), tol=1e-6) for point in contour_points):
+                return index
         raise ValueError("The contour does not lay on one of the reference sides of the element.")
 
     @staticmethod
