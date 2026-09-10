@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* `BTLxWriter` now numbers each part's processings so that `ProcessID` is unique within the part and never 0. Previously duplicates were emitted and rejected by consumers.
+* `BTLxWriter` now declares BTLx version 2.3.0 instead of 2.0.0, and takes a `version` argument to declare another. `xsi:schemaLocation` is derived from it, so the two can no longer disagree.
+* Added `NurbsContour`, a contour of NURBS curves and/or straight lines. It is handed to a `FreeContour` and serializes to the same `<Contour>` element, with `<NURBS>` children.
+* Added `FreeContour.from_nurbs_curves_and_element()`, which builds a `FreeContour` from a `NurbsCurve`, or a connected sequence of curves and lines, lying on one of an element's reference sides.
+* Added `knotvector_to_btlx()`, `knotvector_from_btlx()` and `nurbs_curve_from_btlx()`, converting between the standard (`count + degree + 1`) knot vector and the reduced (`count + degree - 1`) form BTLx uses.
+* `BTLxReader` now deserializes `<Contour>` elements containing `<NURBS>` segments into a `NurbsContour`.
+* Added `NurbsContour.to_contour()` and the `tessellate` argument of `BTLxWriter`, which writes every NURBS contour in the model as straight `Line` segments for consumers that do not support them, such as Lignocam's BtlViewer. The model is left alone, and writing NURBS stays the default.
+* Added `split_nurbs_curve()`, Boehm knot insertion in homogeneous coordinates so that rational curves survive. `NurbsContour` uses it on closed curves, which BTLx cannot express as one segment.
 * Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
@@ -38,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 ### Changed
+* `FreeContour.get_ref_face_index()` now tests every contour point against each reference side, instead of fitting a plane to three of the points, which raised `ZeroDivisionError` when they were near collinear. It is stricter: all points must now lie on the side, not just the first.
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
 * Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.

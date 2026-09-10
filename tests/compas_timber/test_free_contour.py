@@ -227,3 +227,24 @@ def test_contour_scaled():
     assert scaled_contour.depth == contour.depth * 2.0
     assert scaled_contour.inclination == contour.inclination
     assert scaled_contour.depth_bounded == contour.depth_bounded
+
+
+def test_get_ref_face_index_finds_the_side_the_contour_lies_on(plate):
+    polyline = Polyline([Point(20, 50, 0), Point(20, 150, 0), Point(80, 150, 0), Point(80, 50, 0), Point(20, 50, 0)])
+
+    assert FreeContour.get_ref_face_index(polyline, plate) == 0
+
+
+def test_get_ref_face_index_handles_near_collinear_points(plate):
+    """A smooth closed contour runs straight through its own start point, so the first, second and
+    second-to-last points are near collinear and the plane through them is unusable."""
+    polyline = Polyline([Point(20, 50, 0), Point(40, 50, 0), Point(80, 50, 0), Point(80, 150, 0), Point(20, 150, 0), Point(10, 50, 0), Point(20, 50, 0)])
+
+    assert FreeContour.get_ref_face_index(polyline, plate) == 0
+
+
+def test_get_ref_face_index_rejects_a_contour_off_the_element(plate):
+    polyline = Polyline([Point(20, 50, 5), Point(20, 150, 5), Point(80, 150, 5), Point(80, 50, 5), Point(20, 50, 5)])
+
+    with pytest.raises(ValueError):
+        FreeContour.get_ref_face_index(polyline, plate)
