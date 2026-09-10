@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional, Union
 
 from compas.data import Data
 from compas.geometry import Box, Plane, Point, Polyline, Transformation, Vector
-from compas_model.elements import Element, reset_computed
+from compas_model.elements import Element, Feature, reset_computed
 
 from .plate_geometry import PlateGeometry
 
@@ -331,6 +331,22 @@ class Layer(Element):
         self._obb = None
         self._collision_mesh = None
         self._planes = None
+
+    @reset_computed
+    def remove_features(self, features: Optional[Union[Feature, list[Feature]]] = None) -> None:
+        """Removes features from the layer.
+
+        Parameters
+        ----------
+        features : :class:`~compas_model.elements.Feature` | list[:class:`~compas_model.elements.Feature`], optional
+            The features to be removed. If None, all features will be removed.
+
+        """
+        if features is None:
+            self._features = []
+        else:
+            feature_list = features if isinstance(features, list) else [features]
+            self._features = [f for f in self._features if f not in feature_list]
 
     def transformation_to_local(self):
         """Transformation from model space to this layer's local space."""
