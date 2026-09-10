@@ -24,8 +24,13 @@ class StekoJoint(Joint):
     """
 
     def __init__(self, steko_column: Beam = None, *steko_beams: Beam, **kwargs):
+        # column first, matching this constructor's own positional order - required so that
+        # TimberModel._expand_composite_joints can reconstruct an equivalent joint (for a
+        # cut_all_parts CompositeBeam among steko_beams) via `type(joint)(*part_pair)`, where
+        # part_pair is built by zipping self.elements position-for-position against this same
+        # constructor's positional parameters.
         super().__init__(
-            elements=(steko_beams + (steko_column,)),
+            elements=((steko_column,) + steko_beams),
             **kwargs,
         )
         self.slot_width = 0.027  # 27mm
@@ -71,11 +76,11 @@ class StekoJoint(Joint):
 
     @property
     def steko_column(self) -> Beam:
-        return self.elements[-1] if self.elements else None
+        return self.elements[0] if self.elements else None
 
     @property
     def steko_beams(self) -> list[Beam]:
-        return list(self.elements[:-1])
+        return list(self.elements[1:])
 
     @property
     def location(self) -> Point:
