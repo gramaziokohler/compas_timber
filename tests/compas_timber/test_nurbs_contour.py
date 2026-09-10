@@ -191,6 +191,7 @@ def test_nurbs_contour_to_polyline_joins_segments_without_duplicates(open_curve)
     assert polyline.is_closed
 
 
+@pytest.mark.requires_occ
 def test_nurbs_contour_to_brep_is_a_solid(closed_curve):
     contour = NurbsContour([closed_curve], depth=20.0, tessellation_count=32)
 
@@ -391,6 +392,7 @@ def test_get_ref_face_index(plate):
     assert FreeContour.get_ref_face_index(polyline, plate) == 0
 
 
+@pytest.mark.requires_occ
 def test_free_contour_nurbs_applies_to_plate_geometry(plate, closed_curve):
     volume_before = plate.geometry.volume
     plate.add_features([FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True)])
@@ -401,6 +403,7 @@ def test_free_contour_nurbs_applies_to_plate_geometry(plate, closed_curve):
     assert geometry.volume < volume_before
 
 
+@pytest.mark.requires_occ
 def test_free_contour_nurbs_applies_to_beam_geometry():
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(600, 0, 0)), width=120, height=200)
     points = [Point(100, 20, 0), Point(200, 90, 0), Point(300, -30, 0), Point(400, 60, 0), Point(500, 20, 0), Point(300, 100, 0), Point(100, 20, 0)]
@@ -575,6 +578,7 @@ def test_nurbs_contour_to_contour_serializes_as_lines_only(closed_curve):
     assert set(tags) == {"StartPoint", "Line"}
 
 
+@pytest.mark.requires_occ
 def test_nurbs_contour_to_contour_keeps_geometry(closed_curve):
     contour = NurbsContour([closed_curve], depth=20.0, tessellation_count=64)
 
@@ -624,6 +628,7 @@ def test_tessellated_output_has_no_zero_length_segments(tmp_path, plate, closed_
             assert a.distance_to_point(b) > 1e-6
 
 
+@pytest.mark.requires_occ
 def test_tessellated_output_matches_the_nurbs_geometry(plate, closed_curve):
     contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellation_count=64)
     nurbs_contour = contour.contour_param_object
