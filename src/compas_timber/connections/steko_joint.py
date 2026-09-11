@@ -7,6 +7,7 @@ from compas.geometry import intersection_line_line
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
+from compas_timber.elements import CompositeBeam
 from compas_timber.fabrication import JackRafterCutProxy
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import FastenerAnchor
@@ -126,13 +127,23 @@ class StekoJoint(Joint):
             front_plane = plane.copy()
             front_plane.translate(plane_normal * (beam.width / 2 - self.slot_padding - self.slot_width / 2))
             front_fame = Frame.from_plane(front_plane)
-            anchor = FastenerAnchor(front_fame, AnchorKind.FACE, [self.steko_column, beam], role="slot_front")
+            anchor = FastenerAnchor(
+                front_fame,
+                AnchorKind.FACE,
+                [self._resolve_cut_element(self.steko_column, front_plane.point), self._resolve_cut_element(beam, front_plane.point)],
+                role="slot_front",
+            )
             anchors.append(anchor)
 
             back_plane = plane.copy()
             back_plane.translate(plane_normal * -(beam.width / 2 - self.slot_padding - self.slot_width / 2))
             back_fame = Frame.from_plane(back_plane)
-            anchor = FastenerAnchor(back_fame, AnchorKind.FACE, [self.steko_column, beam], role="slot_back")
+            anchor = FastenerAnchor(
+                back_fame,
+                AnchorKind.FACE,
+                [self._resolve_cut_element(self.steko_column, back_plane.point), self._resolve_cut_element(beam, back_plane.point)],
+                role="slot_back",
+            )
             anchors.append(anchor)
 
             # The Dowels now
@@ -162,10 +173,33 @@ class StekoJoint(Joint):
                     dowel_plane = plane.translated(Vector.Zaxis() * y * 0.08)
                     dowel_plane.translate(out_joint_beam_direction * x * dowel_step)
                     frame = Frame.from_plane(dowel_plane)
-                    anchor = FastenerAnchor(frame, AnchorKind.AXIS, [beam], role="dowel")
+                    anchor = FastenerAnchor(
+                        frame, AnchorKind.AXIS, [self._resolve_cut_element(beam, dowel_plane.point)], role="dowel"
+                    )
                     anchors.append(anchor)
 
         return FastenerAnchors(anchors)
+
+    @staticmethod
+    def _resolve_cut_element(element, point):
+        """Resolves `element` to the real part a fastener feature at `point` should actually cut,
+        when `element` is a `cut_all_parts` CompositeBeam (e.g. a StekoBeam - see steko_system's
+        beam_generator.py): its own nominal envelope is never fabricated (see CompositeBeam's own
+        docstring), so a slot/dowel anchor built against its full-size geometry (correct - the
+        anchor grid must span the whole built-up cross-section, not one thin layer) must still
+        reference whichever real layer that anchor's position actually falls in, or the resulting
+        cut lands on geometry nothing will ever be machined from.
+
+        `point` is expressed in the same world coordinates the anchor frame itself already is.
+        Returns `element` unchanged for every ordinary (non-composite, or not cut_all_parts)
+        element - the common case (a plain Beam column, or a beam that isn't built-up).
+        """
+        if isinstance(element, CompositeBeam) and element.cut_all_parts:
+            try:
+                return element.resolve_part_at(point)
+            except ValueError:
+                return element
+        return element
 
     def column_beam_ref_side_index(self, beam):
         ref_side_dict = beam_ref_side_incidence(beam, self.steko_column, ignore_ends=True)
