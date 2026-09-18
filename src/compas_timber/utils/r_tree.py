@@ -1,6 +1,4 @@
 from compas.plugins import plugin
-from rtree.index import Index
-from rtree.index import Property
 
 
 @plugin(category="solvers", requires=["rtree"])
@@ -24,6 +22,22 @@ def find_neighboring_elements(elements, inflate_by=0.0):
         List containing sets of two neighboring beams each.
 
     """
+    # Imported here rather than at module scope, and that is load-bearing.
+    #
+    # `compas.plugins` imports every registered plugin module the first time it
+    # selects any plugin, and its importer catches only `ImportError`. `rtree`
+    # wraps the native `libspatialindex`, and where that library is missing --
+    # Pyodide/Emscripten, where there is no wasm build of it at all -- importing
+    # it raises `OSError`, not `ImportError`. At module scope that escapes plugin
+    # discovery and takes down the *first geometry call of the session*, with a
+    # traceback about a spatial index the caller never asked for.
+    #
+    # `requires=["rtree"]` already says this plugin is optional. Importing lazily
+    # is what makes that true: absent or unusable, the plugin simply is not
+    # selected, and only a caller that actually wants an R-tree pays for it.
+    from rtree.index import Index
+    from rtree.index import Property
+
     # insert and search three dimensional data (bounding boxes).
     p = Property(dimension=3)
     r_tree = Index(properties=p, interleaved=True)  # interleaved => x_min, y_min, z_min, x_max, y_max, z_max
