@@ -1,8 +1,6 @@
 import math
 
 from compas.datastructures import Mesh
-from compas.geometry import Brep
-from compas.geometry import BrepTrimmingError
 from compas.geometry import Cylinder
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -14,8 +12,12 @@ from compas.geometry import intersection_line_line
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
 from compas.tolerance import TOL
+from compas_brep import Brep
+from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -230,8 +232,8 @@ class FrenchRidgeLap(BTLxProcessing):
     def _calculate_ref_position(beam, other_beam, ref_side, plane, angle):
         # determine if the position of the ridge lap is on the reference edge or the opposite edge
         angle_vector = Vector.cross(ref_side.normal, plane.normal)
-        # condition for orthogonal connection
-        if angle == 90.0:
+        # condition for orthogonal connection — use TOL.is_close to guard against floating-point drift
+        if TOL.is_close(angle, 90.0):
             intersection_pt = intersection_line_line(other_beam.centerline, beam.centerline)[0]
             angle_vector = other_beam.centerline.direction
             # make sure the direction of the other beam's centerline is facing outwards
@@ -240,12 +242,12 @@ class FrenchRidgeLap(BTLxProcessing):
 
         # calculate the angle between angle vector and the reference side's x-axis
         signed_angle = angle_vectors_signed(ref_side.xaxis, angle_vector, ref_side.normal, deg=True)
-        if angle > 90.0:
-            is_ref_edge = abs(signed_angle) < 90
-        elif angle < 90.0:
-            is_ref_edge = abs(signed_angle) > 90
-        else:
+        if TOL.is_close(angle, 90.0):
             is_ref_edge = signed_angle < 0
+        elif angle > 90.0:
+            is_ref_edge = abs(signed_angle) < 90
+        else:
+            is_ref_edge = abs(signed_angle) > 90
         if is_ref_edge:
             return EdgePositionType.REFEDGE
         return EdgePositionType.OPPEDGE
@@ -299,19 +301,19 @@ class FrenchRidgeLap(BTLxProcessing):
                 geometry.trim(trimming_frame)
             except BrepTrimmingError:
                 raise FeatureApplicationError(
-                    trimming_frame,
-                    geometry,
+                    trimming_frame.transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
                     "Could not trim the beam geometry with the cutting frame.",
                 )
         # subtract the lap volume from the beam geometry
         subtracting_volume = self.lap_volume_from_params_and_beam(beam)
         subtracting_volume.transform(beam.transformation_to_local())
         try:
-            return geometry - subtracting_volume
+            return brep_difference_first(geometry, subtracting_volume)
         except IndexError:
             raise FeatureApplicationError(
-                subtracting_volume,
-                geometry,
+                subtracting_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
                 "Could not subtract the cutting volume from the beam geometry.",
             )
 
@@ -432,7 +434,7 @@ class FrenchRidgeLap(BTLxProcessing):
             diagonal = Line(bottom_vertices[0], bottom_vertices[2])
             drill_frame = Frame(diagonal.midpoint, -ref_side.xaxis, ref_side.yaxis)
             drill_cylinder = Cylinder(self.drillhole_diam / 2, height * 2, drill_frame)
-            subtraction_volume += Brep.from_cylinder(drill_cylinder)
+            subtraction_volume = brep_union_first(subtraction_volume, Brep.from_cylinder(drill_cylinder))
         return subtraction_volume
 
     def scale(self, factor):

@@ -51,7 +51,6 @@ class LapJoint(Joint):
         super(LapJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self.flip_lap_side = flip_lap_side
         self.cut_plane_bias = cut_plane_bias
-        self.features = []
 
         self._ref_side_index_a = None
         self._ref_side_index_b = None

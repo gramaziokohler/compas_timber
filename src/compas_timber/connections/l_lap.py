@@ -69,10 +69,6 @@ class LLapJoint(LapJoint):
         """Adds the required joint features to both beams."""
         assert self.beam_a and self.beam_b
 
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
-
         # create lap features
         negative_volume_a, negative_volume_b = self._create_negative_volumes(self.cut_plane_bias)
         lap_feature_a = LapProxy.from_volume_and_beam(negative_volume_a, self.beam_a, ref_side_index=self.ref_side_index_a)

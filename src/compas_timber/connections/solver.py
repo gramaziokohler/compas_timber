@@ -105,7 +105,11 @@ class ConnectionSolver(object):
 
     @classmethod
     def find_intersecting_pairs(cls, beams, rtree=False, max_distance=0.0):
-        """Finds pairs of intersecting beams in the given list of beams.
+        """Generates candidate pairs of beams for topology checking.
+
+        This method does not test for intersection. When `rtree` is True, candidates are pairs of beams
+        whose axis-aligned bounding boxes overlap; when False, all possible pairs are returned and the
+        geometry is not consulted.
 
         Parameters
         ----------
@@ -114,13 +118,14 @@ class ConnectionSolver(object):
         rtree : bool
             When set to True R-tree will be used to search for neighboring beams.
         max_distance : float, optional
-            When `rtree` is True, an additional distance apart with which
-            non-touching beams are still considered intersecting.
+            When `rtree` is True, beams whose bounding boxes are up to this distance apart are still
+            considered neighboring. Ignored when `rtree` is False.
 
         Returns
         -------
-        list(set(:class:`~compas_timber.elements.Beam`, :class:`~compas_timber.elements.Beam`))
-            List containing sets or neightboring pairs beams.
+        iterable
+            Candidate pairs of beams. A list of sets of two beams when `rtree` is True, an iterator of
+            all possible pairs as tuples otherwise.
 
         """
         return find_neighboring_elements(beams, inflate_by=max_distance) if rtree else itertools.combinations(beams, 2)

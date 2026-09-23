@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,8 +10,10 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -362,7 +363,7 @@ class StepJoint(BTLxProcessing):
             cutting_planes = self.planes_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting planes from parameters and beam: {}".format(str(e))
             )
         cutting_planes = [plane.transformed(beam.transformation_to_local()) for plane in cutting_planes]
 
@@ -373,7 +374,9 @@ class StepJoint(BTLxProcessing):
                     geometry.trim(cutting_plane)
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting planes: {}".format(str(e))
+                        cutting_plane.transformed(beam.modeltransformation),
+                        geometry.transformed(beam.modeltransformation),
+                        "Failed to trim geometry with cutting planes: {}".format(str(e)),
                     )
 
         elif self.step_shape == StepShapeType.HEEL:
@@ -384,7 +387,9 @@ class StepJoint(BTLxProcessing):
                     trimmed_geometies.append(geometry.trimmed(cutting_plane))
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                        cutting_plane.transformed(beam.modeltransformation),
+                        geometry.transformed(beam.modeltransformation),
+                        "Failed to trim geometry with cutting plane: {}".format(str(e)),
                     )
             try:
                 geometry = (
@@ -392,7 +397,9 @@ class StepJoint(BTLxProcessing):
                 )  # TODO: should be swed (.sew()) for a cleaner Brep
             except Exception as e:
                 raise FeatureApplicationError(
-                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
+                    [g.transformed(beam.modeltransformation) for g in trimmed_geometies],
+                    geometry.transformed(beam.modeltransformation),
+                    "Failed to union trimmed geometries: {}".format(str(e)),
                 )
 
         elif self.step_shape == StepShapeType.TAPERED_HEEL:
@@ -402,7 +409,9 @@ class StepJoint(BTLxProcessing):
                 geometry.trim(cutting_plane)
             except Exception as e:
                 raise FeatureApplicationError(
-                    cutting_planes, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                    [p.transformed(beam.modeltransformation) for p in cutting_planes],
+                    geometry.transformed(beam.modeltransformation),
+                    "Failed to trim geometry with cutting plane: {}".format(str(e)),
                 )
 
         elif self.step_shape == StepShapeType.DOUBLE:
@@ -412,7 +421,9 @@ class StepJoint(BTLxProcessing):
                 geometry.trim(cutting_planes[-1])
             except Exception as e:
                 raise FeatureApplicationError(
-                    cutting_planes[-1], geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                    cutting_planes[-1].transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
+                    "Failed to trim geometry with cutting plane: {}".format(str(e)),
                 )
             # trim geometry with first two cutting planes
             trimmed_geometies = []
@@ -422,7 +433,9 @@ class StepJoint(BTLxProcessing):
                     trimmed_geometies.append(geometry.trimmed(cutting_plane))
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                        cutting_plane.transformed(beam.modeltransformation),
+                        geometry.transformed(beam.modeltransformation),
+                        "Failed to trim geometry with cutting plane: {}".format(str(e)),
                     )
             try:
                 geometry = (
@@ -430,7 +443,9 @@ class StepJoint(BTLxProcessing):
                 )  # TODO: should be swed (.sew()) for a cleaner Brep
             except Exception as e:
                 raise FeatureApplicationError(
-                    trimmed_geometies, geometry, "Failed to union trimmed geometries: {}".format(str(e))
+                    [g.transformed(beam.modeltransformation) for g in trimmed_geometies],
+                    geometry.transformed(beam.modeltransformation),
+                    "Failed to union trimmed geometries: {}".format(str(e)),
                 )
 
         if self.tenon and self.step_shape != StepShapeType.DOUBLE:  # TODO: check if tenon applies only to step in BTLx
@@ -444,8 +459,8 @@ class StepJoint(BTLxProcessing):
                     tenon_volume.trim(cutting_planes[0])
                 except Exception as e:
                     raise FeatureApplicationError(
-                        cutting_planes[0],
-                        tenon_volume,
+                        cutting_planes[0].transformed(beam.modeltransformation),
+                        tenon_volume.transformed(beam.modeltransformation),
                         "Failed to trim tenon volume with cutting plane: {}".format(str(e)),
                     )
                 # trim tenon volume with second cutting plane if tenon height is greater than step depth
@@ -454,16 +469,18 @@ class StepJoint(BTLxProcessing):
                         tenon_volume.trim(cutting_planes[1])
                     except Exception as e:
                         raise FeatureApplicationError(
-                            cutting_planes[1],
-                            tenon_volume,
+                            cutting_planes[1].transformed(beam.modeltransformation),
+                            tenon_volume.transformed(beam.modeltransformation),
                             "Failed to trim tenon volume with second cutting plane: {}".format(str(e)),
                         )
             # add tenon volume to geometry
             try:
-                geometry += tenon_volume
+                geometry = brep_union_first(geometry, tenon_volume)
             except Exception as e:
                 raise FeatureApplicationError(
-                    tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                    tenon_volume.transformed(beam.modeltransformation),
+                    geometry.transformed(beam.modeltransformation),
+                    "Failed to add tenon volume to geometry: {}".format(str(e)),
                 )
 
         return geometry

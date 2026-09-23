@@ -7,7 +7,21 @@ repo_url: https://github.com/gramaziokohler/compas_timber/
 copyright: Copyright &copy; 2026, ETH Zurich - Gramazio Kohler Research
 
 extra:
+  generator: false
   homepage: https://gramaziokohler.github.io/compas_timber/
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/gramaziokohler/compas_timber
+      name: compas_timber on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/compas-timber/
+      name: compas_timber on PyPI
+    - icon: fontawesome/brands/discourse
+      link: https://forum.compas-framework.org/
+      name: COMPAS forum
+    - icon: material/web
+      link: https://gramaziokohler.arch.ethz.ch/
+      name: Gramazio Kohler Research
   version:
     provider: mike
 
@@ -76,16 +90,19 @@ markdown_extensions:
       check_paths: true
   - toc:
       permalink: "¤"
+      toc_depth: 3
   - pymdownx.superfences:
         # make exceptions to highlighting of code:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:mermaid2.fence_mermaid_custom
+          format: !!python/name:pymdownx.superfences.fence_code_format
 
 plugins:
   - search
   - mermaid2
+  - panzoom:
+      full_screen: true
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -96,7 +113,6 @@ plugins:
             - https://compas.dev/compas/latest/objects.inv
           options:
             allow_inspection: true
-            backlinks: tree
             docstring_options:
               ignore_init_summary: true
               trim_doctest_flags: true
@@ -127,7 +143,7 @@ plugins:
             show_signature: true
             show_signature_annotations: true
             show_signature_type_parameters: true
-            show_source: false
+            show_source: true
             show_submodules: false
             show_symbol_type_heading: true
             show_symbol_type_toc: true
@@ -151,24 +167,15 @@ nav:
       - rhino: api/compas_timber.rhino.md
       - base: api/compas_timber.base.md
       - structural: api/compas_timber.structural.md
+      - geometry: api/compas_timber.geometry.md
       - panel_features: api/compas_timber.panel_features.md
   - Developer Guide:
       - Class Diagrams: contribution/class_diagrams.md
       - BTLx Contribution: contribution/BTLx_contribution_guide.md
       - Joints Contribution: contribution/joints_contribution_guide.md
-  - Grasshopper Plugin:
-      - Introduction: tutorials/index.md
-      - Installation: tutorials/grasshopper/installation.md
-      - Workflow: tutorials/grasshopper/workflow.md
-      - Attributes: tutorials/grasshopper/attributes.md
-      - Beams: tutorials/grasshopper/beams.md
-      - Design: tutorials/grasshopper/design.md
-      - Fabrication: tutorials/grasshopper/fabrication.md
-      - Features: tutorials/grasshopper/features.md
-      - Joint Rules: tutorials/grasshopper/joint_rules.md
-      - Model: tutorials/grasshopper/model.md
-      - Show: tutorials/grasshopper/show.md
-      - Utils: tutorials/grasshopper/utils.md
-      - Examples: tutorials/grasshopper/examples.md
   - Citing: citing.md
   - License: license.md
+  - Links:
+      - COMPAS: https://compas.dev/
+      - Timber Design: https://gramaziokohler.github.io/timber_design/
+      - Grasshopper Plugin: https://www.food4rhino.com/en/app/compas-timber

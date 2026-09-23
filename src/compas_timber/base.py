@@ -95,6 +95,21 @@ class TimberElement(Element, abc.ABC):
         """Reset all computed/cached properties."""
         self._reset_computed_dummy()
 
+    def clear_model_dependent_cache(self):
+        """Clear cached attributes that depend on the element's position in the model hierarchy.
+
+        Preserves model-independent caches such as ``_elementgeometry``, features,
+        and blank extensions.
+        """
+        self._modeltransformation = None
+        self._modelgeometry = None
+        self._aabb = None
+        self._obb = None
+        self._collision_mesh = None
+        self._blank = None
+        self._ref_frame = None
+        self._geometry = None
+
     @property
     def is_beam(self):
         return False
@@ -163,25 +178,23 @@ class TimberElement(Element, abc.ABC):
         self.remove_blank_extension()
         self.debug_info = []
 
-    @reset_computed
-    @reset_timber_attrs
     def add_feature(self, feature):
         # type: (BTLxProcessing) -> None
-        """Adds one or more features to the beam.
+        """Adds a feature to the element.
 
         Parameters
         ----------
-        feature : :class:`~compas_timber.fabrication.BTLxProcessing`)
+        feature : :class:`~compas_timber.fabrication.BTLxProcessing`
             The feature to be added.
 
         """
-        self._features.append(feature)  # type: ignore
+        self.add_features(feature)
 
     @reset_computed
     @reset_timber_attrs
     def add_features(self, features):
         # type: (BTLxProcessing | list[BTLxProcessing]) -> None
-        """Adds one or more features to the beam.
+        """Adds one or more features to the element.
 
         Parameters
         ----------
@@ -197,7 +210,7 @@ class TimberElement(Element, abc.ABC):
     @reset_timber_attrs
     def remove_features(self, features=None):
         # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
-        """Removes a feature from the beam.
+        """Removes one or more features from the element.
 
         Parameters
         ----------

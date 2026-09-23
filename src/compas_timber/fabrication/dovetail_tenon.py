@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import PlanarSurface
@@ -12,8 +11,10 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -638,7 +639,7 @@ class DovetailTenon(BTLxProcessing):
             cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
 
         # get dovetail volume from params and beam
@@ -646,7 +647,7 @@ class DovetailTenon(BTLxProcessing):
             dovetail_volume = self.dovetail_volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate dovetail tenon volume from parameters and beam: {}".format(str(e))
             )
 
         # fillet the edges of the dovetail volume based on the shape
@@ -659,9 +660,10 @@ class DovetailTenon(BTLxProcessing):
                     self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
                 )  # TODO: NotImplementedError
             except Exception as e:
+                # dovetail_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
                     dovetail_volume,
-                    geometry,
+                    geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the dovetail volume based on the shape: {}".format(str(e)),
                 )
 
@@ -680,15 +682,19 @@ class DovetailTenon(BTLxProcessing):
             geometry.trim(cutting_plane)
         except Exception as e:
             raise FeatureApplicationError(
-                cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                cutting_plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to trim geometry with cutting plane: {}".format(str(e)),
             )
 
         # add tenon volume to geometry
         try:
-            geometry += dovetail_volume
+            geometry = brep_union_first(geometry, dovetail_volume)
         except Exception as e:
             raise FeatureApplicationError(
-                dovetail_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                dovetail_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to add tenon volume to geometry: {}".format(str(e)),
             )
 
         return geometry

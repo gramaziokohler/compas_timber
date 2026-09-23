@@ -72,11 +72,11 @@ class NewProcessing(BTLxProcessing):
 
 See also:
 
-- [`JackRafterCut`](../api/compas_timber.fabrication.md#JackRafterCut)
-- [`Lap`](../api/compas_timber.fabrication.md#Lap)
-- [`Drilling`](../api/compas_timber.fabrication.md#Drilling)
-- [`DoubleCut`](../api/compas_timber.fabrication.md#DoubleCut)
-- [`FrenchRidgeLap`](../api/compas_timber.fabrication.md#FrenchRidgeLap)
+- [`JackRafterCut`](../api/compas_timber.fabrication.md#compas_timber.fabrication.JackRafterCut)
+- [`Lap`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Lap)
+- [`Drilling`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Drilling)
+- [`DoubleCut`](../api/compas_timber.fabrication.md#compas_timber.fabrication.DoubleCut)
+- [`FrenchRidgeLap`](../api/compas_timber.fabrication.md#compas_timber.fabrication.FrenchRidgeLap)
 
 ### 3. Add Alternative Constructors in Processing Class
 
@@ -112,11 +112,11 @@ class NewProcessing(BTLxProcessing):
 
 See also:
 
-- [`JackRafterCut.from_plane_and_beam()`](../api/compas_timber.fabrication.md#JackRafterCut.from_plane_and_beam)
-- [`Lap.from_volume_and_beam()`](../api/compas_timber.fabrication.md#Lap.from_volume_and_beam)
-- [`Drilling.from_line_and_element()`](../api/compas_timber.fabrication.md#Drilling.from_line_and_element)
-- [`DoubleCut.from_planes_and_beam()`](../api/compas_timber.fabrication.md#DoubleCut.from_planes_and_beam)
-- [`FrenchRidgeLap.from_beam_beam_and_plane()`](../api/compas_timber.fabrication.md#FrenchRidgeLap.from_beam_beam_and_plane)
+- [`JackRafterCut.from_plane_and_beam()`](../api/compas_timber.fabrication.md#compas_timber.fabrication.JackRafterCut.from_plane_and_beam)
+- [`Lap.from_volume_and_beam()`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Lap.from_volume_and_beam)
+- [`Drilling.from_line_and_element()`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Drilling.from_line_and_element)
+- [`DoubleCut.from_planes_and_beam()`](../api/compas_timber.fabrication.md#compas_timber.fabrication.DoubleCut.from_planes_and_beam)
+- [`FrenchRidgeLap.from_beam_beam_and_plane()`](../api/compas_timber.fabrication.md#compas_timber.fabrication.FrenchRidgeLap.from_beam_beam_and_plane)
 
 ### 4. Add Geometry Generation Method in Processing Class
 
@@ -158,11 +158,11 @@ class NewProcessing(BTLxProcessing):
 
 See also:
 
-- [`JackRafterCut.plane_from_params_and_beam`](../api/compas_timber.fabrication.md#JackRafterCut.plane_from_params_and_beam)
-- [`Lap.volume_from_params_and_beam`](../api/compas_timber.fabrication.md#Lap.volume_from_params_and_beam)
-- [`Drilling.cylinder_from_params_and_element`](../api/compas_timber.fabrication.md#Drilling.cylinder_from_params_and_element)
-- [`DoubleCut.planes_from_params_and_beam`](../api/compas_timber.fabrication.md#DoubleCut.planes_from_params_and_beam)
-- [`FrenchRidgeLap.lap_volume_from_params_and_beam`](../api/compas_timber.fabrication.md#FrenchRidgeLap.lap_volume_from_params_and_beam)
+- [`JackRafterCut.plane_from_params_and_beam`](../api/compas_timber.fabrication.md#compas_timber.fabrication.JackRafterCut.plane_from_params_and_beam)
+- [`Lap.volume_from_params_and_beam`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Lap.volume_from_params_and_beam)
+- [`Drilling.cylinder_from_params_and_element`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Drilling.cylinder_from_params_and_element)
+- [`DoubleCut.planes_from_params_and_beam`](../api/compas_timber.fabrication.md#compas_timber.fabrication.DoubleCut.planes_from_params_and_beam)
+- [`FrenchRidgeLap.lap_volume_from_params_and_beam`](../api/compas_timber.fabrication.md#compas_timber.fabrication.FrenchRidgeLap.lap_volume_from_params_and_beam)
 
 ### 5. Update Module Imports
 

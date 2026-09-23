@@ -445,6 +445,15 @@ def test_geometry_with_features(beam, mocker):
     mock_feature.apply.assert_called()
 
 
+def test_add_feature_with_list_does_not_nest(beam):
+    """A list passed to the singular add_feature is normalised, not stored as a nested list (#823)."""
+    cut = JackRafterCut(is_joinery=False)
+
+    beam.add_feature([cut])
+
+    assert beam.features == [cut]
+
+
 def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
     # Force computation of cached attributes by accessing them
@@ -509,3 +518,53 @@ def test_transform_invalidates_cached_timber_attributes(beam):
     assert new_blank.frame != original_blank.frame
     assert new_ref_frame.point != original_ref_frame.point
     assert not TOL.is_close(new_blank.frame.point.distance_to_point(original_blank.frame.point), 0.0)
+
+
+def test_add_extend_start_feature():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.10, end=0.0)
+
+    assert close(beam.blank.xsize, 1.1)
+
+
+def test_add_extend_end_feature():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+
+    beam.add_blank_extension(start=0.0, end=0.10)
+
+    assert close(beam.blank.xsize, 1.1)
+    # TODO: assert was extended at end and not at start
+
+
+def test_extend_both_start_end():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+
+    beam.add_blank_extension(start=0.10, end=0.10)
+
+    assert close(beam.blank.xsize, 1.2)
+
+
+def test_accumulate_extension():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.0, end=0.10)
+    beam.add_blank_extension(start=0.0, end=0.20)
+
+    # max extension is used
+    assert close(beam.blank.xsize, 1.20)
+
+
+def test_remove_parametric_extension():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.0, end=0.10)
+
+    assert close(beam.blank.xsize, 1.10)

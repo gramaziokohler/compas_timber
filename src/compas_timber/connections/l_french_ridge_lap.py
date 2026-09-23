@@ -54,7 +54,7 @@ class LFrenchRidgeLapJoint(LapJoint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -74,22 +74,17 @@ class LFrenchRidgeLapJoint(LapJoint):
             raise BeamJoiningError(self.elements, self, debug_info=str(ae), debug_geometries=geometries)
         except Exception as ex:
             raise BeamJoiningError(self.elements, self, debug_info=str(ex))
-        self.beam_a.add_blank_extension(start_a, end_a, self.beam_a_guid)
-        self.beam_b.add_blank_extension(start_b, end_b, self.beam_b_guid)
+        self.beam_a.add_blank_extension(start_a, end_a, self.guid)
+        self.beam_b.add_blank_extension(start_b, end_b, self.guid)
 
     def add_features(self):
         """Adds the necessary features to the beams.
 
-        This method is called during the `Model.process_joinery()` process after the joint
-        has been instantiated and added to the model. It is executed after the beam extensions
-        have been added via `Joint.add_extensions()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
+        It is executed after the beam extensions have been added via `Joint.add_extensions()`.
 
         """
         assert self.beam_a and self.beam_b
-
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
 
         frl_feature_a = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_a, self.beam_b, self.cutting_plane_a, self.drillhole_diam, self.ref_side_index_a)
         frl_feature_b = FrenchRidgeLap.from_beam_beam_and_plane(self.beam_b, self.beam_a, self.cutting_plane_b, self.drillhole_diam, self.ref_side_index_b)

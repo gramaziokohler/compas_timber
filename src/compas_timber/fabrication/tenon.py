@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,8 +10,10 @@ from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
 from compas.geometry import is_point_behind_plane
+from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -539,7 +540,7 @@ class Tenon(BTLxProcessing):
             cutting_plane = Plane.from_frame(self.frame_from_params_and_beam(beam))
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate cutting frame from parameters and beam: {}".format(str(e))
             )
 
         cutting_plane.transform(beam.transformation_to_local())
@@ -549,14 +550,16 @@ class Tenon(BTLxProcessing):
             geometry.trim(cutting_plane)
         except Exception as e:
             raise FeatureApplicationError(
-                cutting_plane, geometry, "Failed to trim geometry with cutting plane: {}".format(str(e))
+                cutting_plane.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to trim geometry with cutting plane: {}".format(str(e)),
             )
         # get tenon volume from params and beam
         try:
             tenon_volume = self.volume_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
-                None, geometry, "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
+                None, geometry.transformed(beam.modeltransformation), "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
         # fillet the edges of the volume based on the shape
         if self.shape is not TenonShapeType.SQUARE:
@@ -564,9 +567,10 @@ class Tenon(BTLxProcessing):
                 edges = tenon_volume.edges[:8]
                 tenon_volume.fillet(self.shape_radius, edges)
             except Exception as e:
+                # tenon_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
                     tenon_volume,
-                    geometry,
+                    geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
 
@@ -580,10 +584,12 @@ class Tenon(BTLxProcessing):
                 pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
         # add tenon volume to geometry
         try:
-            geometry += tenon_volume
+            geometry = brep_union_first(geometry, tenon_volume)
         except Exception as e:
             raise FeatureApplicationError(
-                tenon_volume, geometry, "Failed to add tenon volume to geometry: {}".format(str(e))
+                tenon_volume.transformed(beam.modeltransformation),
+                geometry.transformed(beam.modeltransformation),
+                "Failed to add tenon volume to geometry: {}".format(str(e)),
             )
         return geometry
 

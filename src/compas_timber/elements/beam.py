@@ -1,7 +1,6 @@
 import math
 
 from compas.geometry import Box
-from compas.geometry import Brep
 from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
@@ -11,6 +10,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
@@ -234,7 +234,7 @@ class Beam(TimberElement):
     # ==========================================================================
 
     @classmethod
-    def from_centerline(cls, centerline, width, height, z_vector=None):
+    def from_centerline(cls, centerline, width, height, z_vector=None, **kwargs):
         """Define the beam from its centerline.
 
         Parameters
@@ -264,10 +264,10 @@ class Beam(TimberElement):
         frame = Frame(centerline.start, x_vector, y_vector)
         length = centerline.length
 
-        return cls(frame, length, width, height)
+        return cls(frame, length, width, height, **kwargs)
 
     @classmethod
-    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None):
+    def from_endpoints(cls, point_start, point_end, width, height, z_vector=None, **kwargs):
         """Creates a Beam from the given endpoints.
 
         Parameters
@@ -290,10 +290,10 @@ class Beam(TimberElement):
 
         """
         line = Line(point_start, point_end)
-        return cls.from_centerline(line, width, height, z_vector)
+        return cls.from_centerline(line, width, height, z_vector, **kwargs)
 
     @classmethod
-    def from_box(cls, box):
+    def from_box(cls, box, **kwargs):
         """Define the beam from a box.
 
         Parameters
@@ -316,7 +316,7 @@ class Beam(TimberElement):
             raise ValueError("The given box has zero height along its z-axis. Check the box dimensions.")
         origin = box.frame.point + box.frame.xaxis * (-box.xsize / 2.0)
         frame = Frame(origin, box.frame.xaxis, box.frame.yaxis)
-        return cls(frame, box.xsize, box.ysize, box.zsize)
+        return cls(frame, box.xsize, box.ysize, box.zsize, **kwargs)
 
     # ==========================================================================
     # Extensions and Modifications
@@ -326,6 +326,7 @@ class Beam(TimberElement):
     @reset_timber_attrs
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
+        # TODO: rename `joint_key` to `joint_guid` for CT 3.0
         """Adds a blank extension to the beam.
 
         start : float
@@ -347,6 +348,8 @@ class Beam(TimberElement):
     @reset_timber_attrs
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
+        # TODO: rename `joint_key` to `joint_guid` for CT 3.0
+
         """Removes a blank extension from the beam.
 
         Parameters
@@ -358,7 +361,7 @@ class Beam(TimberElement):
         if joint_key is None:
             self._blank_extensions = {}
         else:
-            del self._blank_extensions[joint_key]
+            self._blank_extensions.pop(joint_key, None)
 
     def extension_to_plane(self, plane):
         # type: (Frame) -> tuple[float, float]

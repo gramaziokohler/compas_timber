@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package compas_timber.proto;
+
+// Shared building blocks (compas_timber.proto).
+
+// A reference to an object by its guid.
+//
+// A uuid spelled out as text costs 38 bytes on the wire, and a serialized model
+// repeats each one roughly three and a half times: once as the object's own
+// `guid`, then again from the interaction graph, the element tree and every
+// joint that names the element. So inside a TimberModelData every guid is
+// interned into `TimberModelData.guid_table` and referenced by index here.
+//
+// A message serialized on its own has no table to point into, so it falls back
+// to `raw` -- the 16 bytes of the uuid -- and stays decodable in isolation.
+// `text` is the escape hatch for the rare guid that is not a parseable uuid.
+message GuidRef {
+  oneof id {
+    uint32 index = 1;
+    bytes raw = 2;
+    string text = 3;
+  }
+}
+
+// A list of points as a flat coordinate array, 3 doubles (x, y, z) per point.
+//
+// `repeated compas_pb.data.PointData` would carry a guid and a name per point,
+// which is ~40 bytes of envelope around 27 bytes of coordinates. Wrapping the
+// flat array in a message (rather than putting a bare `repeated double` on the
+// parent) keeps a None list distinct from an empty one.
+message PointList {
+  repeated double coordinates = 1;
+}
+
+// compas_model Feature and its subclasses. All four are empty marker classes
+// (__data__ == {}), so guid and name are the whole payload; they get a message
+// each so the oneof arm identifies the class.
+message ModelFeatureBaseData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+message BeamFeatureData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+message PlateFeatureData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+message ColumnFeatureData {
+  GuidRef guid = 1;
+  optional string name = 2;
+}
+
+// Polymorphic wrapper: any compas_model Feature.
+message ModelFeatureData {
+  oneof feature {
+    ModelFeatureBaseData base_feature = 1;
+    BeamFeatureData beam_feature = 2;
+    PlateFeatureData plate_feature = 3;
+    ColumnFeatureData column_feature = 4;
+  }
+}

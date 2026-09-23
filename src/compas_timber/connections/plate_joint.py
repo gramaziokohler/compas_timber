@@ -121,7 +121,11 @@ class PlateJoint(Joint, ABC):
             if allow_reordering:
                 self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
             else:
-                raise BeamJoiningError("The order of plates is incompatible with the joint topology. Try reversing the order of the plates.")
+                raise BeamJoiningError(
+                    beams=[self.plate_a, self.plate_b],
+                    joint=self,
+                    debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
+                )
         self.topology = topo_results.topology
         self.a_segment_index = topo_results.a_segment_index
         self.b_segment_index = topo_results.b_segment_index
@@ -171,6 +175,13 @@ class PlateJoint(Joint, ABC):
     def add_features(self):
         """Adds features to the plates based on the joint. this should be implemented in subclasses if needed."""
         pass
+
+    def clear_extensions(self):
+        """Clears features from the plates based on the joint."""
+        if self.a_segment_index is not None:
+            self.element_a.remove_blank_extension(self.a_segment_index)
+        if self.b_segment_index is not None:
+            self.element_b.remove_blank_extension(self.b_segment_index)
 
     def _reorder_planes_and_outlines(self):
         if dot_vectors(self.plate_b.frame.normal, get_polyline_segment_perpendicular_vector(self.plate_a.outline_a, self.a_segment_index)) < 0:

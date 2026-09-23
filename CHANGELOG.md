@@ -8,14 +8,175 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-
-* Added `extend_line_segments()` to `compas_timber.utils` — extends a sequence of line segments to their mutual intersections, optionally closing a loop.
-* Added `get_interior_corner_indices()` to `compas_timber.utils` — returns the indices of interior (re-entrant) corners of a polyline.
-* Added `get_interior_segment_indices()` to `compas_timber.utils` — returns the indices of interior segments of a polyline (segments bounded by two interior corners).
+* Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
+* Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
+* Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
+* Added `Joint.reset_location()`, which clears the joint's cached location and allows it to be recomputed if needed.
+* Added `brep_from_outlines` to `compas_timber.geometry`.
+* Added `TimberModel.unpromoted_joint_candidates`, returning only the `JointCandidate` instances that have not yet been promoted to a joint on the same edge.
+* Added `Layer` class (`compas_timber.elements.Layer`) — a resolved cross-section slice of a `Panel`, constructed directly from a `PlateGeometry` (like `Panel`/`Plate`) plus a `start_offset` (in the panel's thickness direction); use `Layer.from_parent_start_end(host, start_offset, end_offset)` to build one by interpolating a parent `Panel`/`Layer`'s outlines. `Layer` is a first-class model element that owns its own `PlateGeometry` and lives as a child of the parent panel in the model tree.
+* Added `LayerDefinition` and `LayerStructure` classes (`compas_timber.elements.LayerDefinition`, `compas_timber.elements.LayerStructure`) — panel-agnostic tree definitions of layer slots (name, thickness, sublayer defs) that can be shared across panels and attached to a specific panel via `LayerStructure.attach(panel)`.
+* Added `Panel.layer_structure` property/setter — assigns a `LayerStructure` to a panel, creating bound `Layer` instances. Layers are automatically registered in the model when the panel already belongs to one; setting `layer_structure` again replaces any previously-attached layers.
+* Added `Panel.layers` property — the panel's root `Layer` instances (direct children only).
+* Added `Panel.exterior_layer`, `Panel.core_layer`, `Panel.interior_layer` properties — look up the layer named `"exterior"`/`"core"`/`"interior"` in the panel's `layer_structure`, or `None` if not defined.
+* Added `Panel.get_leaf_layers()` — returns all layers without sublayers as a flat ordered list, from `outline_a` to `outline_b`.
+* Added `Panel.merge_layer_structure(model)` — adds all layers in the panel's layer structure to `model` as children of the panel.
+* Added `Layer.sublayers` setter — propagates newly-assigned sublayers into the model when the layer is already in one.
+* Added `TimberModel.layers` property — returns all `Layer` instances registered in the model.
+* `Panel.set_extension_plane` and `Panel.apply_edge_extensions` now propagate to all attached layers.
+* `Panel.model` is now a property/setter pair; when a panel is added to the model, any pre-existing layers are automatically added as child elements.
+* Added `Joint.clear_features()` and `Joint.clear_extensions()`, which remove the features/extensions this joint previously applied to its elements. `self.features` is now initialized on all joints and is expected to hold every feature a joint applies, so that `clear_features()` can fully undo it.
+* Added `TimberModel.get_joint(element_a, element_b)`, which returns the joint connecting two given elements, or `None`.
+* Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
+* Added new `compas_timber.fabrication.BirdsMouth`.
+* Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
+* Added new subpackage `compas_timber.proto`, merging the former `compas_timber_pb` plugin into compas_timber. It contains the protobuf IDL split by domain (`elements.proto`, `fabrication.proto`, `connections.proto`, `panel_features.proto`, `planning.proto`, `structural.proto`, `model.proto`) and `compas_timber.proto.conversions`, which registers the serializers via the `compas_pb.plugins` entry point. Objects can be round-tripped with `compas_pb.pb_dump_bts()` / `pb_load_bts()`.
+* Added protobuf messages for every class that implements `__data__`: all timber elements (`Beam`, `Plate`, `Panel`, `Layer`, `LayerDefinition`, `LayerStructure`, `PlateGeometry`, the fastener types), all 18 BTLx processings plus `Contour` / `DualContour`, all 28 instantiable joints, `JointCandidate`, the panel features, the building plan / sequencing / nesting types, `StructuralSegment`, and `TimberModel` itself. A whole model -- beams, plates, panels, joints and features -- round-trips without data loss.
+* Added `compas_timber.proto.conversions.register()`, which derives the mapping between a class and its protobuf message from the message descriptor, so proto field names matching `__data__` keys is all that is needed to serialize a new type.
+* Added `invoke pre_build` task, which generates the protobuf python bindings (`*_pb2.py`) from the `.proto` files. It must be run before `invoke test` and before building a distribution.
+* Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
+* Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 ### Changed
+* Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
+* Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
+* Bumped the required `compas_pb` to `>= 1.2.0`, which is where the asset tasks started taking their package name and output folder from the invoke configuration. On an older `compas_pb` the `create_proto_bundle` import in `tasks.py` fails, taking every invoke task with it.
+* The generated bindings reference `compas_pb`'s own bindings rather than embedding them, so a consumer needs both bundles unpacked into the same tree, at matching versions.
+* Guids are no longer written as 36-character text everywhere they appear. `TimberModelData` now carries a `guid_table` of 16-byte uuids and every guid in the message -- the object's own, the interaction graph's element and joint references, the element tree's, and each joint's `element_guids` -- is a `GuidRef` index into it. A message serialized on its own has no table and falls back to carrying the raw uuid, so it stays decodable in isolation. A 200-beam model went from 92,392 to 32,660 bytes (65% smaller).
+* `TimberModelData.tree` is no longer `AnyData`. It is now `ElementTreeData`, which flattens the tree into parallel arrays in depth-first order (a varint parent index per node) and interns the node names, instead of a recursive dict repeating `name` / `attributes` / `children` / `element` per node.
+* `TimberModelData.graph` is no longer `AnyData`. It is now `InteractionGraphData`, which lifts the two guid-valued attributes (`element` on a node, `joints` on an edge) into `GuidRef` columns so they join the guid table; any other node or edge attribute still falls through to `AnyData` and round-trips unchanged. `compas_pb.data.GraphData` was tried first but keeps its attributes as `AnyData`, which is where nearly all of this graph's payload lives.
+* `TimberModelData.materials` is now a `ModelMaterialData` oneof over `Material`, `Timber`, `Concrete` and `Steel` instead of `AnyData`, and those four now have serializers. Note that their numeric fields are proto `double`, so an int passed to e.g. `Steel(fy=235)` comes back as `235.0`.
+* `FastenerTimberInterfaceData.outline_points` is now a `PointList` (a flat coordinate array) rather than `repeated PointData`, which carried a guid and a name per point.
+* `FastenerTimberInterfaceData.holes` is now `repeated FastenerHoleData` instead of `repeated AnyData`; the documented `point` / `diameter` / `vector` / `through` keys are typed and anything else is kept in an `extra` map.
+* `FastenerTimberInterfaceData.features` is now `repeated BTLxFromGeometryDefinitionData`, and `PlateFastenerData.cutouts` is now `repeated PolylineData`, both previously `AnyData`.
+* `GenericElementData.material` and the panel features' `material` are now `GuidRef`, not `AnyData`. `Element.__data__` has always stored the material as a guid rather than the material itself.
+* `GenericElementData.features` and the panel features' `features` are now a `ModelFeatureData` oneof over `compas_model`'s `Feature`, `BeamFeature`, `PlateFeature` and `ColumnFeature`.
+* `StepData.geometry` is now a `string`, not `AnyData`. `Step.geometry` is the name of a geometry type used for visualization (`"obj"`, `"cylinder"`, `"box"`), not a geometry object.
+* Fixed `PlateFastener` failing to serialize at all. Its `__data__` stores `interface.__data__` rather than the interfaces themselves, and the codec had no path for a dict where a nested message was expected.
+* Fixed `Step`, `Model3d`, `Text3d` and `LinearDimension` coming back with `location` as a plain dict, which broke the restored object's next `__data__` or `transform()` call.
+* Migrated CI to the new-generation `compas-dev/compas-actions` monorepo: `build`, `coverage`, `docs` and `pr-checks` now use `ci`/`setup-python`/`docs`/`pr-checks`/`release-check` instead of `compas-actions.build`, `compas-actions.docs` and `Zomzog/changelog-checker`.
+* Python 3.9 (the version Rhino 8 ships) stays in the build matrix, except on `macos-latest`: the `ci` action installs interpreters with `actions/setup-python`, which has no darwin-arm64 build for 3.9. macOS is covered on 3.12/3.14 and 3.9 is covered on the other runners.
+* The `publish_yak` workflow is now a stub on `main`: the components and the `yakerize`/`publish-yak` tasks it drove moved to `timber_design`, but the file has to stay on the default branch for `LTS-1.x.x` to remain dispatchable. Running it against any branch other than `LTS-1.x.x` now fails with an explanation.
+* Releases are now prepared by the `prepare release` workflow (manual dispatch), which opens a `release/vX.Y.Z` pull request; merging it to `main` runs the release. Pushing a `v*` tag no longer publishes.
+* PyPI uploads now use OIDC Trusted Publishing via `pypa/gh-action-pypi-publish` instead of the `PYPI` API token secret.
+* `[tool.bumpversion]` no longer commits or tags, and no longer parses pre-release versions; the release actions support stable semantic versions only.
+* Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
+* `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
+* Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
+* `TimberElement.add_feature` now delegates to `add_features`, so a list passed by mistake is normalised instead of silently nested (#823). Docstring corrected accordingly.
+* `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.
+* Added `TimberModel.get_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`. Candidates are always pairwise, so (like joints) they're looked up directly from the graph edge rather than a separate registry.
+* `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
+* Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
+* Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
+* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
+* `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
+* Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
+* Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
+* Fixed plate geometry created with inconsistent face orientation.
+* `TimberModel.remove_joint()` now clears the joint's features and extensions from its elements before removing it, instead of leaving them stuck on the remaining elements.
+* `TimberModel.add_joint()` now removes any existing joint between the same elements before adding the new one, preventing a stale joint from leaking its features/extensions while becoming unreachable from the model.
+* `TimberModel.remove_element()` now also removes any joints connected to the removed element (previously only `compas_model`'s interaction/edge cleanup ran, leaving stale entries in `TimberModel`'s own joints registry and orphaned features on the surviving elements).
+* `TimberModel.process_joinery()` now clears every processed joint's extensions and features before recomputing them, so individual joints no longer need to clear their own previous state at the start of `add_extensions()`/`add_features()`, and repeated calls (full or via `joints_to_process`) are idempotent instead of accumulating (e.g. `Beam.add_blank_extension()` adds onto any existing entry for the same joint, so without the upfront clear a second run would silently double the extension amount).
+* Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
+* Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
+* Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
+* Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
+* Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
+* Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
+* Fixed `PlateMiterJoint` bug where parallel plates failed to join.
+* Fixed `Pocket`, `Lap`, and `BTLxPart.shape_strings` calling the old `compas.geometry.brep` `BrepFace` API (`.nurbssurface`, `.frame_at`), which no longer exists on `compas_brep`'s `BrepFace`; they now read face frames through `compas_brep`'s `BrepFace.frame_at()`, which handles planar and curved faces alike and accounts for `face.is_reversed` (without it, opposite faces of a box report identical normals). Also fixed `Pocket`/`Lap`'s `_get_optimal_ref_side_index` unpacking `edge.curve` (already a `Line`) as if it needed `Line(*curve.points)`.
+* `Pocket.apply()` now raises a clear `FeatureApplicationError` when `start_depth` is negative (the pocket volume lies entirely outside the element's material on the ref_side's outward side) instead of letting a corrupted or erased geometry reach the boolean subtraction.
+* Fixed `Pocket.from_volume_and_element` and `Lap.from_volume_and_beam` mutating the `Brep` volume passed to them: they flipped `face.surface`'s normal in place, and `BrepFace.surface` hands back the face's own `Plane`. A second call with the same volume saw the already-flipped normals and failed to orient it.
+* Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
+* Changed `build.yml` and `release.yml` workflows to run the `pre_build` step so the generated protobuf bindings are present before tests and before publishing.
+* Changed the ruff configuration to exclude the protoc-generated `*_pb2.py` / `*_pb2.pyi` files, which are not hand-authored and would otherwise fail `invoke lint`.
+* Changed `BeamData` dimensions from `float` to `double`, so beam dimensions and frames round-trip bit-exact.
+* Changed the proto IDL layout: `processing.proto` and `building_plan.proto` (written against a demo application) were replaced by the domain-split files above. Since proto has no inheritance, each concrete message carries its whole MRO's `__data__` fields flattened; `guid` and `name` come from the compas serialization envelope and occupy fields 1 and 2 everywhere.
+* Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
+* Fixed `Layer` silently dropping `self.attributes` on every JSON round-trip. Unlike `Beam`/`Panel`/`Plate`, `Layer.__init__` never initialized `self.attributes` and `Layer.__data__` never included it, so any custom attributes set on a `Layer` were lost as soon as the owning model was serialized and reloaded.
 
 ### Removed
+* Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
+* Removed depricated `features.py` module and related imports.
+* Removed `test_features.py` and moved extension tests to `test_beam.py`.
+
+## [2.2.0] 2026-07-02
+
+### Added
+
+* Added `CutPlaneSpec` — beam-relative cutting plane for butt/back cuts `(ref_side_index, angle, offset)`. Build with `from_butt_plane()` / `from_back_plane()`, resolve with `.to_plane(beam)`.
+* Added `MiterPlaneSpec` — beam-relative cutting plane for miter cuts `(ref_side_index, angle_x, angle_y, offset)`. Build with `from_plane(beam_a, beam_b, plane)`, resolve with `.to_plane(beam)`.
+* Added `butt_plane_spec` parameter to `ButtJoint`, `LButtJoint`, and `TButtJoint`; `back_plane_spec` to `LButtJoint`; `miter_plane` to `LMiterJoint` — all accept the new spec types above.
+* Added `orientation` parameter to `PlateGeometry.from_global_outlines`, `Panel.from_outlines`, `Panel.from_outline_thickness`, `Panel.from_face_thickness`, `Panel.from_brep`, `Plate.from_outlines`, `Plate.from_outline_thickness`, `Plate.from_face_thickness`, and `Plate.from_brep`. When provided, the vector is projected onto the element's plane and used to control the direction of the local coordinate frame, overriding the frame determined automatically from the input outlines.* Added `SimpleScarf` BTLx processing class to `compas_timber.fabrication` for generating simple scarf joint machining operations, including optional drill holes (0, 1, or 2).
+* Added `ISimpleScarf` joint class to `compas_timber.connections` for joining two parallel beams (Topology I) with a simple scarf joint.
+* Added unit tests for `ISimpleScarf`, `SimpleScarf`, `LButtJoint`, `LMiterJoint`, `TButtJoint`, `Panel`, and `Plate`.
+
+### Changed
+* Fixed a bug that prevented `FrenchRidgeLapJoint` from adding extensions to beams.
+* Fixed `Lap.from_shapes_and_element` calling a non-existent method; it now correctly defers to `LapProxy.from_volume_and_beam`.
+* Fixed `XNotchJoint.add_features` referencing non-existent `main_beam` / `cross_beam` attributes instead of `notch_beam` / `solid_beam`.
+* Fixed `Lap.from_volume_and_beam` reusing the same plane for two roles (e.g. `start_plane` and `front_plane`) when a plane had the minimum dot product on two axes, causing it to fail for non-axis-aligned volumes.
+
+* `PlateGeometry.from_global_outlines` now uses a robust backwards search to find a non-colinear third point when building the initial local frame, fixing a failure on outlines where the second-to-last point is colinear with the first edge.
+* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip check was applied after computing `transform_to_world_xy`, producing an incorrect transform for outlines whose natural frame normal pointed in the −Z direction.
+* Replaced `compas.geometry.Brep` with drop-in `compas_brep.Brep`.
+
+### Removed
+
+* **Breaking:** `ButtJoint` / `LButtJoint` / `TButtJoint` constructor params `butt_plane` / `back_plane` renamed to `butt_plane_spec` / `back_plane_spec` and now require a `CutPlaneSpec` instead of a raw `Plane`. Serialized models with the old keys will not deserialize correctly.
+* **Breaking:** `LMiterJoint` flat params `miter_plane_ref_side_index` / `miter_plane_angle_x` / `miter_plane_angle_y` / `miter_plane_offset` replaced by a single `miter_plane: MiterPlaneSpec`. Use `miter_plane_args()` or `MiterPlaneSpec.from_plane()` to build one. Old serialized models will not deserialize correctly.
+* **Breaking:** `LButtJoint.modify_cross` now defaults to `True` (was `False`).
+
+## [2.1.2] 2026-06-16
+
+### Added
+
+### Changed
+* Added `**kwargs` passthrough to all `Beam` constructors.
+* Fixed `TButtJoint` erroneously cutting cross beam even though `modify_cross` is set to `False`.
+
+### Removed
+
+## [2.1.1] 2026-06-16
+
+### Added
+* Added `angle_and_dot_product_main_beam_and_cross_beam` function in `compas_timber.connections.utilities`.
+* Added `oriented_polyhedron` and `polyhedron_from_box_planes` functions in `compas_timber.geometry`.
+* Added `allow_undercut` flag in `Pocket.from_volume_and_element`
+* Added `back_plane` property to `LButtJoint`, stored as `back_plane_ref_side_index`/`back_plane_angle`/`back_plane_offset`.
+* Added `ButtJoint.butt_plane_args()`, `LButtJoint.back_plane_args()`, and `LMiterJoint.miter_plane_args()` static methods that convert a world-coordinate `Plane` to the corresponding ref_side kwargs, for use with the constructor or `create()`.
+* Added `force_pocket` and `conical_tool` flags to `TButtJoint`
+* Added `force_pocket` and `conical_tool` flags to `LButtJoint`
+* Added `clear_model_dependent_cache()` to all element classes (`TimberElement`, `Beam`, `Plate`, `Panel`, `Fastener`). Clears only the cached attributes that depend on the element's position in the model hierarchy (world-space geometry, bounding boxes, blank, ref_frame) while preserving model-independent caches such as `_elementgeometry`, features, and blank extensions.
+* Added `TimberModel.remove_element_subtree(element)` — removes all children and their descendants from the model while keeping *element* itself. Joints are cleaned up consistently.
+* Added `TimberModel.extract_model_from_parent(parent)` — moves *parent*'s entire child subtree (hierarchy and joints preserved) into a new standalone `TimberModel` and returns it.
+* Added `TimberModel.merge_model(model, parent=None)` — moves all elements and joints from *model* into this model, optionally re-rooting them under *parent*.
+* Added `clear_model_dependent_cache()` method to `TimberElement`, `Plate`, `Panel`, `Fastener`.
+
+* Added `plane_from_ref_side_angle_offset`, `decompose_plane_to_ref_side`, `plane_from_ref_side_angles_offset` and `decompose_plane_to_ref_side_angles` functions in `compas_timber.connections.utilities`.
+* Added `Opening` panel feature class to `compas_timber.panel_features` for representing door and window cutouts in panels. Includes `Opening.from_outline_panel()` classmethod to create an opening from a single outline and a panel.
+* Added `OpeningType` constants class to `compas_timber.panel_features` with `DOOR` and `WINDOW` string constants.
+* Added `recognize_doors` and `horizontal_openings` parameters to `Panel.from_outlines()`. When `recognize_doors=True`, L-shaped door notches in the wall outline are automatically extracted and added as `Opening` features with `OpeningType.DOOR`.
+* Added `extract_door_openings(outline_a, outline_b)` module-level function in `compas_timber.elements.panel` that detects door cutouts from paired wall outlines by identifying interior segments and geometric constraints.
+
+### Changed
+* **Breaking:** `PlateGeometry.__init__` no longer accepts an `openings` parameter. The `openings` attribute has been removed from `PlateGeometry` entirely. Openings are now managed as features on the element, not as data on the geometry object.
+* **Breaking:** `Plate.__init__` no longer accepts an `openings` parameter. Pass openings via `Plate.from_outlines(openings=[...])`, which now adds each opening as a `FreeContour` feature, or add `FreeContour` features directly.
+* **Breaking:** `Panel.__init__` no longer accepts an `openings` parameter. Pass openings via `Panel.from_outlines(openings=[...])`, which now creates `Opening` panel features instead of storing raw polylines on the geometry.
+* Refactored `ButtJoint` to calculate the main beam's trimming plane via the `butt_plane` attribute, and the cross beam's refinement plane (when `modify_cross` is True) via an overridable `_back_cutting_plane()` hook.
+* **Breaking:** `ButtJoint.butt_plane`, `LButtJoint.back_plane` and `LMiterJoint.miter_plane` are no longer stored as a frozen `Plane`. They are now stored as a `ref_side_index` plus rotation angle(s) and an offset relative to a beam's reference side, so they stay correct after `model.transform()` without special-casing. To supply a world-coordinate cutting plane, use the new `butt_plane_args()` / `back_plane_args()` / `miter_plane_args()` static methods to obtain the corresponding kwargs, then pass them to the constructor or `create()`.
+* `PlateGeometry.get_args_from_outlines()` no longer accepts or returns an `openings` key.
+* `Panel.from_outlines()` signature extended with `recognize_doors=False` and `horizontal_openings=False` keyword arguments.
+* `polyline_from_brep_loop()` now raises `ValueError` when the loop produces more than one polyline, rather than silently returning the first.
+
+### Removed
+
+* Removed unused `TimberModel.topologies` property and the internal `_topologies` list.
+
+* Removed `openings` attribute from `PlateGeometry` — serialization of `PlateGeometry` no longer includes opening data.
+* Removed opening-feature caching (`_opening_features`) from `Plate` — all features are now stored uniformly in `_features`.
 
 
 ## [2.1.1-rc1] 2026-04-01

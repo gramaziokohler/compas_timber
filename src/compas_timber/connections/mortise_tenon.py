@@ -111,8 +111,6 @@ class MortiseTenonJoint(Joint, abc.ABC):
         self.tenon_shape = tenon_shape
         self.shape_radius = shape_radius
 
-        self.features = []
-
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()
 
@@ -149,12 +147,6 @@ class MortiseTenonJoint(Joint, abc.ABC):
         self.height = self.height or width / 2
         self.tenon_shape = self.tenon_shape or TenonShapeType.ROUND
         self.shape_radius = self.shape_radius or width / 4
-
-    def _clear_features(self):
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
-            self.features = []
 
     def _create_tenon_feature(self):
         return Tenon.from_plane_and_beam(

@@ -46,8 +46,6 @@ class TBirdsmouthJoint(Joint):
         super(TBirdsmouthJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.mill_depth = mill_depth
 
-        self.features = []  # TODOL remove?
-
     @property
     def main_beam(self):
         return self.element_a
@@ -71,7 +69,7 @@ class TBirdsmouthJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -97,15 +95,11 @@ class TBirdsmouthJoint(Joint):
     def add_features(self):
         """Adds the required trimming features to both beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
 
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         cutting_planes = self._get_cutting_planes()
 
