@@ -232,9 +232,17 @@ class Joint(Data):
         pass
 
     def clear_extensions(self):
-        """Removes the extensions defined by this joint from affected element(s)."""
+        """Removes the extensions defined by this joint from affected element(s).
+
+        Only beams are touched here, because only beams key their blank extensions by joint.
+        Plates, panels and layers key theirs by outline edge, and the joints that set those
+        (:class:`~compas_timber.connections.PlateJoint`) override this method to clear them by edge.
+        Passing this joint's guid to a plate's ``remove_blank_extension`` would be read as an edge index.
+
+        """
         for e in self.elements:
-            e.remove_blank_extension(self.guid)
+            if e.is_beam:
+                e.remove_blank_extension(self.guid)
 
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.

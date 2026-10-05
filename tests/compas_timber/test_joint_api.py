@@ -2,7 +2,9 @@ import pytest
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyline
 from compas.geometry import Vector
 
 from compas_timber.connections import Joint
@@ -12,6 +14,7 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -818,3 +821,75 @@ def test_joint_elements_are_beams(two_beam_model):
     joint = LButtJoint.create(model, b1, b2)
     for elem in joint.elements:
         assert isinstance(elem, Beam)
+
+
+# =============================================================================
+# Joint.clear_extensions() on elements other than beams
+# =============================================================================
+
+
+class _BeamToPlateJoint(Joint):
+    """A joint between a beam and a plate that extends only the beam, like a neck in a guitar body."""
+
+    MIN_ELEMENT_COUNT = 2
+    MAX_ELEMENT_COUNT = 2
+
+    def __init__(self, beam=None, plate=None, **kwargs):
+        super(_BeamToPlateJoint, self).__init__(elements=[beam, plate] if beam else None, **kwargs)
+        self.beam = beam
+        self.plate = plate
+
+    @property
+    def elements(self):
+        return [self.beam, self.plate]
+
+    def add_extensions(self):
+        self.beam.add_blank_extension(0.0, 25.0, self.guid)
+
+    def add_features(self):
+        pass
+
+
+@pytest.fixture
+def beam_and_plate_model():
+    model = TimberModel()
+    beam = Beam(frame=Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=30.0, height=30.0, length=200.0)
+    outline = Polyline([Point(0, 0, -50), Point(300, 0, -50), Point(300, 300, -50), Point(0, 300, -50), Point(0, 0, -50)])
+    plate = Plate.from_outline_thickness(outline, 40.0)
+    model.add_element(beam)
+    model.add_element(plate)
+    return model, beam, plate
+
+
+def test_process_joinery_accepts_a_joint_between_a_beam_and_a_plate(beam_and_plate_model):
+    # The base clear_extensions() used to pass the joint's guid to every element, and
+    # Plate.remove_blank_extension() takes an edge index, so this raised TypeError.
+    model, beam, plate = beam_and_plate_model
+    joint = _BeamToPlateJoint.create(model, beam, plate)
+
+    errors = model.process_joinery()
+
+    assert errors == []
+    assert joint.guid in beam._blank_extensions
+
+
+def test_clear_extensions_still_clears_the_beam_of_a_beam_to_plate_joint(beam_and_plate_model):
+    model, beam, plate = beam_and_plate_model
+    joint = _BeamToPlateJoint.create(model, beam, plate)
+    model.process_joinery()
+
+    joint.clear_extensions()
+
+    assert joint.guid not in beam._blank_extensions
+
+
+def test_clear_extensions_leaves_plate_edge_extensions_alone(beam_and_plate_model):
+    # A plate's extensions belong to plate joints, keyed by edge; a joint that never
+    # extended the plate has nothing to clear there.
+    model, beam, plate = beam_and_plate_model
+    plate.set_extension_plane(0, Plane(Point(0, -10, 0), Vector(0, -1, 0)))
+    joint = _BeamToPlateJoint.create(model, beam, plate)
+
+    joint.clear_extensions()
+
+    assert 0 in plate.plate_geometry._extension_planes
