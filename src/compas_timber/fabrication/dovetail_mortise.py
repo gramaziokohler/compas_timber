@@ -6,6 +6,7 @@ from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import Translation
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -624,11 +625,31 @@ class DovetailMortise(BTLxProcessing):
         Returns
         -------
         list of :class:`compas.geometry.Frame`
-            The cutting frames for the dovetail mortise.
+            The cutting frames for the dovetail mortise, placed by ``Slope`` and ``StartDepth``.
         """
+        placement = self._placement(beam)
+        return [frame.transformed(placement) for frame in self._cutting_frames_on_face(beam)]
+
+    def _placement(self, beam):
+        """The transformation from a dovetail laid on the reference face to where ``Slope`` and ``StartDepth`` put it.
+
+        ``Slope`` turns the dovetail about its start edge on the face, the width axis through the
+        start point; 90 is square to the face, as for ``Mortise`` (BTLx manual pp.52, 60). That
+        tilts the length, along which the tenon slides in, and the depth axis together.
+        ``StartDepth`` then lowers the whole cut along its own depth axis, below a housing
+        (manual p.56): the dovetail begins ``StartDepth`` into the part and is ``Depth`` deep from there.
+        """
+        assert self.slope is not None
+        assert self.start_depth is not None
+        frame = self.frame_from_params_and_beam(beam)
+        rotation = Rotation.from_axis_and_angle(frame.xaxis, math.radians(90.0 - self.slope), frame.point)
+        into = frame.normal.transformed(rotation) * -self.start_depth
+        return Translation.from_vector(into) * rotation
+
+    def _cutting_frames_on_face(self, beam):
+        """The cutting frames for a dovetail laid on the reference face itself, before :meth:`_placement`."""
         assert self.angle is not None
         assert self.depth is not None
-        assert self.start_depth is not None
 
         # start with a plane aligned with the ref side but shifted to the start_x of the cut
         cutting_frame = self.frame_from_params_and_beam(beam)
@@ -642,8 +663,6 @@ class DovetailMortise(BTLxProcessing):
             frame=cutting_frame,
         )
 
-        # offset the cutting surface in case of housing
-        cutting_surface.translate(-cutting_frame.zaxis * self.start_depth)
 
         # calculate the displacement of the edge points of the dovetail from the top-center
         dx_top = self.width / 2 + self.length * abs(math.tan(math.radians(self.cone_angle)))
@@ -718,8 +737,8 @@ class DovetailMortise(BTLxProcessing):
             )
         )
 
-        # get the cutting frames for the dovetail tenon
-        trimming_frames = self.dovetail_cutting_frames_from_params_and_beam(beam)
+        # get the cutting frames for the dovetail, on the reference face
+        trimming_frames = self._cutting_frames_on_face(beam)
 
         # trim the box to create the dovetail volume
         for frame in trimming_frames:
@@ -731,6 +750,8 @@ class DovetailMortise(BTLxProcessing):
                     frame, dovetail_volume, "Failed to trim tenon volume with cutting plane: {}".format(str(e))
                 )
 
+        # then place it: Slope and StartDepth move the whole cut rigidly
+        dovetail_volume.transform(self._placement(beam))
         return dovetail_volume
 
     def scale(self, factor):

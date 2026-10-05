@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from collections import OrderedDict
@@ -10,6 +12,7 @@ from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication import Mortise
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
 from compas_timber.fabrication.btlx import LimitationTopType
@@ -581,3 +584,43 @@ def test_a_rounded_dovetail_tenon_fills_the_mortise_with_the_same_parameters():
     tenon = _volume_change(_dovetail_tenon(TenonShapeType.RADIUS, True, True))
     assert tenon == pytest.approx(_volume_change(_dovetail_tenon(TenonShapeType.RADIUS, False, True)), rel=1e-9)
     assert -_volume_change(_dovetail_mortise(TenonShapeType.RADIUS, True, True)) == pytest.approx(tenon, rel=1e-6)
+
+
+def _bounds(brep):
+    points = [vertex.point for vertex in brep.vertices]
+    return [(min(p[i] for p in points), max(p[i] for p in points)) for i in range(3)]
+
+
+def test_a_dovetail_mortise_starts_its_start_depth_below_the_face():
+    # StartDepth lowers the whole dovetail under a housing (BTLx manual p.56); it used
+    # to leave the cut at the face and only shrink its profile.
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    at_face = _dovetail_mortise(TenonShapeType.SQUARE, True, True)
+    lowered = _dovetail_mortise(TenonShapeType.SQUARE, True, True)
+    lowered.start_depth = 10.0
+    face = at_face.dovetail_volume_from_params_and_beam(beam)
+    below = lowered.dovetail_volume_from_params_and_beam(beam)
+    assert below.volume == pytest.approx(face.volume, rel=1e-9)
+    # reference side 0 faces -z, so "into the part" is +z
+    (_, _), (_, _), (face_z0, face_z1) = _bounds(face)
+    (_, _), (_, _), (below_z0, below_z1) = _bounds(below)
+    assert (below_z0, below_z1) == pytest.approx((face_z0 + 10.0, face_z1 + 10.0))
+
+
+def test_a_sloped_dovetail_mortise_leans_as_a_sloped_mortise_does():
+    # Slope turns the dovetail about its start edge on the face (manual pp.52, 60), the
+    # same rotation as Mortise's, and it used to be ignored. The floor swings back past
+    # the start by depth * sin(90 - Slope), and the volume is unchanged.
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    square = _dovetail_mortise(TenonShapeType.SQUARE, True, True)
+    sloped = _dovetail_mortise(TenonShapeType.SQUARE, True, True)
+    sloped.slope = 80.0
+    upright = square.dovetail_volume_from_params_and_beam(beam)
+    leaning = sloped.dovetail_volume_from_params_and_beam(beam)
+    assert leaning.volume == pytest.approx(upright.volume, rel=1e-9)
+    (upright_x0, _), _, _ = _bounds(upright)
+    (leaning_x0, _), _, _ = _bounds(leaning)
+    assert upright_x0 - leaning_x0 == pytest.approx(25.0 * math.sin(math.radians(10.0)))
+    mortise = Mortise(start_x=200.0, start_y=50.0, length=60.0, width=40.0, depth=25.0, slope=80.0, shape=TenonShapeType.SQUARE)
+    (mortise_x0, _), _, _ = _bounds(mortise.volume_from_params_and_beam(beam))
+    assert leaning_x0 == pytest.approx(mortise_x0)
