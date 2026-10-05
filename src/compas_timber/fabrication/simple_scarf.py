@@ -266,11 +266,12 @@ class SimpleScarf(BTLxProcessing):
         # Subtract the scarf volume from the beam geometry
         try:
             sub_breps = Brep.from_boolean_difference(geometry, scarf_volume)
-            for dv in drill_volumes:
-                sub_breps = [drilled for b in sub_breps for drilled in Brep.from_boolean_difference(b, dv)]
             for b in sub_breps:
                 if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
-                    return b
+                    sub_brep = b
+                    break
+            for dv in drill_volumes:
+                sub_brep = Brep.from_boolean_difference(sub_brep, dv)
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume.transformed(beam.modeltransformation),
