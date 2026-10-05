@@ -43,7 +43,10 @@ class BTLxWriter(object):
         The name of the file. Defaults to None.
     comment : str, optional
         A comment to be included in the file. Defaults to None.
-
+    include_shapes : bool, optional
+        If True, each part carries a ``Shape``: its geometry as a faceted ``IndexedFaceSet``, for
+        viewers that display parts rather than computing them from the processings. Computing it
+        requires each element's brep. Defaults to False.
 
     """
 
@@ -64,10 +67,11 @@ class BTLxWriter(object):
         ]
     )
 
-    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, include_shapes=False):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
+        self.include_shapes = include_shapes
         self._project_name = project_name or "COMPAS Timber Project"
         self._tolerance = TOL
         self._errors = []
@@ -275,7 +279,7 @@ class BTLxWriter(object):
                 else:
                     processings_element.append(processing_element)
             part_element.append(processings_element)
-        if element._geometry:
+        if self.include_shapes:
             part_element.append(part.et_shape)
         return part_element
 
@@ -647,52 +651,85 @@ class BTLxPart(BTLxGenericPart):
         """
 
         if not self._shape_strings:
-            brep_vertex_points = []
+            to_part = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
+            vertex_index = {}  # vertex key -> index into vertex_strings
+            vertex_strings = []
             brep_indices = []
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
             for face in scaled_geometry.faces:
-                pts = []
                 # not `face.surface.frame_at()`: a planar face's surface is a Plane, which has none.
                 frame = face.frame_at()
-                edges = face.boundary.edges[1:]
-                pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
-                overflow = len(edges)
-                while edges and overflow > 0:
-                    for i, edge in enumerate(edges):
-                        if (not edge.is_line) or ((edge.start_vertex.point in pts) and (edge.end_vertex.point in pts)):  # edge endpoints already in pts
-                            edges.pop(i)
-                        elif TOL.is_allclose(edge.start_vertex.point, pts[-1]) and (edge.end_vertex.point not in pts):  # edge.start_vertex is the last point in pts
-                            pts.append(edges.pop(i).end_vertex.point)
-                        elif TOL.is_allclose(edge.end_vertex.point, pts[-1]) and (edge.start_vertex.point not in pts):  # edge.end_vertex is the last point in pts
-                            pts.append(edges.pop(i).start_vertex.point)
-                    overflow -= 1
-                pts = correct_polyline_direction(pts, frame.normal)
+                pts = correct_polyline_direction(_face_loop_points(face), frame.normal)
 
                 if len(pts) != len(face.edges):
                     print("edge count doesnt match point count, BTLxPart shape will be incorrect")
 
                 if len(pts) > 2:
                     for pt in pts:
-                        if pt in brep_vertex_points:
-                            brep_indices.append(brep_vertex_points.index(pt))
-                        else:
-                            brep_indices.append(len(brep_vertex_points))
-                            brep_vertex_points.append(pt)
+                        key = _vertex_key(pt)
+                        index = vertex_index.get(key)
+                        if index is None:
+                            index = vertex_index[key] = len(vertex_strings)
+                            vertex_strings.append(_format_shape_point(pt.transformed(to_part)))
+                        brep_indices.append(index)
                     brep_indices.append(-1)
 
-            brep_indices_string = ""
-            for index in brep_indices:
-                brep_indices_string += str(index) + " "
-
-            brep_vertices_string = ""
-            for point in brep_vertex_points:
-                xform = Transformation.from_frame_to_frame(self.frame, Frame((0, 0, 0), (1, 0, 0), (0, 1, 0)))
-                point.transform(xform)
-                brep_vertices_string += "{:.{prec}f} {:.{prec}f} {:.{prec}f} ".format(point.x, point.y, point.z, prec=3)
-                brep_vertices_string = brep_vertices_string.replace("-", "")
-
+            brep_indices_string = "".join(str(index) + " " for index in brep_indices)
+            brep_vertices_string = "".join(point + " " for point in vertex_strings)
             self._shape_strings = [brep_indices_string, brep_vertices_string]
         return self._shape_strings
+
+
+_SHAPE_VERTEX_KEY_PRECISION = 6
+"""Decimals a shape vertex is identified by: finer than the 3 it is written with, so that two
+vertices which print the same but are distinct in the brep keep distinct indices."""
+
+
+def _vertex_key(point):
+    return TOL.geometric_key(point, precision=_SHAPE_VERTEX_KEY_PRECISION)
+
+
+def _format_shape_point(point):
+    # `+ 0.0` turns the -0.0 that rounding a tiny negative produces into 0.0, so it is not
+    # written as "-0.000". Real negative coordinates keep their sign.
+    return " ".join("{:.{prec}f}".format(round(value, BTLxWriter.POINT_PRECISION) + 0.0, prec=BTLxWriter.POINT_PRECISION) for value in point)
+
+
+def _face_loop_points(face):
+    """Return the corners of a face's outer loop, in order, by walking its line edges end to end.
+
+    Each step looks up the edges touching the current corner rather than scanning every edge,
+    so this is linear in the edge count. Edges that are not lines are skipped, as before.
+    """
+    boundary_edges = face.boundary.edges
+    if not boundary_edges:
+        return []
+    first = boundary_edges[0]
+    edges = [edge for edge in boundary_edges[1:] if edge.is_line]
+
+    touching = {}
+    for i, edge in enumerate(edges):
+        touching.setdefault(_vertex_key(edge.start_vertex.point), []).append(i)
+        touching.setdefault(_vertex_key(edge.end_vertex.point), []).append(i)
+
+    pts = [first.start_vertex.point, first.end_vertex.point]
+    seen = {_vertex_key(pts[0]), _vertex_key(pts[1])}
+    used = set()
+    while True:
+        here = _vertex_key(pts[-1])
+        step = next((i for i in touching.get(here, ()) if i not in used), None)
+        if step is None:
+            break
+        used.add(step)
+        edge = edges[step]
+        start, end = edge.start_vertex.point, edge.end_vertex.point
+        following = end if _vertex_key(start) == here else start
+        key = _vertex_key(following)
+        if key in seen:
+            continue  # the closing edge, or one whose far end is already in the loop
+        seen.add(key)
+        pts.append(following)
+    return pts
 
 
 def contour_to_xml(contour):

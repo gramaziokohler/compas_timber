@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
+* Added `include_shapes` to `BTLxWriter`, to ask for each part's `Shape` (its faceted geometry) explicitly.
 ### Changed
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
@@ -97,6 +98,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
 * Fixed `Layer` silently dropping `self.attributes` on every JSON round-trip. Unlike `Beam`/`Panel`/`Plate`, `Layer.__init__` never initialized `self.attributes` and `Layer.__data__` never included it, so any custom attributes set on a `Layer` were lost as soon as the owning model was serialized and reloaded.
 * Fixed `Joint.clear_extensions()` raising `TypeError` for any joint whose elements include a `Plate` (or `Panel`/`Layer`), which made `process_joinery()` fail before such a joint could add a feature. It passed the joint's guid to every element's `remove_blank_extension`, but only `Beam` keys extensions by joint; plates take an outline edge index. It now clears beams only; `PlateJoint` still clears plate edges itself.
+* Changed `BTLxWriter` to write part `Shape`s only when `include_shapes=True`. Previously a part got one whenever its brep happened to have been computed, so whether a file contained shapes depended on what had run before the export. With `include_shapes=True` every part gets one, computing the brep if needed.
+* Fixed `BTLxPart.shape_strings` taking time cubic in a face's edge count: ordering the edges of each face and indexing the vertices were both linear searches by tolerant point equality. A plate with a 400-segment outline took 13 s; it is now linear, with identical output.
+* Fixed `BTLxPart.shape_strings` removing every `-` from the written coordinates, which was meant to avoid `-0.000`. Negative zero is now normalised instead, so a negative coordinate keeps its sign.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.

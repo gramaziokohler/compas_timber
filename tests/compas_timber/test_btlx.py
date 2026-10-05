@@ -1,4 +1,6 @@
+import math
 import os
+import time
 import pytest
 from unittest.mock import patch
 
@@ -7,6 +9,8 @@ from compas.tolerance import Tolerance
 from compas.geometry import Frame
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
+from compas.geometry import Vector
 
 import xml.etree.ElementTree as ET
 
@@ -897,3 +901,68 @@ def test_btlx_reader_processing_instantiation_error():
     assert len(reader.errors) > 0
     # Error should reference the JackRafterCut processing type
     assert any("JackRafterCut" in (e.processing_type or "") for e in reader.errors)
+
+
+# =============================================================================
+# Part shapes
+# =============================================================================
+
+
+def _shape_model():
+    model = TimberModel(tolerance=Tolerance(unit="MM"))
+    outline = Polyline([Point(0, 0, -50), Point(300, 0, -50), Point(300, 300, -50), Point(0, 300, -50), Point(0, 0, -50)])
+    model.add_element(Plate.from_outline_thickness(outline, 40.0))
+    model.add_element(Beam(frame=Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), width=30.0, height=30.0, length=200.0))
+    return model
+
+
+def _shapes(btlx_string):
+    root = ET.fromstring(btlx_string)
+    return root.findall(".//d2m:Part/d2m:Shape", {"d2m": "https://www.design2machine.com"})
+
+
+def test_part_shapes_are_left_out_by_default_even_when_the_geometry_was_computed():
+    # Whether a shape was written used to depend on whether the element's brep
+    # happened to be cached, so two exports of one model could differ.
+    model = _shape_model()
+    for element in model.elements():
+        _ = element.geometry
+
+    assert _shapes(BTLxWriter().model_to_xml(model)) == []
+
+
+def test_part_shapes_are_written_when_asked_for_even_when_the_geometry_was_not_computed():
+    assert len(_shapes(BTLxWriter(include_shapes=True).model_to_xml(_shape_model()))) == 2
+
+
+def test_part_shape_coordinates_are_the_part_vertices_in_the_part_frame():
+    model = _shape_model()
+    for element in model.elements():
+        part = BTLxPart(element, order_num=0)
+        indices, coordinates = part.shape_strings
+        values = [float(value) for value in coordinates.split()]
+        written = {tuple(values[i : i + 3]) for i in range(0, len(values), 3)}
+
+        to_part = Transformation.from_frame_to_frame(part.frame, Frame.worldXY())
+        expected = set()
+        for vertex in element.geometry.vertices:
+            local = vertex.point.transformed(to_part)
+            expected.add(tuple(round(c, 3) + 0.0 for c in local))
+        assert written == expected
+        assert "-0.000" not in coordinates
+        assert max(int(i) for i in indices.split()) == len(written) - 1
+
+
+def test_part_shape_is_built_in_reasonable_time_for_a_many_sided_outline():
+    # Ordering each face's edges into a loop and indexing the vertices were both
+    # linear searches by tolerant equality, so the cost grew with the cube of the
+    # outline's segment count: 400 sides took 13 s. A traced outline has hundreds.
+    count = 400
+    points = [Point(150 + 140 * math.cos(2 * math.pi * i / count), 150 + 140 * math.sin(2 * math.pi * i / count), 0) for i in range(count)]
+    plate = Plate.from_outline_thickness(Polyline(points + [points[0]]), 40.0)
+    _ = plate.geometry
+
+    started = time.perf_counter()
+    indices, _ = BTLxPart(plate, order_num=0).shape_strings
+    assert time.perf_counter() - started < 2.0
+    assert indices.split().count("-1") == count + 2  # the side faces, the top and the bottom
