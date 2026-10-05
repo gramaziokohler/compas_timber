@@ -515,13 +515,24 @@ class Mortise(BTLxProcessing):
         assert self.depth is not None
 
         cutting_frame = self.frame_from_params_and_beam(beam)
-        # translate the cutting frame to the center of the mortise
-        translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.yaxis * self.length)
+        # Slope: the mortise turns about its start edge on the reference face (the width axis through
+        # the start point). BTLx defines Slope = 90 - that rotation, so 90 is square to the face; below
+        # 90 the depth axis leans back past the start (BTLx manual, Mortise).
+        assert self.slope is not None
+        rotation = math.radians(90.0 - self.slope)
+        cutting_frame.rotate(rotation, cutting_frame.xaxis, cutting_frame.point)
+        # A mortise is plunged along its axis from the face, so a tilted one opens to the face along
+        # its whole length: extend the box back up its own axis far enough to clear the face at the
+        # far end, which the rotation has carried L * sin(r) below it: L * tan(r) up the tilted axis
+        # gets there, and 1.0 more keeps the box's lid off the face (above the face is air).
+        # A square mortise needs no extension, and keeps its old box exactly.
+        rise = self.length * abs(math.tan(rotation)) + 1.0 if rotation else 0.0
+        translation_vector = -cutting_frame.normal * (self.depth - rise) - cutting_frame.yaxis * self.length
         cutting_frame.translate(translation_vector * 0.5)
 
-        # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.depth, cutting_frame)
-        return Brep.from_box(tenon_box)
+        # get the mortise as a box
+        mortise_box = Box(self.width, self.length, self.depth + rise, cutting_frame)
+        return Brep.from_box(mortise_box)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

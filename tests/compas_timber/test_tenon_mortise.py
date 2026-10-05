@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from collections import OrderedDict
@@ -386,3 +388,60 @@ def test_tenon_scaled():
     assert scaled.height == tenon.height * 2.0
     assert scaled.shape == tenon.shape
     assert scaled.shape_radius == tenon.shape_radius * 2.0
+
+
+# =============================================================================
+# Mortise Slope: the box rotates about the width edge through its start point
+# =============================================================================
+
+
+def _mortise_box(slope):
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    mortise = Mortise(start_x=200.0, start_y=50.0, angle=0.0, slope=slope, length=80.0, width=40.0, depth=30.0, shape=TenonShapeType.SQUARE, ref_side_index=0)
+    frame = mortise.frame_from_params_and_beam(beam)
+    vertices = [vertex.point for vertex in mortise.volume_from_params_and_beam(beam).vertices]
+    return frame, vertices
+
+
+def _centroid(points):
+    return Point(*[sum(point[i] for point in points) / len(points) for i in range(3)])
+
+
+def test_a_square_mortise_is_unchanged_by_slope_90():
+    frame, vertices = _mortise_box(90.0)
+    depths = sorted({round(-frame.normal.dot(point - frame.point), 6) for point in vertices})
+    assert depths == [0.0, 30.0]
+
+
+def test_slope_tilts_the_floor_and_swings_it_back_past_the_start():
+    # BTLx: Slope = 90 - rotation about the width edge through the start point.
+    # The floor is square to the tilted depth axis, and below 90 it leans back.
+    frame, sloped = _mortise_box(80.0)
+    floor = sorted(sloped, key=lambda point: frame.normal.dot(point - frame.point))[:4]
+    a, b, c = floor[0], floor[1], floor[2]
+    floor_normal = Vector.from_start_end(a, b).cross(Vector.from_start_end(a, c)).unitized()
+    assert math.degrees(math.acos(abs(floor_normal.dot(frame.normal)))) == pytest.approx(10.0)
+    # the length runs along -yaxis from the start, so "back past the start" is +yaxis
+    assert max(frame.yaxis.dot(point - frame.point) for point in floor) == pytest.approx(30.0 * math.sin(math.radians(10.0)))
+
+
+def test_a_sloped_mortise_cuts_a_tilted_floor():
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    before = beam.geometry.volume
+    mortise = Mortise(start_x=200.0, start_y=50.0, angle=0.0, slope=80.0, length=80.0, width=40.0, depth=30.0, shape=TenonShapeType.SQUARE, ref_side_index=0)
+    beam.add_feature(mortise)
+    beam._geometry = None
+    removed = before - beam.geometry.volume
+    # In the plane of the slope the cut is a quadrilateral: hinge, floor at the
+    # start, floor at the far end, and where the far wall meets the face again.
+    length, width, depth, r = 80.0, 40.0, 30.0, math.radians(10.0)
+    axis = (math.sin(r), -math.cos(r))  # depth axis, leaning back past the start (x is back, y is up)
+    along = (-math.cos(r), -math.sin(r))  # toward the far end, square to the axis
+    hinge = (0.0, 0.0)
+    floor_start = (depth * axis[0], depth * axis[1])
+    floor_end = (floor_start[0] + length * along[0], floor_start[1] + length * along[1])
+    climb = -floor_end[1] / math.cos(r)
+    at_face = (floor_end[0] - climb * axis[0], 0.0)
+    corners = [hinge, floor_start, floor_end, at_face]
+    area = 0.5 * abs(sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(corners, corners[1:] + corners[:1])))
+    assert removed == pytest.approx(width * area, rel=1e-6)
