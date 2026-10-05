@@ -1376,8 +1376,17 @@ class Contour(Data):
         new_instance.scale(factor)
         return new_instance
 
-    def to_brep(self):
+    def to_brep(self, through=True):
         """Convert the contour to a COMPAS Brep object.
+
+        Parameters
+        ----------
+        through : bool, optional
+            Whether the cut goes all the way through the part. Both ends of the solid are pushed 0.001
+            past the contour so a boolean never meets a coplanar face; a blind cut (``through=False``)
+            keeps its floor exactly at ``depth``, because pushing it would cut deeper than asked.
+            Defaults to True.
+
         Returns
         -------
         :class:`~compas.geometry.Brep`
@@ -1395,7 +1404,8 @@ class Contour(Data):
                 plane.rotate(math.radians(inclination), seg.direction, seg.start)
                 move_polyline_segment_to_plane(pline_b, i, plane)
         pline_a.translate([0, 0, 0.001])
-        pline_b.translate([0, 0, -0.001])
+        if through:
+            pline_b.translate([0, 0, -0.001])
 
         return brep_from_outlines(pline_a, pline_b)
 

@@ -369,9 +369,13 @@ class Drilling(BTLxProcessing):
 
         drill_line = self._calculate_drill_line(element, xy_world, cylinder_frame)
 
-        # scale both ends so is protrudes nicely from the surface
+        # extend the line so it protrudes from the surface, and the boolean never meets a coplanar face.
+        # A blind hole is extended at its entry only: extending its far end too would drill it deeper than `depth`.
         # TODO: this is a best-effort solution. this can be done more accurately taking the angle into account. consider doing that in the future.
-        drill_line = self._scaled_line_by_factor(drill_line, 1.2)
+        if self.depth_limited:
+            drill_line = Line(drill_line.start - drill_line.vector * 0.1, drill_line.end)
+        else:
+            drill_line = self._scaled_line_by_factor(drill_line, 1.2)
         return Cylinder.from_line_and_radius(drill_line, self.diameter * 0.5)
 
     def _scaled_line_by_factor(self, line, factor):

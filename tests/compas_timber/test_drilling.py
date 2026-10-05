@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from collections import OrderedDict
@@ -348,3 +350,30 @@ def test_drilling_proxy_transforms_with_beam(tol):
     assert tol.is_close(cylinder_a.radius, cylinder_b.radius)
     assert tol.is_allclose(cylinder_a.circle.plane.point, cylinder_b.circle.plane.point)
     assert tol.is_allclose(cylinder_a.circle.plane.normal, cylinder_b.circle.plane.normal)
+
+
+# =============================================================================
+# The geometry of a drilling is as deep as the processing says
+# =============================================================================
+
+
+def _drilled_volume(line, diameter):
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=200.0, width=60.0, height=40.0)
+    before = beam.geometry.volume
+    beam.add_feature(Drilling.from_line_and_element(line, beam, diameter))
+    beam._geometry = None
+    return before - beam.geometry.volume
+
+
+def test_a_blind_drilling_removes_exactly_its_depth():
+    # The drill line used to be stretched by 20% about its midpoint, so a blind
+    # hole came out 10% deeper than the Depth written to BTLx.
+    removed = _drilled_volume(Line(Point(100.0, 0.0, 20.0), Point(100.0, 0.0, 4.0)), 4.0)
+
+    assert removed == pytest.approx(math.pi * 2.0**2 * 16.0, rel=1e-6)
+
+
+def test_a_through_drilling_still_removes_the_whole_hole():
+    removed = _drilled_volume(Line(Point(100.0, 0.0, 30.0), Point(100.0, 0.0, -30.0)), 4.0)
+
+    assert removed == pytest.approx(math.pi * 2.0**2 * 40.0, rel=1e-6)

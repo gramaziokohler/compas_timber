@@ -306,7 +306,7 @@ class FreeContour(BTLxProcessing):
             The resulting geometry after processing.
         """
 
-        vol = self.contour_param_object.to_brep()
+        vol = self._volume(element)
         # contour is defined in the ref_side local frame, need to transform first to global then to element local, where geometry is created
         transformation_ref_side_to_local = element.modeltransformation.inverse() * Transformation.from_frame(element.ref_sides[self.ref_side_index])
         vol.transform(transformation_ref_side_to_local)
@@ -314,6 +314,20 @@ class FreeContour(BTLxProcessing):
             return brep_difference_first(geometry, vol)
         else:
             return brep_intersection_first(geometry, vol)
+
+    def _volume(self, element):
+        """The solid this contour removes, or keeps, before it is moved onto the element.
+
+        A blind interior cut (a pocket) asks for its floor exactly at its depth; anything else may
+        overshoot, which keeps the booleans away from coplanar faces. Only an interior cut is
+        subtracted, so only there would an overshoot change the part.
+        """
+        contour = self.contour_param_object
+        if not isinstance(contour, Contour):
+            return contour.to_brep()
+        thickness = element.get_dimensions_relative_to_side(self.ref_side_index)[1]
+        blind = bool(self.counter_sink) and contour.depth_bounded and contour.depth < thickness - TOL.absolute
+        return contour.to_brep(through=not blind)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

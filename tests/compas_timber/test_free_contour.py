@@ -227,3 +227,31 @@ def test_contour_scaled():
     assert scaled_contour.depth == contour.depth * 2.0
     assert scaled_contour.inclination == contour.inclination
     assert scaled_contour.depth_bounded == contour.depth_bounded
+
+
+# =============================================================================
+# The geometry of a blind pocket is as deep as the processing says
+# =============================================================================
+
+
+def _pocketed_plate(depth):
+    outline = Polyline([Point(0, 0, 0), Point(200, 0, 0), Point(200, 100, 0), Point(0, 100, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(outline, 40.0)
+    before = plate.geometry.volume
+    top = plate.geometry.aabb.zmax
+    pocket = Polyline([Point(50, 25, top), Point(150, 25, top), Point(150, 75, top), Point(50, 75, top), Point(50, 25, top)])
+    plate.add_feature(FreeContour.from_polyline_and_element(pocket, plate, depth=depth, interior=True))
+    plate._geometry = None
+    return before - plate.geometry.volume
+
+
+def test_a_blind_interior_contour_removes_exactly_its_depth():
+    # Contour.to_brep pushes its floor 0.001 below the requested depth so a
+    # boolean never meets a coplanar face. That is right for a cut through the
+    # part, and made every blind pocket 0.001 too deep.
+    # rel=1e-6: OCCT's booleans agree to ~1e-8 relative; the 0.001 overshoot was ~7e-5.
+    assert _pocketed_plate(15.0) == pytest.approx(100.0 * 50.0 * 15.0, rel=1e-6)
+
+
+def test_an_interior_contour_through_the_part_still_cuts_all_the_way():
+    assert _pocketed_plate(40.0) == pytest.approx(100.0 * 50.0 * 40.0, rel=1e-6)
