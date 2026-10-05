@@ -104,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `BTLxPart.shape_strings` taking time cubic in a face's edge count: ordering the edges of each face and indexing the vertices were both linear searches by tolerant point equality. A plate with a 400-segment outline took 13 s; it is now linear, with identical output.
 * Fixed `BTLxPart.shape_strings` removing every `-` from the written coordinates, which was meant to avoid `-0.000`. Negative zero is now normalised instead, so a negative coordinate keeps its sign.
 * Fixed BTLx `FileHistory` writing `UserName="None"` and `ComputerName="None"` when the `USERNAME` / `computername` environment variables are unset (on macOS and Linux, always). The attributes are now left out, which the schema allows.
+* The warning `BTLxWriter` gives for a model in metres now says that every length is multiplied by 1000, and how to declare a model that is already in millimetres. `TimberModel()` defaults to metres, so a model built in millimetres without saying so is exported 1000 times too large, which still validates against the schema.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.

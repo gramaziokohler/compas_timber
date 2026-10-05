@@ -142,7 +142,11 @@ class BTLxWriter(object):
         self._errors = []
         self._tolerance = model.tolerance
         if self._tolerance.unit == "M":
-            warn("Model units are set to {} and will auto-scale to mm for BTLx. Please design in mm if you intend to use BTLx.".format(self._tolerance.unit))
+            warn(
+                "Model units are set to {} and will auto-scale to mm for BTLx: every length is multiplied by 1000. "
+                "TimberModel() is in metres unless told otherwise; if this model is already in millimetres, "
+                "construct it with TimberModel(tolerance=Tolerance(unit='MM')).".format(self._tolerance.unit)
+            )
 
         root_element = ET.Element("BTLx", self.FILE_ATTRIBUTES)
         # first child -> file_history

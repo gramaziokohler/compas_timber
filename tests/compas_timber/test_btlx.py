@@ -1005,3 +1005,13 @@ def test_reproducible_writer_gives_the_same_bytes_for_the_same_model(monkeypatch
     second = BTLxWriter(reproducible=True).model_to_xml(model)
 
     assert first == second
+
+
+def test_metre_warning_says_what_it_will_do_and_how_to_avoid_it():
+    model = _shape_model()
+    model._tolerance = Tolerance(unit="M")
+
+    with pytest.warns(UserWarning, match="multiplied by 1000") as warned:
+        BTLxWriter().model_to_xml(model)
+
+    assert "Tolerance(unit='MM')" in str(warned[0].message)
