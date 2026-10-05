@@ -146,9 +146,6 @@ class SimpleScarf(BTLxProcessing):
 
     @property
     def num_drill_hole_str(self) -> str:
-        # BTLxProcessingParams._format_value formats integers as floats (e.g. 2 -> "2.000").
-        # Returning a str here bypasses that branch and writes the value as a plain integer string.
-        # This workaround can be removed once _format_value is updated to handle int separately.
         return str(self._num_drill_hole)
 
     @property
@@ -218,6 +215,7 @@ class SimpleScarf(BTLxProcessing):
             return 0.0
         else:
             return beam.blank_length
+            return beam.blank_length
 
 
     #########################################################################
@@ -263,15 +261,12 @@ class SimpleScarf(BTLxProcessing):
                 "Could not convert the scarf volume mesh to a Brep."
             )
 
-        # Subtract the scarf volume from the beam geometry
         try:
-            sub_breps = Brep.from_boolean_difference(geometry, scarf_volume)
-            for b in sub_breps:
-                if b.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
-                    sub_brep = b
-                    break
-            for dv in drill_volumes:
-                sub_brep = Brep.from_boolean_difference(sub_brep, dv)
+            for sub_brep in Brep.from_boolean_difference(geometry, scarf_volume):
+                if sub_brep.contains(beam.centerline.midpoint.transformed(beam.transformation_to_local())):
+                    for dv in drill_volumes:
+                        sub_brep = Brep.from_boolean_difference(sub_brep, dv)[0]
+                    return sub_brep
         except IndexError:
             raise FeatureApplicationError(
                 scarf_volume.transformed(beam.modeltransformation),
