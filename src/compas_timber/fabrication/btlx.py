@@ -52,6 +52,9 @@ class BTLxWriter(object):
         If True, a processing that cannot be written raises :class:`~compas_timber.errors.BTLxWriterError`
         (after the whole model has been written, listing every failure) instead of being left out of the
         file and recorded in :attr:`errors`. Defaults to False.
+    reproducible : bool, optional
+        If True, the file history leaves out the date, time, user name and computer name, so that the
+        same model always produces the same file. Defaults to False.
 
     """
 
@@ -72,12 +75,13 @@ class BTLxWriter(object):
         ]
     )
 
-    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, include_shapes=False, strict=False):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, include_shapes=False, strict=False, reproducible=False):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
         self.include_shapes = include_shapes
         self.strict = strict
+        self.reproducible = reproducible
         self._project_name = project_name or "COMPAS Timber Project"
         self._tolerance = TOL
         self._errors = []
@@ -167,21 +171,25 @@ class BTLxWriter(object):
         return file_history
 
     def _get_file_history_attributes(self):
-        """Generates the file history attributes with the current date and time."""
+        """Generates the file history attributes, with the current date and time unless :attr:`reproducible`.
+
+        All of these are optional in the schema. The user and computer name are left out when the
+        environment does not provide them, rather than written as ``"None"``.
+        """
         file_history_attributes = OrderedDict(
             [
                 ("CompanyName", self.company_name or "Gramazio Kohler Research"),
                 ("ProgramName", "COMPAS_Timber"),
                 ("ProgramVersion", "COMPAS Timber: {}; COMPAS: {}".format(compas_timber.__version__, compas.__version__)),
-                ("ComputerName", "{}".format(os.getenv("computername"))),
-                ("UserName", "{}".format(os.getenv("USERNAME"))),
+                ("ComputerName", None if self.reproducible else os.getenv("computername")),
+                ("UserName", None if self.reproducible else os.getenv("USERNAME")),
                 ("FileName", self.file_name or ""),
-                ("Date", "{}".format(date.today())),
-                ("Time", "{}".format(datetime.now().strftime("%H:%M:%S"))),
+                ("Date", None if self.reproducible else "{}".format(date.today())),
+                ("Time", None if self.reproducible else "{}".format(datetime.now().strftime("%H:%M:%S"))),
                 ("Comment", self.comment or ""),
             ]
         )
-        return file_history_attributes
+        return OrderedDict((key, value) for key, value in file_history_attributes.items() if value is not None)
 
     def _create_project_element(self, model, nesting_result=None):
         """Creates the project element. This method creates the parts element and appends it to the project element.

@@ -75,8 +75,9 @@ def test_btlx_file_history(resulting_btlx, namespaces):
     assert initial_export_program.get("CompanyName") == "Gramazio Kohler Research"
     assert initial_export_program.get("ProgramName") == "COMPAS_Timber"
     assert initial_export_program.get("ProgramVersion") == "COMPAS Timber: {}; COMPAS: {}".format(compas_timber.__version__, compas.__version__)
-    assert initial_export_program.get("ComputerName") == (os.getenv("computername") or "None")
-    assert initial_export_program.get("UserName") == (os.getenv("USERNAME") or "None")
+    # Left out rather than written as the string "None" when the environment does not say.
+    assert initial_export_program.get("ComputerName") == os.getenv("computername")
+    assert initial_export_program.get("UserName") == os.getenv("USERNAME")
 
 
 def test_btlx_parts(resulting_btlx, test_model, namespaces):
@@ -966,3 +967,41 @@ def test_part_shape_is_built_in_reasonable_time_for_a_many_sided_outline():
     indices, _ = BTLxPart(plate, order_num=0).shape_strings
     assert time.perf_counter() - started < 2.0
     assert indices.split().count("-1") == count + 2  # the side faces, the top and the bottom
+
+
+# =============================================================================
+# Reproducible output
+# =============================================================================
+
+
+def test_file_history_leaves_out_an_unset_user_and_computer_name(monkeypatch):
+    monkeypatch.delenv("USERNAME", raising=False)
+    monkeypatch.delenv("computername", raising=False)
+
+    root = ET.fromstring(BTLxWriter().model_to_xml(_shape_model()))
+    program = root.find("d2m:FileHistory/d2m:InitialExportProgram", {"d2m": "https://www.design2machine.com"})
+
+    assert "UserName" not in program.attrib
+    assert "ComputerName" not in program.attrib
+
+
+def test_reproducible_writer_leaves_out_the_clock_user_and_computer(monkeypatch):
+    monkeypatch.setenv("USERNAME", "someone")
+    monkeypatch.setenv("computername", "somewhere")
+
+    root = ET.fromstring(BTLxWriter(reproducible=True).model_to_xml(_shape_model()))
+    program = root.find("d2m:FileHistory/d2m:InitialExportProgram", {"d2m": "https://www.design2machine.com"})
+
+    for attribute in ("Date", "Time", "UserName", "ComputerName"):
+        assert attribute not in program.attrib
+    assert program.get("ProgramName") == "COMPAS_Timber"
+
+
+def test_reproducible_writer_gives_the_same_bytes_for_the_same_model(monkeypatch):
+    model = _shape_model()
+    monkeypatch.setenv("USERNAME", "first")
+    first = BTLxWriter(reproducible=True).model_to_xml(model)
+    monkeypatch.setenv("USERNAME", "second")
+    second = BTLxWriter(reproducible=True).model_to_xml(model)
+
+    assert first == second

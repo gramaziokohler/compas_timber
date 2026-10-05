@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Added `include_shapes` to `BTLxWriter`, to ask for each part's `Shape` (its faceted geometry) explicitly.
 * Added `strict` to `BTLxWriter`. A strict writer raises the new `compas_timber.errors.BTLxWriterError`, listing every processing it could not write, instead of writing a valid file without them; `write()` then creates no file.
+* Added `reproducible` to `BTLxWriter`. A reproducible writer leaves the date, time, user name and computer name out of the file history, so the same model always produces the same file.
 ### Changed
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.
@@ -102,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed `BTLxWriter` to write part `Shape`s only when `include_shapes=True`. Previously a part got one whenever its brep happened to have been computed, so whether a file contained shapes depended on what had run before the export. With `include_shapes=True` every part gets one, computing the brep if needed.
 * Fixed `BTLxPart.shape_strings` taking time cubic in a face's edge count: ordering the edges of each face and indexing the vertices were both linear searches by tolerant point equality. A plate with a 400-segment outline took 13 s; it is now linear, with identical output.
 * Fixed `BTLxPart.shape_strings` removing every `-` from the written coordinates, which was meant to avoid `-0.000`. Negative zero is now normalised instead, so a negative coordinate keeps its sign.
+* Fixed BTLx `FileHistory` writing `UserName="None"` and `ComputerName="None"` when the `USERNAME` / `computername` environment variables are unset (on macOS and Linux, always). The attributes are now left out, which the schema allows.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
