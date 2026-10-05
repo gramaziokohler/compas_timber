@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 
 * Added `include_shapes` to `BTLxWriter`, to ask for each part's `Shape` (its faceted geometry) explicitly.
+* Added `strict` to `BTLxWriter`. A strict writer raises the new `compas_timber.errors.BTLxWriterError`, listing every processing it could not write, instead of writing a valid file without them; `write()` then creates no file.
 ### Changed
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
 * Fixed `SimpleScarf.apply()` feeding the list returned by `Brep.from_boolean_difference` back in as the first argument of the next subtraction when drilling the scarf holes.

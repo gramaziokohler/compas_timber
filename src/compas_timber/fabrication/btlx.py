@@ -22,6 +22,7 @@ from compas.tolerance import TOL
 
 import compas_timber
 from compas_timber.errors import BTLxProcessingError
+from compas_timber.errors import BTLxWriterError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import correct_polyline_direction
@@ -47,6 +48,10 @@ class BTLxWriter(object):
         If True, each part carries a ``Shape``: its geometry as a faceted ``IndexedFaceSet``, for
         viewers that display parts rather than computing them from the processings. Computing it
         requires each element's brep. Defaults to False.
+    strict : bool, optional
+        If True, a processing that cannot be written raises :class:`~compas_timber.errors.BTLxWriterError`
+        (after the whole model has been written, listing every failure) instead of being left out of the
+        file and recorded in :attr:`errors`. Defaults to False.
 
     """
 
@@ -67,11 +72,12 @@ class BTLxWriter(object):
         ]
     )
 
-    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, include_shapes=False):
+    def __init__(self, project_name=None, company_name=None, file_name=None, comment=None, include_shapes=False, strict=False):
         self.company_name = company_name
         self.file_name = file_name
         self.comment = comment
         self.include_shapes = include_shapes
+        self.strict = strict
         self._project_name = project_name or "COMPAS Timber Project"
         self._tolerance = TOL
         self._errors = []
@@ -140,6 +146,8 @@ class BTLxWriter(object):
         # second child -> project
         project_element = self._create_project_element(model, nesting_result)
         root_element.extend([file_history_element, project_element])
+        if self.strict and self._errors:
+            raise BTLxWriterError(self._errors)
         return MD.parseString(ET.tostring(root_element)).toprettyxml(indent="   ")
 
     def _create_file_history(self):

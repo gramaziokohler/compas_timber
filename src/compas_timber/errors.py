@@ -129,6 +129,31 @@ class BTLxProcessingError(Exception):
         self.failed_processing = failed_processing
 
 
+class BTLxWriterError(Exception):
+    """Raised by a strict ``BTLxWriter`` when one or more processings could not be written.
+
+    A non-strict writer collects these failures in ``BTLxWriter.errors`` and writes the file without
+    the failed processings. A strict one raises this instead, after writing the whole model, so
+    that every failure is reported at once and no incomplete file is produced.
+
+    Parameters
+    ----------
+    errors : list(:class:`BTLxProcessingError`)
+        One error per processing that could not be written.
+
+    Attributes
+    ----------
+    errors : list(:class:`BTLxProcessingError`)
+        One error per processing that could not be written.
+
+    """
+
+    def __init__(self, errors):
+        self.errors = list(errors)
+        lines = ["{} on part {!r}".format(error.message, getattr(error.part, "name", "")) for error in self.errors]
+        super(BTLxWriterError, self).__init__("{} processing(s) could not be written:\n  {}".format(len(self.errors), "\n  ".join(lines)))
+
+
 class BTLxParsingError(Exception):
     """Raised when a non-fatal error occurs while parsing a BTLx file.
 

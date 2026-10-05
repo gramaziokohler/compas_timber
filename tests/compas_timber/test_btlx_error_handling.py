@@ -8,6 +8,7 @@ from compas_timber.fabrication import BTLxWriter
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import BTLxParsingError
+from compas_timber.errors import BTLxWriterError
 from compas_timber.elements import Beam
 from compas_timber.model import TimberModel
 
@@ -455,3 +456,47 @@ def test_btlx_reader_print_errors_with_errors(capsys, btlx_reader):
     output = capsys.readouterr().out
     assert "1 error(s)" in output
     assert "GhostCut" in output
+
+
+# =============================================================================
+# strict mode
+# =============================================================================
+
+
+def test_strict_writer_raises_with_every_processing_it_could_not_write(mock_model):
+    beam = list(mock_model.beams)[0]
+    beam.add_feature(MockProcessingWithBadAttribute("first"))
+    beam.add_feature(MockProcessingSuccess())
+    beam.add_feature(MockProcessingWithBadAttribute("second"))
+
+    with pytest.raises(BTLxWriterError) as raised:
+        BTLxWriter(strict=True).model_to_xml(mock_model)
+
+    assert len(raised.value.errors) == 2
+    assert all(isinstance(error, BTLxProcessingError) for error in raised.value.errors)
+    assert "first" in str(raised.value) and "second" in str(raised.value)
+
+
+def test_strict_writer_writes_no_file_when_a_processing_fails(mock_model, tmp_path):
+    list(mock_model.beams)[0].add_feature(MockProcessingWithBadAttribute())
+    path = tmp_path / "model.btlx"
+
+    with pytest.raises(BTLxWriterError):
+        BTLxWriter(strict=True).write(mock_model, str(path))
+
+    assert not path.exists()
+
+
+def test_strict_writer_writes_a_model_without_errors(mock_model):
+    list(mock_model.beams)[0].add_feature(MockProcessingSuccess())
+
+    assert "MockProcessingSuccess" in BTLxWriter(strict=True).model_to_xml(mock_model)
+
+
+def test_default_writer_still_collects_errors_instead_of_raising(mock_model):
+    list(mock_model.beams)[0].add_feature(MockProcessingWithBadAttribute())
+    writer = BTLxWriter()
+
+    writer.model_to_xml(mock_model)
+
+    assert len(writer.errors) == 1
