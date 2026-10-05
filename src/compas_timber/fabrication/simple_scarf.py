@@ -215,7 +215,6 @@ class SimpleScarf(BTLxProcessing):
             return 0.0
         else:
             return beam.blank_length
-            return beam.blank_length
 
 
     #########################################################################
