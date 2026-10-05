@@ -15,6 +15,7 @@ from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_difference_first
+from compas_timber.utils import get_brep_corner_edge_indices
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -540,15 +541,11 @@ class DovetailMortise(BTLxProcessing):
                 None, geometry.transformed(beam.modeltransformation), "Failed to generate dovetail mortise volume from parameters and beam: {}".format(str(e))
             )
 
-        # fillet the edges of the dovetail volume based on the shape
-        if (
-            self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
-        ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_bottom else [5, 8]
+        # round the cutter's corners at the closed bottom of the dovetail
+        corners = self._corner_edge_indices(dovetail_volume, beam) if self.shape != TenonShapeType.SQUARE else []
+        if corners:
             try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
+                dovetail_volume.fillet(self.shape_radius, corners)
             except Exception as e:
                 # dovetail_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
@@ -571,6 +568,19 @@ class DovetailMortise(BTLxProcessing):
             )
 
         return geometry
+
+    def _corner_edge_indices(self, volume, beam):
+        """Indices of the volume's corner edges at its bottom, which the dovetail cutter leaves rounded.
+
+        Only the bottom, the narrow end where the cutter stops, and only when ``LengthLimitedBottom``:
+        an open bottom runs out of the part. The top stays square whether it is limited or not
+        (manual pp.59, 61). The corners lean with the flank angle; a constant-radius fillet stands
+        in for the cutter's cone.
+        """
+        if not self.length_limited_bottom:
+            return []
+        bottom = self.dovetail_cutting_frames_from_params_and_beam(beam)[2]
+        return get_brep_corner_edge_indices(volume, Plane.from_frame(bottom), bottom.xaxis)
 
     def frame_from_params_and_beam(self, beam):
         """Calculates the cutting frame from the machining parameters in this instance and the given beam

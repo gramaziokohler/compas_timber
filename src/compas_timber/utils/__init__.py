@@ -903,6 +903,42 @@ def mesh_from_brep_simple(brep):
     return Mesh.from_vertices_and_faces([v.point for v in brep.vertices], faces_indices)
 
 
+def get_brep_corner_edge_indices(brep, plane, along, tol=1e-6):
+    """Indices of the edges of ``brep`` lying in ``plane`` that do not run ``along`` the given direction.
+
+    At a closed end of a tenon or mortise, these are the corners a rounded ``Shape``
+    rounds: the end face's edges other than the end line itself. Indices, because
+    that is what ``Brep.fillet`` takes.
+
+    Parameters
+    ----------
+    brep : :class:`compas.geometry.Brep`
+        The volume to search.
+    plane : :class:`compas.geometry.Plane`
+        The plane of the closed end.
+    along : :class:`compas.geometry.Vector`
+        The direction of the end line, whose edges are left out.
+    tol : float, optional
+        Distance and parallelism tolerance.
+
+    Returns
+    -------
+    list of int
+
+    """
+    along = Vector(*along).unitized()
+    indices = []
+    for index, edge in enumerate(brep.edges):
+        start, end = edge.start_vertex.point, edge.end_vertex.point
+        if any(fabs(dot_vectors(subtract_vectors(point, plane.point), plane.normal)) > tol for point in (start, end)):
+            continue
+        direction = Vector.from_start_end(start, end).unitized()
+        if fabs(direction.dot(along)) > 1.0 - tol:
+            continue
+        indices.append(index)
+    return indices
+
+
 def get_leaf_subclasses(cls):
     subclasses = []
     for subclass in cls.__subclasses__():
@@ -935,6 +971,7 @@ __all__ = [
     "get_brep_loop_vertex_indices",
     "mesh_from_brep_simple",
     "get_leaf_subclasses",
+    "get_brep_corner_edge_indices",
     "move_polyline_segment_to_line",
     "join_polyline_segments",
     "polyline_from_brep_loop",

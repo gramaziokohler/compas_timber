@@ -468,3 +468,33 @@ def test_a_radius_mortise_rounds_its_plan_corners_not_its_floor(slope):
     # of the cut, takes away (4 - pi) r^2 of section and nothing else.
     lost_section = (removed["square"] - removed["rounded"]) / ((4.0 - math.pi) * 10.0**2)
     assert 0.0 < lost_section < 30.0 / math.cos(math.radians(90.0 - slope)) + 80.0
+
+
+@pytest.mark.parametrize("top, bottom", [(True, True), (True, False), (False, False)])
+def test_a_radius_tenon_rounds_the_corners_of_its_limited_ends(top, bottom):
+    # BTLx rounds a tenon's corners as seen square to the cut face (manual p.51),
+    # and only at an end that is length-limited: an open end runs out of the beam.
+    # Each rounded corner takes (1 - pi/4) r^2 off the section, along the height.
+    added = {}
+    for shape in (TenonShapeType.SQUARE, TenonShapeType.RADIUS):
+        beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+        before = beam.geometry.volume
+        tenon = Tenon(
+            orientation="end",
+            start_x=400.0,
+            start_y=50.0,
+            start_depth=20.0,
+            length=60.0,
+            width=40.0,
+            height=30.0,
+            length_limited_top=top,
+            length_limited_bottom=bottom,
+            shape=shape,
+            shape_radius=8.0,
+        )
+        beam.add_feature(tenon)
+        beam._geometry = None
+        added[shape] = beam.geometry.volume - before
+        assert not beam.debug_info
+    corners = 2 * (int(top) + int(bottom))
+    assert added[TenonShapeType.SQUARE] - added[TenonShapeType.RADIUS] == pytest.approx(corners * (1.0 - math.pi / 4.0) * 8.0**2 * 30.0, rel=1e-6, abs=1e-6)

@@ -12,6 +12,7 @@ from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
+from compas_timber.fabrication.btlx import LimitationTopType
 
 from compas.tolerance import TOL
 
@@ -510,3 +511,73 @@ def test_dovetailtenon_scaled():
     assert scaled.shape == tenon.shape
     assert scaled.shape_radius == tenon.shape_radius * 2.0
     assert scaled.ref_side_index == tenon.ref_side_index
+
+
+def _volume_change(processing):
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    before = beam.geometry.volume
+    beam.add_feature(processing)
+    beam._geometry = None
+    after = beam.geometry.volume
+    assert not beam.debug_info, beam.debug_info
+    return after - before
+
+
+def _dovetail_tenon(shape, top, bottom):
+    return DovetailTenon(
+        orientation="end",
+        start_x=400.0,
+        start_y=50.0,
+        start_depth=20.0,
+        length=60.0,
+        width=40.0,
+        height=25.0,
+        cone_angle=0.0,
+        flank_angle=15.0,
+        length_limited_top=top,
+        length_limited_bottom=bottom,
+        shape=shape,
+        shape_radius=8.0,
+    )
+
+
+def _dovetail_mortise(shape, top, bottom):
+    return DovetailMortise(
+        start_x=200.0,
+        start_y=50.0,
+        start_depth=0.0,
+        limitation_top=LimitationTopType.LIMITED if top else LimitationTopType.UNLIMITED,
+        length_limited_bottom=bottom,
+        length=60.0,
+        width=40.0,
+        depth=25.0,
+        cone_angle=0.0,
+        flank_angle=15.0,
+        shape=shape,
+        shape_radius=8.0,
+    )
+
+
+@pytest.mark.parametrize("make", [_dovetail_tenon, _dovetail_mortise])
+@pytest.mark.parametrize("top, bottom", [(True, True), (True, False), (False, True), (False, False)])
+def test_a_rounded_dovetail_is_cut_and_rounds_only_a_closed_bottom(make, top, bottom):
+    # A rounded dovetail used to be missing from the geometry whenever its bottom
+    # was open (`fillet` was given edge objects, not indices), and square whenever
+    # it was closed (the fillet was skipped). The cutter rounds the corners of a
+    # closed bottom, and the top stays square either way (manual pp.59, 61).
+    square = abs(_volume_change(make(TenonShapeType.SQUARE, top, bottom)))
+    rounded = abs(_volume_change(make(TenonShapeType.RADIUS, top, bottom)))
+    assert rounded > 0.0
+    if bottom:
+        assert rounded < square
+    else:
+        assert rounded == pytest.approx(square, rel=1e-9)
+
+
+def test_a_rounded_dovetail_tenon_fills_the_mortise_with_the_same_parameters():
+    # Its two bottom corners round alike, and the tenon and the mortise round alike,
+    # so a pair cut with the same dimensions mates. A fillet landing on the wrong
+    # edge (compas_brep numbered edges differently from Brep.edges) broke both.
+    tenon = _volume_change(_dovetail_tenon(TenonShapeType.RADIUS, True, True))
+    assert tenon == pytest.approx(_volume_change(_dovetail_tenon(TenonShapeType.RADIUS, False, True)), rel=1e-9)
+    assert -_volume_change(_dovetail_mortise(TenonShapeType.RADIUS, True, True)) == pytest.approx(tenon, rel=1e-6)

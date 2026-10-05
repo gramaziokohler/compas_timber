@@ -14,6 +14,7 @@ from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_union_first
+from compas_timber.utils import get_brep_corner_edge_indices
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -562,10 +563,10 @@ class Tenon(BTLxProcessing):
                 None, geometry.transformed(beam.modeltransformation), "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
         # fillet the edges of the volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
+        corners = self._corner_edge_indices(tenon_volume, beam) if self.shape != TenonShapeType.SQUARE else []
+        if corners:
             try:
-                edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
+                tenon_volume.fillet(self.shape_radius, corners)
             except Exception as e:
                 # tenon_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
@@ -592,6 +593,20 @@ class Tenon(BTLxProcessing):
                 "Failed to add tenon volume to geometry: {}".format(str(e)),
             )
         return geometry
+
+    def _corner_edge_indices(self, volume, beam):
+        """Indices of the volume's corner edges at its limited ends: the corners seen perpendicular to the cut face.
+
+        Those are what BTLx's rounded shapes round (manual p.51). A tenon end that is not
+        length-limited runs out of the beam, and has no corner to round.
+        """
+        frame = self.frame_from_params_and_beam(beam)
+        ends = []
+        if self.length_limited_top:
+            ends.append(Plane(frame.point, frame.yaxis))
+        if self.length_limited_bottom:
+            ends.append(Plane(frame.point - frame.yaxis * self.length, frame.yaxis))
+        return [index for plane in ends for index in get_brep_corner_edge_indices(volume, plane, frame.xaxis)]
 
     def frame_from_params_and_beam(self, beam):
         """
