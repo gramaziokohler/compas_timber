@@ -445,3 +445,26 @@ def test_a_sloped_mortise_cuts_a_tilted_floor():
     corners = [hinge, floor_start, floor_end, at_face]
     area = 0.5 * abs(sum(x0 * y1 - x1 * y0 for (x0, y0), (x1, y1) in zip(corners, corners[1:] + corners[:1])))
     assert removed == pytest.approx(width * area, rel=1e-6)
+
+
+@pytest.mark.parametrize("slope", [90.0, 80.0])
+def test_a_radius_mortise_rounds_its_plan_corners_not_its_floor(slope):
+    # BTLx Shape = radius rounds the corners seen square to the face: the four
+    # edges along the depth axis. Rounding the floor edges too leaves wood where
+    # a square-edged tenon has to sit.
+    beam = Beam(Frame(Point(0, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=400.0, width=100.0, height=100.0)
+    square = Mortise(start_x=200.0, start_y=50.0, slope=slope, length=80.0, width=40.0, depth=30.0, shape=TenonShapeType.SQUARE, ref_side_index=0)
+    rounded = Mortise(start_x=200.0, start_y=50.0, slope=slope, length=80.0, width=40.0, depth=30.0, shape=TenonShapeType.RADIUS, shape_radius=10.0, ref_side_index=0)
+    removed = {}
+    for name, mortise in (("square", square), ("rounded", rounded)):
+        part = beam.copy()
+        before = part.geometry.volume
+        part.add_feature(mortise)
+        part._geometry = None
+        removed[name] = before - part.geometry.volume
+    if slope == 90.0:
+        assert removed["rounded"] == pytest.approx((80.0 * 40.0 - (4.0 - math.pi) * 10.0**2) * 30.0, rel=1e-6)
+    # Whatever the slope: rounding four corners in plan, along the whole height
+    # of the cut, takes away (4 - pi) r^2 of section and nothing else.
+    lost_section = (removed["square"] - removed["rounded"]) / ((4.0 - math.pi) * 10.0**2)
+    assert 0.0 < lost_section < 30.0 / math.cos(math.radians(90.0 - slope)) + 80.0

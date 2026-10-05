@@ -5,6 +5,7 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -443,8 +444,7 @@ class Mortise(BTLxProcessing):
         # fillet the edges of the mortise volume based on the shape
         if self.shape is not TenonShapeType.SQUARE:
             try:
-                edges = mortise_volume.edges[:8]
-                mortise_volume.fillet(self.shape_radius, edges)
+                mortise_volume.fillet(self.shape_radius, self._corner_edge_indices(mortise_volume, beam))
             except Exception as e:
                 # mortise_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
@@ -464,6 +464,21 @@ class Mortise(BTLxProcessing):
                 geometry.transformed(beam.modeltransformation),
                 "Failed to remove mortise volume from geometry: {}".format(str(e)),
             )
+
+    def _corner_edge_indices(self, volume, beam):
+        """Indices of the volume's edges along the depth axis: the corners seen square to the face.
+
+        Those are what BTLx's rounded shapes round. The floor's edges stay square, so a
+        square-edged tenon seats on the floor. Indices, because that is what ``Brep.fillet`` takes.
+        """
+        frame = self.frame_from_params_and_beam(beam)
+        frame.rotate(math.radians(90.0 - self.slope), frame.xaxis, frame.point)
+        indices = []
+        for index, edge in enumerate(volume.edges):
+            direction = Vector.from_start_end(edge.start_vertex.point, edge.end_vertex.point).unitized()
+            if abs(direction.dot(frame.normal)) > 1.0 - 1e-6:
+                indices.append(index)
+        return indices
 
     def frame_from_params_and_beam(self, beam):
         """Calculates the cutting frame from the machining parameters in this instance and the given beam
