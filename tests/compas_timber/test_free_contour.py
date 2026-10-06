@@ -255,3 +255,24 @@ def test_a_blind_interior_contour_removes_exactly_its_depth():
 
 def test_an_interior_contour_through_the_part_still_cuts_all_the_way():
     assert _pocketed_plate(40.0) == pytest.approx(100.0 * 50.0 * 40.0, rel=1e-6)
+
+
+def test_get_ref_face_index_finds_the_side_the_contour_lies_on(plate):
+    polyline = Polyline([Point(20, 50, 0), Point(20, 150, 0), Point(80, 150, 0), Point(80, 50, 0), Point(20, 50, 0)])
+
+    assert FreeContour.get_ref_face_index(polyline, plate) == 0
+
+
+def test_get_ref_face_index_handles_near_collinear_points(plate):
+    """A smooth closed contour runs straight through its own start point, so the first, second and
+    second-to-last points are near collinear and the plane through them is unusable."""
+    polyline = Polyline([Point(20, 50, 0), Point(40, 50, 0), Point(80, 50, 0), Point(80, 150, 0), Point(20, 150, 0), Point(10, 50, 0), Point(20, 50, 0)])
+
+    assert FreeContour.get_ref_face_index(polyline, plate) == 0
+
+
+def test_get_ref_face_index_rejects_a_contour_off_the_element(plate):
+    polyline = Polyline([Point(20, 50, 5), Point(20, 150, 5), Point(80, 150, 5), Point(80, 50, 5), Point(20, 50, 5)])
+
+    with pytest.raises(ValueError):
+        FreeContour.get_ref_face_index(polyline, plate)

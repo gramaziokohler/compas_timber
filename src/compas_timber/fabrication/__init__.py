@@ -32,6 +32,10 @@ from .btlx import StepShapeType
 from .btlx import BTLxFromGeometryDefinition
 from .btlx import Contour
 from .btlx import DualContour
+from .btlx import NurbsContour
+from .btlx import knotvector_to_btlx
+from .btlx import knotvector_from_btlx
+from .btlx import nurbs_curve_from_btlx
 from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
 from .birds_mouth import BirdsMouth
@@ -71,6 +75,10 @@ __all__ = [
     "BTLxFromGeometryDefinition",
     "Contour",
     "DualContour",
+    "NurbsContour",
+    "knotvector_to_btlx",
+    "knotvector_from_btlx",
+    "nurbs_curve_from_btlx",
     "LongitudinalCut",
     "BTLxRawpart",
     "SimpleScarf",
