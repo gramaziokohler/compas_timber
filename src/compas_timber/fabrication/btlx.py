@@ -1866,13 +1866,19 @@ class NurbsContour(Data):
         Anything else, an open contour or an inclined wall, is built from the tessellated
         polyline, as :meth:`to_contour` writes it for consumers without NURBS support.
 
+        Unlike :meth:`Contour.to_brep <compas_timber.fabrication.Contour.to_brep>`, the solid is
+        **not** pushed 0.001 past the faces it cuts: it spans exactly from the reference side to
+        ``depth``. Pushed past, every edge where a face of the part cuts a curved wall is an
+        intersection OCC approximates, and it records the error as tolerance: 0.079 mm on a
+        guitar body, and 0.28 mm^3 of its volume. Flush, those edges are the solid's own, exact,
+        and the faces meet coplanar, which the booleans glue cleanly. A planar polygon contour
+        has no such curve to approximate, so the overshoot does it no harm there.
+
         Parameters
         ----------
         through : bool, optional
-            Whether the cut goes all the way through the part. As for
-            :meth:`Contour.to_brep <compas_timber.fabrication.Contour.to_brep>`: both ends of the
-            solid are pushed 0.001 past the contour so a boolean never meets a coplanar face, and a
-            blind cut keeps its floor exactly at ``depth``. Defaults to True.
+            Whether the cut goes all the way through the part. Kept for the signature
+            :class:`FreeContour` calls; a curved contour is flush either way. Defaults to True.
 
         Returns
         -------
@@ -1882,10 +1888,7 @@ class NurbsContour(Data):
         """
         if not self.is_closed or any(inclination != 0 for inclination in self.inclination):
             return self.to_contour().to_brep(through=through)
-        lift = 0.001
-        top = [segment.translated([0, 0, lift]) for segment in self.segments]
-        reach = self.depth + lift + (lift if through else 0.0)
-        return Brep.from_extrusion(top, Vector(0, 0, -reach))
+        return Brep.from_extrusion(list(self.segments), Vector(0, 0, -self.depth))
 
     def scale(self, factor: float) -> None:
         """Scale the contour by a given factor.
