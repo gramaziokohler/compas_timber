@@ -325,7 +325,7 @@ class SimpleScarf(BTLxProcessing):
         return [Plane.from_frame(frame) for frame in frames]
 
     def volume_from_params_and_beam(self, beam: Beam) -> Polyhedron:
-        """Generates a Brep representing the volume to be removed from the beam.
+        """Generates a Polyhedron representing the volume to be removed from the beam.
 
         Parameters
         ----------
@@ -334,8 +334,8 @@ class SimpleScarf(BTLxProcessing):
 
         Returns
         -------
-        :class:`~compas_brep.Brep`
-            The Brep representing the volume to be removed from the beam.
+        :class:`~compas_geometry.Polyhedron`
+            The Polyhedron representing the volume to be removed from the beam.
 
         """
 
