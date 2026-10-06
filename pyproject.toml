@@ -104,6 +104,7 @@ version = { attr = "compas_timber.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
+"compas_timber.fabrication" = ["basic_characters.zip"]
 
 # ============================================================================
 # Release
