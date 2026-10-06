@@ -24,8 +24,10 @@ from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 from compas_brep.curves import NurbsCurve
 
 import compas_timber
@@ -1856,16 +1858,34 @@ class NurbsContour(Data):
         """
         return Contour(self.to_polyline(), self.depth, depth_bounded=self.depth_bounded, inclination=self._inclination_per_subsegment())
 
-    def to_brep(self):
+    def to_brep(self, through=True):
         """Convert the contour to a COMPAS Brep object.
+
+        A closed contour with vertical walls is extruded from its segments themselves, so the
+        walls are the NURBS surfaces the BTLx describes and not a faceted stand-in for them.
+        Anything else, an open contour or an inclined wall, is built from the tessellated
+        polyline, as :meth:`to_contour` writes it for consumers without NURBS support.
+
+        Parameters
+        ----------
+        through : bool, optional
+            Whether the cut goes all the way through the part. As for
+            :meth:`Contour.to_brep <compas_timber.fabrication.Contour.to_brep>`: both ends of the
+            solid are pushed 0.001 past the contour so a boolean never meets a coplanar face, and a
+            blind cut keeps its floor exactly at ``depth``. Defaults to True.
 
         Returns
         -------
         :class:`~compas.geometry.Brep`
-            The brep representation of the contour, generated from its tessellated polyline.
+            The brep representation of the contour.
 
         """
-        return self.to_contour().to_brep()
+        if not self.is_closed or any(inclination != 0 for inclination in self.inclination):
+            return self.to_contour().to_brep(through=through)
+        lift = 0.001
+        top = [segment.translated([0, 0, lift]) for segment in self.segments]
+        reach = self.depth + lift + (lift if through else 0.0)
+        return Brep.from_extrusion(top, Vector(0, 0, -reach))
 
     def scale(self, factor: float) -> None:
         """Scale the contour by a given factor.

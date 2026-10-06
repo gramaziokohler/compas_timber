@@ -398,7 +398,7 @@ class FreeContour(BTLxProcessing):
         subtracted, so only there would an overshoot change the part.
         """
         contour = self.contour_param_object
-        if not isinstance(contour, Contour):
+        if not isinstance(contour, (Contour, NurbsContour)):
             return contour.to_brep()
         thickness = element.get_dimensions_relative_to_side(self.ref_side_index)[1]
         blind = bool(self.counter_sink) and contour.depth_bounded and contour.depth < thickness - TOL.absolute

@@ -582,8 +582,11 @@ def test_nurbs_contour_to_contour_serializes_as_lines_only(closed_curve):
 def test_nurbs_contour_to_contour_keeps_geometry(closed_curve):
     contour = NurbsContour([closed_curve], depth=20.0, tessellation_count=64)
 
-    # the tessellated contour is built from the very same polyline, so the solids agree
-    assert TOL.is_close(contour.to_contour().to_brep().volume, contour.to_brep().volume, rtol=1e-9)
+    # The solid is the curve's; the tessellated contour is 64 chords of it, which cut inside the
+    # curve by their sag: close, and never the larger.
+    tessellated, exact = contour.to_contour().to_brep().volume, contour.to_brep().volume
+    assert TOL.is_close(tessellated, exact, rtol=1e-3)
+    assert tessellated < exact
 
 
 def test_writer_tessellates_nurbs_on_the_way_out(plate, closed_curve):
@@ -633,7 +636,8 @@ def test_tessellated_output_matches_the_nurbs_geometry(plate, closed_curve):
     contour = FreeContour.from_nurbs_curves_and_element(closed_curve, plate, interior=True, tessellation_count=64)
     nurbs_contour = contour.contour_param_object
 
-    assert TOL.is_close(nurbs_contour.to_contour().to_brep().volume, nurbs_contour.to_brep().volume, rtol=1e-9)
+    # what a consumer without NURBS support gets is within the chord error of the curve
+    assert TOL.is_close(nurbs_contour.to_contour().to_brep().volume, nurbs_contour.to_brep().volume, rtol=1e-3)
 
 
 def test_tessellated_serializer_is_looked_up_by_registration(plate, closed_curve):
@@ -779,3 +783,36 @@ def test_reader_parses_spec_style_nurbs_element():
     assert len(curve.points) == 4
     assert curve.weights == [1.0, 0.5, 1.0, 1.0]
     assert curve.knotvector == [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]
+
+
+# =============================================================================
+# The geometry is the curve, not a polyline standing in for it
+# =============================================================================
+
+
+def _disc_plate(depth=None):
+    from compas.geometry import Circle
+    from compas.geometry import Frame
+    from compas.geometry import Vector
+
+    outline = Polyline([Point(0, 0, 0), Point(300, 0, 0), Point(300, 300, 0), Point(0, 300, 0), Point(0, 0, 0)])
+    plate = Plate.from_outline_thickness(outline, 40.0)
+    top = plate.geometry.aabb.zmax
+    before = plate.geometry.volume
+    circle = NurbsCurve.from_circle(Circle(100.0, Frame(Point(150, 150, top), Vector(1, 0, 0), Vector(0, 1, 0))))
+    plate.add_feature(FreeContour.from_nurbs_curves_and_element(circle, plate, depth=depth, interior=True))
+    plate._geometry = None
+    return before - plate.geometry.volume
+
+
+def test_a_nurbs_aperture_removes_the_curve_s_area_not_a_polygon_s():
+    # 64 chords round a circle of radius 100 leave out 0.16% of it: 1.0e3 mm^3 through 40 mm.
+    import math
+
+    assert _disc_plate() == pytest.approx(math.pi * 100.0**2 * 40.0, rel=1e-6)
+
+
+def test_a_blind_nurbs_pocket_is_exactly_its_depth():
+    import math
+
+    assert _disc_plate(depth=15.0) == pytest.approx(math.pi * 100.0**2 * 15.0, rel=1e-6)
