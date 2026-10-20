@@ -15,6 +15,7 @@ from compas_brep import Brep
 from compas_brep import BrepTrimmingError
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AlignmentType
@@ -431,7 +432,7 @@ class LongitudinalCut(BTLxProcessing):
             neg_vol = self.volume_from_params_and_beam(beam)
             neg_vol.transform(beam.transformation_to_local())
             try:
-                return geometry - neg_vol
+                return brep_difference_first(geometry, neg_vol)
             except IndexError:
                 raise FeatureApplicationError(
                     neg_vol.transformed(beam.modeltransformation),

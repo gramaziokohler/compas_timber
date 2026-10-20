@@ -652,7 +652,8 @@ class BTLxPart(BTLxGenericPart):
             scaled_geometry = self.element.geometry.scaled(self._scale_factor)
             for face in scaled_geometry.faces:
                 pts = []
-                frame = face.surface.frame_at(0.5, 0.5)
+                # not `face.surface.frame_at()`: a planar face's surface is a Plane, which has none.
+                frame = face.frame_at()
                 edges = face.boundary.edges[1:]
                 pts = [face.boundary.edges[0].start_vertex.point, face.boundary.edges[0].end_vertex.point]
                 overflow = len(edges)

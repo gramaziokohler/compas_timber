@@ -18,6 +18,7 @@ from compas.geometry import intersection_segment_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -387,7 +388,7 @@ class Slot(BTLxProcessing):
             subtraction_volume.flip()
 
         try:
-            cutted_geometry = geometry - subtraction_volume
+            cutted_geometry = brep_difference_first(geometry, subtraction_volume)
             return cutted_geometry
 
         except Exception:

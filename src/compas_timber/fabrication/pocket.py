@@ -6,7 +6,6 @@ from typing import Union
 
 from compas.datastructures import Mesh
 from compas.geometry import Frame
-from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyhedron
@@ -23,6 +22,7 @@ from compas_brep import Brep
 
 from compas_timber.base import TimberElement
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -342,8 +342,9 @@ class Pocket(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            volume_frames = [face.frame_at(0,0) for face in volume.faces]
-            planes = [Plane.from_frame(frame) for frame in volume_frames]
+            # not `face.surface`: it ignores `is_reversed`, and it is the face's own Plane,
+            # so flipping the normal in place would mutate the volume we were handed.
+            planes = [Plane.from_frame(face.frame_at()) for face in volume.faces]
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
 
@@ -452,8 +453,7 @@ class Pocket(BTLxProcessing):
         # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
         # get the volume edges
         if isinstance(volume, Brep):
-            volume_curve = [edge.curve for edge in volume.edges]
-            volume_edges = [Line(*curve.points) for curve in volume_curve]
+            volume_edges = [edge.curve for edge in volume.edges]
         else:
             volume_edges = [volume.edge_line(edge) for edge in volume.edges()]
 
@@ -546,6 +546,22 @@ class Pocket(BTLxProcessing):
             The resulting geometry after processing
 
         """
+        # a negative start_depth means the "bottom" plane of the pocket volume sits outside the
+        # element's material on the ref_side's outward side (the volume passed to
+        # from_volume_and_element never actually reached the material, e.g. a plate's shank
+        # embedded entirely in a beam it doesn't share a face with). face_limited_top=False then
+        # pins the "top" plane to the element's own ref_side, so the resulting hexahedron spans
+        # from the ref_side surface *outward* rather than into the material - subtracting it can
+        # corrupt (or entirely erase) the element's geometry instead of being a no-op. There's
+        # nothing to cut in that case, so skip it rather than let it reach the boolean below.
+        if self.start_depth < -TOL.absolute:
+            raise FeatureApplicationError(
+                None,
+                geometry.transformed(element.modeltransformation),
+                "Pocket's start_depth ({:.4f}) is negative: the pocket volume lies entirely outside "
+                "{}'s material on the ref_side's outward side, so there is nothing to cut.".format(self.start_depth, element),
+            )
+
         # get the pocket volume as a polyhedron
         polyhedron_volume = self.volume_from_params_and_element(element)
         polyhedron_volume.transform(element.transformation_to_local())
@@ -560,7 +576,7 @@ class Pocket(BTLxProcessing):
                 "The pocket volume could not be converted to a Brep." + str(e),
             )
         try:
-            return geometry - pocket_volume
+            return brep_difference_first(geometry, pocket_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 pocket_volume.transformed(element.modeltransformation),
@@ -844,7 +860,7 @@ class PocketProxy(object):
         """
         # type: (Brep, Element) -> Brep
         try:
-            return geometry - self.volume
+            return brep_difference_first(geometry, self.volume)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.element.modeltransformation),
