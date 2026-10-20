@@ -1,3 +1,4 @@
+import pytest
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Frame
@@ -47,6 +48,16 @@ def test_rectangular_plate_holes_are_child_parts():
     fastener = Fastener()
     fastener.add_part(plate)
     assert fastener.all_parts == [plate, hole]
+
+
+@pytest.mark.requires_occ
+def test_rectangular_plate_holes_not_in_fastener_geometry():
+    plate = RectangularPlate(width=10, height=20, thickness=2)
+    plate.add_hole(PlateHole(diameter=5, height=2, frame=Frame.worldXY()))
+    fastener = Fastener()
+    fastener.add_part(plate)
+
+    # only the plate, with the hole cut out of it; the hole contributes no geometry of its own
     assert len(fastener.geometry) == 1
 
 
