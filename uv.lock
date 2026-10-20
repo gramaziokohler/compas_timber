@@ -137,7 +137,7 @@ name = "cadquery-ocp-novtk"
 version = "7.9.3.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cadquery-ocp-proxy", marker = "python_full_version >= '3.10'"},
+    { name = "cadquery-ocp-proxy", marker = "python_full_version >= '3.10'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/88/ce/287c003e8a96771854cac6563ca209a13a1b22a9bc012e32aafed2d5ebe5/cadquery_ocp_novtk-7.9.3.1.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:cee061a62066e58b366d1b0647d7148ffa2b3a7cec08e0e612a59a25b019791a", size = 61702081, upload-time = "2026-05-28T13:07:19.388Z" },
@@ -488,7 +488,7 @@ wheels = [
 
 [[package]]
 name = "compas-brep"
-version = "0.3.0"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "compas" },
@@ -499,9 +499,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.10.*'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/14/ec/e080019a6d829abac18bce1ecf0d39acd1eac9eff59da0bf5a34ffafa80a/compas_brep-0.3.0.tar.gz", hash = "sha256:7a1627b5e5104183aa7a01d6a36f97deaf20031980a24b512041d04717f4831d", size = 104098, upload-time = "2026-09-01T08:30:29.14Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/92/a763eefe855204056c8a8e0976c4a8c5a1d1e08b6a81d9dad1e3b0212b5d/compas_brep-0.3.1.tar.gz", hash = "sha256:b4e7afe076d0ac193a8552be480b87c9f704f3f8e23542fbaffadebb3931d072", size = 104099, upload-time = "2026-09-09T15:55:30.855Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/f1/c40499df9a6f53ca68889fb5b7bcdf7169ba02ef06c7b4b102c699d1e503/compas_brep-0.3.0-py3-none-any.whl", hash = "sha256:eb91c71929a200fe49e2b77384d8ee59a8eaa668ffc34471a3c43bb38c55c0e6", size = 123835, upload-time = "2026-09-01T08:30:27.89Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/bb/8d06103bdfcce2060b54687279648877a6766c2330a9339cce2a3dd3b6f5/compas_brep-0.3.1-py3-none-any.whl", hash = "sha256:932f037385f0917653c713b1797dca47c478016deda46556bb0e3be4f103f79c", size = 123836, upload-time = "2026-09-09T15:55:29.366Z" },
 ]
 
 [package.optional-dependencies]
@@ -624,7 +624,7 @@ requires-dist = [
     { name = "build", marker = "extra == 'dev'" },
     { name = "bump-my-version", marker = "extra == 'dev'" },
     { name = "compas", specifier = ">=2.15.1,<3.0" },
-    { name = "compas-brep", specifier = ">=0.3.0" },
+    { name = "compas-brep", specifier = ">=0.3.1" },
     { name = "compas-brep", extras = ["occ"], marker = "extra == 'dev'" },
     { name = "compas-brep", extras = ["occ"], marker = "extra == 'viz'" },
     { name = "compas-invocations2", marker = "extra == 'gh'" },

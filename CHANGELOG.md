@@ -99,6 +99,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `SimpleScarf.apply()` under `compas_brep`, where `Brep.from_boolean_difference()` returns one Brep per resulting piece instead of a single Brep. The drill hole volumes were subtracted from that list rather than from a Brep; the piece the beam runs through is now picked first and the drill holes are subtracted from it.
 * Fixed `SimpleScarf.apply()` passing a `Polyhedron` to `Brep.from_mesh()`. `compas_brep` builds one Brep face per mesh face and iterates the mesh interface, which `Polyhedron` does not provide, so the scarf volume is handed over as a mesh. As a side effect the quad faces of the scarf volume stay quads instead of being fanned into triangles.
 * Fixed `StartX` of an END-oriented `SimpleScarf`, which carried the cutting volume's half-scarf-length overshoot (`beam.length + length/2`) into the exported BTLx parameter. `StartX` is now `beam.blank_length`, the end of the blank, and the overshoot lives in the cutting volume geometry where it belongs.
+* Changed `PlateHole` to a `FastenerPart`. Holes are now child parts of their `RectangularPlate` in the model tree, and each hole applies its own `Drilling`. `RectangularPlate.holes` is a read-only view over those children, and holes are no longer part of `RectangularPlate.__data__` or `RectangularPlateData`; `PlateHoleData` is now an `ElementData` element. A hole has no geometry of its own (`geometry` is `None`), and the cylinder cut out of the plate is `PlateHole.cutting_geometry`.
+* Changed `Fastener.add_part()` and `FastenerPart.add_part()` to add the part to the model tree right away when the fastener or part is already in a model.
+* Fixed `RectangularPlate` silently dropping hole drillings that failed. A hole now only drills the elements its drill line crosses, and any other drilling error is reported by `TimberModel.process_fasteners()` as a `FastenerApplicationError`, which now also wraps `FeatureApplicationError`.
+* Fixed `RectangularPlate` keeping stale cached geometry after a hole was added.
+* Removed a dead frame assignment in `TButtJoint.fastener_anchors`.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
@@ -240,6 +245,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `InteractionType` enum to `compas_timber.structural` for controlling which interaction types (`AUTO`, `JOINTS`, `CANDIDATES`) are used when creating structural segments.
 * Added `get_joints_for_element()` method to `TimberModel` to retrieve only joints for a given element.
 * Added `get_candidates_for_element()` method to `TimberModel` to retrieve only joint candidates for a given element.
+* Added module `compas_timber.fasteners`.
+* Added abstract class `Fastener` as the base type for fastener definitions.
+* Added `RectangularPlate` and `PlateHole` to support plate-based fastener geometry.
+* Added `BallNode`, `BallNodeRod`, and `BallNodePlate` to support ball-node fastener assemblies.
+* Added `GeometryPart` and `Part` as supporting types in `compas_timber.fasteners`.
 * Added `ATTRIBUTE_MAP` class attribute to all `BTLxProcessing` classes to define attribute-to-BTLx parameter mappings directly on processing classes.
 * Added `__init_subclass__` validation to `BTLxProcessing` to catch invalid `ATTRIBUTE_MAP` entries at class definition time.
 * Added `contour_param_object` property to `FreeContour` processing class with validation for `Contour` and `DualContour` types.
@@ -269,6 +279,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `TDovetailJoint.dovetail_shape` now accepts `TenonShapeType` string constants instead of integers.
 * `TDovetailJoint` unset attributes are now resolved inside `_set_unset_attributes()`, with dimensional defaults proportional to the main beam's cross-section.
 * `DovetailTenon.apply()` now trims the dovetail volume against the beam's reference sides when the volume exceeds the beam geometry, failing silently when trimming is not possible.
+* `TimberModel.add_joints()` now adds a graph edge between the fastener and the elements participatign in a joint as well as a edges between fastener and sub-fasteners.
 * Changed `compas_timber.fabrication.BTLxProcessingParams` to a single concrete universal class that accepts any `BTLxProcessing` instance and uses its `ATTRIBUTE_MAP` for serialization.
 * Changed `BTLxProcessing` to be an abstract base class (ABC) with `PROCESSING_NAME` and `ATTRIBUTE_MAP` as abstract properties.
 * Renamed `OliGinaJoint` to `TOliGinaJoint` for consistency wrt to the supported topology.
@@ -283,6 +294,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Removed `tapered_heel` attribute and parameter from `TStepJoint`; use `step_shape=StepShapeType.TAPERED_HEEL` instead.
 * Removed `tenon_shape` property from `TenonMortiseJoint`; use `shape` with `TenonShapeType` string constants directly.
 * Removed the `shape` property from `TDovetailJoint`; `dovetail_shape` now stores the `TenonShapeType` value directly.
+* Removed `FastenerTimberInterface` class.
 * Removed deprecated `Features` skipping mechanism from `compas_timber.fabrication.BTLxWriter`, streamlining processing handling and error reporting for cleaner BTLx output generation.
 * Removed all `BTLxProcessingParams` subclasses as `ATTRIBUTE_MAP` is now defined directly on `BTLxProcessing` classes.
 * Removed all `params` properties in all `BTLxProcessing` subclasses since it's now universal in the parent `BTLxProcessing` class and dynamically uses each processing's `ATTRIBUTE_MAP`.

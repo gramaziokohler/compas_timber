@@ -184,44 +184,10 @@ def _pointlist_from_pb(msg):
     return [Point(*flat[i : i + 3]) for i in range(0, len(flat), 3)]
 
 
-_HOLE_KEYS = ("point", "diameter", "vector", "through")
-
-
-def _hole_to_pb(hole):
-    msg = elements_pb2.FastenerHoleData()
-    if hole.get("point") is not None:
-        msg.point.CopyFrom(point_to_pb(hole["point"]))
-    if hole.get("diameter") is not None:
-        msg.diameter = hole["diameter"]
-    if hole.get("vector") is not None:
-        msg.vector.CopyFrom(vector_to_pb(hole["vector"]))
-    if hole.get("through") is not None:
-        msg.through = hole["through"]
-    for key, value in hole.items():
-        if key not in _HOLE_KEYS:
-            msg.extra[key].CopyFrom(any_to_pb(value))
-    return msg
-
-
-def _hole_from_pb(msg):
-    hole = {}
-    if msg.HasField("point"):
-        hole["point"] = point_from_pb(msg.point)
-    if msg.HasField("diameter"):
-        hole["diameter"] = msg.diameter
-    if msg.HasField("vector"):
-        hole["vector"] = vector_from_pb(msg.vector)
-    if msg.HasField("through"):
-        hole["through"] = msg.through
-    hole.update({k: any_from_pb(v) for k, v in msg.extra.items()})
-    return hole
-
-
 # message full_name -> (to_pb, from_pb) for values that are plain python rather
 # than compas Data objects, so the generic codec below can handle them too.
 _STRUCTS = {
     "compas_timber.proto.PointList": (_pointlist_to_pb, _pointlist_from_pb),
-    "compas_timber.proto.FastenerHoleData": (_hole_to_pb, _hole_from_pb),
 }
 
 
@@ -361,7 +327,7 @@ def _wrap(descriptor, obj):
     wrapper_cls = _WRAPPERS.get(descriptor.full_name)
     if isinstance(obj, dict):
         # a few __data__ implementations store `child.__data__` rather than the
-        # child itself (PlateFastener does this with its interfaces)
+        # child itself, so the wrapped value can arrive as a dict
         cls = _CLASSES.get(descriptor.full_name)
         if cls is None:
             raise TypeError("{} was given a dict but no class is registered for it".format(descriptor.full_name))
@@ -604,11 +570,19 @@ register(_el.LayerStructure, elements_pb2.LayerStructureData)
 register(_el.Beam, elements_pb2.BeamData)
 register(_el.Plate, elements_pb2.PlateData)
 register(_el.Panel, elements_pb2.PanelData)
-register(_el.FastenerTimberInterface, elements_pb2.FastenerTimberInterfaceData, aliases={"element_guid": "element"})
-register(_el.Fastener, elements_pb2.FastenerData)
-register(_el.BallNodeFastener, elements_pb2.BallNodeFastenerData)
-# PlateFastener.__data__ stores `interface.__data__` rather than the interface.
-register(_el.PlateFastener, elements_pb2.PlateFastenerData, raw_dict_fields=("interfaces",))
+
+from compas_timber import fasteners as _fs  # noqa: E402
+
+register(_fs.PlateHole, elements_pb2.PlateHoleData)
+register(_fs.Fastener, elements_pb2.FastenerData)
+register(_fs.Screw, elements_pb2.ScrewData)
+register(_fs.Dowel, elements_pb2.DowelData)
+register(_fs.RectangularPlate, elements_pb2.RectangularPlateData)
+register(_fs.GeometryPart, elements_pb2.GeometryPartData)
+register(_fs.BallNodeCore, elements_pb2.BallNodeCoreData)
+register(_fs.BallNodeRod, elements_pb2.BallNodeRodData)
+register(_fs.BallNodePlate, elements_pb2.BallNodePlateData)
+register(_fs.BallNodeFastenerParameters, elements_pb2.BallNodeFastenerParametersData)
 
 
 # Layer.layer_path is a tuple-or-None, wrapped so the two stay distinct.

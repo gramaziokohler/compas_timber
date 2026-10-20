@@ -74,10 +74,7 @@ message BallNodeJointData {
   optional int32 topology = 10;
   optional compas_pb.data.PointData location = 11;
   repeated GuidRef element_guids = 12;
-  repeated GuidRef beam_guids = 13;
-  optional double ball_diameter = 14;
-  optional GuidRef fastener_guid = 15;
-  optional FastenerTimberInterfaceData base_interface = 16;
+  optional BallNodeFastenerParametersData parameters = 13;
 }
 
 message ButtJointData {
