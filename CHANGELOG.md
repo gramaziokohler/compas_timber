@@ -99,6 +99,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `SimpleScarf.apply()` under `compas_brep`, where `Brep.from_boolean_difference()` returns one Brep per resulting piece instead of a single Brep. The drill hole volumes were subtracted from that list rather than from a Brep; the piece the beam runs through is now picked first and the drill holes are subtracted from it.
 * Fixed `SimpleScarf.apply()` passing a `Polyhedron` to `Brep.from_mesh()`. `compas_brep` builds one Brep face per mesh face and iterates the mesh interface, which `Polyhedron` does not provide, so the scarf volume is handed over as a mesh. As a side effect the quad faces of the scarf volume stay quads instead of being fanned into triangles.
 * Fixed `StartX` of an END-oriented `SimpleScarf`, which carried the cutting volume's half-scarf-length overshoot (`beam.length + length/2`) into the exported BTLx parameter. `StartX` is now `beam.blank_length`, the end of the blank, and the overshoot lives in the cutting volume geometry where it belongs.
+* Changed `PlateHole` to a `FastenerPart`. Holes are now child parts of their `RectangularPlate` in the model tree, and each hole applies its own `Drilling`. `RectangularPlate.holes` is a read-only view over those children, and holes are no longer part of `RectangularPlate.__data__` or `RectangularPlateData`; `PlateHoleData` is now an `ElementData` element. A hole has no geometry of its own (`geometry` is `None`), and the cylinder cut out of the plate is `PlateHole.cutting_geometry`.
+* Changed `Fastener.add_part()` and `FastenerPart.add_part()` to add the part to the model tree right away when the fastener or part is already in a model.
+* Fixed `RectangularPlate` silently dropping hole drillings that failed. A hole now only drills the elements its drill line crosses, and any other drilling error is reported by `TimberModel.process_fasteners()` as a `FastenerApplicationError`, which now also wraps `FeatureApplicationError`.
+* Fixed `RectangularPlate` keeping stale cached geometry after a hole was added.
+* Removed a dead frame assignment in `TButtJoint.fastener_anchors`.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.

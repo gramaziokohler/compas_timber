@@ -102,7 +102,8 @@ message FastenerData {
   compas_pb.data.FrameData frame = 10;
 }
 
-// One entry of RectangularPlate.holes.
+// A hole in a RectangularPlate: a child part of the plate in the model tree,
+// placed relative to it (`frame`).
 message PlateHoleData {
   GuidRef guid = 1;
   optional string name = 2;
@@ -112,6 +113,7 @@ message PlateHoleData {
   optional bool apply_drilling = 13;
   optional double drilling_depth = 14;
   optional double drilling_diameter = 15;
+  repeated GuidRef element_guids = 16;
 }
 
 message ScrewData {
@@ -144,7 +146,8 @@ message RectangularPlateData {
   compas_pb.data.FrameData frame = 13;
   optional double recess = 14;
   optional double recess_offset = 15;
-  repeated PlateHoleData holes = 16;
+  // 16 was `holes`: holes are now PlateHole child parts in the model tree.
+  reserved 16;
   repeated GuidRef element_guids = 17;
 }
 
@@ -226,5 +229,6 @@ message ElementData {
     BallNodeCoreData ball_node_core = 12;
     BallNodeRodData ball_node_rod = 13;
     BallNodePlateData ball_node_plate = 14;
+    PlateHoleData plate_hole = 15;
   }
 }

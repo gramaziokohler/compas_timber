@@ -67,7 +67,8 @@ class FastenerPart(Element):
         """Stage a part as a direct child of this part.
 
         The part is held in a staging area until the owning fastener is added to a model, at which point the model moves
-        the whole staged subtree into the tree (``model.add_element(part, parent=this)``).
+        the whole staged subtree into the tree (``model.add_element(part, parent=this)``). If this part is already in a
+        model, the new part (and its staged subtree) is added to the tree right away.
 
         Parameters
         ----------
@@ -79,7 +80,10 @@ class FastenerPart(Element):
         :class:`~compas_timber.elements.FastenerPart`
             The added part, for chaining.
         """
-        self._parts.append(part)
+        if self.model is not None:
+            self.model._add_staged_part_subtree(part, self)
+        else:
+            self._parts.append(part)
         return part
 
     @property
@@ -185,7 +189,8 @@ class Fastener(Element):
         """Stage a part as a direct child of this fastener.
 
         The part is held in a staging area until the fastener is added to a model, at which point the model moves
-        the whole staged subtree into the tree (``model.add_element(part, parent=this)``).
+        the whole staged subtree into the tree (``model.add_element(part, parent=this)``). If the fastener is already in
+        a model, the new part (and its staged subtree) is added to the tree right away.
 
         Parameters
         ----------
@@ -197,7 +202,10 @@ class Fastener(Element):
         :class:`~compas_timber.elements.FastenerPart`
             The added part, for chaining.
         """
-        self._parts.append(part)
+        if self.model is not None:
+            self.model._add_staged_part_subtree(part, self)
+        else:
+            self._parts.append(part)
         return part
 
     @property
@@ -223,6 +231,8 @@ class Fastener(Element):
         geometries = []
         for part in self.all_parts:
             part_geometry = part.geometry
+            if part_geometry is None:
+                continue  # e.g. a PlateHole, which is a void in its plate
             if isinstance(part_geometry, (list, tuple)):
                 geometries.extend(part_geometry)
             else:

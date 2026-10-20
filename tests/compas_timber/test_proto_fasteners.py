@@ -13,11 +13,11 @@ import json
 
 import pytest
 from compas.data import json_dumps
-from compas.data import json_loads
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Transformation
 
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
@@ -90,20 +90,38 @@ def test_plate_hole_roundtrip():
     assert other.drilling_depth == hole.drilling_depth
 
 
-def test_rectangular_plate_with_holes_roundtrip():
-    hole = PlateHole(Frame([1, 1, 0], [1, 0, 0], [0, 1, 0]), diameter=6, height=8)
-    plate = RectangularPlate(width=40, height=50, thickness=5, recess=5, recess_offset=1, holes=[hole])
+def test_rectangular_plate_with_holes_model_roundtrip():
+    """Holes are child parts of their plate in the model tree, so they round-trip with the model."""
+    model = TimberModel()
+    cross_beam = Beam.from_centerline(Line([-100, 0, 20], [100, 0, 20]), width=10, height=20)
+    main_beam = Beam.from_centerline(Line([0, 0, 20], [0, 0, 200]), width=10, height=20)
+    model.add_elements([cross_beam, main_beam])
+    TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
 
-    other = roundtrip(plate)
+    hole = PlateHole(Frame([0, -5, 0], [1, 0, 0], [0, 1, 0]), diameter=3, height=2, drilling_diameter=2)
+    plate = RectangularPlate(width=10, height=80, thickness=2, recess=1, recess_offset=0.5, holes=[hole])
+    plate.transformation = Transformation.from_frame(Frame([0, -5, 20], [1, 0, 0], [0, 0, 1]))
+    plate.elements = [main_beam, cross_beam]
+    fastener = Fastener()
+    fastener.add_part(plate)
+    model.add_fastener(fastener, [main_beam, cross_beam])
 
-    assert other.width == plate.width
-    assert other.height == plate.height
-    assert other.thickness == plate.thickness
-    assert other.recess == plate.recess
-    assert other.recess_offset == plate.recess_offset
-    assert len(other.holes) == 1
-    assert isinstance(other.holes[0], PlateHole)
-    assert other.holes[0].diameter == hole.diameter
+    rec_model = pb_load_bts(pb_dump_bts(model))
+
+    rec_plate = rec_model.fasteners[0].parts[0]
+    assert isinstance(rec_plate, RectangularPlate)
+    assert rec_plate.recess == plate.recess
+    assert len(rec_plate.holes) == 1
+    rec_hole = rec_plate.holes[0]
+    assert isinstance(rec_hole, PlateHole)
+    assert str(rec_hole.guid) == str(hole.guid)
+    assert rec_hole.diameter == hole.diameter
+    assert rec_hole.drilling_diameter == hole.drilling_diameter
+    assert rec_hole.placement_frame.point == hole.placement_frame.point
+
+    assert rec_model.process_fasteners() == []
+    rec_cross_beam = next(b for b in rec_model.beams if b.length == 200)
+    assert [type(f).__name__ for f in rec_cross_beam.features].count("Drilling") == 1
 
 
 def test_geometry_part_roundtrip():

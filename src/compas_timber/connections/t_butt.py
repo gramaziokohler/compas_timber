@@ -118,8 +118,8 @@ class TButtJoint(ButtJoint):
         anchor_back = FastenerAnchor(frame, AnchorKind.FACE, [main_beam, cross_beam], ref_side_index=(ref_side_index - 1) % 4, role="back_face")
 
         # opp anchor
+        # the axis runs along the main beam's centerline, pointing away from the main beam
         point = Plane.from_frame(opp_side_frame).intersection_with_line(self.main_beam.centerline)
-        frame = Frame(point, opp_side_frame.xaxis, opp_side_frame.yaxis)
         frame = Frame.from_plane(Plane(point, Vector.from_start_end(main_beam.centerline.midpoint, point)))
         anchor_opp = FastenerAnchor(frame, AnchorKind.AXIS, [main_beam, cross_beam], ref_side_index=(ref_side_index + 2) % 4, role="opposite_face")
 

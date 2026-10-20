@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional
 
-from compas.data import Data
 from compas.geometry import Box
 from compas.geometry import Cylinder
 from compas.geometry import Frame
@@ -16,6 +15,7 @@ from compas_brep import Brep
 from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import Pocket
 from compas_timber.geometry import brep_difference_first
+from compas_timber.utils import intersection_line_beam_param
 
 from .anchor import AnchorKind
 from .fastener import Fastener
@@ -42,6 +42,13 @@ def beam_ref_side_index(beam, vector):
     return ref_side_index
 
 
+def _segment_hits_beam(segment, beam):
+    # whether the segment (not just its infinite line) crosses one of the beam's reference sides
+    points, _ = intersection_line_beam_param(segment, beam)
+    direction = segment.direction
+    return any(0.0 <= direction.dot(point - segment.start) <= segment.length for point in points)
+
+
 class RectangularPlate(FastenerPart):
     """
     Describes a rectangular plate that can be used as part of a fastener.
@@ -66,7 +73,7 @@ class RectangularPlate(FastenerPart):
     recess_offset : float, optional
         The offset of the recess from the plate dimensions, by default 0 (recess has the same dimensions as the plate).
     holes : list[PlateHole], optional
-        The holes of the plate, expressed in the plate's local coordinate system.
+        The holes of the plate, expressed in the plate's local coordinate system. Staged as child parts of the plate.
 
     Attributes
     ----------
@@ -77,7 +84,7 @@ class RectangularPlate(FastenerPart):
     thickness : float
         The thickness of the plate.
     holes : list[PlateHole]
-        The holes in the plate.
+        The holes in the plate, i.e. its :class:`PlateHole` child parts.
     recess : float
         The depth of the recess to be milled in the beam.
     recess_offset : float
@@ -98,7 +105,6 @@ class RectangularPlate(FastenerPart):
             "frame": self.placement_frame,
             "recess": self.recess,
             "recess_offset": self.recess_offset,
-            "holes": self.holes,
             "element_guids": self.element_guids,
         }
 
@@ -119,7 +125,13 @@ class RectangularPlate(FastenerPart):
         self.thickness = thickness
         self.recess = recess
         self.recess_offset = recess_offset
-        self.holes = list(holes) if holes else []
+        for hole in holes or []:
+            self.add_hole(hole)
+
+    @property
+    def holes(self) -> list:
+        """The holes of the plate, i.e. its :class:`PlateHole` child parts."""
+        return [part for part in self.parts if isinstance(part, PlateHole)]
 
     @property
     def _local_frame(self) -> Frame:
@@ -137,7 +149,7 @@ class RectangularPlate(FastenerPart):
         box = self.blank_geometry
         box_brep = Brep.from_mesh(box.to_mesh())
         for hole in self.holes:
-            box_brep = brep_difference_first(box_brep, hole.geometry)
+            box_brep = brep_difference_first(box_brep, hole.cutting_geometry)
         if self.recess > 0:
             box_brep.transform(Translation.from_vector(self._local_frame.zaxis * -self.recess))
         return box_brep
@@ -181,7 +193,10 @@ class RectangularPlate(FastenerPart):
         hole : PlateHole
             The hole to be added to the plate, expressed in the plate's local coordinate system.
         """
-        self.holes.append(hole)
+        self.add_part(hole)
+        # the plate's geometry has the holes cut out of it
+        self._elementgeometry = None
+        self._modelgeometry = None
 
     def add_holes_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=None, drilling_diameter=None) -> list:
         """
@@ -224,35 +239,18 @@ class RectangularPlate(FastenerPart):
 
     def apply_fastening_features(self):
         """
-        Apply the features of the plate to :attr:`elements`.
-        This includes creating pockets for the recess and drillings for the holes.
+        Apply the recess of the plate to :attr:`elements` as a Pocket.
+
+        The holes are child parts and apply their own drillings (see :meth:`PlateHole.apply_fastening_features`).
         """
-        frame = self.frame  # placement frame in model coordinates
-        xform = self.modeltransformation
+        geo = self._compute_recess_milling_volume(self.frame)
+        if not geo:
+            return
         for element in self.elements:
-            ref_side_index = beam_ref_side_index(element, frame.zaxis)
-
-            # recess Pocket
-            geo = self._compute_recess_milling_volume(frame)
-            if geo:
-                pocket = Pocket.from_volume_and_element(geo, element, ref_side_index=ref_side_index)
-                element.add_feature(pocket)
-                self.applied_features.append(pocket)
-
-            # Drillings
-            for hole in self.holes:
-                if not hole.apply_drilling:
-                    continue
-                hole_frame = hole.frame.transformed(xform)  # to model coordinates
-                start = hole_frame.point + frame.zaxis * self.thickness
-                end = hole_frame.point + frame.zaxis * -(self.thickness + self.recess)
-                drill_line = Line(start, end)
-                try:
-                    drilling = Drilling.from_line_and_element(drill_line, element, hole.drilling_diameter)
-                    element.add_feature(drilling)
-                    self.applied_features.append(drilling)
-                except Exception:
-                    pass
+            ref_side_index = beam_ref_side_index(element, self.frame.zaxis)
+            pocket = Pocket.from_volume_and_element(geo, element, ref_side_index=ref_side_index)
+            element.add_feature(pocket)
+            self.applied_features.append(pocket)
 
     def _compute_recess_milling_volume(self, frame):
         if self.recess <= 0:
@@ -262,14 +260,14 @@ class RectangularPlate(FastenerPart):
         return recess_box.to_polyhedron()
 
 
-# TODO: shouldn't this be a FastenerPart?
-class PlateHole(Data):
+class PlateHole(FastenerPart):
     """
     Describes a hole in a fastener plate.
-    It has a diameter, a height, and a frame that describes its position and orientation relative to the plate's local
-    coordinate system.
-    It can apply a `Drilling` fabrication process to the beam, in which case it has a drilling depth and diameter.
 
+    A hole is a child part of its :class:`RectangularPlate`: its placement frame is expressed relative to the plate's
+    local coordinate system, and the plate cuts the hole out of its own geometry. The hole itself is a void, so it has
+    no geometry of its own (:attr:`geometry` is ``None``) and contributes nothing to the fastener's geometry.
+    It can apply a `Drilling` fabrication process to the beam(s) it sits over.
 
     Parameters
     ----------
@@ -286,39 +284,55 @@ class PlateHole(Data):
     drilling_diameter : float, optional
         The diameter of the drilling process to be applied to the beam, by default is the same as the diameter.
 
+    Attributes
+    ----------
+    cutting_geometry : Brep
+        The cylinder cut out of the plate, in the plate's local coordinate system.
+
     """
 
     @property
     def __data__(self):
         return {
-            "frame": self.frame,
+            "frame": self.placement_frame,
             "diameter": self.diameter,
             "height": self.height,
             "apply_drilling": self.apply_drilling,
             "drilling_depth": self.drilling_depth,
             "drilling_diameter": self.drilling_diameter,
+            "element_guids": self.element_guids,
         }
 
     def __init__(
-        self, frame: Frame, diameter: float, height: float, apply_drilling: bool = True, drilling_depth: Optional[float] = None, drilling_diameter: Optional[float] = None
+        self,
+        frame: Frame,
+        diameter: float,
+        height: float,
+        apply_drilling: bool = True,
+        drilling_depth: Optional[float] = None,
+        drilling_diameter: Optional[float] = None,
+        **kwargs,
     ):
-        super().__init__()
-        self.frame = frame
+        super().__init__(frame=frame, **kwargs)
         self.diameter = diameter
         self.height = height
         self.apply_drilling = apply_drilling
         self.drilling_depth = drilling_depth if drilling_depth is not None else 5
         self.drilling_diameter = drilling_diameter if drilling_diameter is not None else diameter
 
-    def copy(self):
-        return PlateHole(self.frame.copy(), self.diameter, self.height, self.apply_drilling, self.drilling_depth, self.drilling_diameter)
+    def compute_elementgeometry(self, include_features: bool = False):
+        """A hole is a void in its plate and has no geometry of its own; see :attr:`cutting_geometry`."""
+        return None
 
     @property
     def geometry(self):
-        cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.frame)
+        return None
+
+    @property
+    def cutting_geometry(self) -> Brep:
+        cylinder = Cylinder(radius=self.diameter / 2, height=self.height, frame=self.placement_frame)
         cylinder.frame.point += cylinder.frame.zaxis * self.height / 2
-        cylinder_brep = Brep.from_cylinder(cylinder)
-        return cylinder_brep
+        return Brep.from_cylinder(cylinder)
 
     @property
     def drilling_line(self) -> Line:
@@ -326,6 +340,29 @@ class PlateHole(Data):
         end = self.frame.point.translated(self.frame.zaxis * -self.drilling_depth)
         line = Line(start, end)
         return line
+
+    def apply_fastening_features(self) -> None:
+        """Drill the element(s) this hole sits over.
+
+        Unless set explicitly, the hole applies to the elements of its parent plate. A plate may straddle several
+        elements, so each hole only drills the elements its drill line actually crosses.
+        """
+        if not self.apply_drilling:
+            return
+        plate = self.parent
+        elements = self.elements or getattr(plate, "elements", [])
+        recess = getattr(plate, "recess", 0.0)
+
+        frame = self.frame  # in model coordinates
+        start = frame.point + frame.zaxis * self.height
+        end = frame.point + frame.zaxis * -(self.height + recess)
+        drill_line = Line(start, end)
+        for element in elements:
+            if not _segment_hits_beam(drill_line, element):
+                continue
+            drilling = Drilling.from_line_and_element(drill_line, element, self.drilling_diameter)
+            element.add_feature(drilling)
+            self.applied_features.append(drilling)
 
 
 class PlateFastenerSystem(FastenerSystem):

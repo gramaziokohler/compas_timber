@@ -21,6 +21,7 @@ from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.errors import FastenerApplicationError
+from compas_timber.errors import FeatureApplicationError
 from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
@@ -790,9 +791,9 @@ class TimberModel(Model):
         for fastener in self.fasteners:
             try:
                 fastener.apply_fastening_features()
-            except ValueError as ve:
+            except (ValueError, FeatureApplicationError) as error:
                 elements = self._elements_connected_by_fastener(fastener)
-                bje = FastenerApplicationError(elements, fastener, message=str(ve))
+                bje = FastenerApplicationError(elements, fastener, message=str(error))
                 errors.append(bje)
                 if stop_on_first_error:
                     raise bje

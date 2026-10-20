@@ -24,9 +24,6 @@ def test_rectangular_plate():
 
 def test_rectangular_plate_copy():
     plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
-    hole = PlateHole(diameter=5, height=2, frame=plate.placement_frame.copy())
-    plate.add_hole(hole)
-    plate.add_hole_point_diameter(Point(2, 3, 0), diameter=3)
 
     plate_copy = plate.copy()
 
@@ -35,35 +32,53 @@ def test_rectangular_plate_copy():
     assert plate.thickness == plate_copy.thickness
     assert plate.recess == plate_copy.recess
     assert plate.recess_offset == plate_copy.recess_offset
-    assert len(plate.holes) == len(plate_copy.holes)
-    assert plate.holes[0].diameter == plate_copy.holes[0].diameter
-    assert plate.holes[0].height == plate_copy.holes[0].height
-    assert plate.holes[0].frame.point == plate_copy.holes[0].frame.point
-    assert plate.holes[1].diameter == plate_copy.holes[1].diameter
-    assert plate.holes[1].height == plate_copy.holes[1].height
-    assert plate.holes[1].frame.point == plate_copy.holes[1].frame.point
 
 
-def test_rectangular_plate_deserialization():
-    plate = RectangularPlate(width=10, height=20, thickness=2, recess=1, recess_offset=0.5)
-    hole = PlateHole(diameter=5, height=2, frame=plate.placement_frame.copy())
+def test_rectangular_plate_holes_are_child_parts():
+    plate = RectangularPlate(width=10, height=20, thickness=2)
+    hole = PlateHole(diameter=5, height=2, frame=Frame.worldXY())
     plate.add_hole(hole)
-    plate.add_hole_point_diameter(Point(2, 3, 0), diameter=3)
 
-    rec_plate = json_loads(json_dumps(plate))
+    assert plate.holes == [hole]
+    assert plate.parts == [hole]
+    # a hole is a void: it has no geometry of its own, it is cut out of the plate
+    assert hole.geometry is None
 
-    assert plate.width == rec_plate.width
-    assert plate.height == rec_plate.height
-    assert plate.thickness == rec_plate.thickness
-    assert plate.recess == rec_plate.recess
-    assert plate.recess_offset == rec_plate.recess_offset
-    assert len(plate.holes) == len(rec_plate.holes)
-    assert plate.holes[0].diameter == rec_plate.holes[0].diameter
-    assert plate.holes[0].height == rec_plate.holes[0].height
-    assert plate.holes[0].frame.point == rec_plate.holes[0].frame.point
-    assert plate.holes[1].diameter == rec_plate.holes[1].diameter
-    assert plate.holes[1].height == rec_plate.holes[1].height
-    assert plate.holes[1].frame.point == rec_plate.holes[1].frame.point
+    fastener = Fastener()
+    fastener.add_part(plate)
+    assert fastener.all_parts == [plate, hole]
+    assert len(fastener.geometry) == 1
+
+
+def test_rectangular_plate_add_hole_in_model():
+    model, main_beam, cross_beam = _straddling_plate_model([])
+    plate = model.fasteners[0].parts[0]
+
+    # adding a hole to a plate already in the model puts it straight into the tree
+    hole = plate.add_hole_point_diameter(Point(0, -5, 0), diameter=3)
+
+    assert hole.model is model
+    assert hole.parent is plate
+    assert plate.holes == [hole]
+
+
+def test_rectangular_plate_holes_model_json_roundtrip():
+    model, _, _ = _straddling_plate_model([Point(0, -5, 0), Point(0, 30, 0)])
+    plate = model.fasteners[0].parts[0]
+
+    rec_model = json_loads(json_dumps(model))
+
+    rec_plate = rec_model.fasteners[0].parts[0]
+    assert len(rec_plate.holes) == 2
+    for hole, rec_hole in zip(plate.holes, rec_plate.holes):
+        assert isinstance(rec_hole, PlateHole)
+        assert rec_hole.parent is rec_plate
+        assert rec_hole.diameter == hole.diameter
+        assert rec_hole.height == hole.height
+        assert rec_hole.placement_frame.point == hole.placement_frame.point
+
+    assert rec_model.process_fasteners() == []
+    assert sum(type(f).__name__ == "Drilling" for beam in rec_model.beams for f in beam.features) == 2
 
 
 def test_rectangular_plate_grid_holes():
@@ -117,3 +132,45 @@ def test_rect_plate_features():
     assert features_names.count("Drilling") == 2
     assert features_names.count("Pocket") == 2
     assert features_names.count("Lap") == 1
+
+
+def _straddling_plate_model(hole_points, drilling_diameter=2):
+    model = TimberModel()
+    cross_beam = Beam.from_centerline(Line(Point(-100, 0, 20), Point(100, 0, 20)), width=10, height=20)
+    main_beam = Beam.from_centerline(Line(Point(0, 0, 20), Point(0, 0, 200)), width=10, height=20)
+    model.add_elements([cross_beam, main_beam])
+    TButtJoint.create(model, main_beam, cross_beam, mill_depth=3)
+
+    # a single plate straddling both beams; its local y-axis runs up along the main beam
+    fastener = Fastener()
+    plate = RectangularPlate(width=10, height=80, thickness=2)
+    for point in hole_points:
+        plate.add_hole_point_diameter(point, diameter=3, drilling_diameter=drilling_diameter)
+    plate.transformation = Transformation.from_frame(Frame(Point(0, -5, 20), [1, 0, 0], [0, 0, 1]))
+    plate.elements = [main_beam, cross_beam]
+    fastener.add_part(plate)
+    model.add_fastener(fastener, [main_beam, cross_beam])
+    return model, main_beam, cross_beam
+
+
+def test_rect_plate_hole_drills_only_the_beam_it_sits_over():
+    # one hole over the cross beam (z=15), one over the main beam (z=50)
+    model, main_beam, cross_beam = _straddling_plate_model([Point(0, -5, 0), Point(0, 30, 0)])
+
+    errors = model.process_fasteners()
+
+    assert errors == []
+    assert [type(f).__name__ for f in cross_beam.features] == ["Drilling"]
+    assert [type(f).__name__ for f in main_beam.features] == ["Drilling"]
+
+
+def test_rect_plate_failed_drilling_is_reported():
+    from compas_timber.errors import FastenerApplicationError
+
+    # an invalid drilling diameter must surface as an error instead of silently dropping the drilling
+    model, _, _ = _straddling_plate_model([Point(0, -5, 0)], drilling_diameter=-1)
+
+    errors = model.process_fasteners()
+
+    assert len(errors) == 1
+    assert isinstance(errors[0], FastenerApplicationError)
