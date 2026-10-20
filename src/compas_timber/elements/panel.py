@@ -376,10 +376,14 @@ class Panel(Element):
         return self.obb.to_mesh()
 
     def compute_modeltransformation(self):
-        """Same as parent but handles standalone elements."""
-        if not self.model:
-            return self.transformation
-        return super().compute_modeltransformation()  # type: ignore
+        """A panel's transformation is always an absolute (world) placement, not relative to whatever
+        element it happens to be nested under, so it must not be composed with ancestor transformations."""
+        if self.model and self.model.transformation:
+            # model.transformation is the model's own root placement, not an ancestor element's
+            # transformation, so composing with it here doesn't violate the rule above.
+            return self.model.transformation * self.transformation
+        # No model transformation to apply, so the panel's own transformation is already the final one.
+        return self.transformation
 
     def compute_modelgeometry(self):
         """Same as parent but handles standalone elements."""
