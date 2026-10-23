@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `invoke pre_build` task, which generates the protobuf python bindings (`*_pb2.py`) from the `.proto` files. It must be run before `invoke test` and before building a distribution.
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
+* Added `StructuralSurface` and `StructuralSurfaceLine` to `compas_timber.structural`: the analytical mid-surface of a plate, and a line on such a surface (e.g. where two plates are connected). Both implement `__data__` and reference their parent plate and surface by guid instead of embedding them; `TimberModel` restores the object references when it is deserialized.
+* Added `PlateSurfaceGenerator`, `PlateConnectionGenerator`, `SimplePlateSurfaceGenerator`, `SimplePlateConnectionGenerator` and `PlateStructuralElementSolver` to `compas_timber.structural`, which create structural surfaces for plates and connection lines for their joints.
+* Added `TimberModel.add_plate_structural_surfaces()`, `TimberModel.get_plate_structural_surfaces()`, `TimberModel.remove_plate_structural_surfaces()`, `TimberModel.add_structural_surface_lines()` and `TimberModel.remove_structural_surface_lines()`.
+* Added plate structural surfaces to `StructuralGraph.from_model()`, with `StructuralGraph.surfaces`, `StructuralGraph.surface_boundary_edges`, `StructuralGraph.surface_connection_edges` and `StructuralGraph.surface_lines()`.
+* Added `effective_centerline()` to `compas_timber.structural`, which returns a beam's centerline extended by its blank extensions, up to `max_structural_extension` (300 mm by default), for structural use only.
+* Added the `StructuralSurfaceData` and `StructuralSurfaceLineData` protobuf messages.
 
 ### Changed
 * Bumped the required `compas_brep` to `>= 0.3.0`, where the boolean operations started returning a `list` of Breps, one per resulting piece.
@@ -96,6 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed the proto IDL layout: `processing.proto` and `building_plan.proto` (written against a demo application) were replaced by the domain-split files above. Since proto has no inheritance, each concrete message carries its whole MRO's `__data__` fields flattened; `guid` and `name` come from the compas serialization envelope and occupy fields 1 and 2 everywhere.
 * Fixed `Plate`, `Panel` and the other non-Beam elements failing to serialize. They previously fell through to a generic `Element` serializer that assumed `.geometry` was a `Mesh` and raised on the `Brep` every timber element actually produces; each type now has its own message built from its `__data__`.
 * Fixed `Layer` silently dropping `self.attributes` on every JSON round-trip. Unlike `Beam`/`Panel`/`Plate`, `Layer.__init__` never initialized `self.attributes` and `Layer.__data__` never included it, so any custom attributes set on a `Layer` were lost as soon as the owning model was serialized and reloaded.
+* `SimpleBeamSegmentGenerator` now splits beams at the closest points between the centerlines of each joint interaction and at the points in the beam's `support_points` attribute, along the beam's `effective_centerline()`. Interactions with elements that have no centerline, such as fasteners, are skipped.
+* `SimpleJointConnectorGenerator` now connects the beams' `effective_centerline()`s, and takes `max_candidate_connector_distance` (10 mm by default) and `use_candidate_connectors` to limit or skip connectors derived from joint candidates.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.

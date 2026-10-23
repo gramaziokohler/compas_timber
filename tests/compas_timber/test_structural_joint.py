@@ -23,6 +23,7 @@ def test_add_joint_structural_segments_crossing_beams(mocker: pytest_mock.Mocker
 
     joint = mocker.MagicMock(spec=Joint)
     joint.interactions = [(beam1, beam2)]
+    joint.location = Point(0, 0, 100)  # what Joint.location computes for these beams
 
     solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(model, [joint])
@@ -56,6 +57,7 @@ def test_add_joint_structural_segments_intersecting_beams(mocker: pytest_mock.Mo
 
     joint = mocker.MagicMock(spec=Joint)
     joint.interactions = [(beam1, beam2)]
+    joint.location = Point(0, 0, 0)
 
     solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(model, [joint])
@@ -77,6 +79,8 @@ def test_add_joint_structural_segments_multi_beam(mocker: pytest_mock.MockerFixt
 
     joint = mocker.MagicMock(spec=Joint)
     joint.interactions = [(beam1, beam2), (beam1, beam3)]
+    # like Joint.location for a joint with more than two elements and no location set
+    type(joint).location = mocker.PropertyMock(side_effect=ValueError)
 
     solver = BeamStructuralElementSolver()
     solver.add_joint_structural_segments(model, [joint])

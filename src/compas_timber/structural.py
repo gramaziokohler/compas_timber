@@ -13,13 +13,12 @@ from compas.data import Data
 from compas.datastructures import Graph
 from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import Polyline
 from compas.geometry import Point
+from compas.geometry import Polyline
+from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import closest_point_on_segment
 from compas.geometry import distance_point_point
-from compas.geometry import intersection_segment_segment
-from compas.geometry import Translation
 from compas.itertools import pairwise
 from compas.tolerance import TOL
 
@@ -29,11 +28,38 @@ from compas_timber.utils import distance_segment_segment_points
 if TYPE_CHECKING:
     from compas_timber.connections import Joint
     from compas_timber.elements import Beam
+    from compas_timber.elements import Plate
     from compas_timber.model import TimberModel
 
 
-def effective_centerline(beam: Beam, max_structural_extension=0.30, include_points=None) -> Line:
-    """Return the beam centerline extended by blank extensions for structural use only."""
+def _joint_location(joint) -> Optional[Point]:
+    # Joint.location raises ValueError (not AttributeError) when it cannot be derived,
+    # e.g. for joints with more than two elements and no explicit location,
+    # so getattr(joint, "location", None) is not enough here.
+    try:
+        return joint.location
+    except (AttributeError, ValueError):
+        return None
+
+
+def effective_centerline(beam: Beam, max_structural_extension=300.0, include_points=None) -> Line:
+    """Return the beam centerline extended by blank extensions for structural use only.
+
+    Parameters
+    ----------
+    beam : :class:`compas_timber.elements.Beam`
+        The beam whose centerline to extend.
+    max_structural_extension : float, optional
+        Maximum extension at either end, in design units (mm, like the rest of compas_timber). Defaults to 300.0.
+        Blank extensions longer than this are ignored altogether, as are include points further than this beyond an end.
+    include_points : list of :class:`compas.geometry.Point`, optional
+        Points (e.g. joint locations) beyond the ends of the centerline which the extended centerline should reach.
+
+    Returns
+    -------
+    :class:`compas.geometry.Line`
+
+    """
     centerline = beam.centerline
     start_extension = 0.0
     end_extension = 0.0
@@ -105,40 +131,154 @@ class StructuralSegment(Data):
         self.frame = frame
         self.cross_section = cross_section
 
+
 class StructuralSurface(Data):
+    """The analytical mid-surface of a plate, used for structural analysis.
+
+    Parameters
+    ----------
+    outline : :class:`compas.geometry.Polyline`
+        The closed outline of the surface, lying in the plate's mid-plane.
+    frame : :class:`compas.geometry.Frame`
+        The local frame of the surface. Its normal is the surface normal.
+    thickness : float
+        The thickness of the plate this surface represents.
+    parent_plate : :class:`compas_timber.elements.Plate`, optional
+        The plate this surface was generated from.
+    role : str, optional
+        The role of the surface. Defaults to ``"surface"``.
+    name : str, optional
+        The name of the surface.
+    parent_plate_guid : str, optional
+        The guid of the parent plate. Only used when deserializing, where the plate itself is not available.
+        Ignored when ``parent_plate`` is given.
+    **kwargs : dict, optional
+        Additional attributes, stored in :attr:`attributes`.
+
+    Attributes
+    ----------
+    parent_plate_guid : str or None
+        The guid of the parent plate. This is what gets serialized in place of the plate itself.
+
+    """
+
+    @property
+    def __data__(self) -> dict:
+        data = {
+            "outline": self.outline,
+            "frame": self.frame,
+            "thickness": self.thickness,
+            "role": self.role,
+            "parent_plate_guid": self.parent_plate_guid,
+        }
+        data.update(self.attributes)
+        return data
+
     def __init__(
         self,
         outline: Polyline,
         frame: Frame,
         thickness: float,
-        parent_plate=None,
-        role="surface",
-        **kwargs
-    ):
-        super().__init__(**kwargs)
+        parent_plate: Optional[Plate] = None,
+        role: str = "surface",
+        name: Optional[str] = None,
+        parent_plate_guid: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        # same pattern as StructuralSegment: Data.__init__ only takes `name`
+        super().__init__(name=name)
+        self.attributes = {}
+        self.attributes.update(kwargs)
         self.outline = outline
         self.frame = frame
         self.thickness = thickness
         self.parent_plate = parent_plate
         self.role = role
-        self.attributes = kwargs
+        self._parent_plate_guid = parent_plate_guid
+
+    @property
+    def parent_plate_guid(self) -> Optional[str]:
+        if self.parent_plate is not None:
+            return str(self.parent_plate.guid)
+        return self._parent_plate_guid
+
 
 class StructuralSurfaceLine(Data):
-    """Possible Line Types: boundary, internal, connection, subdivision, hinge, support"""
+    """A line on a :class:`StructuralSurface`, e.g. where two surfaces are connected.
+
+    Parameters
+    ----------
+    line : :class:`compas.geometry.Line`
+        The geometry of the line.
+    parent_surface : :class:`StructuralSurface`, optional
+        The surface this line lies on.
+    parent_plate : :class:`compas_timber.elements.Plate`, optional
+        The plate of the parent surface.
+    line_type : str, optional
+        One of ``"boundary"``, ``"internal"``, ``"connection"``, ``"subdivision"``, ``"hinge"`` or ``"support"``.
+        Defaults to ``"internal"``.
+    name : str, optional
+        The name of the line.
+    parent_surface_guid : str, optional
+        The guid of the parent surface. Only used when deserializing. Ignored when ``parent_surface`` is given.
+    parent_plate_guid : str, optional
+        The guid of the parent plate. Only used when deserializing. Ignored when ``parent_plate`` is given.
+    **kwargs : dict, optional
+        Additional attributes, stored in :attr:`attributes`.
+
+    Attributes
+    ----------
+    parent_surface_guid : str or None
+        The guid of the parent surface. This is what gets serialized in place of the surface itself.
+    parent_plate_guid : str or None
+        The guid of the parent plate. This is what gets serialized in place of the plate itself.
+
+    """
+
+    @property
+    def __data__(self) -> dict:
+        data = {
+            "line": self.line,
+            "line_type": self.line_type,
+            "parent_surface_guid": self.parent_surface_guid,
+            "parent_plate_guid": self.parent_plate_guid,
+        }
+        data.update(self.attributes)
+        return data
+
     def __init__(
         self,
         line: Line,
-        parent_surface=None,
-        parent_plate=None,
-        line_type="internal",
-        **kwargs
-    ):
-        super().__init__(**kwargs)
+        parent_surface: Optional[StructuralSurface] = None,
+        parent_plate: Optional[Plate] = None,
+        line_type: str = "internal",
+        name: Optional[str] = None,
+        parent_surface_guid: Optional[str] = None,
+        parent_plate_guid: Optional[str] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(name=name)
+        self.attributes = {}
+        self.attributes.update(kwargs)
         self.line = line
         self.parent_surface = parent_surface
         self.parent_plate = parent_plate
         self.line_type = line_type
-        self.attributes = kwargs
+        self._parent_surface_guid = parent_surface_guid
+        self._parent_plate_guid = parent_plate_guid
+
+    @property
+    def parent_surface_guid(self) -> Optional[str]:
+        if self.parent_surface is not None:
+            return str(self.parent_surface.guid)
+        return self._parent_surface_guid
+
+    @property
+    def parent_plate_guid(self) -> Optional[str]:
+        if self.parent_plate is not None:
+            return str(self.parent_plate.guid)
+        return self._parent_plate_guid
+
 
 class BeamSegmentGenerator(ABC):
     """Base class for beam segment generators.
@@ -166,6 +306,7 @@ class BeamSegmentGenerator(ABC):
         """
         raise NotImplementedError
 
+
 class JointConnectorGenerator(ABC):
     """Base class for joint connector segment generators.
 
@@ -192,19 +333,72 @@ class JointConnectorGenerator(ABC):
         """
         raise NotImplementedError
 
+
 class PlateSurfaceGenerator(ABC):
+    """Base class for plate surface generators.
+
+    Subclasses should implement ``generate_surfaces`` to produce structural surfaces
+    for a plate, given its joints.
+
+    """
+
     @abstractmethod
     def generate_surfaces(self, plate: Plate, joints: Sequence[Joint]) -> List[StructuralSurface]:
+        """Generate structural surfaces for a plate.
+
+        Parameters
+        ----------
+        plate : :class:`compas_timber.elements.Plate`
+            The plate for which to generate surfaces.
+        joints : list of :class:`compas_timber.connections.Joint`
+            The joints associated with the plate.
+
+        Returns
+        -------
+        list of :class:`StructuralSurface`
+
+        """
         raise NotImplementedError
+
+
 class PlateConnectionGenerator(ABC):
+    """Base class for plate connection line generators.
+
+    Subclasses should implement ``generate_connection_lines`` to produce the lines
+    along which the structural surfaces of two joined plates are connected.
+
+    """
+
     @abstractmethod
     def generate_connection_lines(self, joint: Joint, model: TimberModel) -> List[StructuralSurfaceLine]:
+        """Generate connection lines for a joint between plates.
+
+        Parameters
+        ----------
+        joint : :class:`compas_timber.connections.Joint`
+            The joint for which to generate connection lines.
+        model : :class:`compas_timber.model.TimberModel`
+            The model holding the structural surfaces of the joined plates.
+
+        Returns
+        -------
+        list of :class:`StructuralSurfaceLine`
+
+        """
         raise NotImplementedError
 
-class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
-    """Generates structural segments by splitting the beam centerline at joint and support locations."""
 
-    def __init__(self, max_structural_extension=0.30):
+class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
+    """Generates structural segments by splitting the beam centerline at joint and support locations.
+
+    Parameters
+    ----------
+    max_structural_extension : float, optional
+        Passed to :func:`effective_centerline`, in design units (mm). Defaults to 300.0.
+
+    """
+
+    def __init__(self, max_structural_extension=300.0):
         self.max_structural_extension = max_structural_extension
 
     def _centerline(self, beam, include_points=None):
@@ -227,9 +421,14 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 
     def _joint_points_on_beam(self, beam: Beam, joint: Joint) -> List[Point]:
         points = []
-        include_points = [joint.location] if getattr(joint, "location", None) else None
+        location = _joint_location(joint)
+        include_points = [location] if location else None
 
         for beam_a, beam_b in joint.interactions:
+            if not hasattr(beam_a, "centerline") or not hasattr(beam_b, "centerline"):
+                # e.g. beam-to-fastener interactions, there is no centerline to intersect with
+                continue
+
             centerline_a = self._centerline(beam_a, include_points)
             centerline_b = self._centerline(beam_b, include_points)
 
@@ -240,14 +439,14 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
                 _, _, point_b = distance_segment_segment_points(centerline_a, centerline_b)
                 points.append(Point(*point_b))
 
-        if not points:
-            points.append(joint.location)
+        if not points and location:
+            points.append(location)
 
         return points
 
     def generate_segments(self, beam: Beam, joints: Sequence[Joint]) -> List[StructuralSegment]:
         split_points_with_distances = []
-        include_points = [joint.location for joint in joints if getattr(joint, "location", None)]
+        include_points = [location for location in (_joint_location(joint) for joint in joints) if location]
         centerline = self._centerline(beam, include_points)
 
         for joint in joints:
@@ -268,10 +467,23 @@ class SimpleBeamSegmentGenerator(BeamSegmentGenerator):
 
         return [StructuralSegment(line=seg, frame=Frame(seg.start, beam.frame.xaxis, beam.frame.yaxis), cross_section=(beam.width, beam.height)) for seg in split_segments]
 
-class SimpleJointConnectorGenerator(JointConnectorGenerator):
-    """Generates connector segments as virtual lines between non-intersecting beam centerlines."""
 
-    def __init__(self, max_candidate_connector_distance=0.01, use_candidate_connectors=True, max_structural_extension=0.30):
+class SimpleJointConnectorGenerator(JointConnectorGenerator):
+    """Generates connector segments as virtual lines between non-intersecting beam centerlines.
+
+    Parameters
+    ----------
+    max_candidate_connector_distance : float, optional
+        Joint candidates whose centerlines are further apart than this get no connector, in design units (mm).
+        Does not apply to joints. Defaults to 10.0.
+    use_candidate_connectors : bool, optional
+        If False, joint candidates get no connectors at all. Defaults to True.
+    max_structural_extension : float, optional
+        Passed to :func:`effective_centerline`, in design units (mm). Defaults to 300.0.
+
+    """
+
+    def __init__(self, max_candidate_connector_distance=10.0, use_candidate_connectors=True, max_structural_extension=300.0):
         self.max_candidate_connector_distance = max_candidate_connector_distance
         self.use_candidate_connectors = use_candidate_connectors
         self.max_structural_extension = max_structural_extension
@@ -286,8 +498,13 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
         if is_candidate and not self.use_candidate_connectors:
             return results
 
-        include_points = [joint.location] if getattr(joint, "location", None) else None
+        location = _joint_location(joint)
+        include_points = [location] if location else None
         for beam_a, beam_b in joint.interactions:
+            if not hasattr(beam_a, "centerline") or not hasattr(beam_b, "centerline"):
+                # e.g. beam-to-fastener interactions, there is no centerline to connect to
+                continue
+
             centerline_a = self._centerline(beam_a, include_points)
             centerline_b = self._centerline(beam_b, include_points)
             distance, p1, p2 = distance_segment_segment_points(centerline_a, centerline_b)
@@ -309,11 +526,13 @@ class SimpleJointConnectorGenerator(JointConnectorGenerator):
             results.append((beam_a, beam_b, [StructuralSegment(line=virtual_segment, frame=frame)]))
         return results
 
+
 def _get_open_points(polyline):
     points = list(polyline.points)
     if points[0].distance_to_point(points[-1]) < TOL.absolute:
         points = points[:-1]
     return points
+
 
 def _polyline_normal_and_direction(polyline):
     points = _get_open_points(polyline)
@@ -325,7 +544,7 @@ def _polyline_normal_and_direction(polyline):
         nx += (p0.y - p1.y) * (p0.z + p1.z)
         ny += (p0.z - p1.z) * (p0.x + p1.x)
         nz += (p0.x - p1.x) * (p0.y + p1.y)
-        
+
         vector = Vector.from_start_end(p0, p1)
         if vector.length > longest_length:
             longest = vector
@@ -337,6 +556,18 @@ def _polyline_normal_and_direction(polyline):
         longest.unitize()
     return normal, longest
 
+
+def _extreme_point_indices(points, axis, tolerance):
+    # indices of the points at either end of `points` along `axis`, and the extent along it
+    projections = [point.x * axis.x + point.y * axis.y + point.z * axis.z for point in points]
+    min_proj = min(projections)
+    max_proj = max(projections)
+
+    min_indices = [i for i, value in enumerate(projections) if abs(value - min_proj) <= tolerance]
+    max_indices = [i for i, value in enumerate(projections) if abs(value - max_proj) <= tolerance]
+    return min_indices, max_indices, max_proj - min_proj
+
+
 def _get_plate_center_outline(plate):
     pts_a = _get_open_points(plate.outline_a)
     pts_b = _get_open_points(plate.outline_b)
@@ -346,14 +577,24 @@ def _get_plate_center_outline(plate):
     center_points.append(center_points[0])
     return Polyline(center_points)
 
+
 class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
-    """
-    Generates analytical surfaces from plate centre outlines.
+    """Generates analytical surfaces from plate centre outlines.
+
     It stretches the center-plane of the plate to automatically close gaps
     to adjacent plates identified by the given joints.
 
     This generator produces one surface per plate and never subdivides it, so
     `split` is accepted for interface compatibility but has no effect here.
+
+    Parameters
+    ----------
+    tolerance : float, optional
+        Distance within which outline points count as lying at the same end of the plate,
+        and within which a plate counts as square, in design units (mm). Defaults to 2.0.
+    split : bool, optional
+        Accepted for interface compatibility, has no effect. Defaults to False.
+
     """
 
     def __init__(self, tolerance=2.0, split=False):
@@ -362,7 +603,7 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
 
     def generate_surfaces(self, plate, joints):
         center_outline = _get_plate_center_outline(plate)
-        
+
         for joint in joints:
             foreign_element = None
             for element in joint.elements:
@@ -377,25 +618,28 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
             target_point = _get_open_points(foreign_outline)[0]
 
             points = _get_open_points(center_outline)
-            _, direction = _polyline_normal_and_direction(center_outline)
-            
+            normal, direction = _polyline_normal_and_direction(center_outline)
+
             if not direction:
                 continue
 
-            projections = [point.x * direction.x + point.y * direction.y + point.z * direction.z for point in points]
-            min_proj = min(projections)
-            max_proj = max(projections)
-
-            min_indices = [i for i, value in enumerate(projections) if abs(value - min_proj) <= self.tolerance]
-            max_indices = [i for i, value in enumerate(projections) if abs(value - max_proj) <= self.tolerance]
+            # The plate is stretched at one of its ends along its longest edge. On a square plate
+            # that edge is an arbitrary pick, so both in-plane directions are considered there.
+            # TODO: revisit. Rectangular plates joined along one of their long edges are still not stretched.
+            # Using the joint's segment index (a_segment_index/b_segment_index) to find the edge to move would cover both cases.
+            perpendicular = normal.cross(direction)
+            min_indices, max_indices, extent = _extreme_point_indices(points, direction, self.tolerance)
+            candidates = [min_indices, max_indices]
+            perp_min_indices, perp_max_indices, perp_extent = _extreme_point_indices(points, perpendicular, self.tolerance)
+            if abs(extent - perp_extent) <= self.tolerance:
+                candidates += [perp_min_indices, perp_max_indices]
 
             best = None
-            for indices in [min_indices, max_indices]:
-                if not indices: continue
+            for indices in candidates:
+                if not indices:
+                    continue
                 midpoint = Point(
-                    sum(points[i].x for i in indices) / len(indices),
-                    sum(points[i].y for i in indices) / len(indices),
-                    sum(points[i].z for i in indices) / len(indices)
+                    sum(points[i].x for i in indices) / len(indices), sum(points[i].y for i in indices) / len(indices), sum(points[i].z for i in indices) / len(indices)
                 )
                 vec = Vector.from_start_end(midpoint, target_point)
                 signed_dist = vec.dot(target_normal)
@@ -407,7 +651,7 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
             if best is not None:
                 dist, signed_dist, indices, target_normal = best
                 thickness = plate.thickness
-                if dist <= (thickness * 1.5): # allow a buffer
+                if dist <= (thickness * 1.5):  # allow a buffer
                     move_vector = target_normal * signed_dist
                     new_points = []
                     for index, point in enumerate(points):
@@ -420,22 +664,29 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
 
         normal, direction = _polyline_normal_and_direction(center_outline)
         pts = _get_open_points(center_outline)
-        frame = Frame(pts[0], direction, normal)
-        
-        surface = StructuralSurface(
-            outline=center_outline,
-            frame=frame,
-            thickness=plate.thickness,
-            parent_plate=plate
-        )
+        # Frame takes two in-plane axes, the normal is derived from them
+        frame = Frame(pts[0], direction, normal.cross(direction))
+
+        surface = StructuralSurface(outline=center_outline, frame=frame, thickness=plate.thickness, parent_plate=plate)
         return [surface]
 
+
 class SimplePlateConnectionGenerator(PlateConnectionGenerator):
+    """Generates interaction lines strictly from the topological intersections of extended StructuralSurfaces.
+
+    Assumes `StructuralSurfaces` have already been generated and stored in the model.
+
+    When the joint carries the index of the joined outline segment of the first plate (``a_segment_index``,
+    as plate joints and plate joint candidates do), only that segment is considered.
+    Otherwise the first outline segment of the first plate lying in the plane of the second plate is used.
+
+    Parameters
+    ----------
+    tolerance : float, optional
+        Maximum distance of a segment's endpoints to the other surface's plane, in design units (mm). Defaults to 2.0.
+
     """
-    Generates interaction lines strictly from the topological intersections of 
-    extended StructuralSurfaces. Assumes `StructuralSurfaces` have already been 
-    generated and stored in the model.
-    """
+
     def __init__(self, tolerance=2.0):
         self.tolerance = tolerance
 
@@ -445,47 +696,42 @@ class SimplePlateConnectionGenerator(PlateConnectionGenerator):
             return []
 
         plate_a, plate_b = plates[0], plates[1]
-        
+
         surfs_a = model.get_plate_structural_surfaces(plate_a)
         surfs_b = model.get_plate_structural_surfaces(plate_b)
-        
+
         if not surfs_a or not surfs_b:
             return []
-            
+
         surf_a = surfs_a[0]
         surf_b = surfs_b[0]
 
         lines_on_b = []
         norm_b = surf_b.frame.normal
         origin_b = surf_b.frame.point
-        
+
         pts_a = _get_open_points(surf_a.outline)
-        for i, p0 in enumerate(pts_a):
-            p1 = pts_a[(i+1)%len(pts_a)]
+        # the centre outline keeps the vertex order of outline_a, so the joint's segment index carries over
+        segment_index = getattr(joint, "a_segment_index", None)
+        indices = [segment_index] if segment_index is not None else range(len(pts_a))
+        for i in indices:
+            p0 = pts_a[i]
+            p1 = pts_a[(i + 1) % len(pts_a)]
             d0 = Vector.from_start_end(origin_b, p0).dot(norm_b)
             d1 = Vector.from_start_end(origin_b, p1).dot(norm_b)
-            
+
             if abs(d0) <= self.tolerance and abs(d1) <= self.tolerance:
                 lines_on_b.append(Line(p0, p1))
-                
+
         results = []
         if lines_on_b:
-            # We assume the first collinear line is the joint line
+            # without a segment index, we assume the first coplanar line is the joint line
             intersection_line = lines_on_b[0]
-            results.append(StructuralSurfaceLine(
-                line=intersection_line,
-                parent_surface=surf_a,
-                parent_plate=plate_a,
-                line_type="connection"
-            ))
-            results.append(StructuralSurfaceLine(
-                line=intersection_line,
-                parent_surface=surf_b,
-                parent_plate=plate_b,
-                line_type="connection"
-            ))
-            
+            results.append(StructuralSurfaceLine(line=intersection_line, parent_surface=surf_a, parent_plate=plate_a, line_type="connection"))
+            results.append(StructuralSurfaceLine(line=intersection_line, parent_surface=surf_b, parent_plate=plate_b, line_type="connection"))
+
         return results
+
 
 class BeamStructuralElementSolver:
     """Produces structural segments for beams and joints in a timber model.
@@ -583,14 +829,33 @@ class BeamStructuralElementSolver:
                 results.extend(segments)
         return results
 
+
 class PlateStructuralElementSolver:
+    """Produces structural surfaces for plates and connection lines for their joints in a timber model.
+
+    Parameters
+    ----------
+    plate_surface_generator : :class:`PlateSurfaceGenerator`, optional
+        Generator used to produce structural surfaces for plates.
+        Defaults to :class:`SimplePlateSurfaceGenerator`.
+    plate_connection_generator : :class:`PlateConnectionGenerator`, optional
+        Generator used to produce connection lines for joints.
+        Defaults to :class:`SimplePlateConnectionGenerator`.
+    interaction_type : :class:`InteractionType`, optional
+        Which interaction types to consider when creating structural surfaces.
+        Defaults to ``InteractionType.AUTO``.
+    split : bool, optional
+        Passed to the default :class:`SimplePlateSurfaceGenerator`. Defaults to True.
+
+    """
+
     def __init__(
         self,
-        plate_surface_generator=None,
-        plate_connection_generator=None,
-        interaction_type=None,
-        split=True,
-    ):
+        plate_surface_generator: Optional[PlateSurfaceGenerator] = None,
+        plate_connection_generator: Optional[PlateConnectionGenerator] = None,
+        interaction_type: Optional[InteractionType] = None,
+        split: bool = True,
+    ) -> None:
         self.plate_surface_generator = plate_surface_generator or SimplePlateSurfaceGenerator(split=split)
         self.plate_connection_generator = plate_connection_generator or SimplePlateConnectionGenerator()
         self._interaction_type = interaction_type
@@ -612,7 +877,23 @@ class PlateStructuralElementSolver:
 
         return candidates
 
-    def add_structural_surfaces(self, model):
+    def add_structural_surfaces(self, model: TimberModel) -> Tuple[List[StructuralSurface], Iterable[Joint]]:
+        """Creates and adds structural surfaces for all plates to the timber model.
+
+        Parameters
+        ----------
+        model : :class:`compas_timber.model.TimberModel`
+            The timber model containing the plates and joints.
+
+        Returns
+        -------
+        list of :class:`StructuralSurface`
+            The structural surfaces that were created and added to the model.
+        set of :class:`compas_timber.connections.Joint`
+            The joints that were traversed when creating the surfaces.
+            Should be passed to :meth:`add_joint_structural_lines` to avoid duplicates.
+
+        """
         joints_traversed = set()
         surfaces = []
 
@@ -627,7 +908,24 @@ class PlateStructuralElementSolver:
 
         return surfaces, joints_traversed
 
-    def add_joint_structural_lines(self, model, joints):
+    def add_joint_structural_lines(self, model: TimberModel, joints: Iterable[Joint]) -> List[StructuralSurfaceLine]:
+        """Creates and adds structural connection lines for the given joints to the timber model.
+
+        Requires the structural surfaces to have been created with :meth:`add_structural_surfaces` first.
+
+        Parameters
+        ----------
+        model : :class:`compas_timber.model.TimberModel`
+            The timber model containing the plates and joints.
+        joints : iterable of :class:`compas_timber.connections.Joint`
+            The joints for which to create connection lines.
+
+        Returns
+        -------
+        list of :class:`StructuralSurfaceLine`
+            The connection lines that were created and added to the model.
+
+        """
         lines = []
 
         for joint in joints:
@@ -642,6 +940,8 @@ class PlateStructuralElementSolver:
             lines.extend(connection_lines)
 
         return lines
+
+
 class StructuralGraph(Graph):
     """A structural graph derived from a :class:`~compas_timber.model.TimberModel`.
 
@@ -666,6 +966,13 @@ class StructuralGraph(Graph):
     connector_edges : iterator
         ``(u, v)`` pairs for edges that represent virtual connector segments
         between non-intersecting beam centerlines.
+    surface_boundary_edges : iterator
+        ``(u, v)`` pairs for edges on the outline of a plate structural surface.
+    surface_connection_edges : iterator
+        ``(u, v)`` pairs for edges along which two plate structural surfaces are connected.
+    surfaces : list of dict
+        One dict per plate structural surface, with the :class:`StructuralSurface` under ``"surface"``
+        and its outline's node keys under ``"boundary_nodes"``.
 
     Examples
     --------
@@ -704,6 +1011,11 @@ class StructuralGraph(Graph):
         - ``joint`` — *(connector edges)* the source
           :class:`~compas_timber.connections.Joint`, or ``None`` when the connector
           was derived from a candidate rather than a resolved joint.
+
+        Plate structural surfaces add ``"surface_boundary"`` edges carrying ``surface``
+        and ``plate``. Surface lines (e.g. connections between plates) are collected
+        under ``surface_lines`` on the edge they lie on, which is usually an existing
+        boundary edge; otherwise a new edge is added with ``type`` set to the line type.
 
         Parameters
         ----------
@@ -763,31 +1075,37 @@ class StructuralGraph(Graph):
                 v = _find_or_create_node(segment.line.end)
                 instance.add_edge(u, v, segment=segment, type="connector", joint=joint)
 
-        # --- Generate Surface Topology ---
+        # --- plate structural surfaces (stored per node in the model graph) ---
         for plate in model.plates:
             surfaces = model.get_plate_structural_surfaces(plate)
             for surface in surfaces:
-                node_ids = [_find_or_create_node(pt) for pt in surface.outline.points]
-                
+                # the outline is closed, its last point is the first one again
+                node_ids = [_find_or_create_node(pt) for pt in _get_open_points(surface.outline)]
+
                 # close the loop
                 for u, v in pairwise(node_ids + [node_ids[0]]):
                     instance.add_edge(u, v, type="surface_boundary", surface=surface, plate=plate)
-                
-                instance._cached_surfaces.append({
-                    "surface": surface,
-                    "boundary_nodes": node_ids[:-1] # Exclude duplicated end node
-                })
 
-        # --- Generate Surface Connections ---
+                instance._cached_surfaces.append({"surface": surface, "boundary_nodes": node_ids})
+
+        # --- surface lines (stored per edge in the model graph) ---
         for edge in model._graph.edges():
             surface_lines = model._graph.edge_attribute(edge, "structural_surface_lines")
-            if not surface_lines: 
+            if not surface_lines:
                 continue
-            
+
             for s_line in surface_lines:
                 u = _find_or_create_node(s_line.line.start)
                 v = _find_or_create_node(s_line.line.end)
-                instance.add_edge(u, v, type=s_line.line_type, line=s_line)
+                # A connection line usually coincides with a surface boundary. The graph is simple,
+                # so the lines are collected on the existing edge instead of overwriting the boundary.
+                if instance.has_edge((v, u)):
+                    u, v = v, u
+                if not instance.has_edge((u, v)):
+                    instance.add_edge(u, v, type=s_line.line_type)
+                lines = instance.edge_attribute((u, v), "surface_lines") or []
+                lines.append(s_line)
+                instance.edge_attribute((u, v), "surface_lines", lines)
 
         if instance.number_of_nodes() == 0:
             raise ValueError("No structural segments found in the model. Call TimberModel.create_beam_structural_segments() before building the structural graph.")
@@ -867,9 +1185,12 @@ class StructuralGraph(Graph):
     @property
     def surface_connection_edges(self):
         # type: () -> Iterable[Tuple]
-        """Iterate over ``(u, v)`` pairs for all surface connection edges."""
+        """Iterate over ``(u, v)`` pairs for all surface connection edges.
+
+        A connection edge may also be a surface boundary edge, so the two iterators can overlap.
+        """
         for u, v in self.edges():
-            if self.edge_attribute((u, v), "type") == "connection":
+            if any(line.line_type == "connection" for line in self.surface_lines(u, v)):
                 yield u, v
 
     def segment(self, u, v):
@@ -916,6 +1237,21 @@ class StructuralGraph(Graph):
             candidate rather than a resolved joint.
         """
         return self.edge_attribute((u, v), "joint")
+
+    def surface_lines(self, u, v):
+        """Return the :class:`StructuralSurfaceLine` objects on the edge ``(u, v)``.
+
+        Parameters
+        ----------
+        u : int, graph node
+        v : int, graph node
+
+        Returns
+        -------
+        list of :class:`StructuralSurfaceLine`
+            Empty for edges without surface lines.
+        """
+        return self.edge_attribute((u, v), "surface_lines") or []
 
         # ------------------------------------------------------------------
 

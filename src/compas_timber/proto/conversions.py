@@ -681,6 +681,8 @@ register_wrapper(connections_pb2.JointData)
 # ---------------------------------------------------------------------------
 
 from compas_timber.structural import StructuralSegment  # noqa: E402
+from compas_timber.structural import StructuralSurface  # noqa: E402
+from compas_timber.structural import StructuralSurfaceLine  # noqa: E402
 
 
 def _segment_to_pb(obj):
@@ -716,6 +718,9 @@ def _segment_from_pb(msg):
 
 pb_serializer(StructuralSegment)(_segment_to_pb)
 pb_deserializer(structural_pb2.StructuralSegmentData)(_segment_from_pb)
+
+register(StructuralSurface, structural_pb2.StructuralSurfaceData)
+register(StructuralSurfaceLine, structural_pb2.StructuralSurfaceLineData)
 
 # ---------------------------------------------------------------------------
 # planning
