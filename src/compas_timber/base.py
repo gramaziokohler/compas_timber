@@ -120,7 +120,21 @@ class TimberElement(Element, abc.ABC):
 
     @property
     def is_group_element(self):
-        # NOTE: I left this in for now, but in the new compas_model, any element can be a container/parent.
+        """True if this element can be used as a container for other elements.
+
+        An element overriding this to ``True`` is expected to:
+
+        - hold its child elements directly (e.g. in a plain list) before it is added to a model,
+          and expose them through a property that switches to reading ``self.children`` once
+          ``self.model`` is set (see e.g. ``Panel.layers``, ``Layer.sublayers``).
+        - implement a ``merge_contained_elements(model)``-shaped method (the name may be more
+          specific, e.g. ``Panel.merge_layer_structure``) that adds its children into ``model`` as
+          its own tree children (``model.add_element(child, parent=self)``), guarding against
+          children that are already present in ``model``.
+
+        This is not called automatically by ``TimberModel.add_element`` - the constructing code is
+        expected to call it explicitly, right after adding the container itself to the model.
+        """
         return False
 
     @property

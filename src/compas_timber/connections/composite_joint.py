@@ -93,6 +93,21 @@ class CompositeJoint(Joint):
         for joint in self.joints:
             joint.clear_extensions()
 
+    def resolve_composite_elements(self):
+        """Delegates composite-routing to each sub-joint, then refreshes `self.elements`/
+        `self.element_guids` (the flattened union) to match.
+
+        `CompositeJoint.add_extensions()`/`add_features()` never read `self.elements` directly -
+        they delegate entirely to `self.joints`, each with its own independent `_elements`. The
+        base `Joint.resolve_composite_elements()` only ever mutates the outer joint's own
+        `_elements`, which is therefore a no-op here: it wouldn't route any `CompositeBeam` a
+        sub-joint actually touches. Overridden to route each sub-joint instead.
+        """
+        for joint in self.joints:
+            joint.resolve_composite_elements()
+        self._elements = tuple(set(e for j in self.joints for e in j.elements))
+        self.element_guids = tuple(str(e.guid) for e in self._elements)
+
     def restore_elements_from_keys(self, model: TimberModel):
         """Restores element references by delegating to each sub-joint, then rebuilds elements.
 
