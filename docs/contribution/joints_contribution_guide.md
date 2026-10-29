@@ -4,6 +4,7 @@ Joints represent the interaction between two or more timber elements to form str
 
 !!! note
     For implementing new BTLx Processings, see the [BTLx Contribution Guide](BTLx_contribution_guide.md).
+    For an overview of the `Joint` class hierarchy and the topology solving machinery, see the [Class Diagrams](class_diagrams.md#connections-subsystem).
 
 ## Creating a New Joint
 
@@ -17,18 +18,25 @@ Before implementation, establish the joint specifications and study how the invo
 - Required BTLx processings for the joint geometry
 - Target elements for each processing operation
 
-**Identify Joint Topology**: Determine the connection topology using standard notation:
+**Identify Joint Topology**: Determine the connection topology using the `JointTopology` values (defined in `compas_timber.connections`):
 
-- `TOPO-X`: Elements both interacting somewhere along their lengths
-- `TOPO-L`: Elements meeting at their ends at an angle
-- `TOPO-T`: One element's end intersecting another element along its length
-- `TOPO-I`: Elements joined end-to-end in a straight line
+- `TOPO_I`: End-to-end joint between two parallel beams (straight line)
+- `TOPO_L`: End-to-end joint between two non-parallel beams (corner)
+- `TOPO_T`: End-to-middle joint between two beams
+- `TOPO_X`: Middle-to-middle joint between two beams (crossing)
+- `TOPO_Y`: Joint between three or more beams where all beams meet at their ends (e.g. `YButtJoint`, `BallNodeJoint`)
+- `TOPO_K`: Joint between three or more beams where at least one beam meets in the middle
+- `TOPO_EDGE_EDGE`: Joint between two plates/panels whose edges are aligned (e.g. `PlateLButtJoint`, `PlateMiterJoint`)
+- `TOPO_EDGE_FACE`: Joint between two plates/panels where the edge of one lies on the face of the other (e.g. `PlateTButtJoint`)
+
+`TOPO_UNKNOWN` is the fallback used by the solvers when no topology could be determined.
 
 **Define Element Roles**: Assign specific roles to each participating element, if relevant:
 
 !!! note
     Some joint topologies or specific joint types require clear distinctions between participating elements (e.g., `main beam` vs. `cross beam`), while others treat all elements equally.
     Consider whether your joint implementation needs element role differentiation.
+    For inline topologies (`TOPO_I`, e.g. `ISimpleScarf`), the elements are collinear rather than intersecting, so roles like `main_beam` and `cross_beam` simply denote the first and second connected segments.
 
 
 ### 2. Create the Joint Class
@@ -36,15 +44,11 @@ Before implementation, establish the joint specifications and study how the invo
 Create a new module in `src/compas_timber/connections/` that inherits from `Joint`.  Based on the identified topology and joint type, name the joint class accordingly (e.g., `TButtJoint` for a **TOPO-T** butt joint).
 The following methods and attributes are the absolute minimum required to implement a joint:
 
-- `SUPPORTED_TOPOLOGY` : Class attribute matching the joint topology (`JointTopology.TOPO_X`, `JointTopology.TOPO_L`, `JointTopology.TOPO_T`, or `JointTopology.TOPO_I`)
+- `SUPPORTED_TOPOLOGY` : Class attribute matching the joint topology (one of the `JointTopology` values listed above, e.g. `JointTopology.TOPO_T`)
 
-- `__init__()` :
+- `__init__()` : Must accept its elements with `None` defaults (required for deserialization) and pass them to the base class via `elements=(...)`
 
-- `__data__` : Property returning a dictionary of joint data for serialization
-
-- `elements` : Property returning a list of participating elements
-
-- `restore_beams_from_keys()` : Method for restoring beam references after deserialization
+- `__data__` : Property returning a dictionary of joint data for serialization (element GUIDs are stored by the base class)
 
 !!! note
     Joints can inherit from a generic base class (e.g., `ButtJoint`) to share common logic across topology-specific implementations (e.g., `LButtJoint`, `TButtJoint`).
@@ -59,36 +63,31 @@ class TNewJoint(Joint):
     @property
     def __data__(self):
         data = super(TNewJoint, self).__data__
-        data["main_beam_guid"] = self.main_beam_guid
-        data["cross_beam_guid"] = self.cross_beam_guid
         data["arg_a"] = self.arg_a
         data["arg_b"] = self.arg_b
         return data
 
-    def __init__(self, main_beam, cross_beam, arg_a=None, arg_b=None, **kwargs):
-        super(TNewJoint, self).__init__(**kwargs)
-        self.main_beam = main_beam
-        self.cross_beam = cross_beam
-        self.main_beam_guid = kwargs.get("main_beam_guid", None) or str(main_beam.guid)
-        self.cross_beam_guid = kwargs.get("cross_beam_guid", None) or str(cross_beam.guid)
+    def __init__(self, main_beam=None, cross_beam=None, arg_a=None, arg_b=None, **kwargs):
+        super(TNewJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
         self.arg_a = arg_a or "default_value_a"
         self.arg_b = arg_b or "default_value_b"
 
         self.features = []  # List to hold BTLx processings (features) for this joint
 
     @property
-    def elements(self):
-        """Returns a list of participating elements in the joint."""
-        return [self.main_beam, self.cross_beam]
+    def main_beam(self):
+        """Role-specific alias for the first element in the joint."""
+        return self.element_a
 
-    def restore_beams_from_keys(self):
-        """After de-serialization, restores references to the main and cross beams saved in the model."""
-        self.main_beam = model[self.main_beam_guid]
-        self.cross_beam = model[self.cross_beam_guid]
+    @property
+    def cross_beam(self):
+        """Role-specific alias for the second element in the joint."""
+        return self.element_b
 ```
 
 !!! note
-    Element references cannot be directly serialized, so joints store element GUIDs for persistence and restore references during deserialization.
+    Element references cannot be directly serialized. The base `Joint` class stores element GUIDs and restores the references automatically during deserialization (`restore_elements_from_keys()`).
+    If your joint has attributes derived from its elements that must be recomputed after deserialization, implement the `_set_unset_attributes()` hook — it is called by the base class once the elements have been restored.
 
 See also:
 
@@ -108,7 +107,7 @@ Implement the following methods in your joint class:
 
 - `add_extensions()`: Modify element geometry (such as extending beam lengths) to accommodate the joint requirements and ensure geometric feasibility.
 
-- `check_elements_compatibility()`: Validate that the elements meet necessary joint requirements if applicable, such as dimensions or coplanarity.
+- `check_elements_compatibility()`: Validate that the elements meet necessary joint requirements if applicable, such as dimensions or coplanarity. This is a *classmethod* that receives the elements as an argument, so it can be called before the joint is instantiated; `process_joinery()` also calls it on each joint's elements.
 
 #### Example:
 
@@ -123,13 +122,20 @@ class TNewJoint(Joint):
             plane_a = self.main_beam_cutting_plane() # beam should be extended to this plane
             start_a, end_a = self.main_beam.extension_to_plane(plane_a) # calculate the extension lengths
         except Exception as ex:
-            raise BeamJoiningError(self.main_beam, self, debug_info=str(ex))
-        self.main_beam.add_blank_extension(start_a, end_a, self.main_beam_guid) # apply the extension to the main beam
+            raise BeamJoiningError(self.elements, self, debug_info=str(ex))
+        self.main_beam.add_blank_extension(start_a, end_a, self.guid) # apply the extension to the main beam, keyed by this joint's guid
 
 
     def add_features(self):
-        """Adds the required features in the form of BTLxProcessings to both beams."""
+        """Removes this joint's previously added features, then adds the required features in the form of BTLxProcessings to both beams."""
         assert self.cross_beam and self.main_beam
+
+        # remove any features this joint added in a previous run.
+        # `process_joinery()` may run more than once on the same model (e.g. on every Grasshopper recompute);
+        # without this, each run would apply the joint's features again, on top of the previous ones.
+        if self.features:
+            self.main_beam.remove_features(self.features)
+            self.cross_beam.remove_features(self.features)
 
         # create a BTLx processing for the main beam
         main_feature = NewProcessing.from_plane_and_beam(
@@ -145,27 +151,33 @@ class TNewJoint(Joint):
         cross_feature = # ... Similar logic to create the BTLx processing for the cross beam ...
         self.cross_beam.add_features(cross_feature)  # register the feature to the cross
 
-        self.features.extend([main_feature, cross_feature])  # register the features to the joint itself
+        self.features = [main_feature, cross_feature]  # register the features to the joint itself (replace, don't extend — the old entries were just removed)
 
-    def check_elements_compatibility(self):
+    @classmethod
+    def check_elements_compatibility(cls, elements, raise_error=False):
         """Checks if the elements are compatible for the creation of the joint."""
-        assert self.cross_beam and self.main_beam
+        main_beam, cross_beam = elements
         are_compatible = # ... Logic to check if the main and cross beams are compatible for the joint ...
         if not are_compatible:
+            if not raise_error:
+                return False
             raise BeamJoiningError(
-                self.elements,
-                self,
+                beams=elements,
+                joint=cls,
                 debug_info="The main and cross beams are not compatible for the joint."
             )
+        return True
 ```
 
 !!! note
-    In the `add_features()` method, register each BTLx processing (feature) both to the corresponding element using `element.add_features()` and to the joint itself using `self.features.append(feature)`.
-    This ensures features are properly associated for both element modification and joint serialization.
+    In the `add_features()` method, register each BTLx processing (feature) both to the corresponding element using `element.add_features()` and to the joint itself in `self.features`.
+    Registering on the element is what applies the feature; registering on the joint is what makes re-runs idempotent — `self.features` is the joint's record of what it added, and the remove-first step at the top of `add_features()` uses it to undo the previous run before adding again.
+    Blank extensions need no such step: `add_blank_extension()` is keyed by `self.guid`, so the element can track each joint's contribution (and drop it when the joint is removed). Features carry no owner key on the element — the joint's `self.features` list is the only record of which features are whose, hence the explicit remove.
+    See `ButtJoint.add_features()` and `LMiterJoint.add_features()` for the pattern in shipped joints.
 
 See also:
 
-- `TButtJoint.add_extensions()`
+- `ButtJoint.add_extensions()`
 - `LMiterJoint.add_extensions()`
 - `XLapJoint.add_features()`
 - `TBirdsmouthJoint.add_features()`
@@ -201,6 +213,6 @@ Use `BeamJoiningError` for joint-specific failures with meaningful debug informa
 Include element references and joint context in error messages to aid debugging.
 
 **Serialization Requirements**:
-Store element GUIDs, not direct references, for persistence.
-Implement proper `restore_beams_from_keys()` to rebuild element relationships after deserialization.
+Element GUIDs are stored and restored automatically by the base `Joint` class.
+Implement `_set_unset_attributes()` if element-derived attributes need recomputing after deserialization.
 Include all joint parameters in the `__data__` property for complete serialization.

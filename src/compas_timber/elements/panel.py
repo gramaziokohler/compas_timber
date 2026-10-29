@@ -145,6 +145,7 @@ class Panel(Element):
         self._root_layers = []
         self._planes = None
         self._attach_layer_structure()
+        self.debug_info = []
 
     def __repr__(self) -> str:
         return "Panel(name={}, {}, {}, {:.3f})".format(self.name, Frame.from_transformation(self.transformation), self.outline_a, self.thickness)
