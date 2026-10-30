@@ -23,6 +23,8 @@ from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
+from compas_timber.structural import StructuralSurface
+from compas_timber.structural import StructuralSurfaceLine
 
 
 class TimberModel(Model):
@@ -61,8 +63,8 @@ class TimberModel(Model):
 
     """
 
-    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None}
-    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None}
+    _TIMBER_GRAPH_EDGE_ATTRIBUTES = {"joints": None, "candidates": None, "structural_segments": None, "structural_surface_lines": None}
+    _TIMBER_GRAPH_NODE_ATTRIBUTES = {"structural_segments": None, "structural_surfaces": None}
 
     @property
     def __data__(self):
@@ -83,7 +85,25 @@ class TimberModel(Model):
         for candidate in model.joint_candidates:
             candidate.restore_elements_from_keys(model)
 
+        model._restore_structural_surface_parents()
+
         return model
+
+    def _restore_structural_surface_parents(self):
+        # Structural surfaces and surface lines serialize their parents by guid only, to avoid embedding
+        # the plates (and surfaces) a second time. Restore the references after deserialization.
+        surfaces_by_guid = {}
+        for plate in self.plates:
+            for surface in self.get_plate_structural_surfaces(plate):
+                surface.parent_plate = plate
+                surfaces_by_guid[str(surface.guid)] = surface
+
+        for edge in self._graph.edges():
+            for line in self._graph.edge_attribute(edge, "structural_surface_lines") or []:
+                if line.parent_plate is None and line.parent_plate_guid in self._elements:
+                    line.parent_plate = self._elements[line.parent_plate_guid]
+                if line.parent_surface is None and line.parent_surface_guid in surfaces_by_guid:
+                    line.parent_surface = surfaces_by_guid[line.parent_surface_guid]
 
     def __init__(self, tolerance=None, **kwargs):
         super(TimberModel, self).__init__()
@@ -548,6 +568,93 @@ class TimberModel(Model):
         """
         segments = cast(List[StructuralSegment], self._graph.node_attribute(beam.graphnode, "structural_segments"))
         return segments or []
+
+    def add_plate_structural_surfaces(self, plate: Plate, surfaces: List[StructuralSurface]) -> None:
+        """Adds structural surfaces to the model node corresponding to the given plate.
+
+        Notes
+        -----
+        Normally, this method shouldn't be called directly. Use :class:`~compas_timber.structural.PlateStructuralElementSolver` to add structural surfaces.
+
+        Parameters
+        ----------
+        plate : :class:`~compas_timber.elements.Plate`
+            The plate to which the structural surfaces belong.
+        surfaces : list[:class:`~compas_timber.structural.StructuralSurface`]
+            The structural surfaces to add.
+        """
+        node = plate.graphnode
+        existing_surfaces = cast(List[StructuralSurface], self._graph.node_attribute(node, "structural_surfaces")) or []
+        existing_surfaces.extend(surfaces)
+        self._graph.node_attribute(node, "structural_surfaces", existing_surfaces)
+
+    def get_plate_structural_surfaces(self, plate: Plate) -> List[StructuralSurface]:
+        """Gets the structural surfaces assigned to the given plate.
+
+        Parameters
+        ----------
+        plate : :class:`~compas_timber.elements.Plate`
+            The plate whose structural surfaces to retrieve.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.structural.StructuralSurface`]
+            The structural surfaces assigned to the plate.
+        """
+        surfaces = cast(List[StructuralSurface], self._graph.node_attribute(plate.graphnode, "structural_surfaces"))
+        return surfaces or []
+
+    def remove_plate_structural_surfaces(self, plate: Plate) -> None:
+        """Removes the structural surfaces assigned to the given plate.
+
+        Parameters
+        ----------
+        plate : :class:`~compas_timber.elements.Plate`
+            The plate whose structural surfaces to remove.
+        """
+        self._graph.node_attribute(plate.graphnode, "structural_surfaces", None)
+
+    def add_structural_surface_lines(self, element_a: Element, element_b: Element, lines: List[StructuralSurfaceLine]) -> None:
+        """Adds structural surface lines to the interaction (edge) between two elements.
+
+        Notes
+        -----
+        Normally, this method shouldn't be called directly. Use :class:`~compas_timber.structural.PlateStructuralElementSolver` to add structural surface lines.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_timber.elements.TimberElement`
+            The first element.
+        element_b : :class:`~compas_timber.elements.TimberElement`
+            The second element.
+        lines : list[:class:`~compas_timber.structural.StructuralSurfaceLine`]
+            The structural surface lines to add.
+        """
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge not in self._graph.edges():
+            edge = (element_b.graphnode, element_a.graphnode)
+            if edge not in self._graph.edges():
+                raise ValueError("Interaction between elements {} and {} does not exist in the model.".format(element_a.name, element_b.name))
+
+        existing_lines = cast(List[StructuralSurfaceLine], self._graph.edge_attribute(edge, "structural_surface_lines")) or []
+        existing_lines.extend(lines)
+        self._graph.edge_attribute(edge, "structural_surface_lines", existing_lines)
+
+    def remove_structural_surface_lines(self, element_a: Element, element_b: Element) -> None:
+        """Removes the structural surface lines from the interaction (edge) between two elements.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_timber.elements.TimberElement`
+            The first element.
+        element_b : :class:`~compas_timber.elements.TimberElement`
+            The second element.
+        """
+        edge = (element_a.graphnode, element_b.graphnode)
+        if edge not in self._graph.edges():
+            edge = (element_b.graphnode, element_a.graphnode)
+        if edge in self._graph.edges():
+            self._graph.unset_edge_attribute(edge, "structural_surface_lines")
 
     def remove_beam_structural_segments(self, beam: Beam) -> None:
         """Removes all structural segments assigned to the given beam.
