@@ -14,6 +14,8 @@ from compas_timber.fabrication import Tenon
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
 
+from compas.data import json_dumps
+from compas.data import json_loads
 from compas.tolerance import Tolerance
 
 
@@ -386,3 +388,32 @@ def test_tenon_scaled():
     assert scaled.height == tenon.height * 2.0
     assert scaled.shape == tenon.shape
     assert scaled.shape_radius == tenon.shape_radius * 2.0
+
+
+@pytest.mark.parametrize(
+    "processing, boolean_op",
+    [
+        (
+            Tenon(OrientationType.END, 10.0, 20.0, 30.0, 80.0, 70.0, 60.0, False, False, 90.0, 50.0, 40.0, TenonShapeType.SQUARE, 15.0, True),
+            "compas_timber.fabrication.tenon.brep_union_first",
+        ),
+        (
+            Mortise(10.0, 20.0, 30.0, 80.0, 70.0, 60.0, False, False, 90.0, 50.0, 40.0, TenonShapeType.SQUARE, 15.0),
+            "compas_timber.fabrication.mortise.brep_difference_first",
+        ),
+    ],
+)
+def test_tenon_mortise_serialization(processing, boolean_op, cross_beam, mocker):
+    restored = json_loads(json_dumps(processing))
+
+    assert restored.__data__ == processing.__data__
+
+    # restored shape is an equal but not identical string, apply() must still treat it as SQUARE
+    volume = mocker.MagicMock()
+    mocker.patch.object(restored, "volume_from_params_and_beam", return_value=volume)
+    mocker.patch.object(restored, "frame_from_params_and_beam", return_value=Frame.worldXY())
+    mocker.patch(boolean_op)
+
+    restored.apply(mocker.MagicMock(), cross_beam)
+
+    volume.fillet.assert_not_called()
