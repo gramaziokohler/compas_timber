@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings
 from itertools import combinations
+from itertools import repeat
 from typing import Iterable
 from typing import List
 from typing import cast
@@ -11,11 +12,13 @@ from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.models import Model
 
+from compas_timber.connections import CompositeJoint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import get_connection_candidate
 from compas_timber.elements import Beam
+from compas_timber.elements import CompositeBeam
 from compas_timber.elements import Fastener
 from compas_timber.elements import Layer
 from compas_timber.elements import Panel
@@ -677,6 +680,14 @@ class TimberModel(Model):
         """
         errors = []
         joints = joints_to_process if joints_to_process is not None else self.joints
+        joints = self._expand_composite_joints(joints)
+
+        for joint in joints:
+            # if a joint targets a CompositeBeam with cut_all_parts=False (the default), route it
+            # to the single part its location applies to. Joints already expanded above (or that
+            # never touched a composite in the first place) are unaffected. Generic, joint-type-
+            # agnostic: relies only on Joint.location, computed the same way for every joint type.
+            joint.resolve_composite_elements()
 
         for joint in joints:
             joint.clear_extensions()
@@ -707,6 +718,62 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def _expand_composite_joints(self, joints):
+        # type: (Iterable[Joint]) -> list[Joint]
+        """Replaces any joint touching a `CompositeBeam` with `cut_all_parts=True` with one clone
+        per matching pair of parts, so the same joint type/parameters gets applied to every layer
+        instead of just the single nearest one (see `CompositeBeam.cut_all_parts`).
+
+        A `cut_all_parts` composite's parts are matched by index against the other element's parts
+        (if it is also such a composite) or repeated against a single other element otherwise. A
+        pair is skipped - not raised - if either element lacks `centerline` (e.g. a `Plate` paired
+        with a `Beam`-oriented joint type): that pair simply doesn't receive this joint.
+
+        The clone for a given part pair is cached on the original joint and reused on every later
+        call, rather than rebuilt from scratch - a clone remembers (via its own `.features`/blank
+        extensions) what it previously applied, which is what lets `clear_features()`/
+        `clear_extensions()` undo it before re-adding. A fresh clone every call would have nothing
+        to undo, so repeated `process_joinery()` calls would silently accumulate features/extensions
+        instead of staying idempotent.
+
+        Joints that don't touch a `cut_all_parts` composite are returned unchanged. `CompositeJoint`
+        is also returned unchanged and never expanded here - it delegates its actual joinery to its
+        own `self.joints` (unregistered sub-joints `type(joint)(*part_pair, **kwargs)` couldn't
+        reconstruct it from anyway), and those sub-joints aren't reachable from this model's
+        registered joint list to expand individually. A `cut_all_parts` composite touched only
+        through a `CompositeJoint` sub-joint is not currently expanded to all of its parts.
+
+        Parameters
+        ----------
+        joints : list[:class:`~compas_timber.connections.Joint`]
+
+        Returns
+        -------
+        list[:class:`~compas_timber.connections.Joint`]
+
+        """
+        skip_keys = {"name", "topology", "location", "element_guids"}
+        expanded = []
+        for joint in joints:
+            if isinstance(joint, CompositeJoint) or not any(isinstance(e, CompositeBeam) and e.cut_all_parts for e in joint.elements):
+                expanded.append(joint)
+                continue
+
+            per_element_options = [e.parts if (isinstance(e, CompositeBeam) and e.cut_all_parts) else repeat(e) for e in joint.elements]
+            # exclude guid references to the original (composite) elements - not real constructor
+            # params on most joint types, and stale/misleading if passed through to the clones.
+            kwargs = {k: v for k, v in joint.__data__.items() if k not in skip_keys and not k.endswith(("guid", "guids"))}
+            # per-part-pair clones, cached on the original joint and reused across calls (see docstring)
+            clone_cache = joint.__dict__.setdefault("_cut_all_parts_clones", {})
+            for part_pair in zip(*per_element_options):
+                if not all(hasattr(part, "centerline") for part in part_pair):
+                    continue  # this joint type doesn't apply to this pair (e.g. a Plate layer)
+                if part_pair not in clone_cache:
+                    clone_cache[part_pair] = type(joint)(*part_pair, **kwargs)
+                expanded.append(clone_cache[part_pair])
+
+        return expanded
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.
