@@ -173,7 +173,7 @@ Add your new processing to `src/compas_timber/fabrication/__init__.py` so it can
 
 ### 6. Add an Example
 
-Add a minimal example to `examples/fabrication` and a section to the [BTLx Processings](../btlx_processings.md) page, and render its image with `python scripts/screenshot_processing_examples.py <example>`.
+Add a minimal example to `examples/fabrication` and a section with an image of it to the [BTLx Processings](../btlx_processings.md) page.
 
 ### 7. Add Tests
 

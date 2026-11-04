@@ -3,7 +3,6 @@
 The processings of [BTLx 2.3](https://www.design2machine.com/btlx/BTLx_2_3_0.pdf) which were added with [`ParametricProcessing`](api/compas_timber.fabrication.md#compas_timber.fabrication.ParametricProcessing), each with a minimal example.
 
 The examples are in [`examples/fabrication`](https://github.com/gramaziokohler/compas_timber/tree/main/examples/fabrication). They need `compas_viewer` and `compas_brep[occ]`.
-The images are rendered from these examples with `python scripts/screenshot_processing_examples.py`.
 In the images the element is ghosted so that its hidden edges show, and blue is the material the processing removes, or the outline of a processing which removes none.
 
 !!! note

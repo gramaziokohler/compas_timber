@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
-* Added a minimal example of each new BTLx processing to `examples/fabrication`, the page BTLx Processings to the docs, and `scripts/screenshot_processing_examples.py` which renders the images of that page.
+* Added a minimal example of each new BTLx processing to `examples/fabrication` and the page BTLx Processings to the docs.
 * Added the remaining processings of BTLx 2.3 to `compas_timber.fabrication`: `RidgeValleyCut`, `SawCut`, `TriangleCut`, `Chamfer`, `Planing`, `Sphere`, `Marking`, `HipValleyRafterNotch`, `LogHouseHalfLap`, `LogHouseJoint`, `LogHouseFront`, `House`, `HouseMortise`, `JapaneseTenon`, `JapaneseMortise`, `ScarfJoint`, `Dovetail`, `TyroleanDovetail`, `ProfileFront`, `ProfileCambered`, `RoundArch`, `ProfileHead`, `SawContour`, `MillContour`, `NailContour`, `CrampContour`, `ScrewContour`, `PenContour`, `GlueArea`, `PlaningArea`, `PlasterArea`, `InsulationArea`, `LockoutArea`, `FreeSurface`, `PatternContour`, `ProcessingGroup`, `Connector` and `Variant`.
 * Added `ParametricProcessing`, a base class which derives validated properties, `__init__`, `__data__`, `scale()` and `apply()` of a processing from its `ATTRIBUTE_MAP`.
 * Added `default`, `limits`, `choices`, `scales` and `multiple` to `AttributeSpec`.
