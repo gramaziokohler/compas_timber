@@ -125,8 +125,8 @@ def test_profile_arc_xml():
     arc = ProfileArc(length=30.0, height=20.0, camber=5.0, arc_shape="concave", lap_length=1.0, lap_height=2.0, displacement=3.0)
     processing = ProfileHead(arc1=ProfileArc(), arc2=arc)
 
-    arc1 = BTLxWriter._element_from_complex_param(processing.arc1)
-    arc2 = BTLxWriter._element_from_complex_param(processing.arc2)
+    arc1 = BTLxWriter()._element_from_complex_param(processing.arc1)
+    arc2 = BTLxWriter()._element_from_complex_param(processing.arc2)
 
     assert ET.tostring(arc1, encoding="unicode") == '<Arc1 ArcShape="convex" LapLength="10.000" LapHeight="10.000" Displacement="10.000"><QuarterArc Radius="50.000" /></Arc1>'
     assert ET.tostring(arc2, encoding="unicode") == (

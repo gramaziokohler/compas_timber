@@ -65,7 +65,7 @@ def insertion_patterns_to_xml(insertion_patterns):
     root = ET.Element("InsertionPatterns")
     for pattern in insertion_patterns.patterns:
         element = ET.SubElement(root, "InsertionPattern")
-        element.append(BTLxWriter._processing_to_element(pattern.processing))
+        element.append(BTLxWriter()._create_processing(pattern.processing))
         element.append(frame_to_xml(pattern.position))
     return root
 

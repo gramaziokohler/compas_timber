@@ -94,6 +94,13 @@ def test_nested_processings_scale_exactly_once_with_meters(tmp_path):
     assert TOL.is_close(read.subprocessings[0].diameter, 10.0)
 
 
+def test_scaled_keeps_the_subprocessings_of_a_plain_processing():
+    drilling = _through_hole(100.0)
+    drilling.add_subprocessing(_through_hole(200.0))
+
+    assert TOL.is_close(drilling.scaled(2.0).subprocessings[0].start_x, 400.0)
+
+
 def test_group_json_round_trip():
     group = json_loads(json_dumps(ProcessingGroup(subprocessings=[_through_hole(100.0)])))
 

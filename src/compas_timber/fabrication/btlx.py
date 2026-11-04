@@ -272,7 +272,9 @@ class BTLxWriter(object):
             processings_element = ET.Element("Processings")
             for feature in element.features:
                 try:
-                    processing_element = self._create_processing(feature)
+                    # BTLx always uses mm
+                    processing = feature.scaled(1000.0) if self._tolerance.unit == "M" else feature
+                    processing_element = self._create_processing(processing)
                 except ValueError as ex:
                     self._errors.append(BTLxProcessingError("Failed to create processing: {}".format(ex), part, feature))
                 else:
@@ -288,28 +290,7 @@ class BTLxWriter(object):
         Parameters
         ----------
         processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
-            The processing object.
-
-        Returns
-        -------
-        :class:`~xml.etree.ElementTree.Element`
-            The processing element.
-
-        """
-        assert self._tolerance
-        # BTLx always uses mm
-        if self._tolerance.unit == "M":
-            processing = processing.scaled(1000.0)
-        return self._processing_to_element(processing)
-
-    @classmethod
-    def _processing_to_element(cls, processing):
-        """Creates the element of a processing whose parameters are already in mm, including its nested processings.
-
-        Parameters
-        ----------
-        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
-            The processing object.
+            The processing object, with its parameters in mm.
 
         Returns
         -------
@@ -326,25 +307,30 @@ class BTLxWriter(object):
         )
 
         for key, value in params_dict.items():
-            for item in value if isinstance(value, list) else [value]:  # a list is a repeated element
-                if isinstance(item, dict):
-                    # childless element:
-                    # <Element key1="value1" key2="value2" />
-                    param = ET.Element(key)
-                    for sub_key, sub_value in item.items():
-                        param.set(sub_key, sub_value)
+            if isinstance(value, list):
+                # repeated element:
+                # <Element /><Element />
+                processing_element.extend(self._element_from_complex_param(item) for item in value)
+                continue
 
-                elif isinstance(item, str):
-                    # single value element:
-                    # <Element>value</Element>
-                    param = ET.Element(key)
-                    param.text = item
+            if isinstance(value, dict):
+                # childless element:
+                # <Element key1="value1" key2="value2" />
+                param = ET.Element(key)
+                for sub_key, sub_value in value.items():
+                    param.set(sub_key, sub_value)
 
-                else:
-                    # complex parameter:
-                    # <Element><SubElement1 /><SubElement2 /></Element>
-                    param = cls._element_from_complex_param(item)
-                processing_element.append(param)
+            elif isinstance(value, str):
+                # single value element:
+                # <Element>value</Element>
+                param = ET.Element(key)
+                param.text = value
+
+            else:
+                # complex parameter:
+                # <Element><SubElement1 /><SubElement2 /></Element>
+                param = self._element_from_complex_param(value)
+            processing_element.append(param)
 
         if processing.subprocessings:  # TODO: expose this in Params as well so this logic only interacts with it
             parent = processing_element
@@ -352,12 +338,11 @@ class BTLxWriter(object):
                 parent = ET.Element("Processings")
                 processing_element.insert(0, parent)
             for subprocessing in processing.subprocessings:
-                parent.append(cls._processing_to_element(subprocessing))
+                parent.append(self._create_processing(subprocessing))
         return processing_element
 
-    @classmethod
-    def _element_from_complex_param(cls, param):
-        serializer = cls.SERIALIZERS.get(type(param).__name__, None)
+    def _element_from_complex_param(self, param):
+        serializer = self.SERIALIZERS.get(type(param).__name__, None)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
         return serializer(param)
@@ -871,10 +856,10 @@ class BTLxProcessing(Data, ABC):
 
     """
 
-    # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
     HAS_REFERENCE_PLANE = True  # False for the processings which the BTLx schema derives from ProcessingBaseType
     WRAPS_SUBPROCESSINGS = False  # True if the BTLx schema nests the subprocessings in a <Processings> element
 
+    # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
     HEADER_ATTRIBUTE_MAP = {
         "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
         "Priority": ("priority", int),
