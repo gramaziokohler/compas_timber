@@ -4,9 +4,14 @@ The processings of [BTLx 2.3](https://www.design2machine.com/btlx/BTLx_2_3_0.pdf
 
 The examples are in [`examples/fabrication`](https://github.com/gramaziokohler/compas_timber/tree/main/examples/fabrication). They need `compas_viewer` and `compas_brep[occ]`.
 The images are rendered from these examples with `python scripts/screenshot_processing_examples.py`.
+In the images the element is ghosted so that its hidden edges show, and blue is the material the processing removes, or the outline of a processing which removes none.
 
 !!! note
     Most examples use `ref_side_index=2`, the reference side which faces up in a beam on `Frame.worldXY()`, to be visible in the image.
+
+## Overview
+
+[![All the processings](_images/processings/overview.png)](_images/processings/overview.png)
 
 ## Cuts
 
