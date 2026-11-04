@@ -146,7 +146,7 @@ A mortise which holds a second, nested mortise or dovetail mortise.
 ![HouseMortise](_images/processings/house_mortise.png)
 
 !!! note
-    As in `Mortise`, `Slope` and `Inclination` are ignored.
+    As in `Mortise`, `Inclination` is ignored.
 
 ```python
 --8<-- "examples/fabrication/house_mortise.py"
@@ -271,7 +271,7 @@ A contour which is cut with a saw blade.
 ![SawContour](_images/processings/saw_contour.png)
 
 !!! note
-    Straight segments only, an open contour does not cut, and `Recess` and `MachiningLimits` are not supported.
+    Lines and NURBS segments are supported, arcs are not. An open contour does not cut, and `Recess` and `MachiningLimits` are not supported.
 
 ```python
 --8<-- "examples/fabrication/saw_contour.py"
@@ -284,7 +284,7 @@ A contour which is milled, here as a pocket.
 ![MillContour](_images/processings/mill_contour.png)
 
 !!! note
-    Straight segments only, an open contour does not cut, and `Recess` and `MachiningLimits` are not supported.
+    Lines and NURBS segments are supported, arcs are not. An open contour does not cut, and `Recess` and `MachiningLimits` are not supported.
 
 ```python
 --8<-- "examples/fabrication/mill_contour.py"

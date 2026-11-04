@@ -20,6 +20,7 @@ from .btlx import BTLxProcessingParams
 from .btlx import BTLxWriter
 from .btlx import Contour
 from .btlx import DualContour
+from .btlx import NurbsContour
 from .btlx import ParametricProcessing
 from .free_contour import FreeContour
 from .free_contour import FreeContourParams
@@ -366,7 +367,7 @@ class SawContour(_ToolContourMixin, FreeContour):
 
     Parameters
     ----------
-    contour_param_object : :class:`~compas_timber.fabrication.Contour` or :class:`~compas_timber.fabrication.DualContour`
+    contour_param_object : :class:`~compas_timber.fabrication.Contour`, :class:`~compas_timber.fabrication.DualContour` or :class:`~compas_timber.fabrication.NurbsContour`
         The contour. Its depth is measured from the contour along -Z of the reference side, and is only used if it is depth bounded.
         Otherwise the cut goes through. An inclination tilts the cut around a segment.
     tool_id : int, optional
@@ -385,7 +386,12 @@ class SawContour(_ToolContourMixin, FreeContour):
 
     def __init__(self, contour_param_object, tool_id=0, counter_sink=None, tool_position=AlignmentType.LEFT, depth_bounded=True, **kwargs):
         if counter_sink is None:
-            polyline = contour_param_object.principal_contour if isinstance(contour_param_object, DualContour) else contour_param_object.polyline
+            if isinstance(contour_param_object, NurbsContour):
+                polyline = contour_param_object.to_contour().polyline
+            elif isinstance(contour_param_object, DualContour):
+                polyline = contour_param_object.principal_contour
+            else:
+                polyline = contour_param_object.polyline
             counter_sink = tool_position == (AlignmentType.RIGHT if is_polyline_clockwise(polyline, Vector.Zaxis()) else AlignmentType.LEFT)
         super(SawContour, self).__init__(contour_param_object, tool_id, counter_sink, tool_position, depth_bounded, **kwargs)
 

@@ -16,10 +16,10 @@ from compas_timber.errors import BTLxParsingError
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DualContour
-from compas_timber.fabrication import NurbsContour
-from compas_timber.fabrication import nurbs_curve_from_btlx
 from compas_timber.fabrication import InsertionPattern
 from compas_timber.fabrication import InsertionPatterns
+from compas_timber.fabrication import NurbsContour
+from compas_timber.fabrication import nurbs_curve_from_btlx
 from compas_timber.fabrication.containers import frame_from_xml
 from compas_timber.model import TimberModel
 

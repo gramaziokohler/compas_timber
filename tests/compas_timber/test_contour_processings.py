@@ -1,3 +1,5 @@
+from compas_brep.curves import NurbsCurve
+from compas_timber.fabrication import NurbsContour
 import math
 import xml.etree.ElementTree as ET
 
@@ -613,3 +615,22 @@ def test_btlx_arc_is_a_parsing_error():
 
     assert not beam.features
     assert "not supported" in str(reader.errors[0])
+
+
+@pytest.mark.parametrize("cls", [SawContour, MillContour])
+def test_nurbs_contour_is_cut_and_survives_the_round_trip(cls):
+    points = [Point(100, 40, 100), Point(200, 40, 100), Point(200, -40, 100), Point(100, -40, 100), Point(100, 40, 100)]
+    beam = Beam(Frame.worldXY(), 800.0, 120.0, 200.0)
+    beam.add_feature(cls.from_nurbs_curves_and_element([NurbsCurve.from_points(points, degree=1)], beam, depth=50.0, interior=True))
+    model = TimberModel(tolerance=Tolerance(unit="MM", absolute=1e-3, relative=1e-3))
+    model.add_element(beam)
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+    reader = BTLxReader()
+    restored = list(reader.xml_to_model(BTLxWriter().model_to_xml(model)).elements())[0].features[0]
+
+    assert not beam.debug_info
+    assert 800.0 * 120.0 * 200.0 - volume == pytest.approx(100.0 * 80.0 * 50.0, rel=1e-3)
+    assert not reader.errors
+    assert type(restored) is cls
+    assert isinstance(restored.contour_param_object, NurbsContour)
