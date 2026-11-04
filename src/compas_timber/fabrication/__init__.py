@@ -1,5 +1,6 @@
 from .btlx import BTLxWriter
 from .btlx import BTLxProcessing
+from .btlx import ParametricProcessing
 from .btlx import BTLxPart
 from .btlx import BTLxRawpart
 from .btlx import OrientationType
@@ -36,11 +37,75 @@ from .longitudinal_cut import LongitudinalCut
 from .longitudinal_cut import LongitudinalCutProxy
 from .birds_mouth import BirdsMouth
 from .simple_scarf import SimpleScarf
+from .containers import Connector
+from .containers import ConnectorInfo
+from .containers import ConnectorParameter
+from .containers import ProcessingGroup
+from .containers import Variant
+from .containers import VariantParameter
+from .pattern_contour import InsertionPattern
+from .pattern_contour import InsertionPatterns
+from .pattern_contour import NodeContour
+from .pattern_contour import NodeContourSegment
+from .pattern_contour import PatternContour
+from .ridge_valley_cut import RidgeValleyCut
+from .saw_cut import SawCut
+from .saw_cut import SawCutMachiningLimits
+from .triangle_cut import TriangleCut
+from .chamfer import Chamfer
+from .chamfer import ChamferExitType
+from .planing import Planing
+from .sphere import Sphere
+from .marking import Marking
+from .marking import MarkingStyleType
+from .hip_valley_rafter_notch import HipValleyRafterNotch
+from .log_house_half_lap import LogHouseHalfLap
+from .log_house_joint import LogHouseJoint
+from .log_house_joint import LogLapPositionType
+from .log_house_front import LogHouseFront
+from .profile_front import ProfileFront
+from .profile_front import ArcShapeType
+from .profile_front import PremillType
+from .profile_cambered import ProfileCambered
+from .round_arch import RoundArch
+from .profile_head import ProfileHead
+from .profile_head import ProfileArc
+from .contours import SawContour
+from .contours import MillContour
+from .contours import NailContour
+from .contours import CrampContour
+from .contours import ScrewContour
+from .contours import PenContour
+from .contours import SimpleContour
+from .contours import CrampAngleRefType
+from .areas import GlueArea
+from .areas import PlaningArea
+from .areas import PlasterArea
+from .areas import InsulationArea
+from .areas import LockoutArea
+from .areas import Apertures
+from .free_surface import FreeSurface
+from .free_surface import NurbsPatch
+from .house import House
+from .house import HouseMortise
+from .japanese_tenon import JapaneseTenon
+from .japanese_tenon import JapaneseMortise
+from .scarf_joint import ScarfJoint
+from .scarf_joint import ScarfShapeType
+from .dovetail import Dovetail
+from .dovetail import LapExitType
+from .dovetail import ProcessSideType
+from .dovetail import DovetailShapeType
+from .tyrolean_dovetail import TyroleanDovetail
+from .tyrolean_dovetail import Frosch
+from .tyrolean_dovetail import Klingschrot
+from .tyrolean_dovetail import TyroleanDovetailShapeType
 
 __all__ = [
     "BTLxWriter",
     "BTLxPart",
     "BTLxProcessing",
+    "ParametricProcessing",
     "JackRafterCut",
     "JackRafterCutProxy",
     "OrientationType",
@@ -76,4 +141,67 @@ __all__ = [
     "SimpleScarf",
     "LongitudinalCutProxy",
     "BirdsMouth",
+    "Connector",
+    "ConnectorInfo",
+    "ConnectorParameter",
+    "ProcessingGroup",
+    "Variant",
+    "VariantParameter",
+    "InsertionPattern",
+    "InsertionPatterns",
+    "NodeContour",
+    "NodeContourSegment",
+    "PatternContour",
+    "RidgeValleyCut",
+    "SawCut",
+    "SawCutMachiningLimits",
+    "TriangleCut",
+    "Chamfer",
+    "ChamferExitType",
+    "Planing",
+    "Sphere",
+    "Marking",
+    "MarkingStyleType",
+    "HipValleyRafterNotch",
+    "LogHouseHalfLap",
+    "LogHouseJoint",
+    "LogLapPositionType",
+    "LogHouseFront",
+    "ProfileFront",
+    "ArcShapeType",
+    "PremillType",
+    "ProfileCambered",
+    "RoundArch",
+    "ProfileHead",
+    "ProfileArc",
+    "SawContour",
+    "MillContour",
+    "NailContour",
+    "CrampContour",
+    "ScrewContour",
+    "PenContour",
+    "SimpleContour",
+    "CrampAngleRefType",
+    "GlueArea",
+    "PlaningArea",
+    "PlasterArea",
+    "InsulationArea",
+    "LockoutArea",
+    "Apertures",
+    "FreeSurface",
+    "NurbsPatch",
+    "House",
+    "HouseMortise",
+    "JapaneseTenon",
+    "JapaneseMortise",
+    "ScarfJoint",
+    "ScarfShapeType",
+    "Dovetail",
+    "LapExitType",
+    "ProcessSideType",
+    "DovetailShapeType",
+    "TyroleanDovetail",
+    "Frosch",
+    "Klingschrot",
+    "TyroleanDovetailShapeType",
 ]

@@ -16,14 +16,17 @@ import compas
 from compas.data import Data
 from compas.geometry import Frame
 from compas.geometry import Plane
+from compas.geometry import Polyhedron
 from compas.geometry import Transformation
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 import compas_timber
 from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_from_outlines
+from compas_timber.geometry import oriented_polyhedron
 from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import move_polyline_segment_to_plane
 
@@ -54,12 +57,12 @@ class BTLxWriter(object):
     FILE_ATTRIBUTES = OrderedDict(
         [
             ("xmlns", "https://www.design2machine.com"),
-            ("Version", "2.0.0"),
+            ("Version", "2.3.0"),
             ("Language", "en"),
             ("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance"),
             (
                 "xsi:schemaLocation",
-                "https://www.design2machine.com https://www.design2machine.com/btlx/btlx_2_0_0.xsd",
+                "https://www.design2machine.com https://www.design2machine.com/btlx/BTLx_2_3_0.xsd",
             ),
         ]
     )
@@ -297,7 +300,23 @@ class BTLxWriter(object):
         # BTLx always uses mm
         if self._tolerance.unit == "M":
             processing = processing.scaled(1000.0)
+        return self._processing_to_element(processing)
 
+    @classmethod
+    def _processing_to_element(cls, processing):
+        """Creates the element of a processing whose parameters are already in mm, including its nested processings.
+
+        Parameters
+        ----------
+        processing : :class:`~compas_timber.fabrication.btlx.BTLxProcessing`
+            The processing object.
+
+        Returns
+        -------
+        :class:`~xml.etree.ElementTree.Element`
+            The processing element.
+
+        """
         processing_params = processing.params
         params_dict = processing_params.as_dict()
 
@@ -307,32 +326,38 @@ class BTLxWriter(object):
         )
 
         for key, value in params_dict.items():
-            if isinstance(value, dict):
-                # childless element:
-                # <Element key1="value1" key2="value2" />
-                param = ET.Element(key)
-                for sub_key, sub_value in value.items():
-                    param.set(sub_key, sub_value)
+            for item in value if isinstance(value, list) else [value]:  # a list is a repeated element
+                if isinstance(item, dict):
+                    # childless element:
+                    # <Element key1="value1" key2="value2" />
+                    param = ET.Element(key)
+                    for sub_key, sub_value in item.items():
+                        param.set(sub_key, sub_value)
 
-            elif isinstance(value, str):
-                # single value element:
-                # <Element>value</Element>
-                param = ET.Element(key)
-                param.text = value
+                elif isinstance(item, str):
+                    # single value element:
+                    # <Element>value</Element>
+                    param = ET.Element(key)
+                    param.text = item
 
-            else:
-                # complex parameter:
-                # <Element><SubElement1 /><SubElement2 /></Element>
-                param = self._element_from_complex_param(value)
-            processing_element.append(param)
+                else:
+                    # complex parameter:
+                    # <Element><SubElement1 /><SubElement2 /></Element>
+                    param = cls._element_from_complex_param(item)
+                processing_element.append(param)
 
         if processing.subprocessings:  # TODO: expose this in Params as well so this logic only interacts with it
+            parent = processing_element
+            if processing.WRAPS_SUBPROCESSINGS:
+                parent = ET.Element("Processings")
+                processing_element.insert(0, parent)
             for subprocessing in processing.subprocessings:
-                processing_element.append(self._create_processing(subprocessing))
+                parent.append(cls._processing_to_element(subprocessing))
         return processing_element
 
-    def _element_from_complex_param(self, param):
-        serializer = self.SERIALIZERS.get(type(param).__name__, None)
+    @classmethod
+    def _element_from_complex_param(cls, param):
+        serializer = cls.SERIALIZERS.get(type(param).__name__, None)
         if not serializer:
             raise ValueError("No serializer found for type: {}".format(type(param)))
         return serializer(param)
@@ -786,6 +811,16 @@ class AttributeSpec(object):
     type : type
         The type used for deserialization (e.g. ``float``, ``bool``, ``str``).
         Defaults to ``str``.
+    default : object, optional
+        The default value. Only used by :class:`ParametricProcessing`.
+    limits : tuple(float, float), optional
+        The inclusive (min, max) range of the value. Only used by :class:`ParametricProcessing`.
+    choices : tuple, optional
+        The allowed values. Only used by :class:`ParametricProcessing`.
+    scales : bool, optional
+        True if the value is a length, which changes with the model's units. Only used by :class:`ParametricProcessing`.
+    multiple : bool, optional
+        True if the element can repeat. The python attribute is then a list.
 
     Examples
     --------
@@ -799,6 +834,11 @@ class AttributeSpec(object):
 
     python_name: str
     type: type = str  # type: ignore
+    default: object = None
+    limits: tuple = None  # type: ignore
+    choices: tuple = None  # type: ignore
+    scales: bool = False
+    multiple: bool = False
 
 
 class BTLxProcessing(Data, ABC):
@@ -832,6 +872,9 @@ class BTLxProcessing(Data, ABC):
     """
 
     # Header attributes mapping: BTLx XML attribute name -> (python_param_name, type_or_converter)
+    HAS_REFERENCE_PLANE = True  # False for the processings which the BTLx schema derives from ProcessingBaseType
+    WRAPS_SUBPROCESSINGS = False  # True if the BTLx schema nests the subprocessings in a <Processings> element
+
     HEADER_ATTRIBUTE_MAP = {
         "ReferencePlaneID": ("ref_side_index", lambda v: int(v) - 1),  # Convert to 0-based
         "Priority": ("priority", int),
@@ -955,7 +998,140 @@ class BTLxProcessing(Data, ABC):
         # type: (float) -> BTLxProcessing
         new_instance = self.copy()
         new_instance.scale(factor)
+        if self.subprocessings:
+            new_instance.subprocessings = [subprocessing.scaled(factor) for subprocessing in self.subprocessings]
         return new_instance
+
+
+def _spec_property(spec):
+    """Creates the validated property of an :class:`AttributeSpec`."""
+    attr_name = "_" + spec.python_name
+
+    def getter(self):
+        return getattr(self, attr_name)
+
+    def setter(self, value):
+        if value is not None:
+            if spec.limits and not spec.limits[0] <= value <= spec.limits[1]:
+                raise ValueError("{} must be between {} and {}. Got: {}".format(spec.python_name, spec.limits[0], spec.limits[1], value))
+            if spec.choices and value not in spec.choices:
+                raise ValueError("{} must be one of {}. Got: {}".format(spec.python_name, spec.choices, value))
+            if spec.type is bool and not isinstance(value, bool):
+                raise ValueError("{} must be a boolean. Got: {}".format(spec.python_name, value))
+        setattr(self, attr_name, value)
+
+    return property(getter, setter)
+
+
+class ParametricProcessing(BTLxProcessing):
+    """Base class for processings which are fully described by the entries of their ``ATTRIBUTE_MAP``.
+
+    Each :class:`AttributeSpec` provides a validated property, a keyword argument of ``__init__``, an entry of ``__data__``
+    and, if it is a length, scaling. A property defined explicitly on the subclass takes precedence over the generated one.
+
+    The entries of ``ATTRIBUTE_MAP`` must follow the order of the elements in the BTLx schema, which is an `xs:sequence`.
+
+    """
+
+    def __init_subclass__(cls, **kwargs):
+        for spec in cls.__dict__.get("ATTRIBUTE_MAP", {}).values():
+            if spec.python_name not in cls.__dict__:
+                setattr(cls, spec.python_name, _spec_property(spec))
+        super(ParametricProcessing, cls).__init_subclass__(**kwargs)
+
+    def __init__(self, **kwargs):
+        values = {spec.python_name: kwargs.pop(spec.python_name, spec.default) for spec in self.ATTRIBUTE_MAP.values()}
+        subprocessings = kwargs.pop("subprocessings", None)
+        super(ParametricProcessing, self).__init__(**kwargs)
+        self.subprocessings = subprocessings
+        for name, value in values.items():
+            setattr(self, name, value)
+
+    @property
+    def __data__(self):
+        data = super(ParametricProcessing, self).__data__
+        for spec in self.ATTRIBUTE_MAP.values():
+            data[spec.python_name] = getattr(self, spec.python_name)
+        for name in ("tool_id", "counter_sink", "tool_position"):
+            if getattr(self, name) is not None:
+                data[name] = getattr(self, name)
+        if self.subprocessings:
+            data["subprocessings"] = self.subprocessings
+        return data
+
+    def scale(self, factor):
+        """Scale the length parameters of this processing.
+
+        Parameters
+        ----------
+        factor : float
+            The scaling factor.
+
+        """
+        for spec in self.ATTRIBUTE_MAP.values():
+            value = getattr(self, spec.python_name)
+            if spec.scales and value is not None:
+                setattr(self, spec.python_name, value * factor)
+        for subprocessing in self.subprocessings or []:
+            subprocessing.scale(factor)
+
+    def volumes_from_params_and_element(self, element):
+        """The volumes this processing removes from the element.
+
+        Processings which leave the element's volume as it is (e.g. marking, or nailing) have no volumes.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.base.TimberElement`
+            The element this processing is applied to.
+
+        Returns
+        -------
+        list(:class:`~compas.geometry.Polyhedron` or :class:`~compas_brep.Brep`)
+            The volumes, in model coordinates.
+
+        """
+        return []
+
+    def apply(self, geometry, element):
+        """Subtract the volumes of this processing from the element's geometry.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas_brep.Brep`
+            The element's geometry, in the element's local coordinates.
+        element : :class:`~compas_timber.base.TimberElement`
+            The element this processing is applied to.
+
+        Raises
+        ------
+        :class:`~compas_timber.errors.FeatureApplicationError`
+            If a volume cannot be generated or subtracted.
+
+        Returns
+        -------
+        :class:`~compas_brep.Brep`
+            The resulting geometry.
+
+        """
+        try:
+            volumes = self.volumes_from_params_and_element(element)
+        except Exception as ex:
+            raise FeatureApplicationError(None, geometry, "Failed to generate the {} volume: {}".format(self.PROCESSING_NAME, ex))
+
+        for volume in volumes:
+            if isinstance(volume, Polyhedron):
+                volume = Brep.from_mesh(oriented_polyhedron(volume).to_mesh())
+            local_volume = volume.transformed(element.transformation_to_local())
+            try:
+                # a removal can split the element, which is one solid, so its largest piece is what remains of it
+                geometry = max(Brep.from_boolean_difference(geometry, local_volume), key=lambda piece: piece.volume)
+            except Exception as ex:
+                raise FeatureApplicationError(volume, geometry.transformed(element.modeltransformation), "Failed to subtract the {} volume: {}".format(self.PROCESSING_NAME, ex))
+
+        for subprocessing in self.subprocessings or []:
+            geometry = subprocessing.apply(geometry, element)
+        return geometry
 
 
 class BTLxProcessingParams(object):
@@ -986,7 +1162,8 @@ class BTLxProcessingParams(object):
         result["Process"] = "yes"
         result["Priority"] = str(self._instance.priority)
         result["ProcessID"] = str(self._instance.process_id)
-        result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
+        if self._instance.HAS_REFERENCE_PLANE:
+            result["ReferencePlaneID"] = str(self._instance.ref_side_index + 1)
 
         # Add optional header attributes if set
         if self._instance.tool_id is not None:
@@ -1016,7 +1193,9 @@ class BTLxProcessingParams(object):
         result = OrderedDict()
         for btlx_name, attr_spec in self.attribute_map.items():
             value = getattr(self._instance, attr_spec.python_name)
-            result[btlx_name] = self._format_value(value)
+            if value is None:  # optional in the schema, and without a default value
+                continue
+            result[btlx_name] = str(int(value)) if attr_spec.type is int else self._format_value(value)
         return result
 
     @staticmethod
@@ -1036,6 +1215,8 @@ class BTLxProcessingParams(object):
         # Check if the value is a registered complex type (e.g., Contour, DualContour)
         if type(value).__name__ in BTLxWriter.SERIALIZERS:
             return value  # Pass through unchanged for complex serialization
+        elif isinstance(value, list):
+            return [BTLxProcessingParams._format_value(item) for item in value]
         elif isinstance(value, bool):
             return "yes" if value else "no"
         elif isinstance(value, (int, float)):
@@ -1380,8 +1561,8 @@ class DualContour(Data):
             The scaling factor.
 
         """
-        self.principal_contour.scaled(factor)
-        self.associated_contour.scaled(factor)
+        self.principal_contour = self.principal_contour.scaled(factor)
+        self.associated_contour = self.associated_contour.scaled(factor)
         if self.depth_bounded is not None:
             self.depth_bounded *= factor
 

@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from collections import OrderedDict
@@ -417,3 +419,33 @@ def test_tenon_mortise_serialization(processing, boolean_op, cross_beam, mocker)
     restored.apply(mocker.MagicMock(), cross_beam)
 
     volume.fillet.assert_not_called()
+
+@pytest.mark.parametrize("shape", ["automatic", "radius", "round"])
+def test_mortise_rounds_only_the_edges_along_its_depth(shape):
+    beam = Beam(Frame.worldXY(), 1000.0, 100.0, 200.0)
+    beam.add_feature(Mortise(start_x=300.0, start_y=50.0, length=80.0, width=40.0, depth=60.0, shape=shape, shape_radius=10.0))
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+
+    assert not beam.debug_info
+    assert 20000000.0 - volume == pytest.approx(80.0 * 40.0 * 60.0 - (4.0 - math.pi) * 10.0**2 * 60.0, abs=1.0)
+
+
+def test_tenon_rounds_only_the_edges_along_its_height():
+    beam = Beam(Frame.worldXY(), 1000.0, 100.0, 200.0)
+    beam.add_feature(Tenon(orientation="end", start_x=900.0, start_y=50.0, length=80.0, width=40.0, height=60.0, shape="radius", shape_radius=10.0))
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+
+    assert not beam.debug_info
+    assert volume == pytest.approx(18000000.0 + 80.0 * 40.0 * 60.0 - (4.0 - math.pi) * 10.0**2 * 60.0, abs=1.0)
+
+
+def test_default_shape_with_a_radius_of_half_the_width_is_applied():
+    beam = Beam(Frame.worldXY(), 1000.0, 100.0, 200.0)
+    beam.add_feature(Mortise(start_x=300.0, start_y=50.0))
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+
+    assert not beam.debug_info
+    assert volume < 20000000.0

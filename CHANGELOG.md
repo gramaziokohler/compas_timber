@@ -8,8 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added a minimal example of each new BTLx processing to `examples/fabrication`, the page BTLx Processings to the docs, and `scripts/screenshot_processing_examples.py` which renders the images of that page.
+* Added the remaining processings of BTLx 2.3 to `compas_timber.fabrication`: `RidgeValleyCut`, `SawCut`, `TriangleCut`, `Chamfer`, `Planing`, `Sphere`, `Marking`, `HipValleyRafterNotch`, `LogHouseHalfLap`, `LogHouseJoint`, `LogHouseFront`, `House`, `HouseMortise`, `JapaneseTenon`, `JapaneseMortise`, `ScarfJoint`, `Dovetail`, `TyroleanDovetail`, `ProfileFront`, `ProfileCambered`, `RoundArch`, `ProfileHead`, `SawContour`, `MillContour`, `NailContour`, `CrampContour`, `ScrewContour`, `PenContour`, `GlueArea`, `PlaningArea`, `PlasterArea`, `InsulationArea`, `LockoutArea`, `FreeSurface`, `PatternContour`, `ProcessingGroup`, `Connector` and `Variant`.
+* Added `ParametricProcessing`, a base class which derives validated properties, `__init__`, `__data__`, `scale()` and `apply()` of a processing from its `ATTRIBUTE_MAP`.
+* Added `default`, `limits`, `choices`, `scales` and `multiple` to `AttributeSpec`.
+* Added `brep_edge_indices_along` to `compas_timber.geometry`.
+* Added reading and writing of nested processings, repeated elements and types with their own `from_xml` to `BTLxReader` and `BTLxWriter`.
 
 ### Changed
+* Changed `BTLxWriter` to declare BTLx version 2.3.0 instead of 2.0.0, as `Connector`, `CrampContour`, `InsulationArea`, `PatternContour` and `ScrewContour` do not exist in 2.0.0.
+* Changed `BTLxReader` to discover every processing with a `PROCESSING_NAME`, instead of only those without subclasses.
+* Fixed `Tenon` and `Mortise` failing with any shape but `square`, which includes the default: the volume of a `Mortise` was not removed at all. Only the edges along the depth are rounded now.
+* Fixed `Tenon` and `Mortise` shapes being compared by identity, which failed for values read from a BTLx file.
+* Fixed `DovetailMortise.scale()` raising a `TypeError`.
+* Fixed `DualContour.scale()` having no effect.
+* Fixed `BTLxWriter` dropping the subprocessings of a processing in a model in meters.
 
 ### Removed
 
