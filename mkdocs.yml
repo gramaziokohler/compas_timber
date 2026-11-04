@@ -157,6 +157,7 @@ plugins:
 nav:
   - Home: index.md
   - Installation: installation.md
+  - BTLx Processings: btlx_processings.md
   - API Reference:
       - model: api/compas_timber.model.md
       - elements: api/compas_timber.elements.md
