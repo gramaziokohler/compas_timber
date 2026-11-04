@@ -9,6 +9,10 @@ In the images the element is ghosted so that its hidden edges show, and blue is 
 !!! note
     Most examples use `ref_side_index=2`, the reference side which faces up in a beam on `Frame.worldXY()`, to be visible in the image.
 
+## Overview
+
+[![All the processings](_images/processings/overview.png)](_images/processings/overview.png)
+
 ## Cuts
 
 ### RidgeValleyCut

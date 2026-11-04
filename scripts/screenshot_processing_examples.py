@@ -2,6 +2,7 @@
 
 An example is a plain script ending in `viewer.show()`. It is run as it is and its scene is then styled: the element is ghosted so that all
 its edges show, and the material which the processing removes is added in a colour. `Viewer` is a singleton, which means one process per example.
+The images of the page are then arranged in `overview.png`.
 
 Needs `compas_viewer`, `compas_brep[occ]` and a display: a window opens for each example. Qt's offscreen platform has no OpenGL.
 
@@ -11,6 +12,7 @@ Needs `compas_viewer`, `compas_brep[occ]` and a display: a window opens for each
 
 import os
 import pathlib
+import re
 import runpy
 import subprocess
 import sys
@@ -24,13 +26,18 @@ from compas_viewer.gl import GL
 from PySide6.QtCore import QRect
 from PySide6.QtCore import Qt
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QColor
+from PySide6.QtGui import QFont
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtGui import QImage
+from PySide6.QtGui import QPainter
 from PySide6.QtOpenGL import QOpenGLFramebufferObject
 from PySide6.QtOpenGL import QOpenGLFramebufferObjectFormat
 
 ROOT = pathlib.Path(__file__).parent.parent
 EXAMPLES = ROOT / "examples" / "fabrication"
 IMAGES = ROOT / "docs" / "_images" / "processings"
+PAGE = ROOT / "docs" / "btlx_processings.md"
 
 TARGET = [400.0, 0.0, 0.0]
 DIRECTION = [650.0, -1000.0, 1000.0]  # from the target to the camera
@@ -48,6 +55,10 @@ BUFFER_SIZE = (4800, 3200)  # rendered larger than the image, as the edges of a 
 IMAGE_WIDTH = 1800
 MARGIN = 72  # in pixels of the buffer
 RENDER_DELAY = 1500  # ms, for the first frames to be drawn
+
+OVERVIEW_COLUMNS = 7
+OVERVIEW_CELL = (620, 440)
+OVERVIEW_LABEL = 56  # the height of the label of a cell
 
 
 def crop_and_save(image, path):
@@ -134,12 +145,40 @@ def render(example):
     viewer.show()
 
 
+def overview():
+    """Arrange the images in one image, with the names and in the order of the page."""
+    application = QGuiApplication(sys.argv[:1])  # the fonts of a `QPainter` need one
+    sections = re.findall(r"!\[(\w+)\]\(_images/processings/(\w+)\.png\)", PAGE.read_text())
+    width, height = OVERVIEW_CELL
+    rows = -(-len(sections) // OVERVIEW_COLUMNS)
+    sheet = QImage(width * OVERVIEW_COLUMNS, height * rows, QImage.Format.Format_RGB32)
+    sheet.fill(QColor("white"))
+
+    painter = QPainter(sheet)
+    font = QFont("Helvetica")
+    font.setPixelSize(30)
+    painter.setFont(font)
+    painter.setPen(QColor("#333333"))
+    for index, (name, stem) in enumerate(sections):
+        left, top = index % OVERVIEW_COLUMNS * width, index // OVERVIEW_COLUMNS * height
+        image = QImage(str(IMAGES / "{}.png".format(stem)))
+        if image.isNull():
+            raise SystemExit("No image of {}".format(stem))
+        image = image.scaled(width - 20, height - OVERVIEW_LABEL, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        painter.drawImage(left + (width - image.width()) // 2, top + OVERVIEW_LABEL, image)
+        painter.drawText(QRect(left, top, width, OVERVIEW_LABEL), Qt.AlignmentFlag.AlignCenter, name)
+    painter.end()
+    sheet.save(str(IMAGES / "overview.png"))
+    application.quit()
+
+
 def main(names):
     IMAGES.mkdir(parents=True, exist_ok=True)
     examples = [EXAMPLES / "{}.py".format(name) for name in names] or sorted(EXAMPLES.glob("*.py"))
     failed = [example.stem for example in examples if subprocess.run([sys.executable, __file__, "--render", str(example)]).returncode]
     if failed:
         raise SystemExit("Failed: {}".format(", ".join(failed)))
+    overview()
 
 
 if __name__ == "__main__":
