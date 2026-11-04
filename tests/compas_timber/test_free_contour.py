@@ -276,3 +276,13 @@ def test_get_ref_face_index_rejects_a_contour_off_the_element(plate):
 
     with pytest.raises(ValueError):
         FreeContour.get_ref_face_index(polyline, plate)
+
+
+def test_dual_contour_scale_scales_both_contours():
+    contour = DualContour(Polyline([[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]]), Polyline([[1.0, 0.0, 1.0], [2.0, 0.0, 1.0]]))
+
+    scaled = contour.scaled(1000.0)
+
+    assert scaled.principal_contour[1].x == 2000.0
+    assert scaled.associated_contour[1].z == 1000.0
+    assert contour.principal_contour[1].x == 2.0

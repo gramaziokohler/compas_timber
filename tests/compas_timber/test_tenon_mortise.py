@@ -498,3 +498,23 @@ def test_a_radius_tenon_rounds_the_corners_of_its_limited_ends(top, bottom):
         assert not beam.debug_info
     corners = 2 * (int(top) + int(bottom))
     assert added[TenonShapeType.SQUARE] - added[TenonShapeType.RADIUS] == pytest.approx(corners * (1.0 - math.pi / 4.0) * 8.0**2 * 30.0, rel=1e-6, abs=1e-6)
+
+
+def test_default_mortise_with_a_radius_of_half_the_width_is_cut():
+    beam = Beam(Frame.worldXY(), 1000.0, 100.0, 200.0)
+    beam.add_feature(Mortise(start_x=300.0, start_y=50.0))
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+
+    assert not beam.debug_info
+    assert volume < 20000000.0
+
+
+def test_default_tenon_with_a_radius_of_half_the_width_is_cut():
+    beam = Beam(Frame.worldXY(), 1000.0, 100.0, 200.0)
+    beam.add_feature(Tenon(orientation="end", start_x=900.0, start_y=50.0))
+
+    volume = beam.compute_elementgeometry(include_features=True).volume
+
+    assert not beam.debug_info
+    assert volume > 18000000.0

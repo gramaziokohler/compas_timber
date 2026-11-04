@@ -442,9 +442,11 @@ class Mortise(BTLxProcessing):
             )
 
         # fillet the edges of the mortise volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
+        if self.shape != TenonShapeType.SQUARE:
             try:
-                mortise_volume.fillet(self.shape_radius, self._corner_edge_indices(mortise_volume, beam))
+                # half the width leaves no flat between two fillets, which is the schema's default and what a Brep cannot fillet
+                radius = min(self.shape_radius, 0.499 * min(self.length, self.width))
+                mortise_volume.fillet(radius, self._corner_edge_indices(mortise_volume, beam))
             except Exception as e:
                 # mortise_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(

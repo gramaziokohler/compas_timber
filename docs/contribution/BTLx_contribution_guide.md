@@ -78,6 +78,9 @@ See also:
 - [`DoubleCut`](../api/compas_timber.fabrication.md#compas_timber.fabrication.DoubleCut)
 - [`FrenchRidgeLap`](../api/compas_timber.fabrication.md#compas_timber.fabrication.FrenchRidgeLap)
 
+!!! tip
+    A processing which only has plain parameters can inherit from `ParametricProcessing` instead. It derives validated properties, `__init__`, `__data__` and `scale()` from `ATTRIBUTE_MAP`, and `apply()` from `volumes_from_params_and_element()`. Declare the entries in the order of the BTLx schema. See [`Sphere`](../api/compas_timber.fabrication.md#compas_timber.fabrication.Sphere).
+
 ### 3. Add Alternative Constructors in Processing Class
 
 Implement class methods to create processings from geometric inputs.
@@ -168,7 +171,11 @@ See also:
 
 Add your new processing to `src/compas_timber/fabrication/__init__.py` so it can be imported by other modules.
 
-### 6. Add Tests
+### 6. Add an Example
+
+Add a minimal example to `examples/fabrication` and a section to the [BTLx Processings](../btlx_processings.md) page, and render its image with `python scripts/screenshot_processing_examples.py <example>`.
+
+### 7. Add Tests
 
 Add unit tests in `tests/compas_timber/` to verify your processing works correctly. Ensure you cover:
 - Parameter validation

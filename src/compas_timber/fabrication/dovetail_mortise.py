@@ -142,7 +142,6 @@ class DovetailMortise(BTLxProcessing):
         self._length_limited_bottom = None
         self._length = None
         self._width = None
-        self._depth = None
         self._cone_angle = None
         self._use_flank_angle = None
         self._flank_angle = None
@@ -772,5 +771,4 @@ class DovetailMortise(BTLxProcessing):
         self._start_depth *= factor
         self._length *= factor
         self._width *= factor
-        self._depth *= factor
         self._shape_radius *= factor

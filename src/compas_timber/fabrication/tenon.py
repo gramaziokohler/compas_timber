@@ -566,7 +566,9 @@ class Tenon(BTLxProcessing):
         corners = self._corner_edge_indices(tenon_volume, beam) if self.shape != TenonShapeType.SQUARE else []
         if corners:
             try:
-                tenon_volume.fillet(self.shape_radius, corners)
+                # half the width leaves no flat between two fillets, which is the schema's default and what a Brep cannot fillet
+                radius = min(self.shape_radius, 0.499 * min(self.length, self.width))
+                tenon_volume.fillet(radius, corners)
             except Exception as e:
                 # tenon_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
