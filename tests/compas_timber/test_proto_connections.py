@@ -90,9 +90,8 @@ def test_joint_topology_and_location_roundtrip():
     joint = LMiterJoint.create(model, a, b)
     other = assert_lossless(joint)
     assert other.topology == joint.topology
-    # compare the stored location; `.location` computes lazily from the
-    # elements, which a detached round-tripped joint cannot reach
-    assert other._location == joint._location
+    # the round-tripped joint is detached from its elements, so it still holds the location in world coordinates
+    assert other._location == joint.location
 
 
 def test_joint_candidate_roundtrip():

@@ -22,6 +22,7 @@ from compas_pb import pb_load_bts
 
 from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
+from compas_timber.connections import LLapJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import LayerDefinition
@@ -189,6 +190,47 @@ def test_plate_like_rejects_non_rigid_transformations(element_type, transformati
 # ==========================================================================
 # joints after their elements moved
 # ==========================================================================
+
+
+def test_l_miter_reprocessed_after_parent_moved(panel_model):
+    model, panel, beam_a, beam_b = panel_model
+    joint = LMiterJoint.create(model, beam_a, beam_b)
+    model.process_joinery()
+    planes_before = joint.cutting_planes
+
+    panel.transform(T)
+    model.process_joinery()
+
+    for plane, plane_before in zip(joint.cutting_planes, planes_before):
+        assert_same_plane(plane, plane_before.transformed(T))
+
+
+@pytest.mark.requires_occ  # the lap's features are applied as Breps
+def test_lap_joint_reprocessed_after_model_moved():
+    model = TimberModel()
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 80, 160)
+    beam_b = Beam.from_centerline(Line(Point(0, 0, 0), Point(0, 1000, 0)), 80, 160)
+    model.add_elements([beam_a, beam_b])
+    joint = LLapJoint.create(model, beam_a, beam_b)
+    model.process_joinery()
+    plane_before = joint.cutting_plane_a
+
+    model.transform(T)
+    model.process_joinery()
+
+    assert_same_plane(joint.cutting_plane_a, plane_before.transformed(T))
+
+
+def test_explicit_joint_location_follows_elements(panel_model):
+    model, panel, beam_a, beam_b = panel_model
+    location = Point(10, 20, 30).transformed(panel.modeltransformation)
+    joint = LMiterJoint.create(model, beam_a, beam_b, location=location)
+
+    panel.transform(T)
+    assert TOL.is_allclose(joint.location, location.transformed(T))
+
+    joint_copy = next(iter(json_loads(json_dumps(model)).joints))
+    assert TOL.is_allclose(joint_copy._location, location.transformed(T))
 
 
 def test_custom_cut_planes_under_transformed_and_reloaded_panel(panel_model):

@@ -84,7 +84,6 @@ class LMiterJoint(Joint):
     ):
         super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
         self._miter_plane = miter_plane
-        self._cutting_planes = []
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
         self.clean = clean
@@ -99,11 +98,10 @@ class LMiterJoint(Joint):
     def beam_b(self):
         return self.element_b
 
+    # not cached: in model space, so it moves with the beams
     @property
     def cutting_planes(self):
-        if not self._cutting_planes:
-            self._cutting_planes = self._get_cutting_planes()
-        return self._cutting_planes
+        return self._get_cutting_planes()
 
     @property
     def miter_plane(self):
