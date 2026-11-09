@@ -3,7 +3,11 @@
 import math
 
 import pytest
+from compas.data import json_dumps
+from compas.data import json_loads
+from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Rotation
@@ -12,10 +16,14 @@ from compas.geometry import Vector
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
 
+from compas_timber.connections import CutPlaneSpec
+from compas_timber.connections import LButtJoint
+from compas_timber.connections import LMiterJoint
 from compas_timber.elements import Beam
 from compas_timber.elements import LayerDefinition
 from compas_timber.elements import LayerStructure
 from compas_timber.elements import Panel
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 T = Translation.from_vector([500, -300, 1000]) * Rotation.from_axis_and_angle([0, 0, 1], math.radians(35))
@@ -53,6 +61,36 @@ def panel_model():
 # ==========================================================================
 
 
+def test_child_beam_follows_transformed_panel(panel_model):
+    _, panel, beam_a, _ = panel_model
+    frame_before = beam_a.frame  # populates the cache
+    centerline_before = beam_a.centerline
+
+    panel.transform(T)
+
+    assert_same_frame(beam_a.frame, frame_before.transformed(T))
+    assert TOL.is_allclose(beam_a.centerline.start, centerline_before.start.transformed(T))
+
+
+def test_child_layer_follows_transformed_panel(panel_model):
+    _, panel, _, _ = panel_model
+    layer = panel.layers[0]
+    outline_before = layer.outline_a
+
+    panel.transform(T)
+
+    assert TOL.is_allclose(layer.outline_a.points[1], outline_before.points[1].transformed(T))
+
+
+def test_setting_parent_transformation_updates_children(panel_model):
+    _, panel, beam_a, _ = panel_model
+    frame_before = beam_a.frame
+
+    panel.transformation = T * panel.transformation
+
+    assert_same_frame(beam_a.frame, frame_before.transformed(T))
+
+
 def test_adding_element_under_parent_updates_cached_frame(panel_model):
     model, panel, _, _ = panel_model
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(500, 0, 0)), 80, 160)
@@ -64,8 +102,59 @@ def test_adding_element_under_parent_updates_cached_frame(panel_model):
 
 
 # ==========================================================================
+# (de)serialization after a transformation
+# ==========================================================================
+
+
+def test_transformed_panel_survives_serialization(panel_model):
+    model, panel, beam_a, _ = panel_model
+    panel.transform(T)
+    expected_outline = panel.outline_a
+    expected_beam_frame = beam_a.frame
+
+    model_copy = json_loads(json_dumps(model))
+    panel_copy = model_copy.panels[0]
+    beam_copy = next(e for e in panel_copy.children if isinstance(e, Beam) and TOL.is_allclose(e.frame.point, beam_a.frame.point))
+
+    assert TOL.is_allclose(panel_copy.outline_a.points[1], expected_outline.points[1])
+    assert_same_frame(beam_copy.frame, expected_beam_frame)
+
+
+def test_transformed_plate_survives_serialization():
+    plate = Plate(frame=Frame([100, 0, 0], [1, 0, 0], [0, 1, 0]), length=1000, width=500, thickness=20)
+    plate.transform(T)
+    expected = plate.frame
+
+    plate_copy = json_loads(json_dumps(plate))
+
+    assert_same_frame(plate_copy.frame, expected)
+
+
+# ==========================================================================
 # joints after their elements moved
 # ==========================================================================
+
+
+def test_custom_cut_planes_under_transformed_and_reloaded_panel(panel_model):
+    model, panel, beam_a, beam_b = panel_model
+    beam_c = Beam.from_centerline(Line(Point(1800, 0, 0), Point(3000, 0, 0)), 80, 160)
+    beam_d = Beam.from_centerline(Line(Point(1800, 0, 0), Point(1800, 1200, 0)), 80, 160)
+    model.add_element(beam_c, parent=panel)
+    model.add_element(beam_d, parent=panel)
+    miter = Plane(Point(0, 0, 0), Vector(1, -1, 0.3)).transformed(panel.modeltransformation)
+    butt = Plane(Point(1840, 0, 0), Vector(-1, 0, -0.5)).transformed(panel.modeltransformation)
+    LMiterJoint.create(model, beam_a, beam_b, miter_plane=CutPlaneSpec.from_plane(beam_a, miter))
+    LButtJoint.create(model, beam_c, beam_d, butt_plane_spec=CutPlaneSpec.from_butt_plane(beam_c, beam_d, butt))
+    model.process_joinery()
+
+    panel.transform(T)
+    model_copy = json_loads(json_dumps(model))
+    model_copy.process_joinery()
+
+    miter_joint = next(j for j in model_copy.joints if isinstance(j, LMiterJoint))
+    butt_joint = next(j for j in model_copy.joints if isinstance(j, LButtJoint))
+    assert_same_plane(miter_joint.miter_plane, miter.transformed(T))
+    assert_same_plane(butt_joint.butt_plane, butt.transformed(T))
 
 
 def test_model_transform_moves_panel_children(panel_model):

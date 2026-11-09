@@ -13,9 +13,24 @@ from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 from compas_brep import Brep
 
+from compas_timber.base import clear_element_cache
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import move_polyline_segment_to_plane
+
+
+class PlateGeometryPlacement(object):
+    """Stores the element's ``transformation`` in ``plate_geometry.frame``, which is what gets serialized."""
+
+    @property
+    def transformation(self):
+        return Transformation.from_frame(self.plate_geometry.frame)
+
+    @transformation.setter
+    def transformation(self, transformation):
+        # `Element.transform()` goes through here too
+        self.plate_geometry.frame = Frame.from_transformation(transformation) if transformation else Frame.worldXY()
+        clear_element_cache(self)
 
 
 class PlateGeometry(Data):

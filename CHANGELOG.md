@@ -113,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed child elements (e.g. beams and layers of a panel) not following when their parent is transformed or added to a parent.
 * Fixed `TimberModel.transform()` failing on models containing a `Panel`.
 * Changed cache invalidation to two tiers: elements list their cached attributes in `ELEMENT_CACHE` and `MODEL_CACHE`, cleared by `clear_element_cache()` (own data changed) and `clear_model_cache()` (placement changed, includes descendants).
+* Fixed transformations of `Panel`, `Plate` and `Layer` being lost on serialization; their placement is now stored only in `plate_geometry.frame`.
 
 ### Removed
 * Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`.

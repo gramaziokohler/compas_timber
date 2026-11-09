@@ -22,9 +22,10 @@ from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
+from .plate_geometry import PlateGeometryPlacement
 
 
-class Plate(TimberElement):
+class Plate(PlateGeometryPlacement, TimberElement):
     """
     A class to represent timber plates (plywood, CLT, etc.) defined by polylines on top and bottom faces of material.
 

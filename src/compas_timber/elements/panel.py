@@ -38,6 +38,7 @@ from compas_timber.utils import polylines_from_brep_face
 from .layer import Layer
 from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
+from .plate_geometry import PlateGeometryPlacement
 
 
 class PanelType(object):
@@ -61,7 +62,7 @@ class PanelType(object):
     GENERIC = "generic"
 
 
-class Panel(Element):
+class Panel(PlateGeometryPlacement, Element):
     """Represents a timber panel element (wall, floor, roof, etc.).
 
     Serves as container for beams, plates, and other related elements and groups them together to form a panel.

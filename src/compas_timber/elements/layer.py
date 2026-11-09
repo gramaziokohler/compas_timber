@@ -17,12 +17,13 @@ from compas_timber.base import MODEL_CACHE
 from compas_timber.base import clear_element_cache
 
 from .plate_geometry import PlateGeometry
+from .plate_geometry import PlateGeometryPlacement
 
 if TYPE_CHECKING:
     from .panel import Panel  # noqa: F401
 
 
-class Layer(Element):
+class Layer(PlateGeometryPlacement, Element):
     """A resolved cross-section layer of a :class:`~compas_timber.elements.Panel`.
 
     A ``Layer`` represents a slice of a parent panel between two
