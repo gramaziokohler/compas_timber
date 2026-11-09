@@ -373,8 +373,7 @@ classDiagram
          +beam_a : Beam
          +beam_b : Beam
          +cutting_planes
-         +miter_plane : MiterPlaneSpec
-         +miter_plane_args(beam_a, beam_b, miter_plane) : dict
+         +miter_plane : CutPlaneSpec
       }
 
       class LapJoint {

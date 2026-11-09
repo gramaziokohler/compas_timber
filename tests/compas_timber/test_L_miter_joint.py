@@ -4,6 +4,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import distance_point_plane_signed
 from compas_timber.elements import Beam
+from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LMiterJoint
 from compas_timber.model import TimberModel
 from compas.tolerance import TOL
@@ -127,8 +128,7 @@ def test_L_miter_joint_ref_plane_extensions_big(beam_a_big, perp_beam):
 def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
     model = TimberModel()
     model.add_elements([beam_a, angle_beam])
-    kwargs = LMiterJoint.miter_plane_args(beam_a, angle_beam, Plane([0, 0, 0], [1, 0, 0]))
-    joint = LMiterJoint.create(model, beam_a, angle_beam, **kwargs)
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=CutPlaneSpec.from_plane(beam_a, Plane([0, 0, 0], [1, 0, 0])))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 200)
@@ -138,12 +138,23 @@ def test_l_miter_user_defined_plane_extend_angle_beam(beam_a, angle_beam):
 def test_l_miter_user_defined_plane_extend_beam_a(beam_a, angle_beam):
     model = TimberModel()
     model.add_elements([beam_a, angle_beam])
-    kwargs = LMiterJoint.miter_plane_args(beam_a, angle_beam, Plane([0, 0, 0], [1, -1, 0]))
-    joint = LMiterJoint.create(model, beam_a, angle_beam, **kwargs)
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=CutPlaneSpec.from_plane(beam_a, Plane([0, 0, 0], [1, -1, 0])))
     joint.add_extensions()
     assert not joint.ref_side_miter
     assert TOL.is_close(beam_a.blank_length, 215)
     assert TOL.is_close(angle_beam.blank_length, 200)
+
+
+def test_l_miter_user_defined_plane_unaffected_by_start_extension(beam_a, angle_beam):
+    # regression: the plane used to be anchored on the blank-derived ref_sides, so extending the beam's start
+    # (e.g. by another joint) slid a user miter plane along the beam axis.
+    miter_plane = Plane([0, 0, 0], [1, -1, 0])
+    joint = LMiterJoint(beam_a, angle_beam, miter_plane=CutPlaneSpec.from_plane(beam_a, miter_plane))
+
+    beam_a.add_blank_extension(50, 0, "some_other_joint")
+
+    assert TOL.is_allclose(joint.miter_plane.normal, miter_plane.normal.unitized())
+    assert TOL.is_zero(distance_point_plane_signed(joint.miter_plane.point, miter_plane))
 
 
 def test_L_miter_joint_bisector_features(beam_a, perp_beam):
@@ -244,8 +255,7 @@ def test_l_miter_joint_serialization_user_plane(beam_a, angle_beam):
     model = TimberModel()
     model.add_elements([beam_a, angle_beam])
 
-    kwargs = LMiterJoint.miter_plane_args(beam_a, angle_beam, Plane([0, 0, 0], [1, 0, 0]))
-    _ = LMiterJoint.create(model, beam_a, angle_beam, **kwargs)
+    _ = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=CutPlaneSpec.from_plane(beam_a, Plane([0, 0, 0], [1, 0, 0])))
     model_copy = json_loads(json_dumps(model))
 
     joint_copy = list(model_copy.joints)[0]
@@ -264,8 +274,7 @@ def test_l_miter_joint_user_plane_with_offset(beam_a, angle_beam):
 
     # a plane perpendicular to beam_a's centerline, shifted away from the origin
     miter_plane = Plane([30, 0, 0], [1, 0, 0])
-    kwargs = LMiterJoint.miter_plane_args(beam_a, angle_beam, miter_plane)
-    joint = LMiterJoint.create(model, beam_a, angle_beam, **kwargs)
+    joint = LMiterJoint.create(model, beam_a, angle_beam, miter_plane=CutPlaneSpec.from_plane(beam_a, miter_plane))
 
     assert TOL.is_allclose(joint.miter_plane.normal, miter_plane.normal)
     assert TOL.is_zero(distance_point_plane_signed(joint.miter_plane.point, miter_plane))

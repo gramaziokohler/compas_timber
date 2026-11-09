@@ -1,6 +1,7 @@
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas_timber.elements import Beam
 from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
@@ -198,6 +199,17 @@ def test_L_butt_joint_butt_plane_rejects_non_parallel_plane(cross_beam, planar_b
 
     with pytest.raises(ValueError):
         CutPlaneSpec.from_butt_plane(planar_beam, cross_beam, invalid_butt_plane)
+
+
+def test_L_butt_joint_butt_plane_accepts_parallel_plane_with_float_noise():
+    # a beam along Y has frame.xaxis.x == 6e-17, which an exact `== 0` check used to reject
+    main_beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 100, 200)
+    cross_beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(0, 1000, 0)), 100, 200)
+    butt_plane = Plane(Point(60, 0, 0), Vector(1, 0, 0.3))
+
+    spec = CutPlaneSpec.from_butt_plane(main_beam, cross_beam, butt_plane)
+
+    assert TOL.is_allclose(spec.to_plane(cross_beam).normal, butt_plane.normal.unitized())
 
 
 def test_L_butt_joint_back_plane_rejects_non_parallel_plane(cross_beam, planar_beam):

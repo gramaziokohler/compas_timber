@@ -21,18 +21,7 @@ import "compas_timber/proto/panel_features.proto";
 message CutPlaneSpecData {
   GuidRef guid = 1;
   optional string name = 2;
-  optional int32 ref_side_index = 10;
-  optional double angle = 11;
-  optional double offset = 12;
-}
-
-message MiterPlaneSpecData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional int32 ref_side_index = 10;
-  optional double angle_x = 11;
-  optional double angle_y = 12;
-  optional double offset = 13;
+  compas_pb.data.FrameData local_frame = 10;
 }
 
 // JointCandidate merges an open-ended `_extra_kwargs` dict into its __data__.
@@ -160,7 +149,7 @@ message LMiterJointData {
   repeated GuidRef element_guids = 12;
   optional bool cutoff = 13;
   optional bool ref_side_miter = 14;
-  optional MiterPlaneSpecData miter_plane = 15;
+  optional CutPlaneSpecData miter_plane = 15;
   optional bool clean = 16;
 }
 

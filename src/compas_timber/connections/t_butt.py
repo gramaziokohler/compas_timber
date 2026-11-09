@@ -18,6 +18,9 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
+    butt_plane_spec : :class:`~compas_timber.connections.CutPlaneSpec`, optional
+        Overrides the plane used to cut the main beam. Build with
+        :meth:`~compas_timber.connections.CutPlaneSpec.from_butt_plane`.
     fastener : :class:`~compas_timber.elements.Fastener`, optional
         The fastener to be used in the joint.
 
@@ -29,8 +32,8 @@ class TButtJoint(ButtJoint):
         The cross beam to be joined.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    butt_plane_spec : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
+    butt_plane : :class:`~compas.geometry.Plane`
+        The plane used to cut the main beam. If not overridden, the closest side of the cross beam will be used.
 
     """
 

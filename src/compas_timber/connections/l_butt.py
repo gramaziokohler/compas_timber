@@ -29,12 +29,12 @@ class LButtJoint(ButtJoint):
         If True, the beam with the smaller cross-section will be trimmed. Otherwise, the main beam will be trimmed.
     modify_cross : bool, default True
         If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane_spec : :class:`~compas_timber.connections.JointCutPlane`, optional
+    butt_plane_spec : :class:`~compas_timber.connections.CutPlaneSpec`, optional
         Overrides the plane used to cut the main beam. Build with
-        :meth:`~compas_timber.connections.JointCutPlane.from_butt_plane`.
-    back_plane : :class:`~compas_timber.connections.JointCutPlane`, optional
+        :meth:`~compas_timber.connections.CutPlaneSpec.from_butt_plane`.
+    back_plane_spec : :class:`~compas_timber.connections.CutPlaneSpec`, optional
         Overrides the plane used to cut the cross beam when `modify_cross` is True. Build with
-        :meth:`~compas_timber.connections.JointCutPlane.from_back_plane`.
+        :meth:`~compas_timber.connections.CutPlaneSpec.from_back_plane`.
     reject_i : bool, default False
         If True, the joint will reject beams in I topology.
 
@@ -88,8 +88,8 @@ class LButtJoint(ButtJoint):
     def back_plane(self) -> Plane:
         """The plane used to cut the cross beam when `modify_cross` is True.
 
-        If a :class:`~compas_timber.connections.JointCutPlane` override is set, it is resolved against the main beam's
-        back face (opposite the cross beam).  Otherwise defaults to the same plane as :meth:`ButtJoint._back_cutting_plane`.
+        If a :class:`~compas_timber.connections.CutPlaneSpec` override is set, it is resolved against the main beam.
+        Otherwise defaults to the same plane as :meth:`ButtJoint._back_cutting_plane`.
         """
         if self._back_plane_spec is not None:
             return self._back_plane_spec.to_plane(self.main_beam)
