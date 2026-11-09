@@ -8,6 +8,7 @@ from compas.geometry import Plane
 from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Vector
+from compas.geometry import Translation
 from compas.tolerance import TOL
 
 from compas_timber.elements import Panel
@@ -110,19 +111,38 @@ def test_add_beam_to_panel(model):
     assert beam.modeltransformation == model.panels[1].transformation, "Expected beam model transformation to match panel transformation"
 
 
-def test_nested_panel_modeltransformation_ignores_ancestor(model):
-    """A panel's own `transformation` is already an absolute (world) placement, unlike most elements' (which are
-    parent-relative), so nesting one panel under another must not compose the parent's transformation into the
-    child's `modeltransformation`."""
+def test_nested_panel_keep_world_placement(model):
+    """A panel built from a world outline keeps its place when nested with `keep_world_placement=True`,
+    and elements placed relative to it follow it."""
     parent_panel = model.panels[0]
     assert not TOL.is_allclose(parent_panel.transformation.translation_vector, [0, 0, 0]), "Fixture panel must have a non-trivial transformation for this test to be meaningful"
 
     polyline_c = Polyline([Point(0, 0, 5), Point(0, 10, 5), Point(10, 10, 5), Point(10, 0, 5), Point(0, 0, 5)])
     nested_panel = Panel.from_outline_thickness(polyline_c, 1, name="Nested Panel")
-    model.add_element(nested_panel, parent=parent_panel)
+    world_frame = nested_panel.frame.copy()
+    model.add_element(nested_panel, parent=parent_panel, keep_world_placement=True)
 
     assert nested_panel in parent_panel.children
-    assert TOL.is_allclose(list(nested_panel.modeltransformation.matrix), list(nested_panel.transformation.matrix))
+    assert TOL.is_allclose(nested_panel.frame.point, world_frame.point)
+    assert TOL.is_allclose(nested_panel.frame.xaxis, world_frame.xaxis)
+    assert TOL.is_allclose(nested_panel.frame.yaxis, world_frame.yaxis)
+
+    beam = Beam(Frame.worldXY(), 5.0, 1.0, 1.0)
+    model.add_element(beam, parent=nested_panel)
+    assert TOL.is_allclose(beam.frame.point, world_frame.point)
+
+    # the nested panel follows its parent
+    parent_panel.transform(Translation.from_vector([0, 0, 100]))
+    assert TOL.is_allclose(nested_panel.frame.point, world_frame.point + Vector(0, 0, 100))
+    assert TOL.is_allclose(beam.frame.point, world_frame.point + Vector(0, 0, 100))
+
+
+def test_nested_panel_default_is_parent_relative(model):
+    parent_panel = model.panels[0]
+    nested_panel = Panel(Frame.worldXY(), 10, 10, 1, name="Nested Panel")
+    model.add_element(nested_panel, parent=parent_panel)
+
+    assert TOL.is_allclose(nested_panel.frame.point, parent_panel.frame.point)
 
 
 def test_copy_panel_model(model):
