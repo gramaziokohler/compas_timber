@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `compas_pb >= 1.0.0, < 2.0` as a runtime and build dependency.
 * Added `brep_difference_first`, `brep_union_first` and `brep_intersection_first` to `compas_timber.geometry`. Which return the first result of a Brep boolean operation.
 * Added `panel.debug_info` attribute.
+* Added `CITATION.cff` as the canonical authors list (serves GitHub, Zenodo, PyPI and the docs). Contributors add themselves there and nowhere else.
+* Added `invoke sync-authors` task that regenerates the `pyproject.toml` authors (names only, see pypi/warehouse#12877) from `CITATION.cff`. `pre-build` runs it, so the release pipeline picks new authors up automatically; the BibTeX authors, DOI and repository URL (from `CITATION.cff`) and year in `docs/citing.md` are filled at docs build time by `scripts/mkdocs_hooks.py`.
 
 ### Changed
 * Fixed `Panel.compute_modeltransformation()` composing a panel's transformation with its ancestors' in the model tree. Unlike most elements, a `Panel`'s own `transformation` is already an absolute (world) placement rather than parent-relative, so composing it with an ancestor's transformation double-applied the ancestor's placement.

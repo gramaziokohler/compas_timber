@@ -1,6 +1,5 @@
 <h1>
-  <img src="docs\_logo\PNG_tranparent-background.png" alt="Logo" width="70" height="70" style="vertical-align:middle"> 
-      COMPAS Timber
+  <img src="docs/_logo/PNG_tranparent-background.png" alt="COMPAS Timber logo" width="70" height="70" align="absmiddle"> COMPAS Timber
 </h1>
 
 
@@ -10,19 +9,36 @@
 [![pip downloads](https://img.shields.io/pypi/dm/compas_timber)](https://pypi.python.org/project/compas_timber)
 [![PyPI Package latest release](https://img.shields.io/pypi/v/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
 [![Supported implementations](https://img.shields.io/pypi/implementation/compas_timber.svg)](https://pypi.python.org/pypi/compas_timber)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7934266.svg)](https://doi.org/10.5281/zenodo.7934266)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.7934266-blue)](https://doi.org/10.5281/zenodo.7934266)
 [![Twitter Follow](https://img.shields.io/twitter/follow/compas_dev?style=social)](https://twitter.com/compas_dev)
 [![Made with COMPAS](https://compas.dev/badge.svg)](https://compas.dev/#/)
 ![COMPAS Timber](https://raw.githubusercontent.com/gramaziokohler/compas_timber/main/docs/_images/compas_timber.jpg)
 
-`compas_timber` is a user-friendly open-source software toolkit to streamline the design of timber frame structures. Despite its advances in digitalization compared to other building techniques, timber construction is often perceived as a challenging field, involving intricate processes in design, planning, coordination, and fabrication. We aim to increase the use of timber in architecture by lowering the threshold of creating versatile and resource-aware designs.
+`compas_timber` is a user-friendly open-source software toolkit that streamlines the design-to-fabrication workflow of timber frame structures. A project is designed and refined in a single digital model that also produces the manufacturing data, so it can go from first concept to fabrication without re-modeling or back-and-forth rework along the way. By lowering the threshold for creating versatile and resource-aware timber designs, we aim to increase the use of timber in architecture.
 
 ## Installation
 
-> It is recomended you install `compas_timber` inside a virtual environment.
+We recommend managing environments and dependencies with [uv](https://docs.astral.sh/uv/), but a plain `pip install compas_timber` works just as well.
+
+Add `compas_timber` to your project:
 
 ```bash
-pip install compas_timber
+uv add compas_timber
+```
+
+To visualize models outside of Rhino, install with the `viz` extra, which adds [compas_viewer](https://github.com/compas-dev/compas_viewer) and `compas_brep[occ]`:
+
+```bash
+uv add "compas_timber[viz]"
+```
+
+For a development setup, clone the repository and sync the environment:
+
+```bash
+git clone https://github.com/gramaziokohler/compas_timber.git
+cd compas_timber
+uv sync --extra dev
+uv run pytest
 ```
 
 ## First Steps
@@ -30,7 +46,7 @@ pip install compas_timber
 * [Documentation](https://gramaziokohler.github.io/compas_timber/)
 * [COMPAS TIMBER Grasshopper Plugin (timber_design)](https://github.com/gramaziokohler/timber_design)
 * [COMPAS TIMBER Grasshopper Tutorial](https://gramaziokohler.github.io/timber_design/)
-* [COMPAS TIMBER API Reference](https://gramaziokohler.github.io/compas_timber/latest/api.html)
+* [COMPAS TIMBER API Reference](https://gramaziokohler.github.io/compas_timber/latest/api/compas_timber.model/)
 
 ## Questions and feedback
 
@@ -45,9 +61,9 @@ If you found an issue or have a suggestion for a dandy new feature, please file 
 
 We love contributions!
 
-Check the [Contributor's Guide](https://github.com/gramaziokohler/compas_timber/blob/main/CONTRIBUTING.md)
+Check the [Contributor's Guide](CONTRIBUTING.md)
 for more details.
 
 ## Credits
 
-`compas_timber` is currently developed by Gramazio Kohler Research. See the [list of authors](https://github.com/gramaziokohler/compas_timber/blob/main/AUTHORS.md) for a complete overview.
+`compas_timber` is currently developed by Gramazio Kohler Research. See [`CITATION.cff`](CITATION.cff) for a complete list of authors.
