@@ -199,6 +199,29 @@ def test_serialization_beam_with_nonjoinery_processings(beam):
     assert len(deserialized.features) == 1
 
 
+def test_serialization_of_nested_beam_preserves_modeltransformation():
+    """`TimberElement.__data__` stores the *local* frame (`Frame.from_transformation(self.transformation)`), not
+    `self.frame` (`Frame.from_transformation(self.modeltransformation)`, the world-composed frame with the whole
+    ancestor chain baked in). For a beam nested under another element in the model tree, storing the world frame
+    would double-apply the ancestor's transformation once the beam is reattached to its parent on deserialization.
+    """
+    model = TimberModel()
+    parent = Beam(Frame(Point(5, 5, 5), Vector(1, 0, 0), Vector(0, 1, 0)), length=2, width=0.1, height=0.1)
+    model.add_element(parent)
+    child = Beam(Frame(Point(1, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=1, width=0.05, height=0.05)
+    model.add_element(child, parent=parent)
+
+    expected_frame = child.frame  # world-composed: parent's frame combined with child's local placement
+
+    model_copy = json_loads(json_dumps(model))
+    parent_copy = next(e for e in model_copy.elements() if TOL.is_allclose(e.frame.point, parent.frame.point))
+    child_copy = next(e for e in parent_copy.children)
+
+    assert TOL.is_allclose(child_copy.frame.point, expected_frame.point)
+    assert TOL.is_allclose(child_copy.frame.xaxis, expected_frame.xaxis)
+    assert TOL.is_allclose(child_copy.frame.yaxis, expected_frame.yaxis)
+
+
 # ==========================================================================
 # Blank Extension & Transformation Tests
 # ==========================================================================
