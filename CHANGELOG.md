@@ -110,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Tenon` and `Mortise` shape attribute doesn't survive round trip serialization.
 * Fixed custom `LMiterJoint` miter planes shifting when the beam's start is extended; `CutPlaneSpec` is now stored relative to the beam's `frame`.
 * **Breaking:** `CutPlaneSpec` serializes as a `local_frame`; specs saved with 2.2.0 won't load. `LMiterJoint.miter_plane` takes a `CutPlaneSpec`.
+* Fixed `TimberModel.transform()` failing on models containing a `Panel`.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.

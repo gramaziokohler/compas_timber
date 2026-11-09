@@ -648,11 +648,10 @@ class TimberModel(Model):
     # =============================================================================
 
     def transform(self, transformation):
-        """Transform the model and reset all computed properties of all elements."""
-        # Override the base method to also reset computed properties of elements
+        """Transform the model and clear the model-space caches of all elements."""
         super().transform(transformation)
         for element in self.elements():
-            element.reset_computed_properties()  # TODO: Find a better way to only update transformations of elements instead of resetting all computed properties.  # noqa: E501
+            element.clear_model_dependent_cache()
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
