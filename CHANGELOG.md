@@ -110,6 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `Tenon` and `Mortise` shape attribute doesn't survive round trip serialization.
 * Fixed custom `LMiterJoint` miter planes shifting when the beam's start is extended; `CutPlaneSpec` is now stored relative to the beam's `frame`.
 * **Breaking:** `CutPlaneSpec` serializes as a `local_frame`; specs saved with 2.2.0 won't load. `LMiterJoint.miter_plane` takes a `CutPlaneSpec`.
+* Fixed child elements (e.g. beams and layers of a panel) not following when their parent is transformed or added to a parent.
 * Fixed `TimberModel.transform()` failing on models containing a `Panel`.
 * Changed cache invalidation to two tiers: elements list their cached attributes in `ELEMENT_CACHE` and `MODEL_CACHE`, cleared by `clear_element_cache()` (own data changed) and `clear_model_cache()` (placement changed, includes descendants).
 

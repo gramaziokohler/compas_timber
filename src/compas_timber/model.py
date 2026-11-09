@@ -629,6 +629,12 @@ class TimberModel(Model):
             # if there's no other timber related attributes on that edge, then remove the edge as well
             super().remove_interaction(a, b)
 
+    def add_element(self, element, parent=None, material=None):
+        super().add_element(element, parent=parent, material=material)
+        # the element's model transformation now composes with its new ancestors'
+        clear_model_cache(element)
+        return element
+
     def remove_element(self, element):
         # compas_model.Model removes the interactions and edges connected to the element,
         # but joints are stored in a separate dict, so we remove those explicitly first.
@@ -891,7 +897,6 @@ class TimberModel(Model):
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
                 self.add_element(child, parent=target_parent)
-                clear_model_cache(child)
         if joints:
             for joint in joints:
                 self.add_joint(joint)

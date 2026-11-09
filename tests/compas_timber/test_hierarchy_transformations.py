@@ -53,6 +53,21 @@ def panel_model():
 # ==========================================================================
 
 
+def test_adding_element_under_parent_updates_cached_frame(panel_model):
+    model, panel, _, _ = panel_model
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(500, 0, 0)), 80, 160)
+    local_frame = beam.frame  # populates the cache while standalone
+
+    model.add_element(beam, parent=panel)
+
+    assert_same_frame(beam.frame, local_frame.transformed(panel.modeltransformation))
+
+
+# ==========================================================================
+# joints after their elements moved
+# ==========================================================================
+
+
 def test_model_transform_moves_panel_children(panel_model):
     model, panel, beam_a, beam_b = panel_model
     elements = [panel, beam_a, beam_b, *panel.layers]
