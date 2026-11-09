@@ -33,8 +33,6 @@ classDiagram
          +ref_frame
          +ref_sides
          +ref_edges
-         +reset_computed_properties()
-         +clear_model_dependent_cache()
          +transform(transformation)
          +remove_blank_extension()
          +reset()
@@ -113,7 +111,6 @@ classDiagram
          +debug_info : list
          +is_fastener : bool
          +key : int or None
-         +clear_model_dependent_cache()
          +compute_elementgeometry()
       }
 
@@ -180,7 +177,6 @@ classDiagram
          +set_extension_plane(edge_index, plane)
          +apply_edge_extensions()
          +remove_blank_extension(edge_index=None)
-         +clear_model_dependent_cache()
          +reset()
          +remove_features(features=None) : None
          +compute_aabb(inflate=0.0) : Box

@@ -111,8 +111,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed custom `LMiterJoint` miter planes shifting when the beam's start is extended; `CutPlaneSpec` is now stored relative to the beam's `frame`.
 * **Breaking:** `CutPlaneSpec` serializes as a `local_frame`; specs saved with 2.2.0 won't load. `LMiterJoint.miter_plane` takes a `CutPlaneSpec`.
 * Fixed `TimberModel.transform()` failing on models containing a `Panel`.
+* Changed cache invalidation to two tiers: elements list their cached attributes in `ELEMENT_CACHE` and `MODEL_CACHE`, cleared by `clear_element_cache()` (own data changed) and `clear_model_cache()` (placement changed, includes descendants).
 
 ### Removed
+* Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`.
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.

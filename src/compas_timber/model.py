@@ -11,6 +11,7 @@ from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.models import Model
 
+from compas_timber.base import clear_model_cache
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
@@ -650,8 +651,8 @@ class TimberModel(Model):
     def transform(self, transformation):
         """Transform the model and clear the model-space caches of all elements."""
         super().transform(transformation)
-        for element in self.elements():
-            element.clear_model_dependent_cache()
+        for node in self.tree.root.children:
+            clear_model_cache(node.element)
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -866,7 +867,7 @@ class TimberModel(Model):
 
         for e in elements_children_first:
             self.remove_element(e)
-            e.clear_model_dependent_cache()
+            clear_model_cache(e)
 
         return tuples, joints
 
@@ -890,7 +891,7 @@ class TimberModel(Model):
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
                 self.add_element(child, parent=target_parent)
-                child.clear_model_dependent_cache()
+                clear_model_cache(child)
         if joints:
             for joint in joints:
                 self.add_joint(joint)

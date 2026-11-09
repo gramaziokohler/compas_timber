@@ -12,9 +12,9 @@ from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import TOL
 from compas_brep import Brep  # noqa: F401
-from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
+from compas_timber.base import clear_element_cache
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.fabrication import FreeContour
 from compas_timber.utils import get_plate_geometry_outlines_from_brep
@@ -73,6 +73,8 @@ class Plate(TimberElement):
         Once plate is added to a model, it will have this model-wide-unique integer key.
 
     """
+
+    MODEL_CACHE = TimberElement.MODEL_CACHE + ("_planes", "_outline_feature", "_opening_features")
 
     @property
     def __data__(self):
@@ -189,20 +191,12 @@ class Plate(TimberElement):
         """Sets the features of the plate."""
         self._features = features
 
-    def clear_model_dependent_cache(self):
-        """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        super().clear_model_dependent_cache()
-        self._planes = []
-        self._outline_feature = None
-        self._opening_features = None
-
-    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = []
-        self._outline_feature = None
         self.debug_info = []
+        clear_element_cache(self)
 
     # ==========================================================================
     #  Implementation of abstract methods

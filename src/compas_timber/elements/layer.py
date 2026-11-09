@@ -12,7 +12,9 @@ from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
-from compas_model.elements import reset_computed
+
+from compas_timber.base import MODEL_CACHE
+from compas_timber.base import clear_element_cache
 
 from .plate_geometry import PlateGeometry
 
@@ -76,6 +78,8 @@ class Layer(Element):
     edge_planes : dict[int, :class:`~compas.geometry.Plane`]
         World-space edge planes by edge index.
     """
+
+    MODEL_CACHE = MODEL_CACHE + ("_planes",)
 
     # ------------------------------------------------------------------
     # Serialization
@@ -232,13 +236,13 @@ class Layer(Element):
     # ------------------------------------------------------------------
     # Methods
     # ------------------------------------------------------------------
-    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing extensions and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self.debug_info = []
         for sublayer in self.sublayers:
             sublayer.reset()
+        clear_element_cache(self)
 
     def define_sublayers(self, thicknesses: list, names: Optional[list] = None) -> list:
         """Subdivide this layer into child layers by thickness.
@@ -301,24 +305,6 @@ class Layer(Element):
             if element not in model.elements():
                 model.add_element(element, parent=self)
             element.merge_sublayer_tree(model)
-
-    @reset_computed
-    def _reset_all_computed(self):
-        pass
-
-    def reset_computed_properties(self):
-        """Clear all cached properties so they recompute against the current model tree."""
-        self._planes = None
-        self._reset_all_computed()
-
-    def clear_model_dependent_cache(self):
-        """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        self._modeltransformation = None
-        self._modelgeometry = None
-        self._aabb = None
-        self._obb = None
-        self._collision_mesh = None
-        self._planes = None
 
     def transformation_to_local(self):
         """Transformation from model space to this layer's local space."""
