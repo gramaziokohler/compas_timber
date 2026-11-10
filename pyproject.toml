@@ -117,7 +117,7 @@ where = ["src"]
 # stable semantic versions only, and both drive the commit/tag through the
 # release pull request rather than through bump-my-version.
 [tool.bumpversion]
-current_version = "3.0.0"
+current_version = "2.2.0"
 message = "Bump version to {new_version}"
 commit = false
 tag = false

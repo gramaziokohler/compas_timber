@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Added
-
-### Changed
-
-### Removed
-
-
-## [3.0.0] 2026-11-10
-
 ### Breaking
 
 * `Plate`, `Panel` and `Layer` take a `frame` argument next to `plate_geometry` (defaults to world XY). `PlateGeometry` now holds only local outlines; its `frame` attribute and argument are removed.
