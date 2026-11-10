@@ -24,6 +24,7 @@ from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LLapJoint
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections.joint import location_from_centerlines
 from compas_timber.elements import Beam
 from compas_timber.elements import LayerDefinition
 from compas_timber.elements import LayerStructure
@@ -229,8 +230,31 @@ def test_explicit_joint_location_follows_elements(panel_model):
     panel.transform(T)
     assert TOL.is_allclose(joint.location, location.transformed(T))
 
+
+def test_explicit_joint_location_follows_elements_after_reload(panel_model):
+    model, panel, beam_a, beam_b = panel_model
+    location = Point(10, 20, 30).transformed(panel.modeltransformation)
+    LMiterJoint.create(model, beam_a, beam_b, location=location)
+
+    model_copy = json_loads(json_dumps(model))
+    model_copy.panels[0].transform(T)  # before the location is first read
+
+    assert TOL.is_allclose(next(iter(model_copy.joints)).location, location.transformed(T))
+
+
+def test_derived_joint_location_stays_derived_after_reload():
+    model = TimberModel()
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), 80, 160)
+    beam_b = Beam.from_centerline(Line(Point(1000, 0, 0), Point(1000, 1000, 0)), 80, 160)
+    model.add_elements([beam_a, beam_b])
+    LButtJoint.create(model, beam_b, beam_a)
+
     joint_copy = next(iter(json_loads(json_dumps(model)).joints))
-    assert TOL.is_allclose(joint_copy._location, location.transformed(T))
+    location_before = joint_copy.location
+    joint_copy.element_b.transform(Translation.from_vector([-300, 0, 0]))
+
+    assert not TOL.is_allclose(joint_copy.location, location_before)
+    assert TOL.is_allclose(joint_copy.location, location_from_centerlines(joint_copy.elements))
 
 
 def test_custom_cut_planes_under_transformed_and_reloaded_panel(panel_model):

@@ -90,8 +90,16 @@ def test_joint_topology_and_location_roundtrip():
     joint = LMiterJoint.create(model, a, b)
     other = assert_lossless(joint)
     assert other.topology == joint.topology
-    # the round-tripped joint is detached from its elements, so it still holds the location in world coordinates
-    assert other._location == joint.location
+    # a location derived from the centerlines isn't stored; it is derived again once the elements are restored
+    assert other._location is None
+
+
+def test_joint_explicit_location_roundtrip():
+    model, a, b = _model_with_two_beams()
+    joint = LMiterJoint.create(model, a, b, location=Point(10.0, 20.0, 30.0))
+    other = assert_lossless(joint)
+    # the round-tripped joint is detached from its elements, so it holds the location in model coordinates
+    assert other._location == Point(10.0, 20.0, 30.0)
 
 
 def test_joint_candidate_roundtrip():

@@ -113,7 +113,7 @@ class Joint(Data):
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name, "topology": self._topology, "location": self._location_or_none(), "element_guids": self.element_guids}
+        return {"name": self.name, "topology": self._topology, "location": self._explicit_location(), "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -169,11 +169,11 @@ class Joint(Data):
         self._location = None
         self._local_location = None
 
-    def _location_or_none(self):
-        try:
-            return self.location
-        except ValueError:
-            return None
+    def _explicit_location(self):
+        # the explicitly set location in model coordinates, or None when it is derived from the centerlines
+        if self._local_location is not None:
+            return self._local_location.transformed(self.element_a.modeltransformation)
+        return self._location
 
     def _anchor_location(self):
         # converts a location given in model coordinates to element_a's local coordinates, once element_a is available
@@ -278,6 +278,7 @@ class Joint(Data):
 
         """
         self._elements = tuple(model[guid] for guid in self.element_guids)
+        self._anchor_location()
         self._set_unset_attributes()
 
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
