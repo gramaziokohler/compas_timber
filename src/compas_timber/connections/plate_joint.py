@@ -112,6 +112,10 @@ class PlateJoint(Joint, ABC):
     def location(self, value):
         self._location = value
 
+    def _anchor_location(self):
+        # plate joints keep their location in model coordinates, defaulting to the origin
+        pass
+
     def calculate_topology(self, allow_reordering=False):
         """Calculate the topology of the joint based on the plates."""
         topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)

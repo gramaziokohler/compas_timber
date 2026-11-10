@@ -117,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed transformations of `Panel`, `Plate` and `Layer` being lost on serialization; their placement is now stored only in the element's `transformation` and serialized as the element's `frame`.
 * **Breaking:** Removed `PlateGeometry.frame` and the `frame` argument of `PlateGeometry`; it holds only the local outlines. `PlateGeometry.from_global_outlines()` is replaced by `compas_timber.elements.global_outlines_to_local(outline_a, outline_b, orientation=None)`, which returns `(frame, local_outline_a, local_outline_b)`, and `PlateGeometry.from_frame_and_dims(frame, ...)` is replaced by `PlateGeometry.from_dims(length, width, thickness)`. `Plate`, `Panel` and `Layer` take `frame` alongside `plate_geometry` (defaults to worldXY). The frame moved from `PlateGeometryData` to `PlateData`, `PanelData` and `LayerData` in JSON and protobuf; data saved before this change won't load.
 * Changed `Panel`, `Plate` and `Layer` to raise a `ValueError` when scaled, sheared or mirrored, which their placement can't represent.
+* Fixed `LMiterJoint` and `LapJoint` cutting planes and explicitly set `Joint.location` not following elements that moved after the joint was created.
 
 ### Removed
 * Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`.

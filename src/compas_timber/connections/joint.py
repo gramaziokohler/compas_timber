@@ -104,12 +104,16 @@ class Joint(Data):
 
         self.features = []
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
+        # an explicit location is kept relative to element_a (see `location`); `_location` holds it in world
+        # coordinates only until element_a is available, e.g. during deserialization
         self._location = location
+        self._local_location = None
+        self._anchor_location()
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name, "topology": self._topology, "location": self._location, "element_guids": self.element_guids}
+        return {"name": self.name, "topology": self._topology, "location": self._explicit_location(), "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -136,14 +140,20 @@ class Joint(Data):
 
     @property
     def location(self):
+        """The location of the joint in model coordinates.
+
+        An explicitly set location is stored relative to `element_a`, so it follows the elements when they move.
+        Otherwise it is derived from the centerlines of the two elements.
+        """
+        self._anchor_location()
+        if self._local_location is not None:
+            return self._local_location.transformed(self.element_a.modeltransformation)
+        if self._location is not None:
+            return self._location
         # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
-        if self._location is None and all(self.elements) and len(self.elements) == 2:
-            self._location = location_from_centerlines(self.elements)
-
-        if self._location is None:
-            raise ValueError("Location of the joint could not be determined. Please set it manually.")
-
-        return self._location
+        if all(self.elements) and len(self.elements) == 2:
+            return location_from_centerlines(self.elements)  # not cached, so it follows the elements
+        raise ValueError("Location of the joint could not be determined. Please set it manually.")
 
     @location.setter
     def location(self, value):
@@ -151,10 +161,25 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
+        self._local_location = None
+        self._anchor_location()
 
     def reset_location(self):
-        """Reset cached joint.location value to None so that it will be recalculated from the beam centerlines on next access."""
+        """Clear an explicitly set location so that it is derived from the beam centerlines on next access."""
         self._location = None
+        self._local_location = None
+
+    def _explicit_location(self):
+        # the explicitly set location in model coordinates, or None when it is derived from the centerlines
+        if self._local_location is not None:
+            return self._local_location.transformed(self.element_a.modeltransformation)
+        return self._location
+
+    def _anchor_location(self):
+        # converts a location given in model coordinates to element_a's local coordinates, once element_a is available
+        if self._location is not None and self.element_a is not None:
+            self._local_location = self._location.transformed(self.element_a.modeltransformation.inverted())
+            self._location = None
 
     @property
     def generated_elements(self):
@@ -253,6 +278,7 @@ class Joint(Data):
 
         """
         self._elements = tuple(model[guid] for guid in self.element_guids)
+        self._anchor_location()
         self._set_unset_attributes()
 
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
