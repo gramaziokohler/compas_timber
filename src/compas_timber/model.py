@@ -11,6 +11,7 @@ from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.models import Model
 
+from compas_timber.base import clear_model_cache
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
@@ -628,6 +629,12 @@ class TimberModel(Model):
             # if there's no other timber related attributes on that edge, then remove the edge as well
             super().remove_interaction(a, b)
 
+    def add_element(self, element, parent=None, material=None):
+        super().add_element(element, parent=parent, material=material)
+        # the element's model transformation now composes with its new ancestors'
+        clear_model_cache(element)
+        return element
+
     def remove_element(self, element):
         # compas_model.Model removes the interactions and edges connected to the element,
         # but joints are stored in a separate dict, so we remove those explicitly first.
@@ -648,11 +655,10 @@ class TimberModel(Model):
     # =============================================================================
 
     def transform(self, transformation):
-        """Transform the model and reset all computed properties of all elements."""
-        # Override the base method to also reset computed properties of elements
+        """Transform the model and clear the model-space caches of all elements."""
         super().transform(transformation)
-        for element in self.elements():
-            element.reset_computed_properties()  # TODO: Find a better way to only update transformations of elements instead of resetting all computed properties.  # noqa: E501
+        for node in self.tree.root.children:
+            clear_model_cache(node.element)
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -867,7 +873,7 @@ class TimberModel(Model):
 
         for e in elements_children_first:
             self.remove_element(e)
-            e.clear_model_dependent_cache()
+            clear_model_cache(e)
 
         return tuples, joints
 
@@ -891,7 +897,6 @@ class TimberModel(Model):
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
                 self.add_element(child, parent=target_parent)
-                child.clear_model_dependent_cache()
         if joints:
             for joint in joints:
                 self.add_joint(joint)

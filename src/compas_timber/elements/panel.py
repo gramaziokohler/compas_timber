@@ -21,8 +21,9 @@ from compas.geometry import angle_vectors
 from compas.geometry import is_colinear_line_line
 from compas.tolerance import TOL
 from compas_model.elements import Element
-from compas_model.elements import reset_computed
 
+from compas_timber.base import MODEL_CACHE
+from compas_timber.base import clear_element_cache
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.panel_features import Opening
 from compas_timber.panel_features import OpeningType
@@ -104,6 +105,8 @@ class Panel(Element):
         Always True for panels as they can contain other elements.
 
     """
+
+    MODEL_CACHE = MODEL_CACHE + ("_planes",)
 
     @property
     def __data__(self):
@@ -218,23 +221,13 @@ class Panel(Element):
         """list[:class:`~compas_timber.panel_features.PanelConnectionInterface`]: The interfaces associated with this panel."""
         return [f for f in self.features if f.panel_feature_type == PanelFeatureType.CONNECTION_INTERFACE]
 
-    def clear_model_dependent_cache(self):
-        """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        self._modeltransformation = None
-        self._modelgeometry = None
-        self._aabb = None
-        self._obb = None
-        self._collision_mesh = None
-        self._planes = None
-
-    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing all features, extensions, and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self._features = [f for f in self._features if not f.is_joinery]
         self.debug_info = []
+        clear_element_cache(self)
 
-    @reset_computed
     def remove_features(self, features: Optional[Union[PanelFeature, list[PanelFeature]]] = None) -> None:
         """Removes features from the element.
 
@@ -249,6 +242,7 @@ class Panel(Element):
         else:
             feature_list = features if isinstance(features, list) else [features]
             self._features = [f for f in self.features if f not in feature_list]
+        clear_element_cache(self)
 
     @property
     def is_group_element(self):
