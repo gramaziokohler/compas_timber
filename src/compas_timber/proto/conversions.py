@@ -659,7 +659,6 @@ import inspect as _inspect  # noqa: E402
 from compas_timber import connections as _cn  # noqa: E402
 
 register(_cn.CutPlaneSpec, connections_pb2.CutPlaneSpecData)
-register(_cn.MiterPlaneSpec, connections_pb2.MiterPlaneSpecData)
 register(_cn.JointCandidate, connections_pb2.JointCandidateData, catchall="extra_kwargs", name_in_data=True)
 from compas_timber.connections.solver import BeamSolverResult as _BeamSolverResult  # noqa: E402
 from compas_timber.connections.solver import PlateSolverResult as _PlateSolverResult  # noqa: E402

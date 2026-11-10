@@ -108,11 +108,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `SimpleScarf.apply()` passing a `Polyhedron` to `Brep.from_mesh()`. `compas_brep` builds one Brep face per mesh face and iterates the mesh interface, which `Polyhedron` does not provide, so the scarf volume is handed over as a mesh. As a side effect the quad faces of the scarf volume stay quads instead of being fanned into triangles.
 * Fixed `StartX` of an END-oriented `SimpleScarf`, which carried the cutting volume's half-scarf-length overshoot (`beam.length + length/2`) into the exported BTLx parameter. `StartX` is now `beam.blank_length`, the end of the blank, and the overshoot lives in the cutting volume geometry where it belongs.
 * Fixed `Tenon` and `Mortise` shape attribute doesn't survive round trip serialization.
+* Fixed custom `LMiterJoint` miter planes shifting when the beam's start is extended; `CutPlaneSpec` is now stored relative to the beam's `frame`.
+* **Breaking:** `CutPlaneSpec` serializes as a `local_frame`; specs saved with 2.2.0 won't load. `LMiterJoint.miter_plane` takes a `CutPlaneSpec`.
 
 ### Removed
 * Removed the `release` and `prepare-changelog` invoke tasks; the release actions bump the version and roll the changelog inside the release pull request.
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
+* Removed `MiterPlaneSpec`, `LMiterJoint.miter_plane_args()` and the plane decomposition helpers in `connections.utilities`; use `CutPlaneSpec.from_plane(beam_a, plane)`.
 
 ## [2.2.0] 2026-07-02
 
