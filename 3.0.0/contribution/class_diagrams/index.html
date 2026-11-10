@@ -1,0 +1,1935 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="https://gramaziokohler.github.io/compas_timber/3.0.0/contribution/class_diagrams/" rel="canonical"/>
+<link href="../../api/compas_timber.panel_features/" rel="prev"/>
+<link href="../BTLx_contribution_guide/" rel="next"/>
+<link href="../../public/favicon.ico" rel="icon"/>
+<meta content="mkdocs-ProperDocs 1.6.7, mkdocs-material-9.8.1" name="generator"/>
+<title>Class Diagrams - COMPAS Timber</title>
+<link href="../../assets/stylesheets/main.57a0d79d.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.fb2fffe2.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<link href="../../assets/_mkdocstrings.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/custom.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/panzoom.css" rel="stylesheet"/>
+<script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<meta name="panzoom-theme" content="material">
+<meta name="panzoom-data" content='{"selectors": [".d2", ".mermaid"], "initial_zoom_level": 1.0}'> </head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="default" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#class-diagrams">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<div data-md-color-scheme="default" data-md-component="outdated" hidden="">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="COMPAS Timber" class="md-header__button md-logo" data-md-component="logo" href="https://gramaziokohler.github.io/compas_timber/" title="COMPAS Timber">
+<img alt="logo" src="../../_logo/compas_logo_white_transparent.png"/>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            COMPAS Timber
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Class Diagrams
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="default" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/gramaziokohler/compas_timber/" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+</div>
+<div class="md-source__repository">
+    gramaziokohler
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="COMPAS Timber" class="md-nav__button md-logo" data-md-component="logo" href="https://gramaziokohler.github.io/compas_timber/" title="COMPAS Timber">
+<img alt="logo" src="../../_logo/compas_logo_white_transparent.png"/>
+</a>
+    COMPAS Timber
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/gramaziokohler/compas_timber/" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+</div>
+<div class="md-source__repository">
+    gramaziokohler
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../installation/">
+<span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--section md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.model/">
+<span class="md-ellipsis">
+    
+  
+    model
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.elements/">
+<span class="md-ellipsis">
+    
+  
+    elements
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.connections/">
+<span class="md-ellipsis">
+    
+  
+    connections
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.fabrication/">
+<span class="md-ellipsis">
+    
+  
+    fabrication
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.planning/">
+<span class="md-ellipsis">
+    
+  
+    planning
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.errors/">
+<span class="md-ellipsis">
+    
+  
+    errors
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.rhino/">
+<span class="md-ellipsis">
+    
+  
+    rhino
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.base/">
+<span class="md-ellipsis">
+    
+  
+    base
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.structural/">
+<span class="md-ellipsis">
+    
+  
+    structural
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.geometry/">
+<span class="md-ellipsis">
+    
+  
+    geometry
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../api/compas_timber.panel_features/">
+<span class="md-ellipsis">
+    
+  
+    panel_features
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Class Diagrams
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Class Diagrams
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#elements-subsystem">
+<span class="md-ellipsis">
+      
+        Elements Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#connections-subsystem">
+<span class="md-ellipsis">
+      
+        Connections Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fabrication-subsystem">
+<span class="md-ellipsis">
+      
+        Fabrication Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#errors-subsystem">
+<span class="md-ellipsis">
+      
+        Errors Subsystem
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../BTLx_contribution_guide/">
+<span class="md-ellipsis">
+    
+  
+    BTLx Contribution
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../joints_contribution_guide/">
+<span class="md-ellipsis">
+    
+  
+    Joints Contribution
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../citing/">
+<span class="md-ellipsis">
+    
+  
+    Citing
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../license/">
+<span class="md-ellipsis">
+    
+  
+    License
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--section md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    Links
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    Links
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="https://compas.dev/">
+<span class="md-ellipsis">
+    
+  
+    COMPAS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="https://gramaziokohler.github.io/timber_design/">
+<span class="md-ellipsis">
+    
+  
+    Timber Design
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="https://www.food4rhino.com/en/app/compas-timber">
+<span class="md-ellipsis">
+    
+  
+    Grasshopper Plugin
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#elements-subsystem">
+<span class="md-ellipsis">
+      
+        Elements Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#connections-subsystem">
+<span class="md-ellipsis">
+      
+        Connections Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fabrication-subsystem">
+<span class="md-ellipsis">
+      
+        Fabrication Subsystem
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#errors-subsystem">
+<span class="md-ellipsis">
+      
+        Errors Subsystem
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="class-diagrams">Class Diagrams<a class="headerlink" href="#class-diagrams" title="Permanent link">¤</a></h1>
+<p>This section provides visual representations of the class hierarchies and relationships in different subsystems of COMPAS Timber. This is to help developers better understand the codebase and to document the interface of the different classes.</p>
+<p>The diagrams are generated from the source code (attributes, methods and inheritance are extracted with Python's <code>ast</code>), so they reflect the code at the version noted in the changelog rather than an idealized design. Members inherited from <code>compas</code> / <code>compas_model</code> base classes are not repeated on subclasses.</p>
+<p>This page is generated — do not edit it by hand; it is regenerated from the source code for each release.</p>
+<div class="toc">
+<ul>
+<li><a href="#class-diagrams">Class Diagrams</a><ul>
+<li><a href="#elements-subsystem">Elements Subsystem</a></li>
+<li><a href="#connections-subsystem">Connections Subsystem</a></li>
+<li><a href="#fabrication-subsystem">Fabrication Subsystem</a></li>
+<li><a href="#errors-subsystem">Errors Subsystem</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="elements-subsystem">Elements Subsystem<a class="headerlink" href="#elements-subsystem" title="Permanent link">¤</a></h2>
+<p>The elements subsystem contains all the core timber elements that can be modeled and manipulated. <code>Beam</code> and <code>Plate</code> inherit from the base <code>TimberElement</code> class, while <code>Panel</code>, <code>Fastener</code> and <code>PanelFeature</code> inherit directly from compas_model's <code>Element</code>. <code>Plate</code> and <code>Panel</code> delegate their outline/plane logic to a shared, composed <code>PlateGeometry</code> object. <code>frame</code> and element-tree bookkeeping are inherited from compas_model's <code>Element</code> and are not repeated below. The legacy <code>Feature</code> classes (<code>CutFeature</code>, <code>DrillFeature</code>, <code>MillVolume</code>, <code>BrepSubtraction</code>) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from <code>compas_timber.elements</code> for backward compatibility.</p>
+<div class="panzoom-box" data-key="alt" id="panzoom0" oncontextmenu="return false;">
+<nav class="panzoom-nav">
+<button class="panzoom-info panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"></path>
+</svg>
+</button><button class="panzoom-reset panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"></path>
+</svg>
+</button><button class="panzoom-max panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"></path>
+</svg>
+</button><button class="panzoom-min panzoom-button panzoom-hidden">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 320c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0z"></path>
+</svg>
+</button>
+</nav>
+<pre class="mermaid"><code>classDiagram
+      class Element {
+         &lt;&lt;compas_model&gt;&gt;
+      }
+
+      class TimberElement {
+         &lt;&lt;abstract&gt;&gt;
+         +attributes
+         +length : float
+         +width : float
+         +height : float
+         +debug_info
+         +is_beam : bool
+         +is_plate : bool
+         +is_group_element : bool
+         +features : list[Feature]
+         +geometry : Geometry
+         +ref_frame
+         +ref_sides
+         +ref_edges
+         +transform(transformation)
+         +remove_blank_extension()
+         +reset()
+         +add_feature(feature)
+         +add_features(features)
+         +remove_features(features=None)
+         +transformation_to_local()
+         +side_as_surface(side_index)
+         +front_side(ref_side_index)
+         +back_side(ref_side_index)
+         +opp_side(ref_side_index)
+         +get_dimensions_relative_to_side(ref_side_index)
+      }
+
+      class Beam {
+         +shape : Box
+         +blank : Box
+         +blank_length : float
+         +centerline : Line
+         +compute_elementgeometry(include_features=True)
+         +compute_aabb(inflate=0.0)
+         +compute_obb(inflate=0.0)
+         +compute_collision_mesh()
+         +from_centerline(centerline, width, height, z_vector=None, **kwargs)
+         +from_endpoints(point_start, point_end, width, height, z_vector=None, **kwargs)
+         +from_box(box, **kwargs)
+         +add_blank_extension(start, end, joint_key=None)
+         +extension_to_plane(plane)
+         +endpoint_closest_to_point(point)
+      }
+
+      class Plate {
+         +plate_geometry : PlateGeometry
+         +blank : Box
+         +blank_length : float
+         +outlines
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +thickness : float
+         +planes
+         +normal
+         +edge_planes
+         +set_extension_plane(edge_index, plane) : None
+         +apply_edge_extensions() : None
+         +compute_aabb(inflate=0.0) : Box
+         +compute_obb(inflate=0.0) : Box
+         +compute_collision_mesh() : Mesh
+         +compute_elementgeometry(include_features=True) : Union[Brep, Mesh]
+         +from_outlines(outline_a, outline_b, openings=None, orientation=None, **kwargs)
+         +from_outline_thickness(outline, thickness, vector=None, openings=None, orientation=None, **kwargs)
+         +from_face_thickness(brep, thickness, vector=None, orientation=None, **kwargs)
+         +from_brep(brep, orientation=None, **kwargs)
+      }
+
+      class PlateGeometry {
+         +length : float
+         +width : float
+         +thickness : float
+         +outline_a : Polyline
+         +outline_b : Polyline
+         +edge_planes : dict[int, Plane]
+         +compute_aabb(inflate=0.0) : Box
+         +set_extension_plane(edge_index, plane) : None
+         +apply_edge_extensions() : None
+         +remove_blank_extension(edge_index=None)
+         +reset()
+         +compute_shape() : Brep
+         +from_dims(length, width, thickness) : PlateGeometry
+      }
+
+      class Fastener {
+         +interfaces : list
+         +attributes : dict
+         +debug_info : list
+         +is_fastener : bool
+         +key : int or None
+         +compute_elementgeometry()
+      }
+
+      class BallNodeFastener {
+         +node_point : Point
+         +ball_diameter : float
+         +base_interface : FastenerTimberInterface | None
+         +default_fastener_interface
+         +interface_plate
+         +interface_shape
+         +update_interface(interface)
+         +compute_geometry()
+         +compute_collision_mesh()
+      }
+
+      class PlateFastener {
+         +outline : list[Point]
+         +thickness : float
+         +frame : Frame
+         +angle : float
+         +topology : int or list[int]
+         +cutouts : list[Polyline]
+         +holes
+         +shapes
+         +shape
+         +set_default(joint)
+         +place_instances(joint)
+         +get_fastener_frames(joint)
+         +validate_fastener_beam_compatibility(joint)
+         +add_features()
+         +compute_geometry()
+      }
+
+      class FastenerTimberInterface {
+         +outline_points : list[Point]
+         +thickness : float
+         +holes : list[dict]
+         +frame : Frame
+         +element : object
+         +shapes : list[Geometry]
+         +features : list[BTLxFromGeometryDefinition]
+         +get_features(element)
+      }
+
+      class Panel {
+         +plate_geometry : PlateGeometry
+         +length : float
+         +width : float
+         +height : float
+         +type
+         +attributes
+         +debug_info
+         +geometry
+         +outlines
+         +outline_a
+         +outline_b
+         +thickness : float
+         +planes : tuple[Plane, Plane]
+         +normal : Vector
+         +edge_planes : dict[int, Plane]
+         +features : list[PanelFeature]
+         +interfaces
+         +is_group_element : bool
+         +set_extension_plane(edge_index, plane)
+         +apply_edge_extensions()
+         +remove_blank_extension(edge_index=None)
+         +reset()
+         +remove_features(features=None) : None
+         +compute_aabb(inflate=0.0) : Box
+         +compute_obb(inflate=0.0) : Box
+         +compute_collision_mesh() : Mesh
+         +transformation_to_local()
+         +compute_elementgeometry(include_features=True) : Brep
+         +from_outline_thickness(outline, thickness, vector=None, openings=None, orientation=None, **kwargs)
+         +from_face_thickness(brep, thickness, vector=None, orientation=None, **kwargs)
+         +from_brep(brep, orientation=None, **kwargs)
+         +from_outlines(outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, orientation=None, **kwargs)
+      }
+
+      class PanelType {
+         &lt;&lt;enumeration&gt;&gt;
+         WALL
+         FLOOR
+         ROOF
+         GENERIC
+      }
+
+      class PanelFeature {
+         &lt;&lt;abstract&gt;&gt;
+         +panel_feature_type
+         +is_joinery
+         +geometry : Geometry
+         +apply(geometry, panel) : Brep
+      }
+
+      class PanelFeatureType {
+         &lt;&lt;enumeration&gt;&gt;
+         CONNECTION_INTERFACE
+         RECESS
+         OPENING
+         LINEAR
+         VOLUMETRIC
+         NONE
+      }
+
+      class Opening {
+         +opening_type
+         +outline_a
+         +outline_b
+         +shape
+         +from_outline_panel(outline, panel, opening_type=None, project_horizontal=False, name=None)
+      }
+
+      class OpeningType {
+         &lt;&lt;enumeration&gt;&gt;
+         DOOR
+         WINDOW
+      }
+
+      class PanelConnectionInterface {
+         +edge_index
+         +interface_role
+         +polyline : Polyline
+         +width : float
+         +compute_elementgeometry(include_features=False) : Polyline
+         +as_plane() : Plane
+      }
+
+      class InterfaceRole {
+         &lt;&lt;enumeration&gt;&gt;
+         MAIN
+         CROSS
+         NONE
+      }
+
+      %% Inheritance relationships
+      Element &lt;|-- TimberElement
+      TimberElement &lt;|-- Beam
+      TimberElement &lt;|-- Plate
+      Element &lt;|-- Fastener
+      Fastener &lt;|-- BallNodeFastener
+      Fastener &lt;|-- PlateFastener
+      Element &lt;|-- Panel
+      Element &lt;|-- PanelFeature
+      PanelFeature &lt;|-- Opening
+      PanelFeature &lt;|-- PanelConnectionInterface
+
+      %% Composition and usage relationships
+      Plate *-- PlateGeometry : delegates to
+      Panel *-- PlateGeometry : delegates to
+      Fastener o-- FastenerTimberInterface : contains
+      Panel o-- PanelFeature : contains
+      Panel ..&gt; PanelType : uses
+      PanelFeature ..&gt; PanelFeatureType : uses
+      Opening ..&gt; OpeningType : uses
+      PanelConnectionInterface ..&gt; InterfaceRole : uses</code></pre>
+<div class="panzoom-info-box panzoom-info-box-bottom panzoom-hidden">
+Hold "Alt" / "Option" to enable pan &amp; zoom
+</div>
+</div>
+<h2 id="connections-subsystem">Connections Subsystem<a class="headerlink" href="#connections-subsystem" title="Permanent link">¤</a></h2>
+<p>The connections subsystem defines joints and their relationships. All joints inherit from the abstract <code>Joint</code> class (a <code>compas.data.Data</code> subclass; <code>Data</code> is omitted from the diagram since every class here derives from it) and declare the topology they support via <code>SUPPORTED_TOPOLOGY</code>. Joints are registered in the <code>TimberModel</code> and referenced from the edges of its interaction graph.</p>
+<p>Beam joints join two or more <code>Beam</code> elements; the generic bases <code>ButtJoint</code>, <code>LapJoint</code> and <code>MortiseTenonJoint</code> share logic across the topology-specific implementations.</p>
+<p>Plate joints connect two <code>Plate</code> elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. <code>JointCandidate</code> / <code>PlateJointCandidate</code> are placeholders registered by <code>TimberModel.connect_adjacent_*()</code>, which can later be promoted to concrete joints with <code>Joint.promote_joint_candidate()</code>.</p>
+<div class="panzoom-box" data-key="alt" id="panzoom0" oncontextmenu="return false;">
+<nav class="panzoom-nav">
+<button class="panzoom-info panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"></path>
+</svg>
+</button><button class="panzoom-reset panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"></path>
+</svg>
+</button><button class="panzoom-max panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"></path>
+</svg>
+</button><button class="panzoom-min panzoom-button panzoom-hidden">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 320c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0z"></path>
+</svg>
+</button>
+</nav>
+<pre class="mermaid"><code>classDiagram
+      class Joint {
+         &lt;&lt;abstract&gt;&gt;
+         +SUPPORTED_TOPOLOGY = TOPO_UNKNOWN
+         +MIN_ELEMENT_COUNT = 2
+         +MAX_ELEMENT_COUNT = 2
+         +elements : tuple[Element]
+         +element_a
+         +element_b
+         +topology : JointTopology
+         +location : Point
+         +generated_elements : list[Element]
+         +ends : dict[str, str]
+         +interactions : list[tuple[Element, Element]]
+         +element_count_complies(elements)
+         +add_features()
+         +add_extensions()
+         +restore_elements_from_keys(model)
+         +get_beam_direction_towards_joint(beam) : Vector
+         +create(model, *elements, **kwargs)
+         +promote_cluster(model, cluster, reordered_elements=None, **kwargs)
+         +promote_joint_candidate(model, candidate, reordered_elements=None, **kwargs)
+         +check_elements_compatibility(elements, raise_error=False)
+      }
+
+      class JointCandidate {
+         +distance : float | None
+      }
+
+      class ButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+         +mill_depth : float
+         +force_pocket : bool
+         +conical_tool : bool
+         +features : list[BTLxProcessing]
+         +main_beam : Beam
+         +cross_beam : Beam
+         +beams : list[Beam]
+         +cross_beam_ref_side_index : int
+         +main_beam_ref_side_index : int
+         +butt_plane : Plane
+      }
+
+      class LButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+         +modify_cross : bool
+         +reject_i : bool
+         +back_plane : Plane
+         +create(model, main_beam=None, cross_beam=None, small_beam_butts=False, **kwargs)
+      }
+
+      class TButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +fasteners
+         +base_fastener
+      }
+
+      class YButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_Y
+         +MIN_ELEMENT_COUNT = 3
+         +MAX_ELEMENT_COUNT = 3
+         +mill_depth : float
+         +features
+         +beams
+         +cross_beams : Beam
+         +main_beam : Beam
+         +cross_beam_a : Beam
+         +cross_beam_b : Beam
+         +cross_beam_ref_side_index(beam)
+         +main_beam_ref_side_index(beam)
+         +get_miter_planes(beam_a, beam_b)
+      }
+
+      class TBirdsmouthJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +mill_depth : float
+         +features
+         +main_beam : Beam
+         +cross_beam : Beam
+         +cross_ref_side_indices
+      }
+
+      class LMiterJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+         +ref_side_miter : bool
+         +cutoff : bool
+         +clean : bool
+         +features
+         +beam_a : Beam
+         +beam_b : Beam
+         +cutting_planes
+         +miter_plane : CutPlaneSpec
+      }
+
+      class LapJoint {
+         &lt;&lt;abstract&gt;&gt;
+         +flip_lap_side : bool
+         +cut_plane_bias
+         +features
+         +beam_a : Beam
+         +beam_b : Beam
+         +ref_side_index_a
+         +ref_side_index_b
+         +cutting_plane_a
+         +cutting_plane_b
+      }
+
+      class TLapJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +main_beam : Beam
+         +cross_beam : Beam
+      }
+
+      class LLapJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+      }
+
+      class XLapJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_X
+      }
+
+      class LFrenchRidgeLapJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+         +drillhole_diam : float
+      }
+
+      class BallNodeJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_Y
+         +MAX_ELEMENT_COUNT = None
+         +beams : list[Beam]
+         +ball_diameter : float
+         +fastener
+         +node_point
+      }
+
+      class TDovetailJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +start_y : float
+         +start_depth : float
+         +rotation : float
+         +length : float
+         +width : float
+         +cone_angle : float
+         +dovetail_shape : str
+         +tool_angle : float
+         +tool_diameter : float
+         +tool_height : float
+         +features : list
+         +main_beam : Beam
+         +cross_beam : Beam
+         +cross_beam_ref_side_index
+         +main_beam_ref_side_index
+         +define_dovetail_tool(tool_angle, tool_diameter, tool_height)
+      }
+
+      class TStepJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +step_shape : str
+         +step_depth : float
+         +heel_depth : float
+         +tenon_mortise_height : float
+         +features
+         +main_beam : Beam
+         +cross_beam : Beam
+         +cross_beam_ref_side_index
+         +main_beam_ref_side_index
+         +main_extension_plane
+      }
+
+      class MortiseTenonJoint {
+         &lt;&lt;abstract&gt;&gt;
+         +start_y : float
+         +start_depth : float
+         +rotation : float
+         +length : float
+         +width : float
+         +height : float
+         +tenon_shape : str
+         +shape_radius : float
+         +features : list
+         +main_beam : Beam
+         +cross_beam : Beam
+         +cross_beam_ref_side_index
+         +main_beam_ref_side_index
+         +get_main_extension()
+      }
+
+      class TTenonMortiseJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+      }
+
+      class LTenonMortiseJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_L
+         +modify_cross : bool
+      }
+
+      class TOliGinaJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+      }
+
+      class ISimpleScarf {
+         +SUPPORTED_TOPOLOGY = TOPO_I
+         +length : float
+         +depth_ref_side : float
+         +depth_opp_side : float
+         +num_drill_hole : int
+         +drill_hole_diam : float
+         +ref_side_index : int
+         +features : list
+         +main_beam : Beam
+         +cross_beam : Beam
+         +main_beam_ref_side_index : int
+         +cross_beam_ref_side_index : int
+         +origin : Point
+         +extension_plane(beam) : Tuple[int, Frame]
+      }
+
+      class XNotchJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_X
+         +features
+         +notch_beam : Beam
+         +solid_beam : Beam
+         +main_ref_side_index
+      }
+
+      class PlateJoint {
+         &lt;&lt;abstract&gt;&gt;
+         +a_segment_index : int
+         +b_segment_index : int
+         +distance
+         +plates : tuple[Plate]
+         +plate_a : Plate
+         +plate_b : Plate
+         +a_planes
+         +b_planes
+         +a_outlines
+         +b_outlines
+         +calculate_topology(allow_reordering=False)
+      }
+
+      class PlateJointCandidate {
+      }
+
+      class PlateButtJoint {
+         &lt;&lt;abstract&gt;&gt;
+         +main_plate
+         +cross_plate
+         +main_segment_index
+         +cross_segment_index
+      }
+
+      class PlateLButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+      }
+
+      class PlateTButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_FACE
+      }
+
+      class PlateMiterJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+      }
+
+      class PanelJoint {
+         &lt;&lt;abstract&gt;&gt;
+         +interface_a : PlanarSurface
+         +interface_b : PlanarSurface
+         +panels : tuple[Optional[Panel], Optional[Panel]]
+         +panel_a : Optional[Panel]
+         +panel_b : Optional[Panel]
+         +interfaces : Optional[list[PanelConnectionInterface]]
+         +create_interfaces() : tuple[PanelConnectionInterface, PanelConnectionInterface]
+      }
+
+      class PanelLButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+         +main_panel : Panel
+         +cross_panel : Panel
+      }
+
+      class PanelTButtJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_FACE
+         +main_panel : Panel
+         +cross_panel : Panel
+      }
+
+      class PanelMiterJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
+      }
+
+      %% Inheritance relationships
+      Joint &lt;|-- JointCandidate
+      Joint &lt;|-- ButtJoint
+      ButtJoint &lt;|-- LButtJoint
+      ButtJoint &lt;|-- TButtJoint
+      Joint &lt;|-- YButtJoint
+      Joint &lt;|-- TBirdsmouthJoint
+      Joint &lt;|-- LMiterJoint
+      Joint &lt;|-- LapJoint
+      LapJoint &lt;|-- TLapJoint
+      LapJoint &lt;|-- LLapJoint
+      LapJoint &lt;|-- XLapJoint
+      LapJoint &lt;|-- LFrenchRidgeLapJoint
+      Joint &lt;|-- BallNodeJoint
+      Joint &lt;|-- TDovetailJoint
+      Joint &lt;|-- TStepJoint
+      Joint &lt;|-- MortiseTenonJoint
+      MortiseTenonJoint &lt;|-- TTenonMortiseJoint
+      MortiseTenonJoint &lt;|-- LTenonMortiseJoint
+      MortiseTenonJoint &lt;|-- TOliGinaJoint
+      Joint &lt;|-- ISimpleScarf
+      Joint &lt;|-- XNotchJoint
+      Joint &lt;|-- PlateJoint
+      PlateJoint &lt;|-- PlateJointCandidate
+      PlateJoint &lt;|-- PlateButtJoint
+      PlateButtJoint &lt;|-- PlateLButtJoint
+      PlateButtJoint &lt;|-- PlateTButtJoint
+      PlateJoint &lt;|-- PlateMiterJoint
+      PlateJoint &lt;|-- PanelJoint
+      PanelJoint &lt;|-- PanelLButtJoint
+      PlateLButtJoint &lt;|-- PanelLButtJoint
+      PanelJoint &lt;|-- PanelTButtJoint
+      PlateTButtJoint &lt;|-- PanelTButtJoint
+      PanelJoint &lt;|-- PanelMiterJoint
+      PlateMiterJoint &lt;|-- PanelMiterJoint</code></pre>
+<div class="panzoom-info-box panzoom-info-box-bottom panzoom-hidden">
+Hold "Alt" / "Option" to enable pan &amp; zoom
+</div>
+</div>
+<h2 id="fabrication-subsystem">Fabrication Subsystem<a class="headerlink" href="#fabrication-subsystem" title="Permanent link">¤</a></h2>
+<p>The fabrication subsystem handles manufacturing features and BTLx processing; the processing classes are a (partial) Python implementation of the <a href="https://design2machine.com/btlx/index.html">BTLx standard</a>. All fabrication features inherit from <code>BTLxProcessing</code> (a <code>compas.data.Data</code> subclass; <code>Data</code> is omitted from the diagram); each processing class represents one BTLx machining operation and is instantiated through alternative constructors (e.g. <code>from_plane_and_beam()</code>) rather than directly. Several processings also export a lightweight <code>*Proxy</code> companion (<code>JackRafterCutProxy</code>, <code>DoubleCutProxy</code>, <code>DrillingProxy</code>, <code>LapProxy</code>, <code>PocketProxy</code>, <code>LongitudinalCutProxy</code>) that defers the expensive parameter computation until the processing is actually applied; proxies mirror the alternative constructors of their processing and are omitted from the diagram.</p>
+<p><code>BTLxWriter</code> walks a <code>TimberModel</code> and wraps each element in a <code>BTLxPart</code> (or <code>BTLxRawpart</code> for nesting stock) whose processings are serialized to BTLx XML; <code>BTLxReader</code> (in the separate <code>compas_timber.btlx</code> package) performs the reverse. <code>BTLxWriter</code>, <code>BTLxReader</code> and the part classes are plain XML-serialization helpers and do not inherit from <code>Data</code>.</p>
+<p>The remaining classes are parameter helpers. <code>BTLxFromGeometryDefinition</code> defers the construction of a processing from arbitrary geometry until the target element is known. <code>Contour</code> and <code>DualContour</code> are parameter objects for the <code>FreeContour</code> processing, and <code>MachiningLimits</code> bundles the face-limitation flags used by <code>Lap</code>, <code>Slot</code> and <code>Pocket</code>. The constants classes (<code>OrientationType</code>, <code>StepShapeType</code>, <code>TenonShapeType</code>, <code>AlignmentType</code>, <code>EdgePositionType</code>, <code>LimitationTopType</code>) enumerate the allowed values of the string-valued parameters; <code>OrientationType</code> in particular is used by the <code>orientation</code> parameter of nearly every processing, so only a representative edge from <code>BTLxProcessing</code> is drawn.</p>
+<div class="panzoom-box" data-key="alt" id="panzoom0" oncontextmenu="return false;">
+<nav class="panzoom-nav">
+<button class="panzoom-info panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"></path>
+</svg>
+</button><button class="panzoom-reset panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"></path>
+</svg>
+</button><button class="panzoom-max panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"></path>
+</svg>
+</button><button class="panzoom-min panzoom-button panzoom-hidden">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 320c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0z"></path>
+</svg>
+</button>
+</nav>
+<pre class="mermaid"><code>classDiagram
+      class Stock {
+         &lt;&lt;abstract&gt;&gt;
+      }
+
+      class BTLxProcessing {
+         &lt;&lt;abstract&gt;&gt;
+         +ref_side_index : int
+         +subprocessings
+         +is_joinery : bool
+         +priority : int
+         +process_id : int
+         +name
+         +process
+         +tool_id : int
+         +counter_sink : bool
+         +tool_position : AlignmentType
+         +params : BTLxProcessingParams
+         +add_subprocessing(subprocessing)
+         +scaled(factor)
+      }
+
+      class BTLxFromGeometryDefinition {
+         +processing : class
+         +geometries : list[Geometry]
+         +kwargs
+         +elements : list[Element]
+         +ToString()
+         +transform(transformation)
+         +transformed(transformation)
+         +feature_from_element(element)
+      }
+
+      class BTLxWriter {
+         +company_name : str
+         +file_name : str
+         +comment : str
+         +errors
+         +write(model, file_path, nesting_result=None)
+         +model_to_xml(model, nesting_result=None)
+         +register_type_serializer(type_, serializer)
+      }
+
+      class BTLxReader {
+         +errors : list
+         +print_errors()
+         +register_type_deserializer(type_name, deserializer)
+         +read(file_path)
+         +xml_to_model(xml_string)
+      }
+
+      class BTLxGenericPart {
+         &lt;&lt;abstract&gt;&gt;
+         +order_num : int
+         +length : float
+         +width : float
+         +height : float
+         +name : str
+         +part_guid
+         +frame
+         +et_grain_direction
+         +et_reference_side
+         +et_transformations
+         +base_attr
+         +et_point_vals(point)
+      }
+
+      class BTLxPart {
+         +element : TimberElement
+         +processings : list
+         +attr : dict
+         +et_shape
+         +shape_strings
+         +ref_side_from_face(element_face)
+      }
+
+      class BTLxRawpart {
+         +stock : Stock
+         +part_refs : list
+         +attr : dict
+         +et_part_refs
+         +add_part_ref(part_guid, position_frame)
+      }
+
+      class Contour {
+         +polyline : Polyline
+         +depth : float
+         +depth_bounded : bool
+         +inclination : list[float]
+         +scale(factor)
+         +scaled(factor)
+         +to_brep()
+      }
+
+      class DualContour {
+         +principal_contour : Polyline
+         +associated_contour : Polyline
+         +depth_bounded : bool
+         +scale(factor)
+         +scaled(factor)
+         +to_brep()
+      }
+
+      class MachiningLimits {
+         +face_limited_start : bool
+         +face_limited_end : bool
+         +face_limited_front : bool
+         +face_limited_back : bool
+         +face_limited_top : bool
+         +face_limited_bottom : bool
+         +limits
+         +from_dict(dictionary)
+         +as_dict()
+      }
+
+      class JackRafterCut {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +inclination : float
+         +from_plane_and_beam(plane, beam, ref_side_index=0, **kwargs)
+         +from_shapes_and_element(plane, element, **kwargs)
+         +apply(geometry, beam)
+         +plane_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class DoubleCut {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +angle_1 : float
+         +inclination_1 : float
+         +angle_2 : float
+         +inclination_2 : float
+         +is_concave
+         +from_planes_and_beam(planes, beam, ref_side_index=None, **kwargs)
+         +from_shapes_and_element(plane_a, plane_b, element, **kwargs)
+         +apply(geometry, beam)
+         +planes_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class Drilling {
+         +start_x : float
+         +start_y : float
+         +angle : float
+         +inclination : float
+         +depth_limited : bool
+         +depth : float
+         +diameter : float
+         +from_line_and_element(line, element, diameter)
+         +from_shapes_and_element(line, element, diameter, **kwargs)
+         +apply(geometry, element)
+         +cylinder_from_params_and_element(element)
+         +scale(factor)
+      }
+
+      class Lap {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +angle : float
+         +inclination : float
+         +slope : float
+         +length : float
+         +width : float
+         +depth : float
+         +lead_angle_parallel : bool
+         +lead_angle : float
+         +lead_inclination_parallel : bool
+         +lead_inclination : float
+         +machining_limits : MachiningLimits or dict
+         +from_plane_and_beam(plane, beam, length, depth, ref_side_index=0)
+         +from_volume_and_beam(volume, beam, machining_limits=None, ref_side_index=None, **kwargs)
+         +from_shapes_and_element(volume, element, **kwargs)
+         +apply(geometry, beam)
+         +volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class Slot {
+         +orientation
+         +start_x
+         +start_y
+         +start_depth
+         +angle
+         +inclination
+         +length
+         +depth
+         +thickness
+         +angle_ref_point
+         +angle_opp_point
+         +add_angle_opp_point
+         +machining_limits
+         +from_plane_and_beam(plane, beam, depth, thickness)
+         +apply(geometry, beam) : Brep
+         +volume_from_params_and_beam(beam) : Polyhedron
+         +scale(factor)
+      }
+
+      class Pocket {
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +inclination : float
+         +slope : float
+         +length : float
+         +width : float
+         +internal_angle : float
+         +tilt_ref_side : float
+         +tilt_end_side : float
+         +tilt_opp_side : float
+         +tilt_start_side : float
+         +machining_limits : MachiningLimits
+         +from_volume_and_element(volume, element, allow_undercut=True, machining_limits=None, ref_side_index=None) : Pocket
+         +from_shapes_and_element(volume, element, **kwargs) : Pocket
+         +apply(geometry, element) : Brep
+         +volume_from_params_and_element(element) : Polyhedron
+         +scale(factor) : None
+      }
+
+      class Tenon {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +inclination : float
+         +rotation : float
+         +length_limited_top : bool
+         +length_limited_bottom : bool
+         +length : float
+         +width : float
+         +height : float
+         +shape : str
+         +shape_radius : float
+         +chamfer : bool
+         +from_plane_and_beam(plane, beam, start_y=0.0, start_depth=0.0, rotation=0.0, length_limited_top=True, length_limited_bottom=True, length=80.0, width=40.0, height=40.0, shape=TenonShapeType.AUTOMATIC, shape_radius=20.0, chamfer=False, ref_side_index=0)
+         +apply(geometry, beam)
+         +frame_from_params_and_beam(beam)
+         +volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class Mortise {
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +slope : float
+         +inclination : float
+         +length_limited_top : bool
+         +length_limited_bottom : bool
+         +length : float
+         +width : float
+         +depth : float
+         +shape : str
+         +shape_radius : float
+         +from_frame_and_beam(frame, beam, start_depth=0.0, length=80.0, width=40.0, depth=28.0, shape=TenonShapeType.AUTOMATIC, shape_radius=20.0, ref_side_index=0)
+         +apply(geometry, beam)
+         +frame_from_params_and_beam(beam)
+         +volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class DovetailTenon {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +inclination : float
+         +rotation : float
+         +length_limited_top : bool
+         +length_limited_bottom : bool
+         +length : float
+         +width : float
+         +height : float
+         +cone_angle : float
+         +use_flank_angle : bool
+         +flank_angle : float
+         +shape : str
+         +shape_radius : float
+         +from_plane_and_beam(plane, beam, start_y=0.0, start_depth=50.0, rotation=0.0, length=80.0, width=40.0, height=28.0, cone_angle=10.0, flank_angle=15.0, shape=TenonShapeType.AUTOMATIC, shape_radius=20.0, ref_side_index=0)
+         +define_dovetail_tool(tool_angle, tool_diameter, tool_height)
+         +apply(geometry, beam)
+         +frame_from_params_and_beam(beam)
+         +dovetail_cutting_frames_from_params_and_beam(beam)
+         +dovetail_volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class DovetailMortise {
+         +start_x : float
+         +start_y : float
+         +start_depth : float
+         +angle : float
+         +slope : float
+         +inclination : float
+         +limitation_top : str
+         +length_limited_bottom : bool
+         +length : float
+         +width : float
+         +depth : float
+         +cone_angle : float
+         +use_flank_angle : bool
+         +flank_angle : float
+         +shape : str
+         +shape_radius : float
+         +from_frame_and_beam(frame, beam, start_depth=0.0, angle=0.0, length=80.0, width=40.0, depth=28.0, cone_angle=10.0, flank_angle=15.0, shape=TenonShapeType.AUTOMATIC, shape_radius=20.0, ref_side_index=0, **kwargs)
+         +define_dovetail_tool(tool_angle, tool_diameter, tool_height)
+         +apply(geometry, beam)
+         +frame_from_params_and_beam(beam)
+         +dovetail_cutting_frames_from_params_and_beam(beam)
+         +dovetail_volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class StepJoint {
+         +orientation : int
+         +start_x : float
+         +strut_inclination : float
+         +step_depth : float
+         +heel_depth : float
+         +step_shape : str
+         +tenon : str
+         +tenon_width : float
+         +tenon_height : float
+         +displacement_end
+         +displacement_heel
+         +from_plane_and_beam(plane, beam, step_depth=20.0, heel_depth=0.0, tapered_heel=False, ref_side_index=0)
+         +apply(geometry, beam)
+         +add_tenon(tenon_width, tenon_height)
+         +planes_from_params_and_beam(beam)
+         +tenon_volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class StepJointNotch {
+         +orientation : int
+         +start_x : float
+         +start_y : float
+         +strut_inclination : float
+         +notch_limited : bool
+         +notch_width : float
+         +step_depth : float
+         +heel_depth : float
+         +strut_height : float
+         +step_shape : str
+         +mortise : str
+         +mortise_width : float
+         +mortise_height : float
+         +displacement_end
+         +displacement_heel
+         +from_plane_and_beam(plane, beam, start_y=0.0, notch_limited=False, notch_width=20.0, step_depth=20.0, heel_depth=0.0, strut_height=20.0, tapered_heel=False, ref_side_index=0)
+         +apply(geometry, beam)
+         +add_mortise(mortise_width, mortise_height)
+         +planes_from_params_and_beam(beam)
+         +mortise_volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class FrenchRidgeLap {
+         +orientation : int
+         +start_x : float
+         +angle : float
+         +ref_position : int
+         +drillhole : bool
+         +drillhole_diam : float
+         +from_beam_beam_and_plane(beam, other_beam, plane, drillhole_diam=0.0, ref_side_index=0)
+         +apply(geometry, beam)
+         +frame_from_params_and_beam(beam)
+         +lap_volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class SimpleScarf {
+         +orientation
+         +start_x
+         +length
+         +depth_ref_side
+         +depth_opp_side
+         +num_drill_hole
+         +drill_hole_diam_1
+         +drill_hole_diam_2
+         +num_drill_hole_str : str
+         +from_beam_and_side(beam, side, length, depth_ref_side, depth_opp_side, num_drill_hole=0, drill_hole_diam=20.0, ref_side_index=0) : SimpleScarf
+         +apply(geometry, beam) : Brep
+         +volume_from_params_and_beam(beam) : Polyhedron
+         +drill_hole_volumes_from_params_and_beam(beam) : List[Cylinder]
+         +scale(factor) : None
+      }
+
+      class FreeContour {
+         +contour_param_object : Contour or DualContour
+         +depth_bounded : bool
+         +from_polyline_and_element(polyline, element, depth=None, interior=False, tool_position=None, ref_side_index=None, **kwargs)
+         +from_top_bottom_and_elements(top_polyline, bottom_polyline, element, interior=False, tool_position=None, ref_side_index=None, **kwargs)
+         +from_shapes_and_element(polyline, element, depth=None, interior=True, **kwargs)
+         +parse_tool_position(polyline, ref_side, interior, tool_position=None)
+         +get_ref_face_index(contour_points, element)
+         +are_all_segments_parallel(polyline_a, polyline_b)
+         +apply(geometry, element)
+         +scale(factor)
+      }
+
+      class Text {
+         +start_x : float
+         +start_y : float
+         +angle : float
+         +alignment_vertical : AlignmentType
+         +alignment_horizontal : AlignmentType
+         +alignment_multiline : AlignmentType
+         +stacked_marking : bool
+         +text_height_auto : bool
+         +text_height : float
+         +text : str
+         +apply(geometry, _)
+         +create_text_curves_for_element(element)
+         +scale(factor)
+      }
+
+      class LongitudinalCut {
+         +start_x : float
+         +start_y : float
+         +inclination : float
+         +start_limited : bool
+         +end_limited : bool
+         +length : float
+         +depth_limited : bool
+         +depth : float
+         +angle_start : float
+         +angle_end : float
+         +from_plane_and_beam(plane, beam, start_x=None, length=None, depth=None, angle_start=90.0, angle_end=90.0, tool_position=AlignmentType.LEFT, ref_side_index=None, **kwargs)
+         +from_shapes_and_element(plane, element, **kwargs)
+         +apply(geometry, beam)
+         +plane_from_params_and_beam(beam)
+         +volume_from_params_and_beam(beam)
+         +scale(factor)
+      }
+
+      class OrientationType {
+         &lt;&lt;enumeration&gt;&gt;
+         START
+         END
+      }
+
+      class StepShapeType {
+         &lt;&lt;enumeration&gt;&gt;
+         STEP
+         HEEL
+         TAPERED_HEEL
+         DOUBLE
+      }
+
+      class TenonShapeType {
+         &lt;&lt;enumeration&gt;&gt;
+         AUTOMATIC
+         SQUARE
+         ROUND
+         ROUNDED
+         RADIUS
+      }
+
+      class AlignmentType {
+         &lt;&lt;enumeration&gt;&gt;
+         TOP
+         BOTTOM
+         LEFT
+         RIGHT
+         CENTER
+      }
+
+      class EdgePositionType {
+         &lt;&lt;enumeration&gt;&gt;
+         REFEDGE
+         OPPEDGE
+      }
+
+      class LimitationTopType {
+         &lt;&lt;enumeration&gt;&gt;
+         LIMITED
+         UNLIMITED
+         POCKET
+      }
+
+      %% Inheritance relationships
+      BTLxGenericPart &lt;|-- BTLxPart
+      BTLxGenericPart &lt;|-- BTLxRawpart
+      BTLxProcessing &lt;|-- JackRafterCut
+      BTLxProcessing &lt;|-- DoubleCut
+      BTLxProcessing &lt;|-- Drilling
+      BTLxProcessing &lt;|-- Lap
+      BTLxProcessing &lt;|-- Slot
+      BTLxProcessing &lt;|-- Pocket
+      BTLxProcessing &lt;|-- Tenon
+      BTLxProcessing &lt;|-- Mortise
+      BTLxProcessing &lt;|-- DovetailTenon
+      BTLxProcessing &lt;|-- DovetailMortise
+      BTLxProcessing &lt;|-- StepJoint
+      BTLxProcessing &lt;|-- StepJointNotch
+      BTLxProcessing &lt;|-- FrenchRidgeLap
+      BTLxProcessing &lt;|-- SimpleScarf
+      BTLxProcessing &lt;|-- FreeContour
+      BTLxProcessing &lt;|-- Text
+      BTLxProcessing &lt;|-- LongitudinalCut
+
+      %% Composition and usage relationships
+      BTLxWriter ..&gt; BTLxPart : creates
+      BTLxWriter ..&gt; BTLxRawpart : creates
+      BTLxReader ..&gt; BTLxProcessing : deserializes
+      BTLxPart o-- BTLxProcessing : contains
+      BTLxRawpart ..&gt; Stock : references
+      BTLxFromGeometryDefinition ..&gt; BTLxProcessing : instantiates
+      FreeContour o-- Contour : contains
+      FreeContour o-- DualContour : contains
+      Lap ..&gt; MachiningLimits : uses
+      Slot ..&gt; MachiningLimits : uses
+      Pocket ..&gt; MachiningLimits : uses
+      BTLxProcessing ..&gt; OrientationType : orientation values
+      BTLxProcessing ..&gt; AlignmentType : uses
+      Text ..&gt; AlignmentType : uses
+      StepJoint ..&gt; StepShapeType : uses
+      StepJointNotch ..&gt; StepShapeType : uses
+      Tenon ..&gt; TenonShapeType : uses
+      Mortise ..&gt; TenonShapeType : uses
+      DovetailTenon ..&gt; TenonShapeType : uses
+      DovetailMortise ..&gt; TenonShapeType : uses
+      DovetailMortise ..&gt; LimitationTopType : uses
+      FrenchRidgeLap ..&gt; EdgePositionType : uses</code></pre>
+<div class="panzoom-info-box panzoom-info-box-bottom panzoom-hidden">
+Hold "Alt" / "Option" to enable pan &amp; zoom
+</div>
+</div>
+<h2 id="errors-subsystem">Errors Subsystem<a class="headerlink" href="#errors-subsystem" title="Permanent link">¤</a></h2>
+<p>The errors subsystem provides specialized exception classes for different types of failures that can occur during timber modeling, joint creation, fabrication, and processing operations.</p>
+<div class="panzoom-box" data-key="alt" id="panzoom0" oncontextmenu="return false;">
+<nav class="panzoom-nav">
+<button class="panzoom-info panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M464 256A208 208 0 1 0 48 256a208 208 0 1 0 416 0zM0 256a256 256 0 1 1 512 0A256 256 0 1 1 0 256zm169.8-90.7c7.9-22.3 29.1-37.3 52.8-37.3l58.3 0c34.9 0 63.1 28.3 63.1 63.1c0 22.6-12.1 43.5-31.7 54.8L280 264.4c-.2 13-10.9 23.6-24 23.6c-13.3 0-24-10.7-24-24l0-13.5c0-8.6 4.6-16.5 12.1-20.8l44.3-25.4c4.7-2.7 7.6-7.7 7.6-13.1c0-8.4-6.8-15.1-15.1-15.1l-58.3 0c-3.4 0-6.4 2.1-7.5 5.3l-.4 1.2c-4.4 12.5-18.2 19-30.6 14.6s-19-18.2-14.6-30.6l.4-1.2zM224 352a32 32 0 1 1 64 0 32 32 0 1 1 -64 0z"></path>
+</svg>
+</button><button class="panzoom-reset panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M125.7 160l50.3 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L48 224c-17.7 0-32-14.3-32-32L16 64c0-17.7 14.3-32 32-32s32 14.3 32 32l0 51.2L97.6 97.6c87.5-87.5 229.3-87.5 316.8 0s87.5 229.3 0 316.8s-229.3 87.5-316.8 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"></path>
+</svg>
+</button><button class="panzoom-max panzoom-button">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M32 32C14.3 32 0 46.3 0 64l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L32 32zM64 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 32c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM448 352c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96z"></path>
+</svg>
+</button><button class="panzoom-min panzoom-button panzoom-hidden">
+<svg class="panzoom-icon" viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+<path d="M160 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 64-64 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l96 0c17.7 0 32-14.3 32-32l0-96zM32 320c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 0 64c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32l-96 0zM352 64c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32l96 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0 0-64zM320 320c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-64 64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0z"></path>
+</svg>
+</button>
+</nav>
+<pre class="mermaid"><code>classDiagram
+      class Exception {
+         &lt;&lt;builtin&gt;&gt;
+      }
+
+      class FeatureApplicationError {
+         &lt;&lt;exception&gt;&gt;
+         +feature_geometry : Geometry
+         +element_geometry : Geometry
+         +message : str
+      }
+
+      class BeamJoiningError {
+         &lt;&lt;exception&gt;&gt;
+         +beams : list[Beam]
+         +joint : Joint
+         +debug_info : str
+         +debug_geometries : list[Geometry]
+      }
+
+      class FastenerApplicationError {
+         &lt;&lt;exception&gt;&gt;
+         +elements : list[TimberElement]
+         +fastener : Fastener
+         +message : str
+      }
+
+      class BTLxProcessingError {
+         &lt;&lt;exception&gt;&gt;
+         +message : str
+         +part : BTLxPart
+         +failed_processing : BTLxProcessing
+      }
+
+      class BTLxParsingError {
+         &lt;&lt;exception&gt;&gt;
+         +message : str
+         +part_id : str
+         +processing_type : str
+      }
+
+      %% Inheritance relationships
+      Exception &lt;|-- FeatureApplicationError
+      Exception &lt;|-- BeamJoiningError
+      Exception &lt;|-- FastenerApplicationError
+      Exception &lt;|-- BTLxProcessingError
+      Exception &lt;|-- BTLxParsingError</code></pre>
+<div class="panzoom-info-box panzoom-info-box-bottom panzoom-hidden">
+Hold "Alt" / "Option" to enable pan &amp; zoom
+</div>
+</div>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Back to top
+</button>
+</main>
+<footer class="md-footer">
+<nav aria-label="Footer" class="md-footer__inner md-grid">
+<a aria-label="Previous: panel_features" class="md-footer__link md-footer__link--prev" href="../../api/compas_timber.panel_features/">
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</div>
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Previous
+              </span>
+<div class="md-ellipsis">
+                panel_features
+              </div>
+</div>
+</a>
+<a aria-label="Next: BTLx Contribution" class="md-footer__link md-footer__link--next" href="../BTLx_contribution_guide/">
+<div class="md-footer__title">
+<span class="md-footer__direction">
+                Next
+              </span>
+<div class="md-ellipsis">
+                BTLx Contribution
+              </div>
+</div>
+<div class="md-footer__button md-icon">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"></path></svg>
+</div>
+</a>
+</nav>
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+<div class="md-copyright__highlight">
+      Copyright © 2026, ETH Zurich - Gramazio Kohler Research
+    </div>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/gramaziokohler/compas_timber" rel="noopener" target="_blank" title="compas_timber on GitHub">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+<a class="md-social__link" href="https://pypi.org/project/compas-timber/" rel="noopener" target="_blank" title="compas_timber on PyPI">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"></path></svg>
+</a>
+<a class="md-social__link" href="https://forum.compas-framework.org/" rel="noopener" target="_blank" title="COMPAS forum">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"></path></svg>
+</a>
+<a class="md-social__link" href="https://gramaziokohler.arch.ethz.ch/" rel="noopener" target="_blank" title="Gramazio Kohler Research">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["content.code.copy", "content.footnote.tooltips", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.sections", "navigation.top", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+<script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+<script src="../../assets/javascripts/panzoom.min.js"></script>
+<script src="../../assets/javascripts/zoompan.js"></script>
+</body>
+</html>
