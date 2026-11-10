@@ -18,3 +18,27 @@ message StructuralSegmentData {
   optional bool cross_section_set = 13;
   map<string, compas_pb.data.AnyData> attributes = 14;
 }
+
+// Parents are referenced by guid rather than embedded: the plate is already
+// serialized as a model element, and the surface on its plate's graph node.
+// TimberModel restores the object references after deserialization.
+message StructuralSurfaceData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  compas_pb.data.PolylineData outline = 10;
+  compas_pb.data.FrameData frame = 11;
+  double thickness = 12;
+  optional string role = 13;
+  optional GuidRef parent_plate_guid = 14;
+  map<string, compas_pb.data.AnyData> attributes = 15;
+}
+
+message StructuralSurfaceLineData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  compas_pb.data.LineData line = 10;
+  optional string line_type = 11;
+  optional GuidRef parent_surface_guid = 12;
+  optional GuidRef parent_plate_guid = 13;
+  map<string, compas_pb.data.AnyData> attributes = 14;
+}
