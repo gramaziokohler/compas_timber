@@ -618,6 +618,7 @@ def _layer_to_pb(obj):
     if getattr(obj, "_name", None) is not None:
         msg.name = obj._name
     data = obj.__data__
+    msg.frame.CopyFrom(frame_to_pb(data["frame"]))
     msg.plate_geometry.CopyFrom(_nested_to_pb(data["plate_geometry"]))
     if data.get("start_offset") is not None:
         msg.start_offset = data["start_offset"]
@@ -628,6 +629,7 @@ def _layer_to_pb(obj):
 
 def _layer_from_pb(msg):
     data = {
+        "frame": frame_from_pb(msg.frame),
         "plate_geometry": _nested_from_pb(msg.plate_geometry),
         "start_offset": msg.start_offset if msg.HasField("start_offset") else None,
         "layer_path": list(msg.layer_path.indices) if msg.HasField("layer_path") else None,

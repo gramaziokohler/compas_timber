@@ -6,6 +6,7 @@ from typing import Union
 
 from compas.data import Data
 from compas.geometry import Box
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
@@ -17,13 +18,13 @@ from compas_timber.base import MODEL_CACHE
 from compas_timber.base import clear_element_cache
 
 from .plate_geometry import PlateGeometry
-from .plate_geometry import PlateGeometryPlacement
+from .plate_geometry import RigidPlacement
 
 if TYPE_CHECKING:
     from .panel import Panel  # noqa: F401
 
 
-class Layer(PlateGeometryPlacement, Element):
+class Layer(RigidPlacement, Element):
     """A resolved cross-section layer of a :class:`~compas_timber.elements.Panel`.
 
     A ``Layer`` represents a slice of a parent panel between two
@@ -54,6 +55,8 @@ class Layer(PlateGeometryPlacement, Element):
         after construction.
     layer_path : tuple[int, ...], optional
         Position in the parent panel's layer tree.  See :attr:`layer_path`.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The coordinate system (frame) of this layer, relative to its parent. Defaults to worldXY.
 
     Attributes
     ----------
@@ -89,6 +92,7 @@ class Layer(PlateGeometryPlacement, Element):
     @property
     def __data__(self):
         data = {}
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["plate_geometry"] = self.plate_geometry
         data["start_offset"] = self.start_offset
         data["name"] = self.name
@@ -107,10 +111,11 @@ class Layer(PlateGeometryPlacement, Element):
         name: Optional[str] = None,
         sublayers: Optional[list] = None,
         layer_path: Optional[tuple] = None,
+        frame: Optional[Frame] = None,
         **kwargs,
     ):
         super(Layer, self).__init__(
-            transformation=Transformation.from_frame(plate_geometry.frame),
+            transformation=Transformation.from_frame(frame if frame is not None else Frame.worldXY()),
             name=name,
             **kwargs,
         )
@@ -155,13 +160,14 @@ class Layer(PlateGeometryPlacement, Element):
         :class:`Layer`
         """
         outline_a, outline_b = cls.get_outlines_from_parent(host, start_offset, end_offset)
-        plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
+        plate_geometry, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
         return cls(
             plate_geometry,
             start_offset,
             name=name,
             sublayers=sublayers,
             layer_path=layer_path,
+            frame=frame,
             **kwargs,
         )
 

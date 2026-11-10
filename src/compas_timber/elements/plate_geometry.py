@@ -12,6 +12,7 @@ from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 from compas_brep import Brep
+from compas_model.elements import Element
 
 from compas_timber.base import clear_element_cache
 from compas_timber.geometry import brep_from_outlines
@@ -19,20 +20,18 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
-class PlateGeometryPlacement:
-    """Stores the element's ``transformation`` in ``plate_geometry.frame``, which is what gets serialized."""
+class RigidPlacement:
+    """Lets an element's ``transformation`` only move and rotate it, and clears its caches when it changes.
 
-    @property
-    def transformation(self):
-        return Transformation.from_frame(self.plate_geometry.frame)
+    The placement is serialized as a frame, which can't hold scaling, shearing or mirroring.
+    """
 
-    @transformation.setter
+    @Element.transformation.setter
     def transformation(self, transformation):
         # `Element.transform()` goes through here too
-        frame = Frame.from_transformation(transformation) if transformation else Frame.worldXY()
-        if transformation and not TOL.is_allclose(_flat(Transformation.from_frame(frame)), _flat(transformation)):
+        if transformation and not TOL.is_allclose(_flat(Transformation.from_frame(Frame.from_transformation(transformation))), _flat(transformation)):
             raise ValueError("{} can only be moved and rotated; scaling, shearing and mirroring are not supported.".format(type(self).__name__))
-        self.plate_geometry.frame = frame
+        self._transformation = transformation
         clear_element_cache(self)
 
 
@@ -51,13 +50,9 @@ class PlateGeometry(Data):
     local_outline_b : :class:`~compas.geometry.Polyline`
         The associated outline of the plate in local space. Must have the same number of points as outline_a,
         be parallel to outline_a, and be offset in the +Z direction.
-    frame : :class:`~compas.geometry.Frame`, optional
-        The local coordinate frame of the plate in global space. Defaults to worldXY.
 
     Attributes
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The local coordinate frame of the plate in global space.
     length : float
         Length of the plate along the local x-axis.
     width : float
@@ -82,7 +77,6 @@ class PlateGeometry(Data):
         return {
             "local_outline_a": self._original_outlines[0],
             "local_outline_b": self._original_outlines[1],
-            "frame": self.frame,
             "length": self.length,
             "width": self.width,
             "thickness": self.thickness,
@@ -90,13 +84,12 @@ class PlateGeometry(Data):
 
     @classmethod
     def __from_data__(cls, data):
-        return cls(data["local_outline_a"], data["local_outline_b"], data["frame"])
+        return cls(data["local_outline_a"], data["local_outline_b"])
 
-    def __init__(self, local_outline_a: Polyline, local_outline_b: Polyline, frame: Optional[Frame] = None, **kwargs):
+    def __init__(self, local_outline_a: Polyline, local_outline_b: Polyline, **kwargs):
         super().__init__(**kwargs)
         self._check_outlines(local_outline_a, local_outline_b)
         box = Box.from_points(local_outline_a.points + local_outline_b.points)
-        self.frame = frame if frame is not None else Frame.worldXY()
         self.length = box.xsize
         self.width = box.ysize
         self.thickness = box.zsize
@@ -206,10 +199,11 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @classmethod
-    def from_global_outlines(cls, outline_a: Polyline, outline_b: Polyline, orientation: Optional[Vector] = None) -> "PlateGeometry":
-        """Creates a PlateGeometry from two polylines in global (world) space.
+    def from_global_outlines(cls, outline_a: Polyline, outline_b: Polyline, orientation: Optional[Vector] = None) -> tuple["PlateGeometry", Frame]:
+        """Creates a PlateGeometry from two polylines in global (world) space, and the frame that places it there.
 
         Computes the local frame and transforms the outlines into the plate's local coordinate system.
+        The PlateGeometry holds only the local outlines; pass the frame to the element that owns it.
 
         Parameters
         ----------
@@ -226,7 +220,8 @@ class PlateGeometry(Data):
 
         Returns
         -------
-        :class:`PlateGeometry`
+        tuple[:class:`PlateGeometry`, :class:`~compas.geometry.Frame`]
+            The plate geometry in local space, and the local coordinate frame of the plate in global space.
         """
         # get 3 non-colinear points
         pt_c = None
@@ -261,22 +256,20 @@ class PlateGeometry(Data):
         # move polylines to positive XY space
         local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
         local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
-        return cls(local_outline_a, local_outline_b, frame)
+        return cls(local_outline_a, local_outline_b), frame
 
     @classmethod
-    def from_frame_and_dims(cls, frame: Frame, length: float, width: float, thickness: float) -> "PlateGeometry":
-        """Creates a PlateGeometry with a rectangular outline from a frame and dimensions.
+    def from_dims(cls, length: float, width: float, thickness: float) -> "PlateGeometry":
+        """Creates a PlateGeometry with a rectangular outline from dimensions.
 
         Parameters
         ----------
-        frame : :class:`~compas.geometry.Frame`
-            The local coordinate frame of the plate in global space.
         length : float
-            Length of the plate along the frame's x-axis.
+            Length of the plate along the local x-axis.
         width : float
-            Width of the plate along the frame's y-axis.
+            Width of the plate along the local y-axis.
         thickness : float
-            Thickness of the plate along the frame's z-axis.
+            Thickness of the plate along the local z-axis.
 
         Returns
         -------
@@ -284,7 +277,7 @@ class PlateGeometry(Data):
         """
         local_outline_a = Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        return cls(local_outline_a, local_outline_b, frame)
+        return cls(local_outline_a, local_outline_b)
 
     # ==========================================================================
     #  static methods

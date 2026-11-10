@@ -16,6 +16,7 @@ from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.geometry import is_colinear_line_line
@@ -38,7 +39,7 @@ from compas_timber.utils import polylines_from_brep_face
 from .layer import Layer
 from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
-from .plate_geometry import PlateGeometryPlacement
+from .plate_geometry import RigidPlacement
 
 
 class PanelType(object):
@@ -62,7 +63,7 @@ class PanelType(object):
     GENERIC = "generic"
 
 
-class Panel(PlateGeometryPlacement, Element):
+class Panel(RigidPlacement, Element):
     """Represents a timber panel element (wall, floor, roof, etc.).
 
     Serves as container for beams, plates, and other related elements and groups them together to form a panel.
@@ -72,7 +73,7 @@ class Panel(PlateGeometryPlacement, Element):
     Parameters
     ----------
     frame : :class:`~compas.geometry.Frame`, optional
-        The coordinate system (frame) of this panel. Required when no plate_geometry is provided.
+        The coordinate system (frame) of this panel, relative to its parent. Defaults to worldXY.
     length : float, optional
         Length of the panel. Required when no plate_geometry is provided.
     width : float, optional
@@ -80,7 +81,7 @@ class Panel(PlateGeometryPlacement, Element):
     thickness : float, optional
         Thickness of the panel. Required when no plate_geometry is provided.
     plate_geometry : :class:`~compas_timber.elements.PlateGeometry`, optional
-        A PlateGeometry object defining the panel shape. When provided, frame and dimensions must not be given.
+        A PlateGeometry object defining the panel shape in local space. When provided, dimensions must not be given.
     **kwargs : dict, optional
         Additional keyword arguments.
 
@@ -112,6 +113,7 @@ class Panel(PlateGeometryPlacement, Element):
     @property
     def __data__(self):
         data = {}
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["plate_geometry"] = self.plate_geometry
         data["type"] = self.type
         data["features"] = [f for f in self.features if f.panel_feature_type != PanelFeatureType.CONNECTION_INTERFACE]
@@ -130,14 +132,15 @@ class Panel(PlateGeometryPlacement, Element):
         layer_structure: Optional[LayerStructure] = None,
         **kwargs,
     ):
-        if plate_geometry is not None and any(x is not None for x in [frame, length, width, thickness]):
-            raise ValueError("Panel cannot be instantiated with both a PlateGeometry and frame/dimension arguments.")
+        if plate_geometry is not None and any(x is not None for x in [length, width, thickness]):
+            raise ValueError("Panel cannot be instantiated with both a PlateGeometry and dimension arguments.")
         if plate_geometry is None:
-            if not all(x is not None for x in [frame, length, width, thickness]):
-                raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: frame, length, width, thickness.")
-            plate_geometry = PlateGeometry.from_frame_and_dims(frame, length, width, thickness)
+            if not all(x is not None for x in [length, width, thickness]):
+                raise ValueError("Panel must be instantiated with either a PlateGeometry or all of: length, width, thickness.")
+            plate_geometry = PlateGeometry.from_dims(length, width, thickness)
+        frame = frame if frame is not None else Frame.worldXY()
 
-        super(Panel, self).__init__(transformation=plate_geometry.frame.to_transformation(), **kwargs)  # NOTE: Element wants a transformation, not a frame
+        super(Panel, self).__init__(transformation=Transformation.from_frame(frame), **kwargs)  # NOTE: Element wants a transformation, not a frame
         self.plate_geometry = plate_geometry
         self.length = plate_geometry.length
         self.width = plate_geometry.width
@@ -538,7 +541,8 @@ class Panel(PlateGeometryPlacement, Element):
         door_polylines = []
         if recognize_doors:
             outline_a, outline_b, door_polylines = extract_door_openings(outline_a, outline_b)
-        panel = cls(plate_geometry=PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation), **kwargs)
+        plate_geometry, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation)
+        panel = cls(frame=frame, plate_geometry=plate_geometry, **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
             panel.add_feature(opening)
