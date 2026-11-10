@@ -55,7 +55,11 @@ def test_l_miter_joint_with_miter_plane_roundtrip():
     model, a, b = _model_with_two_beams()
     plane = Plane(Point(3000, 0, 0), Vector(1, -1, 0.2))
     joint = LMiterJoint.create(model, a, b, miter_plane=CutPlaneSpec.from_plane(a, plane))
-    other = assert_lossless(joint)
+    # not `assert_lossless`: a loaded Frame re-orthonormalizes its axes, which can change their last digit
+    # depending on the platform, so the frame is compared within tolerance (`Frame.__eq__`)
+    other = pb_load_bts(pb_dump_bts(joint))
+    assert type(other) is LMiterJoint
+    assert list(other.element_guids) == list(joint.element_guids)
     assert other._miter_plane.local_frame == joint._miter_plane.local_frame
 
 
