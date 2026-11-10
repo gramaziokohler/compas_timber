@@ -10,7 +10,7 @@ from compas.data import json_loads
 from compas.tolerance import TOL
 
 from compas_timber.elements import PlateGeometry
-from compas_timber.elements.plate_geometry import global_outlines_to_local
+from compas_timber.elements import global_outlines_to_local
 
 
 def test_plate_geometry_serialization():
