@@ -17,6 +17,8 @@ from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
+from compas_pb import pb_dump_bts
+from compas_pb import pb_load_bts
 
 from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import LButtJoint
@@ -130,6 +132,50 @@ def test_transformed_plate_survives_serialization():
     plate_copy = json_loads(json_dumps(plate))
 
     assert_same_frame(plate_copy.frame, expected)
+
+
+def json_roundtrip(model):
+    return json_loads(json_dumps(model))
+
+
+def protobuf_roundtrip(model):
+    import compas_timber.proto.conversions  # noqa: F401
+
+    return pb_load_bts(pb_dump_bts(model))
+
+
+@pytest.mark.parametrize("roundtrip", [json_roundtrip, protobuf_roundtrip], ids=["json", "protobuf"])
+def test_transformed_hierarchy_survives_serialization(roundtrip):
+    """Every element of a moved panel tree loads back where it was: layers, sublayers, and children with their own placement."""
+    model = TimberModel()
+    outline = Polyline([Point(1000, 0, 0), Point(4000, 0, 0), Point(4000, 2400, 0), Point(1000, 2400, 0), Point(1000, 0, 0)])
+    panel = Panel.from_outline_thickness(outline, 200)
+    exterior = LayerDefinition("exterior", 50, sublayer_defs=[LayerDefinition("cladding", 20), LayerDefinition("battens")])
+    panel.layer_structure = LayerStructure([exterior, LayerDefinition("core"), LayerDefinition("interior", 50)])
+    model.add_element(panel)
+    panel.merge_layer_structure(model)
+    # children placed in the panel's local coordinates, rotated relative to it
+    plate = Plate(Frame([300, 400, 200], [0, 1, 0], [-1, 0, 0]), 600, 300, 20)
+    nested_panel = Panel(Frame([1500, 200, 200], [1, 1, 0], [-1, 1, 0]), 800, 600, 50)
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1200, 0, 0)), 80, 160)
+    for child in (plate, nested_panel, beam):
+        model.add_element(child, parent=panel)
+    plate.transform(Translation.from_vector([100, 50, 0]))  # moved on its own, then with its parent
+    panel.transform(T)
+
+    def placement(element):
+        outline = list(element.outline_a.points) if hasattr(element, "outline_a") else []
+        return [element.frame.point, element.frame.xaxis, element.frame.yaxis] + outline
+
+    expected = {str(e.guid): placement(e) for e in model.elements()}
+    assert len(expected) == 9  # panel, 5 layers, plate, nested panel, beam
+
+    model_copy = roundtrip(model)
+
+    for element in model_copy.elements():
+        for actual, wanted in zip(placement(element), expected.pop(str(element.guid))):
+            assert TOL.is_allclose(actual, wanted), type(element).__name__
+    assert not expected
 
 
 @pytest.mark.parametrize("element_type", [Plate, Panel], ids=["plate", "panel"])
