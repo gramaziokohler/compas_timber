@@ -88,7 +88,6 @@ classDiagram
       }
 
       class PlateGeometry {
-         +frame : Frame
          +length : float
          +width : float
          +thickness : float
@@ -101,8 +100,7 @@ classDiagram
          +remove_blank_extension(edge_index=None)
          +reset()
          +compute_shape() : Brep
-         +from_global_outlines(outline_a, outline_b, orientation=None) : PlateGeometry
-         +from_frame_and_dims(frame, length, width, thickness) : PlateGeometry
+         +from_dims(length, width, thickness) : PlateGeometry
       }
 
       class Fastener {

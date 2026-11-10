@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added `keep_world_placement` to `TimberModel.add_element()` for adding an element built in world coordinates under a parent without moving it.
 * Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
 * Added `CompositeJoint`, which is a Joint that takes a list of pairwise joints, intended to make 3+ element joint definition simpler. Typical use via `ClusterRule` in timber_design repo.
@@ -41,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `invoke sync-authors` task that regenerates the `pyproject.toml` authors (names only, see pypi/warehouse#12877) from `CITATION.cff`. `pre-build` runs it, so the release pipeline picks new authors up automatically; the BibTeX authors, DOI and repository URL (from `CITATION.cff`) and year in `docs/citing.md` are filled at docs build time by `scripts/mkdocs_hooks.py`.
 
 ### Changed
-* Fixed `Panel.compute_modeltransformation()` composing a panel's transformation with its ancestors' in the model tree. Unlike most elements, a `Panel`'s own `transformation` is already an absolute (world) placement rather than parent-relative, so composing it with an ancestor's transformation double-applied the ancestor's placement.
 * Fixed `TimberElement.__data__` serializing `self.frame` (the world-composed frame, with the whole ancestor chain baked in) instead of the element's own local, parent-relative transformation. For a nested element (e.g. a `Beam` that is a child of another element in the model tree), this double-applied the ancestor's transformation once the element was reattached to its parent on deserialization.
 * Fixed `Text.create_text_curves_for_element()` failing with `FileNotFoundError` in every installed copy of `compas_timber` (i.e. anything but a git clone). The font file `basic_characters.zip` lived in the repository's top-level `data/` folder, which is not part of the package, so it never made it into the wheel. It now ships inside `compas_timber.fabrication`, next to `text.py`, and is loaded from there.
 * Changed `Text.apply()` to engrave the text into the element geometry, instead of returning it untouched. Every straight stroke of the text is cut as a groove `Text.ENGRAVING` (8%) of the text height wide and deep; strokes that miss the element are left out. The grooves are available as boxes through the new `Text.grooves_for_element()`.
@@ -113,6 +113,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed child elements (e.g. beams and layers of a panel) not following when their parent is transformed or added to a parent.
 * Fixed `TimberModel.transform()` failing on models containing a `Panel`.
 * Changed cache invalidation to two tiers: elements list their cached attributes in `ELEMENT_CACHE` and `MODEL_CACHE`, cleared by `clear_element_cache()` (own data changed) and `clear_model_cache()` (placement changed, includes descendants).
+* Changed a nested `Panel`'s `transformation` back to being relative to its parent, like all other elements; use `keep_world_placement=True` when nesting a panel built in world coordinates.
+* Fixed transformations of `Panel`, `Plate` and `Layer` being lost on serialization; their placement is now stored only in the element's `transformation` and serialized as the element's `frame`.
+* **Breaking:** Removed `PlateGeometry.frame` and the `frame` argument of `PlateGeometry`; it holds only the local outlines. `PlateGeometry.from_global_outlines()` is replaced by `compas_timber.elements.global_outlines_to_local(outline_a, outline_b, orientation=None)`, which returns `(frame, local_outline_a, local_outline_b)`, and `PlateGeometry.from_frame_and_dims(frame, ...)` is replaced by `PlateGeometry.from_dims(length, width, thickness)`. `Plate`, `Panel` and `Layer` take `frame` alongside `plate_geometry` (defaults to worldXY). The frame moved from `PlateGeometryData` to `PlateData`, `PanelData` and `LayerData` in JSON and protobuf; data saved before this change won't load.
+* Changed `Panel`, `Plate` and `Layer` to raise a `ValueError` when scaled, sheared or mirrored, which their placement can't represent.
 
 ### Removed
 * Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`.
