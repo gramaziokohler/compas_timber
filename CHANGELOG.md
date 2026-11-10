@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+
+### Changed
+
+### Removed
+
+
+## [3.0.0] 2026-11-10
+
+### Added
 * Added `keep_world_placement` to `TimberModel.add_element()` for adding an element built in world coordinates under a parent without moving it.
 * Added `create-class-assets` and `create-proto-bundle` invoke tasks (from `compas_pb.invocations`), and a `release-assets` job that runs them on release. compas_timber owns its `.proto` files, so each release now publishes the schema bundle (`compas_timber-proto.zip`) and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript alongside the wheel. Python bindings are not published separately -- they already ship inside the wheel.
 * Added `compas_timber/proto/common.proto`, holding the messages shared across the proto IDL: `GuidRef`, `PointList` and the `compas_model` `Feature` wrapper.
