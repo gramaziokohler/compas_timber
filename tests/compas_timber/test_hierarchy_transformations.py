@@ -10,7 +10,9 @@ from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Reflection
 from compas.geometry import Rotation
+from compas.geometry import Scale
 from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import distance_point_plane
@@ -128,6 +130,14 @@ def test_transformed_plate_survives_serialization():
     plate_copy = json_loads(json_dumps(plate))
 
     assert_same_frame(plate_copy.frame, expected)
+
+
+@pytest.mark.parametrize("element_type", [Plate, Panel], ids=["plate", "panel"])
+@pytest.mark.parametrize("transformation", [Scale.from_factors([2, 2, 2]), Reflection.from_frame(Frame.worldYZ())], ids=["scale", "mirror"])
+def test_plate_like_rejects_non_rigid_transformations(element_type, transformation):
+    element = element_type(Frame.worldXY(), 100, 100, 10)
+    with pytest.raises(ValueError):
+        element.transform(transformation)
 
 
 # ==========================================================================

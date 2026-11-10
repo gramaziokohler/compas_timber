@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Changed cache invalidation to two tiers: elements list their cached attributes in `ELEMENT_CACHE` and `MODEL_CACHE`, cleared by `clear_element_cache()` (own data changed) and `clear_model_cache()` (placement changed, includes descendants).
 * Changed a nested `Panel`'s `transformation` back to being relative to its parent, like all other elements; use `keep_world_placement=True` when nesting a panel built in world coordinates.
 * Fixed transformations of `Panel`, `Plate` and `Layer` being lost on serialization; their placement is now stored only in `plate_geometry.frame`.
+* Changed `Panel`, `Plate` and `Layer` to raise a `ValueError` when scaled, sheared or mirrored, which their placement can't represent.
 
 ### Removed
 * Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`.

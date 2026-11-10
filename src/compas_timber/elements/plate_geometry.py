@@ -29,8 +29,15 @@ class PlateGeometryPlacement(object):
     @transformation.setter
     def transformation(self, transformation):
         # `Element.transform()` goes through here too
-        self.plate_geometry.frame = Frame.from_transformation(transformation) if transformation else Frame.worldXY()
+        frame = Frame.from_transformation(transformation) if transformation else Frame.worldXY()
+        if transformation and not TOL.is_allclose(_flat(Transformation.from_frame(frame)), _flat(transformation)):
+            raise ValueError("{} can only be moved and rotated; scaling, shearing and mirroring are not supported.".format(type(self).__name__))
+        self.plate_geometry.frame = frame
         clear_element_cache(self)
+
+
+def _flat(transformation):
+    return [value for row in transformation.matrix for value in row]
 
 
 class PlateGeometry(Data):
