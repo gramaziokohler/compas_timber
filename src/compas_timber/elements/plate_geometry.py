@@ -19,7 +19,7 @@ from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import move_polyline_segment_to_plane
 
 
-class PlateGeometryPlacement(object):
+class PlateGeometryPlacement:
     """Stores the element's ``transformation`` in ``plate_geometry.frame``, which is what gets serialized."""
 
     @property
