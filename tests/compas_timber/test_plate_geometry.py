@@ -10,6 +10,7 @@ from compas.data import json_loads
 from compas.tolerance import TOL
 
 from compas_timber.elements import PlateGeometry
+from compas_timber.elements.plate_geometry import global_outlines_to_local
 
 
 def test_plate_geometry_serialization():
@@ -127,19 +128,19 @@ def test_compute_shape_produces_solid_with_correct_volume():
     assert brep.is_closed
 
 
-def test_from_global_outlines_orientation_sets_local_yaxis():
+def test_global_outlines_to_local_orientation_sets_local_yaxis():
     """When `orientation` is given, the local frame's y-axis should follow it, regardless of outline_b's side."""
     outline_a = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 5, 0), Point(0, 5, 0), Point(0, 0, 0)])
     outline_b = Polyline([Point(p[0], p[1], p[2] + 1) for p in outline_a.points])  # offset in +Z
     orientation = Vector(0, 1, 0)
 
-    _, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation)
+    frame, _, _ = global_outlines_to_local(outline_a, outline_b, orientation=orientation)
 
     # frame.yaxis must be parallel to the requested orientation vector
     assert TOL.is_allclose(cross_vectors(frame.yaxis, orientation), [0, 0, 0])
 
 
-def test_from_global_outlines_orientation_forces_rotation():
+def test_global_outlines_to_local_orientation_forces_rotation():
     """`orientation` should rotate the local outline to align local +Y with it, even when that
     differs from the frame the algorithm would otherwise derive from the outline geometry.
 
@@ -151,8 +152,8 @@ def test_from_global_outlines_orientation_forces_rotation():
     outline_b = Polyline([Point(p[0], p[1], p[2] + 1) for p in outline_a.points])
     orientation = Vector(1, 1, 0)  # 45 degrees, not aligned with any edge of outline_a
 
-    _, frame_default = PlateGeometry.from_global_outlines(outline_a, outline_b)
-    pg_oriented, frame_oriented = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation)
+    frame_default, _, _ = global_outlines_to_local(outline_a, outline_b)
+    frame_oriented, local_outline_a, _ = global_outlines_to_local(outline_a, outline_b, orientation=orientation)
 
     # orientation actually changed the frame - not coincidentally the same as the default one
     assert not TOL.is_allclose(cross_vectors(frame_default.yaxis, frame_oriented.yaxis), [0, 0, 0])
@@ -163,11 +164,11 @@ def test_from_global_outlines_orientation_forces_rotation():
     # mapping the local (rotated) outline back through the returned frame must exactly reproduce
     # the original, asymmetric global outline - this only holds if the rotation embedded in the
     # frame matches the rotation actually applied to the outline points.
-    for local_pt, global_pt in zip(pg_oriented.outline_a.points, outline_a.points):
+    for local_pt, global_pt in zip(local_outline_a.points, outline_a.points):
         assert TOL.is_allclose(frame_oriented.to_world_coordinates(local_pt), global_pt)
 
 
-def test_from_global_outlines_orientation_consistent_when_outline_b_flipped():
+def test_global_outlines_to_local_orientation_consistent_when_outline_b_flipped():
     """The frame's relationship to `orientation` should not depend on which side outline_b is offset to.
 
     Regression test: an earlier implementation swapped the x/y axes when flipping the frame to
@@ -179,8 +180,8 @@ def test_from_global_outlines_orientation_consistent_when_outline_b_flipped():
     outline_b_neg = Polyline([Point(p[0], p[1], p[2] - 1) for p in outline_a.points])  # -Z, triggers frame flip
     orientation = Vector(0, 1, 0)
 
-    pg_pos, frame_pos = PlateGeometry.from_global_outlines(outline_a, outline_b_pos, orientation=orientation)
-    pg_neg, frame_neg = PlateGeometry.from_global_outlines(outline_a, outline_b_neg, orientation=orientation)
+    frame_pos, _, local_outline_b_pos = global_outlines_to_local(outline_a, outline_b_pos, orientation=orientation)
+    frame_neg, _, local_outline_b_neg = global_outlines_to_local(outline_a, outline_b_neg, orientation=orientation)
 
     # y-axis stays parallel to orientation in both the flipped and non-flipped case
     assert TOL.is_allclose(cross_vectors(frame_pos.yaxis, orientation), [0, 0, 0])
@@ -189,6 +190,6 @@ def test_from_global_outlines_orientation_consistent_when_outline_b_flipped():
     # and its relationship (same vs. opposite direction) to orientation is consistent between the two cases
     assert TOL.is_close(dot_vectors(frame_pos.yaxis, orientation), dot_vectors(frame_neg.yaxis, orientation))
 
-    # regardless of which side outline_b was offset to, local outline_b always ends up at +thickness
-    assert all(TOL.is_close(p[2], pg_pos.thickness) for p in pg_pos.outline_b.points)
-    assert all(TOL.is_close(p[2], pg_neg.thickness) for p in pg_neg.outline_b.points)
+    # regardless of which side outline_b was offset to, local outline_b always ends up at +thickness (1)
+    assert all(TOL.is_close(p[2], 1.0) for p in local_outline_b_pos.points)
+    assert all(TOL.is_close(p[2], 1.0) for p in local_outline_b_neg.points)

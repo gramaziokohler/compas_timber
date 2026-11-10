@@ -23,6 +23,7 @@ from compas_timber.utils import polylines_from_brep_face
 
 from .plate_geometry import PlateGeometry
 from .plate_geometry import RigidPlacement
+from .plate_geometry import global_outlines_to_local
 
 
 class Plate(RigidPlacement, TimberElement):
@@ -300,7 +301,8 @@ class Plate(RigidPlacement, TimberElement):
         :class:`~compas_timber.elements.Plate`
             A Plate object representing the plate geometry with the given outlines.
         """
-        plate_geometry, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation)
+        frame, local_outline_a, local_outline_b = global_outlines_to_local(outline_a, outline_b, orientation=orientation)
+        plate_geometry = PlateGeometry(local_outline_a, local_outline_b)
         plate = cls(frame=frame, plate_geometry=plate_geometry, **kwargs)
         if openings:
             for opening in openings:

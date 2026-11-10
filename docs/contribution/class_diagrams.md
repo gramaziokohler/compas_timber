@@ -100,7 +100,6 @@ classDiagram
          +remove_blank_extension(edge_index=None)
          +reset()
          +compute_shape() : Brep
-         +from_global_outlines(outline_a, outline_b, orientation=None) : tuple[PlateGeometry, Frame]
          +from_dims(length, width, thickness) : PlateGeometry
       }
 

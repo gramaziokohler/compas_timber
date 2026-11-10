@@ -19,6 +19,7 @@ from compas_timber.base import clear_element_cache
 
 from .plate_geometry import PlateGeometry
 from .plate_geometry import RigidPlacement
+from .plate_geometry import global_outlines_to_local
 
 if TYPE_CHECKING:
     from .panel import Panel  # noqa: F401
@@ -160,7 +161,8 @@ class Layer(RigidPlacement, Element):
         :class:`Layer`
         """
         outline_a, outline_b = cls.get_outlines_from_parent(host, start_offset, end_offset)
-        plate_geometry, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
+        frame, local_outline_a, local_outline_b = global_outlines_to_local(outline_a, outline_b, orientation=[0, 1, 0])
+        plate_geometry = PlateGeometry(local_outline_a, local_outline_b)
         return cls(
             plate_geometry,
             start_offset,

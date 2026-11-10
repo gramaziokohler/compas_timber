@@ -56,7 +56,7 @@ def test_flat_panel_creation():
 
 
 def test_sloped_panel_creation():
-    # this outline triggers the frame flip in `PlateGeometry.from_global_outlines` (natural normal derived from
+    # this outline triggers the frame flip in `global_outlines_to_local` (natural normal derived from
     # point order opposes the default thickness offset). The fix negates the local x-axis on flip instead of
     # swapping x/y, so local x stays aligned with outline_a[0]->outline_a[1] = (10, 0, 0): `length` tracks that
     # 10-long edge (extended by the slope to 20) and `width` tracks the 10*sqrt(2) diagonal edge.

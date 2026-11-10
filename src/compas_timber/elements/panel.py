@@ -40,6 +40,7 @@ from .layer import Layer
 from .layer import LayerStructure
 from .plate_geometry import PlateGeometry
 from .plate_geometry import RigidPlacement
+from .plate_geometry import global_outlines_to_local
 
 
 class PanelType(object):
@@ -541,7 +542,8 @@ class Panel(RigidPlacement, Element):
         door_polylines = []
         if recognize_doors:
             outline_a, outline_b, door_polylines = extract_door_openings(outline_a, outline_b)
-        plate_geometry, frame = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=orientation)
+        frame, local_outline_a, local_outline_b = global_outlines_to_local(outline_a, outline_b, orientation=orientation)
+        plate_geometry = PlateGeometry(local_outline_a, local_outline_b)
         panel = cls(frame=frame, plate_geometry=plate_geometry, **kwargs)
         for polyline in window_polylines:
             opening = Opening.from_outline_panel(polyline, panel, opening_type=OpeningType.WINDOW, project_horizontal=horizontal_openings)
