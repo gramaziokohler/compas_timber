@@ -272,7 +272,7 @@ def parse_cross_beams_and_main_beams_from_cluster(cluster: Cluster) -> tuple[lis
 
     Parameters
     ----------
-    cluster : :class:`~compas_timber.analyzers.Cluster`
+    cluster : :class:`~compas_timber.connections.Cluster`
         The cluster of joints to parse.
 
     Returns
