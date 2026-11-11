@@ -854,23 +854,25 @@ def get_brep_loop_vertex_indices(loop, brep):
     list of int
         The vertex indices of the BrepLoop (closed: first index repeated at end).
     """
-    face_vertex_indices = []
-    for edge in loop.edges:
+
+    def index(vertex):
         try:
-            if edge.start_vertex.native_vertex.VertexIndex not in face_vertex_indices:
-                face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
-            if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
-                face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
+            return vertex.native_vertex.VertexIndex
         except AttributeError:
             for i, v in enumerate(brep.vertices):
-                if TOL.is_allclose(edge.start_vertex.point, v.point):
-                    if i not in face_vertex_indices:
-                        face_vertex_indices.append(i)
-                if TOL.is_allclose(edge.end_vertex.point, v.point):
-                    if i not in face_vertex_indices:
-                        face_vertex_indices.append(i)
-    face_vertex_indices.append(face_vertex_indices[0])
-    return face_vertex_indices
+                if TOL.is_allclose(vertex.point, v.point):
+                    return i
+
+    # edges keep their own direction, which may run against the loop, so walk them by shared vertices
+    edges = [(index(e.start_vertex), index(e.end_vertex)) for e in loop.edges]
+    start, end = edges[0]
+    if len(edges) > 1 and start in edges[1]:
+        start, end = end, start
+    indices = [start, end]
+    for a, b in edges[1:-1]:  # the last edge closes back to start
+        indices.append(b if a == indices[-1] else a)
+    indices.append(indices[0])
+    return indices
 
 
 def mesh_from_brep_simple(brep):
