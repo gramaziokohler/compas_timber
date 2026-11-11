@@ -129,8 +129,6 @@ class TDovetailJoint(Joint):
         self._flank_angle = None
         self._shape_radius = None
 
-        self.features = []
-
         if self.main_beam and self.cross_beam:
             self._set_unset_attributes()
 
@@ -181,7 +179,7 @@ class TDovetailJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -208,14 +206,10 @@ class TDovetailJoint(Joint):
     def add_features(self):
         """Adds the required trimming features to both beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
         assert self.main_beam and self.cross_beam  # should never happen
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # define the tool parameters
         self.define_dovetail_tool(self.tool_angle, self.tool_diameter, self.tool_height)

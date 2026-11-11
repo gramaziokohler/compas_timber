@@ -132,9 +132,7 @@ class PanelJoint(PlateJoint):
 
         # NOTE: I called this add_features to fit with joint workflow, as interface is the panel equivalent of a joint-generated feature.
         """Add features to the plates based on the joint."""
-        if self.interface_a and self.interface_b:
-            self.panel_a.remove_features(self.interface_a)
-            self.panel_b.remove_features(self.interface_b)
         self.interface_a, self.interface_b = self.create_interfaces()
         self.panel_a.add_feature(self.interface_a)  # TODO: TypeError: should PanelFeature inherit from Element AND Feature?
         self.panel_b.add_feature(self.interface_b)
+        self.features = [self.interface_a, self.interface_b]

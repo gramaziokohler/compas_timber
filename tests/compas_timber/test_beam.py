@@ -199,6 +199,29 @@ def test_serialization_beam_with_nonjoinery_processings(beam):
     assert len(deserialized.features) == 1
 
 
+def test_serialization_of_nested_beam_preserves_modeltransformation():
+    """`TimberElement.__data__` stores the *local* frame (`Frame.from_transformation(self.transformation)`), not
+    `self.frame` (`Frame.from_transformation(self.modeltransformation)`, the world-composed frame with the whole
+    ancestor chain baked in). For a beam nested under another element in the model tree, storing the world frame
+    would double-apply the ancestor's transformation once the beam is reattached to its parent on deserialization.
+    """
+    model = TimberModel()
+    parent = Beam(Frame(Point(5, 5, 5), Vector(1, 0, 0), Vector(0, 1, 0)), length=2, width=0.1, height=0.1)
+    model.add_element(parent)
+    child = Beam(Frame(Point(1, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=1, width=0.05, height=0.05)
+    model.add_element(child, parent=parent)
+
+    expected_frame = child.frame  # world-composed: parent's frame combined with child's local placement
+
+    model_copy = json_loads(json_dumps(model))
+    parent_copy = next(e for e in model_copy.elements() if TOL.is_allclose(e.frame.point, parent.frame.point))
+    child_copy = next(e for e in parent_copy.children)
+
+    assert TOL.is_allclose(child_copy.frame.point, expected_frame.point)
+    assert TOL.is_allclose(child_copy.frame.xaxis, expected_frame.xaxis)
+    assert TOL.is_allclose(child_copy.frame.yaxis, expected_frame.yaxis)
+
+
 # ==========================================================================
 # Blank Extension & Transformation Tests
 # ==========================================================================
@@ -445,8 +468,16 @@ def test_geometry_with_features(beam, mocker):
     mock_feature.apply.assert_called()
 
 
-def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
-    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+def test_add_feature_with_list_does_not_nest(beam):
+    """A list passed to the singular add_feature is normalised, not stored as a nested list (#823)."""
+    cut = JackRafterCut(is_joinery=False)
+
+    beam.add_feature([cut])
+
+    assert beam.features == [cut]
+
+
+def test_add_feature_clears_cached_attributes(beam):
     # Force computation of cached attributes by accessing them
     _ = beam.blank
     _ = beam.ref_frame
@@ -455,7 +486,6 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     assert beam._blank is not None
     assert beam._ref_frame is not None
 
-    # Call a method decorated with @reset_timber_attrs
     beam.add_feature(JackRafterCut(is_joinery=False))
 
     # Verify the cached attributes have been reset to None
@@ -464,8 +494,7 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     assert beam._geometry is None
 
 
-def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
-    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+def test_add_blank_extension_clears_cached_attributes(beam):
     # Force computation of cached attributes by accessing them
     _ = beam.blank
     _ = beam.ref_frame
@@ -474,7 +503,6 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
     assert beam._blank is not None
     assert beam._ref_frame is not None
 
-    # Call a method decorated with @reset_timber_attrs
     beam.add_blank_extension(10.0, 20.0)
 
     # Verify the cached attributes have been reset to None
@@ -509,3 +537,53 @@ def test_transform_invalidates_cached_timber_attributes(beam):
     assert new_blank.frame != original_blank.frame
     assert new_ref_frame.point != original_ref_frame.point
     assert not TOL.is_close(new_blank.frame.point.distance_to_point(original_blank.frame.point), 0.0)
+
+
+def test_add_extend_start_feature():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.10, end=0.0)
+
+    assert close(beam.blank.xsize, 1.1)
+
+
+def test_add_extend_end_feature():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+
+    beam.add_blank_extension(start=0.0, end=0.10)
+
+    assert close(beam.blank.xsize, 1.1)
+    # TODO: assert was extended at end and not at start
+
+
+def test_extend_both_start_end():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+
+    beam.add_blank_extension(start=0.10, end=0.10)
+
+    assert close(beam.blank.xsize, 1.2)
+
+
+def test_accumulate_extension():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.0, end=0.10)
+    beam.add_blank_extension(start=0.0, end=0.20)
+
+    # max extension is used
+    assert close(beam.blank.xsize, 1.20)
+
+
+def test_remove_parametric_extension():
+    start = Point(0.0, 0.0, 0.0)
+    end = Point(1.0, 0.0, 0.0)
+    beam = Beam.from_endpoints(start, end, 0.06, 0.12)
+    beam.add_blank_extension(start=0.0, end=0.10)
+
+    assert close(beam.blank.xsize, 1.10)

@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Rotation
 from compas.geometry import angle_vectors
 from compas.geometry import dot_vectors
 from compas.geometry import intersection_line_line
@@ -12,7 +14,7 @@ from compas.tolerance import TOL
 from .solver import JointTopology
 
 if TYPE_CHECKING:
-    from compas_timber.analyzers import Cluster
+    from compas_timber.connections.cluster import Cluster
     from compas_timber.elements import Beam
 
     from .joint import Joint
@@ -208,6 +210,34 @@ def point_centerline_towards_joint(beam_a, beam_b):
     else:
         centerline_vec = beam_a.centerline.vector
     return centerline_vec
+
+
+def plane_from_ref_side_angle_offset(ref_side, angle, offset):
+    """Builds a plane anchored on a beam's reference side, tilted around the side's x-axis and offset along its own (tilted) normal.
+
+    The resulting plane's line of intersection with `ref_side` stays parallel to `ref_side`'s x-axis, i.e. to the centerline of the
+    beam `ref_side` belongs to. This makes it suitable for cutting planes that must remain parallel to that centerline, e.g.
+    :attr:`~compas_timber.connections.ButtJoint.butt_plane`.
+
+    Parameters
+    ----------
+    ref_side : :class:`~compas.geometry.Frame`
+        The beam's reference side used as the anchor for the plane.
+    angle : float
+        Rotation angle, in radians, around `ref_side`'s x-axis.
+    offset : float
+        Signed distance, measured along the rotated normal, from `ref_side`'s origin to the plane.
+
+    Returns
+    -------
+    :class:`~compas.geometry.Plane`
+
+    """
+    plane = Plane(ref_side.point, ref_side.normal)
+    rotation = Rotation.from_axis_and_angle(ref_side.xaxis, angle, point=ref_side.point)
+    plane.transform(rotation)
+    plane.point = plane.point + plane.normal * offset
+    return plane
 
 
 def angle_and_dot_product_beam_a_and_beam_b(beam_a: Beam, beam_b: Beam, joint: Joint) -> tuple[float, float]:

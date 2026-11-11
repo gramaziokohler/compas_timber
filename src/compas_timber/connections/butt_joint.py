@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
 from typing import Optional
 
+from compas.data import Data
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Polyhedron
+from compas.geometry import dot_vectors
+from compas.tolerance import TOL
 
 from compas_timber.errors import BeamJoiningError
 from compas_timber.fabrication import JackRafterCutProxy
@@ -15,9 +20,81 @@ from compas_timber.geometry import polyhedron_from_box_planes
 from .joint import Joint
 from .solver import JointTopology
 from .utilities import beam_ref_side_incidence
+from .utilities import plane_from_ref_side_angle_offset
 
 if TYPE_CHECKING:
     from compas_timber.elements.beam import Beam
+
+
+class CutPlaneSpec(Data):
+    """A cutting plane stored in the local coordinate system of a beam.
+
+    The plane is kept relative to the beam's :attr:`~compas_timber.elements.Beam.frame` rather than its
+    blank-derived reference sides, so it is unaffected by blank extensions (e.g. added by other joints)
+    and follows the beam through :meth:`~compas_timber.model.TimberModel.transform` and serialization.
+
+    Use :meth:`from_plane` (or the validating :meth:`from_butt_plane` / :meth:`from_back_plane`) to build
+    an instance from a world-coordinate plane, and :meth:`to_plane` to resolve it at query time.
+
+    Parameters
+    ----------
+    local_frame : :class:`~compas.geometry.Frame`
+        The plane, as a frame, in the beam's local coordinates.
+
+    """
+
+    @property
+    def __data__(self):
+        return {"local_frame": self.local_frame}
+
+    def __init__(self, local_frame: Frame):
+        super().__init__()
+        self.local_frame = local_frame
+
+    def to_plane(self, beam: Beam) -> Plane:
+        """Resolve the plane in world coordinates relative to `beam`."""
+        return Plane.from_frame(self.local_frame.transformed(beam.modeltransformation))
+
+    @classmethod
+    def from_plane(cls, beam: Beam, plane: Plane) -> CutPlaneSpec:
+        """Store `plane` (world coordinates) relative to `beam`. Any orientation is supported."""
+        return cls(Frame.from_plane(plane).transformed(beam.transformation_to_local()))
+
+    @classmethod
+    def from_butt_plane(cls, main_beam: Beam, cross_beam: Beam, plane: Plane) -> CutPlaneSpec:
+        """Store `plane` relative to the cross beam, for use as :attr:`~compas_timber.connections.ButtJoint.butt_plane`.
+
+        Parameters
+        ----------
+        main_beam
+            Main beam of the joint.
+        cross_beam
+            Cross beam of the joint.
+        plane
+            Cutting plane in world coordinates. Its normal must be perpendicular to the cross beam's centerline.
+
+        """
+        if not TOL.is_zero(dot_vectors(cross_beam.frame.xaxis, plane.normal.unitized())):
+            raise ValueError("butt_plane must be parallel to cross_beam's centerline: its normal may not have a component along it.")
+        return cls.from_plane(cross_beam, plane)
+
+    @classmethod
+    def from_back_plane(cls, main_beam: Beam, cross_beam: Beam, plane: Plane) -> CutPlaneSpec:
+        """Store `plane` relative to the main beam, for use as :attr:`~compas_timber.connections.LButtJoint.back_plane`.
+
+        Parameters
+        ----------
+        main_beam
+            Main beam of the joint.
+        cross_beam
+            Cross beam of the joint.
+        plane
+            Cutting plane in world coordinates. Its normal must be perpendicular to the main beam's centerline.
+
+        """
+        if not TOL.is_zero(dot_vectors(main_beam.frame.xaxis, plane.normal.unitized())):
+            raise ValueError("back_plane must be parallel to main_beam's centerline: its normal may not have a component along it.")
+        return cls.from_plane(main_beam, plane)
 
 
 class ButtJoint(Joint):
@@ -34,13 +111,10 @@ class ButtJoint(Joint):
     cross_beam : :class:`~compas_timber.elements.Beam`
         The cross beam to be joined.
     mill_depth : float
-        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane` is provided.
-    modify_cross : bool, default False
-        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam if `modify_cross` is True.
+        The depth of the pocket to be milled in the cross beam. This will be ignored if `butt_plane_spec` is provided.
+    butt_plane_spec : :class:`~compas_timber.connections.CutPlaneSpec`, optional
+        Overrides the plane used to cut the main beam. Build with
+        :meth:`~compas_timber.connections.CutPlaneSpec.from_butt_plane`.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
@@ -56,20 +130,14 @@ class ButtJoint(Joint):
         A list containing the main beam and the cross beam.
     mill_depth : float
         The depth of the pocket to be milled in the cross beam.
-    modify_cross : bool, default False
-        If True, the cross beam will be extended to the opposite face of the main beam and cut with the same plane.
-    butt_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the main beam. If not provided, the closest side of the cross beam will be used.
-    back_plane : :class:`~compas.geometry.Plane`, optional
-        The plane used to cut the cross beam if `modify_cross` is True.
     force_pocket : bool
         If `True` applies a `:~compas_timber.fabrication.Pocket` feature instead of a `:~compas_timber.fabrication.Lap` on the cross beam. Default is `False`.
     conical_tool : bool
         If `True` it can apply smaller than 90 degrees angles to the TiltSide parameters of the `:~compas_timber.fabrication.Pocket` feature. Default is `False`.
-    features: list[BTLxProcessing]
+    features: list[:class:`~compas_timber.fabrication.BTLxProcessing`]
         List of features to be applied to the cross beam and main beam.
     cross_beam_ref_side_index : int
-        The index of the side of the cross beam relative to the main beam..
+        The index of the side of the cross beam relative to the main beam.
     main_beam_ref_side_index : int
         The index of the side of the main beam relative to the cross beam.
 
@@ -81,9 +149,7 @@ class ButtJoint(Joint):
     def __data__(self):
         data = super(ButtJoint, self).__data__
         data["mill_depth"] = self.mill_depth
-        data["modify_cross"] = self.modify_cross
-        data["butt_plane"] = self.butt_plane.__data__
-        data["back_plane"] = self.back_plane.__data__
+        data["butt_plane_spec"] = self._butt_plane_spec
         data["force_pocket"] = self.force_pocket
         data["conical_tool"] = self.conical_tool
         return data
@@ -93,21 +159,16 @@ class ButtJoint(Joint):
         main_beam: Beam = None,
         cross_beam: Beam = None,
         mill_depth: Optional[float] = None,
-        modify_cross: bool = True,
-        butt_plane: Optional[Plane] = None,
-        back_plane: Optional[Plane] = None,
+        butt_plane_spec: Optional[CutPlaneSpec] = None,
         force_pocket: bool = False,
         conical_tool: bool = False,
         **kwargs,
     ):
         super(ButtJoint, self).__init__(elements=(main_beam, cross_beam), **kwargs)
-        self.mill_depth = mill_depth
-        self.modify_cross = modify_cross
-        self.force_pocket = force_pocket
-        self.conical_tool = conical_tool
-        self.features = []
-        self._butt_plane = butt_plane
-        self._back_plane = back_plane
+        self.mill_depth: float = mill_depth or 0.0
+        self._butt_plane_spec: Optional[CutPlaneSpec] = butt_plane_spec
+        self.force_pocket: bool = force_pocket
+        self.conical_tool: bool = conical_tool
 
     @property
     def main_beam(self):
@@ -135,19 +196,24 @@ class ButtJoint(Joint):
 
     @property
     def butt_plane(self) -> Plane:
-        if self._butt_plane is None:
-            cutting_plane = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
-            cutting_plane.xaxis = -cutting_plane.xaxis
-            if self.mill_depth:
-                cutting_plane.translate(cutting_plane.normal * self.mill_depth)
-            self._butt_plane = Plane.from_frame(cutting_plane)
-        return self._butt_plane
+        """The plane used to cut the main beam.
 
-    @property
-    def back_plane(self) -> Plane:
-        if self._back_plane is None:
-            return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
-        return self._back_plane
+        If a :class:`~compas_timber.connections.CutPlaneSpec` override is set, it is resolved against the cross beam.
+        Otherwise defaults to the cross beam's side closest to the main beam, offset outward by `mill_depth`.
+        """
+        if self._butt_plane_spec is not None:
+            return self._butt_plane_spec.to_plane(self.cross_beam)
+        # default: the cross beam's closest side, facing the main beam, offset by mill_depth
+        ref_side = self.cross_beam.ref_sides[self.cross_beam_ref_side_index]
+        return plane_from_ref_side_angle_offset(ref_side, math.pi, self.mill_depth)
+
+    def _back_cutting_plane(self) -> Plane:
+        """The plane used to extend/cut the cross beam when `modify_cross` is True.
+
+        Defaults to the side of the main beam opposite the one facing the cross beam. `LButtJoint` overrides this to
+        support a user-defined `back_plane`; this is not a general `ButtJoint` concept.
+        """
+        return Plane.from_frame(self.main_beam.opp_side(self.main_beam_ref_side_index))
 
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
@@ -161,7 +227,8 @@ class ButtJoint(Joint):
         # extend the main beam
         try:
             start, end = self.main_beam.extension_to_plane(self.butt_plane)
-            extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
+            extension_tolerance = 0
+            # extension_tolerance = 0.01 if TOL.unit == "M" else 10
             joint_id = self.guid
             self.main_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
         except AttributeError as ae:
@@ -169,23 +236,9 @@ class ButtJoint(Joint):
         except Exception as ex:
             raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
 
-        # extend the cross beam
-        if self.modify_cross:
-            try:
-                start, end = self.cross_beam.extension_to_plane(self.back_plane)
-                extension_tolerance = 0.01  # TODO: this should be proportional to the unit used
-                joint_id = self.guid
-                self.cross_beam.add_blank_extension(start + extension_tolerance, end + extension_tolerance, joint_id)
-            except AttributeError as ae:
-                raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ae), debug_geometries=[self.back_plane])
-
     def add_features(self) -> None:
         """Removes this joint's previously generated features and adds new features to each beam."""
         assert self.main_beam and self.cross_beam
-
-        if self.features:
-            self.main_beam.remove_features(self.features)
-            self.cross_beam.remove_features(self.features)
 
         # apply cut on the main beam
         main_feature = JackRafterCutProxy.from_plane_and_beam(self.butt_plane, self.main_beam, self.main_beam_ref_side_index)
@@ -196,8 +249,6 @@ class ButtJoint(Joint):
         if self.mill_depth:
             if self.force_pocket:
                 milling_volume = self._get_milling_volume_for_pocket()
-                # except Exception as ex:
-                #     raise BeamJoiningError(beams=self.elements, joint=self, debug_info=str(ex))
                 cross_feature = Pocket.from_volume_and_element(
                     milling_volume,
                     self.cross_beam,
@@ -216,12 +267,6 @@ class ButtJoint(Joint):
                 )
             self.cross_beam.add_features(cross_feature)
             self.features.append(cross_feature)
-
-        # apply a refinement cut on the cross beam
-        if self.modify_cross:
-            cross_refinement_feature = JackRafterCutProxy.from_plane_and_beam(self.back_plane, self.cross_beam, self.cross_beam_ref_side_index)
-            self.cross_beam.add_features(cross_refinement_feature)
-            self.features.append(cross_refinement_feature)
 
     def _get_milling_volume_for_pocket(self) -> Polyhedron:
         top_plane = Plane.from_frame(self.cross_beam.ref_sides[self.cross_beam_ref_side_index])

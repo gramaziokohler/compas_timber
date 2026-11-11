@@ -4,18 +4,21 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   pull_request:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: compas-dev/compas-actions.docs@v5
+      - uses: compas-dev/compas-actions/docs@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          generator: mkdocs
-          extras: dev,mkdocs
+          python-version: '3.12'
+          extras: dev
+          config-file: mkdocs.yml
+          # griffe reports pre-existing docstring/signature mismatches as warnings
+          strict: false
