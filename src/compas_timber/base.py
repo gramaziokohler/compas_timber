@@ -1,5 +1,4 @@
 import abc
-from functools import wraps
 
 from compas.geometry import Frame
 from compas.geometry import Line
@@ -7,21 +6,42 @@ from compas.geometry import PlanarSurface
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
-from compas_model.elements import reset_computed
+
+# Cached attributes, in two tiers. Element classes extend these with their own in class attributes of the same name.
+# Element tier: derived from the element's own data (its geometry, features, transformation).
+ELEMENT_CACHE = ("_elementgeometry",)
+# Model tier: derived from the element's placement in the model, i.e. also from its ancestors' transformations.
+MODEL_CACHE = ("_modeltransformation", "_modelgeometry", "_aabb", "_obb", "_collision_mesh", "_point", "_surface_mesh", "_volumetric_mesh")
 
 
-def reset_timber_attrs(f):
-    """Decorator to reset cached timber-specific attributes."""
+def clear_element_cache(element):
+    """Clear the cached data of `element` after its own data changed (geometry, features, transformation).
 
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        self: TimberElement = args[0]
-        self._blank = None
-        self._ref_frame = None
-        self._geometry = None  # from Element
-        return f(*args, **kwargs)
+    Its model-space data is derived from it, so this also calls :func:`clear_model_cache`.
 
-    return wrapper
+    Parameters
+    ----------
+    element : :class:`compas_model.elements.Element`
+
+    """
+    for name in getattr(element, "ELEMENT_CACHE", ELEMENT_CACHE):
+        setattr(element, name, None)
+    clear_model_cache(element)
+
+
+def clear_model_cache(element):
+    """Clear the cached model-space data of `element` and of all its descendants, after its placement changed.
+
+    The descendants' placement is composed from `element`'s, so their model-space data is cleared too.
+
+    Parameters
+    ----------
+    element : :class:`compas_model.elements.Element`
+
+    """
+    for e in [node.element for node in element.treenode.traverse()] if element.treenode else [element]:
+        for name in getattr(e, "MODEL_CACHE", MODEL_CACHE):
+            setattr(e, name, None)
 
 
 class TimberElement(Element, abc.ABC):
@@ -63,10 +83,16 @@ class TimberElement(Element, abc.ABC):
 
     """
 
+    MODEL_CACHE = MODEL_CACHE + ("_blank", "_ref_frame", "_geometry")
+
     @property
     def __data__(self):
         data = {}
-        data["frame"] = self.frame
+        # not `self.frame`: that is `Frame.from_transformation(self.modeltransformation)`, the world-composed
+        # frame with the whole ancestor chain baked in. The constructor treats `frame` as `self.transformation`,
+        # the *local*, parent-relative placement - so for a nested element (a child of another element in the
+        # model tree), storing the world frame would double-apply the ancestor's transformation on deserialization.
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["length"] = self.length
         data["width"] = self.width
         data["height"] = self.height
@@ -84,31 +110,6 @@ class TimberElement(Element, abc.ABC):
         self._blank = None
         self._ref_frame = None
         self.debug_info = []
-
-    @reset_computed
-    @reset_timber_attrs
-    def _reset_computed_dummy(self):
-        """Dummy method to trigger reset_computed decorator."""
-        pass
-
-    def reset_computed_properties(self):
-        """Reset all computed/cached properties."""
-        self._reset_computed_dummy()
-
-    def clear_model_dependent_cache(self):
-        """Clear cached attributes that depend on the element's position in the model hierarchy.
-
-        Preserves model-independent caches such as ``_elementgeometry``, features,
-        and blank extensions.
-        """
-        self._modeltransformation = None
-        self._modelgeometry = None
-        self._aabb = None
-        self._obb = None
-        self._collision_mesh = None
-        self._blank = None
-        self._ref_frame = None
-        self._geometry = None
 
     @property
     def is_beam(self):
@@ -129,14 +130,15 @@ class TimberElement(Element, abc.ABC):
         return self._features
 
     @features.setter
-    @reset_computed
     def features(self, features):
         self._features = features
+        clear_element_cache(self)
 
-    @reset_timber_attrs
-    def transform(self, transformation):
-        # override to reset timber-specific cached attributes
-        super().transform(transformation)
+    @Element.transformation.setter
+    def transformation(self, transformation):
+        # `Element.transform()` goes through here too
+        self._transformation = transformation
+        clear_element_cache(self)
 
     @property
     def geometry(self):
@@ -190,8 +192,6 @@ class TimberElement(Element, abc.ABC):
         """
         self.add_features(feature)
 
-    @reset_computed
-    @reset_timber_attrs
     def add_features(self, features):
         # type: (BTLxProcessing | list[BTLxProcessing]) -> None
         """Adds one or more features to the element.
@@ -202,12 +202,11 @@ class TimberElement(Element, abc.ABC):
             The feature or features to be added described as a BTLxProcessing or a list of BTLxProcessings.
 
         """
+        clear_element_cache(self)
         if not isinstance(features, list):
             features = [features]
         self._features.extend(features)  # type: ignore
 
-    @reset_computed
-    @reset_timber_attrs
     def remove_features(self, features=None):
         # type: (None | BTLxProcessing | list[BTLxProcessing]) -> None
         """Removes one or more features from the element.
@@ -219,6 +218,7 @@ class TimberElement(Element, abc.ABC):
             If None, all features will be removed.
 
         """
+        clear_element_cache(self)
         if features is None:
             self._features = []
         else:

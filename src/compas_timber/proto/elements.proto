@@ -22,7 +22,9 @@ message PlateGeometryData {
   optional string name = 2;
   compas_pb.data.PolylineData local_outline_a = 10;
   compas_pb.data.PolylineData local_outline_b = 11;
-  compas_pb.data.FrameData frame = 12;
+  // the placement now lives on the owning element (PlateData/PanelData/LayerData.frame)
+  reserved 12;
+  reserved "frame";
   optional double length = 13;
   optional double width = 14;
   optional double thickness = 15;
@@ -52,6 +54,7 @@ message LayerData {
   PlateGeometryData plate_geometry = 10;
   optional double start_offset = 11;
   optional LayerPath layer_path = 12;
+  compas_pb.data.FrameData frame = 13;
 }
 
 message BeamData {
@@ -72,6 +75,7 @@ message PlateData {
   PlateGeometryData plate_geometry = 10;
   repeated BTLxProcessingData features = 11;
   map<string, compas_pb.data.AnyData> attributes = 12;
+  compas_pb.data.FrameData frame = 13;
 }
 
 message PanelData {
@@ -82,6 +86,7 @@ message PanelData {
   repeated PanelFeatureData features = 12;
   optional LayerStructureData layer_structure = 13;
   map<string, compas_pb.data.AnyData> attributes = 14;
+  compas_pb.data.FrameData frame = 15;
 }
 
 // Fasteners (compas_timber.fasteners): the anchor-based fastener system.

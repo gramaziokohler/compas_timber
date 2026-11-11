@@ -6,21 +6,26 @@ from typing import Union
 
 from compas.data import Data
 from compas.geometry import Box
+from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Transformation
 from compas.geometry import Vector
 from compas_model.elements import Element
-from compas_model.elements import reset_computed
+
+from compas_timber.base import MODEL_CACHE
+from compas_timber.base import clear_element_cache
 
 from .plate_geometry import PlateGeometry
+from .plate_geometry import RigidPlacement
+from .plate_geometry import global_outlines_to_local
 
 if TYPE_CHECKING:
     from .panel import Panel  # noqa: F401
 
 
-class Layer(Element):
+class Layer(RigidPlacement, Element):
     """A resolved cross-section layer of a :class:`~compas_timber.elements.Panel`.
 
     A ``Layer`` represents a slice of a parent panel between two
@@ -51,6 +56,8 @@ class Layer(Element):
         after construction.
     layer_path : tuple[int, ...], optional
         Position in the parent panel's layer tree.  See :attr:`layer_path`.
+    frame : :class:`~compas.geometry.Frame`, optional
+        The coordinate system (frame) of this layer, relative to its parent. Defaults to worldXY.
 
     Attributes
     ----------
@@ -77,6 +84,8 @@ class Layer(Element):
         World-space edge planes by edge index.
     """
 
+    MODEL_CACHE = MODEL_CACHE + ("_planes",)
+
     # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------
@@ -84,6 +93,7 @@ class Layer(Element):
     @property
     def __data__(self):
         data = {}
+        data["frame"] = Frame.from_transformation(self.transformation)
         data["plate_geometry"] = self.plate_geometry
         data["start_offset"] = self.start_offset
         data["name"] = self.name
@@ -102,10 +112,11 @@ class Layer(Element):
         name: Optional[str] = None,
         sublayers: Optional[list] = None,
         layer_path: Optional[tuple] = None,
+        frame: Optional[Frame] = None,
         **kwargs,
     ):
         super(Layer, self).__init__(
-            transformation=Transformation.from_frame(plate_geometry.frame),
+            transformation=Transformation.from_frame(frame if frame is not None else Frame.worldXY()),
             name=name,
             **kwargs,
         )
@@ -150,13 +161,15 @@ class Layer(Element):
         :class:`Layer`
         """
         outline_a, outline_b = cls.get_outlines_from_parent(host, start_offset, end_offset)
-        plate_geometry = PlateGeometry.from_global_outlines(outline_a, outline_b, orientation=[0, 1, 0])
+        frame, local_outline_a, local_outline_b = global_outlines_to_local(outline_a, outline_b, orientation=[0, 1, 0])
+        plate_geometry = PlateGeometry(local_outline_a, local_outline_b)
         return cls(
             plate_geometry,
             start_offset,
             name=name,
             sublayers=sublayers,
             layer_path=layer_path,
+            frame=frame,
             **kwargs,
         )
 
@@ -232,13 +245,13 @@ class Layer(Element):
     # ------------------------------------------------------------------
     # Methods
     # ------------------------------------------------------------------
-    @reset_computed
     def reset(self):
         """Resets the element to its initial state by removing extensions and debug_info."""
         self.plate_geometry.reset()  # reset outline_a and outline_b
         self.debug_info = []
         for sublayer in self.sublayers:
             sublayer.reset()
+        clear_element_cache(self)
 
     def define_sublayers(self, thicknesses: list, names: Optional[list] = None) -> list:
         """Subdivide this layer into child layers by thickness.
@@ -301,24 +314,6 @@ class Layer(Element):
             if element not in model.elements():
                 model.add_element(element, parent=self)
             element.merge_sublayer_tree(model)
-
-    @reset_computed
-    def _reset_all_computed(self):
-        pass
-
-    def reset_computed_properties(self):
-        """Clear all cached properties so they recompute against the current model tree."""
-        self._planes = None
-        self._reset_all_computed()
-
-    def clear_model_dependent_cache(self):
-        """Clear cached attributes that depend on the element's position in the model hierarchy."""
-        self._modeltransformation = None
-        self._modelgeometry = None
-        self._aabb = None
-        self._obb = None
-        self._collision_mesh = None
-        self._planes = None
 
     def transformation_to_local(self):
         """Transformation from model space to this layer's local space."""

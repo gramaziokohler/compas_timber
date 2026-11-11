@@ -199,6 +199,29 @@ def test_serialization_beam_with_nonjoinery_processings(beam):
     assert len(deserialized.features) == 1
 
 
+def test_serialization_of_nested_beam_preserves_modeltransformation():
+    """`TimberElement.__data__` stores the *local* frame (`Frame.from_transformation(self.transformation)`), not
+    `self.frame` (`Frame.from_transformation(self.modeltransformation)`, the world-composed frame with the whole
+    ancestor chain baked in). For a beam nested under another element in the model tree, storing the world frame
+    would double-apply the ancestor's transformation once the beam is reattached to its parent on deserialization.
+    """
+    model = TimberModel()
+    parent = Beam(Frame(Point(5, 5, 5), Vector(1, 0, 0), Vector(0, 1, 0)), length=2, width=0.1, height=0.1)
+    model.add_element(parent)
+    child = Beam(Frame(Point(1, 0, 0), Vector(1, 0, 0), Vector(0, 1, 0)), length=1, width=0.05, height=0.05)
+    model.add_element(child, parent=parent)
+
+    expected_frame = child.frame  # world-composed: parent's frame combined with child's local placement
+
+    model_copy = json_loads(json_dumps(model))
+    parent_copy = next(e for e in model_copy.elements() if TOL.is_allclose(e.frame.point, parent.frame.point))
+    child_copy = next(e for e in parent_copy.children)
+
+    assert TOL.is_allclose(child_copy.frame.point, expected_frame.point)
+    assert TOL.is_allclose(child_copy.frame.xaxis, expected_frame.xaxis)
+    assert TOL.is_allclose(child_copy.frame.yaxis, expected_frame.yaxis)
+
+
 # ==========================================================================
 # Blank Extension & Transformation Tests
 # ==========================================================================
@@ -454,8 +477,7 @@ def test_add_feature_with_list_does_not_nest(beam):
     assert beam.features == [cut]
 
 
-def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
-    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+def test_add_feature_clears_cached_attributes(beam):
     # Force computation of cached attributes by accessing them
     _ = beam.blank
     _ = beam.ref_frame
@@ -464,7 +486,6 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     assert beam._blank is not None
     assert beam._ref_frame is not None
 
-    # Call a method decorated with @reset_timber_attrs
     beam.add_feature(JackRafterCut(is_joinery=False))
 
     # Verify the cached attributes have been reset to None
@@ -473,8 +494,7 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes(beam):
     assert beam._geometry is None
 
 
-def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
-    """Test that the reset_timber_attrs decorator resets cached attributes when decorated methods are called."""
+def test_add_blank_extension_clears_cached_attributes(beam):
     # Force computation of cached attributes by accessing them
     _ = beam.blank
     _ = beam.ref_frame
@@ -483,7 +503,6 @@ def test_reset_timber_attrs_decorator_clears_cached_attributes_extension(beam):
     assert beam._blank is not None
     assert beam._ref_frame is not None
 
-    # Call a method decorated with @reset_timber_attrs
     beam.add_blank_extension(10.0, 20.0)
 
     # Verify the cached attributes have been reset to None

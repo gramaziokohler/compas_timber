@@ -19,7 +19,7 @@ from brep_mocks import make_single_face_brep
 
 
 def test_flat_plate_creation():
-    # this outline's point order triggers the frame flip in `PlateGeometry.from_global_outlines` (see
+    # this outline's point order triggers the frame flip in `global_outlines_to_local` (see
     # test_plate_frame). Local x stays aligned with outline_a[0]->outline_a[1] = (0, 20, 0), so `length`
     # (the extent along local x) now tracks the 20-long edge and `width` the 10-long edge.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
@@ -81,7 +81,7 @@ def test_sloped_plate_creation():
 
 def test_plate_frame():
     # this polyline winds clockwise around +Z (its "natural" normal derived from point order is -Z), while its
-    # default thickness offset goes to +Z, so `from_global_outlines` flips the frame. The fix negates the local
+    # default thickness offset goes to +Z, so `global_outlines_to_local` flips the frame. The fix negates the local
     # x-axis on flip instead of swapping x/y, so local x stays aligned with outline_a[0]->outline_a[1] (0, 20, 0),
     # i.e. -world-Y here, and local y ends up along +world-X. The frame origin moves to the matching box corner.
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])

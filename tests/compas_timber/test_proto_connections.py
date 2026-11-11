@@ -5,10 +5,13 @@ import json
 import pytest
 from compas.data import json_dumps
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
+from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
@@ -48,6 +51,18 @@ def test_l_miter_joint_roundtrip():
     assert list(other.element_guids) == list(joint.element_guids)
 
 
+def test_l_miter_joint_with_miter_plane_roundtrip():
+    model, a, b = _model_with_two_beams()
+    plane = Plane(Point(3000, 0, 0), Vector(1, -1, 0.2))
+    joint = LMiterJoint.create(model, a, b, miter_plane=CutPlaneSpec.from_plane(a, plane))
+    # not `assert_lossless`: a loaded Frame re-orthonormalizes its axes, which can change their last digit
+    # depending on the platform, so the frame is compared within tolerance (`Frame.__eq__`)
+    other = pb_load_bts(pb_dump_bts(joint))
+    assert type(other) is LMiterJoint
+    assert list(other.element_guids) == list(joint.element_guids)
+    assert other._miter_plane.local_frame == joint._miter_plane.local_frame
+
+
 def test_t_butt_joint_roundtrip():
     """TButtJoint has no __data__ of its own; it inherits ButtJoint's fields."""
     model, a, b = _model_with_two_beams()
@@ -75,9 +90,16 @@ def test_joint_topology_and_location_roundtrip():
     joint = LMiterJoint.create(model, a, b)
     other = assert_lossless(joint)
     assert other.topology == joint.topology
-    # compare the stored location; `.location` computes lazily from the
-    # elements, which a detached round-tripped joint cannot reach
-    assert other._location == joint._location
+    # a location derived from the centerlines isn't stored; it is derived again once the elements are restored
+    assert other._location is None
+
+
+def test_joint_explicit_location_roundtrip():
+    model, a, b = _model_with_two_beams()
+    joint = LMiterJoint.create(model, a, b, location=Point(10.0, 20.0, 30.0))
+    other = assert_lossless(joint)
+    # the round-tripped joint is detached from its elements, so it holds the location in model coordinates
+    assert other._location == Point(10.0, 20.0, 30.0)
 
 
 def test_joint_candidate_roundtrip():

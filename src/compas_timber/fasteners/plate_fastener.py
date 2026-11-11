@@ -12,6 +12,7 @@ from compas.geometry import Translation
 from compas.geometry import angle_vectors
 from compas_brep import Brep
 
+from compas_timber.base import clear_element_cache
 from compas_timber.fabrication import Drilling
 from compas_timber.fabrication import Pocket
 from compas_timber.geometry import brep_difference_first
@@ -195,8 +196,7 @@ class RectangularPlate(FastenerPart):
         """
         self.add_part(hole)
         # the plate's geometry has the holes cut out of it
-        self._elementgeometry = None
-        self._modelgeometry = None
+        clear_element_cache(self)
 
     def add_holes_grid(self, nx: int, ny: int, border_padding: float, diameter: float, apply_drilling=True, drilling_depth=None, drilling_diameter=None) -> list:
         """
