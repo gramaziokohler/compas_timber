@@ -25,8 +25,8 @@ def beam():
 
 @pytest.fixture
 def tol():
-    TOL.absolute = 0.001
-    TOL.relative = 0.01
+    with TOL.temporary(absolute=0.001, relative=0.01):
+        yield
 
 
 def test_horizontal_slot_negative_angle(beam):

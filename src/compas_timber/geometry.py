@@ -1,13 +1,20 @@
 import math
+from typing import List
+from typing import Optional
 
 from compas.geometry import Point
+from compas.geometry import Polygon
 from compas.geometry import Polyhedron
 from compas.geometry import Polyline
 from compas.geometry import Vector
+from compas.geometry import angle_vectors
 from compas.geometry import centroid_points
 from compas.geometry import intersection_plane_plane_plane
+from compas.tolerance import TOL
+from compas_brep import Brep
 from scipy.spatial import KDTree as _ScipyKDTree
 
+from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 
@@ -124,12 +131,11 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     Parameters
     ----------
-    polyhedron : :class:`~compas.geometry.Polyhedron`
+    polyhedron :
         The input polyhedron.
 
     Returns
     -------
-    :class:`~compas.geometry.Polyhedron`
         A new polyhedron with its faces reordered to ensure outward-facing normals.
 
     """
@@ -155,3 +161,136 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
 
     polyhedron.faces = new_faces
     return polyhedron
+
+
+def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optional[Vector] = None) -> Brep:
+    """Create a solid brep from two closed outlines.
+
+    Assumes outline_a and outline_b are closed polylines with the same number of vertices.
+    Assumes outlines are parallel to each other.
+
+    Parameters
+    ----------
+    outline_a :
+        The first closed outline.
+    outline_b :
+        The second closed outline.
+    normal :
+        The normal vector around which the outlines are oriented.
+
+    Returns
+    -------
+        A Brep representing the solid defined by the two outlines.
+
+    Raises
+    ------
+    ValueError
+        If either outline is not closed, if the outlines don't have the same
+        number of vertices, or if the outlines are not parallel to each other.
+    """
+    if not TOL.is_allclose(outline_a[0], outline_a[-1]):
+        raise ValueError("outline_a is not closed: its first and last points must coincide.")
+    if not TOL.is_allclose(outline_b[0], outline_b[-1]):
+        raise ValueError("outline_b is not closed: its first and last points must coincide.")
+    if len(outline_a) != len(outline_b):
+        raise ValueError("outline_a and outline_b must have the same number of vertices.")
+
+    normal_a = Polygon(outline_a.points[:-1]).normal
+    normal_b = Polygon(outline_b.points[:-1]).normal
+    angle = angle_vectors(normal_a, normal_b)
+    if not (TOL.is_zero(angle, tol=TOL.angular) or TOL.is_zero(angle - math.pi, tol=TOL.angular)):
+        raise ValueError("outline_a and outline_b are not parallel to each other.")
+
+    normal = normal or Vector(0, 0, 1)
+    outline_a = correct_polyline_direction(outline_a, normal, clockwise=True)
+    outline_b = correct_polyline_direction(outline_b, normal, clockwise=True)
+
+    vector_a = Vector.from_start_end(outline_a[0], outline_b[0])
+    if vector_a.dot(normal) < 0:
+        # make sure that outline_b is above (Z+) outline_a
+        outline_a, outline_b = outline_b, outline_a
+
+    polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
+    for i in range(len(outline_a) - 1):
+        polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
+    return Brep.from_polygons(polygons)
+
+
+def _first_solid(results: List[Brep], operation: str) -> Brep:
+    # taking the first piece is not a meaningful selection, it is what the Rhino backend happened to do
+    # internally in compas.geometry.Brep. Which piece is wanted is a decision only the caller can make, so a
+    # caller which can tell them apart should call the boolean operation directly and select from all of them.
+    if not results:
+        raise IndexError("Boolean {} left no result.".format(operation))
+    return results[0]
+
+
+def brep_difference_first(brep_a: Brep, brep_b: Brep) -> Brep:
+    """Subtracts `brep_b` from `brep_a` and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The Brep to subtract from.
+    brep_b :
+        The Brep to subtract.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If nothing is left of `brep_a` after the subtraction.
+
+    """
+    return _first_solid(Brep.from_boolean_difference(brep_a, brep_b), "difference")
+
+
+def brep_union_first(brep_a: Brep, *breps: Brep) -> Brep:
+    """Unions `brep_a` with one or more other Breps and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The Brep to union with.
+    *breps :
+        One or more Breps to union with `brep_a`.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If the union left no result.
+
+    """
+    if not breps:
+        raise ValueError("At least one Brep to union with is required.")
+    return _first_solid(Brep.from_boolean_union_multi(brep_a, *breps), "union")
+
+
+def brep_intersection_first(brep_a: Brep, brep_b: Brep) -> Brep:
+    """Intersects `brep_a` with `brep_b` and returns the first resulting piece.
+
+    Parameters
+    ----------
+    brep_a :
+        The first Brep.
+    brep_b :
+        The second Brep.
+
+    Returns
+    -------
+        The first resulting piece.
+
+    Raises
+    ------
+    IndexError
+        If the two Breps do not overlap.
+
+    """
+    return _first_solid(Brep.from_boolean_intersection(brep_a, brep_b), "intersection")

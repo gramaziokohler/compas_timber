@@ -1,5 +1,6 @@
 from .joint import Joint
 from .butt_joint import ButtJoint
+from .i_simple_scarf import ISimpleScarf
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
@@ -11,6 +12,7 @@ from .solver import ConnectionSolver
 from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
+from .candidate_dispatch import get_connection_candidate
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -24,6 +26,7 @@ from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
+from .butt_joint import CutPlaneSpec
 from .utilities import beam_ref_side_incidence
 from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
@@ -38,9 +41,12 @@ from .plate_miter_joint import PlateMiterJoint
 from .panel_butt_joint import PanelLButtJoint
 from .panel_butt_joint import PanelTButtJoint
 from .panel_miter_joint import PanelMiterJoint
+from .panel_layer_butt_joint import PanelLLayerButtJoint
 from .k_miter import KMiterJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
+from .cluster import get_topology_from_joints
+from .composite_joint import CompositeJoint
 
 
 __all__ = [
@@ -48,6 +54,7 @@ __all__ = [
     "LapJoint",
     "ButtJoint",
     "TButtJoint",
+    "ISimpleScarf",
     "LButtJoint",
     "TButtJoint",
     "TStepJoint",
@@ -64,6 +71,7 @@ __all__ = [
     "ConnectionSolver",
     "PlateConnectionSolver",
     "find_neighboring_elements",
+    "get_connection_candidate",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "BallNodeJoint",
@@ -71,6 +79,7 @@ __all__ = [
     "LTenonMortiseJoint",
     "YButtJoint",
     "TOliGinaJoint",
+    "CutPlaneSpec",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
@@ -85,7 +94,10 @@ __all__ = [
     "PanelLButtJoint",
     "PanelTButtJoint",
     "PanelMiterJoint",
+    "PanelLLayerButtJoint",
     "KMiterJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
+    "get_topology_from_joints",
+    "CompositeJoint",
 ]

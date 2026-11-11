@@ -27,6 +27,7 @@ class LMiterJoint(Joint):
     This joint type is compatible with beams in L topology.
 
     Please use `LMiterJoint.create()` to properly create an instance of this class and associate it with a model.
+    To override the miter plane, pass a :class:`~compas_timber.connections.CutPlaneSpec` built with :meth:`~compas_timber.connections.CutPlaneSpec.from_plane`.
 
     Parameters
     ----------
@@ -36,14 +37,12 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool, optional
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-    miter_plane : :class:`~compas.geometry.Plane`, optional
-        A plane that defines the miter cut location and orientation.
-        If not provided, it will be calculated automatically.
-        If provided, miter_type will be automatically set to `MiterType.USER_DEFINED`.
-    ref_side_miter : :bool, optional
+    ref_side_miter : bool, optional
         If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.
     clean : bool, optional
-        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+        If True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+    miter_plane : :class:`~compas_timber.connections.CutPlaneSpec`, optional
+        Overrides the automatically calculated miter plane, stored relative to `beam_a`. Build with ``CutPlaneSpec.from_plane(beam_a, plane)``.
 
     Attributes
     ----------
@@ -53,12 +52,13 @@ class LMiterJoint(Joint):
         Second beam to be joined.
     cutoff : bool
         If True, the beams will be trimmed with a plane perpendicular to the bisector (miter) plane of the beams.
-    miter_plane : :class:`~compas.geometry.Plane`
-        A user-defined plane that defines the miter cut location and orientation.
-    ref_side_miter : :bool
+    miter_plane : :class:`~compas.geometry.Plane`, optional
+        A user-defined plane that defines the miter cut location and orientation. ``None`` if not set,
+        in which case the miter plane is calculated automatically (see `ref_side_miter`).
+    ref_side_miter : bool
         If True, the miter plane will be calculated based on the reference sides of the beams instead of the bisector of the centerlines.
     clean : bool
-        if True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
+        If True, cleaning cuts will be applied to each beam based on the back sides of the other beam.
     """
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_L
@@ -68,19 +68,25 @@ class LMiterJoint(Joint):
         data = super(LMiterJoint, self).__data__
         data["cutoff"] = self.cutoff
         data["ref_side_miter"] = self.ref_side_miter
-        data["miter_plane"] = self.miter_plane
+        data["miter_plane"] = self._miter_plane
         data["clean"] = self.clean
-
         return data
 
-    def __init__(self, beam_a=None, beam_b=None, cutoff=None, miter_plane=None, ref_side_miter=False, clean=False, **kwargs):
+    def __init__(
+        self,
+        beam_a=None,
+        beam_b=None,
+        cutoff=None,
+        ref_side_miter=False,
+        clean=False,
+        miter_plane=None,
+        **kwargs,
+    ):
         super(LMiterJoint, self).__init__(elements=(beam_a, beam_b), **kwargs)
-        self.miter_plane = miter_plane
-        self._cutting_planes = []
+        self._miter_plane = miter_plane
         self.ref_side_miter = ref_side_miter
         self.cutoff = cutoff
         self.clean = clean
-        self.features = []
         self._back_a_index = None
         self._back_b_index = None
 
@@ -92,11 +98,20 @@ class LMiterJoint(Joint):
     def beam_b(self):
         return self.element_b
 
+    # not cached: in model space, so it moves with the beams
     @property
     def cutting_planes(self):
-        if not self._cutting_planes:
-            self._cutting_planes = self._get_cutting_planes()
-        return self._cutting_planes
+        return self._get_cutting_planes()
+
+    @property
+    def miter_plane(self):
+        """The user-defined miter plane in world coordinates, or ``None`` if no override is set.
+
+        When ``None``, the cutting plane is calculated automatically from the beams' geometry (see `ref_side_miter`).
+        """
+        if self._miter_plane is None:
+            return None
+        return self._miter_plane.to_plane(self.beam_a)
 
     def _get_cut_planes_from_miter_plane(self, miter_plane):
         # create two cutting planes from the butt plane
@@ -184,7 +199,7 @@ class LMiterJoint(Joint):
     def add_extensions(self):
         """Calculates and adds the necessary extensions to the beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         Raises
         ------
@@ -214,14 +229,10 @@ class LMiterJoint(Joint):
     def add_features(self):
         """Adds the required extension and trimming features to both beams.
 
-        This method is automatically called when joint is created by the call to `Joint.create()`.
+        This method is called during `TimberModel.process_joinery()`, not when the joint is created.
 
         """
         assert self.beam_a and self.beam_b
-
-        if self.features:
-            self.beam_a.remove_features(self.features)
-            self.beam_b.remove_features(self.features)
 
         try:
             miter_plane_a, miter_plane_b = self.cutting_planes

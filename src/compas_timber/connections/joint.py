@@ -76,7 +76,7 @@ class Joint(Data):
     features : list(:class:`~compas_timber.fabrication.BTLxProcessing`)
         A list of features that were added to the elements by this joint.
     topology : literal, one of :class:`JointTopology`
-        The topology by which the two elements connected with this joint interact.
+        The topology by which the elements connected with this joint interact.
     location : :class:`~compas.geometry.Point`
         The estimated location of the interaction point of the two elements connected with this joint.
     """
@@ -102,13 +102,18 @@ class Joint(Data):
         else:
             raise ValueError("Joint requires either elements or element_guids.")
 
+        self.features = []
         self._topology = topology if topology is not None else JointTopology.TOPO_UNKNOWN
+        # an explicit location is kept relative to element_a (see `location`); `_location` holds it in world
+        # coordinates only until element_a is available, e.g. during deserialization
         self._location = location
+        self._local_location = None
+        self._anchor_location()
 
     @property
     def __data__(self):
         # type: () -> dict
-        return {"name": self.name, "topology": self._topology, "location": self._location, "element_guids": self.element_guids}
+        return {"name": self.name, "topology": self._topology, "location": self._explicit_location(), "element_guids": self.element_guids}
 
     def __repr__(self):
         return '{}(name="{}")'.format(self.__class__.__name__, self.name)
@@ -135,14 +140,20 @@ class Joint(Data):
 
     @property
     def location(self):
+        """The location of the joint in model coordinates.
+
+        An explicitly set location is stored relative to `element_a`, so it follows the elements when they move.
+        Otherwise it is derived from the centerlines of the two elements.
+        """
+        self._anchor_location()
+        if self._local_location is not None:
+            return self._local_location.transformed(self.element_a.modeltransformation)
+        if self._location is not None:
+            return self._location
         # all(()) == True, so we need to check len(self.elements) as well to avoid calculating location for joints without elements
-        if self._location is None and all(self.elements) and len(self.elements) == 2:
-            self._location = location_from_centerlines(self.elements)
-
-        if self._location is None:
-            raise ValueError("Location of the joint could not be determined. Please set it manually.")
-
-        return self._location
+        if all(self.elements) and len(self.elements) == 2:
+            return location_from_centerlines(self.elements)  # not cached, so it follows the elements
+        raise ValueError("Location of the joint could not be determined. Please set it manually.")
 
     @location.setter
     def location(self, value):
@@ -150,6 +161,25 @@ class Joint(Data):
         if not isinstance(value, Point):
             raise TypeError("Location must be a Point.")
         self._location = value
+        self._local_location = None
+        self._anchor_location()
+
+    def reset_location(self):
+        """Clear an explicitly set location so that it is derived from the beam centerlines on next access."""
+        self._location = None
+        self._local_location = None
+
+    def _explicit_location(self):
+        # the explicitly set location in model coordinates, or None when it is derived from the centerlines
+        if self._local_location is not None:
+            return self._local_location.transformed(self.element_a.modeltransformation)
+        return self._location
+
+    def _anchor_location(self):
+        # converts a location given in model coordinates to element_a's local coordinates, once element_a is available
+        if self._location is not None and self.element_a is not None:
+            self._local_location = self._location.transformed(self.element_a.modeltransformation.inverted())
+            self._location = None
 
     @property
     def generated_elements(self):
@@ -203,6 +233,13 @@ class Joint(Data):
         """
         raise NotImplementedError
 
+    def clear_features(self):
+        """Removes the features defined by this joint from affected element(s)."""
+        if self.features:
+            for e in self.elements:
+                e.remove_features(self.features)
+        self.features = []
+
     def add_extensions(self):
         """Adds the extensions defined by this joint to affected beam(s).
         This is optional and should only be implemented by joints that require it.
@@ -218,6 +255,11 @@ class Joint(Data):
 
         """
         pass
+
+    def clear_extensions(self):
+        """Removes the extensions defined by this joint from affected element(s)."""
+        for e in self.elements:
+            e.remove_blank_extension(self.guid)
 
     def restore_elements_from_keys(self, model):
         """Restores the reference to the elements associated with this joint.
@@ -235,7 +277,8 @@ class Joint(Data):
         See :class:`compas_timber.connections.TButtJoint`.
 
         """
-        self._elements = tuple(model.element_by_guid(guid) for guid in self.element_guids)
+        self._elements = tuple(model[guid] for guid in self.element_guids)
+        self._anchor_location()
         self._set_unset_attributes()
 
         # TODO add fasteners to this as well? should we have a separate self.fastener_guids property?
@@ -329,7 +372,12 @@ class Joint(Data):
         """
         if reordered_elements:
             if set(reordered_elements) != cluster.elements:
-                raise BeamJoiningError(cls, "Elements of the joint candidate must match the provided elements.", [e.blank for e in reordered_elements])
+                raise BeamJoiningError(
+                    beams=reordered_elements,
+                    joint=cls,
+                    debug_info="Elements of the joint candidate must match the provided elements.",
+                    debug_geometries=[e.blank for e in reordered_elements],
+                )
         if len(cluster.joints) == 1:
             elements = reordered_elements or cluster.joints[0].elements
             return cls.promote_joint_candidate(model, cluster.joints[0], reordered_elements=elements, **kwargs)

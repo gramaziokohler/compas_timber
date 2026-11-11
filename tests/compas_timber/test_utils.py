@@ -1,9 +1,11 @@
 import pytest
 
 from compas.tolerance import TOL
+from compas.geometry import Frame
 from compas.geometry import Line
-from compas.geometry import Point
+from compas.geometry import PlanarSurface
 from compas.geometry import Plane
+from compas.geometry import Point
 from compas.geometry import Vector
 from compas.geometry import Polyline
 from compas.geometry import angle_vectors
@@ -16,11 +18,18 @@ from compas_timber.utils import is_point_in_polyline
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import do_segments_overlap
 from compas_timber.utils import distance_segment_segment
+from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import move_polyline_segment_to_line
+from compas_timber.utils import move_polyline_segment_to_plane
+from compas_timber.utils import planar_surface_point_at
 from compas_timber.utils import join_polyline_segments
 from compas_timber.utils import get_polyline_normal_vector
 from compas_timber.utils import combine_parallel_segments
+from compas_timber.utils import extend_line_segments
+from compas_timber.utils import get_interior_corner_indices
+from compas_timber.utils import get_interior_segment_indices
+from compas_timber.utils import get_leaf_subclasses
 
 
 def test_intersection_line_line_param():
@@ -45,10 +54,6 @@ def test_intersection_line_line_param():
 
 
 def test_intersection_line_plane_param():
-    TOL.absolute = 0.001
-    TOL.unit = "MM"
-    TOL.relative = 0.001
-
     line = Line(Point(x=5.53733031674, y=12.3190045249, z=0.0), Point(x=20.8427601810, y=12.3190045249, z=0.0))
     plane = Plane(point=Point(x=15.436, y=16.546, z=-2.703), normal=Vector(x=-0.957, y=-0.289, z=0.000))
 
@@ -58,10 +63,11 @@ def test_intersection_line_plane_param():
     expected_point = [16.712490796555798, 12.3190045249, 0.0]
     expected_t = 0.7301435228494384
 
-    intersection_point, t = intersection_line_plane_param(line, plane)
+    with TOL.temporary(absolute=0.001, relative=0.001, unit="MM"):
+        intersection_point, t = intersection_line_plane_param(line, plane)
 
-    assert TOL.is_allclose(expected_point, intersection_point)
-    assert TOL.is_close(expected_t, t)
+        assert TOL.is_allclose(expected_point, intersection_point)
+        assert TOL.is_close(expected_t, t)
 
 
 def test_is_polyline_clockwise():
@@ -374,3 +380,241 @@ def test_combine_parallel_segments():
     combine_parallel_segments(polyline)
     expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
     assert polyline == expected
+
+
+# ==========================================================================
+# distance_segment_segment_points
+# ==========================================================================
+
+
+def test_distance_segment_segment_points_crossing():
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    seg_b = Line(Point(5, -5, 0), Point(5, 5, 0))
+    distance, pt_a, pt_b = distance_segment_segment_points(seg_a, seg_b)
+    assert TOL.is_close(distance, 0.0)
+    assert TOL.is_allclose(pt_a, [5, 0, 0])
+    assert TOL.is_allclose(pt_b, [5, 0, 0])
+
+
+def test_distance_segment_segment_points_parallel_offset():
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    seg_b = Line(Point(2, 3, 0), Point(8, 3, 0))
+    distance, pt_a, pt_b = distance_segment_segment_points(seg_a, seg_b)
+    assert TOL.is_close(distance, 3.0)
+
+
+def test_distance_segment_segment_points_non_overlapping():
+    # Closest approach: end of seg_a (10,0,0) to start of seg_b (13,4,0) — distance 5
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    seg_b = Line(Point(13, 4, 0), Point(15, 6, 0))
+    distance, pt_a, pt_b = distance_segment_segment_points(seg_a, seg_b)
+    assert TOL.is_close(distance, 5.0)
+
+
+def test_distance_segment_segment_points_returns_three_values():
+    seg_a = Line(Point(0, 0, 0), Point(10, 0, 0))
+    seg_b = Line(Point(5, -5, 0), Point(5, 5, 0))
+    result = distance_segment_segment_points(seg_a, seg_b)
+    assert len(result) == 3
+
+
+# ==========================================================================
+# move_polyline_segment_to_plane
+# ==========================================================================
+
+
+def test_move_polyline_segment_to_plane():
+    polyline = Polyline([[0, 0, 0], [2, 0, 0], [3, 2, 0], [0, 2, 0], [0, 0, 0]])
+    plane = Plane(Point(2, 0, 0), Vector(1, 0, 0))
+    move_polyline_segment_to_plane(polyline, 1, plane)
+    expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert polyline == expected
+
+
+def test_move_polyline_segment_to_plane_closed_wraps():
+    # Segment 0: first segment; if moved, endpoint -1 should also update
+    polyline = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    plane = Plane(Point(0, 1, 0), Vector(0, 1, 0))
+    move_polyline_segment_to_plane(polyline, 0, plane)
+    # Segment 0 goes from polyline[-1]==(0,0,0) (prev segment end) to (2,0,0) (next segment start)
+    # After moving segment 0 to the plane y=1:
+    # start of segment 0 should be intersection of prev segment line and plane y=1
+    # prev segment is from (0,2,0) to (0,0,0) — intersects y=1 at (0,1,0)
+    assert TOL.is_close(polyline[0][1], 1.0)
+
+
+# ==========================================================================
+# planar_surface_point_at
+# ==========================================================================
+
+
+def test_planar_surface_point_at_worldxy():
+    surface = PlanarSurface(xsize=10, ysize=5)
+    pt = planar_surface_point_at(surface, 3, 2)
+    assert TOL.is_allclose(pt, [3, 2, 0])
+
+
+def test_planar_surface_point_at_origin():
+    surface = PlanarSurface(xsize=10, ysize=5)
+    pt = planar_surface_point_at(surface, 0, 0)
+    assert TOL.is_allclose(pt, [0, 0, 0])
+
+
+def test_planar_surface_point_at_translated():
+    frame = Frame(Point(0, 0, 5), Vector(1, 0, 0), Vector(0, 1, 0))
+    surface = PlanarSurface(xsize=10, ysize=5, frame=frame)
+    pt = planar_surface_point_at(surface, 3, 2)
+    assert TOL.is_allclose(pt, [3, 2, 5])
+
+
+# ==========================================================================
+# extend_line_segments
+# ==========================================================================
+
+
+def test_extend_line_segments_basic():
+    # Two segments that don't meet at (5, 0); extending should bring them together
+    seg_a = Line(Point(0, 0, 0), Point(3, 0, 0))  # horizontal, short of (5,0)
+    seg_b = Line(Point(5, -3, 0), Point(5, 5, 0))  # vertical, line passes through (5,0)
+    segments = [seg_a, seg_b]
+    extend_line_segments(segments)
+    assert TOL.is_allclose(segments[0].end, [5, 0, 0])
+    assert TOL.is_allclose(segments[1].start, [5, 0, 0])
+
+
+def test_extend_line_segments_already_connected():
+    seg_a = Line(Point(0, 0, 0), Point(5, 0, 0))
+    seg_b = Line(Point(5, 0, 0), Point(5, 5, 0))
+    segments = [seg_a, seg_b]
+    extend_line_segments(segments)
+    # Should remain unchanged since endpoints already coincide
+    assert TOL.is_allclose(segments[0].end, [5, 0, 0])
+    assert TOL.is_allclose(segments[1].start, [5, 0, 0])
+
+
+def test_extend_line_segments_close_loop():
+    # Three segments forming a nearly-closed triangle
+    seg_a = Line(Point(0, 0, 0), Point(4, 0, 0))
+    seg_b = Line(Point(5, 0, 0), Point(5, 4, 0))
+    seg_c = Line(Point(5, 5, 0), Point(0, 5, 0))
+    segments = [seg_a, seg_b, seg_c]
+    extend_line_segments(segments, close_loop=False)
+    # seg_a end and seg_b start should converge to their intersection
+    assert TOL.is_allclose(segments[0].end, segments[1].start)
+
+
+# ==========================================================================
+# get_interior_corner_indices
+# ==========================================================================
+
+
+@pytest.fixture
+def concave_polyline():
+    # L-shaped polygon with a notch: rectangle with a square notch cut from bottom interior
+    points = [[0, 0, 0], [2, 0, 0], [2, 1, 0], [3, 1, 0], [3, 0, 0], [4, 0, 0], [4, 2, 0], [0, 2, 0], [0, 0, 0]]
+    return Polyline(points)
+
+
+def test_get_interior_corner_indices_convex():
+    # Simple convex rectangle has no interior (concave) corners
+    polyline = Polyline([[0, 0, 0], [4, 0, 0], [4, 2, 0], [0, 2, 0], [0, 0, 0]])
+    result = get_interior_corner_indices(polyline)
+    assert result == []
+
+
+def test_get_interior_corner_indices_concave(concave_polyline):
+    result = get_interior_corner_indices(concave_polyline)
+    # Indices 2 and 3 are the inward-pointing corners of the notch
+    assert 2 in result
+    assert 3 in result
+
+
+def test_get_interior_corner_indices_only_concave_corners(concave_polyline):
+    result = get_interior_corner_indices(concave_polyline)
+    assert len(result) == 2
+
+
+# ==========================================================================
+# get_interior_segment_indices
+# ==========================================================================
+
+
+def test_get_interior_segment_indices_convex():
+    polyline = Polyline([[0, 0, 0], [4, 0, 0], [4, 2, 0], [0, 2, 0], [0, 0, 0]])
+    result = get_interior_segment_indices(polyline)
+    assert result == []
+
+
+def test_get_interior_segment_indices_concave(concave_polyline):
+    result = get_interior_segment_indices(concave_polyline)
+    # Segment 2 (from index 2 to index 3) connects both interior corners
+    assert 2 in result
+
+
+def test_get_interior_segment_indices_count(concave_polyline):
+    result = get_interior_segment_indices(concave_polyline)
+    assert len(result) == 1
+
+
+# ==========================================================================
+# get_leaf_subclasses
+# ==========================================================================
+
+
+def test_get_leaf_subclasses_no_subclasses():
+    class Leaf:
+        pass
+
+    result = get_leaf_subclasses(Leaf)
+    assert result == []
+
+
+def test_get_leaf_subclasses_single_level():
+    class Base:
+        pass
+
+    class ChildA(Base):
+        pass
+
+    class ChildB(Base):
+        pass
+
+    result = get_leaf_subclasses(Base)
+    assert set(result) == {ChildA, ChildB}
+
+
+def test_get_leaf_subclasses_multi_level():
+    class Root:
+        pass
+
+    class Middle(Root):
+        pass
+
+    class Leaf1(Middle):
+        pass
+
+    class Leaf2(Middle):
+        pass
+
+    result = get_leaf_subclasses(Root)
+    # Middle is not a leaf because it has subclasses; Leaf1 and Leaf2 are leaves
+    assert set(result) == {Leaf1, Leaf2}
+    assert Middle not in result
+
+
+def test_get_leaf_subclasses_mixed():
+    class Top:
+        pass
+
+    class DirectLeaf(Top):
+        pass
+
+    class Branch(Top):
+        pass
+
+    class DeepLeaf(Branch):
+        pass
+
+    result = get_leaf_subclasses(Top)
+    assert set(result) == {DirectLeaf, DeepLeaf}
+    assert Branch not in result

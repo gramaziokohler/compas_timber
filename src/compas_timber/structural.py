@@ -55,8 +55,12 @@ class StructuralSegment(Data):
         data.update(self.attributes)
         return data
 
-    def __init__(self, line: Line, frame: Frame, cross_section: Optional[Tuple[float, float]] = None, **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(self, line: Line, frame: Frame, cross_section: Optional[Tuple[float, float]] = None, name: Optional[str] = None, **kwargs) -> None:
+        # `name` is consumed here rather than forwarded with the rest: Data.__init__
+        # takes no other keyword, so passing **kwargs through made any segment with
+        # extra attributes impossible to construct (and to deserialize), and left a
+        # duplicate copy of the name in `attributes`.
+        super().__init__(name=name)
         self.attributes = {}
         self.attributes.update(kwargs)
         self.line = line

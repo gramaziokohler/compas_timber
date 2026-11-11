@@ -35,3 +35,37 @@ def test_create():
     assert set([f.__class__ for f in instance.cross_beams[0].features]) == set([JackRafterCut, Lap])
     assert len(list(model_copy.elements())) == 3
     assert set([b.guid for b in model.beams]) == set([b.guid for b in model_copy.beams])
+
+
+def test_add_features_tracks_all_beam_features():
+    """joint.features must include main_feature and the mill-depth pocket features, not just the final miter cuts."""
+    path = os.path.abspath(r"data/y_joint_lines.json")
+    lines = json_load(path)
+    beams = [Beam.from_centerline(b, z_vector=Vector(0, 0, 1), width=60.0, height=120.0) for b in lines]
+    model = TimberModel()
+    for b in beams:
+        model.add_element(b)
+    instance = YButtJoint.create(model, *beams, mill_depth=10.0)
+
+    instance.add_features()
+
+    total_applied = sum(len(b.features) for b in beams)
+    assert total_applied > 0
+    assert len(instance.features) == total_applied
+
+
+def test_clear_features_removes_all_beam_features():
+    path = os.path.abspath(r"data/y_joint_lines.json")
+    lines = json_load(path)
+    beams = [Beam.from_centerline(b, z_vector=Vector(0, 0, 1), width=60.0, height=120.0) for b in lines]
+    model = TimberModel()
+    for b in beams:
+        model.add_element(b)
+    instance = YButtJoint.create(model, *beams, mill_depth=10.0)
+    instance.add_features()
+
+    instance.clear_features()
+
+    assert instance.features == []
+    for b in beams:
+        assert b.features == []

@@ -15,7 +15,7 @@ def find_neighboring_elements(elements, inflate_by=0.0):
     Returns
     -------
     list(set(:class:`compas_timber.elements.Beam`))
-        List containing sets or neightboring pairs beams.
+        List containing sets of neighboring beam pairs.
 
     """
     import Rhino
