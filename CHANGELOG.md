@@ -7,9 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking
+
+* Fasteners moved from `compas_timber.elements` to the new `compas_timber.fasteners` module and were redesigned. Removed `compas_timber.elements.Fastener`, `FastenerTimberInterface`, `BallNodeFastener` and `PlateFastener`; use a `FastenerSystem` (`PlateFastenerSystem`, `ScrewFastenerSystem`, `DowelFastenerSystem`, `BallNodeFastenerSystem`) bound to a joint's `fastener_anchors` instead.
+* `TButtJoint` no longer takes a `fastener` argument. Create the joint, then bind a `FastenerSystem` to `joint.fastener_anchors` and add the result with `TimberModel.add_fastener()`.
+* `BallNodeJoint` is now constructed from `*elements` and an optional `BallNodeFastenerParameters`; `BallNodeJoint.create()` builds and adds its ball-node fastener.
+* JSON and protobuf data containing fasteners saved with 3.0.0 is not compatible and must be recreated.
+
 ### Added
+* Added `compas_timber.fasteners` with `FastenerSystem` (a staged, model-independent fastener definition), `Fastener` (the resolved model element) and `FastenerPart` (its parts, applying their own fabrication features).
+* Added `FastenerAnchor`, `FastenerAnchors` and `AnchorKind`, which a joint publishes through its `fastener_anchors` property to say where a fastener may attach. `TButtJoint` and `BallNodeJoint` publish anchors.
+* Added fastener types `RectangularPlate` / `PlateHole` with `PlateFastenerSystem`, `Screw` with `ScrewFastenerSystem`, `Dowel` with `DowelFastenerSystem`, `BallNodeCore` / `BallNodeRod` / `BallNodePlate` with `BallNodeFastenerSystem` and `BallNodeFastenerParameters`, and `GeometryPart` for arbitrary geometry.
+* Added `TimberModel.add_fastener(fastener, elements)`, which adds the fastener and its parts to the model tree and references the fastener on the graph edges between the fastened elements, and `TimberModel.process_fasteners()`, which applies the fasteners' features and returns `FastenerApplicationError`s.
+* Added protobuf messages for the new fastener types.
 
 ### Changed
+* Changed `PlateHole` to a `FastenerPart`. Holes are now child parts of their `RectangularPlate` in the model tree, and each hole applies its own `Drilling`. `RectangularPlate.holes` is a read-only view over those children, and holes are no longer part of `RectangularPlate.__data__` or `RectangularPlateData`; `PlateHoleData` is now an `ElementData` element. A hole has no geometry of its own (`geometry` is `None`), and the cylinder cut out of the plate is `PlateHole.cutting_geometry`.
+* Changed `Fastener.add_part()` and `FastenerPart.add_part()` to add the part to the model tree right away when the fastener or part is already in a model.
+* Fixed `RectangularPlate` silently dropping hole drillings that failed. A hole now only drills the elements its drill line crosses, and any other drilling error is reported by `TimberModel.process_fasteners()` as a `FastenerApplicationError`, which now also wraps `FeatureApplicationError`.
+* Fixed `RectangularPlate` keeping stale cached geometry after a hole was added.
+* Removed a dead frame assignment in `TButtJoint.fastener_anchors`.
 
 ### Removed
 
