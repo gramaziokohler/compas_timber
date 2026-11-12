@@ -4,9 +4,11 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Point
 from compas.geometry import Line
+from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
 from compas_timber.connections import LLapJoint
+from compas_timber.connections import ILapJoint
 from compas_timber.connections import TLapJoint
 from compas_timber.connections import XLapJoint
 from compas_timber.connections import LFrenchRidgeLapJoint
@@ -235,3 +237,128 @@ def test_create_x_lap_serialize():
     joint: XLapJoint = list(model.joints)[0]
     assert isinstance(joint, XLapJoint)
     assert joint.cut_plane_bias == org_joint.cut_plane_bias
+
+
+def test_create_i_lap_serialize():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(200, 0, 0), Point(400, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_element(beam_a)
+    model.add_element(beam_b)
+
+    org_joint = ILapJoint.create(model, beam_a, beam_b, flip_lap_side=True, cut_plane_bias=0.3)
+
+    assert org_joint.__data__["cut_plane_bias"] == 0.3
+
+    model = json_loads(json_dumps(model))
+
+    assert len(model.joints) == 1
+    joint = list(model.joints)[0]
+    assert isinstance(joint, ILapJoint)
+    assert joint.cut_plane_bias == org_joint.cut_plane_bias
+
+
+def test_i_lap_process_joinery_no_errors():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(200, 0, 0), Point(400, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    assert len(beam_a.features) == 1
+    assert len(beam_b.features) == 1
+
+
+def test_i_lap_adds_extensions_to_close_gap():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(200.5, 0, 0), Point(400.5, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    expected_extension = 0.5 * (20.0 + 0.5)
+    assert TOL.is_close(beam_a.blank_length - beam_a.length, expected_extension, rtol=1e-3, atol=1e-3)
+    assert TOL.is_close(beam_b.blank_length - beam_b.length, expected_extension, rtol=1e-3, atol=1e-3)
+
+
+def test_i_lap_adds_extensions_when_touching():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(200, 0, 0), Point(400, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    expected_extension = 10.0
+    assert TOL.is_close(beam_a.blank_length - beam_a.length, expected_extension, rtol=1e-3, atol=1e-3)
+    assert TOL.is_close(beam_b.blank_length - beam_b.length, expected_extension, rtol=1e-3, atol=1e-3)
+
+
+def test_i_lap_process_joinery_when_colliding():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(199, 0, 0), Point(399, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    expected_extension = 0.5 * (20.0 - 1.0)
+    assert TOL.is_close(beam_a.blank_length - beam_a.length, expected_extension, rtol=1e-3, atol=1e-3)
+    assert TOL.is_close(beam_b.blank_length - beam_b.length, expected_extension, rtol=1e-3, atol=1e-3)
+    assert len(beam_a.features) == 1
+    assert len(beam_b.features) == 1
+
+
+def test_i_lap_large_overlap_keeps_constant_lap_length():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(170, 0, 0), Point(370, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    assert len(beam_a.features) == 2
+    assert len(beam_b.features) == 2
+    assert TOL.is_close(beam_a.features[1].length, 20.0, rtol=1e-3, atol=1e-3)
+    assert TOL.is_close(beam_b.features[1].length, 20.0, rtol=1e-3, atol=1e-3)
+
+
+def test_i_lap_overlap_more_than_half_beam_length():
+    beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(200, 0, 0)), width=10.0, height=20.0)
+    beam_b = Beam.from_centerline(Line(Point(80, 0, 0), Point(280, 0, 0)), width=10.0, height=20.0)
+
+    model = TimberModel()
+    model.add_elements([beam_a, beam_b])
+
+    ILapJoint.create(model, beam_a, beam_b, cut_plane_bias=0.5)
+
+    errors = model.process_joinery()
+
+    assert not errors
+    assert len(beam_a.features) == 2
+    assert len(beam_b.features) == 2
+    assert TOL.is_close(beam_a.features[1].length, 20.0, rtol=1e-3, atol=1e-3)
+    assert TOL.is_close(beam_b.features[1].length, 20.0, rtol=1e-3, atol=1e-3)
