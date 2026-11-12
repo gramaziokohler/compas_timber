@@ -296,7 +296,7 @@ class BallNodeFastenerSystem(FastenerSystem):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Fastener`
+        :class:`~compas_timber.fasteners.Fastener`
             A new fastener, its core/rods/plates hierarchy staged and positioned, ready to be added to a model.
 
         Raises

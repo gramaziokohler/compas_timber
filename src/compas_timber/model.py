@@ -50,7 +50,7 @@ class TimberModel(Model):
         A list of all panels assigned to this model.
     layers : list[:class:`~compas_timber.elements.Layer`]
         A list of all layers assigned to this model.
-    fasteners : list[:class:`~compas_timber.elements.Fastener`]
+    fasteners : list[:class:`~compas_timber.fasteners.Fastener`]
         A list of all fasteners assigned to this model.
 
     center_of_mass : :class:`~compas.geometry.Point`
@@ -810,7 +810,7 @@ class TimberModel(Model):
         Parameters
         ----------
         stop_on_first_error : bool, optional
-            If True, the method will raise an exception on the first error it encounters. Default is
+            If True, the method will raise an exception on the first error it encounters. Default is False.
 
         Returns
         -------

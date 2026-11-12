@@ -218,24 +218,25 @@ class RectangularPlate(FastenerPart):
         list[PlateHole]
             The created PlateHole objects.
         """
+        if not drilling_depth:
+            apply_drilling = False
+        if not drilling_diameter:
+            drilling_diameter = diameter
+
         holes = []
-        for ix in range(nx):
-            for iy in range(ny):
-                x = self._local_frame.point.x + border_padding + ix * (self.width - 2 * border_padding) / (nx - 1)
-                x -= self.width / 2
-
-                y = self._local_frame.point.y + border_padding + iy * (self.height - 2 * border_padding) / (ny - 1)
-                y -= self.height / 2
-
-                if not drilling_depth:
-                    apply_drilling = False
-
-                if not drilling_diameter:
-                    drilling_diameter = diameter
-
+        for x in self._grid_positions(nx, self.width, border_padding):
+            for y in self._grid_positions(ny, self.height, border_padding):
                 hole = self.add_hole_point_diameter(Point(x, y, 0), diameter, apply_drilling, drilling_depth, drilling_diameter)
                 holes.append(hole)
         return holes
+
+    @staticmethod
+    def _grid_positions(count: int, size: float, border_padding: float) -> list:
+        # evenly spaced positions along one side of the plate, centered on the plate; a single hole sits in the middle
+        if count == 1:
+            return [0.0]
+        step = (size - 2 * border_padding) / (count - 1)
+        return [-size / 2 + border_padding + i * step for i in range(count)]
 
     def apply_fastening_features(self):
         """
@@ -421,7 +422,7 @@ class PlateFastenerSystem(FastenerSystem):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Fastener`
+        :class:`~compas_timber.fasteners.Fastener`
             A new fastener, its plates staged and positioned, ready to be added to a model.
 
         Raises

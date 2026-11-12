@@ -6,7 +6,6 @@ from compas.geometry import Frame
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import BallNodeJoint
 
-# from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import Cluster
 from compas_timber.elements import Beam

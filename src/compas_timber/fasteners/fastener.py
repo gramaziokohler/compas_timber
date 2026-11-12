@@ -10,7 +10,7 @@ from compas_model.elements import Element
 
 
 class FastenerPart(Element):
-    """Base class for the parts that make up a :class:`~compas_timber.elements.Fastener`.
+    """Base class for the parts that make up a :class:`~compas_timber.fasteners.Fastener`.
 
     A part is a non-timber :class:`~compas_model.elements.Element`. In a model it lives as a child of its parent (the
     fastener, or another part) in the model tree, and its placement is expressed by the element ``transformation``
@@ -258,7 +258,7 @@ class FastenerSystem(Data):
     model; it can be authored once and bound to as many joints as needed.
 
     :meth:`bind` is a pure factory: given a set of anchors, it returns a brand-new, fully-built
-    :class:`~compas_timber.elements.Fastener` ready to be passed to
+    :class:`~compas_timber.fasteners.Fastener` ready to be passed to
     :meth:`~compas_timber.model.TimberModel.add_fastener`. It never mutates the system itself, so the same system
     instance can be bound to multiple joints independently, and mutating it afterwards cannot retroactively affect a
     fastener it already produced.
@@ -304,7 +304,7 @@ class FastenerSystem(Data):
 
         Returns
         -------
-        :class:`~compas_timber.elements.Fastener`
+        :class:`~compas_timber.fasteners.Fastener`
             A new fastener, its parts staged and positioned, ready to be added to a model.
         """
         raise NotImplementedError
