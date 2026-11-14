@@ -627,6 +627,7 @@ def test_get_brep_loop_vertex_indices_follows_loop_despite_reversed_edges():
     pts = [Point(0, 0, 0), Point(1, 0, 0), Point(1, 1, 0), Point(0, 1, 0)]
     # loop 0->1->2->3, but edges 0 and 1 and 3 are stored reversed (like the bottom face of a Rhino box)
     edges = [MockEdge(pts[1], pts[0]), MockEdge(pts[2], pts[1]), MockEdge(pts[2], pts[3]), MockEdge(pts[0], pts[3])]
+    trims = [MockEdge(pts[i], pts[(i + 1) % 4]) for i in range(4)]
     brep = MockBrep(faces=[], all_vertices=[pts[1], pts[0], pts[2], pts[3]])
 
-    assert get_brep_loop_vertex_indices(MockLoop(edges), brep) == [1, 0, 2, 3, 1]  # pts 0, 1, 2, 3, 0
+    assert get_brep_loop_vertex_indices(MockLoop(edges, trims=trims), brep) == [1, 0, 2, 3, 1]  # pts 0, 1, 2, 3, 0
