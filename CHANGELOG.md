@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `get_brep_loop_vertex_indices()` ignoring edge direction, which twisted plates and panels made with `from_brep()`.
+
 ### Removed
 
 
