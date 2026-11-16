@@ -46,7 +46,8 @@ class CompositeJoint(Joint):
     def __init__(self, joints: list[Joint], name: str = None, **kwargs):
         self.joints = joints
         kwargs["name"] = name
-        kwargs["location"] = sum([j.location for j in joints], Point(0, 0, 0)) / len(joints)
+        if kwargs.get("location") is None:  # given when deserializing, when the sub-joints' elements aren't restored yet
+            kwargs["location"] = sum([j.location for j in joints], Point(0, 0, 0)) / len(joints)
         kwargs["topology"] = get_topology_from_joints(joints)
         kwargs["elements"] = tuple(set([e for j in joints for e in j.elements]))
         super(CompositeJoint, self).__init__(**kwargs)
@@ -105,3 +106,4 @@ class CompositeJoint(Joint):
             joint.restore_elements_from_keys(model)
             joint._set_unset_attributes()
         self._elements = tuple(set([e for j in self.joints for e in j.elements]))
+        self._anchor_location()

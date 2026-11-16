@@ -1,11 +1,14 @@
 import os
 
 from compas.data import json_loadz
+from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Scale
 from compas.geometry import Transformation
+from compas.geometry import Vector
+from compas_brep import Brep
 
-from compas_timber import DATA
+from compas_timber.geometry import brep_difference_first
 
 from .btlx import AlignmentType
 from .btlx import AttributeSpec
@@ -54,6 +57,8 @@ class Text(BTLxProcessing):
         "Text": AttributeSpec("text", str),
     }
     _CHARACTER_DICT = {}
+    ENGRAVING = 0.08  # width and depth of the engraved strokes, as a fraction of the text height
+    LETTER_SPACING = 0.2  # gap between letters, as a fraction of the text height (keep it wider than ENGRAVING)
 
     @property
     def __data__(self):
@@ -112,7 +117,8 @@ class Text(BTLxProcessing):
     @staticmethod
     def _load_character_dict():
         if not Text._CHARACTER_DICT:
-            character_dict_path = os.path.join(DATA, "basic_characters.zip")
+            # shipped inside the package (next to this module), so it is there once installed
+            character_dict_path = os.path.join(os.path.dirname(__file__), "basic_characters.zip")
             Text._CHARACTER_DICT = json_loadz(character_dict_path)  # type: ignore
 
 
@@ -229,21 +235,61 @@ class Text(BTLxProcessing):
     # Methods
     ########################################################################
 
-    def apply(self, geometry, _):
-        """Apply the feature to the beam geometry.
+    def apply(self, geometry, element):
+        """Apply the feature to the element geometry: engrave the text into it.
 
-        Raises
-        -------
+        Every straight stroke of the text becomes a groove, `ENGRAVING` times the text height wide and deep.
+        Strokes that miss the element (running off the face, or over a cut) are left out.
+
+        Parameters
+        ----------
+        geometry : :class:`~compas.geometry.Brep`
+            The element geometry to engrave, in the element's local coordinates.
+        element : :class:`~compas_timber.elements.Beam`
+            The element the text is engraved on.
 
         Returns
         -------
-        :class:`compas.geometry.Brep`
+        :class:`~compas.geometry.Brep`
             The resulting geometry after processing.
 
         """
-        # TODO: think about ways to display text curves from `draw_string_on_element()`
-        # NOTE: this currently does nothing due to the fact the visualizing the text as a brep subtraction is very heavy and usually unnecessary.
+        to_local = element.transformation_to_local()
+        for box in self.grooves_for_element(element):
+            groove = Brep.from_box(box.transformed(to_local))
+            try:
+                geometry = brep_difference_first(geometry, groove)
+            except IndexError:
+                # a groove is far too small to remove the whole element: an empty result means
+                # this stroke misses it (it runs off the face, or over a cut), so there is nothing to engrave
+                continue
         return geometry
+
+    def grooves_for_element(self, element):
+        """The volumes engraved by this text: one box per straight stroke, centered on the reference side.
+
+        Parameters
+        ----------
+        element : :class:`~compas_timber.elements.Beam`
+            The element the text is engraved on.
+
+        Returns
+        -------
+        list[:class:`~compas.geometry.Box`]
+            One groove per stroke, in model coordinates.
+
+        """
+        face = element.ref_sides[self.ref_side_index or 0]
+        size = self.text_height * self.ENGRAVING
+        grooves = []
+        for curve in self.create_text_curves_for_element(element):
+            for start, end in zip(curve.points, curve.points[1:]):
+                stroke = Vector.from_start_end(start, end)
+                xaxis = stroke.unitized() if stroke.length > 0 else face.xaxis  # a dot is a square groove
+                frame = Frame(start + stroke * 0.5, xaxis, face.normal.cross(xaxis))
+                # longer by `size` so the strokes overlap where they meet; reaching `size` into the face
+                grooves.append(Box(stroke.length + size, size, 2 * size, frame))
+        return grooves
 
     def create_text_curves_for_element(self, element):
         """This returns translated and scaled curves which correspond to the text and the element the text is engraved on.
@@ -269,14 +315,14 @@ class Text(BTLxProcessing):
         face = element.ref_sides[ref_side_index]
         string_curves = []
         x_pos = 0
-        spacing = 0.1
         for char in self.text:
             curves = Text._CHARACTER_DICT[char]["curves"]
-            translated_crvs = []
-            for crv in curves:
-                translated_crvs.append(crv.translated([x_pos + spacing,0,0]))
-            string_curves.extend(translated_crvs)
-            x_pos += spacing + Text._CHARACTER_DICT[char]["width"]
+            # the glyphs come with some space of their own on the left: move each one so its
+            # first stroke starts at x_pos, so every pair of letters is `LETTER_SPACING` apart
+            left = min((point[0] for crv in curves for point in crv.points), default=0.0)
+            string_curves.extend(crv.translated([x_pos - left, 0, 0]) for crv in curves)
+            x_pos += Text._CHARACTER_DICT[char]["width"] + self.LETTER_SPACING
+        x_pos -= self.LETTER_SPACING  # no space after the last letter
         x_pos *= self.text_height
 
         if self.alignment_vertical == AlignmentType.BOTTOM:

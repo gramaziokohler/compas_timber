@@ -31,6 +31,16 @@ def test_simple_joint_and_reset():
     assert all([plate_a.outline_a.points[i] == polyline_a.points[i] for i in range(len(plate_a.outline_a.points))]), "Expected joint to reset outline_a"
 
 
+def test_explicit_location():
+    plate_a = Plate.from_outline_thickness(Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)]), 1)
+    plate_b = Plate.from_outline_thickness(Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)]), 1)
+
+    joint = PlateMiterJoint(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0, location=Point(5, 6, 7))
+
+    assert joint.location == Point(5, 6, 7)
+    assert joint.__data__["location"] == Point(5, 6, 7)
+
+
 def test_simple_joint_and_reset_no_kwargs():
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 10, 0), Point(10, 10, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(Polyline([pt for pt in polyline_a.points]), 1)

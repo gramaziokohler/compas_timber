@@ -33,8 +33,6 @@ classDiagram
          +ref_frame
          +ref_sides
          +ref_edges
-         +reset_computed_properties()
-         +clear_model_dependent_cache()
          +transform(transformation)
          +remove_blank_extension()
          +reset()
@@ -90,7 +88,6 @@ classDiagram
       }
 
       class PlateGeometry {
-         +frame : Frame
          +length : float
          +width : float
          +thickness : float
@@ -103,8 +100,7 @@ classDiagram
          +remove_blank_extension(edge_index=None)
          +reset()
          +compute_shape() : Brep
-         +from_global_outlines(outline_a, outline_b, orientation=None) : PlateGeometry
-         +from_frame_and_dims(frame, length, width, thickness) : PlateGeometry
+         +from_dims(length, width, thickness) : PlateGeometry
       }
 
       class Fastener {
@@ -113,7 +109,6 @@ classDiagram
          +debug_info : list
          +is_fastener : bool
          +key : int or None
-         +clear_model_dependent_cache()
          +compute_elementgeometry()
       }
 
@@ -180,7 +175,6 @@ classDiagram
          +set_extension_plane(edge_index, plane)
          +apply_edge_extensions()
          +remove_blank_extension(edge_index=None)
-         +clear_model_dependent_cache()
          +reset()
          +remove_features(features=None) : None
          +compute_aabb(inflate=0.0) : Box
@@ -373,8 +367,7 @@ classDiagram
          +beam_a : Beam
          +beam_b : Beam
          +cutting_planes
-         +miter_plane : MiterPlaneSpec
-         +miter_plane_args(beam_a, beam_b, miter_plane) : dict
+         +miter_plane : CutPlaneSpec
       }
 
       class LapJoint {

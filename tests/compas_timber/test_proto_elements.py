@@ -8,6 +8,8 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Rotation
+from compas.geometry import Translation
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
@@ -138,6 +140,23 @@ def test_layer_with_layer_path_roundtrip(outline):
     layer = Layer.from_parent_start_end(panel, 10.0, 30.0, layer_path=(0, 1))
     other = assert_lossless(layer)
     assert other.layer_path == (0, 1)
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda o: Plate.from_outline_thickness(o, 20.0),
+        lambda o: Panel.from_outline_thickness(o, 50.0),
+        lambda o: Layer.from_parent_start_end(Panel.from_outline_thickness(o, 50.0), 0.0, 20.0),
+    ],
+    ids=["plate", "panel", "layer"],
+)
+def test_moved_plate_like_roundtrip(outline, make):
+    # the placement is stored on the element, not in its plate_geometry
+    element = make(outline)
+    element.transform(Translation.from_vector([100, 200, 300]) * Rotation.from_axis_and_angle([0, 0, 1], 0.5))
+    other = assert_lossless(element)
+    assert other.frame == element.frame
 
 
 def test_opening_roundtrip(outline):
