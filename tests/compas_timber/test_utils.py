@@ -618,3 +618,16 @@ def test_get_leaf_subclasses_mixed():
     result = get_leaf_subclasses(Top)
     assert set(result) == {DirectLeaf, DeepLeaf}
     assert Branch not in result
+
+
+def test_get_brep_loop_vertex_indices_follows_loop_despite_reversed_edges():
+    from brep_mocks import MockBrep, MockEdge, MockLoop
+    from compas_timber.utils import get_brep_loop_vertex_indices
+
+    pts = [Point(0, 0, 0), Point(1, 0, 0), Point(1, 1, 0), Point(0, 1, 0)]
+    # loop 0->1->2->3, but edges 0 and 1 and 3 are stored reversed (like the bottom face of a Rhino box)
+    edges = [MockEdge(pts[1], pts[0]), MockEdge(pts[2], pts[1]), MockEdge(pts[2], pts[3]), MockEdge(pts[0], pts[3])]
+    trims = [MockEdge(pts[i], pts[(i + 1) % 4]) for i in range(4)]
+    brep = MockBrep(faces=[], all_vertices=[pts[1], pts[0], pts[2], pts[3]])
+
+    assert get_brep_loop_vertex_indices(MockLoop(edges, trims=trims), brep) == [1, 0, 2, 3, 1]  # pts 0, 1, 2, 3, 0
