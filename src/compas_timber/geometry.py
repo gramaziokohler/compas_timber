@@ -216,6 +216,32 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     return Brep.from_polygons(polygons)
 
 
+def brep_edge_indices_along(brep: Brep, direction: Vector) -> List[int]:
+    """Returns the indices of the edges of a Brep which are parallel to a direction.
+
+    The order of the edges of a Brep depends on its backend, so they cannot be selected by a fixed index.
+
+    Parameters
+    ----------
+    brep :
+        The Brep.
+    direction :
+        The direction.
+
+    Returns
+    -------
+        The indices of the edges.
+
+    """
+    direction = direction.unitized()
+    indices = []
+    for index, edge in enumerate(brep.edges):
+        start, end = edge.vertices
+        if abs(Vector.from_start_end(start.point, end.point).unitized().dot(direction)) > 0.999:
+            indices.append(index)
+    return indices
+
+
 def _first_solid(results: List[Brep], operation: str) -> Brep:
     # taking the first piece is not a meaningful selection, it is what the Rhino backend happened to do
     # internally in compas.geometry.Brep. Which piece is wanted is a decision only the caller can make, so a
