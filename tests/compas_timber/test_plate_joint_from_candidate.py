@@ -5,8 +5,8 @@ from compas.geometry import Point
 from compas_timber.connections import PlateJointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateLButtJoint
-from compas_timber.connections import PlateTopologyData
-from compas_timber.connections import TopologyData
+from compas_timber.connections import PlateTopologyInfo
+from compas_timber.connections import TopologyInfo
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -122,11 +122,11 @@ def test_plate_joint_from_generic_joint_topology_solver_called_when_attributes_m
 
     # Mock the PlateConnectionSolver.find_topology method to return expected results
     mock_find_topology = mocker.patch.object(PlateConnectionSolver, "find_topology")
-    mock_find_topology.return_value = TopologyData(
+    mock_find_topology.return_value = TopologyInfo(
         JointTopology.TOPO_EDGE_EDGE,
-        element_topo_data={
-            str(plate1.guid): PlateTopologyData(role="edge", edge_index=1),
-            str(plate2.guid): PlateTopologyData(role="edge", edge_index=0),
+        element_topo_info={
+            str(plate1.guid): PlateTopologyInfo(role="edge", edge_index=1),
+            str(plate2.guid): PlateTopologyInfo(role="edge", edge_index=0),
         },
     )
 

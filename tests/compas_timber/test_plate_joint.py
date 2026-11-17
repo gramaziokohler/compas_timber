@@ -11,17 +11,17 @@ from compas_timber.connections import PlateTButtJoint
 from compas.geometry import Polyline, Point
 
 
-def _joint_args(pair, topo_data):
-    """Returns the plates and segment-index kwargs a `PlateJoint` expects, from a `TopologyData`.
+def _joint_args(pair, topo_info):
+    """Returns the plates and segment-index kwargs a `PlateJoint` expects, from a `TopologyInfo`.
 
     `PlateJoint` requires `plate_a` to be the edge/main plate, which is the order `reorder_elements`
-    restores; each plate's segment index then comes from its own entry in the topology data.
+    restores; each plate's segment index then comes from its own entry in the topology info.
     """
-    plate_a, plate_b = topo_data.reorder_elements(*pair)
+    plate_a, plate_b = topo_info.reorder_elements(*pair)
     kwargs = {
-        "topology": topo_data.topology,
-        "a_segment_index": topo_data.data_for(plate_a).edge_index,
-        "b_segment_index": topo_data.data_for(plate_b).edge_index,
+        "topology": topo_info.topology,
+        "a_segment_index": topo_info.info_for(plate_a).edge_index,
+        "b_segment_index": topo_info.info_for(plate_b).edge_index,
     }
     return (plate_a, plate_b), kwargs
 

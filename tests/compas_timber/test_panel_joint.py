@@ -10,17 +10,17 @@ from compas_timber.model import TimberModel
 from compas.geometry import Polyline, Point
 
 
-def _joint_args(pair, topo_data):
-    """Returns the panels and segment-index kwargs a `PanelJoint` expects, from a `TopologyData`.
+def _joint_args(pair, topo_info):
+    """Returns the panels and segment-index kwargs a `PanelJoint` expects, from a `TopologyInfo`.
 
     `PlateJoint` requires `plate_a` to be the edge/main panel, which is the order `reorder_elements`
-    restores; each panel's segment index then comes from its own entry in the topology data.
+    restores; each panel's segment index then comes from its own entry in the topology info.
     """
-    panel_a, panel_b = topo_data.reorder_elements(*pair)
+    panel_a, panel_b = topo_info.reorder_elements(*pair)
     kwargs = {
-        "topology": topo_data.topology,
-        "a_segment_index": topo_data.data_for(panel_a).edge_index,
-        "b_segment_index": topo_data.data_for(panel_b).edge_index,
+        "topology": topo_info.topology,
+        "a_segment_index": topo_info.info_for(panel_a).edge_index,
+        "b_segment_index": topo_info.info_for(panel_b).edge_index,
     }
     return (panel_a, panel_b), kwargs
 

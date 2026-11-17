@@ -28,11 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `joints_to_process` parameter to `TimberModel.process_joinery()`, to process a subset of the model's joints instead of all of them.
 * Added new `compas_timber.fabrication.BirdsMouth`.
 * Added new module `candidate_dispatch` in `compas_timber.connections` with `get_connection_candidate(element_a, element_b, max_distance)`, the entry point used by `TimberModel.compute_topologies()` to build the right kind of joint candidate for a pair of adjacent elements based on their types.
-* Added new module `topology_data` in `compas_timber.connections` 
-* Added `TopologyData`, structured, element-agnostic, pairwise data class for topology information
-* Added `BeamTopologyData`, and `PlateTopologyData` — structured, per-element topology data (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
-* Added `ConnectionSolver.update_location(element_a, element_b, topology_data)` and `PlateConnectionSolver.update_location(plate_a, plate_b, topology_data)`, which recompute the location of an already-solved connection from the elements' current geometry, without searching for the topology again.
-* Added `PlateTopologyData.ref_side_index`, the index of the plate outline/plane on which the connection was detected. Together with `edge_index` it identifies the exact outline segment involved in the connection.
+* Added new module `topology_info` in `compas_timber.connections` 
+* Added `TopologyInfo`, structured, element-agnostic, pairwise data class for topology information
+* Added `BeamTopologyInfo`, and `PlateTopologyInfo` — structured, per-element topology info (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
+* Added `ConnectionSolver.update_location(element_a, element_b, topology_info)` and `PlateConnectionSolver.update_location(plate_a, plate_b, topology_info)`, which recompute the location of an already-solved connection from the elements' current geometry, without searching for the topology again.
+* Added `PlateTopologyInfo.ref_side_index`, the index of the plate outline/plane on which the connection was detected. Together with `edge_index` it identifies the exact outline segment involved in the connection.
 * Added `get_segment_range_on_polyline` to `compas_timber.geometry`.
 
 ### Changed
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
-* Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `SolverResult`.
+* Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `TopologyInfo`.
 
 ## [2.2.0] 2026-07-02
 

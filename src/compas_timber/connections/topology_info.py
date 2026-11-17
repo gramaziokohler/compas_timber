@@ -1,15 +1,19 @@
 from compas.data import Data
-from compas_model.elements import Element
 
 # Canonical element ordering convention: the "main"/"edge" role always sorts before "cross"/"face".
-# Used by `TopologyData.ordered_guids()` to derive a/b-style ordering without storing it positionally.
+# Used by `TopologyInfo.reorder_elements()` to derive a/b-style ordering without storing it positionally.
 _ROLE_PRIORITY = {"main": 0, "edge": 0, "cross": 1, "face": 1}
 
 
-class BeamTopologyData(Data):
-    """Per-beam topology data describing how a single beam participates in a connection.
+def _role_priority(element_info):
+    """Sort priority of an element's role; unset or unknown roles sort last."""
+    return _ROLE_PRIORITY.get(element_info.role, 2)
 
-    Holds no reference to the beam itself — it is meant to be stored in `TopologyData.element_topo_data`,
+
+class BeamTopologyInfo(Data):
+    """Per-beam topology info describing how a single beam participates in a connection.
+
+    Holds no reference to the beam itself — it is meant to be stored in `TopologyInfo.element_topo_info`,
     keyed by the beam's guid, which is how it gets correlated back to a live element.
 
     Parameters
@@ -36,7 +40,7 @@ class BeamTopologyData(Data):
     """
 
     def __init__(self, role=None, end=None, ref_side_index=None, location_parameter=None):
-        super(BeamTopologyData, self).__init__()
+        super(BeamTopologyInfo, self).__init__()
         self.role = role
         self.end = end
         self.ref_side_index = ref_side_index
@@ -52,13 +56,13 @@ class BeamTopologyData(Data):
         }
 
     def __repr__(self):
-        return "BeamTopologyData(role={}, end={}, ref_side_index={}, location_parameter={})".format(self.role, self.end, self.ref_side_index, self.location_parameter)
+        return "BeamTopologyInfo(role={}, end={}, ref_side_index={}, location_parameter={})".format(self.role, self.end, self.ref_side_index, self.location_parameter)
 
 
-class PlateTopologyData(Data):
-    """Per-plate topology data describing how a single plate participates in a connection.
+class PlateTopologyInfo(Data):
+    """Per-plate topology info describing how a single plate participates in a connection.
 
-    Holds no reference to the plate itself — it is meant to be stored in `TopologyData.element_topo_data`,
+    Holds no reference to the plate itself — it is meant to be stored in `TopologyInfo.element_topo_info`,
     keyed by the plate's guid, which is how it gets correlated back to a live element.
 
     Parameters
@@ -86,7 +90,7 @@ class PlateTopologyData(Data):
     """
 
     def __init__(self, role=None, edge_index=None, ref_side_index=None, location=None):
-        super(PlateTopologyData, self).__init__()
+        super(PlateTopologyInfo, self).__init__()
         self.role = role
         self.edge_index = edge_index
         self.ref_side_index = ref_side_index
@@ -97,15 +101,15 @@ class PlateTopologyData(Data):
         return {"role": self.role, "edge_index": self.edge_index, "ref_side_index": self.ref_side_index, "location": self.location}
 
     def __repr__(self):
-        return "PlateTopologyData(role={}, edge_index={}, ref_side_index={}, location={})".format(self.role, self.edge_index, self.ref_side_index, self.location)
+        return "PlateTopologyInfo(role={}, edge_index={}, ref_side_index={}, location={})".format(self.role, self.edge_index, self.ref_side_index, self.location)
 
 
-class TopologyData(Data):
+class TopologyInfo(Data):
     """Data structure to hold the results of a connection topology analysis between two (or more) elements.
 
-    Per-element data (`BeamTopologyData`/`PlateTopologyData`) holds no reference to its element — it
-    is correlated to a live element via `element_topo_data`, a dict keyed by `str(element.guid)`.
-    This lets `TopologyData` represent any pair (or, in principle, group) of element types uniformly,
+    Per-element info (`BeamTopologyInfo`/`PlateTopologyInfo`) holds no reference to its element — it
+    is correlated to a live element via `element_topo_info`, a dict keyed by `str(element.guid)`.
+    This lets `TopologyInfo` represent any pair (or, in principle, group) of element types uniformly,
     including a mix of types (e.g. a beam-to-plate connection), without needing to resolve or store
     live elements itself.
 
@@ -117,8 +121,8 @@ class TopologyData(Data):
         The distance between the closest points of the elements.
     location : :class:`~compas.geometry.Point`, optional
         The location of the intersection.
-    element_topo_data : dict(str, :class:`~compas_timber.connections.BeamTopologyData` or :class:`~compas_timber.connections.PlateTopologyData`), optional
-        Per-element topology data, keyed by `str(element.guid)`.
+    element_topo_info : dict(str, :class:`~compas_timber.connections.BeamTopologyInfo` or :class:`~compas_timber.connections.PlateTopologyInfo`), optional
+        Per-element topology info, keyed by `str(element.guid)`.
 
     Attributes
     ----------
@@ -128,17 +132,17 @@ class TopologyData(Data):
         The distance between the closest points of the elements.
     location : :class:`~compas.geometry.Point` or None
         The location of the intersection.
-    element_topo_data : dict(str, :class:`~compas_timber.connections.BeamTopologyData` or :class:`~compas_timber.connections.PlateTopologyData`)
-        Per-element topology data, keyed by `str(element.guid)`.
+    element_topo_info : dict(str, :class:`~compas_timber.connections.BeamTopologyInfo` or :class:`~compas_timber.connections.PlateTopologyInfo`)
+        Per-element topology info, keyed by `str(element.guid)`.
 
     """
 
-    def __init__(self, topology, distance=None, location=None, element_topo_data=None):
-        super(TopologyData, self).__init__()
+    def __init__(self, topology, distance=None, location=None, element_topo_info=None):
+        super(TopologyInfo, self).__init__()
         self.topology = topology
         self.distance = distance
         self.location = location
-        self.element_topo_data = element_topo_data or {}
+        self.element_topo_info = element_topo_info or {}
 
     @property
     def __data__(self):
@@ -146,14 +150,14 @@ class TopologyData(Data):
             "topology": self.topology,
             "distance": self.distance,
             "location": self.location,
-            "element_topo_data": self.element_topo_data,
+            "element_topo_info": self.element_topo_info,
         }
 
     def __repr__(self):
-        return "TopologyData(topology={}, distance={}, location={}, element_topo_data={})".format(self.topology, self.distance, self.location, self.element_topo_data)
+        return "TopologyInfo(topology={}, distance={}, location={}, element_topo_info={})".format(self.topology, self.distance, self.location, self.element_topo_info)
 
-    def data_for(self, element):
-        """Returns the `BeamTopologyData`/`PlateTopologyData` entry for a live `element`, or ``None`` if absent.
+    def info_for(self, element):
+        """Returns the `BeamTopologyInfo`/`PlateTopologyInfo` entry for a live `element`, or ``None`` if absent.
 
         Parameters
         ----------
@@ -162,26 +166,38 @@ class TopologyData(Data):
 
         Returns
         -------
-        :class:`~compas_timber.connections.BeamTopologyData` or :class:`~compas_timber.connections.PlateTopologyData` or None
+        :class:`~compas_timber.connections.BeamTopologyInfo` or :class:`~compas_timber.connections.PlateTopologyInfo` or None
 
         """
-        return self.element_topo_data.get(str(element.guid))
+        return self.element_topo_info.get(str(element.guid))
 
-    def ordered_guids(self):
-        """Returns this topology's element guids in canonical role order (main/edge first, cross/face second).
+    def reorder_elements(self, element_a, element_b):
+        """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second).
 
-        Ties (e.g. equal or unset roles) keep the original insertion order of `element_topo_data`.
+        The pair is swapped only if `element_b` holds the leading role and `element_a` does not; ties
+        (e.g. `TOPO_L`, `TOPO_X`, `TOPO_EDGE_EDGE` or unset roles) keep the given order.
+
+        Parameters
+        ----------
+        element_a : :class:`~compas_model.elements.Element`
+            First element of the pair.
+        element_b : :class:`~compas_model.elements.Element`
+            Second element of the pair.
 
         Returns
         -------
-        list(str)
+        tuple(:class:`~compas_model.elements.Element`, :class:`~compas_model.elements.Element`)
+
+        Raises
+        ------
+        ValueError
+            If either element has no entry in `element_topo_info`.
 
         """
-        return sorted(self.element_topo_data, key=lambda guid: _ROLE_PRIORITY.get(self.element_topo_data[guid].role, 2))
-
-    def reorder_elements(self, element_a: Element, element_b: Element) -> list[Element]:
-        """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second)."""
-        if not (set((str(element_a.guid), str(element_b.guid))) <= set(self.element_topo_data)):
-            raise ValueError("Both elements must be present in this topology's `element_topo_data`.")
-        elements_by_guid = {str(element_a.guid): element_a, str(element_b.guid): element_b}
-        return [elements_by_guid[guid] for guid in self.ordered_guids()]
+        info_a = self.info_for(element_a)
+        info_b = self.info_for(element_b)
+        if info_a is None or info_b is None:
+            raise ValueError("Both elements must be present in this topology's `element_topo_info`.")
+        if _role_priority(info_b) < _role_priority(info_a):
+            return element_b, element_a
+        return element_a, element_b

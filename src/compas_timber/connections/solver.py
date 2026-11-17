@@ -19,9 +19,9 @@ from compas_timber.utils import distance_segment_segment_points
 from compas_timber.utils import get_segment_overlap
 from compas_timber.utils import is_point_in_polyline
 
-from .topology_data import BeamTopologyData
-from .topology_data import PlateTopologyData
-from .topology_data import TopologyData
+from .topology_info import BeamTopologyInfo
+from .topology_info import PlateTopologyInfo
+from .topology_info import TopologyInfo
 from .utilities import beam_ref_side_incidence
 
 
@@ -172,16 +172,16 @@ class ConnectionSolver(object):
 
         Returns
         -------
-        :class:`~compas_timber.connections.TopologyData`
+        :class:`~compas_timber.connections.TopologyInfo`
             The topology results of the intersection between the two beams.
         """
         # first check if the beams are close enough to be considered intersecting and get the closest points on the segments
         max_distance = max_distance or TOL.absolute  # TODO: change to a unit-sensitive value
         dist, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         if dist > max_distance:
-            return TopologyData(
+            return TopologyInfo(
                 JointTopology.TOPO_UNKNOWN,
-                element_topo_data={str(beam_a.guid): BeamTopologyData(), str(beam_b.guid): BeamTopologyData()},
+                element_topo_info={str(beam_a.guid): BeamTopologyInfo(), str(beam_b.guid): BeamTopologyInfo()},
             )
         point_a = Point(*point_a)
         point_b = Point(*point_b)
@@ -194,51 +194,51 @@ class ConnectionSolver(object):
             if overlap_on_a is None:
                 end_a, _ = beam_a.endpoint_closest_to_point(point_a)
                 end_b, _ = beam_b.endpoint_closest_to_point(point_b)
-                beam_a_data = BeamTopologyData(role="main", end=end_a, location_parameter=_beam_location_parameter(beam_a, point_a))
-                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, point_b))
-                return TopologyData(
+                beam_a_info = BeamTopologyInfo(role="main", end=end_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+                beam_b_info = BeamTopologyInfo(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, point_b))
+                return TopologyInfo(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(point_a + point_b) / 2.0,
-                    element_topo_data={
-                        str(beam_a.guid): beam_a_data,
-                        str(beam_b.guid): beam_b_data,
+                    element_topo_info={
+                        str(beam_a.guid): beam_a_info,
+                        str(beam_b.guid): beam_b_info,
                     },
                 )
             if overlap_on_a[1] < max_distance:  # overlaps on beam_a start
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.start)[1]
                 end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.start)
                 dist = distance_point_point(pt, beam_a.centerline.start)
-                beam_a_data = BeamTopologyData(role="main", end="start", location_parameter=0.0)
-                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
-                return TopologyData(
+                beam_a_info = BeamTopologyInfo(role="main", end="start", location_parameter=0.0)
+                beam_b_info = BeamTopologyInfo(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
+                return TopologyInfo(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(beam_a.centerline.start + pt) / 2.0,
-                    element_topo_data={
-                        str(beam_a.guid): beam_a_data,
-                        str(beam_b.guid): beam_b_data,
+                    element_topo_info={
+                        str(beam_a.guid): beam_a_info,
+                        str(beam_b.guid): beam_b_info,
                     },
                 )
             if abs(overlap_on_a[0] - beam_a.length) < max_distance:  # overlaps on beam_a end
                 pt = beam_b.endpoint_closest_to_point(beam_a.centerline.end)[1]
                 end_b, _ = beam_b.endpoint_closest_to_point(beam_a.centerline.end)
                 dist = distance_point_point(pt, beam_a.centerline.end)
-                beam_a_data = BeamTopologyData(role="main", end="end", location_parameter=beam_a.length)
-                beam_b_data = BeamTopologyData(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
-                return TopologyData(
+                beam_a_info = BeamTopologyInfo(role="main", end="end", location_parameter=beam_a.length)
+                beam_b_info = BeamTopologyInfo(role="main", end=end_b, location_parameter=_beam_location_parameter(beam_b, pt))
+                return TopologyInfo(
                     JointTopology.TOPO_I,
                     distance=dist,
                     location=(beam_a.centerline.end + pt) / 2.0,
-                    element_topo_data={
-                        str(beam_a.guid): beam_a_data,
-                        str(beam_b.guid): beam_b_data,
+                    element_topo_info={
+                        str(beam_a.guid): beam_a_info,
+                        str(beam_b.guid): beam_b_info,
                     },
                 )
             else:
-                return TopologyData(
+                return TopologyInfo(
                     JointTopology.TOPO_UNKNOWN,
-                    element_topo_data={str(beam_a.guid): BeamTopologyData(), str(beam_b.guid): BeamTopologyData()},
+                    element_topo_info={str(beam_a.guid): BeamTopologyInfo(), str(beam_b.guid): BeamTopologyInfo()},
                 )
 
         a_end_label, a_end_pt = beam_a.endpoint_closest_to_point(point_b)
@@ -249,63 +249,63 @@ class ConnectionSolver(object):
         location = (point_a + point_b) / 2.0
         ref_side_index_a = _beam_ref_side_index(beam_a, beam_b)
         ref_side_index_b = _beam_ref_side_index(beam_b, beam_a)
-        beam_a_data = BeamTopologyData(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
-        beam_b_data = BeamTopologyData(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
+        beam_a_info = BeamTopologyInfo(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+        beam_b_info = BeamTopologyInfo(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
         if a_end and b_end:
-            return TopologyData(
+            return TopologyInfo(
                 JointTopology.TOPO_L,
                 distance=dist,
                 location=location,
-                element_topo_data={
-                    str(beam_a.guid): beam_a_data,
-                    str(beam_b.guid): beam_b_data,
+                element_topo_info={
+                    str(beam_a.guid): beam_a_info,
+                    str(beam_b.guid): beam_b_info,
                 },
             )
         if a_end:
-            beam_a_data = BeamTopologyData(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
-            beam_b_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
-            return TopologyData(
+            beam_a_info = BeamTopologyInfo(role="main", end=a_end_label, ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+            beam_b_info = BeamTopologyInfo(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
+            return TopologyInfo(
                 JointTopology.TOPO_T,
                 distance=dist,
                 location=location,
-                element_topo_data={
-                    str(beam_a.guid): beam_a_data,
-                    str(beam_b.guid): beam_b_data,
+                element_topo_info={
+                    str(beam_a.guid): beam_a_info,
+                    str(beam_b.guid): beam_b_info,
                 },
             )
         if b_end:
-            beam_a_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
-            beam_b_data = BeamTopologyData(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
-            return TopologyData(
+            beam_a_info = BeamTopologyInfo(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+            beam_b_info = BeamTopologyInfo(role="main", end=b_end_label, ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
+            return TopologyInfo(
                 JointTopology.TOPO_T,
                 distance=dist,
                 location=location,
-                element_topo_data={
-                    str(beam_b.guid): beam_b_data,
-                    str(beam_a.guid): beam_a_data,
+                element_topo_info={
+                    str(beam_a.guid): beam_a_info,
+                    str(beam_b.guid): beam_b_info,
                 },
             )
 
-        beam_a_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
-        beam_b_data = BeamTopologyData(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
-        return TopologyData(
+        beam_a_info = BeamTopologyInfo(role="cross", ref_side_index=ref_side_index_a, location_parameter=_beam_location_parameter(beam_a, point_a))
+        beam_b_info = BeamTopologyInfo(role="cross", ref_side_index=ref_side_index_b, location_parameter=_beam_location_parameter(beam_b, point_b))
+        return TopologyInfo(
             JointTopology.TOPO_X,
             distance=dist,
             location=location,
-            element_topo_data={
-                str(beam_a.guid): beam_a_data,
-                str(beam_b.guid): beam_b_data,
+            element_topo_info={
+                str(beam_a.guid): beam_a_info,
+                str(beam_b.guid): beam_b_info,
             },
         )
 
-    def update_location(self, beam_a, beam_b, topology_data):
+    def update_location(self, beam_a, beam_b, topology_info):
         """Recomputes the location of an existing connection between `beam_a` and `beam_b` from their current geometry.
 
         The location is the midpoint between the closest points of the two centerlines, the same
-        definition used by :meth:`find_topology`. Only the location data of `topology_data` is
-        updated in place, i.e. `TopologyData.location` and the `location_parameter` of each beam's
-        `BeamTopologyData`. The topology type, roles, ends and reference side indices are left
-        untouched, as is `TopologyData.distance`.
+        definition used by :meth:`find_topology`. Only the location info of `topology_info` is
+        updated in place, i.e. `TopologyInfo.location` and the `location_parameter` of each beam's
+        `BeamTopologyInfo`. The topology type, roles, ends and reference side indices are left
+        untouched, as is `TopologyInfo.distance`.
 
         Parameters
         ----------
@@ -313,8 +313,8 @@ class ConnectionSolver(object):
             First beam of the connection.
         beam_b : :class:`~compas_timber.elements.Beam`
             Second beam of the connection.
-        topology_data : :class:`~compas_timber.connections.TopologyData`
-            The topology data to update. Must contain entries for both beams.
+        topology_info : :class:`~compas_timber.connections.TopologyInfo`
+            The topology info to update. Must contain entries for both beams.
 
         Returns
         -------
@@ -324,22 +324,22 @@ class ConnectionSolver(object):
         Raises
         ------
         ValueError
-            If `topology_data` does not contain an entry for both beams.
+            If `topology_info` does not contain an entry for both beams.
 
         """
-        data_a = topology_data.data_for(beam_a)
-        data_b = topology_data.data_for(beam_b)
-        if data_a is None or data_b is None:
-            raise ValueError("Both beams must be present in the given topology data.")
+        info_a = topology_info.info_for(beam_a)
+        info_b = topology_info.info_for(beam_b)
+        if info_a is None or info_b is None:
+            raise ValueError("Both beams must be present in the given topology info.")
 
         _, point_a, point_b = distance_segment_segment_points(beam_a.centerline, beam_b.centerline)
         point_a = Point(*point_a)
         point_b = Point(*point_b)
 
-        data_a.location_parameter = _beam_location_parameter(beam_a, point_a)
-        data_b.location_parameter = _beam_location_parameter(beam_b, point_b)
-        topology_data.location = (point_a + point_b) / 2.0
-        return topology_data.location
+        info_a.location_parameter = _beam_location_parameter(beam_a, point_a)
+        info_b.location_parameter = _beam_location_parameter(beam_b, point_b)
+        topology_info.location = (point_a + point_b) / 2.0
+        return topology_info.location
 
 
 class PlateConnectionSolver(ConnectionSolver):
@@ -364,67 +364,69 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        :class:`~compas_timber.connections.TopologyData`
+        :class:`~compas_timber.connections.TopologyInfo`
             The topology results of the intersection between the two plates.
 
         """
-        plate_a_edge, plate_b_edge, dist, pt = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        plate_a_edge, plate_b_edge, dist, loc_a, loc_b = self._find_plate_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         a_ref_side_index, a_segment_index = plate_a_edge if plate_a_edge else (None, None)
         b_ref_side_index, b_segment_index = plate_b_edge if plate_b_edge else (None, None)
+        location = self._joint_location(loc_a, loc_b)
         if a_segment_index is None and b_segment_index is None:
-            return TopologyData(
+            return TopologyInfo(
                 JointTopology.TOPO_UNKNOWN,
                 distance=dist,
-                location=pt,
-                element_topo_data={str(plate_a.guid): PlateTopologyData(), str(plate_b.guid): PlateTopologyData()},
+                location=location,
+                element_topo_info={str(plate_a.guid): PlateTopologyInfo(), str(plate_b.guid): PlateTopologyInfo()},
             )
         if a_segment_index is not None and b_segment_index is None:
-            plate_a_data = PlateTopologyData(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=pt)
-            plate_b_data = PlateTopologyData(role="face", ref_side_index=b_ref_side_index, location=pt)
-            return TopologyData(
+            plate_a_info = PlateTopologyInfo(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=loc_a)
+            plate_b_info = PlateTopologyInfo(role="face", ref_side_index=b_ref_side_index, location=loc_b)
+            return TopologyInfo(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
-                location=pt,
-                element_topo_data={
-                    str(plate_a.guid): plate_a_data,
-                    str(plate_b.guid): plate_b_data,
+                location=location,
+                element_topo_info={
+                    str(plate_a.guid): plate_a_info,
+                    str(plate_b.guid): plate_b_info,
                 },
             )
         if a_segment_index is None and b_segment_index is not None:
-            plate_a_data = PlateTopologyData(role="face", ref_side_index=a_ref_side_index, location=pt)
-            plate_b_data = PlateTopologyData(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=pt)
-            return TopologyData(
+            plate_a_info = PlateTopologyInfo(role="face", ref_side_index=a_ref_side_index, location=loc_a)
+            plate_b_info = PlateTopologyInfo(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=loc_b)
+            return TopologyInfo(
                 JointTopology.TOPO_EDGE_FACE,
                 distance=dist,
-                location=pt,
-                element_topo_data={
-                    str(plate_b.guid): plate_b_data,
-                    str(plate_a.guid): plate_a_data,
+                location=location,
+                element_topo_info={
+                    str(plate_a.guid): plate_a_info,
+                    str(plate_b.guid): plate_b_info,
                 },
             )
         if a_segment_index is not None and b_segment_index is not None:
-            plate_a_data = PlateTopologyData(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=pt)
-            plate_b_data = PlateTopologyData(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=pt)
-            return TopologyData(
+            plate_a_info = PlateTopologyInfo(role="edge", edge_index=a_segment_index, ref_side_index=a_ref_side_index, location=loc_a)
+            plate_b_info = PlateTopologyInfo(role="edge", edge_index=b_segment_index, ref_side_index=b_ref_side_index, location=loc_b)
+            return TopologyInfo(
                 JointTopology.TOPO_EDGE_EDGE,
                 distance=dist,
-                location=pt,
-                element_topo_data={
-                    str(plate_a.guid): plate_a_data,
-                    str(plate_b.guid): plate_b_data,
+                location=location,
+                element_topo_info={
+                    str(plate_a.guid): plate_a_info,
+                    str(plate_b.guid): plate_b_info,
                 },
             )
 
-    def update_location(self, plate_a, plate_b, topology_data):
+    def update_location(self, plate_a, plate_b, topology_info):
         """Recomputes the location of an existing connection between `plate_a` and `plate_b` from their current geometry.
 
         The connecting edges are not searched for again: they are looked up from the `ref_side_index`
-        and `edge_index` already stored in `topology_data`, and only the location along them is solved
-        anew, using the same definition as :meth:`find_topology` (midpoint of the overlap of the two
-        edges for `TOPO_EDGE_EDGE`, midpoint of the portion of the edge that lies on the cross plate's
-        outline for `TOPO_EDGE_FACE`). `TopologyData.location` and the `location` of each plate's
-        `PlateTopologyData` are updated in place; topology type, roles and indices are left untouched,
-        as is `TopologyData.distance`.
+        and `edge_index` already stored in `topology_info`, and only the location along them is solved
+        anew, using the same definition as :meth:`find_topology`: each plate's `location` is the
+        midpoint of the overlap of the two edges measured on its own edge for `TOPO_EDGE_EDGE`, and the
+        midpoint of the portion of the edge that lies on the cross plate's outline, measured on the edge
+        and on the cross plate's face respectively, for `TOPO_EDGE_FACE`. `TopologyInfo.location` is the
+        midpoint of the two per-plate locations. These are updated in place; topology type, roles and indices are left untouched,
+        as is `TopologyInfo.distance`.
 
         Parameters
         ----------
@@ -432,68 +434,101 @@ class PlateConnectionSolver(ConnectionSolver):
             First plate of the connection.
         plate_b : :class:`~compas_timber.elements.Plate`
             Second plate of the connection.
-        topology_data : :class:`~compas_timber.connections.TopologyData`
-            The topology data to update. Must contain entries for both plates.
+        topology_info : :class:`~compas_timber.connections.TopologyInfo`
+            The topology info to update. Must contain entries for both plates.
 
         Returns
         -------
         :class:`~compas.geometry.Point` or None
             The updated location, or ``None`` if the topology is unknown or the stored edges no longer
-            overlap, in which case `topology_data` is left unchanged.
+            overlap, in which case `topology_info` is left unchanged.
 
         Raises
         ------
         ValueError
-            If `topology_data` does not contain an entry for both plates.
+            If `topology_info` does not contain an entry for both plates.
 
         """
-        data_a = topology_data.data_for(plate_a)
-        data_b = topology_data.data_for(plate_b)
-        if data_a is None or data_b is None:
-            raise ValueError("Both plates must be present in the given topology data.")
+        info_a = topology_info.info_for(plate_a)
+        info_b = topology_info.info_for(plate_b)
+        if info_a is None or info_b is None:
+            raise ValueError("Both plates must be present in the given topology info.")
 
-        if topology_data.topology == JointTopology.TOPO_EDGE_EDGE:
-            location = self._edge_edge_location(self._plate_edge_segment(plate_a, data_a), self._plate_edge_segment(plate_b, data_b))
-        elif topology_data.topology == JointTopology.TOPO_EDGE_FACE:
-            if data_a.role == "edge":
-                main_plate, main_data, cross_plate, cross_data = plate_a, data_a, plate_b, data_b
+        if topology_info.topology == JointTopology.TOPO_EDGE_EDGE:
+            locations = self._edge_edge_locations(self._plate_edge_segment(plate_a, info_a), self._plate_edge_segment(plate_b, info_b))
+            if locations is None:
+                return None
+            loc_a, loc_b = locations
+        elif topology_info.topology == JointTopology.TOPO_EDGE_FACE:
+            if info_a.role == "edge":
+                main_plate, main_info, cross_plate, cross_info = plate_a, info_a, plate_b, info_b
             else:
-                main_plate, main_data, cross_plate, cross_data = plate_b, data_b, plate_a, data_a
-            location = self._edge_face_location(
-                self._plate_edge_segment(main_plate, main_data),
-                cross_plate.outlines[cross_data.ref_side_index],
-                min(main_plate.thickness, cross_plate.thickness),
+                main_plate, main_info, cross_plate, cross_info = plate_b, info_b, plate_a, info_a
+            locations = self._edge_face_locations(
+                self._plate_edge_segment(main_plate, main_info),
+                cross_plate.outlines[cross_info.ref_side_index],
+                cross_plate.planes[cross_info.ref_side_index],
             )
+            if locations is None:
+                return None
+            main_location, cross_location = locations
+            loc_a, loc_b = (main_location, cross_location) if main_plate is plate_a else (cross_location, main_location)
         else:
             return None
 
-        if location is None:
+        info_a.location = loc_a
+        info_b.location = loc_b
+        topology_info.location = self._joint_location(loc_a, loc_b)
+        return topology_info.location
+
+    @staticmethod
+    def _joint_location(loc_a, loc_b):
+        """The location of the connection as a whole: the midpoint of the two per-plate locations."""
+        if loc_a is None or loc_b is None:
             return None
-        topology_data.location = location
-        data_a.location = location
-        data_b.location = location
-        return location
+        return (loc_a + loc_b) / 2.0
 
     @staticmethod
-    def _plate_edge_segment(plate, plate_topo_data):
-        """The outline segment of `plate` that takes part in the connection described by `plate_topo_data`."""
-        return plate.outlines[plate_topo_data.ref_side_index].lines[plate_topo_data.edge_index]
+    def _plate_edge_segment(plate, plate_topo_info):
+        """The outline segment of `plate` that takes part in the connection described by `plate_topo_info`."""
+        return plate.outlines[plate_topo_info.ref_side_index].lines[plate_topo_info.edge_index]
 
     @staticmethod
-    def _edge_edge_location(seg_a, seg_b):
-        """Midpoint of the overlap of two colinear edge segments, or ``None`` if they no longer overlap."""
-        overlap = get_segment_overlap(seg_a, seg_b, unitize=True)
-        if overlap is None:
+    def _edge_edge_locations(seg_a, seg_b):
+        """Per-plate locations of an edge-edge connection: the midpoint of the overlap of the two
+        colinear edges, measured on each edge. ``None`` if they no longer overlap.
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`) or None
+            The location on `seg_a` and the location on `seg_b`.
+
+        """
+        overlap_a = get_segment_overlap(seg_a, seg_b, unitize=True)
+        overlap_b = get_segment_overlap(seg_b, seg_a, unitize=True)
+        if overlap_a is None or overlap_b is None:
             return None
-        return seg_a.point_at(sum(overlap) / 2.0)
+        return seg_a.point_at(sum(overlap_a) / 2.0), seg_b.point_at(sum(overlap_b) / 2.0)
 
     @staticmethod
-    def _edge_face_location(segment, outline, max_distance):
-        """Midpoint of the portion of `segment` that lies on `outline`, or ``None`` if there is no overlap."""
-        pts = get_segment_range_on_polyline(segment, outline, max_distance)
+    def _edge_face_locations(segment, outline, plane, tol=TOL.absolute):
+        """Per-plate locations of an edge-face connection: the midpoint of the portion of the edge
+        `segment` that lies on the face `outline`, measured on the face (`segment` projected onto
+        `plane`, the plane of `outline`) and on the edge itself. ``None`` if there is no overlap.
+
+        Returns
+        -------
+        tuple(:class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`) or None
+            The location on the edge plate and the location on the face plate.
+
+        """
+        projected = Line(plane.projected_point(segment.start), plane.projected_point(segment.end))
+        pts = get_segment_range_on_polyline(projected, outline, tol)
         if pts is None:
             return None
-        return (pts[0] + pts[1]) / 2.0
+        face_location = (pts[0] + pts[1]) / 2.0
+        edge_location = Point(*segment.closest_point(face_location))
+        return edge_location, face_location
 
     @staticmethod
     def _find_plate_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -501,23 +536,26 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, :class:`~compas.geometry.Point` or None)
+        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, :class:`~compas.geometry.Point` or None, :class:`~compas.geometry.Point` or None)
             For each plate a `(ref_side_index, edge_index)` pair, where `edge_index` is ``None`` for the
             face side of an edge-face connection, followed by the distance between the plates and the
-            location of the connection. All ``None`` when the plates do not connect.
+            location of the connection on `plate_a` and on `plate_b`. All ``None`` when the plates do not connect.
 
         """
 
-        edge_a, edge_b, dist, pt = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
+        edge_a, edge_b, dist, locations = PlateConnectionSolver._get_l_topo_segment_indices(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if edge_a is not None:
-            return edge_a, edge_b, dist, pt
-        edge_a, ref_side_b, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
+            loc_a, loc_b = locations or (None, None)
+            return edge_a, edge_b, dist, loc_a, loc_b
+        edge_a, ref_side_b, dist, locations = PlateConnectionSolver._get_t_topo_segment_index(plate_a, plate_b, max_distance=max_distance, tol=tol)
         if edge_a is not None:
-            return edge_a, (ref_side_b, None), dist, pt
-        edge_b, ref_side_a, dist, pt = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
+            loc_a, loc_b = locations or (None, None)
+            return edge_a, (ref_side_b, None), dist, loc_a, loc_b
+        edge_b, ref_side_a, dist, locations = PlateConnectionSolver._get_t_topo_segment_index(plate_b, plate_a, max_distance=max_distance, tol=tol)
         if edge_b is not None:
-            return (ref_side_a, None), edge_b, dist, pt
-        return None, None, None, None
+            loc_b, loc_a = locations or (None, None)
+            return (ref_side_a, None), edge_b, dist, loc_a, loc_b
+        return None, None, None, None, None
 
     @staticmethod
     def _get_l_topo_segment_indices(plate_a, plate_b, max_distance=None, tol=TOL):
@@ -526,9 +564,10 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, :class:`~compas.geometry.Point` or None)
+        tuple(tuple(int, int) or None, tuple(int, int) or None, float or None, tuple(:class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`) or None)
             A `(ref_side_index, edge_index)` pair per plate, the distance between the segments and the
-            location of the connection. All ``None`` when no colinear overlapping pair is found.
+            location of the connection on `plate_a` and on `plate_b`. All ``None`` when no colinear
+            overlapping pair is found.
 
         """
 
@@ -542,8 +581,8 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, seg_b, tol=tol):
                             if PlateConnectionSolver.do_segments_overlap(seg_a, seg_b):
-                                location = PlateConnectionSolver._edge_edge_location(seg_a, seg_b)
-                                return (ref_side_a, i), (ref_side_b, j), dist, location
+                                locations = PlateConnectionSolver._edge_edge_locations(seg_a, seg_b)
+                                return (ref_side_a, i), (ref_side_b, j), dist, locations
         return None, None, None, None
 
     @staticmethod
@@ -553,10 +592,10 @@ class PlateConnectionSolver(ConnectionSolver):
 
         Returns
         -------
-        tuple(tuple(int, int) or None, int or None, float or None, :class:`~compas.geometry.Point` or None)
+        tuple(tuple(int, int) or None, int or None, float or None, tuple(:class:`~compas.geometry.Point`, :class:`~compas.geometry.Point`) or None)
             The `(ref_side_index, edge_index)` pair of the main plate's connecting edge, the reference
             side index of the cross plate it lands on, the distance between the two, and the location of
-            the connection. All ``None`` when no such segment is found.
+            the connection on `main_plate` and on `cross_plate`. All ``None`` when no such segment is found.
 
         """
 
@@ -571,8 +610,8 @@ class PlateConnectionSolver(ConnectionSolver):
                     if dist <= max_distance:
                         if is_parallel_line_line(seg_a, line, tol=tol):
                             if PlateConnectionSolver.does_segment_intersect_outline(seg_a, pline_b):
-                                location = PlateConnectionSolver._edge_face_location(seg_a, pline_b, max_distance)
-                                return (ref_side_a, i), ref_side_b, dist, location
+                                locations = PlateConnectionSolver._edge_face_locations(seg_a, pline_b, plane_b)
+                                return (ref_side_a, i), ref_side_b, dist, locations
         return None, None, None, None
 
     @staticmethod
