@@ -57,15 +57,16 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
         return None
     # use the plate order determined by find_topology to keep edge, face relationship
     plate_a, plate_b = result.reorder_elements(element_a, element_b)
-    kwargs = {
-        "topology": result.topology,
-        "distance": result.distance,
-        "location": result.location,
+    return PlateJointCandidate(
+        plate_a, 
+        plate_b, 
+        topology=result.topology,
+        distance=result.distance,
+        location=result.location,
         # `edge_index` is None on the face-side plate of a TOPO_EDGE_FACE connection
-        "a_segment_index": result.data_for(plate_a).edge_index,
-        "b_segment_index": result.data_for(plate_b).edge_index,
-    }
-    return PlateJointCandidate(plate_a, plate_b, **kwargs)
+        a_segment_index=result.data_for(plate_a).edge_index,
+        b_segment_index=result.data_for(plate_b).edge_index,
+        )
 
 
 def find_connection_handler(element_a, element_b):
