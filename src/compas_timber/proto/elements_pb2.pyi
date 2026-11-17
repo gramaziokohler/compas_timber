@@ -12,12 +12,11 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class PlateGeometryData(_message.Message):
-    __slots__ = ("guid", "name", "local_outline_a", "local_outline_b", "frame", "length", "width", "thickness")
+    __slots__ = ("guid", "name", "local_outline_a", "local_outline_b", "length", "width", "thickness")
     GUID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     LOCAL_OUTLINE_A_FIELD_NUMBER: _ClassVar[int]
     LOCAL_OUTLINE_B_FIELD_NUMBER: _ClassVar[int]
-    FRAME_FIELD_NUMBER: _ClassVar[int]
     LENGTH_FIELD_NUMBER: _ClassVar[int]
     WIDTH_FIELD_NUMBER: _ClassVar[int]
     THICKNESS_FIELD_NUMBER: _ClassVar[int]
@@ -25,11 +24,10 @@ class PlateGeometryData(_message.Message):
     name: str
     local_outline_a: _geometry_pb2.PolylineData
     local_outline_b: _geometry_pb2.PolylineData
-    frame: _geometry_pb2.FrameData
     length: float
     width: float
     thickness: float
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., local_outline_a: _Optional[_Union[_geometry_pb2.PolylineData, _Mapping]] = ..., local_outline_b: _Optional[_Union[_geometry_pb2.PolylineData, _Mapping]] = ..., frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ..., length: _Optional[float] = ..., width: _Optional[float] = ..., thickness: _Optional[float] = ...) -> None: ...
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., local_outline_a: _Optional[_Union[_geometry_pb2.PolylineData, _Mapping]] = ..., local_outline_b: _Optional[_Union[_geometry_pb2.PolylineData, _Mapping]] = ..., length: _Optional[float] = ..., width: _Optional[float] = ..., thickness: _Optional[float] = ...) -> None: ...
 
 class LayerDefinitionData(_message.Message):
     __slots__ = ("guid", "name", "thickness", "sublayer_defs")
@@ -60,18 +58,20 @@ class LayerPath(_message.Message):
     def __init__(self, indices: _Optional[_Iterable[int]] = ...) -> None: ...
 
 class LayerData(_message.Message):
-    __slots__ = ("guid", "name", "plate_geometry", "start_offset", "layer_path")
+    __slots__ = ("guid", "name", "plate_geometry", "start_offset", "layer_path", "frame")
     GUID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
     PLATE_GEOMETRY_FIELD_NUMBER: _ClassVar[int]
     START_OFFSET_FIELD_NUMBER: _ClassVar[int]
     LAYER_PATH_FIELD_NUMBER: _ClassVar[int]
+    FRAME_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
     plate_geometry: PlateGeometryData
     start_offset: float
     layer_path: LayerPath
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., start_offset: _Optional[float] = ..., layer_path: _Optional[_Union[LayerPath, _Mapping]] = ...) -> None: ...
+    frame: _geometry_pb2.FrameData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., start_offset: _Optional[float] = ..., layer_path: _Optional[_Union[LayerPath, _Mapping]] = ..., frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ...) -> None: ...
 
 class BeamData(_message.Message):
     __slots__ = ("guid", "name", "frame", "length", "width", "height", "features", "attributes")
@@ -101,7 +101,7 @@ class BeamData(_message.Message):
     def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ..., length: _Optional[float] = ..., width: _Optional[float] = ..., height: _Optional[float] = ..., features: _Optional[_Iterable[_Union[_fabrication_pb2.BTLxProcessingData, _Mapping]]] = ..., attributes: _Optional[_Mapping[str, _message_pb2.AnyData]] = ...) -> None: ...
 
 class PlateData(_message.Message):
-    __slots__ = ("guid", "name", "plate_geometry", "features", "attributes")
+    __slots__ = ("guid", "name", "plate_geometry", "features", "attributes", "frame")
     class AttributesEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -114,15 +114,17 @@ class PlateData(_message.Message):
     PLATE_GEOMETRY_FIELD_NUMBER: _ClassVar[int]
     FEATURES_FIELD_NUMBER: _ClassVar[int]
     ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    FRAME_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
     plate_geometry: PlateGeometryData
     features: _containers.RepeatedCompositeFieldContainer[_fabrication_pb2.BTLxProcessingData]
     attributes: _containers.MessageMap[str, _message_pb2.AnyData]
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., features: _Optional[_Iterable[_Union[_fabrication_pb2.BTLxProcessingData, _Mapping]]] = ..., attributes: _Optional[_Mapping[str, _message_pb2.AnyData]] = ...) -> None: ...
+    frame: _geometry_pb2.FrameData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., features: _Optional[_Iterable[_Union[_fabrication_pb2.BTLxProcessingData, _Mapping]]] = ..., attributes: _Optional[_Mapping[str, _message_pb2.AnyData]] = ..., frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ...) -> None: ...
 
 class PanelData(_message.Message):
-    __slots__ = ("guid", "name", "plate_geometry", "type", "features", "layer_structure", "attributes")
+    __slots__ = ("guid", "name", "plate_geometry", "type", "features", "layer_structure", "attributes", "frame")
     class AttributesEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -137,6 +139,7 @@ class PanelData(_message.Message):
     FEATURES_FIELD_NUMBER: _ClassVar[int]
     LAYER_STRUCTURE_FIELD_NUMBER: _ClassVar[int]
     ATTRIBUTES_FIELD_NUMBER: _ClassVar[int]
+    FRAME_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
     plate_geometry: PlateGeometryData
@@ -144,7 +147,8 @@ class PanelData(_message.Message):
     features: _containers.RepeatedCompositeFieldContainer[_panel_features_pb2.PanelFeatureData]
     layer_structure: LayerStructureData
     attributes: _containers.MessageMap[str, _message_pb2.AnyData]
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., type: _Optional[str] = ..., features: _Optional[_Iterable[_Union[_panel_features_pb2.PanelFeatureData, _Mapping]]] = ..., layer_structure: _Optional[_Union[LayerStructureData, _Mapping]] = ..., attributes: _Optional[_Mapping[str, _message_pb2.AnyData]] = ...) -> None: ...
+    frame: _geometry_pb2.FrameData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., plate_geometry: _Optional[_Union[PlateGeometryData, _Mapping]] = ..., type: _Optional[str] = ..., features: _Optional[_Iterable[_Union[_panel_features_pb2.PanelFeatureData, _Mapping]]] = ..., layer_structure: _Optional[_Union[LayerStructureData, _Mapping]] = ..., attributes: _Optional[_Mapping[str, _message_pb2.AnyData]] = ..., frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ...) -> None: ...
 
 class FastenerHoleData(_message.Message):
     __slots__ = ("point", "diameter", "vector", "through", "extra")

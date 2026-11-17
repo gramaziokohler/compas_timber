@@ -63,10 +63,9 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
         topology=result.topology,
         distance=result.distance,
         location=result.location,
-        # `edge_index` is None on the face-side plate of a TOPO_EDGE_FACE connection
-        "a_segment_index": result.info_for(plate_a).edge_index,
-        "b_segment_index": result.info_for(plate_b).edge_index,
-    }
+        a_segment_index=result.info_for(plate_a).edge_index,
+        b_segment_index=result.info_for(plate_b).edge_index,
+    )
     return PlateJointCandidate(plate_a, plate_b, **kwargs)
 
 

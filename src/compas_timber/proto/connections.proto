@@ -35,26 +35,43 @@ message JointCandidateData {
   map<string, compas_pb.data.AnyData> extra_kwargs = 14;
 }
 
-message BeamSolverResultData {
+// Per-element topology info (compas_timber.connections.topology_info). These hold
+// no reference to their element; TopologyInfo keys them by the element's guid.
+message BeamTopologyInfoData {
   GuidRef guid = 1;
   optional string name = 2;
-  optional int32 topology = 10;
-  optional GuidRef beam_a_guid = 11;
-  optional GuidRef beam_b_guid = 12;
-  optional double distance = 13;
-  optional compas_pb.data.PointData location = 14;
+  optional string role = 10;
+  optional string end = 11;
+  optional int32 ref_side_index = 12;
+  optional double location_parameter = 13;
 }
 
-message PlateSolverResultData {
+message PlateTopologyInfoData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional string role = 10;
+  optional int32 edge_index = 11;
+  optional int32 ref_side_index = 12;
+  optional compas_pb.data.PointData location = 13;
+}
+
+// Polymorphic wrapper: the per-element entry of a TopologyInfo.
+message ElementTopologyInfoData {
+  oneof info {
+    BeamTopologyInfoData beam_topology_info = 1;
+    PlateTopologyInfoData plate_topology_info = 2;
+  }
+}
+
+// `element_topo_info` is keyed by `str(element.guid)`; the keys are plain strings
+// rather than GuidRefs because proto map keys must be scalars.
+message TopologyInfoData {
   GuidRef guid = 1;
   optional string name = 2;
   optional int32 topology = 10;
-  optional GuidRef plate_a_guid = 11;
-  optional GuidRef plate_b_guid = 12;
-  optional int32 a_segment_index = 13;
-  optional int32 b_segment_index = 14;
-  optional double distance = 15;
-  optional compas_pb.data.PointData location = 16;
+  optional double distance = 11;
+  optional compas_pb.data.PointData location = 12;
+  map<string, ElementTopologyInfoData> element_topo_info = 13;
 }
 
 message BallNodeJointData {

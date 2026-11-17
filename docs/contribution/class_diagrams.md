@@ -272,16 +272,10 @@ classDiagram
 The connections subsystem defines joints and their relationships. All joints inherit from the abstract `Joint` class (a `compas.data.Data` subclass; `Data` is omitted from the diagram since every class here derives from it) and declare the topology they support via `SUPPORTED_TOPOLOGY`. Joints are registered in the `TimberModel` and referenced from the edges of its interaction graph.
 
 Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `LapJoint` and `MortiseTenonJoint` share logic across the topology-specific implementations.
-`TopologyInfo` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyInfo`, `PlateTopologyInfo`) deliberately hold no reference to their element — they live in `TopologyInfo.element_topo_info`, keyed by `str(element.guid)` (always exactly two entries, one per element of the pair, in any mix of `BeamTopologyInfo`/`PlateTopologyInfo`), and are correlated back to a live element with `info_for(element)`. Keeping the elements out of the per-element info lets one `TopologyInfo` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `reorder_elements(a, b)` derives the canonical a/b order from the two entries' `role`s (`main`/`edge` goes before `cross`/`face`; ties keep the given order).
-
-```mermaid
-classDiagram
-      class Interaction {
-         <<abstract>>
-         +name : str
-      }
 
 Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
+
+`TopologyInfo` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyInfo`, `PlateTopologyInfo`) deliberately hold no reference to their element — they live in `TopologyInfo.element_topo_info`, keyed by `str(element.guid)` (always exactly two entries, one per element of the pair, in any mix of `BeamTopologyInfo`/`PlateTopologyInfo`), and are correlated back to a live element with `info_for(element)`. Keeping the elements out of the per-element info lets one `TopologyInfo` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `reorder_elements(a, b)` derives the canonical a/b order from the two entries' `role`s (`main`/`edge` goes before `cross`/`face`; ties keep the given order).
 
 ```mermaid
 classDiagram
@@ -337,6 +331,7 @@ classDiagram
       class PlateTopologyInfo {
          +role : edge | face
          +edge_index : int
+         +ref_side_index : int
          +location : Point
       }
 
@@ -551,9 +546,6 @@ classDiagram
          +calculate_topology()
       }
 
-      class PlateJointCandidate {
-      }
-
       class PlateButtJoint {
          <<abstract>>
          +main_plate
@@ -602,12 +594,7 @@ classDiagram
       }
 
       %% Inheritance relationships
-      Interaction <|-- Joint
-      Data <|-- JointCandidate
       JointCandidate <|-- PlateJointCandidate
-      Data <|-- TopologyInfo
-      Data <|-- BeamTopologyInfo
-      Data <|-- PlateTopologyInfo
       TopologyInfo "1" o-- "0..2" BeamTopologyInfo : element_topo_info, keyed by element guid
       TopologyInfo "1" o-- "0..2" PlateTopologyInfo : element_topo_info, keyed by element guid
       PlateJoint ..> TopologyInfo : calculate_topology()
@@ -633,7 +620,6 @@ classDiagram
       Joint <|-- ISimpleScarf
       Joint <|-- XNotchJoint
       Joint <|-- PlateJoint
-      PlateJoint <|-- PlateJointCandidate
       PlateJoint <|-- PlateButtJoint
       PlateButtJoint <|-- PlateLButtJoint
       PlateButtJoint <|-- PlateTButtJoint

@@ -7,18 +7,24 @@ from compas.data import json_dumps
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
+from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import CutPlaneSpec
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
+from compas_timber.connections import PlateConnectionSolver
+from compas_timber.connections import PlateTopologyInfo
 from compas_timber.connections import TButtJoint
+from compas_timber.connections import TopologyInfo
 from compas_timber.connections import XLapJoint
 from compas_timber.elements import Beam
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 
@@ -126,3 +132,39 @@ def test_joint_candidate_extra_kwargs_roundtrip():
     )
     other = assert_lossless(candidate)
     assert other.__data__["a_segment_index"] == 2
+
+
+def test_beam_topology_info_roundtrip():
+    model, a, b = _model_with_two_beams()
+    topo_info = ConnectionSolver().find_topology(a, b)
+    assert topo_info.topology == JointTopology.TOPO_L
+
+    other = assert_lossless(topo_info)
+
+    assert other.reorder_elements(a, b) == (a, b)
+    for beam in (a, b):
+        assert other.info_for(beam).__data__ == topo_info.info_for(beam).__data__
+
+
+def test_plate_topology_info_roundtrip():
+    face = Plate.from_outline_thickness(Polyline([[0, 0, 0], [100, 0, 0], [100, 100, 0], [0, 100, 0], [0, 0, 0]]), 10)
+    edge = Plate.from_outline_thickness(Polyline([[50, -50, 0], [50, 50, 0], [50, 50, 100], [50, -50, 100], [50, -50, 0]]), 10, vector=Vector(1, 0, 0))
+    topo_info = PlateConnectionSolver().find_topology(face, edge, max_distance=1.0)
+    assert topo_info.topology == JointTopology.TOPO_EDGE_FACE
+
+    other = assert_lossless(topo_info)
+
+    assert other.reorder_elements(face, edge) == (edge, face)
+    assert isinstance(other.info_for(edge), PlateTopologyInfo)
+    assert other.info_for(edge).location == topo_info.info_for(edge).location
+    assert other.info_for(face).edge_index is None
+
+
+def test_unknown_topology_info_roundtrip():
+    """Unset per-element fields stay unset rather than turning into proto defaults."""
+    topo_info = TopologyInfo(JointTopology.TOPO_UNKNOWN, element_topo_info={"aaa": PlateTopologyInfo(), "bbb": PlateTopologyInfo()})
+
+    other = assert_lossless(topo_info)
+
+    assert other.distance is None and other.location is None
+    assert all(v is None for v in other.element_topo_info["aaa"].__data__.values())

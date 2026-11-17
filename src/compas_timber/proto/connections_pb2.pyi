@@ -12,34 +12,14 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class CutPlaneSpecData(_message.Message):
-    __slots__ = ("guid", "name", "ref_side_index", "angle", "offset")
+    __slots__ = ("guid", "name", "local_frame")
     GUID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
-    REF_SIDE_INDEX_FIELD_NUMBER: _ClassVar[int]
-    ANGLE_FIELD_NUMBER: _ClassVar[int]
-    OFFSET_FIELD_NUMBER: _ClassVar[int]
+    LOCAL_FRAME_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
-    ref_side_index: int
-    angle: float
-    offset: float
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., ref_side_index: _Optional[int] = ..., angle: _Optional[float] = ..., offset: _Optional[float] = ...) -> None: ...
-
-class MiterPlaneSpecData(_message.Message):
-    __slots__ = ("guid", "name", "ref_side_index", "angle_x", "angle_y", "offset")
-    GUID_FIELD_NUMBER: _ClassVar[int]
-    NAME_FIELD_NUMBER: _ClassVar[int]
-    REF_SIDE_INDEX_FIELD_NUMBER: _ClassVar[int]
-    ANGLE_X_FIELD_NUMBER: _ClassVar[int]
-    ANGLE_Y_FIELD_NUMBER: _ClassVar[int]
-    OFFSET_FIELD_NUMBER: _ClassVar[int]
-    guid: _common_pb2.GuidRef
-    name: str
-    ref_side_index: int
-    angle_x: float
-    angle_y: float
-    offset: float
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., ref_side_index: _Optional[int] = ..., angle_x: _Optional[float] = ..., angle_y: _Optional[float] = ..., offset: _Optional[float] = ...) -> None: ...
+    local_frame: _geometry_pb2.FrameData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., local_frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ...) -> None: ...
 
 class JointCandidateData(_message.Message):
     __slots__ = ("guid", "name", "element_guids", "topology", "location", "distance", "extra_kwargs")
@@ -66,45 +46,68 @@ class JointCandidateData(_message.Message):
     extra_kwargs: _containers.MessageMap[str, _message_pb2.AnyData]
     def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., element_guids: _Optional[_Iterable[_Union[_common_pb2.GuidRef, _Mapping]]] = ..., topology: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., distance: _Optional[float] = ..., extra_kwargs: _Optional[_Mapping[str, _message_pb2.AnyData]] = ...) -> None: ...
 
-class BeamSolverResultData(_message.Message):
-    __slots__ = ("guid", "name", "topology", "beam_a_guid", "beam_b_guid", "distance", "location")
+class BeamTopologyInfoData(_message.Message):
+    __slots__ = ("guid", "name", "role", "end", "ref_side_index", "location_parameter")
     GUID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
-    TOPOLOGY_FIELD_NUMBER: _ClassVar[int]
-    BEAM_A_GUID_FIELD_NUMBER: _ClassVar[int]
-    BEAM_B_GUID_FIELD_NUMBER: _ClassVar[int]
-    DISTANCE_FIELD_NUMBER: _ClassVar[int]
-    LOCATION_FIELD_NUMBER: _ClassVar[int]
+    ROLE_FIELD_NUMBER: _ClassVar[int]
+    END_FIELD_NUMBER: _ClassVar[int]
+    REF_SIDE_INDEX_FIELD_NUMBER: _ClassVar[int]
+    LOCATION_PARAMETER_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
-    topology: int
-    beam_a_guid: _common_pb2.GuidRef
-    beam_b_guid: _common_pb2.GuidRef
-    distance: float
-    location: _geometry_pb2.PointData
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., topology: _Optional[int] = ..., beam_a_guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., beam_b_guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., distance: _Optional[float] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ...) -> None: ...
+    role: str
+    end: str
+    ref_side_index: int
+    location_parameter: float
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., role: _Optional[str] = ..., end: _Optional[str] = ..., ref_side_index: _Optional[int] = ..., location_parameter: _Optional[float] = ...) -> None: ...
 
-class PlateSolverResultData(_message.Message):
-    __slots__ = ("guid", "name", "topology", "plate_a_guid", "plate_b_guid", "a_segment_index", "b_segment_index", "distance", "location")
+class PlateTopologyInfoData(_message.Message):
+    __slots__ = ("guid", "name", "role", "edge_index", "ref_side_index", "location")
     GUID_FIELD_NUMBER: _ClassVar[int]
     NAME_FIELD_NUMBER: _ClassVar[int]
-    TOPOLOGY_FIELD_NUMBER: _ClassVar[int]
-    PLATE_A_GUID_FIELD_NUMBER: _ClassVar[int]
-    PLATE_B_GUID_FIELD_NUMBER: _ClassVar[int]
-    A_SEGMENT_INDEX_FIELD_NUMBER: _ClassVar[int]
-    B_SEGMENT_INDEX_FIELD_NUMBER: _ClassVar[int]
-    DISTANCE_FIELD_NUMBER: _ClassVar[int]
+    ROLE_FIELD_NUMBER: _ClassVar[int]
+    EDGE_INDEX_FIELD_NUMBER: _ClassVar[int]
+    REF_SIDE_INDEX_FIELD_NUMBER: _ClassVar[int]
     LOCATION_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
+    role: str
+    edge_index: int
+    ref_side_index: int
+    location: _geometry_pb2.PointData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., role: _Optional[str] = ..., edge_index: _Optional[int] = ..., ref_side_index: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ...) -> None: ...
+
+class ElementTopologyInfoData(_message.Message):
+    __slots__ = ("beam_topology_info", "plate_topology_info")
+    BEAM_TOPOLOGY_INFO_FIELD_NUMBER: _ClassVar[int]
+    PLATE_TOPOLOGY_INFO_FIELD_NUMBER: _ClassVar[int]
+    beam_topology_info: BeamTopologyInfoData
+    plate_topology_info: PlateTopologyInfoData
+    def __init__(self, beam_topology_info: _Optional[_Union[BeamTopologyInfoData, _Mapping]] = ..., plate_topology_info: _Optional[_Union[PlateTopologyInfoData, _Mapping]] = ...) -> None: ...
+
+class TopologyInfoData(_message.Message):
+    __slots__ = ("guid", "name", "topology", "distance", "location", "element_topo_info")
+    class ElementTopoInfoEntry(_message.Message):
+        __slots__ = ("key", "value")
+        KEY_FIELD_NUMBER: _ClassVar[int]
+        VALUE_FIELD_NUMBER: _ClassVar[int]
+        key: str
+        value: ElementTopologyInfoData
+        def __init__(self, key: _Optional[str] = ..., value: _Optional[_Union[ElementTopologyInfoData, _Mapping]] = ...) -> None: ...
+    GUID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    TOPOLOGY_FIELD_NUMBER: _ClassVar[int]
+    DISTANCE_FIELD_NUMBER: _ClassVar[int]
+    LOCATION_FIELD_NUMBER: _ClassVar[int]
+    ELEMENT_TOPO_INFO_FIELD_NUMBER: _ClassVar[int]
+    guid: _common_pb2.GuidRef
+    name: str
     topology: int
-    plate_a_guid: _common_pb2.GuidRef
-    plate_b_guid: _common_pb2.GuidRef
-    a_segment_index: int
-    b_segment_index: int
     distance: float
     location: _geometry_pb2.PointData
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., topology: _Optional[int] = ..., plate_a_guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., plate_b_guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., a_segment_index: _Optional[int] = ..., b_segment_index: _Optional[int] = ..., distance: _Optional[float] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ...) -> None: ...
+    element_topo_info: _containers.MessageMap[str, ElementTopologyInfoData]
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., topology: _Optional[int] = ..., distance: _Optional[float] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., element_topo_info: _Optional[_Mapping[str, ElementTopologyInfoData]] = ...) -> None: ...
 
 class BallNodeJointData(_message.Message):
     __slots__ = ("guid", "name", "topology", "location", "element_guids", "beam_guids", "ball_diameter", "fastener_guid", "base_interface")
@@ -278,9 +281,9 @@ class LMiterJointData(_message.Message):
     element_guids: _containers.RepeatedCompositeFieldContainer[_common_pb2.GuidRef]
     cutoff: bool
     ref_side_miter: bool
-    miter_plane: MiterPlaneSpecData
+    miter_plane: CutPlaneSpecData
     clean: bool
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., topology: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., element_guids: _Optional[_Iterable[_Union[_common_pb2.GuidRef, _Mapping]]] = ..., cutoff: bool = ..., ref_side_miter: bool = ..., miter_plane: _Optional[_Union[MiterPlaneSpecData, _Mapping]] = ..., clean: bool = ...) -> None: ...
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., topology: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., element_guids: _Optional[_Iterable[_Union[_common_pb2.GuidRef, _Mapping]]] = ..., cutoff: bool = ..., ref_side_miter: bool = ..., miter_plane: _Optional[_Union[CutPlaneSpecData, _Mapping]] = ..., clean: bool = ...) -> None: ...
 
 class LTenonMortiseJointData(_message.Message):
     __slots__ = ("guid", "name", "topology", "location", "element_guids", "start_y", "start_depth", "rotation", "length", "width", "height", "tenon_shape", "shape_radius", "modify_cross")

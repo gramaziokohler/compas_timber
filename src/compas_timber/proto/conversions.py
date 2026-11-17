@@ -257,10 +257,12 @@ def _field_to_pb(msg, field, value):
         vfield = field.message_type.fields_by_name["value"]
         target = getattr(msg, name)
         for k, v in dict(value).items():
-            if vfield.type == FieldDescriptor.TYPE_MESSAGE and vfield.message_type.full_name == _ANY:
+            if vfield.type != FieldDescriptor.TYPE_MESSAGE:
+                target[k] = v
+            elif vfield.message_type.full_name == _ANY:
                 target[k].CopyFrom(any_to_pb(v))
             else:
-                target[k] = v
+                target[k].CopyFrom(_wrap(vfield.message_type, v))
         return
 
     repeated = field.is_repeated
@@ -311,9 +313,11 @@ def _field_from_pb(msg, field):
     if _is_map(field):
         vfield = field.message_type.fields_by_name["value"]
         raw = getattr(msg, name)
-        if vfield.type == FieldDescriptor.TYPE_MESSAGE and vfield.message_type.full_name == _ANY:
+        if vfield.type != FieldDescriptor.TYPE_MESSAGE:
+            return dict(raw)
+        if vfield.message_type.full_name == _ANY:
             return {k: any_from_pb(v) for k, v in raw.items()}
-        return dict(raw)
+        return {k: _unwrap(v) for k, v in raw.items()}
 
     repeated = field.is_repeated
     if field.type != FieldDescriptor.TYPE_MESSAGE:
@@ -662,11 +666,10 @@ from compas_timber import connections as _cn  # noqa: E402
 
 register(_cn.CutPlaneSpec, connections_pb2.CutPlaneSpecData)
 register(_cn.JointCandidate, connections_pb2.JointCandidateData, catchall="extra_kwargs", name_in_data=True)
-from compas_timber.connections.solver import BeamSolverResult as _BeamSolverResult  # noqa: E402
-from compas_timber.connections.solver import PlateSolverResult as _PlateSolverResult  # noqa: E402
-
-register(_BeamSolverResult, connections_pb2.BeamSolverResultData, aliases={"beam_a_guid": "beam_a", "beam_b_guid": "beam_b"})
-register(_PlateSolverResult, connections_pb2.PlateSolverResultData, aliases={"plate_a_guid": "plate_a", "plate_b_guid": "plate_b"})
+register(_cn.BeamTopologyInfo, connections_pb2.BeamTopologyInfoData)
+register(_cn.PlateTopologyInfo, connections_pb2.PlateTopologyInfoData)
+register_wrapper(connections_pb2.ElementTopologyInfoData)
+register(_cn.TopologyInfo, connections_pb2.TopologyInfoData)
 
 for _name in dir(_cn):
     _obj = getattr(_cn, _name)
