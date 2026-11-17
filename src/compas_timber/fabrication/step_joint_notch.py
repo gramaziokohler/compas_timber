@@ -13,6 +13,7 @@ from compas.geometry import is_point_behind_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -512,7 +513,7 @@ class StepJointNotch(BTLxProcessing):
         if isinstance(subtraction_volume, list):
             for sub_vol in subtraction_volume:
                 try:
-                    geometry -= sub_vol
+                    geometry = brep_difference_first(geometry, sub_vol)
                 except Exception as e:
                     raise FeatureApplicationError(
                         sub_vol.transformed(beam.modeltransformation),
@@ -520,7 +521,7 @@ class StepJointNotch(BTLxProcessing):
                         "Failed to subtract volume from geometry: {}".format(str(e)),
                     )
         else:
-            geometry -= subtraction_volume
+            geometry = brep_difference_first(geometry, subtraction_volume)
 
         ## add mortise
         if self.mortise and self.step_shape != StepShapeType.DOUBLE: # TODO: check if mortise applies only to step in BTLx
@@ -544,7 +545,7 @@ class StepJointNotch(BTLxProcessing):
                     "Failed to trim mortise volume with step cutting plane: {}".format(str(e)),
                 )
             try:
-                geometry -= mortise_volume
+                geometry = brep_difference_first(geometry, mortise_volume)
             except Exception as e:
                 raise FeatureApplicationError(
                     mortise_volume.transformed(beam.modeltransformation),

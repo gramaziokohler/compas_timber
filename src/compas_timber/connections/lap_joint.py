@@ -54,8 +54,6 @@ class LapJoint(Joint):
 
         self._ref_side_index_a = None
         self._ref_side_index_b = None
-        self._cutting_plane_a = None
-        self._cutting_plane_b = None
 
     @property
     def beam_a(self):
@@ -79,19 +77,16 @@ class LapJoint(Joint):
             self._ref_side_index_b = self._get_beam_ref_side_index(self.beam_b, self.beam_a, self.flip_lap_side)
         return self._ref_side_index_b
 
+    # not cached: in model space, so it moves with the beams
     @property
     def cutting_plane_a(self):
         """The face of the beam_b that cuts the beam_a, as a plane."""
-        if self._cutting_plane_a is None:
-            self._cutting_plane_a = self._get_cutting_plane(self.beam_b, self.beam_a)
-        return self._cutting_plane_a
+        return self._get_cutting_plane(self.beam_b, self.beam_a)
 
     @property
     def cutting_plane_b(self):
         """The face of the beam_a that cuts the beam_b, as a plane."""
-        if self._cutting_plane_b is None:
-            self._cutting_plane_b = self._get_cutting_plane(self.beam_a, self.beam_b)
-        return self._cutting_plane_b
+        return self._get_cutting_plane(self.beam_a, self.beam_b)
 
     @staticmethod
     def _get_beam_ref_side_index(beam_a, beam_b, flip):

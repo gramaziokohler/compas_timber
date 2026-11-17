@@ -199,7 +199,7 @@ def test_birds_mouth_apply_raises_when_boolean_difference_fails(beam, notch_plan
     mock_trim_volume = mocker.MagicMock()
     mocker.patch.object(beam, "compute_elementgeometry", return_value=mock_trim_volume)
     mock_geometry = mocker.MagicMock()
-    mock_geometry.__sub__ = mocker.MagicMock(side_effect=Exception("subtraction failed"))
+    mocker.patch("compas_timber.fabrication.birds_mouth.brep_difference_first", side_effect=Exception("subtraction failed"))
 
     with pytest.raises(FeatureApplicationError) as excinfo:
         bm.apply(mock_geometry, beam)

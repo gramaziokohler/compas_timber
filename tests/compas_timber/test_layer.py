@@ -9,6 +9,7 @@ from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import TOL
 
+from compas_timber.base import clear_model_cache
 from compas_timber.elements import Layer
 from compas_timber.elements import LayerDefinition
 from compas_timber.elements import LayerStructure
@@ -918,30 +919,18 @@ def test_apply_edge_extensions_recurses_through_nested_sublayers(panel_with_laye
 
 
 # ---------------------------------------------------------------------------
-# 34. reset_computed_properties / clear_model_dependent_cache
+# 34. clear_model_cache
 # ---------------------------------------------------------------------------
 
 
-def test_reset_computed_properties_clears_planes_and_computed_caches(flat_panel):
-    layer = Layer.from_parent_start_end(flat_panel, 0.0, 0.5)
-    layer.planes  # populate cache
-    layer.aabb  # populate cache
-    assert layer._planes is not None
-
-    layer.reset_computed_properties()
-
-    assert layer._planes is None
-    assert layer._aabb is None
-
-
-def test_clear_model_dependent_cache(flat_panel):
+def test_clear_model_cache(flat_panel):
     layer = Layer.from_parent_start_end(flat_panel, 0.0, 0.5)
     layer.planes
     layer.aabb
     layer.obb
     layer.collision_mesh
 
-    layer.clear_model_dependent_cache()
+    clear_model_cache(layer)
 
     assert layer._modeltransformation is None
     assert layer._modelgeometry is None

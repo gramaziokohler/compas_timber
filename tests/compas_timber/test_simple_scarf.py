@@ -47,8 +47,8 @@ def test_simple_scarf_end_orientation(standard_beam):
     )
 
     assert feature.orientation == OrientationType.END
-    # StartX should be beam length + length/2 for END cuts based on the method
-    assert feature.start_x == 1000.0 + (300 / 2)
+    # StartX should be the end of the blank for END cuts, the scarf volume itself overshoots it
+    assert feature.start_x == standard_beam.blank_length
 
 
 def test_simple_scarf_validation():

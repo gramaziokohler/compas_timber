@@ -1,4 +1,5 @@
 import pytest
+from compas.geometry import Box
 from compas.geometry import Frame
 from compas.geometry import Plane
 from compas.geometry import Point
@@ -7,7 +8,12 @@ from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import TOL
 
+from compas_brep import Brep
+
+from compas_timber.geometry import brep_difference_first
 from compas_timber.geometry import brep_from_outlines
+from compas_timber.geometry import brep_intersection_first
+from compas_timber.geometry import brep_union_first
 
 
 def _rectangle(z, width=10, height=5):
@@ -188,3 +194,82 @@ def test_brep_from_outlines_raises_if_outlines_not_parallel():
 
     with pytest.raises(ValueError):
         brep_from_outlines(outline_a, outline_b)
+
+
+def _box_brep(xsize, ysize, zsize, point=None):
+    return Brep.from_box(Box(xsize, ysize, zsize, frame=Frame(point or Point(0, 0, 0))))
+
+
+@pytest.mark.requires_occ
+def test_brep_difference_first_returns_a_single_solid():
+    box = _box_brep(10, 10, 10)
+    cutter = _box_brep(2, 2, 20)
+
+    result = brep_difference_first(box, cutter)
+
+    _assert_valid_solid(result, expected_volume=10 * 10 * 10 - 2 * 2 * 10)
+
+
+@pytest.mark.requires_occ
+def test_brep_difference_first_returns_one_piece_when_subtraction_splits():
+    box = _box_brep(10, 10, 10)
+    slab = _box_brep(2, 20, 20)  # cuts the box into two disconnected halves
+
+    result = brep_difference_first(box, slab)
+
+    # both halves are the same size, whichever is returned it is a single solid, not a list
+    _assert_valid_solid(result, expected_volume=4 * 10 * 10)
+
+
+@pytest.mark.requires_occ
+def test_brep_difference_first_raises_when_nothing_is_left():
+    box = _box_brep(10, 10, 10)
+    cutter = _box_brep(20, 20, 20)
+
+    with pytest.raises(IndexError):
+        brep_difference_first(box, cutter)
+
+
+@pytest.mark.requires_occ
+def test_brep_union_first_returns_a_single_solid():
+    box_a = _box_brep(10, 10, 10)
+    box_b = _box_brep(10, 10, 10, point=Point(5, 0, 0))
+
+    result = brep_union_first(box_a, box_b)
+
+    _assert_valid_solid(result, expected_volume=15 * 10 * 10)
+
+
+@pytest.mark.requires_occ
+def test_brep_union_first_accepts_more_than_two_breps():
+    box_a = _box_brep(10, 10, 10)
+    box_b = _box_brep(10, 10, 10, point=Point(5, 0, 0))
+    box_c = _box_brep(10, 10, 10, point=Point(10, 0, 0))
+
+    result = brep_union_first(box_a, box_b, box_c)
+
+    _assert_valid_solid(result, expected_volume=20 * 10 * 10)
+
+
+def test_brep_union_first_requires_something_to_union_with():
+    with pytest.raises(ValueError):
+        brep_union_first(object())
+
+
+@pytest.mark.requires_occ
+def test_brep_intersection_first_returns_a_single_solid():
+    box_a = _box_brep(10, 10, 10)
+    box_b = _box_brep(10, 10, 10, point=Point(5, 0, 0))
+
+    result = brep_intersection_first(box_a, box_b)
+
+    _assert_valid_solid(result, expected_volume=5 * 10 * 10)
+
+
+@pytest.mark.requires_occ
+def test_brep_intersection_first_raises_when_breps_do_not_overlap():
+    box_a = _box_brep(10, 10, 10)
+    box_b = _box_brep(10, 10, 10, point=Point(50, 0, 0))
+
+    with pytest.raises(IndexError):
+        brep_intersection_first(box_a, box_b)

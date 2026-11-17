@@ -36,35 +36,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_segment_range_on_polyline` to `compas_timber.geometry`.
 
 ### Changed
-* Exported BTLx `FileHistory` now records the compas_timber version in `ProgramVersion` (`COMPAS Timber: <version>; COMPAS: <version>`) instead of only the compas version, so the file identifies the program that generated it.
-* `Joint.restore_elements_from_keys()` now uses `model[guid]` instead of the deprecated `element_by_guid()`, so deserializing a jointed model no longer emits a `DeprecationWarning` from inside the library.
-* Documented in `JackRafterCut.from_plane_and_beam` (and its proxy) that the cut is fully defined by the input plane, so `ref_side_index` only pins which reference side the parameters are expressed on; removed the resolved `TODO` (#824).
-* `TimberElement.add_feature` now delegates to `add_features`, so a list passed by mistake is normalised instead of silently nested (#823). Docstring corrected accordingly.
-* `JointCandidate` no longer subclasses `Joint` (and `PlateJointCandidate` no longer subclasses `PlateJoint`); both are now standalone `compas.data.Data` subclasses with their own `location`/`topology`/`elements` handling. Code relying on `isinstance(candidate, Joint)` must be updated to check `isinstance(candidate, JointCandidate)` instead.
-* Added `TimberModel.get_candidate(element_a, element_b)`, which returns the joint candidate connecting two given elements, or `None`. Candidates are always pairwise, so (like joints) they're looked up directly from the graph edge rather than a separate registry.
-* `FeatureApplicationError` raised from `BTLxProcessing.apply()` now carries geometry in the model's global coordinate system (previously local/element space), matching errors raised elsewhere. 
-* Fixed a live crash (`TypeError`) and two other constructor-argument bugs on `BeamJoiningError` call sites.
-* Fixed wrong `RefPosition` assigned to one beam in `LFrenchRidgeLapJoint` for 90° configurations where floating-point drift caused `_calculate_ref_position` to miss the orthogonal-connection branch (`angle == 90.0` replaced with `TOL.is_close(angle, 90.0)`). Also removed a stray `print(90)` debug statement.
-* `TimberModel.remove_joint()` now calls `Joint.reset_location()`.
-* `TimberModel.connect_adjacent_beams()`, `connect_adjacent_plates()`, and `connect_adjacent_panels()` now share a single `TimberModel.compute_topologies()` implementation. Joint-candidate clearing is now unconditional (all candidates, not just the connected element type) and no longer removes existing concrete joints.
-* Fixed a bug in `PlateGeometry.from_global_outlines` where the frame-flip was applied incorrectly when the initial local frame's normal pointed in the −Z direction.
-* Bumped minimum required `compas_brep` due to bugfix in Grasshopper Brep scene object.
-* Replaced calls to `Brep.from_loft()` in `Contour` and `DualContour` with `brep_from_outlines()` for more robust solid generation.
-* Fixed plate geometry created with inconsistent face orientation.
-* `TimberModel.remove_joint()` now clears the joint's features and extensions from its elements before removing it, instead of leaving them stuck on the remaining elements.
-* `TimberModel.add_joint()` now removes any existing joint between the same elements before adding the new one, preventing a stale joint from leaking its features/extensions while becoming unreachable from the model.
-* `TimberModel.remove_element()` now also removes any joints connected to the removed element (previously only `compas_model`'s interaction/edge cleanup ran, leaving stale entries in `TimberModel`'s own joints registry and orphaned features on the surviving elements).
-* `TimberModel.process_joinery()` now clears every processed joint's extensions and features before recomputing them, so individual joints no longer need to clear their own previous state at the start of `add_extensions()`/`add_features()`, and repeated calls (full or via `joints_to_process`) are idempotent instead of accumulating (e.g. `Beam.add_blank_extension()` adds onto any existing entry for the same joint, so without the upfront clear a second run would silently double the extension amount).
-* Fixed `Beam.remove_blank_extension()` raising `KeyError` when called for a joint/element pair that was never extended (e.g. `ButtJoint` only extends its `main_beam`, never `cross_beam`).
-* Fixed `BallNodeJoint`, `YButtJoint`, and `TOliGinaJoint` not recording all of the features they apply in `self.features`, which meant `clear_features()` (or the old per-joint clearing logic) could leave some features permanently stuck on the beams.
-* Fixed `PlateJoint.clear_extensions()` resetting *all* of an element's extensions when the joint never set one (e.g. `PlateTButtJoint`'s cross plate), instead of leaving unrelated joints' extensions untouched.
-* Fixed panel `Opening` geometry calculations in standalone environments by swapping `compas.geometry.Brep` for `compas_brep`.
-* Moved the element-type dispatch used by `compute_topologies()` out of `connections/solver.py` into a new `candidate_dispatch.py` module to avoid a circular import between `solver.py` and the modules it dispatches to (`joint_candidate.py`, `compas_timber.elements`). 
-* Changed connection-candidate handlers in `candidate_dispatch.py` to register the element-type pair they support via a `@_register(TypeA, TypeB)` decorator next to their definition, instead of a separate mapping.
-* Fixed `PlateMiterJoint` bug where parallel plates failed to join.
-* Fixed bug where the `TimberModel.connect_adjacent_beams/plates/panels()` methods would not clear all existing joint candidates, including for other element types.
 
 ### Removed
+
+
+## [3.0.0] 2026-11-10
+
+### Breaking
+
+* `Plate`, `Panel` and `Layer` take a `frame` argument next to `plate_geometry` (defaults to world XY). `PlateGeometry` now holds only local outlines; its `frame` attribute and argument are removed.
+* Replaced `PlateGeometry.from_global_outlines()` with `compas_timber.elements.global_outlines_to_local()`, and `PlateGeometry.from_frame_and_dims()` with `PlateGeometry.from_dims()`.
+* `Plate`, `Panel` and `Layer` raise `ValueError` when scaled, sheared or mirrored.
+* A nested `Panel`'s `transformation` is relative to its parent again, like every other element. Use `TimberModel.add_element(..., keep_world_placement=True)` to nest a panel built in world coordinates.
+* `LMiterJoint.miter_plane` takes a `CutPlaneSpec`. Removed `MiterPlaneSpec`, `LMiterJoint.miter_plane_args()`, and `decompose_plane_to_ref_side()`, `plane_from_ref_side_angles_offset()` and `decompose_plane_to_ref_side_angles()` from `compas_timber.connections.utilities`; use `CutPlaneSpec.from_plane(beam, plane)`.
+* `JointCandidate` and `PlateJointCandidate` no longer subclass `Joint` / `PlateJoint`, and no longer have the joint members they inherited (e.g. `PlateJointCandidate.plates`, `a_planes`, `b_planes`). Check `isinstance(obj, JointCandidate)` instead.
+* `JointCandidate`'s constructor is now `(element_a, element_b, topology, location, distance, ...)`; pass `distance` by keyword.
+* `TimberModel.process_joinery()` arguments are keyword-only.
+* `CutPlaneSpec` is constructed from a `local_frame` instead of `(ref_side_index, angle, offset)`; build one with `from_plane()`, `from_butt_plane()` or `from_back_plane()`.
+* Removed `reset_computed_properties()` and `clear_model_dependent_cache()`; use `clear_element_cache()` and `clear_model_cache()` from `compas_timber.base`. Also removed the `reset_timber_attrs` decorator.
+* Removed the deprecated `compas_timber.elements.features` module, with `BrepSubtraction`, `CutFeature`, `DrillFeature` and `MillVolume`.
+* `compas_timber.model` no longer re-exports `JointTopology`, `PlateJoint`, `PanelJoint`, `PlateJointCandidate` and `PlateConnectionSolver`; import them from `compas_timber.connections`.
+* Custom joints must record every feature they add in `self.features`: `process_joinery()` now clears each joint's features and extensions before recomputing them.
+* `FeatureApplicationError` raised by `BTLxProcessing.apply()` carries geometry in model coordinates instead of element-local ones.
+* JSON data saved with 2.2.0 containing plates, panels, layers or a `CutPlaneSpec` is not compatible and must be recreated.
+* The `compas_timber_pb` plugin is now part of compas_timber as `compas_timber.proto`. Uninstall the plugin; data serialized with it can't be loaded.
+
+### Added
+
+* Protobuf serialization for all compas_timber types, up to a whole `TimberModel`, via `compas_pb.pb_dump_bts()` / `pb_load_bts()`. Each release also publishes the `.proto` schema and generated bindings for C++, C#, Java, Objective-C, PHP, Ruby and TypeScript.
+* Panel layers: `Layer`, `LayerDefinition` and `LayerStructure` in `compas_timber.elements`. Assign one with `Panel.layer_structure` and add its layers to the model with `Panel.merge_layer_structure(model)`, then use `Panel.layers`, `exterior_layer`, `core_layer`, `interior_layer`, `get_leaf_layers()` and `TimberModel.layers`.
+* `CompositeJoint`, a joint made of several pairwise joints, for connecting three or more elements.
+* `TimberModel.get_joint()`, `TimberModel.get_joint_candidate()`, `TimberModel.unpromoted_joint_candidates`, and a `joints_to_process` parameter on `TimberModel.process_joinery()`.
+* `keep_world_placement` parameter on `TimberModel.add_element()`.
+* `Joint.reset_location()`, `Joint.clear_features()` and `Joint.clear_extensions()`.
+* `BirdsMouth` processing in `compas_timber.fabrication`.
+* `get_connection_candidate()` in `compas_timber.connections`.
+* `brep_from_outlines()`, `brep_difference_first()`, `brep_union_first()` and `brep_intersection_first()` in `compas_timber.geometry`.
+* `debug_info` attribute on elements.
+* `Text.grooves_for_element()`.
+
+### Changed
+
+* `Text.apply()` engraves the text into the element, and letters are now evenly spaced.
+* `process_joinery()` can be called repeatedly without accumulating features or extensions.
+* Removing a joint or an element, or replacing a joint with `add_joint()`, removes the features and extensions that joint added, and nothing else.
+* `connect_adjacent_beams()`, `connect_adjacent_plates()` and `connect_adjacent_panels()` replace the joint candidates between the given elements and no longer remove existing joints.
+* Joint cutting planes and an explicitly set `Joint.location` follow the elements when they move.
+* Panel edge extensions also apply to the panel's layers.
+* `TimberElement.add_feature()` accepts a list of features.
+* BTLx files record the compas_timber version in `ProgramVersion`.
+* Requires `compas_brep >= 0.4.2` and `compas_pb >= 1.2.0`.
+* Fixed nested elements, and plates, panels and layers, being misplaced after deserialization.
+* Fixed child elements not following their parent when it is transformed.
+* Fixed `TimberModel.transform()` failing on models with a `Panel`.
+* Fixed custom `LMiterJoint` miter planes shifting when the beam's start is extended.
+* Fixed plates whose outline normal points in −Z getting a wrong frame, and plate geometry with inconsistently oriented faces.
+* Fixed `Text.create_text_curves_for_element()` raising `FileNotFoundError` in installed packages.
+* Fixed `SimpleScarf` failing with `compas_brep`, and its wrong BTLx `StartX` at the beam end.
+* Fixed `Pocket`, `Lap` and `BTLxPart.shape_strings` failing with `compas_brep`, and `Pocket.from_volume_and_element()` / `Lap.from_volume_and_beam()` modifying the input volume. `Pocket.apply()` now raises a clear error when the pocket lies outside the element.
+* Fixed `LFrenchRidgeLapJoint` assigning a wrong `RefPosition` at 90°.
+* Fixed `PlateMiterJoint` failing on parallel plates.
+* Fixed some joints raising `TypeError` instead of `BeamJoiningError`.
+* Fixed `Beam.remove_blank_extension()` raising `KeyError` for a joint that never extended the beam.
+* Fixed `Opening` geometry outside Rhino, and more robust `Contour` / `DualContour` solids.
+* Fixed `Layer.attributes` and the `shape` of `Tenon` / `Mortise` being lost on serialization.
+* Loading a jointed model no longer emits a `DeprecationWarning`.
+* `process_joinery()` reports any error raised by a joint as a `BeamJoiningError` instead of aborting and leaving other joints without features.
+* Fixed `TTenonMortiseJoint`, `LTenonMortiseJoint`, `TOliGinaJoint` and `TDovetailJoint` failing in some orientations with "Angle must be between -180.0 and 180.0".
+* Fixed `LMiterJoint(cutoff=True)` always failing.
+* Fixed `TLapJoint`, `XLapJoint`, `LLapJoint` and `LFrenchRidgeLapJoint` on coplanar beams cutting through the full beam height when processed again after the beams moved.
+* Fixed `Lap` exporting a wrong `Inclination` for some beam orientations.
+* Fixed `TimberModel.copy()` failing once any element's geometry was computed.
+* Fixed BTLx export of `TDovetailJoint` failing in models designed in meters.
+
+### Removed
+
 * Removed depricated `features.py` module and related imports.
 * Removed `test_features.py` and moved extension tests to `test_beam.py`.
 * Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `TopologyInfo`.

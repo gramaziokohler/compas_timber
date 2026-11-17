@@ -21,6 +21,7 @@ from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -410,9 +411,9 @@ class Lap(BTLxProcessing):
             volume = volume.to_mesh()
             planes = [volume.face_plane(i) for i in range(volume.number_of_faces())]
         elif isinstance(volume, Brep):
-            volume_surfaces = [face.nurbssurface for face in volume.faces]
-            volume_frames = [surface.frame_at(0, 0) for surface in volume_surfaces]
-            planes = [Plane.from_frame(frame) for frame in volume_frames]
+            # not `face.surface`: it ignores `is_reversed`, and it is the face's own Plane,
+            # so flipping the normal in place would mutate the volume we were handed.
+            planes = [Plane.from_frame(face.frame_at()) for face in volume.faces]
 
         else:
             raise ValueError("Volume must be either a Mesh, Brep, or Polyhedron.")
@@ -572,8 +573,7 @@ class Lap(BTLxProcessing):
         # get the optimal reference side index based on the volume. The optimal reference side is the one with the most intersections with the volume edges.
         # get the volume edges
         if isinstance(volume, Brep):
-            volume_curve = [edge.curve for edge in volume.edges]
-            volume_edges = [Line(*curve.points) for curve in volume_curve]
+            volume_edges = [edge.curve for edge in volume.edges]
         else:
             volume_edges = [volume.edge_line(edge) for edge in volume.edges()]
 
@@ -686,7 +686,7 @@ class Lap(BTLxProcessing):
 
         # subtract the lap volume from the beam geometry
         try:
-            return geometry - lap_volume
+            return brep_difference_first(geometry, lap_volume)
         except IndexError:
             raise FeatureApplicationError(
                 lap_volume.transformed(beam.modeltransformation),
@@ -950,7 +950,7 @@ class LapProxy(object):
             scaling_factor = 1 + TOL.approximation
             frame_at_centroid = Frame(self.volume.centroid, self.volume.frame.xaxis, self.volume.frame.yaxis)
             inflated_brep = self.volume.transformed(Scale.from_factors([scaling_factor, scaling_factor, scaling_factor], frame=frame_at_centroid))
-            return geometry - inflated_brep
+            return brep_difference_first(geometry, inflated_brep)
         except IndexError:
             raise FeatureApplicationError(
                 self.volume.transformed(self.beam.modeltransformation),

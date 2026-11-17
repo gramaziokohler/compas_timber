@@ -12,6 +12,7 @@ from compas.geometry import is_point_behind_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_difference_first
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -440,7 +441,7 @@ class Mortise(BTLxProcessing):
             )
 
         # fillet the edges of the mortise volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
+        if self.shape != TenonShapeType.SQUARE:
             try:
                 edges = mortise_volume.edges[:8]
                 mortise_volume.fillet(self.shape_radius, edges)
@@ -456,7 +457,7 @@ class Mortise(BTLxProcessing):
 
         # remove tenon volume to geometry
         try:
-            return geometry - mortise_volume
+            return brep_difference_first(geometry, mortise_volume)
         except Exception as e:
             raise FeatureApplicationError(
                 mortise_volume.transformed(beam.modeltransformation),
