@@ -1,7 +1,7 @@
 import os
 import compas
 
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 
 HERE = os.path.dirname(__file__)
 HOME = os.path.abspath(os.path.join(HERE, "..", ".."))
