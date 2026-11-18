@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `is_polyline_clockwise()` building a zero-length segment from the closing point of a closed polyline, which raised a `ValueError` with `compas>=2.16` and broke plates, panels and free contours.
+
 ### Removed
 
 

@@ -293,17 +293,17 @@ def is_polyline_clockwise(polyline, normal_vector):
         True if the polyline is clockwise, False otherwise.
 
     """
-    # make sure the polyline is closed
-    if not polyline[0] == polyline[-1]:
-        polyline = polyline[:]  # create a copy
-        polyline.append(polyline[0])
+    # walk the distinct corners cyclically. A closed polyline repeats its first point at the end; keeping that copy
+    # would build a zero-length segment from the last point to the first one and skip the turn at the first corner.
+    points = list(polyline)
+    if points[0] == points[-1]:
+        points = points[:-1]
 
     angle_sum = 0
-    for i in range(len(polyline) - 1):
-        u = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v = Vector.from_start_end(polyline[i], polyline[i + 1])
-        angle = angle_vectors_signed(u, v, normal_vector)
-        angle_sum += angle
+    for i in range(len(points)):
+        u = Vector.from_start_end(points[i - 1], points[i])
+        v = Vector.from_start_end(points[i], points[(i + 1) % len(points)])
+        angle_sum += angle_vectors_signed(u, v, normal_vector)
     return angle_sum < 0
 
 
