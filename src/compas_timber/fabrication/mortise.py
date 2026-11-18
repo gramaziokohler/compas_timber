@@ -13,6 +13,7 @@ from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_from_box_with_rounded_corners
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -434,21 +435,22 @@ class Mortise(BTLxProcessing):
 
         # get mortise volume from params and beam
         try:
-            mortise_volume = self.volume_from_params_and_beam(beam)
+            mortise_box = self._box_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry.transformed(beam.modeltransformation), "Failed to generate mortise volume from parameters and beam: {}".format(str(e))
             )
 
-        # fillet the edges of the mortise volume based on the shape
-        if self.shape != TenonShapeType.SQUARE:
+        # round the edges along the mortise's depth based on the shape
+        if self.shape == TenonShapeType.SQUARE:
+            mortise_volume = Brep.from_box(mortise_box)
+        else:
             try:
-                edges = mortise_volume.edges[:8]
-                mortise_volume.fillet(self.shape_radius, edges)
+                mortise_volume = brep_from_box_with_rounded_corners(mortise_box, self.shape_radius)
             except Exception as e:
-                # mortise_volume is still in model space here (not yet localized below), geometry is local
+                # mortise_box is in model space, geometry is local
                 raise FeatureApplicationError(
-                    mortise_volume,
+                    Brep.from_box(mortise_box),
                     geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
@@ -510,6 +512,10 @@ class Mortise(BTLxProcessing):
 
         """
         # type: (Beam) -> Brep
+        return Brep.from_box(self._box_from_params_and_beam(beam))
+
+    def _box_from_params_and_beam(self, beam):
+        # type: (Beam) -> Box
         assert self.length is not None
         assert self.width is not None
         assert self.depth is not None
@@ -519,9 +525,8 @@ class Mortise(BTLxProcessing):
         translation_vector = (-cutting_frame.normal * self.depth - cutting_frame.yaxis * self.length)
         cutting_frame.translate(translation_vector * 0.5)
 
-        # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.depth, cutting_frame)
-        return Brep.from_box(tenon_box)
+        # get the mortise as a box
+        return Box(self.width, self.length, self.depth, cutting_frame)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

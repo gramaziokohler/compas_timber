@@ -1,10 +1,15 @@
+import math
+
 import pytest
 from unittest.mock import patch
 
 from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.tolerance import TOL
 
 from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.elements import Beam
@@ -112,3 +117,34 @@ def test_tenon_mortise_joint_restore_beams_resolves_attributes(beams):
         deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()
+
+
+@pytest.mark.requires_occ
+@pytest.mark.parametrize(
+    "tenon_shape, tenon_volume",
+    [
+        (TenonShapeType.SQUARE, 80.0 * 80.0 * 80.0),
+        # the default radius is half the width of the 80 x 80 tenon, which makes it a cylinder
+        (TenonShapeType.ROUND, math.pi * 40.0**2 * 80.0),
+    ],
+)
+def test_tenon_mortise_joint_geometry(tenon_shape, tenon_volume):
+    main_beam = Beam.from_centerline(Line(Point(0, 800, 0), Point(0, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+    cross_beam = Beam.from_centerline(Line(Point(-600, 0, 0), Point(600, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+    model = TimberModel()
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+    TTenonMortiseJoint.create(model, main_beam, cross_beam, tenon_shape=tenon_shape)
+    model.process_joinery()
+
+    main_geometry = main_beam.geometry
+    cross_geometry = cross_beam.geometry
+
+    assert not main_beam.debug_info
+    assert not cross_beam.debug_info
+    # the tenon is the part of the main beam past the face of the cross beam at y=40
+    tenon = main_geometry.trimmed(Plane(Point(0, 40, 0), Vector(0, 1, 0)))
+    assert TOL.is_close(tenon.volume, tenon_volume)
+    assert TOL.is_close(min(vertex.point.y for vertex in main_geometry.vertices), -40.0)
+    # the mortise removes the same volume from the cross beam
+    assert TOL.is_close(1200.0 * 80.0 * 160.0 - cross_geometry.volume, tenon_volume)
