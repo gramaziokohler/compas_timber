@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * `brep_edge_indices_not_parallel_to_plane()` and `brep_from_box_with_rounded_corners()` in `compas_timber.geometry`.
+* Added `examples/model/0014_joint_explorer.py`, an interactive COMPAS viewer app to pick a beam joint type and change its parameters with sliders.
 
 ### Changed
 
