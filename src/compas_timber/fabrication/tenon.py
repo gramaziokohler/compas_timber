@@ -13,6 +13,7 @@ from compas.geometry import is_point_behind_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_from_box_with_rounded_corners
 from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
@@ -556,32 +557,35 @@ class Tenon(BTLxProcessing):
             )
         # get tenon volume from params and beam
         try:
-            tenon_volume = self.volume_from_params_and_beam(beam)
+            tenon_box = self._box_from_params_and_beam(beam)
         except ValueError as e:
             raise FeatureApplicationError(
                 None, geometry.transformed(beam.modeltransformation), "Failed to generate tenon volume from parameters and beam: {}".format(str(e))
             )
-        # fillet the edges of the volume based on the shape
-        if self.shape != TenonShapeType.SQUARE:
+        # round the edges along the tenon's height based on the shape
+        if self.shape == TenonShapeType.SQUARE:
+            tenon_volume = Brep.from_box(tenon_box)
+        else:
             try:
-                edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
+                tenon_volume = brep_from_box_with_rounded_corners(tenon_box, self.shape_radius)
             except Exception as e:
-                # tenon_volume is still in model space here (not yet localized below), geometry is local
+                # tenon_box is in model space, geometry is local
                 raise FeatureApplicationError(
-                    tenon_volume,
+                    Brep.from_box(tenon_box),
                     geometry.transformed(beam.modeltransformation),
                     "Failed to fillet the edges of the tenon volume based on the shape: {}".format(str(e)),
                 )
 
-        tenon_volume.transform(beam.transformation_to_local())
-
         # remove any parts of the volume that exceed the beam geometry. Fails silently.
+        # beam.ref_sides are in model space, so this happens before the volume is moved to local space.
         for frame in beam.ref_sides[:4]:
             try:
                 tenon_volume = tenon_volume.trimmed(frame)
             except Exception:
                 pass # Fail silently since it won't be possible to trim the tenon if it doesn't exceed the beam geometry.
+
+        tenon_volume.transform(beam.transformation_to_local())
+
         # add tenon volume to geometry
         try:
             geometry = brep_union_first(geometry, tenon_volume)
@@ -669,6 +673,10 @@ class Tenon(BTLxProcessing):
 
         """
         # type: (Beam) -> Brep
+        return Brep.from_box(self._box_from_params_and_beam(beam))
+
+    def _box_from_params_and_beam(self, beam):
+        # type: (Beam) -> Box
         assert self.length is not None
         assert self.width is not None
         assert self.height is not None
@@ -679,8 +687,7 @@ class Tenon(BTLxProcessing):
         cutting_frame.translate(translation_vector * 0.5)
 
         # get the tenon as a box
-        tenon_box = Box(self.width, self.length, self.height, cutting_frame)
-        return Brep.from_box(tenon_box)
+        return Box(self.width, self.length, self.height, cutting_frame)
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

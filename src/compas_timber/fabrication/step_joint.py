@@ -392,9 +392,7 @@ class StepJoint(BTLxProcessing):
                         "Failed to trim geometry with cutting plane: {}".format(str(e)),
                     )
             try:
-                geometry = (
-                    trimmed_geometies[0] + trimmed_geometies[1]
-                )  # TODO: should be swed (.sew()) for a cleaner Brep
+                geometry = brep_union_first(trimmed_geometies[0], trimmed_geometies[1])
             except Exception as e:
                 raise FeatureApplicationError(
                     [g.transformed(beam.modeltransformation) for g in trimmed_geometies],
@@ -438,9 +436,7 @@ class StepJoint(BTLxProcessing):
                         "Failed to trim geometry with cutting plane: {}".format(str(e)),
                     )
             try:
-                geometry = (
-                    trimmed_geometies[0] + trimmed_geometies[1]
-                )  # TODO: should be swed (.sew()) for a cleaner Brep
+                geometry = brep_union_first(trimmed_geometies[0], trimmed_geometies[1])
             except Exception as e:
                 raise FeatureApplicationError(
                     [g.transformed(beam.modeltransformation) for g in trimmed_geometies],

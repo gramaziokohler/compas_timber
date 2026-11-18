@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* `brep_edge_indices_not_parallel_to_plane()` and `brep_from_box_with_rounded_corners()` in `compas_timber.geometry`.
+
 ### Changed
 
 * Fixed `is_polyline_clockwise()` building a zero-length segment from the closing point of a closed polyline, which raised a `ValueError` with `compas>=2.16` and broke plates, panels and free contours.
+* Fixed `Tenon` leaving out the tenon, so the main beam of a `TTenonMortiseJoint` or `LTenonMortiseJoint` was cut flush: the tenon volume was trimmed with the beam's model-space `ref_sides` after it was moved to beam-local coordinates.
+* Fixed `Tenon`, `Mortise`, `DovetailTenon` and `DovetailMortise` not applying any shape other than `square`, including the default `round`: they passed edge objects to `Brep.fillet`, which takes edge indices, and the feature was dropped into `debug_info`. Edges are now selected by direction instead of their position in `Brep.edges`, and a `round` shape whose radius is half the tenon width is built from cylinders, which a fillet cannot produce.
+* Fixed `TBirdsmouthJoint` with a `mill_depth` raising `TypeError` in `process_joinery()` by passing `is_pocket` to `Lap.from_plane_and_beam()`, which no longer takes it.
+* Fixed `StepJoint` with a `heel` or `double` step shape producing a list instead of a `Brep`, which made `Beam.geometry` raise `AttributeError`.
+* Raised the minimum `compas_brep` version to 0.4.1, the first version whose `Brep.fillet` picks edges by their index in `Brep.edges`.
 
 ### Removed
 

@@ -6,6 +6,7 @@ from compas.geometry import Line
 from compas.geometry import PlanarSurface
 from compas.geometry import Plane
 from compas.geometry import Rotation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_point
 from compas.geometry import intersection_line_plane
@@ -15,6 +16,7 @@ from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_edge_indices_not_parallel_to_plane
 from compas_timber.utils import planar_surface_point_at
 
 from .btlx import AttributeSpec
@@ -544,11 +546,10 @@ class DovetailMortise(BTLxProcessing):
         if (
             self.shape != TenonShapeType.SQUARE and not self.length_limited_bottom
         ):  # TODO: Change negation to affirmation once Brep.fillet is implemented
-            edge_indices = [4, 7] if self.length_limited_bottom else [5, 8]
             try:
-                dovetail_volume.fillet(
-                    self.shape_radius, [dovetail_volume.edges[edge_indices[0]], dovetail_volume.edges[edge_indices[1]]]
-                )  # TODO: NotImplementedError
+                edge_indices = self._rounded_edge_indices(dovetail_volume, self.frame_from_params_and_beam(beam))
+                if edge_indices:
+                    dovetail_volume.fillet(self.shape_radius, edge_indices)
             except Exception as e:
                 # dovetail_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
@@ -722,6 +723,19 @@ class DovetailMortise(BTLxProcessing):
                 )
 
         return dovetail_volume
+
+    def _rounded_edge_indices(self, dovetail_volume, cutting_frame):
+        # type: (Brep, Frame) -> list[int]
+        # the edges rising from the cutting plane at the length limited ends of the dovetail, which get rounded.
+        # the top end lies at the origin of the cutting frame, the bottom end at `length` along its negative y-axis.
+        indices = []
+        for index in brep_edge_indices_not_parallel_to_plane(dovetail_volume, Plane.from_frame(cutting_frame)):
+            edge = dovetail_volume.edges[index]
+            midpoint = Line(edge.start_vertex.point, edge.end_vertex.point).midpoint
+            is_top = Vector.from_start_end(cutting_frame.point, midpoint).dot(cutting_frame.yaxis) > -self.length / 2.0
+            if (is_top and self.length_limited_top) or (not is_top and self.length_limited_bottom):
+                indices.append(index)
+        return indices
 
     def scale(self, factor):
         """Scale the parameters of this processing by a given factor.

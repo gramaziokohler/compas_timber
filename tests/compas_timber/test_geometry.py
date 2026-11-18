@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -11,6 +13,8 @@ from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_edge_indices_not_parallel_to_plane
+from compas_timber.geometry import brep_from_box_with_rounded_corners
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.geometry import brep_intersection_first
 from compas_timber.geometry import brep_union_first
@@ -273,3 +277,55 @@ def test_brep_intersection_first_raises_when_breps_do_not_overlap():
 
     with pytest.raises(IndexError):
         brep_intersection_first(box_a, box_b)
+
+
+def _tilted_frame():
+    return Frame(Point(10, 20, 30), Vector(1, 1, 0), Vector(-1, 1, 1))
+
+
+@pytest.mark.requires_occ
+def test_brep_edge_indices_not_parallel_to_plane_selects_the_edges_along_the_box_height():
+    frame = _tilted_frame()
+    brep = Brep.from_box(Box(10, 20, 30, frame))
+
+    indices = brep_edge_indices_not_parallel_to_plane(brep, Plane.from_frame(frame))
+
+    assert len(indices) == 4
+    for index in indices:
+        edge = brep.edges[index]
+        direction = Vector.from_start_end(edge.start_vertex.point, edge.end_vertex.point)
+        assert TOL.is_close(abs(direction.dot(frame.zaxis)), 30.0)
+
+
+@pytest.mark.requires_occ
+def test_brep_from_box_with_rounded_corners_fillets_the_corners():
+    box = Box(80, 160, 50, _tilted_frame())
+
+    brep = brep_from_box_with_rounded_corners(box, 20)
+
+    _assert_rounded_box(brep, box, expected_volume=(80 * 160 - (4 - math.pi) * 20**2) * 50)
+
+
+@pytest.mark.requires_occ
+@pytest.mark.parametrize("xsize, ysize", [(80, 160), (160, 80), (80, 80)])
+def test_brep_from_box_with_rounded_corners_where_the_corners_meet(xsize, ysize):
+    # a radius of half the smaller side leaves no flat side between the corners to fillet, e.g. a round tenon
+    box = Box(xsize, ysize, 50, _tilted_frame())
+
+    brep = brep_from_box_with_rounded_corners(box, 40)
+
+    _assert_rounded_box(brep, box, expected_volume=((max(xsize, ysize) - 80) * 80 + math.pi * 40**2) * 50)
+
+
+def _assert_rounded_box(brep, box, expected_volume):
+    # not `_assert_valid_solid`: `Brep.is_closed` only counts faces, and a cylinder has three
+    assert brep.is_solid
+    assert brep.is_valid
+    assert TOL.is_close(brep.volume, expected_volume)
+    # the rounded box lies within the box
+    assert TOL.is_close(brep_intersection_first(brep, Brep.from_box(box)).volume, brep.volume)
+
+
+def test_brep_from_box_with_rounded_corners_raises_if_radius_is_too_large():
+    with pytest.raises(ValueError):
+        brep_from_box_with_rounded_corners(Box(80, 160, 50), 41)
