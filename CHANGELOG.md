@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Added `examples/model/0014_joint_explorer.py`, an interactive COMPAS viewer app to pick a beam joint type and change its parameters with sliders.
+
 ### Changed
 
 ### Removed
