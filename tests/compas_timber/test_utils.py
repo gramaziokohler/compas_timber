@@ -78,6 +78,26 @@ def test_is_polyline_clockwise():
     assert is_polyline_clockwise(pline_cw, [0, 0, 1])
 
 
+# L-shape whose first point is the reflex corner, in CCW order around +Z
+L_SHAPE_CCW = [[1, 1, 0], [1, 2, 0], [0, 2, 0], [0, 0, 0], [2, 0, 0], [2, 1, 0]]
+
+
+@pytest.mark.parametrize(
+    "points",
+    [
+        pytest.param(L_SHAPE_CCW + [L_SHAPE_CCW[0]], id="closed"),
+        pytest.param(L_SHAPE_CCW, id="open"),
+    ],
+)
+def test_is_polyline_clockwise_concave(points):
+    # closed outlines repeat their first point; that must not produce a zero-length segment (compas >= 2.16 raises on it)
+    assert not is_polyline_clockwise(Polyline(points), Vector(0, 0, 1))
+    assert is_polyline_clockwise(Polyline(points[::-1]), Vector(0, 0, 1))
+    assert is_polyline_clockwise(Polyline(points), Vector(0, 0, -1))
+    # plain point lists are accepted as well
+    assert not is_polyline_clockwise([Point(*p) for p in points], Vector(0, 0, 1))
+
+
 def test_correct_polyline_direction():
     pline_ccw = Polyline([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 0]])
     pline_cw = Polyline([[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0], [0, 0, 0]])
