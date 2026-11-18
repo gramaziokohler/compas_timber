@@ -14,6 +14,7 @@ from compas.geometry import intersection_segment_plane
 from compas.geometry import is_point_behind_plane
 from compas.geometry import is_point_in_polyhedron
 from compas.geometry import project_point_plane
+from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
@@ -287,6 +288,8 @@ class Drilling(BTLxProcessing):
         # this the angle between the direction projected by the drill line onto the reference plane and the reference side x-axis
         vector_end_point = project_point_plane(line.end, ref_surface.to_plane())
         drill_horizontal_vector = Vector.from_start_end(intersection, vector_end_point)
+        if TOL.is_zero(drill_horizontal_vector.length):
+            return 0.0  # drill is perpendicular to the ref surface, angle is undefined
         reference_vector = -ref_surface.xaxis  # angle = 0 when the drill is parallel to -x axis
         measurement_axis = -ref_surface.zaxis  # measure clockwise around the z-axis (sign flips the direction)
         angle = angle_vectors_signed(reference_vector, drill_horizontal_vector, measurement_axis, deg=True)

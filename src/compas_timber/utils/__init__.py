@@ -293,15 +293,13 @@ def is_polyline_clockwise(polyline, normal_vector):
         True if the polyline is clockwise, False otherwise.
 
     """
-    # make sure the polyline is closed
-    if not polyline[0] == polyline[-1]:
-        polyline = polyline[:]  # create a copy
-        polyline.append(polyline[0])
+    # drop the closing point so every vertex is a real corner (no zero-length edges)
+    points = polyline[:-1] if polyline[0] == polyline[-1] else polyline[:]
 
     angle_sum = 0
-    for i in range(len(polyline) - 1):
-        u = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+    for i in range(len(points)):
+        u = Vector.from_start_end(points[i - 1], points[i])
+        v = Vector.from_start_end(points[i], points[(i + 1) % len(points)])
         angle = angle_vectors_signed(u, v, normal_vector)
         angle_sum += angle
     return angle_sum < 0
@@ -831,7 +829,8 @@ def combine_parallel_segments(polyline, tol=TOL):
     for i in range(len(polyline) - 2, 0, -1):
         v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
         v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
-        if tol.is_zero(angle_vectors(v1, v2)):
+        # a zero-length segment (duplicate point) is dropped as well
+        if tol.is_zero(v1.length) or tol.is_zero(v2.length) or tol.is_zero(angle_vectors(v1, v2)):
             polyline.points.pop(i)
 
 

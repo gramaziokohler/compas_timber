@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `ValueError` from zero-length vectors with COMPAS 2.16 in `is_polyline_clockwise`, `combine_parallel_segments` and perpendicular `Drilling`.
+
 ### Removed
 
 
