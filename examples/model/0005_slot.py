@@ -4,7 +4,7 @@ from compas_timber.model import TimberModel
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
-from compas_timber._fabrication import Slot
+from compas_timber.fabrication import Slot
 
 from compas_viewer import Viewer
 
@@ -74,15 +74,16 @@ model = TimberModel()
 
 for line in lines:
     beam = Beam.from_centerline(line, WIDTH, HEIGHT)
-    model.add_beam(beam)
+    model.add_element(beam)
 
 solver = ConnectionSolver()
 pairs = solver.find_intersecting_pairs(model.beams, rtree=True)
 
 for pair in pairs:
     beam_a, beam_b = pair
-    topo, beam_a, beam_b = solver.find_topology(beam_a, beam_b)
-    if topo == JointTopology.TOPO_L:
+    result = solver.find_topology(beam_a, beam_b)
+    if result.topology == JointTopology.TOPO_L:
+        beam_a, beam_b = result.reorder_elements(beam_a, beam_b)
         LMiterJoint.create(model, beam_a, beam_b)
 
 for b_index, beam in enumerate(model.beams):

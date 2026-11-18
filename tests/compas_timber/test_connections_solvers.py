@@ -3,6 +3,8 @@ from compas_timber.elements import Beam
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import JointTopology
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.geometry import distance_point_point
 from compas_timber.elements import Plate
 from compas_timber.connections import PlateConnectionSolver
 from compas.geometry import Polyline
@@ -68,6 +70,69 @@ def test_find_topology_basic(beam_fixture, expected_topology, flip_a, flip_b, re
         assert main is beam_a and other is beam_b, "Expected first beam ordered first in topology result"
         assert TOL.is_close(topo_results.distance, 0.0), "Expected distance == 0"
         assert isinstance(topo_results.location, Point), "Expected location to be a Point instance"
+
+
+# Per-beam metadata cases. The T and X joints are deliberately off-centre on the beams that pass
+# through: at an exact midpoint "the end closest to the joint" is a tie, and the ref side picked by
+# `beam_ref_side_incidence` would depend on tie-breaking rather than on the geometry.
+# Each beam entry is (start, end, role, expected ref side normal); the ref side faces the way the
+# other beam runs from the joint, away from its own end nearest the joint.
+BEAM_METADATA_CASES = {
+    "L": (
+        JointTopology.TOPO_L,
+        Point(0, 0, 0),
+        (Point(0, 0, 0), Point(10, 0, 0), "main", Vector(0, 1, 0)),
+        (Point(0, 0, 0), Point(0, 10, 0), "main", Vector(1, 0, 0)),
+    ),
+    "T": (
+        JointTopology.TOPO_T,
+        Point(-5, 0, 0),
+        (Point(-5, 0, 0), Point(5, 0, 0), "main", Vector(0, 1, 0)),
+        (Point(-5, -2, 0), Point(-5, 8, 0), "cross", Vector(1, 0, 0)),
+    ),
+    "X": (
+        JointTopology.TOPO_X,
+        Point(0, 0, 0),
+        (Point(-3, 0, 0), Point(7, 0, 0), "cross", Vector(0, 1, 0)),
+        (Point(0, -2, 0), Point(0, 8, 0), "cross", Vector(1, 0, 0)),
+    ),
+}
+
+
+def _assert_beam_info(topo_results, beam, joint_point, role, ref_side_normal):
+    info = topo_results.info_for(beam)
+    assert info.role == role
+    if role == "main":
+        expected_end = "start" if TOL.is_allclose(beam.centerline.start, joint_point) else "end"
+        assert info.end == expected_end
+    else:
+        assert info.end is None
+    assert TOL.is_close(info.location_parameter, distance_point_point(beam.centerline.start, joint_point))
+    assert TOL.is_allclose(beam.ref_sides[info.ref_side_index].normal, ref_side_normal)
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("flip_a", [False, True])
+@pytest.mark.parametrize("flip_b", [False, True])
+@pytest.mark.parametrize("case", sorted(BEAM_METADATA_CASES))
+def test_find_topology_beam_metadata(case, flip_a, flip_b, reverse):
+    """Per-beam role, end, ref_side_index and location_parameter, for flipped beams and either input order."""
+    expected_topology, joint_point, spec_a, spec_b = BEAM_METADATA_CASES[case]
+    beam_a = Beam.from_endpoints(spec_a[0], spec_a[1], 1, 1)
+    beam_b = Beam.from_endpoints(spec_b[0], spec_b[1], 1, 1)
+    beam_a = flip_beam(beam_a) if flip_a else beam_a
+    beam_b = flip_beam(beam_b) if flip_b else beam_b
+    inputs = (beam_b, beam_a) if reverse else (beam_a, beam_b)
+
+    topo_results = ConnectionSolver().find_topology(*inputs)
+
+    assert topo_results.topology == expected_topology
+    assert TOL.is_allclose(topo_results.location, joint_point)
+    _assert_beam_info(topo_results, beam_a, joint_point, *spec_a[2:])
+    _assert_beam_info(topo_results, beam_b, joint_point, *spec_b[2:])
+    # main goes first whatever the input order; ties (L: main/main, X: cross/cross) keep the input order
+    expected_order = (beam_a, beam_b) if case == "T" else inputs
+    assert topo_results.reorder_elements(*inputs) == expected_order
 
 
 @pytest.mark.parametrize("flip_a", [False, True])

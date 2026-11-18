@@ -13,7 +13,7 @@ from compas.geometry import Polyline, Point
 def _joint_args(pair, topo_info):
     """Returns the panels and segment-index kwargs a `PanelJoint` expects, from a `TopologyInfo`.
 
-    `PlateJoint` requires `plate_a` to be the edge/main panel, which is the order `reorder_elements`
+    `PanelJoint` requires `panel_a` to be the edge/main panel, which is the order `reorder_elements`
     restores; each panel's segment index then comes from its own entry in the topology info.
     """
     panel_a, panel_b = topo_info.reorder_elements(*pair)
