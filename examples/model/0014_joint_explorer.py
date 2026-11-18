@@ -178,6 +178,9 @@ LAP = [
 
 MILL_DEPTH = length("mill_depth", "Mill depth", 60.0, default=0.0)
 
+# with a mill depth, mill a pocket that follows the main beam instead of a lap square to the cross beam
+POCKET = [toggle("force_pocket", "Force pocket"), toggle("conical_tool", "Conical tool")]
+
 
 class JointSpec(object):
     """A joint type offered in the explorer.
@@ -217,12 +220,13 @@ class JointSpec(object):
 AB = ("beam_a", "beam_b")
 
 JOINTS = [
-    JointSpec("L-Butt", LButtJoint, "L", [MILL_DEPTH, toggle("modify_cross", "Modify cross beam", True)]),
+    # LButtJoint passes force_pocket and conical_tool on to ButtJoint through its **kwargs
+    JointSpec("L-Butt", LButtJoint, "L", [MILL_DEPTH, toggle("modify_cross", "Modify cross beam", True)] + POCKET),
     JointSpec("L-Miter", LMiterJoint, "L", [toggle("cutoff", "Cutoff"), toggle("ref_side_miter", "Miter on ref. sides"), toggle("clean", "Cleaning cuts")], roles=AB),
     JointSpec("L-Lap", LLapJoint, "L", LAP, roles=AB),
     JointSpec("L-French Ridge Lap", LFrenchRidgeLapJoint, "L", [LAP[0], length("drillhole_diam", "Drill hole diameter", 40.0, default=0.0, zero_is_none=True)], roles=AB),
     JointSpec("L-Tenon Mortise", LTenonMortiseJoint, "L", [toggle("modify_cross", "Modify cross beam")] + TENON),
-    JointSpec("T-Butt", TButtJoint, "T", [MILL_DEPTH, toggle("force_pocket", "Force pocket"), toggle("conical_tool", "Conical tool")]),
+    JointSpec("T-Butt", TButtJoint, "T", [MILL_DEPTH] + POCKET),
     JointSpec("T-Lap", TLapJoint, "T", LAP),
     JointSpec("T-Birdsmouth", TBirdsmouthJoint, "T", [MILL_DEPTH], beams={"tilt": 30.0}),
     JointSpec("T-Dovetail", TDovetailJoint, "T", DOVETAIL),
