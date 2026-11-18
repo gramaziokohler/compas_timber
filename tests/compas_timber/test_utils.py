@@ -382,6 +382,13 @@ def test_combine_parallel_segments():
     assert polyline == expected
 
 
+def test_combine_parallel_segments_duplicate_point():
+    polyline = Polyline([[0, 0, 0], [2, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    combine_parallel_segments(polyline)
+    expected = Polyline([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0], [0, 0, 0]])
+    assert polyline == expected
+
+
 # ==========================================================================
 # distance_segment_segment_points
 # ==========================================================================
