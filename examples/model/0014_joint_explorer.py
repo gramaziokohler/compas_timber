@@ -8,7 +8,9 @@ and runs `process_joinery()` again, so what you see is exactly what the library 
 * Joint parameters: the arguments of the joint's constructor. Parameters marked "auto" are left to the joint, which
   derives them from the beams; the slider shows the value it picked. Touch the slider to take over, press
   "Reset joint parameters" to hand them back.
-* Display: pull the beams apart to look inside the joint, ghost the uncut blanks, show the centerlines.
+* Display: pull the beams apart to look inside the joint, ghost the uncut blanks, show the centerlines. Exploding
+  moves each piece along the direction it is inserted in, which the explorer derives per joint type from the joint's
+  own cuts (see "Insertion directions" below).
 * "Copy code" puts a script that rebuilds the current state on the clipboard (and prints it).
 
 Needs the `viz` extras (``pip install -e ".[viz]"``). Run with::
@@ -182,6 +184,63 @@ MILL_DEPTH = length("mill_depth", "Mill depth", 60.0, default=0.0)
 POCKET = [toggle("force_pocket", "Force pocket"), toggle("conical_tool", "Conical tool")]
 
 
+# ==========================================================================
+# Insertion directions
+# ==========================================================================
+# The joints don't define how their pieces go together (yet), so the explorer derives an insertion direction per
+# joint type from the joint's own cuts, and exploding moves the pieces out along it, i.e. it plays the assembly
+# backwards. Every rule was checked for collisions at several angles: sliding the pieces apart along it never makes
+# them overlap. Each rule maps an element of the joint to the direction it moves in; elements left out stay put.
+# `away` maps each beam to the direction along its own axis that points away from the joint.
+
+
+def unit(vector):
+    return vector.unitized() if vector.length > 1e-9 else vector
+
+
+def along_main_axis(joint, away):
+    """Butt and step joints: the main beam slides out along its own axis."""
+    main = joint.elements[0]
+    return {main: away[main]}
+
+
+def off_the_cross_face(joint, away):
+    """Tenons: the tenon is square to the cross beam's face at any angle between the beams, so it comes out along that face's normal."""
+    return {joint.main_beam: joint.cross_beam.ref_sides[joint.cross_beam_ref_side_index].normal}
+
+
+def apart_from_the_lap(joint, away):
+    """Laps: both beams move off the lap, along the normal of beam b's lap face."""
+    beam_a, beam_b = joint.elements
+    normal = beam_b.ref_sides[joint.ref_side_index_b].normal
+    return {beam_a: normal, beam_b: -normal}
+
+
+def out_of_the_dovetail(joint, away):
+    """Dovetail: the tenon slides out through the open face of the dovetail mortise; pulling it along the main beam is what a dovetail prevents."""
+    return {joint.main_beam: joint.main_beam.ref_sides[joint.main_beam_ref_side_index].normal}
+
+
+def off_the_seat(joint, away):
+    """Birdsmouth: the rafter lifts off both faces of the cross beam it sits on."""
+    normal = Vector(0, 0, 0)
+    for index in joint.cross_ref_side_indices:
+        normal += joint.cross_beam.ref_sides[index].normal
+    return {joint.main_beam: normal}
+
+
+def out_of_the_notch(joint, away):
+    """Notch: the notched beam lifts off the solid beam, away from the face the notch is cut into."""
+    normal = joint.notch_beam.ref_sides[joint.main_ref_side_index].normal
+    return {joint.notch_beam: -normal, joint.solid_beam: normal}
+
+
+def apart_from_the_scarf(joint, away):
+    """Scarf: the two halves separate across the scarf, along the normal of the main beam's reference side."""
+    normal = joint.main_beam.ref_sides[joint.main_beam_ref_side_index].normal
+    return {joint.main_beam: normal, joint.cross_beam: -normal}
+
+
 class JointSpec(object):
     """A joint type offered in the explorer.
 
@@ -199,16 +258,20 @@ class JointSpec(object):
         Overrides of the beam settings this joint needs to work (e.g. a step joint needs an inclined strut).
     roles : tuple(str), optional
         The names of the beams, in the order the joint takes them.
+    insertion : callable, optional
+        One of the insertion rules above, used to explode the joint. Without one, the beams move apart along their
+        own axes.
 
     """
 
-    def __init__(self, name, cls, topology, params=(), beams=None, roles=("main_beam", "cross_beam")):
+    def __init__(self, name, cls, topology, params=(), beams=None, roles=("main_beam", "cross_beam"), insertion=None):
         self.name = name
         self.cls = cls
         self.topology = topology
         self.params = list(params)
         self.beams = beams or {}
         self.roles = roles
+        self.insertion = insertion
 
     @property
     def description(self):
@@ -221,15 +284,23 @@ AB = ("beam_a", "beam_b")
 
 JOINTS = [
     # LButtJoint passes force_pocket and conical_tool on to ButtJoint through its **kwargs
-    JointSpec("L-Butt", LButtJoint, "L", [MILL_DEPTH, toggle("modify_cross", "Modify cross beam", True)] + POCKET),
+    JointSpec("L-Butt", LButtJoint, "L", [MILL_DEPTH, toggle("modify_cross", "Modify cross beam", True)] + POCKET, insertion=along_main_axis),
     JointSpec("L-Miter", LMiterJoint, "L", [toggle("cutoff", "Cutoff"), toggle("ref_side_miter", "Miter on ref. sides"), toggle("clean", "Cleaning cuts")], roles=AB),
-    JointSpec("L-Lap", LLapJoint, "L", LAP, roles=AB),
-    JointSpec("L-French Ridge Lap", LFrenchRidgeLapJoint, "L", [LAP[0], length("drillhole_diam", "Drill hole diameter", 40.0, default=0.0, zero_is_none=True)], roles=AB),
-    JointSpec("L-Tenon Mortise", LTenonMortiseJoint, "L", [toggle("modify_cross", "Modify cross beam")] + TENON),
-    JointSpec("T-Butt", TButtJoint, "T", [MILL_DEPTH] + POCKET),
-    JointSpec("T-Lap", TLapJoint, "T", LAP),
-    JointSpec("T-Birdsmouth", TBirdsmouthJoint, "T", [MILL_DEPTH], beams={"tilt": 30.0}),
-    JointSpec("T-Dovetail", TDovetailJoint, "T", DOVETAIL),
+    JointSpec("L-Lap", LLapJoint, "L", LAP, roles=AB, insertion=apart_from_the_lap),
+    JointSpec(
+        "L-French Ridge Lap",
+        LFrenchRidgeLapJoint,
+        "L",
+        [LAP[0], length("drillhole_diam", "Drill hole diameter", 40.0, default=0.0, zero_is_none=True)],
+        roles=AB,
+        insertion=apart_from_the_lap,
+    ),
+    JointSpec("L-Tenon Mortise", LTenonMortiseJoint, "L", [toggle("modify_cross", "Modify cross beam")] + TENON, insertion=off_the_cross_face),
+    JointSpec("T-Butt", TButtJoint, "T", [MILL_DEPTH] + POCKET, insertion=along_main_axis),
+    # with the main beam tilted, no straight move takes a T-Lap apart: each notch is cut square to its own beam
+    JointSpec("T-Lap", TLapJoint, "T", LAP, insertion=apart_from_the_lap),
+    JointSpec("T-Birdsmouth", TBirdsmouthJoint, "T", [MILL_DEPTH], beams={"tilt": 30.0}, insertion=off_the_seat),
+    JointSpec("T-Dovetail", TDovetailJoint, "T", DOVETAIL, insertion=out_of_the_dovetail),
     JointSpec(
         "T-Step",
         TStepJoint,
@@ -241,10 +312,11 @@ JOINTS = [
             length("tenon_mortise_height", "Tenon height (0 = none)", 100.0, default=0.0, zero_is_none=True),
         ],
         beams={"angle": 45.0},
+        insertion=along_main_axis,
     ),
-    JointSpec("T-Tenon Mortise", TTenonMortiseJoint, "T", TENON),
-    JointSpec("X-Lap", XLapJoint, "X", LAP, roles=AB),
-    JointSpec("X-Notch", XNotchJoint, "X", beams={"offset": 120.0}, roles=("notch_beam", "solid_beam")),
+    JointSpec("T-Tenon Mortise", TTenonMortiseJoint, "T", TENON, insertion=off_the_cross_face),
+    JointSpec("X-Lap", XLapJoint, "X", LAP, roles=AB, insertion=apart_from_the_lap),
+    JointSpec("X-Notch", XNotchJoint, "X", beams={"offset": 120.0}, roles=("notch_beam", "solid_beam"), insertion=out_of_the_notch),
     JointSpec(
         "I-Simple Scarf",
         ISimpleScarf,
@@ -257,6 +329,7 @@ JOINTS = [
             length("drill_hole_diam", "Drill hole diameter", 40.0, minimum=5.0, default=20.0),
             integer("ref_side_index", "Ref. side index", 0, 3, 0),
         ],
+        insertion=apart_from_the_scarf,
     ),
     JointSpec("Y-Butt", YButtJoint, "Y", [MILL_DEPTH], roles=("main_beam", "cross_beam_a", "cross_beam_b")),
     JointSpec("Y-Ball Node", BallNodeJoint, "Y", [length("ball_diameter", "Ball diameter", 300.0, minimum=20.0)], roles=("beam_1", "beam_2", "beam_3")),
@@ -687,9 +760,28 @@ class JointExplorer(object):
             if geometry is not None:
                 yield geometry
 
+    def explode_vectors(self, beams):
+        """The unit direction each beam moves in when the view is exploded: its insertion direction, reversed.
+
+        Falls back to pulling the beams apart along their axes for joints without an insertion rule, and when the
+        joint failed to build (the beams drawn are then fresh copies the joint doesn't know).
+        """
+        away = {beam: vector for beam, (_, _, _, vector) in zip(beams, self.layout)}
+        fallback = [away[beam] for beam in beams]
+        if self.spec.insertion is None or self.joint is None:
+            return fallback
+        if not all(any(beam is element for element in self.joint.elements) for beam in beams):
+            return fallback
+        try:
+            directions = self.spec.insertion(self.joint, away)
+        except Exception:  # e.g. a reference side the joint can't resolve for this layout
+            return fallback
+        return [unit(directions.get(beam, Vector(0, 0, 0))) for beam in beams]
+
     def _draw(self, beams, geometries):
         items = []
-        for index, (beam, geometry, (_, _, _, vector)) in enumerate(zip(beams, geometries, self.layout)):
+        vectors = self.explode_vectors(beams)
+        for index, (beam, geometry, vector) in enumerate(zip(beams, geometries, vectors)):
             name = self.spec.roles[index].replace("_", " ")
             color = BEAM_COLORS[index % len(BEAM_COLORS)]
             items.append((geometry, vector, dict(name=name, facecolor=color, linecolor=EDGE_COLOR, show_points=False)))
