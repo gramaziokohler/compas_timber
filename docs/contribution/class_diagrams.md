@@ -10,7 +10,7 @@ This page is generated — do not edit it by hand; it is regenerated from the so
 
 ## Elements Subsystem
 
-The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from `compas_timber.elements` for backward compatibility.
+The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel` and `PanelFeature` inherit directly from compas_model's `Element`. Fasteners live in their own subsystem, see [Fasteners Subsystem](#fasteners-subsystem). `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from `compas_timber.elements` for backward compatibility.
 
 ```mermaid
 classDiagram
@@ -101,56 +101,6 @@ classDiagram
          +reset()
          +compute_shape() : Brep
          +from_dims(length, width, thickness) : PlateGeometry
-      }
-
-      class Fastener {
-         +interfaces : list
-         +attributes : dict
-         +debug_info : list
-         +is_fastener : bool
-         +key : int or None
-         +compute_elementgeometry()
-      }
-
-      class BallNodeFastener {
-         +node_point : Point
-         +ball_diameter : float
-         +base_interface : FastenerTimberInterface | None
-         +default_fastener_interface
-         +interface_plate
-         +interface_shape
-         +update_interface(interface)
-         +compute_geometry()
-         +compute_collision_mesh()
-      }
-
-      class PlateFastener {
-         +outline : list[Point]
-         +thickness : float
-         +frame : Frame
-         +angle : float
-         +topology : int or list[int]
-         +cutouts : list[Polyline]
-         +holes
-         +shapes
-         +shape
-         +set_default(joint)
-         +place_instances(joint)
-         +get_fastener_frames(joint)
-         +validate_fastener_beam_compatibility(joint)
-         +add_features()
-         +compute_geometry()
-      }
-
-      class FastenerTimberInterface {
-         +outline_points : list[Point]
-         +thickness : float
-         +holes : list[dict]
-         +frame : Frame
-         +element : object
-         +shapes : list[Geometry]
-         +features : list[BTLxFromGeometryDefinition]
-         +get_features(element)
       }
 
       class Panel {
@@ -248,9 +198,6 @@ classDiagram
       Element <|-- TimberElement
       TimberElement <|-- Beam
       TimberElement <|-- Plate
-      Element <|-- Fastener
-      Fastener <|-- BallNodeFastener
-      Fastener <|-- PlateFastener
       Element <|-- Panel
       Element <|-- PanelFeature
       PanelFeature <|-- Opening
@@ -259,7 +206,6 @@ classDiagram
       %% Composition and usage relationships
       Plate *-- PlateGeometry : delegates to
       Panel *-- PlateGeometry : delegates to
-      Fastener o-- FastenerTimberInterface : contains
       Panel o-- PanelFeature : contains
       Panel ..> PanelType : uses
       PanelFeature ..> PanelFeatureType : uses
@@ -1200,4 +1146,139 @@ classDiagram
       Exception <|-- FastenerApplicationError
       Exception <|-- BTLxProcessingError
       Exception <|-- BTLxParsingError
+```
+
+## Fasteners Subsystem
+
+The fasteners subsystem (`compas_timber.fasteners`) separates *what* a fastener is from *where* it goes. A `FastenerSystem` is a staged, model-independent definition (e.g. "a 2 mm plate with these holes"). Joints publish `FastenerAnchor`s, the places where a fastener may attach, and `FastenerSystem.bind(anchors)` resolves the system into a `Fastener`: a model element whose `FastenerPart` children (plates, holes, screws, dowels, ball-node parts) are placed at the anchors and apply their own fabrication features to the timber elements they reference.
+
+```mermaid
+classDiagram
+direction TB
+
+    class FastenerSystem {
+        <<abstract>>
+        +bind(anchors) Fastener
+    }
+
+    class Fastener {
+        +parts : list[FastenerPart]
+        +all_parts : list[FastenerPart]
+        +placement_frame : Frame
+        +add_part(part) FastenerPart
+        +apply_fastening_features()
+    }
+
+    class FastenerPart {
+        +parts : list[FastenerPart]
+        +all_parts : list[FastenerPart]
+        +placement_frame : Frame
+        +element_guids : list[str]
+        +add_part(part) FastenerPart
+        +restore_elements_from_keys(model)
+        +apply_fastening_features()
+    }
+
+    class FastenerAnchor {
+        +frame : Frame
+        +kind : AnchorKind
+        +elements : list
+        +ref_side_index : int
+        +role : str
+        +normal : Vector
+    }
+
+    class FastenerAnchors {
+        +of_kind(kind) FastenerAnchors
+        +referencing(element) FastenerAnchors
+        +with_role(role) FastenerAnchors
+    }
+
+    class AnchorKind {
+        <<enumeration>>
+        POINT
+        AXIS
+        FACE
+        VOLUME
+    }
+
+    class RectangularPlate {
+        +width : float
+        +height : float
+        +thickness : float
+        +recess : float
+        +recess_offset : float
+        +holes : list[PlateHole]
+        +add_hole(hole)
+        +add_hole_point_diameter(point, diameter)
+        +add_holes_grid(nx, ny, border_padding, diameter)
+    }
+
+    class PlateHole {
+        +diameter : float
+        +cutting_geometry : Brep
+        +drilling_line : Line
+    }
+
+    class Screw {
+        +designation : str
+        +centerline : Line
+        +from_name(name)
+    }
+
+    class Dowel {
+        +diameter : float
+        +length : float
+        +centerline : Line
+        +drill_line : Line
+    }
+
+    class BallNodeCore {
+        +diameter : float
+        +radius : float
+    }
+
+    class BallNodeRod {
+        +length : float
+        +diameter : float
+    }
+
+    class BallNodePlate {
+        +x_size : float
+        +y_size : float
+        +thickness : float
+        +plate_depth : float
+    }
+
+    class GeometryPart {
+        +geometry
+    }
+
+    Data <|-- FastenerSystem
+    Element <|-- Fastener
+    Element <|-- FastenerPart
+    list <|-- FastenerAnchors
+
+    FastenerSystem <|-- PlateFastenerSystem
+    FastenerSystem <|-- ScrewFastenerSystem
+    FastenerSystem <|-- DowelFastenerSystem
+    FastenerSystem <|-- BallNodeFastenerSystem
+
+    FastenerPart <|-- RectangularPlate
+    FastenerPart <|-- PlateHole
+    FastenerPart <|-- Screw
+    FastenerPart <|-- Dowel
+    FastenerPart <|-- BallNodeCore
+    FastenerPart <|-- BallNodeRod
+    FastenerPart <|-- BallNodePlate
+    FastenerPart <|-- GeometryPart
+
+    FastenerSystem ..> FastenerAnchors : bind()
+    FastenerSystem ..> Fastener : creates
+    Fastener *-- FastenerPart : parts
+    FastenerPart *-- FastenerPart : sub-parts
+    RectangularPlate *-- PlateHole : holes
+    FastenerAnchors o-- FastenerAnchor
+    FastenerAnchor ..> AnchorKind
+    BallNodeFastenerSystem ..> BallNodeFastenerParameters : uses
 ```
