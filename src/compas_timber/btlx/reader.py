@@ -3,10 +3,12 @@ import xml.etree.ElementTree as ET
 from warnings import warn
 
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polyline
 from compas.geometry import Vector
 from compas.tolerance import Tolerance
+from compas_brep.curves import NurbsCurve
 
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
@@ -14,6 +16,8 @@ from compas_timber.errors import BTLxParsingError
 from compas_timber.fabrication import BTLxProcessing
 from compas_timber.fabrication import Contour
 from compas_timber.fabrication import DualContour
+from compas_timber.fabrication import NurbsContour
+from compas_timber.fabrication import nurbs_curve_from_btlx
 from compas_timber.model import TimberModel
 from compas_timber.utils import get_leaf_subclasses
 
@@ -523,11 +527,95 @@ def xml_to_dual_contour(element):
     return DualContour(principal_contour, associated_contour)
 
 
+def _xml_to_point(element: ET.Element) -> Point:
+    return Point(float(element.attrib["X"]), float(element.attrib["Y"]), float(element.attrib["Z"]))
+
+
+def _xml_to_nurbs_curve(element: ET.Element) -> NurbsCurve:
+    degree = int(element.attrib["Degree"])
+
+    control_points_elem = element.find("{*}ControlPoints")
+    if control_points_elem is None:
+        raise ValueError("NURBS element missing ControlPoints")
+    points = []
+    weights = []
+    for control_point_elem in control_points_elem.findall("{*}ControlPoint"):
+        points.append(_xml_to_point(control_point_elem))
+        weights.append(float(control_point_elem.attrib.get("W", 1.0)))
+
+    count = int(element.attrib.get("Count", len(points)))
+    if count != len(points):
+        raise ValueError("NURBS element declares Count={} but has {} control points.".format(count, len(points)))
+
+    knots_elem = element.find("{*}Knots")
+    if knots_elem is None or not (knots_elem.text and knots_elem.text.strip()):
+        raise ValueError("NURBS element missing Knots")
+    knots = [float(value) for value in knots_elem.text.split()]
+
+    return nurbs_curve_from_btlx(points, weights, knots, degree)
+
+
+def xml_to_nurbs_contour(element: ET.Element) -> NurbsContour:
+    """Converts a Contour XML element which contains NURBS segments to a NurbsContour object.
+
+    Parameters
+    ----------
+    element
+        The XML element representing the contour.
+
+    Returns
+    -------
+    NurbsContour
+        The NurbsContour object.
+
+    """
+    depth = float(element.attrib.get("Depth", 0))
+    depth_bounded = element.attrib.get("DepthBounded", "no").lower() in ["yes", "true"]
+    inclination_attr = element.attrib.get("Inclination", None)
+
+    start_point_elem = element.find("{*}StartPoint")
+    if start_point_elem is None:
+        raise ValueError("Contour element missing StartPoint")
+    # Line elements carry only their end point, so the running point is tracked here
+    current_point = _xml_to_point(start_point_elem)
+
+    segments = []
+    inclinations = []
+    for child in element:
+        tag_name = child.tag.split("}")[-1]  # Remove namespace
+        if tag_name == "Line":
+            end_point_elem = child.find("{*}EndPoint")
+            if end_point_elem is None:
+                raise ValueError("Line element missing EndPoint")
+            end_point = _xml_to_point(end_point_elem)
+            segments.append(Line(current_point, end_point))
+            current_point = end_point
+        elif tag_name == "NURBS":
+            curve = _xml_to_nurbs_curve(child)
+            segments.append(curve)
+            current_point = Point(*curve.points[-1])
+        else:
+            continue
+
+        segment_inclination = child.attrib.get("Inclination", None)
+        if segment_inclination is not None:
+            inclinations.append(float(segment_inclination))
+
+    if inclination_attr is not None:
+        inclination = [float(inclination_attr)]
+    elif inclinations:
+        inclination = inclinations
+    else:
+        inclination = [0.0]
+
+    return NurbsContour(segments, depth, depth_bounded=depth_bounded, inclination=inclination)
+
+
 def xml_to_contour_or_dual(element):
     """Unified deserializer for Contour and DualContour elements.
 
-    Inspects the XML element tag to determine whether to deserialize as
-    Contour or DualContour. This handles FreeContour's polymorphic
+    Inspects the XML element tag, and its children, to determine whether to deserialize as
+    Contour, NurbsContour or DualContour. This handles FreeContour's polymorphic
     contour_param_object attribute.
 
     Parameters
@@ -537,13 +625,15 @@ def xml_to_contour_or_dual(element):
 
     Returns
     -------
-    :class:`Contour` or :class:`DualContour`
-        The appropriate contour object based on the element tag.
+    :class:`Contour` or :class:`NurbsContour` or :class:`DualContour`
+        The appropriate contour object based on the element tag and its children.
 
     """
     tag_name = element.tag.split("}")[-1]  # Remove namespace
     if tag_name == "DualContour":
         return xml_to_dual_contour(element)
+    elif element.find("{*}NURBS") is not None:
+        return xml_to_nurbs_contour(element)
     else:  # "Contour"
         return xml_to_contour(element)
 
