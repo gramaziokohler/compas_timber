@@ -8,11 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* `BTLxWriter` now numbers each part's processings so that `ProcessID` is unique within the part and never 0. Previously duplicates were emitted and rejected by consumers.
+* `BTLxWriter` now declares BTLx version 2.3.0 instead of 2.0.0, and takes a `version` argument to declare another. `xsi:schemaLocation` is derived from it, so the two can no longer disagree.
+* Added `NurbsContour`, a contour of NURBS curves and/or straight lines. It is handed to a `FreeContour` and serializes to the same `<Contour>` element, with `<NURBS>` children.
+* Added `FreeContour.from_nurbs_curves_and_element()`, which builds a `FreeContour` from a `NurbsCurve`, or a connected sequence of curves and lines, lying on one of an element's reference sides.
+* Added `knotvector_to_btlx()`, `knotvector_from_btlx()` and `nurbs_curve_from_btlx()`, converting between the standard (`count + degree + 1`) knot vector and the reduced (`count + degree - 1`) form BTLx uses.
+* `BTLxReader` now deserializes `<Contour>` elements containing `<NURBS>` segments into a `NurbsContour`.
+* Added `NurbsContour.to_contour()` and the `tessellate` argument of `BTLxWriter`, which writes every NURBS contour in the model as straight `Line` segments for consumers that do not support them, such as Lignocam's BtlViewer. The model is left alone, and writing NURBS stays the default.
+* Added `split_nurbs_curve()`, Boehm knot insertion in homogeneous coordinates so that rational curves survive. `NurbsContour` uses it on closed curves, which BTLx cannot express as one segment.
 
 * `brep_edge_indices_not_parallel_to_plane()` and `brep_from_box_with_rounded_corners()` in `compas_timber.geometry`.
 * Added `examples/model/0014_joint_explorer.py`, an interactive COMPAS viewer app to pick a beam joint type and change its parameters with sliders.
 
 ### Changed
+* `FreeContour.get_ref_face_index()` now tests every contour point against each reference side, instead of fitting a plane to three of the points, which raised `ZeroDivisionError` when they were near collinear. It is stricter: all points must now lie on the side, not just the first.
 
 * Fixed `is_polyline_clockwise()` building a zero-length segment from the closing point of a closed polyline, which raised a `ValueError` with `compas>=2.16` and broke plates, panels and free contours.
 * Fixed `Tenon` leaving out the tenon, so the main beam of a `TTenonMortiseJoint` or `LTenonMortiseJoint` was cut flush: the tenon volume was trimmed with the beam's model-space `ref_sides` after it was moved to beam-local coordinates.

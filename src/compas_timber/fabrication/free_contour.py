@@ -3,8 +3,9 @@ from __future__ import annotations
 import math
 from collections import OrderedDict
 from typing import Optional
+from typing import Union
 
-from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Polyline
 from compas.geometry import Transformation
@@ -13,6 +14,7 @@ from compas.geometry import angle_vectors
 from compas.geometry import angle_vectors_signed
 from compas.geometry import distance_point_plane
 from compas.tolerance import TOL
+from compas_brep.curves import NurbsCurve
 
 from compas_timber.base import TimberElement
 from compas_timber.geometry import brep_difference_first
@@ -25,6 +27,7 @@ from .btlx import BTLxProcessing
 from .btlx import BTLxProcessingParams
 from .btlx import Contour
 from .btlx import DualContour
+from .btlx import NurbsContour
 
 
 class FreeContour(BTLxProcessing):
@@ -32,7 +35,7 @@ class FreeContour(BTLxProcessing):
 
     Parameters
     ----------
-    contour_param_object : :class:`compas_timber.fabrication.btlx.Contour` or :class:`compas_timber.fabrication.btlx.DualContour`
+    contour_param_object : :class:`~compas_timber.fabrication.Contour` or :class:`~compas_timber.fabrication.NurbsContour` or :class:`~compas_timber.fabrication.DualContour`
         The contour parameter object.
     tool_id : int, optional
         The tool ID for the processing. Default is 0.
@@ -48,7 +51,8 @@ class FreeContour(BTLxProcessing):
     PROCESSING_NAME = "FreeContour"  # type: ignore
     # NOTE: Unusual polymorphic case - both XML element types map to the SAME Python attribute.
     # The reader requires both entries to recognize either <Contour> or <DualContour> children.
-    # At runtime, contour_param_object holds ONE object (Contour OR DualContour, never both).
+    # At runtime, contour_param_object holds ONE object, never several. NurbsContour serializes to
+    # <Contour> as well, so it needs no entry of its own.
     # During writing, custom FreeContourParams.as_dict() serializes only the appropriate type.
     ATTRIBUTE_MAP = {
         "Contour": AttributeSpec("contour_param_object", Contour),  # Simple contour with single or per-segment inclinations
@@ -81,8 +85,8 @@ class FreeContour(BTLxProcessing):
 
     @contour_param_object.setter
     def contour_param_object(self, value):
-        if not isinstance(value, (Contour, DualContour)):
-            raise ValueError("contour_param_object must be an instance of Contour or DualContour.")
+        if not isinstance(value, (Contour, DualContour, NurbsContour)):
+            raise ValueError("contour_param_object must be an instance of Contour, NurbsContour or DualContour.")
         self._contour_param_object = value
 
     @property
@@ -243,6 +247,65 @@ class FreeContour(BTLxProcessing):
         """
         return cls.from_polyline_and_element(polyline, element, depth, interior, **kwargs)
 
+    @classmethod
+    def from_nurbs_curves_and_element(
+        cls,
+        curves: Union[NurbsCurve, list[Union[NurbsCurve, Line]]],
+        element: TimberElement,
+        depth: Optional[float] = None,
+        interior: Optional[bool] = False,
+        tool_position: Optional[str] = None,
+        ref_side_index: Optional[int] = None,
+        tessellation_count: int = 64,
+        **kwargs,
+    ):
+        """Construct a FreeContour processing from NURBS curves and an element.
+
+        In BTLx a NURBS curve is a contour segment type rather than a processing of its own, so an
+        arbitrarily shaped contour is expressed as a FreeContour whose Contour is made of NURBS segments.
+
+        Parameters
+        ----------
+        curves
+            The curve, or the connected sequence of curves and lines, which make up the contour. All of
+            them must lie on one of the reference sides of `element`.
+        element
+            The element.
+        depth
+            The depth of the contour. Default is the dimension of the element normal to the reference side.
+        interior
+            If True, the material inside of the contour is removed. Default is False.
+        tool_position
+            The position of the tool, an :class:`~compas_timber.fabrication.AlignmentType`. Required if the
+            contour is not closed.
+        ref_side_index
+            The reference side index. If none is given, it is derived from the curves and the element.
+        tessellation_count
+            The number of straight sub-segments each NURBS segment is approximated with when generating the
+            geometry, and when writing with ``BTLxWriter(tessellate=True)`` also in the BTLx output.
+
+        Returns
+        -------
+        :class:`~compas_timber.fabrication.FreeContour`
+            The resulting processing.
+
+        """
+        segments = list(curves) if isinstance(curves, (list, tuple)) else [curves]
+        # a tessellated polyline stands in for the contour while the reference side and tool position are worked out
+        polyline = NurbsContour(segments, depth=0.0, tessellation_count=tessellation_count).to_polyline()
+
+        if ref_side_index is None:
+            ref_side_index = cls.get_ref_face_index(polyline, element)
+        ref_side = element.ref_sides[ref_side_index]
+        tool_position = cls.parse_tool_position(polyline, ref_side, interior, tool_position)
+        # get_dimensions_relative_to_side [1] returns element dimension normal to ref_side
+        depth = depth or element.get_dimensions_relative_to_side(ref_side_index)[1]
+
+        transformation_to_local = Transformation.from_frame(ref_side).inverse()
+        local_segments = [segment.transformed(transformation_to_local) for segment in segments]
+        contour = NurbsContour(local_segments, depth=depth, inclination=[0.0], tessellation_count=tessellation_count)
+        return cls(contour, tool_position=tool_position, counter_sink=interior, ref_side_index=ref_side_index, **kwargs)
+
     @staticmethod
     def parse_tool_position(polyline, ref_side, interior, tool_position=None):
         # type: (Polyline, Frame, bool, str | None) -> str
@@ -272,13 +335,25 @@ class FreeContour(BTLxProcessing):
     @staticmethod
     def get_ref_face_index(contour_points, element):
         # type: (Polyline, Union[Plate, Beam]) -> int
-        curve_frame = Frame.from_points(contour_points[0], contour_points[1], contour_points[-2])
-        for i, ref_side in enumerate(element.ref_sides):
-            distance = distance_point_plane(contour_points[0], Plane.from_frame(ref_side))
-            if TOL.is_zero(distance, tol=1e-6):
-                angle = angle_vectors(ref_side.normal, curve_frame.zaxis, deg=True)
-                if TOL.is_zero(angle, 1e-3) or TOL.is_zero(angle - 180.0, 1e-3):
-                    return i
+        """Finds the reference side of `element` which all of `contour_points` lie on.
+
+        Parameters
+        ----------
+        contour_points
+            The points of the contour.
+        element
+            The element.
+
+        Returns
+        -------
+        int
+            The index of the matching reference side.
+
+        """
+        for index, ref_side in enumerate(element.ref_sides):
+            plane = Plane.from_frame(ref_side)
+            if all(TOL.is_zero(distance_point_plane(point, plane), tol=1e-6) for point in contour_points):
+                return index
         raise ValueError("The contour does not lay on one of the reference sides of the element.")
 
     @staticmethod
