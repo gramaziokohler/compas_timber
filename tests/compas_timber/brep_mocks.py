@@ -4,7 +4,7 @@ These objects implement only the interface that ``mesh_from_brep_simple``,
 ``get_plate_geometry_outlines_from_brep``, and ``polylines_from_brep_face``
 actually traverse:
 
-    brep.faces → face.loops → loop.is_outer, loop.edges
+    brep.faces → face.loops → loop.is_outer, loop.edges, loop.trims
     edge.start_vertex.point, edge.end_vertex.point
     brep.vertices → v.point
 
@@ -30,8 +30,9 @@ class MockEdge:
 class MockLoop:
     """Brep loop stub."""
 
-    def __init__(self, edges, is_outer=True):
+    def __init__(self, edges, is_outer=True, trims=None):
         self.edges = edges
+        self.trims = edges if trims is None else trims  # edges run along the loop unless trims say otherwise
         self.is_outer = is_outer
 
 
