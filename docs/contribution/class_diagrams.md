@@ -565,6 +565,17 @@ classDiagram
       class PanelMiterJoint {
          +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
       }
+      
+      class KMiterJoint{
+        +cross_beam: Beam
+        +main_beams: list[Beam]
+        +mill_depth: float
+        +force_pocket: bool
+        +conical_tool: bool
+        +are_beams_coplanar()
+        +promote_cluster()
+        +beam_relative_side_to_beam()
+      }
 
       %% Inheritance relationships
       Joint <|-- JointCandidate
@@ -575,6 +586,7 @@ classDiagram
       Joint <|-- TBirdsmouthJoint
       Joint <|-- LMiterJoint
       Joint <|-- LapJoint
+      Joint <|-- KMiterJoint
       LapJoint <|-- TLapJoint
       LapJoint <|-- LLapJoint
       LapJoint <|-- XLapJoint
