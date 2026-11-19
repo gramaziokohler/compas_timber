@@ -116,23 +116,20 @@ class PlateJoint(Joint, ABC):
         # plate joints keep their location in model coordinates, defaulting to the origin
         pass
 
-    def calculate_topology(self, allow_reordering=False):
+    def calculate_topology(self):
         """Calculate the topology of the joint based on the plates."""
         topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
-        if self.plate_a != topo_results.plate_a:
-            if allow_reordering:
-                self.plate_a, self.plate_b = topo_results.plate_a, topo_results.plate_b
-            else:
-                raise BeamJoiningError(
-                    beams=[self.plate_a, self.plate_b],
-                    joint=self,
-                    debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
-                )
+        if topo_results.get_element_by_role(self.plate_a, self.plate_b)[0] is not self.plate_a:
+            raise BeamJoiningError(
+                beams=[self.plate_a, self.plate_b],
+                joint=self,
+                debug_info="The order of plates is incompatible with the joint topology. Try reversing the order of the plates.",
+            )
         self.topology = topo_results.topology
-        self.a_segment_index = topo_results.a_segment_index
-        self.b_segment_index = topo_results.b_segment_index
+        self.a_segment_index = topo_results.info_for(self.plate_a).edge_index
+        self.b_segment_index = topo_results.info_for(self.plate_b).edge_index
         return topo_results
 
     @classmethod

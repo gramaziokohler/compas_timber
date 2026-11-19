@@ -1,6 +1,7 @@
 import pytest
 from compas.geometry import Box
 from compas.geometry import Frame
+from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
 from compas.geometry import Polygon
@@ -14,6 +15,7 @@ from compas_timber.geometry import brep_difference_first
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.geometry import brep_intersection_first
 from compas_timber.geometry import brep_union_first
+from compas_timber.geometry import get_segment_range_on_polyline
 
 
 def _rectangle(z, width=10, height=5):
@@ -273,3 +275,33 @@ def test_brep_intersection_first_raises_when_breps_do_not_overlap():
 
     with pytest.raises(IndexError):
         brep_intersection_first(box_a, box_b)
+
+
+# get_segment_range_on_polyline
+
+_SQUARE = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 10, 0), Point(0, 10, 0), Point(0, 0, 0)])
+# U shape opening upwards: a horizontal line at y=8 crosses it four times, at x=0, 10, 20 and 30
+_U_SHAPE = Polyline([Point(0, 0, 0), Point(30, 0, 0), Point(30, 10, 0), Point(20, 10, 0), Point(20, 5, 0), Point(10, 5, 0), Point(10, 10, 0), Point(0, 10, 0), Point(0, 0, 0)])
+
+
+@pytest.mark.parametrize(
+    "polyline,start,end,expected",
+    [
+        (_SQUARE, Point(2, 2, 0), Point(8, 8, 0), (Point(2, 2, 0), Point(8, 8, 0))),  # fully inside: its own endpoints
+        (_SQUARE, Point(5, 5, 0), Point(15, 5, 0), (Point(5, 5, 0), Point(10, 5, 0))),  # start inside
+        (_SQUARE, Point(-5, 5, 0), Point(5, 5, 0), (Point(0, 5, 0), Point(5, 5, 0))),  # end inside
+        (_SQUARE, Point(-5, 5, 0), Point(15, 5, 0), (Point(0, 5, 0), Point(10, 5, 0))),  # crosses through
+        (_SQUARE, Point(15, 5, 0), Point(-5, 5, 0), (Point(10, 5, 0), Point(0, 5, 0))),  # ordered from the segment's start
+        (_U_SHAPE, Point(-5, 8, 0), Point(35, 8, 0), (Point(0, 8, 0), Point(30, 8, 0))),  # outermost of several crossings
+    ],
+)
+def test_get_segment_range_on_polyline(polyline, start, end, expected):
+    result = get_segment_range_on_polyline(Line(start, end), polyline, TOL.absolute)
+
+    assert result is not None
+    assert TOL.is_allclose(result[0], expected[0])
+    assert TOL.is_allclose(result[1], expected[1])
+
+
+def test_get_segment_range_on_polyline_no_overlap():
+    assert get_segment_range_on_polyline(Line(Point(20, 0, 0), Point(30, 0, 0)), _SQUARE, TOL.absolute) is None

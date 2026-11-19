@@ -8,10 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+* Added new module `topology_info` in `compas_timber.connections`.
+* Added `TopologyInfo`, structured, element-agnostic, pairwise data class for topology information
+* Added `BeamTopologyInfo`, and `PlateTopologyInfo` — structured, per-element topology info (role, end/edge_index, ref_side_index, location) computed eagerly by `ConnectionSolver`/`PlateConnectionSolver` for each element in a connection.
+* Added `ConnectionSolver.update_location(element_a, element_b, topology_info)` and `PlateConnectionSolver.update_location(plate_a, plate_b, topology_info)`, which recompute the location of an already-solved connection from the elements' current geometry, without searching for the topology again.
+* Added `PlateTopologyInfo.ref_side_index`, the index of the plate outline/plane on which the connection was detected. Together with `edge_index` it identifies the exact outline segment involved in the connection.
+* Added `get_segment_range_on_polyline` to `compas_timber.geometry`.
+* Added protobuf messages `TopologyInfoData`, `BeamTopologyInfoData`, `PlateTopologyInfoData` and the `ElementTopologyInfoData` wrapper to `connections.proto`, with serializers for the matching classes.
+* Added support for map fields with message values (other than `AnyData`) to the protobuf codec in `compas_timber.proto.conversions`.
 
 ### Changed
+* Changed `ConnectionSolver.find_topology()` and `PlateConnectionSolver.find_topology()` to return a `TopologyInfo` instead of `BeamSolverResult`/`PlateSolverResult`.
+* Removed the `allow_reordering` parameter from `PlateJoint.calculate_topology()`; it now always raises `BeamJoiningError` if the plates are not in edge/main-first order.
 
 ### Removed
+* Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `TopologyInfo`.
+* Removed protobuf messages `BeamSolverResultData` and `PlateSolverResultData`, replaced by `TopologyInfoData`.
 
 
 ## [3.0.2] 2026-11-18

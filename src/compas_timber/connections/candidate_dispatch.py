@@ -44,20 +44,28 @@ def _beam_connection_candidate(beam_a, beam_b, max_distance):
     if result.topology == JointTopology.TOPO_UNKNOWN:
         return None
     # use the beam order determined by find_topology to keep main, cross relationship
-    return JointCandidate(result.beam_a, result.beam_b, topology=result.topology, distance=result.distance, location=result.location)
+    main, cross = result.get_element_by_role(beam_a, beam_b)
+    return JointCandidate(main, cross, topology=result.topology, distance=result.distance, location=result.location)
 
 
 @_register(Plate, Plate)
 @_register(Panel, Panel)
 def _plate_connection_candidate(element_a, element_b, max_distance):
-    """Builds a :class:`~compas_timber.connections.PlateJointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
+    """Builds a :class:`~compas_timber.connections.JointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
     result = PlateConnectionSolver().find_topology(element_a, element_b, tol=TOL.relative, max_distance=max_distance)
     if result.topology is JointTopology.TOPO_UNKNOWN:
         return None
-    kwargs = {"topology": result.topology, "a_segment_index": result.a_segment_index, "distance": result.distance, "location": result.location}
-    if result.topology == JointTopology.TOPO_EDGE_EDGE:
-        kwargs["b_segment_index"] = result.b_segment_index
-    return PlateJointCandidate(result.plate_a, result.plate_b, **kwargs)
+    # use the plate order determined by find_topology to keep edge, face relationship
+    plate_a, plate_b = result.get_element_by_role(element_a, element_b)
+    return PlateJointCandidate(
+        plate_a,
+        plate_b,
+        topology=result.topology,
+        distance=result.distance,
+        location=result.location,
+        a_segment_index=result.info_for(plate_a).edge_index,
+        b_segment_index=result.info_for(plate_b).edge_index,
+    )
 
 
 def find_connection_handler(element_a, element_b):

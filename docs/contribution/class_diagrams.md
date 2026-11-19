@@ -275,6 +275,8 @@ Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `La
 
 Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
 
+`TopologyInfo` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyInfo`, `PlateTopologyInfo`) deliberately hold no reference to their element — they live in `TopologyInfo.element_topo_info`, keyed by `str(element.guid)` (always exactly two entries, one per element of the pair, in any mix of `BeamTopologyInfo`/`PlateTopologyInfo`), and are correlated back to a live element with `info_for(element)`. Keeping the elements out of the per-element info lets one `TopologyInfo` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `get_element_by_role(a, b)` derives the canonical a/b order from the two entries' `role`s (`main`/`edge` goes before `cross`/`face`; ties keep the given order).
+
 ```mermaid
 classDiagram
       class Joint {
@@ -303,6 +305,34 @@ classDiagram
 
       class JointCandidate {
          +distance : float | None
+      }
+
+      class PlateJointCandidate {
+         +plate_a : Plate
+         +plate_b : Plate
+      }
+
+      class TopologyInfo {
+         +topology : JointTopology
+         +distance : float
+         +location : Point
+         +element_topo_info : dict[str, BeamTopologyInfo | PlateTopologyInfo]
+         +info_for(element)
+         +get_element_by_role(element_a, element_b) tuple[Element, Element]
+      }
+
+      class BeamTopologyInfo {
+         +role : main | cross
+         +end : start | end
+         +ref_side_index : int
+         +location_parameter : float
+      }
+
+      class PlateTopologyInfo {
+         +role : edge | face
+         +edge_index : int
+         +ref_side_index : int
+         +location : Point
       }
 
       class ButtJoint {
@@ -513,10 +543,7 @@ classDiagram
          +b_planes
          +a_outlines
          +b_outlines
-         +calculate_topology(allow_reordering=False)
-      }
-
-      class PlateJointCandidate {
+         +calculate_topology()
       }
 
       class PlateButtJoint {
@@ -567,7 +594,11 @@ classDiagram
       }
 
       %% Inheritance relationships
-      Joint <|-- JointCandidate
+      JointCandidate <|-- PlateJointCandidate
+      TopologyInfo "1" o-- "0..2" BeamTopologyInfo : element_topo_info, keyed by element guid
+      TopologyInfo "1" o-- "0..2" PlateTopologyInfo : element_topo_info, keyed by element guid
+      PlateJoint ..> TopologyInfo : calculate_topology()
+      JointCandidate ..> TopologyInfo : built from, by candidate_dispatch
       Joint <|-- ButtJoint
       ButtJoint <|-- LButtJoint
       ButtJoint <|-- TButtJoint
@@ -589,7 +620,6 @@ classDiagram
       Joint <|-- ISimpleScarf
       Joint <|-- XNotchJoint
       Joint <|-- PlateJoint
-      PlateJoint <|-- PlateJointCandidate
       PlateJoint <|-- PlateButtJoint
       PlateButtJoint <|-- PlateLButtJoint
       PlateButtJoint <|-- PlateTButtJoint
