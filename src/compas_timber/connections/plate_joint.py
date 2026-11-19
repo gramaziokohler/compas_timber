@@ -1,7 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
 
-from compas.geometry import Point
 from compas.geometry import dot_vectors
 
 from compas_timber.errors import BeamJoiningError
@@ -27,8 +26,12 @@ class PlateJoint(Joint, ABC):
         The index of the segment in plate_a's outline where the plates are connected.
     b_segment_index : int
         The index of the segment in plate_b's outline where the plates are connected.
+    distance : float, optional
+        The distance between the plates' connecting segments. Computed by the
+        :class:`~compas_timber.connections.PlateConnectionSolver` if not provided.
     location : :class:`compas.geometry.Point`, optional
-        The location of the joint. If not provided, defaults to the origin.
+        The location of the joint. Computed by the :class:`~compas_timber.connections.PlateConnectionSolver`
+        if not provided.
     **kwargs : dict, optional
         Additional keyword arguments to pass to the parent class.
 
@@ -40,7 +43,8 @@ class PlateJoint(Joint, ABC):
         The second plate.
     plates : tuple of :class:`compas_timber.elements.Plate`
         The plates that are connected.
-
+    distance : float | None
+        The distance between the plates' connecting segments, as measured by the connection solver.
 
     """
 
@@ -52,16 +56,16 @@ class PlateJoint(Joint, ABC):
         data["b_segment_index"] = self.b_segment_index
         return data
 
-    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, **kwargs):
+    def __init__(self, plate_a=None, plate_b=None, topology=None, a_segment_index=None, b_segment_index=None, distance=None, **kwargs):
         super(PlateJoint, self).__init__(elements=(plate_a, plate_b), topology=topology, **kwargs)
         self.a_segment_index = a_segment_index
         self.b_segment_index = b_segment_index
+        self.distance = distance
         if self.plate_a and self.plate_b:
             if self.topology is None or (self.a_segment_index is None and self.b_segment_index is None):
                 self.calculate_topology()
         self._reverse_a_planes = False
         self._reverse_b_planes = False
-        self.distance = 0.0  # HACK: to pass joint rules that expect a distance attribute
 
     def __repr__(self):
         return "PlateJoint({0}, {1}, {2})".format(self.plate_a, self.plate_b, JointTopology.get_name(self.topology))
@@ -104,8 +108,10 @@ class PlateJoint(Joint, ABC):
 
     @property
     def location(self):
+        if self._location is None and self.plate_a and self.plate_b:
+            self._location = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b, max_distance=None).location
         if self._location is None:
-            self._location = Point(0, 0, 0)
+            raise ValueError("Location of the joint could not be determined. Please set it manually.")
         return self._location
 
     @location.setter
@@ -113,7 +119,7 @@ class PlateJoint(Joint, ABC):
         self._location = value
 
     def _anchor_location(self):
-        # plate joints keep their location in model coordinates, defaulting to the origin
+        # plate joints keep their location in model coordinates, computed by the PlateConnectionSolver when not set
         pass
 
     def calculate_topology(self):
@@ -130,6 +136,9 @@ class PlateJoint(Joint, ABC):
         self.topology = topo_results.topology
         self.a_segment_index = topo_results.info_for(self.plate_a).edge_index
         self.b_segment_index = topo_results.info_for(self.plate_b).edge_index
+        self.distance = topo_results.distance
+        if self._location is None:
+            self._location = topo_results.location
         return topo_results
 
     @classmethod
@@ -140,8 +149,8 @@ class PlateJoint(Joint, ABC):
         ----------
         model : :class:`~compas_timber.model.TimberModel`
             The model to which the elements and this joint belong.
-        candidate : :class:`~compas_timber.connections.Joint`
-            The generic joint to be converted.
+        candidate : :class:`~compas_timber.connections.JointCandidate`
+            The joint candidate to be converted.
         reordered_elements : list(:class:`~compas_model.elements.Element`), optional
             The elements to be connected by this joint. If not provided, the elements of the generic joint will be used.
             This is used to explicitly define the element order.
@@ -154,10 +163,17 @@ class PlateJoint(Joint, ABC):
             The instance of the created joint.
 
         """
-        if reordered_elements and candidate.elements[0] != reordered_elements[0]:  # plates are in different order, reverse segment indices
-            kwargs.update({"a_segment_index": candidate.b_segment_index, "b_segment_index": candidate.a_segment_index})  # pass reversed segment indices from candidate
-        else:
-            kwargs.update({"a_segment_index": candidate.a_segment_index, "b_segment_index": candidate.b_segment_index})  # pass segment indices from candidate
+        plate_a, plate_b = reordered_elements or candidate.elements
+        # segment indices are looked up per plate, so they follow the plates regardless of their order
+        info_a = candidate.info_for(plate_a)
+        info_b = candidate.info_for(plate_b)
+        kwargs.update(
+            {
+                "a_segment_index": getattr(info_a, "edge_index", None),
+                "b_segment_index": getattr(info_b, "edge_index", None),
+                "distance": candidate.distance,
+            }
+        )
         return super(PlateJoint, cls).promote_joint_candidate(model, candidate, reordered_elements=reordered_elements, **kwargs)
 
     def add_extensions(self):

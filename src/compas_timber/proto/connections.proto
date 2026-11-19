@@ -25,6 +25,8 @@ message CutPlaneSpecData {
 }
 
 // JointCandidate merges an open-ended `_extra_kwargs` dict into its __data__.
+// `topology`, `location` and `distance` are legacy: they are no longer written (they live in
+// `topology_info` now) but are still read, and folded into a TopologyInfo by JointCandidate.
 message JointCandidateData {
   GuidRef guid = 1;
   optional string name = 2;
@@ -33,6 +35,7 @@ message JointCandidateData {
   optional compas_pb.data.PointData location = 12;
   optional double distance = 13;
   map<string, compas_pb.data.AnyData> extra_kwargs = 14;
+  optional TopologyInfoData topology_info = 15;
 }
 
 // Per-element topology info (compas_timber.connections.topology_info). These hold

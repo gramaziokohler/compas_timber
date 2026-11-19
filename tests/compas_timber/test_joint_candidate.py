@@ -5,12 +5,14 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Polyline
+from compas.geometry import Translation
+from compas.geometry import Vector
 from compas.tolerance import TOL
 
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import JointTopology
 from compas_timber.connections import LButtJoint
-from compas_timber.connections import PlateJointCandidate
+from compas_timber.connections import PlateConnectionSolver
 from compas_timber.elements import Beam
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
@@ -93,14 +95,18 @@ def test_connect_adjacent_plates_creates_plate_joint_candidates():
 
     model.connect_adjacent_plates()
 
-    assert all((isinstance(j, PlateJointCandidate) for j in model.joint_candidates))
+    assert all((type(j) is JointCandidate for j in model.joint_candidates))
 
     assert len(model.joint_candidates) == 1
     edge_face_joints = [j for j in model.joint_candidates if j.topology == JointTopology.TOPO_EDGE_FACE]
     assert len(edge_face_joints) == 1
-    assert isinstance(edge_face_joints[0], PlateJointCandidate)
+    assert type(edge_face_joints[0]) is JointCandidate
     assert edge_face_joints[0].topology == JointTopology.TOPO_EDGE_FACE
-    assert list(model.joint_candidates)[0].elements[0] == plate_b
+    candidate = list(model.joint_candidates)[0]
+    assert candidate.elements[0] == plate_b
+    assert candidate.info_for(plate_b).role == "edge"
+    assert candidate.info_for(plate_b).edge_index is not None
+    assert candidate.info_for(plate_a).role == "face"
 
 
 # =============================================================================
@@ -274,16 +280,45 @@ def test_joint_candidate_location_raises_before_elements_available():
         _ = candidate.location
 
 
-def test_plate_joint_candidate_location_defaults_to_origin_when_unset():
-    """`PlateJointCandidate.location` defaults to the origin (matching `PlateJoint.location`'s default), not a centerline computation."""
+def test_plate_candidate_location_and_distance_solved_when_unset():
+    """A plate candidate without topology info gets its location, distance and per-plate info from the PlateConnectionSolver."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
     plate_b = Plate.from_outline_thickness(polyline_b, 1)
 
-    candidate = PlateJointCandidate(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_EDGE)
+    candidate = JointCandidate(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_FACE)
+    solved = PlateConnectionSolver().find_topology(plate_a, plate_b, max_distance=None)
 
-    assert TOL.is_allclose(candidate.location, Point(0, 0, 0))
+    assert candidate.topology == JointTopology.TOPO_EDGE_FACE  # given values are kept
+    assert TOL.is_allclose(candidate.location, solved.location)
+    assert candidate.distance == solved.distance
+    assert candidate.info_for(plate_b).edge_index == solved.info_for(plate_b).edge_index
+
+
+def test_beam_candidate_location_solved_without_topology_info():
+    """A beam candidate without any topology info is solved lazily by the ConnectionSolver."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
+
+    candidate = JointCandidate(b1, b2)
+
+    assert candidate.topology == JointTopology.TOPO_X
+    assert TOL.is_allclose(candidate.location, Point(1, 0, 0))
+    assert candidate.info_for(b1).role == "cross"
+
+
+def test_candidate_reset_location_follows_moved_element():
+    """`reset_location` recomputes the location from the elements' current geometry via the solver's `update_location`."""
+    b1 = Beam.from_centerline(Line(Point(0, 0, 0), Point(2, 0, 0)), 0.1, 0.1)
+    b2 = Beam.from_centerline(Line(Point(1, -1, 0), Point(1, 1, 0)), 0.1, 0.1)
+    candidate = JointCandidate(b1, b2)
+    assert TOL.is_allclose(candidate.location, Point(1, 0, 0))
+
+    b2.transform(Translation.from_vector(Vector(0.5, 0, 0)))
+    candidate.reset_location()
+
+    assert TOL.is_allclose(candidate.location, Point(1.5, 0, 0))
 
 
 # =============================================================================
@@ -311,8 +346,8 @@ def test_joint_candidate_location_and_topology_survive_serialization():
     assert restored_joint.topology == original_topology
 
 
-def test_plate_joint_candidate_extra_kwargs_survive_serialization():
-    """`a_segment_index`/`b_segment_index` (arbitrary extra kwargs) survive a JSON round-trip."""
+def test_plate_candidate_topology_info_survives_serialization():
+    """The per-plate topology info (e.g. edge indices) survives a JSON round-trip of the model."""
     polyline_a = Polyline([Point(0, 0, 0), Point(0, 20, 0), Point(10, 20, 0), Point(10, 0, 0), Point(0, 0, 0)])
     plate_a = Plate.from_outline_thickness(polyline_a, 1)
     polyline_b = Polyline([Point(0, 10, 0), Point(10, 10, 0), Point(20, 20, 10), Point(0, 20, 10), Point(0, 10, 0)])
@@ -321,14 +356,37 @@ def test_plate_joint_candidate_extra_kwargs_survive_serialization():
     model = TimberModel()
     model.add_elements([plate_a, plate_b])
 
-    candidate = PlateJointCandidate(plate_a, plate_b, topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
-    model.add_joint_candidate(candidate)
+    model.connect_adjacent_plates()
+    candidate = list(model.joint_candidates)[0]
 
     restored = json_loads(json_dumps(model))
     restored_candidate = list(restored.joint_candidates)[0]
+    restored_a, restored_b = restored_candidate.elements
 
-    assert restored_candidate.a_segment_index == 1
-    assert restored_candidate.b_segment_index == 0
+    assert restored_candidate.topology == candidate.topology
+    assert restored_candidate.distance == candidate.distance
+    assert TOL.is_allclose(restored_candidate.location, candidate.location)
+    assert restored_candidate.info_for(restored_a).edge_index == candidate.info_for(candidate.element_a).edge_index
+    assert restored_candidate.info_for(restored_b).role == candidate.info_for(candidate.element_b).role
+
+
+def test_legacy_plate_candidate_data_loads():
+    """Pre-`topology_info` candidate data (flat topology/location/distance + segment index kwargs) still loads."""
+    candidate = JointCandidate.__from_data__(
+        {
+            "name": None,
+            "element_guids": ["aaa", "bbb"],
+            "topology": JointTopology.TOPO_EDGE_EDGE,
+            "location": Point(1, 2, 3),
+            "distance": 0.0,
+            "a_segment_index": 1,
+            "b_segment_index": 0,
+        }
+    )
+    assert candidate.topology == JointTopology.TOPO_EDGE_EDGE
+    assert TOL.is_allclose(candidate.location, Point(1, 2, 3))
+    assert candidate.distance == 0.0
+    assert not hasattr(candidate, "a_segment_index")
 
 
 # =============================================================================

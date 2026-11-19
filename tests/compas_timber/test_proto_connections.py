@@ -128,10 +128,27 @@ def test_joint_candidate_extra_kwargs_roundtrip():
         topology=JointTopology.TOPO_T,
         location=Point(0.0, 0.0, 0.0),
         distance=1.0,
-        a_segment_index=2,
+        custom_flag=2,
     )
     other = assert_lossless(candidate)
-    assert other.__data__["a_segment_index"] == 2
+    assert other.__data__["custom_flag"] == 2
+
+
+def test_joint_candidate_topology_info_roundtrip():
+    model, a, b = _model_with_two_beams()
+    topo_info = ConnectionSolver().find_topology(a, b)
+    candidate = JointCandidate(a, b, topology_info=topo_info)
+    other = assert_lossless(candidate)
+    assert other.topology == JointTopology.TOPO_L
+    assert other.distance == topo_info.distance
+    assert other.topology_info.element_topo_info.keys() == topo_info.element_topo_info.keys()
+
+
+def test_joint_candidate_legacy_segment_indices_dropped():
+    """Pre-`topology_info` plate candidates stored segment indices as extra kwargs; they are now derived per element."""
+    candidate = JointCandidate(element_guids=["aaa", "bbb"], topology=JointTopology.TOPO_EDGE_EDGE, a_segment_index=1, b_segment_index=0)
+    assert "a_segment_index" not in candidate.__data__
+    assert not hasattr(candidate, "a_segment_index")
 
 
 def test_beam_topology_info_roundtrip():

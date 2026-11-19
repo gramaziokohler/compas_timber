@@ -809,7 +809,8 @@ def test_connect_adjacent_plates_and_panels_equivalent():
     panel_candidates = list(panel_model.joint_candidates)
     assert len(plate_candidates) == len(panel_candidates) == 1
     assert plate_candidates[0].topology == panel_candidates[0].topology
-    assert plate_candidates[0].a_segment_index == panel_candidates[0].a_segment_index
+    plate_candidate, panel_candidate = plate_candidates[0], panel_candidates[0]
+    assert plate_candidate.info_for(plate_candidate.element_a).edge_index == panel_candidate.info_for(panel_candidate.element_a).edge_index
 
 
 def test_connect_adjacent_plates_repeated_call_no_duplicate_candidates():

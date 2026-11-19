@@ -22,7 +22,7 @@ class CutPlaneSpecData(_message.Message):
     def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., local_frame: _Optional[_Union[_geometry_pb2.FrameData, _Mapping]] = ...) -> None: ...
 
 class JointCandidateData(_message.Message):
-    __slots__ = ("guid", "name", "element_guids", "topology", "location", "distance", "extra_kwargs")
+    __slots__ = ("guid", "name", "element_guids", "topology", "location", "distance", "extra_kwargs", "topology_info")
     class ExtraKwargsEntry(_message.Message):
         __slots__ = ("key", "value")
         KEY_FIELD_NUMBER: _ClassVar[int]
@@ -37,6 +37,7 @@ class JointCandidateData(_message.Message):
     LOCATION_FIELD_NUMBER: _ClassVar[int]
     DISTANCE_FIELD_NUMBER: _ClassVar[int]
     EXTRA_KWARGS_FIELD_NUMBER: _ClassVar[int]
+    TOPOLOGY_INFO_FIELD_NUMBER: _ClassVar[int]
     guid: _common_pb2.GuidRef
     name: str
     element_guids: _containers.RepeatedCompositeFieldContainer[_common_pb2.GuidRef]
@@ -44,7 +45,8 @@ class JointCandidateData(_message.Message):
     location: _geometry_pb2.PointData
     distance: float
     extra_kwargs: _containers.MessageMap[str, _message_pb2.AnyData]
-    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., element_guids: _Optional[_Iterable[_Union[_common_pb2.GuidRef, _Mapping]]] = ..., topology: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., distance: _Optional[float] = ..., extra_kwargs: _Optional[_Mapping[str, _message_pb2.AnyData]] = ...) -> None: ...
+    topology_info: TopologyInfoData
+    def __init__(self, guid: _Optional[_Union[_common_pb2.GuidRef, _Mapping]] = ..., name: _Optional[str] = ..., element_guids: _Optional[_Iterable[_Union[_common_pb2.GuidRef, _Mapping]]] = ..., topology: _Optional[int] = ..., location: _Optional[_Union[_geometry_pb2.PointData, _Mapping]] = ..., distance: _Optional[float] = ..., extra_kwargs: _Optional[_Mapping[str, _message_pb2.AnyData]] = ..., topology_info: _Optional[_Union[TopologyInfoData, _Mapping]] = ...) -> None: ...
 
 class BeamTopologyInfoData(_message.Message):
     __slots__ = ("guid", "name", "role", "end", "ref_side_index", "location_parameter")

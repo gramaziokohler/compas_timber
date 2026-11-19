@@ -7,7 +7,6 @@ from .l_miter import LMiterJoint
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
-from .joint_candidate import PlateJointCandidate
 from .topology_info import BeamTopologyInfo
 from .topology_info import PlateTopologyInfo
 from .topology_info import TopologyInfo
@@ -66,7 +65,6 @@ __all__ = [
     "TLapJoint",
     "LLapJoint",
     "JointCandidate",
-    "PlateJointCandidate",
     "BeamTopologyInfo",
     "PlateTopologyInfo",
     "TopologyInfo",

@@ -765,10 +765,10 @@ class TimberModel(Model):
     def compute_topologies(self, elements=None, max_distance=None):
         """Detects adjacent elements and creates joint candidates for them.
 
-        Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
+        Dispatches each adjacent pair to a connection solver based on the pair's element types (beam-beam,
         plate-plate, and panel-panel are supported today). Additional type combinations can be
-        supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered combinations are
-        silently skipped.
+        supported by registering a solver in `candidate_dispatch._CONNECTION_SOLVERS`; unregistered
+        combinations are silently skipped.
 
         Clears all existing joint candidates before recomputing, regardless of the element types
         involved. Concrete (already promoted) joints are left untouched.

@@ -16,14 +16,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added `get_segment_range_on_polyline` to `compas_timber.geometry`.
 * Added protobuf messages `TopologyInfoData`, `BeamTopologyInfoData`, `PlateTopologyInfoData` and the `ElementTopologyInfoData` wrapper to `connections.proto`, with serializers for the matching classes.
 * Added support for map fields with message values (other than `AnyData`) to the protobuf codec in `compas_timber.proto.conversions`.
+* Added `JointCandidate.topology_info` and `JointCandidate.info_for(element)`. A candidate's topology, distance, location and per-element info now live in a single `TopologyInfo`; missing values are filled in lazily by the connection solver registered for the elements' types.
+* Added `find_connection_solver()` and `solve_topology()` to `compas_timber.connections.candidate_dispatch`.
+* Added a `distance` parameter/attribute to `PlateJoint`, set from the `PlateConnectionSolver` result or the promoted candidate.
+* Added the `topology_info` field to the `JointCandidateData` protobuf message.
 
 ### Changed
 * Changed `ConnectionSolver.find_topology()` and `PlateConnectionSolver.find_topology()` to return a `TopologyInfo` instead of `BeamSolverResult`/`PlateSolverResult`.
 * Removed the `allow_reordering` parameter from `PlateJoint.calculate_topology()`; it now always raises `BeamJoiningError` if the plates are not in edge/main-first order.
+* Changed `JointCandidate` to be element-type agnostic: `topology`, `location` and `distance` read through to `JointCandidate.topology_info`, and are serialized as part of it. The flat `topology`/`location`/`distance` constructor arguments are still accepted, as is older serialized data.
+* Changed `candidate_dispatch` to register a connection solver per element-type pair instead of a candidate-building handler; `get_connection_candidate()` now builds a plain `JointCandidate` for any supported pair.
+* Changed `JointCandidate.location` to be computed by the registered connection solver instead of from the beam centerlines; `JointCandidate.reset_location()` now recomputes it from the elements' current geometry.
+* Changed `PlateJoint.location` to be computed by the `PlateConnectionSolver` when not set, instead of defaulting to the origin.
+* Changed `PlateJoint.promote_joint_candidate()` to read the segment indices per plate from the candidate's `TopologyInfo`, so they follow the plates when `reordered_elements` swaps them.
 
 ### Removed
 * Removed `BeamSolverResult` and `PlateSolverResult` (`compas_timber.connections.solver`), replaced by `TopologyInfo`.
 * Removed protobuf messages `BeamSolverResultData` and `PlateSolverResultData`, replaced by `TopologyInfoData`.
+* Removed `PlateJointCandidate`; plate and panel connections now produce a plain `JointCandidate`.
+* Removed `find_connection_handler()` from `compas_timber.connections.candidate_dispatch`, replaced by `find_connection_solver()`.
+* Removed the hardcoded `PlateJoint.distance = 0.0`.
 
 
 ## [3.0.2] 2026-11-18
