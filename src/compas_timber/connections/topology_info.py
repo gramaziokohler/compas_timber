@@ -16,7 +16,7 @@ BeamEnd = Literal["start", "end"]
 PlateRole = Literal["edge", "face"]
 
 # Canonical element ordering convention: the "main"/"edge" role always sorts before "cross"/"face".
-# Used by `TopologyInfo.reorder_elements()` to derive a/b-style ordering without storing it positionally.
+# Used by `TopologyInfo.get_element_by_role()` to derive a/b-style ordering without storing it positionally.
 _ROLE_PRIORITY = {"main": 0, "edge": 0, "cross": 1, "face": 1}
 
 
@@ -178,7 +178,7 @@ class TopologyInfo(Data):
         """
         return self.element_topo_info.get(str(element.guid))
 
-    def reorder_elements(self, element_a: Element, element_b: Element) -> tuple[Element, Element]:
+    def get_element_by_role(self, element_a: Element, element_b: Element) -> tuple[Element, Element]:
         """Returns `element_a` and `element_b` in the role order determined by the solver (main/edge first, cross/face second).
 
         The pair is swapped only if `element_b` holds the leading role and `element_a` does not; ties

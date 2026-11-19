@@ -83,7 +83,7 @@ for pair in pairs:
     beam_a, beam_b = pair
     result = solver.find_topology(beam_a, beam_b)
     if result.topology == JointTopology.TOPO_L:
-        beam_a, beam_b = result.reorder_elements(beam_a, beam_b)
+        beam_a, beam_b = result.get_element_by_role(beam_a, beam_b)
         LMiterJoint.create(model, beam_a, beam_b)
 
 for b_index, beam in enumerate(model.beams):

@@ -66,7 +66,7 @@ def test_find_topology_basic(beam_fixture, expected_topology, flip_a, flip_b, re
         cs = ConnectionSolver()
         topo_results = cs.find_topology(beam_a, beam_b)
         assert topo_results.topology == expected_topology, f"Expected {expected_topology} joint topology"
-        main, other = topo_results.reorder_elements(beam_a, beam_b)
+        main, other = topo_results.get_element_by_role(beam_a, beam_b)
         assert main is beam_a and other is beam_b, "Expected first beam ordered first in topology result"
         assert TOL.is_close(topo_results.distance, 0.0), "Expected distance == 0"
         assert isinstance(topo_results.location, Point), "Expected location to be a Point instance"
@@ -132,7 +132,7 @@ def test_find_topology_beam_metadata(case, flip_a, flip_b, reverse):
     _assert_beam_info(topo_results, beam_b, joint_point, *spec_b[2:])
     # main goes first whatever the input order; ties (L: main/main, X: cross/cross) keep the input order
     expected_order = (beam_a, beam_b) if case == "T" else inputs
-    assert topo_results.reorder_elements(*inputs) == expected_order
+    assert topo_results.get_element_by_role(*inputs) == expected_order
 
 
 @pytest.mark.parametrize("flip_a", [False, True])
@@ -184,7 +184,7 @@ def test_find_topology_with_max_distance(beam_fixture, expected_topology, flip_a
         topo_results = cs.find_topology(beam_a, beam_b, max_distance=0.02)
 
         assert topo_results.topology == expected_topology, f"Expected {expected_topology} joint topology"
-        main, other = topo_results.reorder_elements(beam_a, beam_b)
+        main, other = topo_results.get_element_by_role(beam_a, beam_b)
         assert main is beam_a and other is beam_b, "Expected first beam ordered first in topology result"
 
         # For i_beams_with_tolerance, distance is consistently 0.01; for others it varies
@@ -313,8 +313,8 @@ def test_plate_topology(plate_config, expected_topology, expected_segments, requ
         assert topo_results.info_for(plate_a).edge_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
         assert topo_results.info_for(plate_b).edge_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
     elif expected_topology == JointTopology.TOPO_EDGE_FACE:
-        # reorder_elements puts the edge plate first regardless of input order
-        edge_plate, face_plate = topo_results.reorder_elements(plate_a, plate_b)
+        # get_element_by_role puts the edge plate first regardless of input order
+        edge_plate, face_plate = topo_results.get_element_by_role(plate_a, plate_b)
         assert topo_results.info_for(edge_plate).edge_index == expected_segments[0], f"Expected a_segment_index = {expected_segments[0]}"
         assert topo_results.info_for(face_plate).edge_index == expected_segments[1], f"Expected b_segment_index = {expected_segments[1]}"
 

@@ -121,7 +121,7 @@ class PlateJoint(Joint, ABC):
         topo_results = PlateConnectionSolver().find_topology(self.plate_a, self.plate_b)
         if topo_results.topology == JointTopology.TOPO_UNKNOWN:
             raise ValueError("Could not determine topology for plates {0} and {1}.".format(self.plate_a, self.plate_b))
-        if topo_results.reorder_elements(self.plate_a, self.plate_b)[0] is not self.plate_a:
+        if topo_results.get_element_by_role(self.plate_a, self.plate_b)[0] is not self.plate_a:
             raise BeamJoiningError(
                 beams=[self.plate_a, self.plate_b],
                 joint=self,

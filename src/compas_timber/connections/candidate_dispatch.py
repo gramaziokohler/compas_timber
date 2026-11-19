@@ -44,7 +44,7 @@ def _beam_connection_candidate(beam_a, beam_b, max_distance):
     if result.topology == JointTopology.TOPO_UNKNOWN:
         return None
     # use the beam order determined by find_topology to keep main, cross relationship
-    main, cross = result.reorder_elements(beam_a, beam_b)
+    main, cross = result.get_element_by_role(beam_a, beam_b)
     return JointCandidate(main, cross, topology=result.topology, distance=result.distance, location=result.location)
 
 
@@ -56,7 +56,7 @@ def _plate_connection_candidate(element_a, element_b, max_distance):
     if result.topology is JointTopology.TOPO_UNKNOWN:
         return None
     # use the plate order determined by find_topology to keep edge, face relationship
-    plate_a, plate_b = result.reorder_elements(element_a, element_b)
+    plate_a, plate_b = result.get_element_by_role(element_a, element_b)
     return PlateJointCandidate(
         plate_a,
         plate_b,

@@ -275,7 +275,7 @@ Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `La
 
 Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
 
-`TopologyInfo` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyInfo`, `PlateTopologyInfo`) deliberately hold no reference to their element — they live in `TopologyInfo.element_topo_info`, keyed by `str(element.guid)` (always exactly two entries, one per element of the pair, in any mix of `BeamTopologyInfo`/`PlateTopologyInfo`), and are correlated back to a live element with `info_for(element)`. Keeping the elements out of the per-element info lets one `TopologyInfo` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `reorder_elements(a, b)` derives the canonical a/b order from the two entries' `role`s (`main`/`edge` goes before `cross`/`face`; ties keep the given order).
+`TopologyInfo` is what `ConnectionSolver.find_topology`/`PlateConnectionSolver.find_topology` return: the topology of a pair of elements plus the per-element detail of how each one participates in it. The per-element entries (`BeamTopologyInfo`, `PlateTopologyInfo`) deliberately hold no reference to their element — they live in `TopologyInfo.element_topo_info`, keyed by `str(element.guid)` (always exactly two entries, one per element of the pair, in any mix of `BeamTopologyInfo`/`PlateTopologyInfo`), and are correlated back to a live element with `info_for(element)`. Keeping the elements out of the per-element info lets one `TopologyInfo` describe any pair of element types uniformly, including mixed pairs, without resolving or storing live elements. Because element order isn't stored positionally, `get_element_by_role(a, b)` derives the canonical a/b order from the two entries' `role`s (`main`/`edge` goes before `cross`/`face`; ties keep the given order).
 
 ```mermaid
 classDiagram
@@ -318,7 +318,7 @@ classDiagram
          +location : Point
          +element_topo_info : dict[str, BeamTopologyInfo | PlateTopologyInfo]
          +info_for(element)
-         +reorder_elements(element_a, element_b) tuple[Element, Element]
+         +get_element_by_role(element_a, element_b) tuple[Element, Element]
       }
 
       class BeamTopologyInfo {

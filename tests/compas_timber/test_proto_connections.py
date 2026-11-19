@@ -141,7 +141,7 @@ def test_beam_topology_info_roundtrip():
 
     other = assert_lossless(topo_info)
 
-    assert other.reorder_elements(a, b) == (a, b)
+    assert other.get_element_by_role(a, b) == (a, b)
     for beam in (a, b):
         assert other.info_for(beam).__data__ == topo_info.info_for(beam).__data__
 
@@ -154,7 +154,7 @@ def test_plate_topology_info_roundtrip():
 
     other = assert_lossless(topo_info)
 
-    assert other.reorder_elements(face, edge) == (edge, face)
+    assert other.get_element_by_role(face, edge) == (edge, face)
     assert isinstance(other.info_for(edge), PlateTopologyInfo)
     assert other.info_for(edge).location == topo_info.info_for(edge).location
     assert other.info_for(face).edge_index is None
