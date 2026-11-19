@@ -105,3 +105,15 @@ def test_unknown_topology_info_json_roundtrip():
 
     assert other.distance is None and other.location is None
     assert all(v is None for v in other.element_topo_info["aaa"].__data__.values())
+
+
+@pytest.mark.parametrize(
+    "obj,expected",
+    [
+        (BeamTopologyInfo(role="main", end="start", ref_side_index=1, location_parameter=2.5), "BeamTopologyInfo(role=main, end=start, ref_side_index=1, location_parameter=2.5)"),
+        (PlateTopologyInfo(role="face", ref_side_index=0), "PlateTopologyInfo(role=face, edge_index=None, ref_side_index=0, location=None)"),
+        (TopologyInfo(JointTopology.TOPO_UNKNOWN), "TopologyInfo(topology=0, distance=None, location=None, element_topo_info={})"),
+    ],
+)
+def test_repr(obj, expected):
+    assert repr(obj) == expected

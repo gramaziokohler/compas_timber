@@ -1,3 +1,4 @@
+import pytest
 from compas.data import json_dumps, json_loads
 
 from compas_timber.model import TimberModel
@@ -8,7 +9,8 @@ from compas_timber.connections import JointTopology
 from compas_timber.connections import PlateMiterJoint
 from compas_timber.connections import PlateLButtJoint
 from compas_timber.connections import PlateTButtJoint
-from compas.geometry import Polyline, Point
+from compas.geometry import Polyline, Point, Vector
+from compas_timber.errors import BeamJoiningError
 
 
 def _joint_args(pair, topo_info):
@@ -256,3 +258,28 @@ def test_clear_extensions_skips_element_b_when_b_segment_index_is_none(mocker):
 
     spy_a.assert_called_once_with(1)
     spy_b.assert_not_called()
+
+
+def _face_and_edge_plates():
+    """A face plate (z=0 down to z=-10) and an upright plate whose bottom edge rests on its z=0 face."""
+    face = Plate.from_outline_thickness(Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 100, 0), Point(0, 100, 0), Point(0, 0, 0)]), 10)
+    edge_outline = Polyline([Point(50, 10, 0), Point(50, 90, 0), Point(50, 90, 100), Point(50, 10, 100), Point(50, 10, 0)])
+    edge = Plate.from_outline_thickness(edge_outline, 10, vector=Vector(1, 0, 0))
+    return face, edge
+
+
+def test_calculate_topology_with_edge_plate_first():
+    face, edge = _face_and_edge_plates()
+
+    joint = PlateTButtJoint(edge, face)
+
+    assert joint.topology == JointTopology.TOPO_EDGE_FACE
+    assert joint.a_segment_index == 0
+    assert joint.b_segment_index is None
+
+
+def test_calculate_topology_raises_when_face_plate_first():
+    face, edge = _face_and_edge_plates()
+
+    with pytest.raises(BeamJoiningError):
+        PlateTButtJoint(face, edge)
