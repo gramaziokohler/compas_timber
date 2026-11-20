@@ -271,13 +271,13 @@ class DovetailMortise(BTLxProcessing):
 
     @property
     def depth(self):
-        return self._height
+        return self._depth
 
     @depth.setter
     def depth(self, depth):
         if depth > 1000.0 or depth < 0.0:
             raise ValueError("depth must be between 0.0 and 1000.0")
-        self._height = depth
+        self._depth = depth
 
     @property
     def cone_angle(self):

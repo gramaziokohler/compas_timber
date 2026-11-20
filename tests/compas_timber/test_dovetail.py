@@ -10,6 +10,7 @@ from compas.geometry import Vector
 from compas_timber.elements import Beam
 from compas_timber.fabrication import DovetailMortise
 from compas_timber.fabrication import DovetailTenon
+from compas_timber.fabrication import LimitationTopType
 from compas_timber.fabrication import OrientationType
 from compas_timber.fabrication import TenonShapeType
 
@@ -510,3 +511,45 @@ def test_dovetailtenon_scaled():
     assert scaled.shape == tenon.shape
     assert scaled.shape_radius == tenon.shape_radius * 2.0
     assert scaled.ref_side_index == tenon.ref_side_index
+
+
+def test_dovetailmortise_scaled():
+    mortise = DovetailMortise(
+        start_x=100.0,
+        start_y=50.0,
+        start_depth=5.0,
+        angle=-10.0,
+        slope=90.0,
+        inclination=90.0,
+        limitation_top=LimitationTopType.LIMITED,
+        length_limited_bottom=True,
+        length=80.0,
+        width=50.0,
+        depth=28.0,
+        cone_angle=7.0,
+        use_flank_angle=False,
+        flank_angle=15.0,
+        shape=TenonShapeType.SQUARE,
+        shape_radius=22.497,
+        ref_side_index=1,
+    )
+
+    scaled = mortise.scaled(2.0)
+
+    assert scaled.start_x == mortise.start_x * 2.0
+    assert scaled.start_y == mortise.start_y * 2.0
+    assert scaled.start_depth == mortise.start_depth * 2.0
+    assert scaled.angle == mortise.angle
+    assert scaled.slope == mortise.slope
+    assert scaled.inclination == mortise.inclination
+    assert scaled.limitation_top == mortise.limitation_top
+    assert scaled.length_limited_bottom == mortise.length_limited_bottom
+    assert scaled.length == mortise.length * 2.0
+    assert scaled.width == mortise.width * 2.0
+    assert scaled.depth == mortise.depth * 2.0
+    assert scaled.cone_angle == mortise.cone_angle
+    assert scaled.use_flank_angle == mortise.use_flank_angle
+    assert scaled.flank_angle == mortise.flank_angle
+    assert scaled.shape == mortise.shape
+    assert scaled.shape_radius == mortise.shape_radius * 2.0
+    assert scaled.ref_side_index == mortise.ref_side_index
