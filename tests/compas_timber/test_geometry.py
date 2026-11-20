@@ -212,6 +212,21 @@ def test_brep_from_outlines_with_a_tilted_outline():
     assert abs(brep.volume) == pytest.approx(10 * 5 * 2)
 
 
+@pytest.mark.requires_occ
+def test_brep_from_outlines_with_a_tilted_outline_rounded_as_in_a_btlx_file():
+    # BTLx stores coordinates to three decimals, which leaves an outline on a tilted plane a little off it
+    corners = [(50.0 * math.cos(math.pi * i / 6), 50.0 * math.sin(math.pi * i / 6)) for i in range(12)]
+    outline_a = Polyline([Point(x, y, 0) for x, y in corners] + [Point(corners[0][0], corners[0][1], 0)])
+    tilted = [Point(round(x, 3), round(y, 3), round(20.0 + 0.3713 * x + 0.1291 * y, 3)) for x, y in corners]
+    outline_b = Polyline(tilted + [tilted[0]])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.is_solid
+    area = 6 * 50.0**2 * math.sin(math.pi / 6)  # of the regular dodecagon, whose centroid is at the origin
+    assert abs(brep.volume) == pytest.approx(area * 20.0, rel=1e-4)
+
+
 def test_brep_from_outlines_raises_if_outlines_are_square_to_each_other():
     outline_a = _rectangle(z=0)
     outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 0, 6), Point(0, 0, 6), Point(0, 0, 1)])

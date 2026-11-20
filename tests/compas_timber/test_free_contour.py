@@ -296,3 +296,16 @@ def test_contour_to_brep_lets_a_short_segment_vanish_where_the_walls_lean_in():
     brep = Contour(polyline, depth=25.0, inclination=[20.0]).to_brep()
 
     assert brep.volume == pytest.approx(25.0 / 3 * (top + bottom + math.sqrt(top * bottom)), rel=1e-3)
+
+
+def test_dual_contour_scaled_scales_both_contours():
+    principal = Polyline([Point(0, 0, 0), Point(0.1, 0, 0), Point(0.1, 0.05, 0), Point(0, 0, 0)])
+    associated = Polyline([Point(0, 0, -0.02), Point(0.1, 0, -0.03), Point(0.1, 0.05, -0.03), Point(0, 0, -0.02)])
+    contour = DualContour(principal, associated, depth_bounded=True)
+
+    scaled = contour.scaled(1000.0)  # as the BTLx writer does for a model in metres
+
+    assert scaled.principal_contour.points[1] == Point(100, 0, 0)
+    assert scaled.associated_contour.points[1] == Point(100, 0, -30)
+    assert scaled.depth_bounded is True
+    assert contour.principal_contour.points[1] == Point(0.1, 0, 0)  # the original is left alone

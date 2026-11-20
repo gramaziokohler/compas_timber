@@ -1500,10 +1500,8 @@ class DualContour(Data):
             The scaling factor.
 
         """
-        self.principal_contour.scaled(factor)
-        self.associated_contour.scaled(factor)
-        if self.depth_bounded is not None:
-            self.depth_bounded *= factor
+        self.principal_contour.scale(factor)
+        self.associated_contour.scale(factor)
 
     def scaled(self, factor):
         """Returns a new instance of the dual contour with the parameters scaled by a given factor.

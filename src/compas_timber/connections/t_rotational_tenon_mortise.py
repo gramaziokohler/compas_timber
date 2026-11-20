@@ -177,7 +177,9 @@ class TRotationalTenonMortiseJoint(Joint):
 
     SUPPORTED_TOPOLOGY = JointTopology.TOPO_T
 
-    MARGIN = 10.0  # how far contours reach past the elements, so that no sliver is left at their edges
+    # how far contours reach past the elements, so that no sliver is left at their edges: a fraction of the main beam's
+    # smaller side (10 for one 120 wide), so that it scales with the model's units
+    MARGIN = 1.0 / 12.0
     TESSELLATION_COUNT = 32  # straight segments per arc in the geometry; the BTLx keeps the exact arcs
     STUCK = (
         "The tenon cannot be swung out of the cross beam, which reaches too far above the rotation axis: "
@@ -399,7 +401,8 @@ class TRotationalTenonMortiseJoint(Joint):
         `end_depth`, how far into the cross beam the main beam's blank ends;
         `slope`: the cross beam's face lies `slope * u` along `into` from `origin`, which is 0 for a main beam square to
         it, and further into the cross beam on the obtuse side (u > 0) otherwise;
-        `cosine`, of the angle between `into` and the cross beam's face normal.
+        `cosine`, of the angle between `into` and the cross beam's face normal;
+        `margin`, how far contours reach past the elements (see `MARGIN`).
 
         """
         ref_side = self.main_ref_side_index
@@ -435,6 +438,7 @@ class TRotationalTenonMortiseJoint(Joint):
             "end_depth": Vector.from_start_end(origin, end_face.point).dot(into),
             "slope": slope,
             "cosine": cosine,
+            "margin": self.MARGIN * min(main_width, thickness),
         }
 
     @property
@@ -574,7 +578,7 @@ class TRotationalTenonMortiseJoint(Joint):
             end_side = self.main_end_side_index
             region = self._region(frame, self._wall_offset(end_depth))
             tenon_cut = self._contour_feature(
-                self._main_segments(self._outline(self._wall_offset(end_depth)), region),
+                self._main_segments(self._outline(self._wall_offset(end_depth)), region, frame["margin"]),
                 frame,
                 end_depth,
                 self.main_beam,
@@ -626,10 +630,11 @@ class TRotationalTenonMortiseJoint(Joint):
         """Why the tenon reaches out of the main beam's cross section, where it would be cut off unlike the mortise,
         or None."""
         u_min, u_max, v_max = outline.bounds()
-        half = frame["main_width"] / 2.0 + 1e-3
+        tolerance = 1e-4 * frame["margin"]
+        half = frame["main_width"] / 2.0 + tolerance
         if u_min < -half or u_max > half:
             return "The tenon reaches out of the side of the main beam: make it narrower or less high, or move it with start_y or rotation_radius."
-        if v_max > frame["thickness"] - self.start_depth + 1e-3:
+        if v_max > frame["thickness"] - self.start_depth + tolerance:
             return "The tenon reaches out of the main beam's opposite face: make start_depth or height smaller (the main beam is {:.1f} thick).".format(frame["thickness"])
         return None
 
@@ -682,13 +687,13 @@ class TRotationalTenonMortiseJoint(Joint):
         beam, plus a margin. At the bottom of a dovetail mortise, the path's inner flank runs closest to the axis."""
         outline = self._outline(0.0)
         center = self._axis()
-        rise = max(frame["face_height"] - self.axis_offset, 0.0) + self.MARGIN  # above the axis
+        rise = max(frame["face_height"] - self.axis_offset, 0.0) + frame["margin"]  # above the axis
         nearest = _distance(center, widest.start_points[1])
         if rise >= nearest:
             raise BeamJoiningError(self.elements, self, debug_info=self.STUCK)
         outer, inner = outline.start_points
         # on around the axis past the start of the tenon: out of the cross beam, and at least by the margin
-        past_start = min(_angle(center, outer), _angle(center, inner)) - self.MARGIN / _distance(center, outer)
+        past_start = min(_angle(center, outer), _angle(center, inner)) - frame["margin"] / _distance(center, outer)
         end_angle = min(-math.asin(rise / nearest), past_start)
         out_outer = _add(center, _direction(end_angle), _distance(center, outer))
         out_inner = _add(center, _direction(end_angle), _distance(center, inner))
@@ -703,10 +708,11 @@ class TRotationalTenonMortiseJoint(Joint):
         beam.
 
         """
-        half = frame["main_width"] / 2.0 + self.MARGIN + offset
-        return -half, half, -self.start_depth - self.MARGIN, frame["thickness"] - self.start_depth + self.MARGIN + offset
+        margin = frame["margin"]
+        half = frame["main_width"] / 2.0 + margin + offset
+        return -half, half, -self.start_depth - margin, frame["thickness"] - self.start_depth + margin + offset
 
-    def _main_segments(self, outline, region):
+    def _main_segments(self, outline, region, margin):
         """The closed contour of what is removed from the main beam past the shoulder: the region around its cross
         section, less the tenon. The tenon's flanks are continued along their tangents up out of the main beam, so
         that the contour goes around it, and walls inclined by a dovetail end mill meet smoothly."""
@@ -722,7 +728,7 @@ class TRotationalTenonMortiseJoint(Joint):
         outer_top, inner_top = tops
         if inner_top[0] >= outer_top[0]:
             raise BeamJoiningError(self.elements, self, debug_info="The flanks of the tenon cross above its start: move the axis (axis_offset).")
-        u_min, u_max = min(u_min, inner_top[0] - self.MARGIN), max(u_max, outer_top[0] + self.MARGIN)
+        u_min, u_max = min(u_min, inner_top[0] - margin), max(u_max, outer_top[0] + margin)
 
         tenon = [segment.reversed() for segment in reversed(outline.segments)]  # from the inner flank around to the outer
         tenon = [_Segment(inner_top, inner)] + tenon + [_Segment(outer, outer_top)]
@@ -854,7 +860,7 @@ class TRotationalTenonMortiseJoint(Joint):
 
         # the face lies further into the cross beam on the obtuse side, the end of the tenon must lie past it all along
         shortest = min(Vector.from_start_end(a, b).dot(frame["into"]) for a, b in zip(top, bottom))
-        if shortest < 1e-3:
+        if shortest < 1e-4 * frame["margin"]:
             reason = "The tenon does not reach into the cross beam on the side of the obtuse angle: make length larger than {:.1f}.".format(self.length - shortest)
             if self.end_mill == EndMillType.DOVETAIL:
                 reason += " A dovetail end mill widens the tenon towards its end, so it may then need a smaller tool_angle or start_width to stay within the main beam."
@@ -875,7 +881,7 @@ class TRotationalTenonMortiseJoint(Joint):
         lean = math.tan(math.radians(self.tool_angle)) if self.end_mill == EndMillType.DOVETAIL else 0.0
         region = self._region(frame, max(self._wall_offset(frame["end_depth"]), 0.0))
         u_min, u_max, v_top, _ = region
-        chains = [self._main_segments(self._outline(0.0), region)]
+        chains = [self._main_segments(self._outline(0.0), region, frame["margin"])]
         if self.start_depth > 1e-6:  # the main beam's face down to the start of the tenon
             slab = [(u_min, v_top), (u_max, v_top), (u_max, 0.0), (u_min, 0.0)]
             chains.append([_Segment(a, b) for a, b in zip(slab, slab[1:] + slab[:1])])

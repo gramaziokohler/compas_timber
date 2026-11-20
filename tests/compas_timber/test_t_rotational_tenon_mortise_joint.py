@@ -1,5 +1,6 @@
 import json
 import math
+import re
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -12,9 +13,12 @@ from compas.geometry import Transformation
 from compas.geometry import Translation
 from compas.geometry import Vector
 from compas.geometry import distance_point_line
+from compas.tolerance import TOL
+from compas.tolerance import Tolerance
 from compas_brep import Brep
 from compas_brep.curves import NurbsCurve
 
+from compas_timber.btlx import BTLxReader
 from compas_timber.connections import EndMillType
 from compas_timber.connections import RotationalTenonProfile
 from compas_timber.connections import TRotationalTenonMortiseJoint
@@ -615,6 +619,49 @@ def test_angled_conical_dovetail_too_short_for_the_obtuse_side_suggests_a_smalle
 
     assert errors
     assert "obtuse" in errors[-1].debug_info and "tool_angle" in errors[-1].debug_info
+
+
+@pytest.mark.requires_occ
+@pytest.mark.parametrize("angle", [70.0, 110.0])
+def test_angled_joint_read_back_from_btlx_has_the_same_geometry(angle, tmp_path):
+    # BTLx rounds the coordinates of the contours on the tilted shoulder and bottom of the mortise
+    model, _, main, cross, errors = build(angle=angle)
+    assert not errors
+    path = str(tmp_path / "rotational.btlx")
+    BTLxWriter().write(model, path)
+
+    reader = BTLxReader()
+    read = reader.read(path)
+
+    assert not reader.errors
+    original = sorted(beam.geometry.volume for beam in (main, cross))
+    assert sorted(beam.geometry.volume for beam in read.beams) == pytest.approx(original, rel=1e-5)
+
+
+@pytest.mark.filterwarnings("ignore:Model units are set to M")
+@pytest.mark.parametrize("angle", [90.0, 70.0])
+def test_a_model_in_metres_gives_the_same_btlx(angle):
+    def btlx_numbers(unit, scale):
+        TOL.unit = unit
+        model = TimberModel(tolerance=Tolerance(unit=unit))
+        a = math.radians(angle)
+        main = Beam.from_centerline(
+            Line(Point(math.cos(a) * 900 * scale, math.sin(a) * 900 * scale, 0), Point(0, 0, 0)), width=MAIN_WIDTH * scale, height=MAIN_THICKNESS * scale, z_vector=Vector(0, 0, 1)
+        )
+        cross = Beam.from_centerline(Line(Point(-700 * scale, 0, 0), Point(700 * scale, 0, 0)), width=CROSS_SIZE * scale, height=CROSS_SIZE * scale, z_vector=Vector(0, 0, 1))
+        model.add_element(main)
+        model.add_element(cross)
+        TRotationalTenonMortiseJoint.create(model, main, cross)
+        assert not model.process_joinery()
+        xml = BTLxWriter().model_to_xml(model)  # in mm, whatever the model's units
+        processings = re.sub(r'(GUID|ProcessID)="[^"]*"', "", xml[xml.find("<Processings") :])
+        return [float(number) for number in re.findall(r"-?\d+\.\d+", processings)]
+
+    millimetres = btlx_numbers("MM", 1.0)
+    metres = btlx_numbers("M", 0.001)
+
+    assert len(metres) == len(millimetres)
+    assert metres == pytest.approx(millimetres, abs=2e-3)
 
 
 def test_angled_axis_below_the_cross_beams_face_is_reported():

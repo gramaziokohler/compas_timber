@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `brep_from_outlines()` accepts outlines which repeat a point: the side face there is a triangle.
 * `brep_from_outlines()` accepts outlines whose planes are not parallel, as long as each is planar and they are not square to each other, and `DualContour.to_brep()` moves its contours apart along the lines between them, so that a `DualContour` whose associated contour lies on a tilted plane makes a solid with planar sides.
 * Fixed `FreeContour.from_top_bottom_and_elements()` ignoring a `ref_side_index` of 0 and looking for the reference side itself.
+* `brep_from_outlines()` moves an outline lying a little off its plane, as one read from a BTLx file, whose coordinates are rounded, onto it, and makes a side face whose corners then do not quite lie in one plane of two triangles, so that a `DualContour` on a tilted plane read from a BTLx file gets its geometry.
+* Fixed `DualContour.scale()` (and so `scaled()`, which the `BTLxWriter` uses for a model in metres) leaving its contours unscaled, and multiplying `depth_bounded` by the factor.
+* Fixed `DovetailMortise` failing to round a mortise limited at its top and open at its bottom: it read `length_limited_top`, which only `DovetailTenon` has, instead of its `limitation_top`.
 
 ### Removed
 

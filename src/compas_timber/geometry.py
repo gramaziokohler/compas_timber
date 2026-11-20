@@ -171,12 +171,46 @@ def _without_repeated_points(polyline: Polyline) -> Polyline:
     return Polyline([point for i, point in enumerate(points) if i == 0 or not TOL.is_allclose(point, points[i - 1])])
 
 
+# BTLx stores coordinates to three decimals, so an outline read from a BTLx file may lie off its plane by about that much
+OUTLINE_FLATNESS_TOLERANCE = 0.002
+
+
+def _flattened(outline: Polyline, name: str) -> Polyline:
+    """The closed `outline` with its points moved onto its plane, as OCC builds faces only from points which lie in one.
+
+    Raises a ValueError if any of them lies further off it than `OUTLINE_FLATNESS_TOLERANCE`, or a millionth of the
+    outline's size if that is more.
+
+    """
+    points = outline.points[:-1]
+    normal = Polygon(points).normal
+    center = Point(*centroid_points(points))
+    size = max(distance_point_point(center, point) for point in points)
+    offsets = [Vector.from_start_end(center, point).dot(normal) for point in points]
+    if max(abs(offset) for offset in offsets) > max(1e-6 * size, OUTLINE_FLATNESS_TOLERANCE):
+        raise ValueError("{} is not planar.".format(name))
+    flat = [point - normal * offset for point, offset in zip(points, offsets)]
+    return Polyline(flat + [flat[0]])
+
+
+def _planar_faces(points: List[Point]) -> List[List[Point]]:
+    """The side face through four points, or two triangles if they do not quite lie in one plane, as happens between
+    outlines on planes which are not parallel, read from a BTLx file."""
+    if len(points) == 4:
+        normal = Vector.from_start_end(points[0], points[1]).cross(Vector.from_start_end(points[0], points[2]))
+        if normal.length > 1e-12 and abs(Vector.from_start_end(points[0], points[3]).dot(normal.unitized())) > 1e-7:
+            return [points[:3], [points[0], points[2], points[3]]]
+    return [points]
+
+
 def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optional[Vector] = None) -> Brep:
     """Create a solid brep from two closed outlines.
 
     Assumes outline_a and outline_b are closed planar polylines with the same number of vertices. Their planes need not
     be parallel, as the bottom of a DualContour may be tilted, but they must face the same way: each pair of
-    corresponding segments makes a planar side face.
+    corresponding segments makes a side face. An outline a little off its plane, as one read from a BTLx file, whose
+    coordinates are rounded, is moved onto it, and a side face whose corners then do not quite lie in one plane is made of
+    two triangles.
 
     Parameters
     ----------
@@ -195,7 +229,7 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     ------
     ValueError
         If either outline is not closed, if the outlines don't have the same
-        number of vertices, or if the outlines are square to each other.
+        number of vertices, if either is not planar, or if the outlines are square to each other.
     """
     if not TOL.is_allclose(outline_a[0], outline_a[-1]):
         raise ValueError("outline_a is not closed: its first and last points must coincide.")
@@ -204,14 +238,10 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     if len(outline_a) != len(outline_b):
         raise ValueError("outline_a and outline_b must have the same number of vertices.")
 
+    outline_a = _flattened(outline_a, "outline_a")
+    outline_b = _flattened(outline_b, "outline_b")
     normal_a = Polygon(outline_a.points[:-1]).normal
     normal_b = Polygon(outline_b.points[:-1]).normal
-    for name, outline, outline_normal in (("outline_a", outline_a, normal_a), ("outline_b", outline_b, normal_b)):
-        points = outline.points[:-1]
-        center = Point(*centroid_points(points))
-        size = max(distance_point_point(center, point) for point in points)
-        if any(abs(Vector.from_start_end(center, point).dot(outline_normal)) > 1e-6 * max(size, 1.0) for point in points):
-            raise ValueError("{} is not planar.".format(name))
     if abs(normal_a.dot(normal_b)) < 1e-3:
         raise ValueError("outline_a and outline_b are square to each other: they do not bound a solid between them.")
 
@@ -235,7 +265,7 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     for points in faces:
         distinct = [p for i, p in enumerate(points) if not TOL.is_allclose(p, points[i - 1])]
         if len(distinct) >= 3:
-            polygons.append(Polygon(distinct))
+            polygons.extend(Polygon(face) for face in _planar_faces(distinct))
     return Brep.from_polygons(polygons)
 
 
