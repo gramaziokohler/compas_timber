@@ -7,9 +7,11 @@ from compas.geometry import Line
 from compas.geometry import Point
 from compas.geometry import Vector
 from compas.tolerance import TOL
+from compas_brep import Brep
 
 from compas_timber.connections import TDovetailJoint
 from compas_timber.elements import Beam
+from compas_timber.fabrication import LimitationTopType
 from compas_timber.fabrication import TenonShapeType
 from compas_timber.model import TimberModel
 
@@ -164,3 +166,35 @@ def test_t_dovetail_joint_rounds_the_limited_end_of_a_dovetail_through_the_main_
             assert TOL.is_zero(Vector.from_start_end(cutting_frame.point, vertex.point).dot(cutting_frame.yaxis))
     # rounding removes material from the dovetail
     assert main_beam.geometry.volume < square_main_beam.geometry.volume
+
+
+@pytest.mark.requires_occ
+def test_t_dovetail_mortise_rounds_its_limited_top_end_when_its_bottom_is_open():
+    def mortise_and_cross_beam(dovetail_shape):
+        main_beam = Beam.from_centerline(Line(Point(0, 800, 0), Point(0, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+        cross_beam = Beam.from_centerline(Line(Point(-600, 0, 0), Point(600, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+        model = TimberModel()
+        model.add_element(main_beam)
+        model.add_element(cross_beam)
+        TDovetailJoint.create(model, main_beam, cross_beam, dovetail_shape=dovetail_shape)
+        model.process_joinery()
+        mortise = cross_beam.features[0]
+        mortise.limitation_top = LimitationTopType.LIMITED
+        mortise.length_limited_bottom = False
+        return mortise, cross_beam
+
+    mortise, cross_beam = mortise_and_cross_beam(TenonShapeType.ROUND)
+    square_mortise, _ = mortise_and_cross_beam(TenonShapeType.SQUARE)
+
+    # the rounded edges are the two rising from the cutting plane at the top end, which lies at the cutting frame's origin
+    volume = mortise.dovetail_volume_from_params_and_beam(cross_beam)
+    cutting_frame = mortise.frame_from_params_and_beam(cross_beam)
+    edge_indices = mortise._rounded_edge_indices(volume, cutting_frame)
+    assert len(edge_indices) == 2
+    for index in edge_indices:
+        edge = volume.edges[index]
+        for vertex in (edge.start_vertex, edge.end_vertex):
+            assert TOL.is_zero(Vector.from_start_end(cutting_frame.point, vertex.point).dot(cutting_frame.yaxis))
+    # rounding the corners of the mortise removes less material
+    blank = Brep.from_box(cross_beam.blank)
+    assert mortise.apply(blank, cross_beam).volume > square_mortise.apply(blank, cross_beam).volume

@@ -728,12 +728,13 @@ class DovetailMortise(BTLxProcessing):
         # type: (Brep, Frame) -> list[int]
         # the edges rising from the cutting plane at the length limited ends of the dovetail, which get rounded.
         # the top end lies at the origin of the cutting frame, the bottom end at `length` along its negative y-axis.
+        top_limited = self.limitation_top == LimitationTopType.LIMITED
         indices = []
         for index in brep_edge_indices_not_parallel_to_plane(dovetail_volume, Plane.from_frame(cutting_frame)):
             edge = dovetail_volume.edges[index]
             midpoint = Line(edge.start_vertex.point, edge.end_vertex.point).midpoint
             is_top = Vector.from_start_end(cutting_frame.point, midpoint).dot(cutting_frame.yaxis) > -self.length / 2.0
-            if (is_top and self.length_limited_top) or (not is_top and self.length_limited_bottom):
+            if (is_top and top_limited) or (not is_top and self.length_limited_bottom):
                 indices.append(index)
         return indices
 

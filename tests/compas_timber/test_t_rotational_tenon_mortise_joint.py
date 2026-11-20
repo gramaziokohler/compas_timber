@@ -195,6 +195,10 @@ def test_check_elements_compatibility():
         dict(profile=RotationalTenonProfile.CONICAL, start_width=20.0),  # narrower where it starts than at the tip
         dict(cross_height=400.0),  # the cross beam reaches so far above the axis that the tenon cannot get out
         dict(axis_offset=100.0),  # so far above the start that the inner flank does not reach it
+        dict(profile=RotationalTenonProfile.CONICAL, start_width=600.0),  # too wide for its flanks to meet the tip
+        dict(tenon_shape=TenonShapeType.RADIUS, shape_radius=30.0),  # corners as wide as the tenon
+        dict(end_mill=EndMillType.DOVETAIL, width=100.0),  # too wide for the main beam even before it widens
+        dict(start_depth=85.0),  # the cross beam's face lies within the margin of the inner flank: stuck
     ],
 )
 def test_invalid_layouts_and_parameters_are_reported(kwargs):
@@ -202,6 +206,39 @@ def test_invalid_layouts_and_parameters_are_reported(kwargs):
 
     assert errors  # reported while extending the beams, and again while adding the features
     assert all(isinstance(error, BeamJoiningError) for error in errors)
+
+
+def test_beams_which_do_not_span_a_plane_are_reported_by_the_faces():
+    cross = Beam.from_centerline(Line(Point(-700, 0, 0), Point(700, 0, 0)), width=CROSS_SIZE, height=CROSS_SIZE, z_vector=Vector(0, 0, 1))
+    parallel = Beam.from_centerline(Line(Point(-700, 300, 0), Point(700, 300, 0)), width=MAIN_WIDTH, height=MAIN_THICKNESS, z_vector=Vector(0, 0, 1))
+    rolled = Beam.from_centerline(Line(Point(0, 900, 0), Point(0, 0, 0)), width=MAIN_WIDTH, height=MAIN_THICKNESS, z_vector=Vector(1, 0, 1))
+
+    with pytest.raises(BeamJoiningError, match="parallel"):
+        TRotationalTenonMortiseJoint(parallel, cross).main_ref_side_index
+    with pytest.raises(BeamJoiningError, match="No face of the main beam"):
+        TRotationalTenonMortiseJoint(rolled, cross).main_ref_side_index
+
+
+def test_main_beams_centerline_may_run_either_way():
+    model = TimberModel()
+    main = Beam.from_centerline(Line(Point(0, 0, 0), Point(0, 900, 0)), width=MAIN_WIDTH, height=MAIN_THICKNESS, z_vector=Vector(0, 0, 1))
+    cross = Beam.from_centerline(Line(Point(-700, 0, 0), Point(700, 0, 0)), width=CROSS_SIZE, height=CROSS_SIZE, z_vector=Vector(0, 0, 1))
+    model.add_element(main)
+    model.add_element(cross)
+    joint = TRotationalTenonMortiseJoint.create(model, main, cross)
+    assert not model.process_joinery()
+
+    assert joint.main_end_side_index == 4  # the tenon is at the main beam's start
+    assert swings_out(joint, main, cross)
+
+
+def test_cross_beam_lower_than_the_axis_releases_the_tenon_with_a_small_turn():
+    # the cross beam is lower than the main beam and the axis raised above it: much of the tenon never meets it
+    _, joint, main, cross, errors = build(cross_height=40.0, axis_offset=50.0)
+    assert not errors
+
+    assert joint.release_angle < 10.0
+    assert swings_out(joint, main, cross, angles=(joint.release_angle + 1.0, 30.0))
 
 
 ########################################################################
@@ -552,6 +589,14 @@ def test_angled_tenon_too_short_for_the_obtuse_side_is_reported():
 
     assert errors
     assert "obtuse" in errors[-1].debug_info and "length" in errors[-1].debug_info
+
+
+def test_angled_conical_dovetail_too_short_for_the_obtuse_side_suggests_a_smaller_tool_angle():
+    # its default length keeps the conical tenon, which the dovetail widens, within the main beam, which is too short
+    _, _, _, _, errors = build(angle=70.0, end_mill=EndMillType.DOVETAIL, profile=RotationalTenonProfile.CONICAL)
+
+    assert errors
+    assert "obtuse" in errors[-1].debug_info and "tool_angle" in errors[-1].debug_info
 
 
 def test_angled_axis_below_the_cross_beams_face_is_reported():
