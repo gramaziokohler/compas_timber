@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Fixed `DovetailMortise.scale()` raising a `TypeError`, which broke writing BTLx for a `TDovetailJoint` in a model in metres: `depth` was stored in `_height` instead of `_depth`.
+
 ### Removed
 
 
