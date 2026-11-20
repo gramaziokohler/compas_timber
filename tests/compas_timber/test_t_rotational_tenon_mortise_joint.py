@@ -219,6 +219,7 @@ def test_beams_which_do_not_span_a_plane_are_reported_by_the_faces():
         TRotationalTenonMortiseJoint(rolled, cross).main_ref_side_index
 
 
+@pytest.mark.requires_occ
 def test_main_beams_centerline_may_run_either_way():
     model = TimberModel()
     main = Beam.from_centerline(Line(Point(0, 0, 0), Point(0, 900, 0)), width=MAIN_WIDTH, height=MAIN_THICKNESS, z_vector=Vector(0, 0, 1))
@@ -232,6 +233,7 @@ def test_main_beams_centerline_may_run_either_way():
     assert swings_out(joint, main, cross)
 
 
+@pytest.mark.requires_occ
 def test_cross_beam_lower_than_the_axis_releases_the_tenon_with_a_small_turn():
     # the cross beam is lower than the main beam and the axis raised above it: much of the tenon never meets it
     _, joint, main, cross, errors = build(cross_height=40.0, axis_offset=50.0)
@@ -292,6 +294,7 @@ def test_btlx_mills_the_tenon_from_the_main_beams_end(default_joint):
     assert planes == sorted([joint.cross_face_index + 1, joint.main_end_side_index + 1])
 
 
+@pytest.mark.requires_occ
 def test_dovetail_end_mill_inclines_the_walls(dovetail_joint):
     joint, main, cross = dovetail_joint
 
@@ -312,6 +315,7 @@ def test_dovetail_end_mill_inclines_the_walls(dovetail_joint):
     assert pocket > flat_pocket * 1.05
 
 
+@pytest.mark.requires_occ
 def test_a_main_beam_reaching_past_the_tenon_is_cut_off_at_its_end():
     _, joint, main, cross, errors = build(length=40.0)  # the main beam's centerline ends 80 into the cross beam
 
@@ -326,6 +330,7 @@ def test_a_main_beam_reaching_past_the_tenon_is_cut_off_at_its_end():
 ########################################################################
 
 
+@pytest.mark.requires_occ
 def test_tenon_volume(default_joint):
     joint, main, cross = default_joint
     expected = parallel_round_tenon_area(joint) * joint.length
@@ -333,12 +338,14 @@ def test_tenon_volume(default_joint):
     assert tenon_volume(main, cross) == pytest.approx(expected, rel=5e-3)
 
 
+@pytest.mark.requires_occ
 def test_tenon_fits_and_swings_out_about_the_rotation_axis(default_joint):
     joint, main, cross = default_joint
 
     assert swings_out(joint, main, cross)
 
 
+@pytest.mark.requires_occ
 def test_the_hook_blocks_pulling_the_tenon_out_of_the_face_or_sideways(default_joint):
     joint, main, cross = default_joint
     tolerance = faceting(main, cross)
@@ -348,6 +355,7 @@ def test_the_hook_blocks_pulling_the_tenon_out_of_the_face_or_sideways(default_j
         assert overlap(pulled, cross.geometry) > 100 * tolerance
 
 
+@pytest.mark.requires_occ
 def test_flat_end_mill_lets_the_main_beam_be_pulled_back_dovetail_does_not(default_joint, dovetail_joint):
     for (joint, main, cross), locked in ((default_joint, False), (dovetail_joint, True)):
         pulled = main.geometry.transformed(Translation.from_vector(joint.rotation_axis.direction * 20))
@@ -355,12 +363,14 @@ def test_flat_end_mill_lets_the_main_beam_be_pulled_back_dovetail_does_not(defau
         assert stuck == locked
 
 
+@pytest.mark.requires_occ
 def test_dovetail_tenon_fits_and_swings_out(dovetail_joint):
     joint, main, cross = dovetail_joint
 
     assert swings_out(joint, main, cross)
 
 
+@pytest.mark.requires_occ
 def test_conical_tenon_narrows_on_both_flanks_from_its_start_to_its_tip():
     _, joint, main, cross, errors = build(profile=RotationalTenonProfile.CONICAL, start_width=80.0)
     assert not errors
@@ -407,6 +417,7 @@ def test_tool_diameter_which_fits():
     assert not errors
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("tip", [TenonShapeType.SQUARE, TenonShapeType.RADIUS])
 @pytest.mark.parametrize("end_mill", [EndMillType.FLAT, EndMillType.DOVETAIL])
 def test_square_and_radius_tips(tip, end_mill):
@@ -431,6 +442,7 @@ def test_rotation_180_turns_the_joint_about_the_main_beam(default_joint):
     assert turned.rotation_axis.start.z == pytest.approx(-joint.rotation_axis.start.z)
 
 
+@pytest.mark.requires_occ
 def test_start_depth_sinks_the_tenon_and_the_axis_below_the_face():
     _, joint, main, cross, errors = build(start_depth=20.0)
 
@@ -441,6 +453,7 @@ def test_start_depth_sinks_the_tenon_and_the_axis_below_the_face():
     assert swings_out(joint, main, cross)  # the mortise follows the tenon's path up past the axis
 
 
+@pytest.mark.requires_occ
 def test_a_cross_beam_reaching_above_the_main_beam():
     _, joint, main, cross, errors = build(cross_height=200.0)
 
@@ -448,6 +461,7 @@ def test_a_cross_beam_reaching_above_the_main_beam():
     assert swings_out(joint, main, cross)
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("axis_offset", [30.0, -30.0])
 def test_axis_offset_moves_the_axis_square_to_the_face(axis_offset):
     _, joint, main, cross, errors = build(axis_offset=axis_offset)
@@ -471,6 +485,7 @@ def test_axis_offset_moves_the_axis_square_to_the_face(axis_offset):
     assert overlap(pulled, cross.geometry) > 100 * faceting(main, cross)
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("end_mill", [EndMillType.DOVETAIL])
 @pytest.mark.parametrize("profile", [RotationalTenonProfile.PARALLEL, RotationalTenonProfile.CONICAL])
 def test_offset_axis_with_other_profiles_and_end_mills(profile, end_mill):
@@ -481,6 +496,7 @@ def test_offset_axis_with_other_profiles_and_end_mills(profile, end_mill):
         assert swings_out(joint, main, cross, angles=(30.0,))
 
 
+@pytest.mark.requires_occ
 def test_release_angle_brings_the_tenon_out_of_the_cross_beam(default_joint):
     joint, main, cross = default_joint
     axis = joint.rotation_axis
@@ -494,6 +510,7 @@ def test_release_angle_brings_the_tenon_out_of_the_cross_beam(default_joint):
     assert overlap(turned(joint.release_angle + 1.0), blank) < 1e-6
 
 
+@pytest.mark.requires_occ
 def test_return_angle_is_where_the_tenon_comes_round_to_the_cross_beam_again():
     _, joint, main, cross, errors = build(axis_offset=-60.0)  # the cross beam's face 60 above the axis
     axis = joint.rotation_axis
@@ -525,6 +542,7 @@ def outline_area_and_centroid_u(joint):
     return abs(area), moment / area
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("angle", [70.0, 110.0])
 def test_angled_main_beam_turns_about_an_axis_along_it_and_is_flush_with_the_cross_beam(angle):
     _, joint, main, cross, errors = build(angle=angle)
@@ -606,6 +624,7 @@ def test_angled_axis_below_the_cross_beams_face_is_reported():
     assert "axis_offset" in errors[-1].debug_info
 
 
+@pytest.mark.requires_occ
 def test_angled_with_start_depth():
     _, joint, main, cross, errors = build(angle=70.0, start_depth=20.0, axis_offset=20.0)
     assert not errors
@@ -614,6 +633,7 @@ def test_angled_with_start_depth():
     assert swings_out(joint, main, cross)
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("profile, tool_angle", [(RotationalTenonProfile.PARALLEL, 15.0), (RotationalTenonProfile.CONICAL, 10.0)])
 def test_angled_dovetail(profile, tool_angle):
     # with 15 degrees, a conical tenon, wide where it starts, would be out of the main beam before it reaches past the

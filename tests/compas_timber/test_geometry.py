@@ -200,6 +200,7 @@ def test_brep_from_outlines_raises_if_an_outline_is_not_planar():
         brep_from_outlines(outline_a, outline_b)
 
 
+@pytest.mark.requires_occ
 def test_brep_from_outlines_with_a_tilted_outline():
     # a box 10 x 5, cut by a plane rising from z = 1 to z = 3 along x: the bottom of a DualContour need not be parallel
     outline_a = _rectangle(z=0)
@@ -350,6 +351,7 @@ def test_brep_from_box_with_rounded_corners_raises_if_radius_is_too_large():
         brep_from_box_with_rounded_corners(Box(80, 160, 50), 41)
 
 
+@pytest.mark.requires_occ
 def test_brep_from_outlines_with_a_repeated_point():
     # a 10 x 10 x 5 box, whose top outline has a point halfway along one side where the bottom one repeats a corner:
     # the side face there is a triangle and a quad instead of two quads

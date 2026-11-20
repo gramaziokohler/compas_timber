@@ -255,6 +255,7 @@ def test_get_ref_face_index_rejects_a_contour_off_the_element(plate):
 ########################################################################
 
 
+@pytest.mark.requires_occ
 def test_contour_to_brep_inclines_the_walls_of_a_polygon():
     # a counterclockwise 100 x 80 rectangle, its walls leaning in by 20 degrees over a depth of 25: a frustum
     polyline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 80, 0), Point(0, 80, 0), Point(0, 0, 0)])
@@ -266,6 +267,7 @@ def test_contour_to_brep_inclines_the_walls_of_a_polygon():
     assert brep.volume == pytest.approx(25.0 / 3 * (top + bottom + math.sqrt(top * bottom)), rel=1e-3)
 
 
+@pytest.mark.requires_occ
 @pytest.mark.parametrize("inclination, expected", [(-15.0, 93007.0), (15.0, 65452.0)])
 def test_nurbs_contour_to_brep_inclines_the_walls_of_an_arc(inclination, expected):
     # a half disc of radius 50, 20 deep, whose walls lean out (-15) or in (15): before, the walls of the many short
@@ -283,6 +285,7 @@ def test_nurbs_contour_to_brep_inclines_the_walls_of_an_arc(inclination, expecte
     assert contour.to_brep().volume == pytest.approx(expected, rel=2e-3)
 
 
+@pytest.mark.requires_occ
 def test_contour_to_brep_lets_a_short_segment_vanish_where_the_walls_lean_in():
     # a 100 x 80 rectangle with a 1 mm chamfer at one corner: leaning in by 20 degrees over 25, the walls move by about
     # 9 mm, which the chamfer is too short for, so it shrinks to a point instead of turning over
