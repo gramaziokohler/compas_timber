@@ -22,8 +22,10 @@ from compas.geometry import Frame
 from compas.geometry import Line
 from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Polygon
 from compas.geometry import Polyline
 from compas.geometry import Transformation
+from compas.geometry import Vector
 from compas.geometry import angle_vectors
 from compas.tolerance import TOL
 from compas_brep.curves import NurbsCurve
@@ -33,7 +35,6 @@ from compas_timber.errors import BTLxProcessingError
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import correct_polyline_direction
-from compas_timber.utils import move_polyline_segment_to_plane
 
 
 class BTLxWriter(object):
@@ -1303,6 +1304,84 @@ class AlignmentType(object):
     CENTER = "center"
 
 
+def _inclined_bottom_polyline(polyline, depth, inclinations):
+    """Returns the outline of a contour at its depth, with the wall of each segment tilted by its inclination.
+
+    The wall of a segment is the vertical plane through it, rotated about the segment by its inclination. Each
+    corner of the outline at the depth is where the walls of the two segments meeting there cross, which also holds
+    for nearly collinear neighbours, such as the segments of a tessellated curve.
+
+    Where walls lean towards the inside of a convex corner, a segment shorter than the distance the walls move would
+    turn over at the depth. Such a segment shrinks to a point instead, where the walls of its remaining neighbours
+    cross, as an offset curve does. Segments are removed one at a time, the shortest first, as a turned over neighbour
+    can make a longer segment look turned over too. The result then holds a repeated point for each removed segment.
+
+    Parameters
+    ----------
+    polyline : :class:`compas.geometry.Polyline`
+        The contour, in the XY plane of the reference side.
+    depth : float
+        The depth of the contour, along -Z.
+    inclinations : list[float]
+        The inclination of each segment, in degrees.
+
+    Returns
+    -------
+    :class:`compas.geometry.Polyline`
+        The outline at the depth, with as many points as `polyline`.
+
+    """
+    lines = polyline.lines
+    offsets = []  # per segment, from its points down its wall to the depth
+    for line, inclination in zip(lines, inclinations):
+        wall = Plane.from_points([line.start, line.end, line.start + [0, 0, -1]])
+        wall.rotate(math.radians(inclination), line.direction, line.start)
+        down = wall.normal.cross(line.direction)
+        if down.z > 0:
+            down = -down
+        offsets.append(down * (depth / -down.z))
+
+    def at_depth(point, segment_before, segment_after):
+        segments = [s for s in (segment_before, segment_after) if s is not None]
+        if len(segments) == 1:
+            return point + offsets[segments[0]]
+        a, b = segments
+        start_a, start_b = lines[a].start + offsets[a], lines[b].start + offsets[b]
+        dir_a, dir_b = lines[a].direction, lines[b].direction
+        cross = dir_a.x * dir_b.y - dir_a.y * dir_b.x
+        if abs(cross) < 1e-9:  # in line: both walls reach the same point
+            return Point(*((point + offsets[a] + point + offsets[b]) * 0.5))
+        delta = start_b - start_a
+        t = (delta.x * dir_b.y - delta.y * dir_b.x) / cross
+        return start_a + dir_a * t
+
+    points = list(polyline.points)
+    count = len(lines)
+    closed = polyline.is_closed
+    vanished = set()
+
+    def remaining(segment, step):
+        """The first segment from `segment` on in the direction `step` which has not vanished, or None."""
+        for _ in range(count):
+            if not closed and not 0 <= segment < count:
+                return None
+            segment %= count
+            if segment not in vanished:
+                return segment
+            segment += step
+        return None
+
+    while True:
+        # a point lies between the segment before it and the one after it
+        result = [Point(*at_depth(point, remaining(index - 1, -1), remaining(index, 1))) for index, point in enumerate(points)]
+        if closed:
+            result[-1] = result[0]
+        turned = [k for k in range(count) if k not in vanished and (result[k + 1] - result[k]).dot(lines[k].direction) < -1e-9]
+        if not turned or len(vanished) + 2 >= count:
+            return Polyline(result)
+        vanished.add(min(turned, key=lambda k: lines[k].length))
+
+
 class Contour(Data):
     """Represens the generic contour for specific free contour processings.
 
@@ -1377,10 +1456,7 @@ class Contour(Data):
                 inclinations = [self.inclination[0] for _ in range(len(pline_a) - 1)]
             else:
                 inclinations = [i for i in self.inclination]
-            for i, (seg, inclination) in enumerate(zip(pline_a.lines, inclinations)):
-                plane = Plane.from_points([seg.start, seg.end, seg.start + [0, 0, -1]])
-                plane.rotate(math.radians(inclination), seg.direction, seg.start)
-                move_polyline_segment_to_plane(pline_b, i, plane)
+            pline_b = _inclined_bottom_polyline(pline_a, self.depth, inclinations)
         pline_a.translate([0, 0, 0.001])
         pline_b.translate([0, 0, -0.001])
 
@@ -1449,10 +1525,33 @@ class DualContour(Data):
         return new_instance
 
     def to_brep(self):
-        pline_a = self.principal_contour.translated([0, 0, 0.001])
-        pline_b = self.associated_contour.translated([0, 0, -0.001])
+        """Convert the dual contour to a COMPAS Brep object.
 
-        return brep_from_outlines(pline_a, pline_b)
+        The contours are moved a little apart, so that the solid reaches past the faces they lie on. Each point is moved
+        along the line to its counterpart on the other contour, so that the sides stay planar where the contours are not
+        parallel, as when the associated contour lies on a tilted plane.
+
+        Returns
+        -------
+        :class:`~compas.geometry.Brep`
+            The brep representation of the dual contour.
+
+        """
+        principal, associated = self.principal_contour.points, self.associated_contour.points
+        normals = [Polygon(points[:-1]).normal for points in (principal, associated)]
+        pline_a, pline_b = [], []
+        for a, b in zip(principal, associated):
+            along = Vector.from_start_end(b, a)  # from the associated contour to the principal one
+            moved = []
+            for point, normal, sign in ((a, normals[0], 1.0), (b, normals[1], -1.0)):
+                reach = abs(along.dot(normal))
+                if reach < 1e-9:  # the line lies in the contour's plane: move square to it
+                    moved.append(point + normal * (0.001 * sign if normal.z >= 0 else -0.001 * sign))
+                else:
+                    moved.append(point + along * (0.001 * sign / reach))
+            pline_a.append(moved[0])
+            pline_b.append(moved[1])
+        return brep_from_outlines(Polyline(pline_a), Polyline(pline_b))
 
 
 BTLxWriter.register_type_serializer(DualContour.__name__, dual_contour_to_xml)

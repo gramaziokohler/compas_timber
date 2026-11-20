@@ -10,7 +10,8 @@ and runs `process_joinery()` again, so what you see is exactly what the library 
   "Reset joint parameters" to hand them back.
 * Display: pull the beams apart to look inside the joint, ghost the uncut blanks, show the centerlines. Exploding
   moves each piece along the direction it is inserted in, which the explorer derives per joint type from the joint's
-  own cuts (see "Insertion directions" below).
+  own cuts (see "Insertion directions" below). A rotational tenon is swung out about its rotation axis instead, which
+  is drawn in red, with the circle the tenon's centerline follows.
 * "Copy code" puts a script that rebuilds the current state on the clipboard (and prints it).
 
 Needs the `viz` extras (``pip install -e ".[viz]"``). Run with::
@@ -23,8 +24,12 @@ import math
 import time
 
 from compas.colors import Color
+from compas.geometry import Circle
+from compas.geometry import Frame
 from compas.geometry import Line
+from compas.geometry import Plane
 from compas.geometry import Point
+from compas.geometry import Rotation
 from compas.geometry import Sphere
 from compas.geometry import Translation
 from compas.geometry import Vector
@@ -45,16 +50,19 @@ from PySide6.QtWidgets import QLabel
 from PySide6.QtWidgets import QSlider
 
 from compas_timber.connections import BallNodeJoint
+from compas_timber.connections import EndMillType
 from compas_timber.connections import ISimpleScarf
 from compas_timber.connections import LButtJoint
 from compas_timber.connections import LFrenchRidgeLapJoint
 from compas_timber.connections import LLapJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import LTenonMortiseJoint
+from compas_timber.connections import RotationalTenonProfile
 from compas_timber.connections import TBirdsmouthJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.connections import TDovetailJoint
 from compas_timber.connections import TLapJoint
+from compas_timber.connections import TRotationalTenonMortiseJoint
 from compas_timber.connections import TStepJoint
 from compas_timber.connections import TTenonMortiseJoint
 from compas_timber.connections import XLapJoint
@@ -183,19 +191,73 @@ MILL_DEPTH = length("mill_depth", "Mill depth", 60.0, default=0.0)
 # with a mill depth, mill a pocket that follows the main beam instead of a lap square to the cross beam
 POCKET = [toggle("force_pocket", "Force pocket"), toggle("conical_tool", "Conical tool")]
 
+# the parameters of a mortise and tenon, plus those of the rotation
+ROTATIONAL_TENON = [
+    length("start_y", "Start y", minimum=-150.0, maximum=150.0),
+    length("start_depth", "Start depth (and axis)", 100.0),
+    Param("rotation", "Rotation (side) [deg]", "float", None, 0.0, 180.0, 180.0),
+    length("length", "Tenon length (into cross beam)", 400.0, minimum=1.0),
+    length("width", "Tenon width", 200.0, minimum=1.0),
+    length("height", "Tenon height (hook reach)", 300.0, minimum=1.0),
+    choice("tenon_shape", "Tip shape", TENON_SHAPES),
+    length("shape_radius", "Tip corner radius (radius tip)", 100.0, minimum=1.0),
+    length("rotation_radius", "Rotation axis radius", 400.0, minimum=1.0),
+    length("axis_offset", "Axis offset (above the start)", minimum=-150.0, maximum=150.0),
+    choice("profile", "Profile", [RotationalTenonProfile.PARALLEL, RotationalTenonProfile.CONICAL]),
+    length("start_width", "Start width (conical)", 300.0, minimum=1.0),
+    choice("end_mill", "End mill", [EndMillType.FLAT, EndMillType.DOVETAIL]),
+    angle("tool_angle", "Tool angle (dovetail)", 1.0, 30.0),
+    length("tool_diameter", "Tool diameter (0 = not checked)", 100.0, default=0.0, zero_is_none=True),
+]
+
 
 # ==========================================================================
 # Insertion directions
 # ==========================================================================
 # The joints don't define how their pieces go together (yet), so the explorer derives an insertion direction per
 # joint type from the joint's own cuts, and exploding moves the pieces out along it, i.e. it plays the assembly
-# backwards. Every rule was checked for collisions at several angles: sliding the pieces apart along it never makes
-# them overlap. Each rule maps an element of the joint to the direction it moves in; elements left out stay put.
-# `away` maps each beam to the direction along its own axis that points away from the joint.
+# backwards. Every rule was checked for collisions at several angles: moving the pieces apart along it never makes
+# them overlap. Each rule maps an element of the joint to how it moves out: a direction it slides in, or a `Swing`
+# about an axis; elements left out stay put. `away` maps each beam to the direction along its own axis that points
+# away from the joint.
 
 
 def unit(vector):
     return vector.unitized() if vector.length > 1e-9 else vector
+
+
+class Slide(object):
+    """Moves an element along a direction, by the explode distance."""
+
+    def __init__(self, direction):
+        self.direction = unit(direction)
+
+    def at(self, distance):
+        return Translation.from_vector(self.direction * distance)
+
+
+class Swing(object):
+    """Rotates an element about an axis, by the angle at which a point at `radius` from the axis travels the explode
+    distance, up to `max_angle` degrees."""
+
+    def __init__(self, axis, radius, max_angle=90.0):
+        self.axis = axis
+        self.radius = radius
+        self.max_angle = math.radians(max_angle)
+
+    def at(self, distance):
+        angle = min(distance / self.radius, self.max_angle)
+        return Rotation.from_axis_and_angle(self.axis.direction, angle, point=self.axis.start)
+
+
+def about_the_rotation_axis(joint, away):
+    """Rotational tenon: the main beam turns about the joint's rotation axis, which runs along it, and the tenon swings
+    out of the cross beam's face following its arcs. It stops well past the turn which brings the tenon out, but
+    before the tenon comes round to the cross beam again."""
+    max_angle = joint.release_angle + 60.0
+    if joint.return_angle is not None:
+        max_angle = min(max_angle, joint.return_angle - 5.0)
+    return {joint.main_beam: Swing(joint.rotation_axis, joint.rotation_radius, max_angle=max_angle)}
 
 
 def along_main_axis(joint, away):
@@ -315,6 +377,16 @@ JOINTS = [
         insertion=along_main_axis,
     ),
     JointSpec("T-Tenon Mortise", TTenonMortiseJoint, "T", TENON, insertion=off_the_cross_face),
+    # the tenon curls out of a face of the main beam parallel to the plane of both beams: the main beam must not be
+    # tilted out of it. At an angle, its end is housed in the cross beam.
+    JointSpec(
+        "T-Rotational Tenon Mortise",
+        TRotationalTenonMortiseJoint,
+        "T",
+        ROTATIONAL_TENON,
+        beams={"tilt": 0.0},
+        insertion=about_the_rotation_axis,
+    ),
     JointSpec("X-Lap", XLapJoint, "X", LAP, roles=AB, insertion=apart_from_the_lap),
     JointSpec("X-Notch", XNotchJoint, "X", beams={"offset": 120.0}, roles=("notch_beam", "solid_beam"), insertion=out_of_the_notch),
     JointSpec(
@@ -527,6 +599,7 @@ BEAM_COLORS = [Color.from_hex("#e3b778"), Color.from_hex("#9fbcd6"), Color.from_
 EDGE_COLOR = Color.from_hex("#4d4d4d")
 BLANK_COLOR = Color.from_hex("#bfbfbf")
 FASTENER_COLOR = Color.from_hex("#8c8c8c")
+AXIS_COLOR = Color.from_hex("#d6453d")
 ERROR_COLOR = "#e5533d"  # readable on the viewer's light and dark themes
 
 
@@ -654,12 +727,14 @@ class JointExplorer(object):
         self.spec = next(spec for spec in JOINTS if spec.name == name)
         self.description.text = "<b>{}</b> &middot; {}<br>{}".format(self.spec.cls.__name__, TOPOLOGY_NAMES[self.spec.topology], self.spec.description)
 
-        # beam sizes carry over, the layout of the beams starts over when the topology changes
+        # beam sizes carry over, the layout of the beams starts over when the topology changes, and what a joint set for
+        # itself (e.g. the birdsmouth's tilt) goes back to its default when another joint is picked
         topology_changed = previous is None or previous.topology != self.spec.topology
+        overridden_before = set(previous.beams) if previous is not None else set()
         for param in beam_params(self.spec.topology):
             if param.name.startswith(("main_", "cross_")) and param.name in self.beam_settings:
                 continue
-            if topology_changed or param.name not in self.beam_settings:
+            if topology_changed or param.name not in self.beam_settings or param.name in overridden_before:
                 self.beam_settings[param.name] = param.default
         self.beam_settings.update(self.spec.beams)
         self._fill(self.beam_container, beam_params(self.spec.topology), self.beam_settings, self.on_beam_changed)
@@ -693,8 +768,8 @@ class JointExplorer(object):
         self.rebuild_timer.start()
 
     def on_explode(self, component, value):
-        for obj, vector in self.objects:
-            obj.transformation = Translation.from_vector(vector * value)
+        for obj, motion in self.objects:
+            obj.transformation = motion.at(value)
             obj.update()
         self.viewer.renderer.update()
 
@@ -760,37 +835,56 @@ class JointExplorer(object):
             if geometry is not None:
                 yield geometry
 
-    def explode_vectors(self, beams):
-        """The unit direction each beam moves in when the view is exploded: its insertion direction, reversed.
+    def explode_motions(self, beams):
+        """How each beam moves when the view is exploded (a `Slide` or a `Swing`): its insertion, reversed.
 
         Falls back to pulling the beams apart along their axes for joints without an insertion rule, and when the
         joint failed to build (the beams drawn are then fresh copies the joint doesn't know).
         """
         away = {beam: vector for beam, (_, _, _, vector) in zip(beams, self.layout)}
-        fallback = [away[beam] for beam in beams]
+        fallback = [Slide(away[beam]) for beam in beams]
         if self.spec.insertion is None or self.joint is None:
             return fallback
         if not all(any(beam is element for element in self.joint.elements) for beam in beams):
             return fallback
         try:
-            directions = self.spec.insertion(self.joint, away)
+            motions = self.spec.insertion(self.joint, away)
         except Exception:  # e.g. a reference side the joint can't resolve for this layout
             return fallback
-        return [unit(directions.get(beam, Vector(0, 0, 0))) for beam in beams]
+        result = []
+        for beam in beams:
+            motion = motions.get(beam, Vector(0, 0, 0))
+            result.append(motion if isinstance(motion, (Slide, Swing)) else Slide(motion))
+        return result
+
+    def _rotation_axis(self):
+        """The rotation axis of the joint and the circle the tenon's centerline follows around it on the shoulder, as
+        lines to draw, if the joint has one and it was built."""
+        try:
+            axis = self.joint.rotation_axis
+            radius = self.joint.rotation_radius
+        except Exception:  # no such joint, or one which failed to build
+            return []
+        reach = 2.0 * max(self.beam_settings["main_height"], self.beam_settings["cross_height"])
+        circle = Circle(radius, frame=Frame.from_plane(Plane(axis.start, axis.direction)))
+        return [Line(axis.start - axis.direction * reach, axis.start + axis.direction * reach), circle.to_polyline(n=96)]
 
     def _draw(self, beams, geometries):
         items = []
-        vectors = self.explode_vectors(beams)
-        for index, (beam, geometry, vector) in enumerate(zip(beams, geometries, vectors)):
+        motions = self.explode_motions(beams)
+        for index, (beam, geometry, motion) in enumerate(zip(beams, geometries, motions)):
             name = self.spec.roles[index].replace("_", " ")
             color = BEAM_COLORS[index % len(BEAM_COLORS)]
-            items.append((geometry, vector, dict(name=name, facecolor=color, linecolor=EDGE_COLOR, show_points=False)))
+            items.append((geometry, motion, dict(name=name, facecolor=color, linecolor=EDGE_COLOR, show_points=False)))
             if self.display["show_blanks"]:
-                items.append((beam.blank, vector, dict(name=name + " blank", facecolor=BLANK_COLOR, linecolor=BLANK_COLOR, opacity=0.2, show_points=False)))
+                items.append((beam.blank, motion, dict(name=name + " blank", facecolor=BLANK_COLOR, linecolor=BLANK_COLOR, opacity=0.2, show_points=False)))
             if self.display["show_centerlines"]:
-                items.append((beam.centerline, vector, dict(name=name + " centerline", linecolor=Color.red(), linewidth=2)))
+                items.append((beam.centerline, motion, dict(name=name + " centerline", linecolor=Color.red(), linewidth=2)))
+        still = Slide(Vector(0, 0, 0))
         for geometry in self._fasteners():
-            items.append((geometry, Vector(0, 0, 0), dict(name="fastener", facecolor=FASTENER_COLOR, show_lines=False, show_points=False)))
+            items.append((geometry, still, dict(name="fastener", facecolor=FASTENER_COLOR, show_lines=False, show_points=False)))
+        for line, width in zip(self._rotation_axis(), (3, 1)):
+            items.append((line, still, dict(name="rotation axis", linecolor=AXIS_COLOR, linewidth=width)))
 
         scene = self.viewer.scene
         running = self.viewer.running
@@ -799,10 +893,10 @@ class JointExplorer(object):
             for obj, _ in self.objects:
                 scene.remove(obj)
             self.objects = []
-            for item, vector, kwargs in items:
+            for item, motion, kwargs in items:
                 obj = scene.add(item, **kwargs)
-                obj.transformation = Translation.from_vector(vector * self.display["explode"])
-                self.objects.append((obj, vector))
+                obj.transformation = motion.at(self.display["explode"])
+                self.objects.append((obj, motion))
         finally:
             self.viewer.running = running
         if running:

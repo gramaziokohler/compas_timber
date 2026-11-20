@@ -248,3 +248,48 @@ def test_get_ref_face_index_rejects_a_contour_off_the_element(plate):
 
     with pytest.raises(ValueError):
         FreeContour.get_ref_face_index(polyline, plate)
+
+
+########################################################################
+# Inclined walls
+########################################################################
+
+
+def test_contour_to_brep_inclines_the_walls_of_a_polygon():
+    # a counterclockwise 100 x 80 rectangle, its walls leaning in by 20 degrees over a depth of 25: a frustum
+    polyline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 80, 0), Point(0, 80, 0), Point(0, 0, 0)])
+    inset = 25.0 * math.tan(math.radians(20.0))
+    top, bottom = 100 * 80, (100 - 2 * inset) * (80 - 2 * inset)
+
+    brep = Contour(polyline, depth=25.0, inclination=[20.0]).to_brep()
+
+    assert brep.volume == pytest.approx(25.0 / 3 * (top + bottom + math.sqrt(top * bottom)), rel=1e-3)
+
+
+@pytest.mark.parametrize("inclination, expected", [(-15.0, 93007.0), (15.0, 65452.0)])
+def test_nurbs_contour_to_brep_inclines_the_walls_of_an_arc(inclination, expected):
+    # a half disc of radius 50, 20 deep, whose walls lean out (-15) or in (15): before, the walls of the many short
+    # segments a curve is tessellated into were moved along their nearly parallel neighbours and gave no solid
+    from compas_brep.curves import NurbsCurve
+
+    from compas.geometry import Line
+    from compas_timber.fabrication import NurbsContour
+
+    r = 50.0
+    w = math.cos(math.pi / 4)
+    arc = NurbsCurve.from_parameters([Point(r, 0, 0), Point(r, r, 0), Point(0, r, 0), Point(-r, r, 0), Point(-r, 0, 0)], [1.0, w, 1.0, w, 1.0], [0.0, 1.0, 2.0], [3, 2, 3], 2)
+    contour = NurbsContour([arc, Line(Point(-r, 0, 0), Point(r, 0, 0))], depth=20.0, inclination=[inclination], tessellation_count=128)
+
+    assert contour.to_brep().volume == pytest.approx(expected, rel=2e-3)
+
+
+def test_contour_to_brep_lets_a_short_segment_vanish_where_the_walls_lean_in():
+    # a 100 x 80 rectangle with a 1 mm chamfer at one corner: leaning in by 20 degrees over 25, the walls move by about
+    # 9 mm, which the chamfer is too short for, so it shrinks to a point instead of turning over
+    polyline = Polyline([Point(0, 0, 0), Point(100, 0, 0), Point(100, 79, 0), Point(99, 80, 0), Point(0, 80, 0), Point(0, 0, 0)])
+    inset = 25.0 * math.tan(math.radians(20.0))
+    top, bottom = 100 * 80, (100 - 2 * inset) * (80 - 2 * inset)
+
+    brep = Contour(polyline, depth=25.0, inclination=[20.0]).to_brep()
+
+    assert brep.volume == pytest.approx(25.0 / 3 * (top + bottom + math.sqrt(top * bottom)), rel=1e-3)

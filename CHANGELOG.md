@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `brep_edge_indices_not_parallel_to_plane()` and `brep_from_box_with_rounded_corners()` in `compas_timber.geometry`.
 * Added `examples/model/0014_joint_explorer.py`, an interactive COMPAS viewer app to pick a beam joint type and change its parameters with sliders.
+* Added `TRotationalTenonMortiseJoint`: a hooked tenon in the main beam's cross section, swung into a mortise in the cross beam's face by turning the main beam about `rotation_axis`, which runs along it. The joint goes together from the cross beam's top or bottom face, like a dovetail. On top of the parameters of `TTenonMortiseJoint` it takes `rotation_radius`, `axis_offset` (which, with `start_y`, places the axis in the main beam's cross section), `profile` (`RotationalTenonProfile.PARALLEL`, or `CONICAL`, which tapers both flanks to `width` from `start_width`), `end_mill` (`EndMillType.FLAT` or `DOVETAIL`), `tool_angle` and `tool_diameter`, which reports a mortise narrower than the end mill or tip corners tighter than it. The mortise is milled into the cross beam's face and the tenon out of the main beam's end, as `FreeContour` processings whose arcs are exact NURBS curves. A main beam at an angle still turns about an axis along it: its end stays flush with the cross beam's face, the tenon reaching out of it along the main beam, milled out of the main beam's end with a `DualContour` down to the slanted shoulder, and the mortise is the tenon's shape: a `DualContour` from the cross beam's face down to the tenon's square end, its walls following the main beam, tilted to the face as with a conical tool. `release_angle` gives the turn which brings the tenon out of the cross beam, `return_angle` the one at which it would come round to it again.
 
 ### Changed
 * `FreeContour.get_ref_face_index()` now tests every contour point against each reference side, instead of fitting a plane to three of the points, which raised `ZeroDivisionError` when they were near collinear. It is stricter: all points must now lie on the side, not just the first.
@@ -29,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `TBirdsmouthJoint` with a `mill_depth` raising `TypeError` in `process_joinery()` by passing `is_pocket` to `Lap.from_plane_and_beam()`, which no longer takes it.
 * Fixed `StepJoint` with a `heel` or `double` step shape producing a list instead of a `Brep`, which made `Beam.geometry` raise `AttributeError`.
 * Raised the minimum `compas_brep` version to 0.4.1, the first version whose `Brep.fillet` picks edges by their index in `Brep.edges`.
+* Fixed `Contour.to_brep()` (and so `FreeContour` and `NurbsContour` geometry) with inclined walls failing on curves: the walls of the short segments a curve is tessellated into were moved along their nearly parallel neighbours. Each corner is now where the walls of the two segments meeting there cross, and a segment too short for walls leaning into a convex corner shrinks to a point. Polygons give the same result as before.
+* `brep_from_outlines()` accepts outlines which repeat a point: the side face there is a triangle.
+* `brep_from_outlines()` accepts outlines whose planes are not parallel, as long as each is planar and they are not square to each other, and `DualContour.to_brep()` moves its contours apart along the lines between them, so that a `DualContour` whose associated contour lies on a tilted plane makes a solid with planar sides.
+* Fixed `FreeContour.from_top_bottom_and_elements()` ignoring a `ref_side_index` of 0 and looking for the reference side itself.
 
 ### Removed
 

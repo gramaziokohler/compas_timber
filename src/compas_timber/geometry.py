@@ -11,14 +11,13 @@ from compas.geometry import Polygon
 from compas.geometry import Polyhedron
 from compas.geometry import Polyline
 from compas.geometry import Vector
-from compas.geometry import angle_vectors
 from compas.geometry import centroid_points
+from compas.geometry import distance_point_point
 from compas.geometry import intersection_plane_plane_plane
 from compas.tolerance import TOL
 from compas_brep import Brep
 from scipy.spatial import KDTree as _ScipyKDTree
 
-from compas_timber.utils import correct_polyline_direction
 from compas_timber.utils import is_polyline_clockwise
 
 
@@ -167,11 +166,17 @@ def oriented_polyhedron(polyhedron: Polyhedron) -> Polyhedron:
     return polyhedron
 
 
+def _without_repeated_points(polyline: Polyline) -> Polyline:
+    points = polyline.points
+    return Polyline([point for i, point in enumerate(points) if i == 0 or not TOL.is_allclose(point, points[i - 1])])
+
+
 def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optional[Vector] = None) -> Brep:
     """Create a solid brep from two closed outlines.
 
-    Assumes outline_a and outline_b are closed polylines with the same number of vertices.
-    Assumes outlines are parallel to each other.
+    Assumes outline_a and outline_b are closed planar polylines with the same number of vertices. Their planes need not
+    be parallel, as the bottom of a DualContour may be tilted, but they must face the same way: each pair of
+    corresponding segments makes a planar side face.
 
     Parameters
     ----------
@@ -190,7 +195,7 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
     ------
     ValueError
         If either outline is not closed, if the outlines don't have the same
-        number of vertices, or if the outlines are not parallel to each other.
+        number of vertices, or if the outlines are square to each other.
     """
     if not TOL.is_allclose(outline_a[0], outline_a[-1]):
         raise ValueError("outline_a is not closed: its first and last points must coincide.")
@@ -201,22 +206,36 @@ def brep_from_outlines(outline_a: Polyline, outline_b: Polyline, normal: Optiona
 
     normal_a = Polygon(outline_a.points[:-1]).normal
     normal_b = Polygon(outline_b.points[:-1]).normal
-    angle = angle_vectors(normal_a, normal_b)
-    if not (TOL.is_zero(angle, tol=TOL.angular) or TOL.is_zero(angle - math.pi, tol=TOL.angular)):
-        raise ValueError("outline_a and outline_b are not parallel to each other.")
+    for name, outline, outline_normal in (("outline_a", outline_a, normal_a), ("outline_b", outline_b, normal_b)):
+        points = outline.points[:-1]
+        center = Point(*centroid_points(points))
+        size = max(distance_point_point(center, point) for point in points)
+        if any(abs(Vector.from_start_end(center, point).dot(outline_normal)) > 1e-6 * max(size, 1.0) for point in points):
+            raise ValueError("{} is not planar.".format(name))
+    if abs(normal_a.dot(normal_b)) < 1e-3:
+        raise ValueError("outline_a and outline_b are square to each other: they do not bound a solid between them.")
 
     normal = normal or Vector(0, 0, 1)
-    outline_a = correct_polyline_direction(outline_a, normal, clockwise=True)
-    outline_b = correct_polyline_direction(outline_b, normal, clockwise=True)
+    # the direction is told from the distinct points: a repeated point would make a segment without direction
+    if not is_polyline_clockwise(_without_repeated_points(outline_a), normal):
+        outline_a = Polyline(outline_a[::-1])
+    if not is_polyline_clockwise(_without_repeated_points(outline_b), normal):
+        outline_b = Polyline(outline_b[::-1])
 
     vector_a = Vector.from_start_end(outline_a[0], outline_b[0])
     if vector_a.dot(normal) < 0:
         # make sure that outline_b is above (Z+) outline_a
         outline_a, outline_b = outline_b, outline_a
 
-    polygons = [Polygon(outline_a.points[0:-1]), Polygon(outline_b.points[-2::-1])]
+    faces = [outline_a.points[0:-1], outline_b.points[-2::-1]]
     for i in range(len(outline_a) - 1):
-        polygons.append(Polygon([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]]))
+        faces.append([outline_a[i], outline_b[i], outline_b[i + 1], outline_a[i + 1]])
+    # an outline may repeat a point, where a segment of the other one has no counterpart: its side face is a triangle
+    polygons = []
+    for points in faces:
+        distinct = [p for i, p in enumerate(points) if not TOL.is_allclose(p, points[i - 1])]
+        if len(distinct) >= 3:
+            polygons.append(Polygon(distinct))
     return Brep.from_polygons(polygons)
 
 

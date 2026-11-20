@@ -191,10 +191,29 @@ def test_brep_from_outlines_raises_on_mismatched_vertex_count():
         brep_from_outlines(outline_a, outline_b)
 
 
-def test_brep_from_outlines_raises_if_outlines_not_parallel():
+def test_brep_from_outlines_raises_if_an_outline_is_not_planar():
     outline_a = _rectangle(z=0)
-    # outline_b is tilted relative to outline_a's plane, not just offset along Z
+    # outline_b's corners do not lie in one plane
     outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 2), Point(0, 5, 0), Point(0, 0, 1)])
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)
+
+
+def test_brep_from_outlines_with_a_tilted_outline():
+    # a box 10 x 5, cut by a plane rising from z = 1 to z = 3 along x: the bottom of a DualContour need not be parallel
+    outline_a = _rectangle(z=0)
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 3), Point(10, 5, 3), Point(0, 5, 1), Point(0, 0, 1)])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.is_solid
+    assert abs(brep.volume) == pytest.approx(10 * 5 * 2)
+
+
+def test_brep_from_outlines_raises_if_outlines_are_square_to_each_other():
+    outline_a = _rectangle(z=0)
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 0, 6), Point(0, 0, 6), Point(0, 0, 1)])
 
     with pytest.raises(ValueError):
         brep_from_outlines(outline_a, outline_b)
@@ -329,3 +348,14 @@ def _assert_rounded_box(brep, box, expected_volume):
 def test_brep_from_box_with_rounded_corners_raises_if_radius_is_too_large():
     with pytest.raises(ValueError):
         brep_from_box_with_rounded_corners(Box(80, 160, 50), 41)
+
+
+def test_brep_from_outlines_with_a_repeated_point():
+    # a 10 x 10 x 5 box, whose top outline has a point halfway along one side where the bottom one repeats a corner:
+    # the side face there is a triangle and a quad instead of two quads
+    outline_a = Polyline([Point(0, 0, 5), Point(10, 0, 5), Point(10, 5, 5), Point(10, 10, 5), Point(0, 10, 5), Point(0, 0, 5)])
+    outline_b = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 10, 0), Point(10, 10, 0), Point(0, 10, 0), Point(0, 0, 0)])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.volume == pytest.approx(500.0)
