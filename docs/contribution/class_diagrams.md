@@ -10,7 +10,7 @@ This page is generated — do not edit it by hand; it is regenerated from the so
 
 ## Elements Subsystem
 
-The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Panel`, `Fastener` and `PanelFeature` inherit directly from compas_model's `Element`. `Plate` and `Panel` delegate their outline/plane logic to a shared, composed `PlateGeometry` object. `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from `compas_timber.elements` for backward compatibility.
+The elements subsystem contains all the core timber elements that can be modeled and manipulated. `Beam` and `Plate` inherit from the base `TimberElement` class, while `Fastener` inherits directly from compas_model's `Element`. `Plate` delegates its outline/plane logic to a composed `PlateGeometry` object, which is also used by the panels in [compas_arch](https://github.com/gramaziokohler/compas_arch). `frame` and element-tree bookkeeping are inherited from compas_model's `Element` and are not repeated below. The legacy `Feature` classes (`CutFeature`, `DrillFeature`, `MillVolume`, `BrepSubtraction`) predate the BTLx-based features; they are no longer used internally and are omitted from the diagram, but remain exported from `compas_timber.elements` for backward compatibility.
 
 ```mermaid
 classDiagram
@@ -153,97 +153,6 @@ classDiagram
          +get_features(element)
       }
 
-      class Panel {
-         +plate_geometry : PlateGeometry
-         +length : float
-         +width : float
-         +height : float
-         +type
-         +attributes
-         +debug_info
-         +geometry
-         +outlines
-         +outline_a
-         +outline_b
-         +thickness : float
-         +planes : tuple[Plane, Plane]
-         +normal : Vector
-         +edge_planes : dict[int, Plane]
-         +features : list[PanelFeature]
-         +interfaces
-         +is_group_element : bool
-         +set_extension_plane(edge_index, plane)
-         +apply_edge_extensions()
-         +remove_blank_extension(edge_index=None)
-         +reset()
-         +remove_features(features=None) : None
-         +compute_aabb(inflate=0.0) : Box
-         +compute_obb(inflate=0.0) : Box
-         +compute_collision_mesh() : Mesh
-         +transformation_to_local()
-         +compute_elementgeometry(include_features=True) : Brep
-         +from_outline_thickness(outline, thickness, vector=None, openings=None, orientation=None, **kwargs)
-         +from_face_thickness(brep, thickness, vector=None, orientation=None, **kwargs)
-         +from_brep(brep, orientation=None, **kwargs)
-         +from_outlines(outline_a, outline_b, openings=None, recognize_doors=False, horizontal_openings=False, orientation=None, **kwargs)
-      }
-
-      class PanelType {
-         <<enumeration>>
-         WALL
-         FLOOR
-         ROOF
-         GENERIC
-      }
-
-      class PanelFeature {
-         <<abstract>>
-         +panel_feature_type
-         +is_joinery
-         +geometry : Geometry
-         +apply(geometry, panel) : Brep
-      }
-
-      class PanelFeatureType {
-         <<enumeration>>
-         CONNECTION_INTERFACE
-         RECESS
-         OPENING
-         LINEAR
-         VOLUMETRIC
-         NONE
-      }
-
-      class Opening {
-         +opening_type
-         +outline_a
-         +outline_b
-         +shape
-         +from_outline_panel(outline, panel, opening_type=None, project_horizontal=False, name=None)
-      }
-
-      class OpeningType {
-         <<enumeration>>
-         DOOR
-         WINDOW
-      }
-
-      class PanelConnectionInterface {
-         +edge_index
-         +interface_role
-         +polyline : Polyline
-         +width : float
-         +compute_elementgeometry(include_features=False) : Polyline
-         +as_plane() : Plane
-      }
-
-      class InterfaceRole {
-         <<enumeration>>
-         MAIN
-         CROSS
-         NONE
-      }
-
       %% Inheritance relationships
       Element <|-- TimberElement
       TimberElement <|-- Beam
@@ -251,20 +160,10 @@ classDiagram
       Element <|-- Fastener
       Fastener <|-- BallNodeFastener
       Fastener <|-- PlateFastener
-      Element <|-- Panel
-      Element <|-- PanelFeature
-      PanelFeature <|-- Opening
-      PanelFeature <|-- PanelConnectionInterface
 
       %% Composition and usage relationships
       Plate *-- PlateGeometry : delegates to
-      Panel *-- PlateGeometry : delegates to
       Fastener o-- FastenerTimberInterface : contains
-      Panel o-- PanelFeature : contains
-      Panel ..> PanelType : uses
-      PanelFeature ..> PanelFeatureType : uses
-      Opening ..> OpeningType : uses
-      PanelConnectionInterface ..> InterfaceRole : uses
 ```
 
 ## Connections Subsystem
@@ -273,7 +172,7 @@ The connections subsystem defines joints and their relationships. All joints inh
 
 Beam joints join two or more `Beam` elements; the generic bases `ButtJoint`, `LapJoint` and `MortiseTenonJoint` share logic across the topology-specific implementations.
 
-Plate joints connect two `Plate` elements along their outlines; panel joints reuse the plate joint geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
+Plate joints connect two `Plate` elements along their outlines; the panel joints in compas_arch reuse this geometry logic through multiple inheritance. `JointCandidate` / `PlateJointCandidate` are placeholders registered by `TimberModel.connect_adjacent_*()`, which can later be promoted to concrete joints with `Joint.promote_joint_candidate()`.
 
 ```mermaid
 classDiagram
@@ -539,33 +438,6 @@ classDiagram
          +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
       }
 
-      class PanelJoint {
-         <<abstract>>
-         +interface_a : PlanarSurface
-         +interface_b : PlanarSurface
-         +panels : tuple[Optional[Panel], Optional[Panel]]
-         +panel_a : Optional[Panel]
-         +panel_b : Optional[Panel]
-         +interfaces : Optional[list[PanelConnectionInterface]]
-         +create_interfaces() : tuple[PanelConnectionInterface, PanelConnectionInterface]
-      }
-
-      class PanelLButtJoint {
-         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
-         +main_panel : Panel
-         +cross_panel : Panel
-      }
-
-      class PanelTButtJoint {
-         +SUPPORTED_TOPOLOGY = TOPO_EDGE_FACE
-         +main_panel : Panel
-         +cross_panel : Panel
-      }
-
-      class PanelMiterJoint {
-         +SUPPORTED_TOPOLOGY = TOPO_EDGE_EDGE
-      }
-
       %% Inheritance relationships
       Joint <|-- JointCandidate
       Joint <|-- ButtJoint
@@ -594,13 +466,6 @@ classDiagram
       PlateButtJoint <|-- PlateLButtJoint
       PlateButtJoint <|-- PlateTButtJoint
       PlateJoint <|-- PlateMiterJoint
-      PlateJoint <|-- PanelJoint
-      PanelJoint <|-- PanelLButtJoint
-      PlateLButtJoint <|-- PanelLButtJoint
-      PanelJoint <|-- PanelTButtJoint
-      PlateTButtJoint <|-- PanelTButtJoint
-      PanelJoint <|-- PanelMiterJoint
-      PlateMiterJoint <|-- PanelMiterJoint
 ```
 
 ## Fabrication Subsystem

@@ -16,8 +16,7 @@ A change that bakes derived geometry back into the model — even if it produces
 |---|---|---|
 | **TimberModel** | Top-level container for all elements and joints. Elements are organized based on interactions and hierarchy (via `compas_model`). Elements are graph nodes; joints are graph edge attributes. | A plain scene graph or geometry container |
 | **Beam** | A timber element with a rectangular cross-section. Its local frame defines: x = centerline/fibre direction, y = width, z = height. The stable, well-defined core element. | Generic mesh or geometry object |
-| **Panel** | A planar container for timber elements (timber frame Walls/Slabs). Definition and implementation are being actively developed — tread carefully. | Plate |
-| **Plate** | A flat timber element type (e.g CLT/plywood/OSB), also actively in development. Changes here may leak across the library. | Panel |
+| **Plate** | A flat timber element type (e.g CLT/plywood/OSB), also actively in development. Changes here may leak across the library. | Panel (now in `compas_arch`) |
 | **Fastener** | A connector element (screws, dowels, etc.). Actively in development; changes leak. | A fabrication feature |
 | **Blank** | The raw stock material geometry, including any extensions added for machining. Features are applied relative to the blank. | Geometry |
 | **Feature** | A machining operation (cut, lap, tenon, mortise, drilling, etc.) applied to a timber elements's blank. Features drive BTLx output. Not metadata or annotations — they are the fabrication instructions. | A geometric attribute or property |
@@ -32,13 +31,12 @@ A change that bakes derived geometry back into the model — even if it produces
 
 ```
 compas_timber/
-├── elements/        # Beam, Panel, Plate, Fastener — element definitions
+├── elements/        # Beam, Plate, Fastener — element definitions
 ├── connections/     # Joint subclasses, JointCandidate, Cluster, solver, topology detection
 ├── fabrication/     # BTLx feature classes (JackRafterCut, Lap, Tenon, Mortise, etc.)
 ├── btlx/            # BTLx serialization/reader
 ├── model.py         # TimberModel — top-level container
 ├── planning/        # Higher-level planning utilities
-├── panel_features/  # Panel-specific features (in-development area)
 ├── ghpython/        # LEGACY — do not touch
 └── rhino/           # LEGACY — do not touch
 ```
@@ -47,6 +45,8 @@ compas_timber/
 
 **Layer boundary:** Design code creates elements and decides how they're connected. Core logic lives in `elements/`, `connections/`, `fabrication/`, and `model.py`. The BTLx layer is downstream — it consumes features, it does not define joint behavior.
 
+**`compas_arch` boundary:** Panels, layers, panel joints and panel features live in the separate `compas_arch` package, which depends on `compas_timber`. Do not add architectural element types here; keep the extension points they use (`TimberModel`, the joint candidate dispatch, `PlateGeometry`) working for downstream packages.
+
 **`compas_model` boundary:** `TimberModel` inherits from `compas_model.Model`; `TimberElement` inherits from `compas_model.elements.Element`. The rule: timber-specific logic belongs in `compas_timber`. Generic model mechanics that are not timber-specific are candidates to upstream to `compas_model`. Do not duplicate what `compas_model` already provides.
 
 ## Areas of active development
@@ -54,9 +54,7 @@ compas_timber/
 `Beam` has a stable, long-standing definition. The following are **being actively developed** — their definitions and implementations are subject to revision, and changes in them tend to leak across the library:
 
 - `Plate`
-- `Panel`
 - `Fastener`
-- Panel features (`panel_features/`)
 
 When touching these, explicitly flag potential cross-library leakage before making structural changes.
 
@@ -105,7 +103,7 @@ Tests that require a Brep being created can only be created using the OCC backen
 ## Open design questions — escalate, do not resolve
 
 - How a `Cluster` translates to a concrete multi-beam `Joint`
-- Definition and boundaries of `Plate`, `Panel`, and `Fastener` element types
+- Definition and boundaries of `Plate` and `Fastener` element types
 - Serialization backwards-compatibility strategy
 
 If your change requires resolving one of these questions, stop and ask the human.

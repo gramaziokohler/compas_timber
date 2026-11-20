@@ -1,7 +1,6 @@
 from compas.tolerance import TOL
 
 from compas_timber.elements import Beam
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 
 from .joint_candidate import JointCandidate
@@ -48,9 +47,8 @@ def _beam_connection_candidate(beam_a, beam_b, max_distance):
 
 
 @_register(Plate, Plate)
-@_register(Panel, Panel)
 def _plate_connection_candidate(element_a, element_b, max_distance):
-    """Builds a :class:`~compas_timber.connections.PlateJointCandidate` for a pair of adjacent plates/panels, or ``None`` if their topology is unknown."""
+    """Builds a :class:`~compas_timber.connections.PlateJointCandidate` for a pair of adjacent plates, or ``None`` if their topology is unknown."""
     result = PlateConnectionSolver().find_topology(element_a, element_b, tol=TOL.relative, max_distance=max_distance)
     if result.topology is JointTopology.TOPO_UNKNOWN:
         return None
@@ -64,6 +62,12 @@ def find_connection_handler(element_a, element_b):
     """Returns the registered handler for the given pair's element types, or ``None`` if unsupported."""
     key = frozenset((type(element_a), type(element_b)))
     return _CONNECTION_HANDLERS.get(key, None)
+
+
+def is_connectable(element):
+    """Returns ``True`` if the element's type takes part in at least one registered type pair."""
+    element_type = type(element)
+    return any(element_type in pair for pair in _CONNECTION_HANDLERS)
 
 
 def get_connection_candidate(element_a, element_b, max_distance):

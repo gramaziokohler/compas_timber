@@ -7,7 +7,6 @@ from compas_timber.connections.candidate_dispatch import _beam_connection_candid
 from compas_timber.connections.candidate_dispatch import _plate_connection_candidate
 from compas_timber.connections.candidate_dispatch import find_connection_handler
 from compas_timber.elements import Beam
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 
 
@@ -22,22 +21,12 @@ def plate():
     return Plate.from_outline_thickness(outline, 0.1)
 
 
-@pytest.fixture
-def panel():
-    outline = Polyline([Point(0, 0, 0), Point(0, 1, 0), Point(1, 1, 0), Point(1, 0, 0), Point(0, 0, 0)])
-    return Panel.from_outline_thickness(outline, 0.1)
-
-
 def test_find_connection_handler_beam_beam(beam):
     assert find_connection_handler(beam, beam) is _beam_connection_candidate
 
 
 def test_find_connection_handler_plate_plate(plate):
     assert find_connection_handler(plate, plate) is _plate_connection_candidate
-
-
-def test_find_connection_handler_panel_panel(panel):
-    assert find_connection_handler(panel, panel) is _plate_connection_candidate
 
 
 def test_find_connection_handler_unsupported_pair_returns_none(beam, plate):

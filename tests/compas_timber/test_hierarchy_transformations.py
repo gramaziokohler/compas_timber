@@ -26,9 +26,6 @@ from compas_timber.connections import LLapJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections.joint import location_from_centerlines
 from compas_timber.elements import Beam
-from compas_timber.elements import LayerDefinition
-from compas_timber.elements import LayerStructure
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
@@ -47,19 +44,17 @@ def assert_same_plane(a, b):
 
 
 @pytest.fixture
-def panel_model():
+def parent_model():
     model = TimberModel()
     outline = Polyline([Point(1000, 0, 0), Point(4000, 0, 0), Point(4000, 2400, 0), Point(1000, 2400, 0), Point(1000, 0, 0)])
-    panel = Panel.from_outline_thickness(outline, 200)
-    panel.layer_structure = LayerStructure(layer_defs=[LayerDefinition("exterior", 50), LayerDefinition("core"), LayerDefinition("interior", 50)])
-    model.add_element(panel)
-    panel.merge_layer_structure(model)
-    # beams are placed in the panel's local coordinates
+    parent = Plate.from_outline_thickness(outline, 200)
+    model.add_element(parent)
+    # beams are placed in the parent's local coordinates
     beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(1200, 0, 0)), 80, 160)
     beam_b = Beam.from_centerline(Line(Point(0, 0, 0), Point(0, 1200, 0)), 80, 160)
-    model.add_element(beam_a, parent=panel)
-    model.add_element(beam_b, parent=panel)
-    return model, panel, beam_a, beam_b
+    model.add_element(beam_a, parent=parent)
+    model.add_element(beam_b, parent=parent)
+    return model, parent, beam_a, beam_b
 
 
 # ==========================================================================
@@ -67,44 +62,34 @@ def panel_model():
 # ==========================================================================
 
 
-def test_child_beam_follows_transformed_panel(panel_model):
-    _, panel, beam_a, _ = panel_model
+def test_child_beam_follows_transformed_parent(parent_model):
+    _, parent, beam_a, _ = parent_model
     frame_before = beam_a.frame  # populates the cache
     centerline_before = beam_a.centerline
 
-    panel.transform(T)
+    parent.transform(T)
 
     assert_same_frame(beam_a.frame, frame_before.transformed(T))
     assert TOL.is_allclose(beam_a.centerline.start, centerline_before.start.transformed(T))
 
 
-def test_child_layer_follows_transformed_panel(panel_model):
-    _, panel, _, _ = panel_model
-    layer = panel.layers[0]
-    outline_before = layer.outline_a
-
-    panel.transform(T)
-
-    assert TOL.is_allclose(layer.outline_a.points[1], outline_before.points[1].transformed(T))
-
-
-def test_setting_parent_transformation_updates_children(panel_model):
-    _, panel, beam_a, _ = panel_model
+def test_setting_parent_transformation_updates_children(parent_model):
+    _, parent, beam_a, _ = parent_model
     frame_before = beam_a.frame
 
-    panel.transformation = T * panel.transformation
+    parent.transformation = T * parent.transformation
 
     assert_same_frame(beam_a.frame, frame_before.transformed(T))
 
 
-def test_adding_element_under_parent_updates_cached_frame(panel_model):
-    model, panel, _, _ = panel_model
+def test_adding_element_under_parent_updates_cached_frame(parent_model):
+    model, parent, _, _ = parent_model
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(500, 0, 0)), 80, 160)
     local_frame = beam.frame  # populates the cache while standalone
 
-    model.add_element(beam, parent=panel)
+    model.add_element(beam, parent=parent)
 
-    assert_same_frame(beam.frame, local_frame.transformed(panel.modeltransformation))
+    assert_same_frame(beam.frame, local_frame.transformed(parent.modeltransformation))
 
 
 # ==========================================================================
@@ -112,17 +97,17 @@ def test_adding_element_under_parent_updates_cached_frame(panel_model):
 # ==========================================================================
 
 
-def test_transformed_panel_survives_serialization(panel_model):
-    model, panel, beam_a, _ = panel_model
-    panel.transform(T)
-    expected_outline = panel.outline_a
+def test_transformed_parent_survives_serialization(parent_model):
+    model, parent, beam_a, _ = parent_model
+    parent.transform(T)
+    expected_outline = parent.outline_a
     expected_beam_frame = beam_a.frame
 
     model_copy = json_loads(json_dumps(model))
-    panel_copy = model_copy.panels[0]
-    beam_copy = next(e for e in panel_copy.children if isinstance(e, Beam) and TOL.is_allclose(e.frame.point, beam_a.frame.point))
+    parent_copy = model_copy.plates[0]
+    beam_copy = next(e for e in parent_copy.children if isinstance(e, Beam) and TOL.is_allclose(e.frame.point, beam_a.frame.point))
 
-    assert TOL.is_allclose(panel_copy.outline_a.points[1], expected_outline.points[1])
+    assert TOL.is_allclose(parent_copy.outline_a.points[1], expected_outline.points[1])
     assert_same_frame(beam_copy.frame, expected_beam_frame)
 
 
@@ -148,29 +133,26 @@ def protobuf_roundtrip(model):
 
 @pytest.mark.parametrize("roundtrip", [json_roundtrip, protobuf_roundtrip], ids=["json", "protobuf"])
 def test_transformed_hierarchy_survives_serialization(roundtrip):
-    """Every element of a moved panel tree loads back where it was: layers, sublayers, and children with their own placement."""
+    """Every element of a moved tree loads back where it was, including children with their own placement."""
     model = TimberModel()
     outline = Polyline([Point(1000, 0, 0), Point(4000, 0, 0), Point(4000, 2400, 0), Point(1000, 2400, 0), Point(1000, 0, 0)])
-    panel = Panel.from_outline_thickness(outline, 200)
-    exterior = LayerDefinition("exterior", 50, sublayer_defs=[LayerDefinition("cladding", 20), LayerDefinition("battens")])
-    panel.layer_structure = LayerStructure([exterior, LayerDefinition("core"), LayerDefinition("interior", 50)])
-    model.add_element(panel)
-    panel.merge_layer_structure(model)
-    # children placed in the panel's local coordinates, rotated relative to it
+    parent = Plate.from_outline_thickness(outline, 200)
+    model.add_element(parent)
+    # children placed in the parent's local coordinates, rotated relative to it
     plate = Plate(Frame([300, 400, 200], [0, 1, 0], [-1, 0, 0]), 600, 300, 20)
-    nested_panel = Panel(Frame([1500, 200, 200], [1, 1, 0], [-1, 1, 0]), 800, 600, 50)
+    nested_plate = Plate(Frame([1500, 200, 200], [1, 1, 0], [-1, 1, 0]), 800, 600, 50)
     beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1200, 0, 0)), 80, 160)
-    for child in (plate, nested_panel, beam):
-        model.add_element(child, parent=panel)
+    for child in (plate, nested_plate, beam):
+        model.add_element(child, parent=parent)
     plate.transform(Translation.from_vector([100, 50, 0]))  # moved on its own, then with its parent
-    panel.transform(T)
+    parent.transform(T)
 
     def placement(element):
         outline = list(element.outline_a.points) if hasattr(element, "outline_a") else []
         return [element.frame.point, element.frame.xaxis, element.frame.yaxis] + outline
 
     expected = {str(e.guid): placement(e) for e in model.elements()}
-    assert len(expected) == 9  # panel, 5 layers, plate, nested panel, beam
+    assert len(expected) == 4  # parent, plate, nested plate, beam
 
     model_copy = roundtrip(model)
 
@@ -180,10 +162,9 @@ def test_transformed_hierarchy_survives_serialization(roundtrip):
     assert not expected
 
 
-@pytest.mark.parametrize("element_type", [Plate, Panel], ids=["plate", "panel"])
 @pytest.mark.parametrize("transformation", [Scale.from_factors([2, 2, 2]), Reflection.from_frame(Frame.worldYZ())], ids=["scale", "mirror"])
-def test_plate_like_rejects_non_rigid_transformations(element_type, transformation):
-    element = element_type(Frame.worldXY(), 100, 100, 10)
+def test_plate_rejects_non_rigid_transformations(transformation):
+    element = Plate(Frame.worldXY(), 100, 100, 10)
     with pytest.raises(ValueError):
         element.transform(transformation)
 
@@ -193,13 +174,13 @@ def test_plate_like_rejects_non_rigid_transformations(element_type, transformati
 # ==========================================================================
 
 
-def test_l_miter_reprocessed_after_parent_moved(panel_model):
-    model, panel, beam_a, beam_b = panel_model
+def test_l_miter_reprocessed_after_parent_moved(parent_model):
+    model, parent, beam_a, beam_b = parent_model
     joint = LMiterJoint.create(model, beam_a, beam_b)
     model.process_joinery()
     planes_before = joint.cutting_planes
 
-    panel.transform(T)
+    parent.transform(T)
     model.process_joinery()
 
     for plane, plane_before in zip(joint.cutting_planes, planes_before):
@@ -222,22 +203,22 @@ def test_lap_joint_reprocessed_after_model_moved():
     assert_same_plane(joint.cutting_plane_a, plane_before.transformed(T))
 
 
-def test_explicit_joint_location_follows_elements(panel_model):
-    model, panel, beam_a, beam_b = panel_model
-    location = Point(10, 20, 30).transformed(panel.modeltransformation)
+def test_explicit_joint_location_follows_elements(parent_model):
+    model, parent, beam_a, beam_b = parent_model
+    location = Point(10, 20, 30).transformed(parent.modeltransformation)
     joint = LMiterJoint.create(model, beam_a, beam_b, location=location)
 
-    panel.transform(T)
+    parent.transform(T)
     assert TOL.is_allclose(joint.location, location.transformed(T))
 
 
-def test_explicit_joint_location_follows_elements_after_reload(panel_model):
-    model, panel, beam_a, beam_b = panel_model
-    location = Point(10, 20, 30).transformed(panel.modeltransformation)
+def test_explicit_joint_location_follows_elements_after_reload(parent_model):
+    model, parent, beam_a, beam_b = parent_model
+    location = Point(10, 20, 30).transformed(parent.modeltransformation)
     LMiterJoint.create(model, beam_a, beam_b, location=location)
 
     model_copy = json_loads(json_dumps(model))
-    model_copy.panels[0].transform(T)  # before the location is first read
+    model_copy.plates[0].transform(T)  # before the location is first read
 
     assert TOL.is_allclose(next(iter(model_copy.joints)).location, location.transformed(T))
 
@@ -257,19 +238,19 @@ def test_derived_joint_location_stays_derived_after_reload():
     assert TOL.is_allclose(joint_copy.location, location_from_centerlines(joint_copy.elements))
 
 
-def test_custom_cut_planes_under_transformed_and_reloaded_panel(panel_model):
-    model, panel, beam_a, beam_b = panel_model
+def test_custom_cut_planes_under_transformed_and_reloaded_parent(parent_model):
+    model, parent, beam_a, beam_b = parent_model
     beam_c = Beam.from_centerline(Line(Point(1800, 0, 0), Point(3000, 0, 0)), 80, 160)
     beam_d = Beam.from_centerline(Line(Point(1800, 0, 0), Point(1800, 1200, 0)), 80, 160)
-    model.add_element(beam_c, parent=panel)
-    model.add_element(beam_d, parent=panel)
-    miter = Plane(Point(0, 0, 0), Vector(1, -1, 0.3)).transformed(panel.modeltransformation)
-    butt = Plane(Point(1840, 0, 0), Vector(-1, 0, -0.5)).transformed(panel.modeltransformation)
+    model.add_element(beam_c, parent=parent)
+    model.add_element(beam_d, parent=parent)
+    miter = Plane(Point(0, 0, 0), Vector(1, -1, 0.3)).transformed(parent.modeltransformation)
+    butt = Plane(Point(1840, 0, 0), Vector(-1, 0, -0.5)).transformed(parent.modeltransformation)
     LMiterJoint.create(model, beam_a, beam_b, miter_plane=CutPlaneSpec.from_plane(beam_a, miter))
     LButtJoint.create(model, beam_c, beam_d, butt_plane_spec=CutPlaneSpec.from_butt_plane(beam_c, beam_d, butt))
     model.process_joinery()
 
-    panel.transform(T)
+    parent.transform(T)
     model_copy = json_loads(json_dumps(model))
     model_copy.process_joinery()
 
@@ -279,9 +260,9 @@ def test_custom_cut_planes_under_transformed_and_reloaded_panel(panel_model):
     assert_same_plane(butt_joint.butt_plane, butt.transformed(T))
 
 
-def test_model_transform_moves_panel_children(panel_model):
-    model, panel, beam_a, beam_b = panel_model
-    elements = [panel, beam_a, beam_b, *panel.layers]
+def test_model_transform_moves_parent_children(parent_model):
+    model, parent, beam_a, beam_b = parent_model
+    elements = [parent, beam_a, beam_b]
     before = [element.frame.point for element in elements]
 
     model.transform(Translation.from_vector([0, 0, 250]))

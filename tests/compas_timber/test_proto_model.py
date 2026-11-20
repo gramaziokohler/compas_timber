@@ -1,7 +1,7 @@
 """End-to-end protobuf round-trip of a whole TimberModel.
 
 The point of these tests is the claim that a fully featured model -- beams,
-plates, panels, joints, processings -- survives a protobuf round-trip without
+plates, joints, processings -- survives a protobuf round-trip without
 losing data.
 """
 
@@ -23,9 +23,6 @@ from compas_pb import pb_load_bts
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.elements import LayerDefinition
-from compas_timber.elements import LayerStructure
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.fabrication import Drilling
 from compas_timber.model import TimberModel
@@ -38,7 +35,7 @@ def load_serializers():
 
 @pytest.fixture
 def model():
-    """A model with beams, a plate, a layered panel and two kinds of joint."""
+    """A model with beams, a plate and two kinds of joint."""
     model = TimberModel()
     beam_a = Beam.from_centerline(Line(Point(0, 0, 0), Point(3000, 0, 0)), width=100.0, height=200.0)
     beam_b = Beam.from_centerline(Line(Point(3000, 0, 0), Point(3000, 3000, 0)), width=100.0, height=200.0)
@@ -48,10 +45,6 @@ def model():
 
     outline = Polyline([Point(0, 0, 0), Point(1000, 0, 0), Point(1000, 1000, 0), Point(0, 1000, 0), Point(0, 0, 0)])
     model.add_element(Plate.from_outline_thickness(outline, 20.0))
-
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    panel.layer_structure = LayerStructure([LayerDefinition("exterior", 10.0), LayerDefinition("core", 40.0)])
-    model.add_element(panel)
 
     LMiterJoint.create(model, beam_a, beam_b)
     TButtJoint.create(model, beam_c, beam_a)
@@ -80,7 +73,7 @@ def test_model_element_count_and_types_preserved(model):
     before = sorted(type(e).__name__ for e in model.elements())
     after = sorted(type(e).__name__ for e in other.elements())
     assert before == after
-    assert "Beam" in after and "Plate" in after and "Panel" in after
+    assert "Beam" in after and "Plate" in after
 
 
 def test_model_element_guids_preserved(model):
@@ -128,12 +121,6 @@ def test_joinery_features_are_excluded_like_compas_json(model):
     via_proto = sum(len(e.features) for e in roundtrip(model).elements())
     via_json = sum(len(e.features) for e in json_loads(json_dumps(model)).elements())
     assert via_proto == via_json
-
-
-def test_model_panel_layer_structure_preserved(model):
-    other = roundtrip(model)
-    panel = next(e for e in other.elements() if type(e).__name__ == "Panel")
-    assert [d.name for d in panel.layer_structure.layer_defs] == ["exterior", "core"]
 
 
 def test_model_tree_and_graph_preserved(model):

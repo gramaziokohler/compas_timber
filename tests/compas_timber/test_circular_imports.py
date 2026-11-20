@@ -25,7 +25,6 @@ MODULES = [
     "compas_timber.fabrication",
     "compas_timber.geometry",
     "compas_timber.model",
-    "compas_timber.panel_features",
     "compas_timber.planning",
     "compas_timber.structural",
 ]

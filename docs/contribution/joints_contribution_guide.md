@@ -26,8 +26,8 @@ Before implementation, establish the joint specifications and study how the invo
 - `TOPO_X`: Middle-to-middle joint between two beams (crossing)
 - `TOPO_Y`: Joint between three or more beams where all beams meet at their ends (e.g. `YButtJoint`, `BallNodeJoint`)
 - `TOPO_K`: Joint between three or more beams where at least one beam meets in the middle
-- `TOPO_EDGE_EDGE`: Joint between two plates/panels whose edges are aligned (e.g. `PlateLButtJoint`, `PlateMiterJoint`)
-- `TOPO_EDGE_FACE`: Joint between two plates/panels where the edge of one lies on the face of the other (e.g. `PlateTButtJoint`)
+- `TOPO_EDGE_EDGE`: Joint between two plates whose edges are aligned (e.g. `PlateLButtJoint`, `PlateMiterJoint`)
+- `TOPO_EDGE_FACE`: Joint between two plates where the edge of one lies on the face of the other (e.g. `PlateTButtJoint`)
 
 `TOPO_UNKNOWN` is the fallback used by the solvers when no topology could be determined.
 

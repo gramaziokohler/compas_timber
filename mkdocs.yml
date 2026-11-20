@@ -171,7 +171,6 @@ nav:
       - base: api/compas_timber.base.md
       - structural: api/compas_timber.structural.md
       - geometry: api/compas_timber.geometry.md
-      - panel_features: api/compas_timber.panel_features.md
   - Developer Guide:
       - Class Diagrams: contribution/class_diagrams.md
       - BTLx Contribution: contribution/BTLx_contribution_guide.md

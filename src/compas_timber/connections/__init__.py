@@ -13,6 +13,7 @@ from .solver import PlateConnectionSolver
 from .solver import JointTopology
 from .solver import find_neighboring_elements
 from .candidate_dispatch import get_connection_candidate
+from .candidate_dispatch import is_connectable
 from .t_butt import TButtJoint
 from .t_step_joint import TStepJoint
 from .t_birdsmouth import TBirdsmouthJoint
@@ -32,15 +33,10 @@ from .utilities import beam_ref_side_incidence_with_vector
 from .utilities import point_centerline_towards_joint
 from .utilities import angle_and_dot_product_beam_a_and_beam_b
 from .plate_joint import PlateJoint
-from .panel_joint import PanelJoint
 from .plate_butt_joint import PlateButtJoint
 from .plate_butt_joint import PlateLButtJoint
 from .plate_butt_joint import PlateTButtJoint
 from .plate_miter_joint import PlateMiterJoint
-from .panel_butt_joint import PanelLButtJoint
-from .panel_butt_joint import PanelTButtJoint
-from .panel_miter_joint import PanelMiterJoint
-from .panel_layer_butt_joint import PanelLLayerButtJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
 from .cluster import get_topology_from_joints
@@ -70,6 +66,7 @@ __all__ = [
     "PlateConnectionSolver",
     "find_neighboring_elements",
     "get_connection_candidate",
+    "is_connectable",
     "TDovetailJoint",
     "MortiseTenonJoint",
     "BallNodeJoint",
@@ -84,15 +81,10 @@ __all__ = [
     "angle_and_dot_product_beam_a_and_beam_b",
     "angle_and_dot_product_beam_a_and_beam_b",
     "PlateJoint",
-    "PanelJoint",
     "PlateButtJoint",
     "PlateLButtJoint",
     "PlateTButtJoint",
     "PlateMiterJoint",
-    "PanelLButtJoint",
-    "PanelTButtJoint",
-    "PanelMiterJoint",
-    "PanelLLayerButtJoint",
     "Cluster",
     "get_clusters_from_joint_candidates",
     "get_topology_from_joints",

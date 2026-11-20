@@ -29,7 +29,7 @@ from compas_timber.connections import LButtJoint
 from compas_timber.connections import LMiterJoint
 from compas_timber.connections import TButtJoint
 from compas_timber.elements import Beam
-from compas_timber.elements import Panel
+from compas_timber.elements import Plate
 from compas_timber.model import TimberModel
 
 W, H = 80, 160  # beam cross-section
@@ -156,24 +156,24 @@ def u_frame_shared_beam(model, o):
     return [miter_left, miter_right]
 
 
-def panel_subtree_moved(model, o):
-    # beams are children of a panel and placed in its local coordinates; only the panel is then moved (stood up
+def parent_subtree_moved(model, o):
+    # beams are children of a plate and placed in its local coordinates; only the plate is then moved (stood up
     # at 60 deg). The beams, and the custom planes stored relative to them, follow it.
-    panel = Panel(frame=Frame(Point(0, 0, 0) + o, [1, 0, 0], [0, 1, 0]), length=1600, width=1400, thickness=40)
-    model.add_element(panel)
-    z = 40 + H / 2  # on top of the panel
+    parent = Plate(frame=Frame(Point(0, 0, 0) + o, [1, 0, 0], [0, 1, 0]), length=1600, width=1400, thickness=40)
+    model.add_element(parent)
+    z = 40 + H / 2  # on top of the plate
     a, b = beam((100, 100, z), (1500, 100, z), Vector(0, 0, 0)), beam((100, 100, z), (100, 1300, z), Vector(0, 0, 0))
     c, d = beam((700, 100, z), (700, 1300, z), Vector(0, 0, 0)), beam((700, 700, z), (1500, 700, z), Vector(0, 0, 0))
     for element in (a, b, c, d):
-        model.add_element(element, parent=panel)
-    to_world = panel.modeltransformation
+        model.add_element(element, parent=parent)
+    to_world = parent.modeltransformation
     miter = Plane(Point(100, 100, z), Vector(1, -1, 0.3)).transformed(to_world)
     butt = Plane(Point(700 + W / 2, 700, z), Vector(-1, 0, 0.5)).transformed(to_world)
     LMiterJoint.create(model, a, b, miter_plane=CutPlaneSpec.from_plane(a, miter))
     TButtJoint.create(model, d, c, butt_plane_spec=CutPlaneSpec.from_butt_plane(d, c, butt))
 
     stand_up = Translation.from_vector(o) * Rotation.from_axis_and_angle([1, 0, 0], math.radians(60)) * Translation.from_vector(-o)
-    panel.transform(stand_up)
+    parent.transform(stand_up)
     return [miter.transformed(stand_up), butt.transformed(stand_up)]
 
 
@@ -188,7 +188,7 @@ EXAMPLES = [
     ("8 L-Miter: 3D tilted plane", l_miter_3d_tilt),
     ("9 L-Miter: 120 deg, square cut", l_miter_obtuse_square_cut),
     ("10 L-Miter: U-frame, shared beam", u_frame_shared_beam),
-    ("11 Panel children: panel moved, model reloaded", panel_subtree_moved),
+    ("11 Plate children: plate moved, model reloaded", parent_subtree_moved),
 ]
 
 
@@ -221,8 +221,8 @@ if __name__ == "__main__":
 
     for element in model.beams:
         viewer.scene.add(element.geometry, facecolor=Color.from_hex("#d9b38c"), linecolor=Color.grey().darkened(50))
-    for panel in model.panels:
-        viewer.scene.add(panel.geometry, facecolor=Color.from_hex("#9fb8c9"), opacity=0.5)
+    for plate in model.plates:
+        viewer.scene.add(plate.geometry, facecolor=Color.from_hex("#9fb8c9"), opacity=0.5)
     for cut_plane in planes:
         viewer.scene.add(plane_patch(cut_plane), facecolor=Color.orange(), linecolor=Color.orange(), opacity=0.4)
     for tag in tags:

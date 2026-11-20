@@ -7,9 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking
+
+* Panels moved to the new [compas_arch](https://github.com/gramaziokohler/compas_arch) package, which depends on `compas_timber`. Removed `Panel`, `Layer`, `LayerDefinition` and `LayerStructure` from `compas_timber.elements`; `PanelJoint`, `PanelLButtJoint`, `PanelTButtJoint`, `PanelMiterJoint` and `PanelLLayerButtJoint` from `compas_timber.connections`; and the `compas_timber.panel_features` package. Import them from `compas_arch` instead, and use its `ArchModel` for `panels`, `layers` and `connect_adjacent_panels()`.
+* Removed `TimberModel.panels`, `TimberModel.layers` and `TimberModel.connect_adjacent_panels()`.
+* Removed the panel, layer, panel feature and panel joint messages from the protobuf schema; their field numbers in `ElementData` and `JointData` are reserved. Reading JSON or protobuf files that contain these types, written by an earlier version, is not supported.
+
 ### Added
 
+* Added `compas_timber.connections.is_connectable()`, which tells whether an element's type has a registered joint candidate handler.
+
 ### Changed
+
+* `TimberModel.compute_topologies()` without `elements` now connects every element whose type has a registered handler, rather than a fixed list of beams, plates and panels. Element types registered by other packages are included.
 
 ### Removed
 

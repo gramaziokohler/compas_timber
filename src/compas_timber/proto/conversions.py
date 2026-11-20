@@ -490,7 +490,6 @@ from compas_timber import fabrication as _fab  # noqa: E402
 from compas_timber.proto import connections_pb2  # noqa: E402
 from compas_timber.proto import fabrication_pb2  # noqa: E402
 from compas_timber.proto import model_pb2  # noqa: E402
-from compas_timber.proto import panel_features_pb2  # noqa: E402
 from compas_timber.proto import planning_pb2  # noqa: E402
 from compas_timber.proto import structural_pb2  # noqa: E402
 
@@ -583,65 +582,20 @@ pb_deserializer(fabrication_pb2.BTLxFromGeometryDefinitionData)(_btlxdef_from_pb
 register_wrapper(fabrication_pb2.BTLxProcessingData)
 
 # ---------------------------------------------------------------------------
-# panel features
-# ---------------------------------------------------------------------------
-
-from compas_timber import panel_features as _pf  # noqa: E402
-
-register(_pf.Opening, panel_features_pb2.OpeningData, name_in_data=True)
-register(_pf.PanelConnectionInterface, panel_features_pb2.PanelConnectionInterfaceData, name_in_data=True)
-register_wrapper(panel_features_pb2.PanelFeatureData)
-
-# ---------------------------------------------------------------------------
 # elements
 # ---------------------------------------------------------------------------
 
 from compas_timber import elements as _el  # noqa: E402
 
 register(_el.PlateGeometry, elements_pb2.PlateGeometryData)
-register(_el.LayerDefinition, elements_pb2.LayerDefinitionData, name_in_data=True)
-register(_el.LayerStructure, elements_pb2.LayerStructureData)
 register(_el.Beam, elements_pb2.BeamData)
 register(_el.Plate, elements_pb2.PlateData)
-register(_el.Panel, elements_pb2.PanelData)
 register(_el.FastenerTimberInterface, elements_pb2.FastenerTimberInterfaceData, aliases={"element_guid": "element"})
 register(_el.Fastener, elements_pb2.FastenerData)
 register(_el.BallNodeFastener, elements_pb2.BallNodeFastenerData)
 # PlateFastener.__data__ stores `interface.__data__` rather than the interface.
 register(_el.PlateFastener, elements_pb2.PlateFastenerData, raw_dict_fields=("interfaces",))
 
-
-# Layer.layer_path is a tuple-or-None, wrapped so the two stay distinct.
-def _layer_to_pb(obj):
-    msg = elements_pb2.LayerData()
-    msg.guid.CopyFrom(_guid_to_pb(obj.guid))
-    if getattr(obj, "_name", None) is not None:
-        msg.name = obj._name
-    data = obj.__data__
-    msg.frame.CopyFrom(frame_to_pb(data["frame"]))
-    msg.plate_geometry.CopyFrom(_nested_to_pb(data["plate_geometry"]))
-    if data.get("start_offset") is not None:
-        msg.start_offset = data["start_offset"]
-    if data.get("layer_path") is not None:
-        msg.layer_path.indices.extend(data["layer_path"])
-    return msg
-
-
-def _layer_from_pb(msg):
-    data = {
-        "frame": frame_from_pb(msg.frame),
-        "plate_geometry": _nested_from_pb(msg.plate_geometry),
-        "start_offset": msg.start_offset if msg.HasField("start_offset") else None,
-        "layer_path": list(msg.layer_path.indices) if msg.HasField("layer_path") else None,
-        "name": msg.name if msg.HasField("name") else None,
-    }
-    obj = _el.Layer.__from_data__(data)
-    obj._guid = _guid_from_pb(msg.guid)
-    return obj
-
-
-pb_serializer(_el.Layer)(_layer_to_pb)
-pb_deserializer(elements_pb2.LayerData)(_layer_from_pb)
 
 # A bare compas_model Element. Registered last so the MRO lookup in
 # SerializerRegistry.get_serializer only reaches it for elements that are not

@@ -6,7 +6,6 @@ import "compas_pb/generated/geometry.proto";
 import "compas_pb/generated/message.proto";
 import "compas_timber/proto/common.proto";
 import "compas_timber/proto/elements.proto";
-import "compas_timber/proto/panel_features.proto";
 
 // Joints and joint candidates (compas_timber.connections).
 //
@@ -15,7 +14,7 @@ import "compas_timber/proto/panel_features.proto";
 // an inherited key (LFrenchRidgeLapJoint deletes `cut_plane_bias`) the field
 // is likewise absent here.
 //
-// Abstract joints (Joint, PlateJoint, PlateButtJoint, PanelJoint) get no
+// Abstract joints (Joint, PlateJoint, PlateButtJoint) get no
 // message of their own; only instantiable classes are represented.
 
 message CutPlaneSpecData {
@@ -196,50 +195,6 @@ message MortiseTenonJointData {
   optional double shape_radius = 20;
 }
 
-message PanelLButtJointData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional int32 topology = 10;
-  optional compas_pb.data.PointData location = 11;
-  repeated GuidRef element_guids = 12;
-  optional int32 a_segment_index = 13;
-  optional int32 b_segment_index = 14;
-  repeated PanelConnectionInterfaceData interfaces = 15;
-}
-
-message PanelLLayerButtJointData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional int32 topology = 10;
-  optional compas_pb.data.PointData location = 11;
-  repeated GuidRef element_guids = 12;
-  optional int32 a_segment_index = 13;
-  optional int32 b_segment_index = 14;
-  repeated PanelConnectionInterfaceData interfaces = 15;
-}
-
-message PanelMiterJointData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional int32 topology = 10;
-  optional compas_pb.data.PointData location = 11;
-  repeated GuidRef element_guids = 12;
-  optional int32 a_segment_index = 13;
-  optional int32 b_segment_index = 14;
-  repeated PanelConnectionInterfaceData interfaces = 15;
-}
-
-message PanelTButtJointData {
-  GuidRef guid = 1;
-  optional string name = 2;
-  optional int32 topology = 10;
-  optional compas_pb.data.PointData location = 11;
-  repeated GuidRef element_guids = 12;
-  optional int32 a_segment_index = 13;
-  optional int32 b_segment_index = 14;
-  repeated PanelConnectionInterfaceData interfaces = 15;
-}
-
 message PlateLButtJointData {
   GuidRef guid = 1;
   optional string name = 2;
@@ -392,6 +347,9 @@ message YButtJointData {
 
 // Polymorphic wrapper: any concrete Joint.
 message JointData {
+  // panel joints moved to compas_arch
+  reserved 12, 13, 14, 15;
+  reserved "panel_l_butt_joint", "panel_l_layer_butt_joint", "panel_miter_joint", "panel_t_butt_joint";
   oneof joint {
     BallNodeJointData ball_node_joint = 1;
     ButtJointData butt_joint = 2;
@@ -404,10 +362,6 @@ message JointData {
     LTenonMortiseJointData l_tenon_mortise_joint = 9;
     LapJointData lap_joint = 10;
     MortiseTenonJointData mortise_tenon_joint = 11;
-    PanelLButtJointData panel_l_butt_joint = 12;
-    PanelLLayerButtJointData panel_l_layer_butt_joint = 13;
-    PanelMiterJointData panel_miter_joint = 14;
-    PanelTButtJointData panel_t_butt_joint = 15;
     PlateLButtJointData plate_l_butt_joint = 16;
     PlateMiterJointData plate_miter_joint = 17;
     PlateTButtJointData plate_t_butt_joint = 18;

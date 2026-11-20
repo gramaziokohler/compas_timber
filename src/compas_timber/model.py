@@ -17,10 +17,9 @@ from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import get_connection_candidate
+from compas_timber.connections import is_connectable
 from compas_timber.elements import Beam
 from compas_timber.elements import Fastener
-from compas_timber.elements import Layer
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
 from compas_timber.structural import BeamStructuralElementSolver
@@ -28,7 +27,7 @@ from compas_timber.structural import StructuralSegment
 
 
 class TimberModel(Model):
-    """Represents a timber model containing different elements such as panels, beams and joints.
+    """Represents a timber model containing different elements such as beams, plates and joints.
 
     The timber model allows expressing the hierarchy and interactions between the different elements it contains.
 
@@ -44,10 +43,6 @@ class TimberModel(Model):
         A set of all joint candidates in the model.
     unpromoted_joint_candidates : set[:class:`~compas_timber.connections.JointCandidate`]
         A set of all joint candidates in the model which have not been promoted to joints.
-    panels : list[:class:`~compas_timber.elements.Panel`]
-        A list of all panels assigned to this model.
-    layers : list[:class:`~compas_timber.elements.Layer`]
-        A list of all layers assigned to this model.
     fasteners : list[:class:`~compas_timber.elements.Fastener`]
         A list of all fasteners assigned to this model.
 
@@ -117,16 +112,6 @@ class TimberModel(Model):
     def plates(self):
         # type: () -> List[Plate]
         return self.find_all_elements_of_type(Plate)
-
-    @property
-    def panels(self):
-        # type: () -> List[Panel]
-        return self.find_all_elements_of_type(Panel)
-
-    @property
-    def layers(self):
-        # type: () -> List[Layer]
-        return self.find_all_elements_of_type(Layer)
 
     @property
     def fasteners(self):
@@ -765,10 +750,10 @@ class TimberModel(Model):
     def compute_topologies(self, elements=None, max_distance=None):
         """Detects adjacent elements and creates joint candidates for them.
 
-        Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam,
-        plate-plate, and panel-panel are supported today). Additional type combinations can be
-        supported by registering a handler in `_CONNECTION_HANDLERS`; unregistered combinations are
-        silently skipped.
+        Dispatches each adjacent pair to a handler based on the pair's element types (beam-beam and
+        plate-plate are supported here). Additional type combinations can be supported by registering
+        a handler in `_CONNECTION_HANDLERS`, including from other packages; unregistered combinations
+        are silently skipped.
 
         Clears all existing joint candidates before recomputing, regardless of the element types
         involved. Concrete (already promoted) joints are left untouched.
@@ -776,7 +761,8 @@ class TimberModel(Model):
         Parameters
         ----------
         elements : list[:class:`~compas_model.elements.Element`], optional
-            The elements to connect. If not provided, defaults to all beams, plates, and panels in the model.
+            The elements to connect. If not provided, defaults to every element in the model whose type
+            has a registered handler (see :func:`~compas_timber.connections.is_connectable`).
         max_distance : float, optional
             The maximum distance between elements to consider them adjacent. Defaults to `TOL.absolute`.
 
@@ -791,7 +777,7 @@ class TimberModel(Model):
         for candidate in to_remove:
             self.remove_joint_candidate(candidate)
 
-        elements = list(elements) if elements is not None else list(self.beams) + list(self.plates) + list(self.panels)
+        elements = list(elements) if elements is not None else [element for element in self.elements() if is_connectable(element)]
 
         max_distance = max_distance or TOL.absolute
         pairs = ConnectionSolver.find_intersecting_pairs(elements, rtree=True, max_distance=max_distance)
@@ -814,16 +800,6 @@ class TimberModel(Model):
             The maximum distance between plates to consider them adjacent. Default is 0.0.
         """
         self.compute_topologies(self.plates, max_distance)
-
-    def connect_adjacent_panels(self, max_distance=None):
-        """Connects adjacent panels in the model.
-
-        Parameters
-        ----------
-        max_distance : float, optional
-            The maximum distance between panels to consider them adjacent. Default is 0.0.
-        """
-        self.compute_topologies(self.panels, max_distance)
 
     # =============================================================================
     # Model sub-tree surgery
@@ -935,7 +911,7 @@ class TimberModel(Model):
         :class:`TimberModel`, which is returned.
 
         A child element detached from its parent reports its geometry in the
-        parent's local frame — convenient for operating on, e.g., a panel's layers
+        parent's local frame — convenient for operating on, e.g., a group's children
         in isolation, then merging them back with :func:`merge_model_into_model`.
 
         Parameters

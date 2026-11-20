@@ -14,12 +14,7 @@ from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
 
 from compas_timber.elements import Beam
-from compas_timber.elements import Layer
-from compas_timber.elements import LayerDefinition
-from compas_timber.elements import LayerStructure
-from compas_timber.elements import Panel
 from compas_timber.elements import Plate
-from compas_timber.panel_features import Opening
 
 
 @pytest.fixture(autouse=True)
@@ -96,60 +91,12 @@ def test_plate_roundtrip(outline):
     assert other.plate_geometry.thickness == plate.plate_geometry.thickness
 
 
-def test_panel_roundtrip(outline):
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    other = assert_lossless(panel)
-    assert other.type == panel.type
-
-
-def test_panel_with_layer_structure_roundtrip(outline):
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    panel.layer_structure = LayerStructure(
-        [
-            LayerDefinition("exterior", 10.0),
-            LayerDefinition("core", 30.0),
-            LayerDefinition("interior", 10.0),
-        ]
-    )
-    other = assert_lossless(panel)
-    assert [d.name for d in other.layer_structure.layer_defs] == ["exterior", "core", "interior"]
-
-
-def test_layer_structure_roundtrip():
-    assert_lossless(LayerStructure([LayerDefinition("core", 30.0)]))
-
-
-def test_layer_definition_nested_roundtrip():
-    nested = LayerDefinition("core", 30.0, sublayer_defs=[LayerDefinition("inner", 15.0)])
-    other = assert_lossless(nested)
-    assert other.sublayer_defs[0].name == "inner"
-
-
-def test_layer_roundtrip(outline):
-    # Layer has a hand-written serializer, unlike the layer *definition* types
-    # above, which are derived from the message descriptor by register().
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    layer = Layer.from_parent_start_end(panel, 0.0, 20.0, name="exterior")
-    other = assert_lossless(layer)
-    assert other.start_offset == layer.start_offset
-    assert other.layer_path is None
-
-
-def test_layer_with_layer_path_roundtrip(outline):
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    layer = Layer.from_parent_start_end(panel, 10.0, 30.0, layer_path=(0, 1))
-    other = assert_lossless(layer)
-    assert other.layer_path == (0, 1)
-
-
 @pytest.mark.parametrize(
     "make",
     [
         lambda o: Plate.from_outline_thickness(o, 20.0),
-        lambda o: Panel.from_outline_thickness(o, 50.0),
-        lambda o: Layer.from_parent_start_end(Panel.from_outline_thickness(o, 50.0), 0.0, 20.0),
     ],
-    ids=["plate", "panel", "layer"],
+    ids=["plate"],
 )
 def test_moved_plate_like_roundtrip(outline, make):
     # the placement is stored on the element, not in its plate_geometry
@@ -157,12 +104,3 @@ def test_moved_plate_like_roundtrip(outline, make):
     element.transform(Translation.from_vector([100, 200, 300]) * Rotation.from_axis_and_angle([0, 0, 1], 0.5))
     other = assert_lossless(element)
     assert other.frame == element.frame
-
-
-def test_opening_roundtrip(outline):
-    panel = Panel.from_outline_thickness(outline, 50.0)
-    opening = Opening.from_outline_panel(
-        Polyline([Point(100, 100, 0), Point(400, 100, 0), Point(400, 400, 0), Point(100, 400, 0), Point(100, 100, 0)]),
-        panel,
-    )
-    assert_lossless(opening)
