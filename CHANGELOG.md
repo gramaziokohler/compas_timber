@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 * `FreeContour.get_ref_face_index()` now tests every contour point against each reference side, instead of fitting a plane to three of the points, which raised `ZeroDivisionError` when they were near collinear. It is stricter: all points must now lie on the side, not just the first.
 
-* Fixed `is_polyline_clockwise()` building a zero-length segment from the closing point of a closed polyline, which raised a `ValueError` with `compas>=2.16` and broke plates, panels and free contours.
 * Fixed `Tenon` leaving out the tenon, so the main beam of a `TTenonMortiseJoint` or `LTenonMortiseJoint` was cut flush: the tenon volume was trimmed with the beam's model-space `ref_sides` after it was moved to beam-local coordinates.
 * Fixed `Tenon`, `Mortise`, `DovetailTenon` and `DovetailMortise` not applying any shape other than `square`, including the default `round`: they passed edge objects to `Brep.fillet`, which takes edge indices, and the feature was dropped into `debug_info`. Edges are now selected by direction instead of their position in `Brep.edges`, and a `round` shape whose radius is half the tenon width is built from cylinders, which a fillet cannot produce.
 * Fixed `TBirdsmouthJoint` with a `mill_depth` raising `TypeError` in `process_joinery()` by passing `is_pocket` to `Lap.from_plane_and_beam()`, which no longer takes it.
@@ -35,6 +34,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `brep_from_outlines()` accepts outlines which repeat a point: the side face there is a triangle.
 * `brep_from_outlines()` accepts outlines whose planes are not parallel, as long as each is planar and they are not square to each other, and `DualContour.to_brep()` moves its contours apart along the lines between them, so that a `DualContour` whose associated contour lies on a tilted plane makes a solid with planar sides.
 * Fixed `FreeContour.from_top_bottom_and_elements()` ignoring a `ref_side_index` of 0 and looking for the reference side itself.
+
+### Removed
+
+
+## [3.0.2] 2026-11-18
+
+### Added
+
+### Changed
+
+* Fixed `ValueError` from zero-length vectors with COMPAS 2.16 in `is_polyline_clockwise`, `combine_parallel_segments` and perpendicular `Drilling`.
 
 ### Removed
 
