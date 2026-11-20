@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -11,6 +13,8 @@ from compas.tolerance import TOL
 from compas_brep import Brep
 
 from compas_timber.geometry import brep_difference_first
+from compas_timber.geometry import brep_edge_indices_not_parallel_to_plane
+from compas_timber.geometry import brep_from_box_with_rounded_corners
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.geometry import brep_intersection_first
 from compas_timber.geometry import brep_union_first
@@ -187,10 +191,45 @@ def test_brep_from_outlines_raises_on_mismatched_vertex_count():
         brep_from_outlines(outline_a, outline_b)
 
 
-def test_brep_from_outlines_raises_if_outlines_not_parallel():
+def test_brep_from_outlines_raises_if_an_outline_is_not_planar():
     outline_a = _rectangle(z=0)
-    # outline_b is tilted relative to outline_a's plane, not just offset along Z
+    # outline_b's corners do not lie in one plane
     outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 5, 2), Point(0, 5, 0), Point(0, 0, 1)])
+
+    with pytest.raises(ValueError):
+        brep_from_outlines(outline_a, outline_b)
+
+
+@pytest.mark.requires_occ
+def test_brep_from_outlines_with_a_tilted_outline():
+    # a box 10 x 5, cut by a plane rising from z = 1 to z = 3 along x: the bottom of a DualContour need not be parallel
+    outline_a = _rectangle(z=0)
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 3), Point(10, 5, 3), Point(0, 5, 1), Point(0, 0, 1)])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.is_solid
+    assert abs(brep.volume) == pytest.approx(10 * 5 * 2)
+
+
+@pytest.mark.requires_occ
+def test_brep_from_outlines_with_a_tilted_outline_rounded_as_in_a_btlx_file():
+    # BTLx stores coordinates to three decimals, which leaves an outline on a tilted plane a little off it
+    corners = [(50.0 * math.cos(math.pi * i / 6), 50.0 * math.sin(math.pi * i / 6)) for i in range(12)]
+    outline_a = Polyline([Point(x, y, 0) for x, y in corners] + [Point(corners[0][0], corners[0][1], 0)])
+    tilted = [Point(round(x, 3), round(y, 3), round(20.0 + 0.3713 * x + 0.1291 * y, 3)) for x, y in corners]
+    outline_b = Polyline(tilted + [tilted[0]])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.is_solid
+    area = 6 * 50.0**2 * math.sin(math.pi / 6)  # of the regular dodecagon, whose centroid is at the origin
+    assert abs(brep.volume) == pytest.approx(area * 20.0, rel=1e-4)
+
+
+def test_brep_from_outlines_raises_if_outlines_are_square_to_each_other():
+    outline_a = _rectangle(z=0)
+    outline_b = Polyline([Point(0, 0, 1), Point(10, 0, 1), Point(10, 0, 6), Point(0, 0, 6), Point(0, 0, 1)])
 
     with pytest.raises(ValueError):
         brep_from_outlines(outline_a, outline_b)
@@ -273,3 +312,67 @@ def test_brep_intersection_first_raises_when_breps_do_not_overlap():
 
     with pytest.raises(IndexError):
         brep_intersection_first(box_a, box_b)
+
+
+def _tilted_frame():
+    return Frame(Point(10, 20, 30), Vector(1, 1, 0), Vector(-1, 1, 1))
+
+
+@pytest.mark.requires_occ
+def test_brep_edge_indices_not_parallel_to_plane_selects_the_edges_along_the_box_height():
+    frame = _tilted_frame()
+    brep = Brep.from_box(Box(10, 20, 30, frame))
+
+    indices = brep_edge_indices_not_parallel_to_plane(brep, Plane.from_frame(frame))
+
+    assert len(indices) == 4
+    for index in indices:
+        edge = brep.edges[index]
+        direction = Vector.from_start_end(edge.start_vertex.point, edge.end_vertex.point)
+        assert TOL.is_close(abs(direction.dot(frame.zaxis)), 30.0)
+
+
+@pytest.mark.requires_occ
+def test_brep_from_box_with_rounded_corners_fillets_the_corners():
+    box = Box(80, 160, 50, _tilted_frame())
+
+    brep = brep_from_box_with_rounded_corners(box, 20)
+
+    _assert_rounded_box(brep, box, expected_volume=(80 * 160 - (4 - math.pi) * 20**2) * 50)
+
+
+@pytest.mark.requires_occ
+@pytest.mark.parametrize("xsize, ysize", [(80, 160), (160, 80), (80, 80)])
+def test_brep_from_box_with_rounded_corners_where_the_corners_meet(xsize, ysize):
+    # a radius of half the smaller side leaves no flat side between the corners to fillet, e.g. a round tenon
+    box = Box(xsize, ysize, 50, _tilted_frame())
+
+    brep = brep_from_box_with_rounded_corners(box, 40)
+
+    _assert_rounded_box(brep, box, expected_volume=((max(xsize, ysize) - 80) * 80 + math.pi * 40**2) * 50)
+
+
+def _assert_rounded_box(brep, box, expected_volume):
+    # not `_assert_valid_solid`: `Brep.is_closed` only counts faces, and a cylinder has three
+    assert brep.is_solid
+    assert brep.is_valid
+    assert TOL.is_close(brep.volume, expected_volume)
+    # the rounded box lies within the box
+    assert TOL.is_close(brep_intersection_first(brep, Brep.from_box(box)).volume, brep.volume)
+
+
+def test_brep_from_box_with_rounded_corners_raises_if_radius_is_too_large():
+    with pytest.raises(ValueError):
+        brep_from_box_with_rounded_corners(Box(80, 160, 50), 41)
+
+
+@pytest.mark.requires_occ
+def test_brep_from_outlines_with_a_repeated_point():
+    # a 10 x 10 x 5 box, whose top outline has a point halfway along one side where the bottom one repeats a corner:
+    # the side face there is a triangle and a quad instead of two quads
+    outline_a = Polyline([Point(0, 0, 5), Point(10, 0, 5), Point(10, 5, 5), Point(10, 10, 5), Point(0, 10, 5), Point(0, 0, 5)])
+    outline_b = Polyline([Point(0, 0, 0), Point(10, 0, 0), Point(10, 10, 0), Point(10, 10, 0), Point(0, 10, 0), Point(0, 0, 0)])
+
+    brep = brep_from_outlines(outline_a, outline_b)
+
+    assert brep.volume == pytest.approx(500.0)

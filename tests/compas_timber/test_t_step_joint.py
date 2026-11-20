@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from unittest.mock import patch
 
@@ -5,6 +7,10 @@ from compas.data import json_dumps
 from compas.data import json_loads
 from compas.geometry import Line
 from compas.geometry import Point
+from compas.geometry import Vector
+from compas.tolerance import TOL
+
+from compas_brep import Brep
 
 from compas_timber.connections import TStepJoint
 from compas_timber.elements import Beam
@@ -180,3 +186,31 @@ def test_t_step_joint_restore_beams_resolves_attributes(beams):
         deserialized_joint.restore_elements_from_keys(model)
 
         assert spy.call_count == 1  # called exactly once by restore_beams_from_keys()
+
+
+@pytest.mark.requires_occ
+@pytest.mark.parametrize("step_shape", [StepShapeType.STEP, StepShapeType.HEEL, StepShapeType.TAPERED_HEEL, StepShapeType.DOUBLE])
+def test_t_step_joint_geometry(step_shape):
+    # main beam at 45 degrees in the XY-plane, ending at the centerline of the cross beam
+    start = Point(800 * math.cos(math.radians(45)), 800 * math.sin(math.radians(45)), 0)
+    main_beam = Beam.from_centerline(Line(start, Point(0, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+    cross_beam = Beam.from_centerline(Line(Point(-600, 0, 0), Point(600, 0, 0)), width=80, height=160, z_vector=Vector(0, 0, 1))
+    model = TimberModel()
+    model.add_element(main_beam)
+    model.add_element(cross_beam)
+    TStepJoint.create(model, main_beam, cross_beam, step_shape=step_shape)
+    model.process_joinery()
+
+    main_geometry = main_beam.geometry
+    cross_geometry = cross_beam.geometry
+
+    assert isinstance(main_geometry, Brep)
+    assert not main_beam.debug_info
+    assert not cross_beam.debug_info
+    # the main beam fills the notch in the cross beam without overlapping it
+    cross_blank = Brep.from_box(cross_beam.blank)
+    notch_volume = cross_blank.volume - cross_geometry.volume
+    assert notch_volume > 0
+    assert not Brep.from_boolean_intersection(main_geometry, cross_geometry)
+    filled_volume = sum(piece.volume for piece in Brep.from_boolean_intersection(main_geometry, cross_blank))
+    assert TOL.is_close(filled_volume, notch_volume)

@@ -22,6 +22,9 @@ from .x_notch import XNotchJoint
 from .t_dovetail import TDovetailJoint
 from .mortise_tenon import MortiseTenonJoint
 from .t_tenon_mortise import TTenonMortiseJoint
+from .t_rotational_tenon_mortise import TRotationalTenonMortiseJoint
+from .t_rotational_tenon_mortise import RotationalTenonProfile
+from .t_rotational_tenon_mortise import EndMillType
 from .l_tenon_mortise import LTenonMortiseJoint
 from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
@@ -74,6 +77,9 @@ __all__ = [
     "MortiseTenonJoint",
     "BallNodeJoint",
     "TTenonMortiseJoint",
+    "TRotationalTenonMortiseJoint",
+    "RotationalTenonProfile",
+    "EndMillType",
     "LTenonMortiseJoint",
     "YButtJoint",
     "TOliGinaJoint",

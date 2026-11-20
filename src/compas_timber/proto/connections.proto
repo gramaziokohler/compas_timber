@@ -363,6 +363,29 @@ message TTenonMortiseJointData {
   optional double shape_radius = 20;
 }
 
+message TRotationalTenonMortiseJointData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 topology = 10;
+  optional compas_pb.data.PointData location = 11;
+  repeated GuidRef element_guids = 12;
+  optional double start_y = 13;
+  optional double start_depth = 14;
+  optional double rotation = 15;
+  optional double length = 16;
+  optional double width = 17;
+  optional double height = 18;
+  optional string tenon_shape = 19;
+  optional double shape_radius = 20;
+  optional double rotation_radius = 21;
+  optional string profile = 22;
+  optional double start_width = 23;
+  optional string end_mill = 24;
+  optional double tool_angle = 25;
+  optional double axis_offset = 26;
+  optional double tool_diameter = 27;
+}
+
 message XLapJointData {
   GuidRef guid = 1;
   optional string name = 2;
@@ -421,5 +444,6 @@ message JointData {
     XLapJointData x_lap_joint = 26;
     XNotchJointData x_notch_joint = 27;
     YButtJointData y_butt_joint = 28;
+    TRotationalTenonMortiseJointData t_rotational_tenon_mortise_joint = 29;
   }
 }

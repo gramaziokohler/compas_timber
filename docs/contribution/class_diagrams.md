@@ -476,6 +476,31 @@ classDiagram
          +SUPPORTED_TOPOLOGY = TOPO_T
       }
 
+      class TRotationalTenonMortiseJoint {
+         +SUPPORTED_TOPOLOGY = TOPO_T
+         +start_y : float
+         +start_depth : float
+         +rotation : float
+         +length : float
+         +width : float
+         +height : float
+         +tenon_shape : str
+         +shape_radius : float
+         +rotation_radius : float
+         +axis_offset : float
+         +profile : str
+         +start_width : float
+         +end_mill : str
+         +tool_angle : float
+         +tool_diameter : float
+         +features : list
+         +main_beam : Beam
+         +cross_beam : Beam
+         +rotation_axis : Line
+         +release_angle : float
+         +return_angle : float
+      }
+
       class ISimpleScarf {
          +SUPPORTED_TOPOLOGY = TOPO_I
          +length : float
@@ -586,6 +611,7 @@ classDiagram
       MortiseTenonJoint <|-- TTenonMortiseJoint
       MortiseTenonJoint <|-- LTenonMortiseJoint
       MortiseTenonJoint <|-- TOliGinaJoint
+      Joint <|-- TRotationalTenonMortiseJoint
       Joint <|-- ISimpleScarf
       Joint <|-- XNotchJoint
       Joint <|-- PlateJoint
