@@ -497,7 +497,7 @@ from compas_timber.proto import structural_pb2  # noqa: E402
 register(_fab.Contour, fabrication_pb2.ContourData)
 register(_fab.DualContour, fabrication_pb2.DualContourData)
 
-# every BTLxProcessing whose fields are plain scalars (plus machining_limits)
+# every BTLxProcessing which needs no conversion of its own. Fields of a __data__ without a field in the message travel in `attributes`.
 _PROCESSINGS = [
     "JackRafterCut",
     "DoubleCut",
@@ -516,6 +516,44 @@ _PROCESSINGS = [
     "LongitudinalCut",
     "SimpleScarf",
     "Text",
+    "Chamfer",
+    "Connector",
+    "CrampContour",
+    "Dovetail",
+    "FreeSurface",
+    "GlueArea",
+    "HipValleyRafterNotch",
+    "House",
+    "HouseMortise",
+    "InsulationArea",
+    "JapaneseMortise",
+    "JapaneseTenon",
+    "LockoutArea",
+    "LogHouseFront",
+    "LogHouseHalfLap",
+    "LogHouseJoint",
+    "Marking",
+    "MillContour",
+    "NailContour",
+    "PatternContour",
+    "PenContour",
+    "Planing",
+    "PlaningArea",
+    "PlasterArea",
+    "ProcessingGroup",
+    "ProfileCambered",
+    "ProfileFront",
+    "ProfileHead",
+    "RidgeValleyCut",
+    "RoundArch",
+    "SawContour",
+    "SawCut",
+    "ScarfJoint",
+    "ScrewContour",
+    "Sphere",
+    "TriangleCut",
+    "TyroleanDovetail",
+    "Variant",
 ]
 for _n in _PROCESSINGS:
     register(getattr(_fab, _n), getattr(fabrication_pb2, _n + "Data"))

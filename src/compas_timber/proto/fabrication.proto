@@ -397,6 +397,771 @@ message BTLxFromGeometryDefinitionData {
   map<string, compas_pb.data.AnyData> kwargs = 13;
 }
 
+message ChamferData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional bool start_limited = 11;
+  optional bool end_limited = 12;
+  optional double length = 13;
+  optional double depth = 14;
+  optional bool chamfer_edge_12 = 15;
+  optional bool chamfer_edge_23 = 16;
+  optional bool chamfer_edge_34 = 17;
+  optional bool chamfer_edge_41 = 18;
+  optional string chamfer_exit = 19;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ConnectorData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData connector_info = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message CrampContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message DovetailData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional bool cut_off = 11;
+  optional double start_x = 12;
+  optional double start_y = 13;
+  optional double start_depth = 14;
+  optional double slope = 15;
+  optional double length = 16;
+  optional double rebate_length = 17;
+  optional double height_ref_side = 18;
+  optional double height_opp_side = 19;
+  optional string lap_position = 20;
+  optional string lap_exit = 21;
+  optional string shape = 22;
+  optional string process_side = 23;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message FreeSurfaceData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData surface = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message GlueAreaData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  optional compas_pb.data.AnyData apertures = 11;
+  optional string glue_type = 12;
+  optional double glue_amount = 13;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message HipValleyRafterNotchData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle_ref_edge = 14;
+  optional double angle_opp_edge = 15;
+  optional double inclination = 16;
+  optional bool width_counter_part_ref_edge_limited = 17;
+  optional double width_counter_part_ref_edge = 18;
+  optional bool width_counter_part_opp_edge_limited = 19;
+  optional double width_counter_part_opp_edge = 20;
+  optional bool rafter_nail_hole = 21;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message HouseData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double angle = 14;
+  optional double inclination = 15;
+  optional double rotation = 16;
+  optional bool length_limited_top = 17;
+  optional bool length_limited_bottom = 18;
+  optional double length = 19;
+  optional double width = 20;
+  optional double height = 21;
+  optional string shape = 22;
+  optional double shape_radius = 23;
+  optional bool chamfer = 24;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message HouseMortiseData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double slope = 14;
+  optional bool length_limited_top = 15;
+  optional bool length_limited_bottom = 16;
+  optional double length = 17;
+  optional double width = 18;
+  optional double depth = 19;
+  optional string shape = 20;
+  optional double shape_radius = 21;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message InsulationAreaData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  optional compas_pb.data.AnyData apertures = 11;
+  optional string part_ref_guid = 12;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message JapaneseMortiseData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double width_1 = 13;
+  optional double length_1 = 14;
+  optional double width_2 = 15;
+  optional double length_2 = 16;
+  optional double width_3 = 17;
+  optional double cone_angle = 18;
+  optional double middle_plane = 19;
+  optional double offset = 20;
+  optional bool use_lap = 21;
+  optional double lap_offset = 22;
+  optional double lap_depth = 23;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message JapaneseTenonData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double width_1 = 13;
+  optional double length_1 = 14;
+  optional double width_2 = 15;
+  optional double length_2 = 16;
+  optional double width_3 = 17;
+  optional double cone_angle = 18;
+  optional double middle_plane = 19;
+  optional double offset = 20;
+  optional bool use_lap = 21;
+  optional double lap_offset = 22;
+  optional double lap_depth = 23;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message LockoutAreaData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  optional bool for_marking = 11;
+  optional bool for_milling = 12;
+  optional bool for_sawing = 13;
+  optional bool for_nailing = 14;
+  optional bool for_gluing = 15;
+  optional bool for_planing = 16;
+  optional bool for_plastering = 17;
+  optional bool for_insulation = 18;
+  optional bool for_free_contour = 19;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message LogHouseFrontData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double length = 14;
+  optional double depth_ref_edge = 15;
+  optional double depth_opp_edge = 16;
+  optional bool ref_side_only = 17;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message LogHouseHalfLapData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double angle = 12;
+  optional double length = 13;
+  optional double depth_ref_side = 14;
+  optional double depth_opp_side = 15;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message LogHouseJointData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional bool side_laps_limited = 11;
+  optional double depth_side_laps = 12;
+  optional string lap_position = 13;
+  optional double length_ref_side = 14;
+  optional double depth_ref_side = 15;
+  optional double length_opp_side = 16;
+  optional double depth_opp_side = 17;
+  optional double length_ref_edge = 18;
+  optional double depth_ref_edge = 19;
+  optional double length_opp_edge = 20;
+  optional double depth_opp_edge = 21;
+  optional bool drillhole = 22;
+  optional bool arc_ref_edge_start = 23;
+  optional bool arc_ref_edge_end = 24;
+  optional bool arc_opp_edge_start = 25;
+  optional bool arc_opp_edge_end = 26;
+  optional double arc_radius = 27;
+  optional double arc_depth = 28;
+  optional double arc_center = 29;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message MarkingData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double angle = 12;
+  optional bool length_limited = 13;
+  optional double length = 14;
+  optional double width = 15;
+  optional double interior_angle = 16;
+  optional string style = 17;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message MillContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  optional compas_pb.data.AnyData contour_param_object = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message NailContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message PatternContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData insertion_patterns = 10;
+  optional compas_pb.data.AnyData contour = 11;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message PenContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message PlaningData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double length = 11;
+  optional double depth = 12;
+  optional bool start_limited = 13;
+  optional bool end_limited = 14;
+  optional bool plane_side_1 = 15;
+  optional bool plane_side_2 = 16;
+  optional bool plane_side_3 = 17;
+  optional bool plane_side_4 = 18;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message PlaningAreaData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  optional compas_pb.data.AnyData apertures = 11;
+  optional double depth = 12;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message PlasterAreaData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  optional compas_pb.data.AnyData apertures = 11;
+  optional double thickness = 12;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ProcessingGroupData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ProfileCamberedData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double length = 12;
+  optional double start_depth = 13;
+  optional double max_depth = 14;
+  optional double min_depth = 15;
+  optional double end_depth = 16;
+  optional string premill = 17;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ProfileFrontData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional string arc_shape = 12;
+  optional double depth = 13;
+  optional double start_rotation = 14;
+  optional double rotation1 = 15;
+  optional double radius1 = 16;
+  optional double rotation2 = 17;
+  optional double radius2 = 18;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ProfileHeadData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional compas_pb.data.AnyData arc1 = 12;
+  optional compas_pb.data.AnyData arc2 = 13;
+  optional double lap_length = 14;
+  optional double lap_height = 15;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message RidgeValleyCutData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double inclination_ref_side = 13;
+  optional double inclination_opp_side = 14;
+  optional bool start_limited = 15;
+  optional bool end_limited = 16;
+  optional double length = 17;
+  optional double angle_ref_edge_start = 18;
+  optional double angle_ref_edge_end = 19;
+  optional double angle_opp_edge_start = 20;
+  optional double angle_opp_edge_end = 21;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message RoundArchData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double length = 11;
+  optional double camber = 12;
+  optional string arc_shape = 13;
+  optional string premill = 14;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message SawContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  optional compas_pb.data.AnyData contour_param_object = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message SawCutData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double angle = 13;
+  optional double inclination = 14;
+  optional double bevel = 15;
+  optional double length = 16;
+  optional double depth = 17;
+  optional compas_pb.data.AnyData machining_limits = 18;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ScarfJointData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double inclination = 12;
+  optional double lap_length = 13;
+  optional double lap_depth = 14;
+  optional double length = 15;
+  optional double depth_opp_side = 16;
+  optional string scarf_shape = 17;
+  optional int32 num_drill_hole = 18;
+  optional double drill_hole_diam_1 = 19;
+  optional double drill_hole_diam_2 = 20;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message ScrewContourData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional compas_pb.data.AnyData contour = 10;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message SphereData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional double start_x = 11;
+  optional double start_y = 12;
+  optional double start_depth = 13;
+  optional double length = 14;
+  optional double radius = 15;
+  optional double start_offset = 16;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message TriangleCutData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional double start_x = 10;
+  optional double start_y = 11;
+  optional double start_depth = 12;
+  optional double normal_1_x = 13;
+  optional double normal_1_y = 14;
+  optional double normal_1_z = 15;
+  optional double normal_2_x = 16;
+  optional double normal_2_y = 17;
+  optional double normal_2_z = 18;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message TyroleanDovetailData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional bool cut_off = 11;
+  optional double start_x = 12;
+  optional double start_y = 13;
+  optional double start_depth = 14;
+  optional double angle = 15;
+  optional double slope = 16;
+  optional double length = 17;
+  optional double rebate_length = 18;
+  optional double height = 19;
+  optional string lap_position = 20;
+  optional string lap_exit = 21;
+  optional string shape = 22;
+  optional string process_side = 23;
+  optional compas_pb.data.AnyData frosch = 24;
+  optional compas_pb.data.AnyData klingschrot = 25;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
+message VariantData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional int32 ref_side_index = 3;
+  optional int32 priority = 4;
+  optional int32 process_id = 5;
+  optional int32 tool_id = 6;
+  optional bool counter_sink = 7;
+  optional string tool_position = 8;
+  repeated compas_pb.data.AnyData subprocessings = 9;
+  optional string orientation = 10;
+  optional bool cut_off = 11;
+  optional double start_x = 12;
+  optional double start_y = 13;
+  optional double start_depth = 14;
+  repeated compas_pb.data.AnyData parameters = 15;
+  map<string, compas_pb.data.AnyData> attributes = 100;
+}
+
 // Polymorphic wrapper: any BTLxProcessing instance.
 message BTLxProcessingData {
   oneof processing {
@@ -418,5 +1183,43 @@ message BTLxProcessingData {
     SimpleScarfData simple_scarf = 16;
     TextData text = 17;
     FreeContourData free_contour = 18;
+    ChamferData chamfer = 19;
+    ConnectorData connector = 20;
+    CrampContourData cramp_contour = 21;
+    DovetailData dovetail = 22;
+    FreeSurfaceData free_surface = 23;
+    GlueAreaData glue_area = 24;
+    HipValleyRafterNotchData hip_valley_rafter_notch = 25;
+    HouseData house = 26;
+    HouseMortiseData house_mortise = 27;
+    InsulationAreaData insulation_area = 28;
+    JapaneseMortiseData japanese_mortise = 29;
+    JapaneseTenonData japanese_tenon = 30;
+    LockoutAreaData lockout_area = 31;
+    LogHouseFrontData log_house_front = 32;
+    LogHouseHalfLapData log_house_half_lap = 33;
+    LogHouseJointData log_house_joint = 34;
+    MarkingData marking = 35;
+    MillContourData mill_contour = 36;
+    NailContourData nail_contour = 37;
+    PatternContourData pattern_contour = 38;
+    PenContourData pen_contour = 39;
+    PlaningData planing = 40;
+    PlaningAreaData planing_area = 41;
+    PlasterAreaData plaster_area = 42;
+    ProcessingGroupData processing_group = 43;
+    ProfileCamberedData profile_cambered = 44;
+    ProfileFrontData profile_front = 45;
+    ProfileHeadData profile_head = 46;
+    RidgeValleyCutData ridge_valley_cut = 47;
+    RoundArchData round_arch = 48;
+    SawContourData saw_contour = 49;
+    SawCutData saw_cut = 50;
+    ScarfJointData scarf_joint = 51;
+    ScrewContourData screw_contour = 52;
+    SphereData sphere = 53;
+    TriangleCutData triangle_cut = 54;
+    TyroleanDovetailData tyrolean_dovetail = 55;
+    VariantData variant = 56;
   }
 }

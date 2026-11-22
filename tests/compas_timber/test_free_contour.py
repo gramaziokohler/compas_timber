@@ -227,3 +227,13 @@ def test_contour_scaled():
     assert scaled_contour.depth == contour.depth * 2.0
     assert scaled_contour.inclination == contour.inclination
     assert scaled_contour.depth_bounded == contour.depth_bounded
+
+
+def test_dual_contour_scale_scales_both_contours():
+    contour = DualContour(Polyline([[1.0, 0.0, 0.0], [2.0, 0.0, 0.0]]), Polyline([[1.0, 0.0, 1.0], [2.0, 0.0, 1.0]]))
+
+    scaled = contour.scaled(1000.0)
+
+    assert scaled.principal_contour[1].x == 2000.0
+    assert scaled.associated_contour[1].z == 1000.0
+    assert contour.principal_contour[1].x == 2.0

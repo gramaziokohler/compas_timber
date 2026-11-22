@@ -13,6 +13,7 @@ from compas.geometry import is_point_behind_plane
 from compas_brep import Brep
 
 from compas_timber.errors import FeatureApplicationError
+from compas_timber.geometry import brep_edge_indices_along
 from compas_timber.geometry import brep_union_first
 from compas_timber.utils import planar_surface_point_at
 
@@ -564,8 +565,9 @@ class Tenon(BTLxProcessing):
         # fillet the edges of the volume based on the shape
         if self.shape != TenonShapeType.SQUARE:
             try:
-                edges = tenon_volume.edges[:8]
-                tenon_volume.fillet(self.shape_radius, edges)
+                # half the width leaves no flat between two fillets, which is the schema's default and what a Brep cannot fillet
+                radius = min(self.shape_radius, 0.499 * min(self.length, self.width))
+                tenon_volume.fillet(radius, brep_edge_indices_along(tenon_volume, self.frame_from_params_and_beam(beam).normal))
             except Exception as e:
                 # tenon_volume is still in model space here (not yet localized below), geometry is local
                 raise FeatureApplicationError(
