@@ -583,6 +583,10 @@ register(_fs.BallNodeCore, elements_pb2.BallNodeCoreData)
 register(_fs.BallNodeRod, elements_pb2.BallNodeRodData)
 register(_fs.BallNodePlate, elements_pb2.BallNodePlateData)
 register(_fs.BallNodeFastenerParameters, elements_pb2.BallNodeFastenerParametersData)
+register(_fs.PlateFastenerSystem, elements_pb2.PlateFastenerSystemData)
+register(_fs.DowelFastenerSystem, elements_pb2.DowelFastenerSystemData)
+register(_fs.ScrewFastenerSystem, elements_pb2.ScrewFastenerSystemData)
+register(_fs.BallNodeFastenerSystem, elements_pb2.BallNodeFastenerSystemData)
 
 
 # Layer.layer_path is a tuple-or-None, wrapped so the two stay distinct.

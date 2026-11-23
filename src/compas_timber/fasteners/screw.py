@@ -207,7 +207,7 @@ class ScrewFastenerSystem(FastenerSystem):
     @property
     def __data__(self):
         return {
-            "screws": [screw.__data__ for screw in self.screws],
+            "screws": self.screws,
         }
 
     def bind(self, anchors: list) -> Fastener:

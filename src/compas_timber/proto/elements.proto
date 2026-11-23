@@ -94,8 +94,8 @@ message PanelData {
 // `Fastener` is a resolved, model-ready container element with no geometry of
 // its own -- its parts (below) carry the geometry and are its children in the
 // model tree. `FastenerSystem` and its subclasses are the design-time recipes
-// that build a `Fastener`; they are plain `Data`, never part of a model, and
-// have no proto message of their own.
+// that build a `Fastener`; they are plain `Data` and never part of a model, so
+// their messages (further below) are standalone and not part of `ElementData`.
 //
 // `frame`/`placement_frame` below mirror each class' `placement_frame`
 // property, which is never `None` (it defaults to the world XY frame), so
@@ -202,6 +202,40 @@ message BallNodeFastenerParametersData {
   optional double rods_length = 11;
   optional double plate_thickness = 12;
   optional double plate_depth = 13;
+}
+
+// The FastenerSystem subclasses: design-time recipes, not Elements. The anchor
+// kinds a system accepts are fixed by its class (`ACCEPTS`) and so not carried.
+
+message PlateFastenerSystemData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double width = 10;
+  optional double height = 11;
+  optional double thickness = 12;
+  optional double recess = 13;
+  optional double recess_offset = 14;
+}
+
+message DowelFastenerSystemData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional double diameter = 10;
+  optional double length = 11;
+}
+
+// The screws are the pattern repeated at every anchor; each one's
+// `placement_frame` is relative to the anchor the system is bound to.
+message ScrewFastenerSystemData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  repeated ScrewData screws = 10;
+}
+
+message BallNodeFastenerSystemData {
+  GuidRef guid = 1;
+  optional string name = 2;
+  optional BallNodeFastenerParametersData parameters = 10;
 }
 
 // A plain compas_model Element, for models that hold elements which are not

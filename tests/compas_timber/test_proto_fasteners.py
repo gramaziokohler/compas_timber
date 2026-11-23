@@ -4,8 +4,8 @@ Covers the parts of the schema fastener.py introduces: the resolved
 `Fastener` container, each concrete `FastenerPart` (`Screw`, `Dowel`,
 `RectangularPlate` with its `PlateHole` entries, `GeometryPart` with its
 arbitrary AnyData geometry, and the ball-node `BallNodeCore` / `BallNodeRod`
-/ `BallNodePlate` trio), `BallNodeFastenerParameters`, and the two ways a
-fastener actually ends up in a model: bound from a `FastenerSystem` at a
+/ `BallNodePlate` trio), `BallNodeFastenerParameters`, the design-time
+`FastenerSystem` subclasses, and the two ways a fastener actually ends up in a model: bound from a `FastenerSystem` at a
 joint's anchors, or staged directly with `Fastener.add_part`.
 """
 
@@ -13,6 +13,7 @@ import json
 
 import pytest
 from compas.data import json_dumps
+from compas.data import json_loads
 from compas.datastructures import Mesh
 from compas.geometry import Box
 from compas.geometry import Frame
@@ -21,6 +22,7 @@ from compas.geometry import Transformation
 
 from compas_pb import pb_dump_bts
 from compas_pb import pb_load_bts
+from compas_pb.core import serialize_message
 
 from compas_timber.connections import BallNodeJoint
 from compas_timber.connections import TButtJoint
@@ -28,11 +30,14 @@ from compas_timber.elements import Beam
 from compas_timber.fasteners import AnchorKind
 from compas_timber.fasteners import BallNodeCore
 from compas_timber.fasteners import BallNodeFastenerParameters
+from compas_timber.fasteners import BallNodeFastenerSystem
 from compas_timber.fasteners import BallNodePlate
 from compas_timber.fasteners import BallNodeRod
 from compas_timber.fasteners import Dowel
+from compas_timber.fasteners import DowelFastenerSystem
 from compas_timber.fasteners import Fastener
 from compas_timber.fasteners import GeometryPart
+from compas_timber.fasteners import PlateFastenerSystem
 from compas_timber.fasteners import PlateHole
 from compas_timber.fasteners import RectangularPlate
 from compas_timber.fasteners import Screw
@@ -157,6 +162,69 @@ def test_ball_node_plate_roundtrip():
 def test_ball_node_fastener_parameters_roundtrip():
     params = BallNodeFastenerParameters(ball_diameter=8, rods_length=10, plate_thickness=2, plate_depth=10)
     assert_lossless(params)
+
+
+FASTENER_SYSTEMS = [
+    PlateFastenerSystem(width=40, height=50, thickness=5, recess=4, recess_offset=1),
+    DowelFastenerSystem(diameter=10, length=100),
+    ScrewFastenerSystem([Screw(diameter=8, length=120, precise=True), Screw(diameter=6, length=80)]),
+    BallNodeFastenerSystem(BallNodeFastenerParameters(ball_diameter=9, rods_length=11, plate_thickness=3, plate_depth=12)),
+]
+
+
+@pytest.mark.parametrize("system", FASTENER_SYSTEMS, ids=lambda system: type(system).__name__)
+def test_fastener_system_roundtrip(system):
+    assert_lossless(system)
+
+
+@pytest.mark.parametrize("system", FASTENER_SYSTEMS, ids=lambda system: type(system).__name__)
+def test_fastener_system_has_typed_message(system):
+    """Without a registered message compas_pb silently falls back to an untyped dict, which also round-trips."""
+    data = serialize_message(system).data
+    assert data.WhichOneof("data") == "message"
+    assert data.message.type_url.endswith("compas_timber.proto.{}Data".format(type(system).__name__))
+
+
+def test_fastener_system_name_roundtrip():
+    assert roundtrip(DowelFastenerSystem(diameter=10, length=100, name="my-dowels"))._name == "my-dowels"
+    assert roundtrip(DowelFastenerSystem(diameter=10, length=100))._name is None
+
+
+@pytest.mark.parametrize(
+    "duplicate",
+    [roundtrip, lambda system: json_loads(json_dumps(system)), lambda system: system.copy()],
+    ids=["protobuf", "json", "copy"],
+)
+def test_screw_fastener_system_keeps_screws(duplicate):
+    screw = Screw(diameter=8, length=120, precise=True, head_diameter=20, placement_frame=Frame([1, 2, 3], [0, 1, 0], [0, 0, 1]), name="my-screw")
+
+    other = duplicate(ScrewFastenerSystem([screw, Screw(diameter=6, length=80)]))
+
+    assert len(other.screws) == 2
+    assert all(isinstance(s, Screw) for s in other.screws)
+    assert other.screws[0].__data__ == screw.__data__
+    assert other.screws[0].name == "my-screw"
+
+
+def test_fastener_system_binds_after_roundtrip():
+    model = TimberModel()
+    cross_beam = Beam.from_centerline(Line([0, 0, 0], [2000, 0, 0]), width=50, height=50)
+    main_beam = Beam.from_centerline(Line([1000, 0, 0], [1000, 1000, 0]), width=50, height=50)
+    model.add_elements([cross_beam, main_beam])
+    anchors = TButtJoint.create(model, main_beam, cross_beam, mill_depth=10).fastener_anchors.of_kind(AnchorKind.AXIS)
+    system = ScrewFastenerSystem([Screw(diameter=8, length=100, placement_frame=Frame([5, 0, 0], [1, 0, 0], [0, 1, 0]))])
+
+    expected = system.bind(anchors).parts
+    actual = roundtrip(system).bind(anchors).parts
+
+    assert len(actual) == len(expected) > 0
+    assert [part.__data__ for part in actual] == [part.__data__ for part in expected]
+
+
+def test_fastener_system_roundtrip_in_list_and_dict():
+    data = {"systems": list(FASTENER_SYSTEMS)}
+    other = roundtrip(data)
+    assert [type(system) for system in other["systems"]] == [type(system) for system in FASTENER_SYSTEMS]
 
 
 def test_screw_fastener_model_roundtrip():
