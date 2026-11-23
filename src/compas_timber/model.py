@@ -925,7 +925,7 @@ class TimberModel(Model):
             A new model containing *parent*'s former subtree.
         """
         tuples, joints = self._detach_subtree(parent)
-        new_model = TimberModel()
+        new_model = type(self)()
         new_model._attach_subtree(tuples, joints=joints)
         return new_model
 
