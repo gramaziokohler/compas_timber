@@ -677,7 +677,8 @@ class TimberModel(Model):
         plate : :class:`~compas_timber.elements.Plate`
             The plate whose structural surfaces to remove.
         """
-        self._graph.node_attribute(plate.graphnode, "structural_surfaces", None)
+        # not node_attribute(..., None): a value of None makes that a read
+        self._graph.unset_node_attribute(plate.graphnode, "structural_surfaces")
 
     def add_structural_surface_lines(self, element_a: Element, element_b: Element, lines: List[StructuralSurfaceLine]) -> None:
         """Adds structural surface lines to the interaction (edge) between two elements.

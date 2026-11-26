@@ -568,6 +568,47 @@ def _extreme_point_indices(points, axis, tolerance):
     return min_indices, max_indices, max_proj - min_proj
 
 
+def _joined_segment_index(joint, plate):
+    # Plate joints and plate joint candidates record which outline segment of each plate is joined.
+    # Returns (True, index) when the joint records it: index is None when the plate has no edge at
+    # the joint (the cross plate of a T). Returns (False, None) for joints that record nothing.
+    if not hasattr(joint, "a_segment_index"):
+        return False, None
+    if getattr(joint, "plate_a", None) is plate:
+        return True, joint.a_segment_index
+    if getattr(joint, "plate_b", None) is plate:
+        return True, getattr(joint, "b_segment_index", None)
+    return False, None
+
+
+def _stretch_segment_to_plane(points, segment_index, normal, target_point, target_normal, max_distance):
+    # Moves both ends of the segment within the plate's plane, perpendicular to the segment, onto
+    # the target plane. Returns the new points, or None if the segment cannot or should not move.
+    count = len(points)
+    i, j = segment_index % count, (segment_index + 1) % count
+    edge = Vector.from_start_end(points[i], points[j])
+    if edge.length < TOL.absolute:
+        return None
+    outward = normal.cross(edge)
+    outward.unitize()
+    centroid = Point(sum(p.x for p in points) / count, sum(p.y for p in points) / count, sum(p.z for p in points) / count)
+    edge_midpoint = Point(*((points[i] + points[j]) * 0.5))
+    if Vector.from_start_end(centroid, edge_midpoint).dot(outward) < 0:
+        outward = -outward
+
+    along_normal = outward.dot(target_normal)
+    if abs(along_normal) < TOL.relative:
+        return None  # the plates are parallel: no plane to stretch to
+
+    new_points = list(points)
+    for index in (i, j):
+        distance = Vector.from_start_end(points[index], target_point).dot(target_normal) / along_normal
+        if abs(distance) > max_distance:
+            return None
+        new_points[index] = points[index] + outward * distance
+    return new_points
+
+
 def _get_plate_center_outline(plate):
     pts_a = _get_open_points(plate.outline_a)
     pts_b = _get_open_points(plate.outline_b)
@@ -583,6 +624,13 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
 
     It stretches the center-plane of the plate to automatically close gaps
     to adjacent plates identified by the given joints.
+
+    When the joint records the joined outline segment of the plate (``a_segment_index`` /
+    ``b_segment_index``, as plate joints and plate joint candidates do), that edge is moved
+    within the plate's plane onto the mid-plane of the other plate, whichever edge it is.
+    A plate without an edge at the joint, such as the cross plate of a T, is left as it is.
+    For joints that record no segment, the plate is stretched at whichever end of its longest
+    edge is closest to the other plate (on a square plate, either in-plane direction).
 
     This generator produces one surface per plate and never subdivides it, so
     `split` is accepted for interface compatibility but has no effect here.
@@ -623,10 +671,21 @@ class SimplePlateSurfaceGenerator(PlateSurfaceGenerator):
             if not direction:
                 continue
 
-            # The plate is stretched at one of its ends along its longest edge. On a square plate
-            # that edge is an arbitrary pick, so both in-plane directions are considered there.
-            # TODO: revisit. Rectangular plates joined along one of their long edges are still not stretched.
-            # Using the joint's segment index (a_segment_index/b_segment_index) to find the edge to move would cover both cases.
+            # The joint knows which edge is joined: move that edge onto the other plate's mid-plane.
+            # The centre outline keeps the vertex order of outline_a, so the segment index carries over.
+            recorded, segment_index = _joined_segment_index(joint, plate)
+            if recorded:
+                if segment_index is None:
+                    continue  # no edge at the joint, e.g. the cross plate of a T: nothing to stretch
+                max_distance = 1.5 * max(plate.thickness, foreign_element.thickness)
+                new_points = _stretch_segment_to_plane(points, segment_index, normal, target_point, target_normal, max_distance)
+                if new_points:
+                    center_outline = Polyline(new_points + [new_points[0]])
+                continue
+
+            # Joints that do not record the joined segment: the plate is stretched at one of the ends
+            # of its longest edge. On a square plate that edge is an arbitrary pick, so both in-plane
+            # directions are considered there.
             perpendicular = normal.cross(direction)
             min_indices, max_indices, extent = _extreme_point_indices(points, direction, self.tolerance)
             candidates = [min_indices, max_indices]
@@ -880,6 +939,9 @@ class PlateStructuralElementSolver:
     def add_structural_surfaces(self, model: TimberModel) -> Tuple[List[StructuralSurface], Iterable[Joint]]:
         """Creates and adds structural surfaces for all plates to the timber model.
 
+        Surfaces stored on a plate by an earlier run are replaced, so solving again does not
+        accumulate them.
+
         Parameters
         ----------
         model : :class:`compas_timber.model.TimberModel`
@@ -901,6 +963,7 @@ class PlateStructuralElementSolver:
             joints_for_plate = self._get_interactions(plate, model)
             plate_surfaces = self.plate_surface_generator.generate_surfaces(plate, joints_for_plate)
 
+            model.remove_plate_structural_surfaces(plate)
             model.add_plate_structural_surfaces(plate, plate_surfaces)
 
             surfaces.extend(plate_surfaces)
@@ -912,6 +975,7 @@ class PlateStructuralElementSolver:
         """Creates and adds structural connection lines for the given joints to the timber model.
 
         Requires the structural surfaces to have been created with :meth:`add_structural_surfaces` first.
+        Lines stored on these joints' interactions by an earlier run are replaced.
 
         Parameters
         ----------
@@ -927,6 +991,13 @@ class PlateStructuralElementSolver:
 
         """
         lines = []
+        joints = list(joints)
+
+        # cleared for all joints first: two joints between the same plates add to the same interaction
+        for joint in joints:
+            elements = list(joint.elements)
+            if len(elements) >= 2:
+                model.remove_structural_surface_lines(elements[0], elements[1])
 
         for joint in joints:
             connection_lines = self.plate_connection_generator.generate_connection_lines(joint, model)

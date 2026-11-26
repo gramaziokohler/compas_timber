@@ -21,6 +21,8 @@ from compas_timber.structural import StructuralGraph
 from compas_timber.structural import StructuralSurface
 from compas_timber.structural import StructuralSurfaceLine
 from compas_timber.structural import effective_centerline
+from compas_timber.structural import _get_open_points
+from compas_timber.structural import _get_plate_center_outline
 
 
 def _plate(points, thickness=20.0):
@@ -130,6 +132,63 @@ def test_square_plate_is_stretched_to_its_joint():
     assert len(lines) == 2
 
 
+@pytest.fixture
+def long_edge_l_model():
+    """A floor and a wall meeting along their 3000 mm long edges at y=1000."""
+    model = TimberModel()
+    floor = _plate([Point(0, 0, 0), Point(3000, 0, 0), Point(3000, 1000, 0), Point(0, 1000, 0)])
+    wall = _plate([Point(0, 1000, 0), Point(3000, 1000, 0), Point(3000, 1000, 1000), Point(0, 1000, 1000)])
+    model.add_element(floor)
+    model.add_element(wall)
+    model.connect_adjacent_plates()
+    return model, floor, wall
+
+
+def test_plates_joined_along_their_long_edges_are_stretched(long_edge_l_model):
+    # the joined edges are the long ones, so looking at the ends of the longest edge finds nothing:
+    # the joint's segment indices say which edge to move
+    model, floor, wall = long_edge_l_model
+    _, lines = _solve(model)
+
+    floor_surface = model.get_plate_structural_surfaces(floor)[0]
+    wall_surface = model.get_plate_structural_surfaces(wall)[0]
+    floor_mid_z = floor_surface.frame.point.z
+    wall_mid_y = wall_surface.frame.point.y
+
+    # the floor reaches the wall's mid-plane and the wall reaches the floor's, along the whole edge
+    assert [TOL.is_close(point.y, wall_mid_y) for point in _get_open_points(floor_surface.outline)].count(True) == 2
+    assert TOL.is_close(max(point.y for point in floor_surface.outline.points), wall_mid_y)
+    assert TOL.is_close(min(point.z for point in wall_surface.outline.points), floor_mid_z)
+    # the far edges stay where they were
+    assert TOL.is_zero(min(point.y for point in floor_surface.outline.points))
+    assert TOL.is_close(max(point.z for point in wall_surface.outline.points), 1000)
+    # both surfaces stay flat
+    for surface in (floor_surface, wall_surface):
+        for point in surface.outline.points:
+            assert TOL.is_zero(Vector.from_start_end(surface.frame.point, point).dot(surface.frame.normal))
+    assert len(lines) == 2
+
+
+def test_through_plate_of_a_t_joint_is_not_stretched():
+    # a wall standing on the middle of a floor: the wall's edge goes down to the floor's mid-plane,
+    # the floor has no edge at the joint and keeps its outline
+    model = TimberModel()
+    floor = _plate([Point(0, 0, 0), Point(3000, 0, 0), Point(3000, 1000, 0), Point(0, 1000, 0)])
+    wall = _plate([Point(0, 500, 0), Point(3000, 500, 0), Point(3000, 500, 1000), Point(0, 500, 1000)])
+    model.add_element(floor)
+    model.add_element(wall)
+    model.connect_adjacent_plates()
+
+    before = [Point(*point) for point in _get_open_points(_get_plate_center_outline(floor))]
+    _solve(model)
+
+    floor_surface = model.get_plate_structural_surfaces(floor)[0]
+    wall_surface = model.get_plate_structural_surfaces(wall)[0]
+    after = _get_open_points(floor_surface.outline)
+    assert all(TOL.is_zero(a.distance_to_point(b)) for a, b in zip(before, after))
+    assert TOL.is_close(min(point.z for point in wall_surface.outline.points), floor_surface.frame.point.z)
+
+
 # =============================================================================
 # TimberModel API
 # =============================================================================
@@ -162,6 +221,28 @@ def test_remove_structural_surface_lines_either_order(l_corner_model, reverse):
         model.remove_structural_surface_lines(plate_a, plate_b)
 
     assert not any(_stored_surface_lines(model))
+
+
+def test_remove_plate_structural_surfaces(l_corner_model):
+    model, plate_a, plate_b = l_corner_model
+    _solve(model)
+
+    model.remove_plate_structural_surfaces(plate_a)
+
+    assert model.get_plate_structural_surfaces(plate_a) == []
+    assert len(model.get_plate_structural_surfaces(plate_b)) == 1
+
+
+def test_solving_again_replaces_surfaces_and_lines(l_corner_model):
+    model, plate_a, plate_b = l_corner_model
+    _solve(model)
+    surfaces, lines = _solve(model)
+
+    assert len(model.get_plate_structural_surfaces(plate_a)) == 1
+    assert len(model.get_plate_structural_surfaces(plate_b)) == 1
+    assert _stored_surface_lines(model) == [lines]
+    # the lines point at the surfaces of this run, not at the replaced ones
+    assert {line.parent_surface.guid for line in lines} == {surface.guid for surface in surfaces}
 
 
 def test_add_structural_surface_lines_raises_without_interaction():
