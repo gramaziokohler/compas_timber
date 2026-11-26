@@ -75,7 +75,7 @@ class FastenerApplicationError(Exception):
     ----------
     elements : list of : class:`~compas_timber.elements.TimberElement`
         The elements of the `Joint` to which the fastener could not be applied.
-    fastener : :class:`~compas_timber.elements.Fastener`
+    fastener : :class:`~compas_timber.fasteners.Fastener`
         The fastener that could not be applied.
     message : str
         The error message.

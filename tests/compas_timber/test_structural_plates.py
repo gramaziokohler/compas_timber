@@ -11,8 +11,8 @@ from compas.geometry import Vector
 from compas.tolerance import TOL
 from compas_timber.connections import Joint
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Plate
+from compas_timber.fasteners import Fastener
 from compas_timber.model import TimberModel
 from compas_timber.structural import PlateStructuralElementSolver
 from compas_timber.structural import SimpleBeamSegmentGenerator

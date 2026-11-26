@@ -11,10 +11,9 @@ from compas.geometry import bounding_box
 from compas.geometry import cross_vectors
 from compas.tolerance import TOL
 from compas_brep import Brep
-from compas_model.elements import reset_computed
 
 from compas_timber.base import TimberElement
-from compas_timber.base import reset_timber_attrs
+from compas_timber.base import clear_element_cache
 from compas_timber.errors import FeatureApplicationError
 from compas_timber.utils import intersection_line_plane_param
 
@@ -322,8 +321,6 @@ class Beam(TimberElement):
     # Extensions and Modifications
     # ==========================================================================
 
-    @reset_computed
-    @reset_timber_attrs
     def add_blank_extension(self, start, end, joint_key=None):
         # type: (float, float, None | int) -> None
         # TODO: rename `joint_key` to `joint_guid` for CT 3.0
@@ -338,14 +335,13 @@ class Beam(TimberElement):
             this extension will be removed as well.
 
         """
+        clear_element_cache(self)
         if joint_key is not None and joint_key in self._blank_extensions:
             s, e = self._blank_extensions[joint_key]
             start += s
             end += e
         self._blank_extensions[joint_key] = (start, end)
 
-    @reset_computed
-    @reset_timber_attrs
     def remove_blank_extension(self, joint_key=None):
         # type: (None | int) -> None
         # TODO: rename `joint_key` to `joint_guid` for CT 3.0
@@ -358,6 +354,7 @@ class Beam(TimberElement):
             The key of the joint which required this extension.
 
         """
+        clear_element_cache(self)
         if joint_key is None:
             self._blank_extensions = {}
         else:

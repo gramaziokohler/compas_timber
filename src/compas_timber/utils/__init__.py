@@ -293,15 +293,13 @@ def is_polyline_clockwise(polyline, normal_vector):
         True if the polyline is clockwise, False otherwise.
 
     """
-    # make sure the polyline is closed
-    if not polyline[0] == polyline[-1]:
-        polyline = polyline[:]  # create a copy
-        polyline.append(polyline[0])
+    # drop the closing point so every vertex is a real corner (no zero-length edges)
+    points = polyline[:-1] if polyline[0] == polyline[-1] else polyline[:]
 
     angle_sum = 0
-    for i in range(len(polyline) - 1):
-        u = Vector.from_start_end(polyline[i - 1], polyline[i])
-        v = Vector.from_start_end(polyline[i], polyline[i + 1])
+    for i in range(len(points)):
+        u = Vector.from_start_end(points[i - 1], points[i])
+        v = Vector.from_start_end(points[i], points[(i + 1) % len(points)])
         angle = angle_vectors_signed(u, v, normal_vector)
         angle_sum += angle
     return angle_sum < 0
@@ -613,7 +611,7 @@ def polyline_from_brep_loop(loop):
 
     Parameters
     ----------
-    loop : :class:`~compas.geometry.BrepLoop`
+    loop : :class:`~compas_brep.BrepLoop`
         The BrepLoop to convert to a polyline.
 
     Returns
@@ -642,7 +640,7 @@ def polylines_from_brep_face(face):
     """Extract polylines from a BRep face.
     Parameters
     ----------
-    face : :class:`~compas.geometry.BrepFace`
+    face : :class:`~compas_brep.BrepFace`
         The Brep face to extract polylines from.
     Returns
     -------
@@ -679,7 +677,7 @@ def get_plate_geometry_outlines_from_brep(brep):
 
     Parameters
     ----------
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         A plate-like brep. Must have at least 5 faces.
 
     Returns
@@ -831,22 +829,24 @@ def combine_parallel_segments(polyline, tol=TOL):
     for i in range(len(polyline) - 2, 0, -1):
         v1 = Vector.from_start_end(polyline[i - 1], polyline[i])
         v2 = Vector.from_start_end(polyline[i], polyline[i + 1])
-        if tol.is_zero(angle_vectors(v1, v2)):
+        # a zero-length segment (duplicate point) is dropped as well
+        if tol.is_zero(v1.length) or tol.is_zero(v2.length) or tol.is_zero(angle_vectors(v1, v2)):
             polyline.points.pop(i)
 
 
 def get_brep_loop_vertex_indices(loop, brep):
     """Get the vertex indices of a BrepLoop.
 
-    Tries to use ``native_vertex.VertexIndex`` of the BrepLoop edges if
+    Follows the loop's trims, which are ordered and oriented along the loop.
+    Tries to use ``native_vertex.VertexIndex`` of the trim vertices if
     available (Rhino), otherwise falls back to comparing vertex positions
     with a tolerance.
 
     Parameters
     ----------
-    loop : :class:`~compas.geometry.BrepLoop`
+    loop : :class:`~compas_brep.BrepLoop`
         The BrepLoop to get the vertex indices from.
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         The Brep to get the vertex indices from.
 
     Returns
@@ -854,23 +854,19 @@ def get_brep_loop_vertex_indices(loop, brep):
     list of int
         The vertex indices of the BrepLoop (closed: first index repeated at end).
     """
-    face_vertex_indices = []
-    for edge in loop.edges:
+
+    def index(vertex):
         try:
-            if edge.start_vertex.native_vertex.VertexIndex not in face_vertex_indices:
-                face_vertex_indices.append(edge.start_vertex.native_vertex.VertexIndex)
-            if edge.end_vertex.native_vertex.VertexIndex not in face_vertex_indices:
-                face_vertex_indices.append(edge.end_vertex.native_vertex.VertexIndex)
+            return vertex.native_vertex.VertexIndex
         except AttributeError:
             for i, v in enumerate(brep.vertices):
-                if TOL.is_allclose(edge.start_vertex.point, v.point):
-                    if i not in face_vertex_indices:
-                        face_vertex_indices.append(i)
-                if TOL.is_allclose(edge.end_vertex.point, v.point):
-                    if i not in face_vertex_indices:
-                        face_vertex_indices.append(i)
-    face_vertex_indices.append(face_vertex_indices[0])
-    return face_vertex_indices
+                if TOL.is_allclose(vertex.point, v.point):
+                    return i
+
+    # trims run head to tail around the loop in its direction, while edges keep their own direction
+    indices = [index(trim.start_vertex) for trim in loop.trims]
+    indices.append(indices[0])
+    return indices
 
 
 def mesh_from_brep_simple(brep):
@@ -882,7 +878,7 @@ def mesh_from_brep_simple(brep):
 
     Parameters
     ----------
-    brep : :class:`~compas.geometry.Brep`
+    brep : :class:`~compas_brep.Brep`
         A polyhedral Brep with planar faces and straight edges.
 
     Returns

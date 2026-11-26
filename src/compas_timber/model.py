@@ -7,20 +7,24 @@ from typing import List
 from typing import cast
 
 from compas.geometry import Point
+from compas.geometry import Transformation
 from compas.tolerance import TOL
 from compas_model.elements import Element
 from compas_model.models import Model
 
+from compas_timber.base import clear_model_cache
 from compas_timber.connections import ConnectionSolver
 from compas_timber.connections import Joint
 from compas_timber.connections import JointCandidate
 from compas_timber.connections import get_connection_candidate
 from compas_timber.elements import Beam
-from compas_timber.elements import Fastener
 from compas_timber.elements import Layer
 from compas_timber.elements import Panel
 from compas_timber.elements import Plate
 from compas_timber.errors import BeamJoiningError
+from compas_timber.errors import FastenerApplicationError
+from compas_timber.errors import FeatureApplicationError
+from compas_timber.fasteners import Fastener
 from compas_timber.structural import BeamStructuralElementSolver
 from compas_timber.structural import StructuralSegment
 from compas_timber.structural import StructuralSurface
@@ -48,7 +52,7 @@ class TimberModel(Model):
         A list of all panels assigned to this model.
     layers : list[:class:`~compas_timber.elements.Layer`]
         A list of all layers assigned to this model.
-    fasteners : list[:class:`~compas_timber.elements.Fastener`]
+    fasteners : list[:class:`~compas_timber.fasteners.Fastener`]
         A list of all fasteners assigned to this model.
 
     center_of_mass : :class:`~compas.geometry.Point`
@@ -70,6 +74,7 @@ class TimberModel(Model):
     def __data__(self):
         data = super().__data__
         data["joints"] = self._joints
+        # Fasteners are now regular elements in the model tree, so they serialize with the rest of the elements.
         return data
 
     @classmethod
@@ -82,6 +87,9 @@ class TimberModel(Model):
         for joint in model._joints.values():
             joint.restore_elements_from_keys(model)
 
+        for fastener in model.fasteners:
+            for part in fastener.all_parts:
+                part.restore_elements_from_keys(model)
         for candidate in model.joint_candidates:
             candidate.restore_elements_from_keys(model)
 
@@ -471,6 +479,63 @@ class TimberModel(Model):
             # (``joints`` vs. ``candidates``)
             self._graph.edge_attribute(edge, "candidates", candidate)
 
+    def add_fastener(self, fastener, elements: list):
+        """
+        Adds a fastener to the model.
+
+        The fastener is added to the model as a regular element. Its parts are added as children of the fastener in the
+        model tree. A reference to the fastener (its guid) is stored under the "fasteners" attribute on the edge(s)
+        connecting the specified elements. If two elements are not yet connected by an edge, a new edge is created.
+
+        Parameters
+        ----------
+
+        fastener : :class:`~compas_timber.fasteners.Fastener`
+            The fastener to be added to the model and connecting the elements.
+        elements : list[:class:`~compas_timber.elements.Element`]
+            The elements to be connected by the fastener.
+
+        """
+        # 1: add the fastener and its (staged) part subtree to the model tree
+        # parts may be nested (a part can own child parts), so the staged subtree is added depth-first, each part
+        # becoming a child of its parent.
+        staged_parts = list(fastener.parts)
+        self.add_element(fastener)
+        for part in staged_parts:
+            self._add_staged_part_subtree(part, fastener)
+
+        fastener_guid = str(fastener.guid)
+
+        # 2: reference the fastener on the edge(s) connecting the elements it fastens
+        # (this is how the fastener sits on the beam-beam edge alongside the joint)
+        for ia, element_a in enumerate(elements):
+            for ib, element_b in enumerate(elements):
+                if element_a is element_b or ia < ib:
+                    continue
+                interaction = self.has_interaction(element_a, element_b)
+                if interaction:
+                    edge = (element_a.graphnode, element_b.graphnode)
+                    if not self._graph.has_edge(edge):
+                        edge = (element_b.graphnode, element_a.graphnode)
+
+                else:
+                    edge = self.add_interaction(element_a, element_b)
+
+                edge_fasteners = list(self._graph.edge_attribute(edge, "fasteners") or [])
+                edge_fasteners.append(fastener_guid)
+                self._graph.edge_attribute(edge, "fasteners", value=edge_fasteners)
+
+    def _add_staged_part_subtree(self, part, parent):
+        """Recursively add a staged fastener part and its staged children to the model tree.
+
+        The staged children must be captured before ``part`` is added to the model, because adding it flips
+        ``part.parts`` from the staging list to the (still empty) tree children.
+        """
+        staged_children = list(part.parts)
+        self.add_element(part, parent=parent)
+        for child in staged_children:
+            self._add_staged_part_subtree(child, part)
+
     def add_structural_connector_segments(self, element_a: Element, element_b: Element, segments: List[StructuralSegment]) -> None:
         """Adds structural segments to the interaction (edge) between two elements.
 
@@ -735,6 +800,36 @@ class TimberModel(Model):
             # if there's no other timber related attributes on that edge, then remove the edge as well
             super().remove_interaction(a, b)
 
+    def add_element(self, element, parent=None, material=None, keep_world_placement=False):
+        """Add an element to the model.
+
+        Parameters
+        ----------
+        element : :class:`~compas_model.elements.Element`
+            The element to add.
+        parent : :class:`~compas_model.elements.Element`, optional
+            The parent element. The element's `transformation` is relative to it.
+        material : :class:`~compas_model.materials.Material`, optional
+            A material already added to the model.
+        keep_world_placement : bool, optional
+            If True, `element` is taken to be placed in world coordinates and its `transformation` is converted
+            to be relative to `parent` (or to the model), so it stays where it is.
+            If False (default), its `transformation` is used as is, i.e. already relative to `parent`.
+
+        Returns
+        -------
+        :class:`~compas_model.elements.Element`
+
+        """
+        if keep_world_placement:
+            reference = parent.modeltransformation if parent else self.transformation
+            if reference:
+                element.transformation = reference.inverted() * (element.transformation or Transformation())
+        super().add_element(element, parent=parent, material=material)
+        # the element's model transformation now composes with its new ancestors'
+        clear_model_cache(element)
+        return element
+
     def remove_element(self, element):
         # compas_model.Model removes the interactions and edges connected to the element,
         # but joints are stored in a separate dict, so we remove those explicitly first.
@@ -755,11 +850,10 @@ class TimberModel(Model):
     # =============================================================================
 
     def transform(self, transformation):
-        """Transform the model and reset all computed properties of all elements."""
-        # Override the base method to also reset computed properties of elements
+        """Transform the model and clear the model-space caches of all elements."""
         super().transform(transformation)
-        for element in self.elements():
-            element.reset_computed_properties()  # TODO: Find a better way to only update transformations of elements instead of resetting all computed properties.  # noqa: E501
+        for node in self.tree.root.children:
+            clear_model_cache(node.element)
 
     def set_topologies(self, topologies):
         """TODO: calculate the topologies inside the model using the ConnectionSolver."""
@@ -814,6 +908,50 @@ class TimberModel(Model):
                 if stop_on_first_error:
                     raise bje
         return errors
+
+    def process_fasteners(self, stop_on_first_error=False):
+        """
+        Process the fasteners of the model.
+        Applies the features of the fasteners in the model to their respective elements.
+
+        Parameters
+        ----------
+        stop_on_first_error : bool, optional
+            If True, the method will raise an exception on the first error it encounters. Default is False.
+
+        Returns
+        -------
+        list[:class:`~compas_timber.errors.FastenerApplicationError`]
+            A list of errors that occurred during the fastener application process.
+        """
+        errors = []
+
+        for fastener in self.fasteners:
+            try:
+                fastener.apply_fastening_features()
+            except (ValueError, FeatureApplicationError) as error:
+                elements = self._elements_connected_by_fastener(fastener)
+                bje = FastenerApplicationError(elements, fastener, message=str(error))
+                errors.append(bje)
+                if stop_on_first_error:
+                    raise bje
+
+        return errors
+
+    def _elements_connected_by_fastener(self, fastener):
+        """Return the timber elements referenced by the given fastener on the interaction graph."""
+        fastener_guid = str(fastener.guid)
+        elements = []
+        for edge in self._graph.edges():
+            edge_fasteners = self._graph.edge_attribute(edge, "fasteners")
+            if not edge_fasteners or fastener_guid not in edge_fasteners:
+                continue
+            for node in edge:
+                element_guid = self._graph.node_attribute(node, "element")
+                element = self._elements[element_guid]
+                if element not in elements:
+                    elements.append(element)
+        return elements
 
     def create_beam_structural_segments(self, solver=None) -> None:
         """Creates structural segments for all beams in the model based on their joints.
@@ -974,7 +1112,7 @@ class TimberModel(Model):
 
         for e in elements_children_first:
             self.remove_element(e)
-            e.clear_model_dependent_cache()
+            clear_model_cache(e)
 
         return tuples, joints
 
@@ -998,7 +1136,6 @@ class TimberModel(Model):
             target_parent = tuple_parent if tuple_parent is not None else parent
             for child in children:
                 self.add_element(child, parent=target_parent)
-                child.clear_model_dependent_cache()
         if joints:
             for joint in joints:
                 self.add_joint(joint)

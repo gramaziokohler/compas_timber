@@ -4,7 +4,6 @@ from .i_simple_scarf import ISimpleScarf
 from .l_butt import LButtJoint
 from .l_lap import LLapJoint
 from .l_miter import LMiterJoint
-from .l_miter import MiterPlaneSpec
 from .l_french_ridge_lap import LFrenchRidgeLapJoint
 from .lap_joint import LapJoint
 from .joint_candidate import JointCandidate
@@ -24,7 +23,6 @@ from .t_dovetail import TDovetailJoint
 from .mortise_tenon import MortiseTenonJoint
 from .t_tenon_mortise import TTenonMortiseJoint
 from .l_tenon_mortise import LTenonMortiseJoint
-from .ball_node import BallNodeJoint
 from .y_butt import YButtJoint
 from .oligina import TOliGinaJoint
 from .butt_joint import CutPlaneSpec
@@ -44,6 +42,7 @@ from .panel_miter_joint import PanelMiterJoint
 from .panel_layer_butt_joint import PanelLLayerButtJoint
 from .cluster import Cluster
 from .cluster import get_clusters_from_joint_candidates
+from .ball_node import BallNodeJoint
 from .cluster import get_topology_from_joints
 from .composite_joint import CompositeJoint
 
@@ -73,13 +72,11 @@ __all__ = [
     "get_connection_candidate",
     "TDovetailJoint",
     "MortiseTenonJoint",
-    "BallNodeJoint",
     "TTenonMortiseJoint",
     "LTenonMortiseJoint",
     "YButtJoint",
     "TOliGinaJoint",
     "CutPlaneSpec",
-    "MiterPlaneSpec",
     "beam_ref_side_incidence",
     "beam_ref_side_incidence_with_vector",
     "point_centerline_towards_joint",
@@ -96,6 +93,7 @@ __all__ = [
     "PanelMiterJoint",
     "PanelLLayerButtJoint",
     "Cluster",
+    "BallNodeJoint",
     "get_clusters_from_joint_candidates",
     "get_topology_from_joints",
     "CompositeJoint",

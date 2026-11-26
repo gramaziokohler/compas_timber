@@ -441,7 +441,7 @@ class Mortise(BTLxProcessing):
             )
 
         # fillet the edges of the mortise volume based on the shape
-        if self.shape is not TenonShapeType.SQUARE:
+        if self.shape != TenonShapeType.SQUARE:
             try:
                 edges = mortise_volume.edges[:8]
                 mortise_volume.fillet(self.shape_radius, edges)

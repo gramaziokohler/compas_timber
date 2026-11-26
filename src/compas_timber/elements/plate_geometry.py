@@ -12,10 +12,31 @@ from compas.geometry import cross_vectors
 from compas.geometry import dot_vectors
 from compas.tolerance import TOL
 from compas_brep import Brep
+from compas_model.elements import Element
 
+from compas_timber.base import clear_element_cache
 from compas_timber.geometry import brep_from_outlines
 from compas_timber.utils import get_polyline_segment_perpendicular_vector
 from compas_timber.utils import move_polyline_segment_to_plane
+
+
+class RigidPlacement:
+    """Lets an element's ``transformation`` only move and rotate it, and clears its caches when it changes.
+
+    The placement is serialized as a frame, which can't hold scaling, shearing or mirroring.
+    """
+
+    @Element.transformation.setter
+    def transformation(self, transformation):
+        # `Element.transform()` goes through here too
+        if transformation and not TOL.is_allclose(_flat(Transformation.from_frame(Frame.from_transformation(transformation))), _flat(transformation)):
+            raise ValueError("{} can only be moved and rotated; scaling, shearing and mirroring are not supported.".format(type(self).__name__))
+        self._transformation = transformation
+        clear_element_cache(self)
+
+
+def _flat(transformation):
+    return [value for row in transformation.matrix for value in row]
 
 
 class PlateGeometry(Data):
@@ -29,13 +50,9 @@ class PlateGeometry(Data):
     local_outline_b : :class:`~compas.geometry.Polyline`
         The associated outline of the plate in local space. Must have the same number of points as outline_a,
         be parallel to outline_a, and be offset in the +Z direction.
-    frame : :class:`~compas.geometry.Frame`, optional
-        The local coordinate frame of the plate in global space. Defaults to worldXY.
 
     Attributes
     ----------
-    frame : :class:`~compas.geometry.Frame`
-        The local coordinate frame of the plate in global space.
     length : float
         Length of the plate along the local x-axis.
     width : float
@@ -60,7 +77,6 @@ class PlateGeometry(Data):
         return {
             "local_outline_a": self._original_outlines[0],
             "local_outline_b": self._original_outlines[1],
-            "frame": self.frame,
             "length": self.length,
             "width": self.width,
             "thickness": self.thickness,
@@ -68,13 +84,12 @@ class PlateGeometry(Data):
 
     @classmethod
     def __from_data__(cls, data):
-        return cls(data["local_outline_a"], data["local_outline_b"], data["frame"])
+        return cls(data["local_outline_a"], data["local_outline_b"])
 
-    def __init__(self, local_outline_a: Polyline, local_outline_b: Polyline, frame: Optional[Frame] = None, **kwargs):
+    def __init__(self, local_outline_a: Polyline, local_outline_b: Polyline, **kwargs):
         super().__init__(**kwargs)
         self._check_outlines(local_outline_a, local_outline_b)
         box = Box.from_points(local_outline_a.points + local_outline_b.points)
-        self.frame = frame if frame is not None else Frame.worldXY()
         self.length = box.xsize
         self.width = box.ysize
         self.thickness = box.zsize
@@ -184,77 +199,17 @@ class PlateGeometry(Data):
     # ==========================================================================
 
     @classmethod
-    def from_global_outlines(cls, outline_a: Polyline, outline_b: Polyline, orientation: Optional[Vector] = None) -> "PlateGeometry":
-        """Creates a PlateGeometry from two polylines in global (world) space.
-
-        Computes the local frame and transforms the outlines into the plate's local coordinate system.
+    def from_dims(cls, length: float, width: float, thickness: float) -> "PlateGeometry":
+        """Creates a PlateGeometry with a rectangular outline from dimensions.
 
         Parameters
         ----------
-        outline_a : :class:`~compas.geometry.Polyline`
-            Principal outline of the plate in global space.
-        outline_b : :class:`~compas.geometry.Polyline`
-            Associated outline of the plate in global space. Must be parallel to outline_a
-            and offset in the plate's normal direction.
-        orientation : :class:`~compas.geometry.Vector`, optional
-            A vector that controls the direction of the local coordinate frame.
-            When provided, the vector is projected onto the outline plane and used to define
-            the local y-axis direction, overriding the frame derived automatically from the
-            outline geometry. If ``None``, the frame is determined from the outline.
-
-        Returns
-        -------
-        :class:`PlateGeometry`
-        """
-        # get 3 non-colinear points
-        pt_c = None
-        vector_a = Vector.from_start_end(outline_a[0], outline_a[1])
-        for pt in outline_a.points[-1:1:-1]:  # walk bakwards along outline_a.points
-            vector_b = Vector.from_start_end(outline_a[0], pt)
-            if not TOL.is_allclose(cross_vectors(vector_a, vector_b), [0, 0, 0]):  # cross_vectors returns [0,0,0] for parallel vectors
-                pt_c = pt
-        if not pt_c:
-            raise ValueError("outline_a appears to only have colinear points")
-
-        # get initial frame for rebasing to XY-plane
-        frame = Frame.from_points(outline_a[0], outline_a[1], pt_c)
-
-        if orientation:
-            frame_x = cross_vectors(orientation, frame.normal)
-            frame_y = cross_vectors(frame.normal, frame_x)
-            frame = Frame(outline_a[0], frame_x, frame_y)  # create new frame based on orientation
-
-        if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
-            frame = Frame(frame.point, -frame.xaxis, frame.yaxis)  # flip frame if outline_b in -z space
-        transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
-
-        # move polylines to XY
-        rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
-        rebased_pline_b = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_b.points])
-        # TODO: rebasing to positive XY space (code below) shouldn't be strictly necessary.
-        box = Box.from_points(rebased_pline_a.points + rebased_pline_b.points)
-        frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))  # frame at bounding box corner
-        frame.transform(transform_to_world_xy.inverse())
-        vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
-        # move polylines to positive XY space
-        local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
-        local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
-        return cls(local_outline_a, local_outline_b, frame)
-
-    @classmethod
-    def from_frame_and_dims(cls, frame: Frame, length: float, width: float, thickness: float) -> "PlateGeometry":
-        """Creates a PlateGeometry with a rectangular outline from a frame and dimensions.
-
-        Parameters
-        ----------
-        frame : :class:`~compas.geometry.Frame`
-            The local coordinate frame of the plate in global space.
         length : float
-            Length of the plate along the frame's x-axis.
+            Length of the plate along the local x-axis.
         width : float
-            Width of the plate along the frame's y-axis.
+            Width of the plate along the local y-axis.
         thickness : float
-            Thickness of the plate along the frame's z-axis.
+            Thickness of the plate along the local z-axis.
 
         Returns
         -------
@@ -262,7 +217,7 @@ class PlateGeometry(Data):
         """
         local_outline_a = Polyline([Point(0, 0, 0), Point(length, 0, 0), Point(length, width, 0), Point(0, width, 0), Point(0, 0, 0)])
         local_outline_b = Polyline([Point(p[0], p[1], thickness) for p in local_outline_a.points])
-        return cls(local_outline_a, local_outline_b, frame)
+        return cls(local_outline_a, local_outline_b)
 
     # ==========================================================================
     #  static methods
@@ -297,3 +252,63 @@ class PlateGeometry(Data):
         # check if outline_b is planar and parallel to outline_a
         if not all(TOL.is_close(p[2], outline_b[0][2]) for p in outline_b.points):
             raise ValueError("Outline_b must be planar and parallel to outline_a.")
+
+
+def global_outlines_to_local(outline_a: Polyline, outline_b: Polyline, orientation: Optional[Vector] = None) -> tuple[Frame, Polyline, Polyline]:
+    """Splits two plate outlines in global (world) space into the plate's local frame and its local outlines.
+
+    The local outlines lie on worldXY and start at the origin, as :class:`PlateGeometry` expects them.
+    The frame places them back in global space, and is what the owning element takes as its ``frame``.
+
+    Parameters
+    ----------
+    outline_a : :class:`~compas.geometry.Polyline`
+        Principal outline of the plate in global space.
+    outline_b : :class:`~compas.geometry.Polyline`
+        Associated outline of the plate in global space. Must be parallel to outline_a
+        and offset in the plate's normal direction.
+    orientation : :class:`~compas.geometry.Vector`, optional
+        A vector that controls the direction of the local coordinate frame.
+        When provided, the vector is projected onto the outline plane and used to define
+        the local y-axis direction, overriding the frame derived automatically from the
+        outline geometry. If ``None``, the frame is determined from the outline.
+
+    Returns
+    -------
+    tuple[:class:`~compas.geometry.Frame`, :class:`~compas.geometry.Polyline`, :class:`~compas.geometry.Polyline`]
+        The local coordinate frame of the plate in global space, and outline_a and outline_b in local space.
+    """
+    # get 3 non-colinear points
+    pt_c = None
+    vector_a = Vector.from_start_end(outline_a[0], outline_a[1])
+    for pt in outline_a.points[-1:1:-1]:  # walk bakwards along outline_a.points
+        vector_b = Vector.from_start_end(outline_a[0], pt)
+        if not TOL.is_allclose(cross_vectors(vector_a, vector_b), [0, 0, 0]):  # cross_vectors returns [0,0,0] for parallel vectors
+            pt_c = pt
+    if not pt_c:
+        raise ValueError("outline_a appears to only have colinear points")
+
+    # get initial frame for rebasing to XY-plane
+    frame = Frame.from_points(outline_a[0], outline_a[1], pt_c)
+
+    if orientation:
+        frame_x = cross_vectors(orientation, frame.normal)
+        frame_y = cross_vectors(frame.normal, frame_x)
+        frame = Frame(outline_a[0], frame_x, frame_y)  # create new frame based on orientation
+
+    if dot_vectors(Vector.from_start_end(outline_a[0], outline_b[0]), frame.normal) < 0:
+        frame = Frame(frame.point, -frame.xaxis, frame.yaxis)  # flip frame if outline_b in -z space
+    transform_to_world_xy = Transformation.from_frame_to_frame(frame, Frame.worldXY())
+
+    # move polylines to XY
+    rebased_pline_a = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_a.points])
+    rebased_pline_b = Polyline([pt.transformed(transform_to_world_xy) for pt in outline_b.points])
+    # TODO: rebasing to positive XY space (code below) shouldn't be strictly necessary.
+    box = Box.from_points(rebased_pline_a.points + rebased_pline_b.points)
+    frame = Frame(box.points[0], Vector(1, 0, 0), Vector(0, 1, 0))  # frame at bounding box corner
+    frame.transform(transform_to_world_xy.inverse())
+    vector_to_xy = Vector.from_start_end(box.points[0], Point(0, 0, 0))
+    # move polylines to positive XY space
+    local_outline_a = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_a.points])
+    local_outline_b = Polyline([pt.translated(vector_to_xy) for pt in rebased_pline_b.points])
+    return frame, local_outline_a, local_outline_b

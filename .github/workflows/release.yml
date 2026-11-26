@@ -27,7 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # ubuntu pinned: setup-python has no 3.9 build for ubuntu-26.04 (ubuntu-latest from Nov 2026).
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         python: ['3.9', '3.12', '3.14']
         exclude:
           # Rhino 8 ships Python 3.9, so it stays in the matrix. The ci action

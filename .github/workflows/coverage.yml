@@ -31,7 +31,6 @@ jobs:
         run: invoke pre-build
 
       - name: Run tests collecting coverage reports
-      - name: Run tests collecting coverage reports
         run: pytest --cov src/compas_timber --cov-report=xml --cov-report=term
 
       - name: Upload coverage reports to Codecov

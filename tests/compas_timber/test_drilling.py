@@ -253,6 +253,14 @@ def test_drilling(beam, drill_line, process_params_dict):
         assert generated_params[key] == value
 
 
+def test_drilling_perpendicular_to_ref_side():
+    beam = Beam.from_centerline(Line(Point(0, 0, 0), Point(1000, 0, 0)), width=100, height=200)
+    drilling = Drilling.from_line_and_element(Line(Point(500, 0, 150), Point(500, 0, -150)), beam, 10)
+
+    assert drilling.angle == 0.0
+    assert drilling.inclination == 90.0
+
+
 def test_drilling_scaled():
     drilling = Drilling(start_x=10.0, start_y=20.0, angle=30.0, inclination=40.0, diameter=50.0, depth=60.0, ref_side_index=1)
 
