@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.0.2] 2026-11-18
 
 ### Added
+* Added `KMiterJoint`.
+* Added `parse_cross_beams_and_main_beams_from_cluster` in `compas_timber.connections.utilities`.
 
 ### Changed
 
