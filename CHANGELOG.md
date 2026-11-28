@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Added fastener types `RectangularPlate` / `PlateHole` with `PlateFastenerSystem`, `Screw` with `ScrewFastenerSystem`, `Dowel` with `DowelFastenerSystem`, `BallNodeCore` / `BallNodeRod` / `BallNodePlate` with `BallNodeFastenerSystem` and `BallNodeFastenerParameters`, and `GeometryPart` for arbitrary geometry.
 * Added `TimberModel.add_fastener(fastener, elements)`, which adds the fastener and its parts to the model tree and references the fastener on the graph edges between the fastened elements, and `TimberModel.process_fasteners()`, which applies the fasteners' features and returns `FastenerApplicationError`s.
 * Added protobuf messages for the new fastener types, including the `FastenerSystem` subclasses.
+* Added `StructuralSurface` and `StructuralSurfaceLine` to `compas_timber.structural`: the analytical mid-surface of a plate, and a line on such a surface (e.g. where two plates are connected). Both implement `__data__` and reference their parent plate and surface by guid instead of embedding them; `TimberModel` restores the object references when it is deserialized.
+* Added `PlateSurfaceGenerator`, `PlateConnectionGenerator`, `SimplePlateSurfaceGenerator`, `SimplePlateConnectionGenerator` and `PlateStructuralElementSolver` to `compas_timber.structural`, which create structural surfaces for plates and connection lines for their joints. `SimplePlateSurfaceGenerator` stretches a plate's mid-surface at the joined edge (from the joint's segment index) onto the other plate's mid-plane, and running the solver again replaces the surfaces and lines it stored before.
+* Added `TimberModel.add_plate_structural_surfaces()`, `TimberModel.get_plate_structural_surfaces()`, `TimberModel.remove_plate_structural_surfaces()`, `TimberModel.add_structural_surface_lines()` and `TimberModel.remove_structural_surface_lines()`.
+* Added plate structural surfaces to `StructuralGraph.from_model()`, with `StructuralGraph.surfaces`, `StructuralGraph.surface_boundary_edges`, `StructuralGraph.surface_connection_edges` and `StructuralGraph.surface_lines()`.
+* Added `effective_centerline()` to `compas_timber.structural`, which returns a beam's centerline extended by its blank extensions, up to `max_structural_extension` (300 mm by default), for structural use only.
+* Added the `StructuralSurfaceData` and `StructuralSurfaceLineData` protobuf messages.
 
 ### Changed
 * Changed `PlateHole` to a `FastenerPart`. Holes are now child parts of their `RectangularPlate` in the model tree, and each hole applies its own `Drilling`. `RectangularPlate.holes` is a read-only view over those children, and holes are no longer part of `RectangularPlate.__data__` or `RectangularPlateData`; `PlateHoleData` is now an `ElementData` element. A hole has no geometry of its own (`geometry` is `None`), and the cylinder cut out of the plate is `PlateHole.cutting_geometry`.
@@ -28,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Fixed `RectangularPlate` keeping stale cached geometry after a hole was added.
 * Fixed `ScrewFastenerSystem` losing its `Screw` objects (turned into plain dicts) when serialized or copied.
 * Removed a dead frame assignment in `TButtJoint.fastener_anchors`.
+* `SimpleBeamSegmentGenerator` now splits beams at the closest points between the centerlines of each joint interaction and at the points in the beam's `support_points` attribute, along the beam's `effective_centerline()`. Interactions with elements that have no centerline, such as fasteners, are skipped.
+* `SimpleJointConnectorGenerator` now connects the beams' `effective_centerline()`s, and takes `max_candidate_connector_distance` (10 mm by default) and `use_candidate_connectors` to limit or skip connectors derived from joint candidates.
 
 ### Removed
 
